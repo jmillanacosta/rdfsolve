@@ -1,0 +1,38 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix : <http://www.w3.org/ns/sparql-service-description#> .
+@prefix void_ext: <http://ldf.fi/void-ext#> .
+@prefix formats: <http://www.w3.org/ns/formats/> .
+@prefix pav: <http://purl.org/pav/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<https://sparql.wikipathways.org/sparql> a :Service;
+  :defaultDataset <https://sparql.wikipathways.org/sparql#sparql-default-dataset>;
+  :endpoint <https://sparql.wikipathways.org/sparql>;
+  :resultFormat formats:SPARQL_Results_CSV, formats:SPARQL_Results_JSON, formats:N-Triples,
+    formats:RDF_XML, formats:SPARQL_Results_TSV, formats:Turtle, formats:SPARQL_Results_XML;
+  :supportedLanguage :SPARQL11Query;
+  :feature :UnionDefaultGraph, :BasicFederatedQuery;
+  :availableGraphs _:d492b8c8d3f049c2b5f277b19ff4ece611 .
+
+<https://sparql.wikipathways.org/sparql#sparql-default-dataset> a :Dataset;
+  :defaultGraph <http://rdf.wikipathways.org/.well-known/void##sparql-default-graph>;
+  :namedGraph <https://sparql.wikipathways.org/sparql/graph> .
+
+<http://rdf.wikipathways.org/.well-known/void##sparql-default-graph> a :Graph;
+  void:distinctObjects "1910662"^^xsd:long;
+  void_ext:distinctLiterals "883650"^^xsd:long;
+  void_ext:distinctIRIReferenceObjects "1027012"^^xsd:long;
+  void:distinctSubjects "847341"^^xsd:long;
+  void_ext:distinctIRIReferenceSubjects "781635"^^xsd:long;
+  void_ext:distinctBlankNodeSubjects "65706"^^xsd:long .
+
+_:d492b8c8d3f049c2b5f277b19ff4ece611 :namedGraph <https://sparql.wikipathways.org/sparql/graph> .
+
+<https://sparql.wikipathways.org/sparql/graph> a :NamedGraph;
+  :name <https://sparql.wikipathways.org/sparql/graph>;
+  :graph <http://rdf.wikipathways.org/.well-known/void##_graph_graph!86ba9859> .
+
+<http://rdf.wikipathways.org/.well-known/void##_graph_graph!86ba9859> a :Graph;
+  void:triples "0"^^xsd:long .
