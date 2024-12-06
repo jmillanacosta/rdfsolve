@@ -1,8 +1,7 @@
 import urllib.parse
-import yaml
 import subprocess
 import requests
-from rdflib import Graph, ConjunctiveGraph
+from rdflib import ConjunctiveGraph
 from rdflib.plugins.sparql.processor import prepareQuery
 import os
 import pkgutil
@@ -96,11 +95,7 @@ def process_rdf_types(results_df, nodes_map, edges_map, node_datatypes_map):
     return nodes_map, edges_map
 
 
-def make_rdf_config(graph_file):
-    print("Loading graph from file:", graph_file)
-    graph = load_graph(graph_file)
-    print("Graph loaded successfully")
-
+def make_rdf_config(graph):
     print("Retrieving prefixes from graph")
     prefixes_data = retrieve_prefixes_from_graph(graph)
     prefixes = prefixes_data["prefixes"]
@@ -116,22 +111,22 @@ def make_rdf_config(graph_file):
     df.columns = ["classFrom", "datatypeTo", "classTo", "propIri", "sumTriples"]
     print("Processing datatypes")
     node_datatypes_map = process_datatypes(df)
-    print("Datatypes processed:", node_datatypes_map)
+    print("Datatypes processed:")
 
     print("Processing RDF types")
     nodes_map, edges_map = process_rdf_types(
         df, nodes_map, edges_map, node_datatypes_map
     )
     print("RDF types processed")
-    print("Nodes map:", nodes_map)
-    print("Edges map:", edges_map)
+    print("Node map length:", len(nodes_map))
+    print("Edge map length:", len(edges_map))
 
     model_yaml = {"nodes": nodes_map, "edges": edges_map}
     combined_yaml = {**prefixes_data, "model": model_yaml}
 
-    print("Generating YAML output")
-    yaml_output = yaml.dump(combined_yaml, default_flow_style=False, sort_keys=False)
-    print("YAML output generated")
+    print("Generating RDF-config")
+    yaml_output = combined_yaml
+    print("RDF-config generated")
     return yaml_output
 
 
@@ -252,9 +247,6 @@ def execute_query(graph, query_file):
         {str(k): str(v) for k, v in row.items()}
         for row in results
     ]
-
-
-import requests
 
 
 def get_graph_iris(endpoint_url):
