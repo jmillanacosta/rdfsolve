@@ -90,17 +90,16 @@ class RDFSolver:
 
     @void.setter
     def void(self, value):
-        if isinstance(value, ConjunctiveGraph):
-            self._void = value
-        elif isinstance(value, str):
-            if os.path.isfile(value):
-                g = ConjunctiveGraph()
-                g.parse(value)
-                self._void = g
-        else:
-            raise ValueError(
-                "The value for void must be a ConjunctiveGraph or a file path.\nTo generate from VoID generator, run self.void_generator()"
-            )
+        if not isinstance(value, ConjunctiveGraph):
+            raise ValueError("The value for void must be a ConjunctiveGraph.")
+        self._void = value
+
+    def parse_void(self, file_path):
+        if not os.path.isfile(file_path):
+            raise ValueError(f"File does not exist: {file_path}")
+        g = ConjunctiveGraph()
+        g.parse(file_path)
+        self._void = g
 
     @property
     def dataset_name(self):
