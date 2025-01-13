@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/cthoyt/cookiecutter-snekpack",
-  "commit": "1884310d930f56787c96d4eba45bcb4a5225f7cb",
+  "commit": "1d7c52b5fbad984d3027e3b04bc2a6973056454f",
   "checkout": null,
   "context": {
     "cookiecutter": {
@@ -8,6 +8,7 @@
       "package_name_stylized": "RDF solve",
       "short_description": "Wraps several RDF schema solver tools",
       "author_name": "Javier Millán Acosta",
+      "author_github": "",
       "author_email": "javier.millanacosta@maastrichtuniversity.nl",
       "github_organization_name": "jmillanacosta",
       "github_repository_name": "rdfsolve",
@@ -19,7 +20,8 @@
       "__runner_pip": "tox tox-uv",
       "__runner_tests": "py",
       "__gh_slug": "jmillanacosta/rdfsolve",
-      "_template": "https://github.com/cthoyt/cookiecutter-snekpack"
+      "_template": "https://github.com/cthoyt/cookiecutter-snekpack",
+      "_commit": "1d7c52b5fbad984d3027e3b04bc2a6973056454f"
     }
   },
   "directory": null
