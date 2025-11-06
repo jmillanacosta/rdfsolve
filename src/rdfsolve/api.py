@@ -1,35 +1,20 @@
-"""This is a placeholder for putting the main code for your module.
+"""Core API functionality for RDFSolve.
 
-If you don't want to keep ``api.py``, check the following places:
-
-1. ``src/rdfsolve/__init__.py`` contains a line
-   ``from .api import *  # noqa``. You'll want to delete this and likely replace
-   it with other imports for the most important functionality for your package
-2. ``docs/usage.rst`` contains a line
-   ``.. automodule:: rdfsolve.api``.
-   You'll want to delete this and replace it with other imports
-3. You don't need to update any linting or testing configuration since it is agnostic
-   to the contents of the package.
+This module provides the main classes and functions for working with RDF datasets:
+- RDFSolver: Main class for managing SPARQL endpoints and generating VoID
+- VoidParser: Parser for VoID descriptions and schema extraction
 """
 
+from .rdfsolve import RDFSolver
+from .void_parser import (
+    VoidParser,
+    parse_void_file,
+    generate_void_from_endpoint,
+)
+
 __all__ = [
-    "hello",
-    "square",
+    "RDFSolver",
+    "VoidParser",
+    "parse_void_file",
+    "generate_void_from_endpoint",
 ]
-
-
-def hello(name: str) -> None:
-    """Print hello."""
-    print(f"Hello, {name}")  # noqa: T201
-
-
-def square(x: int) -> int:
-    """Square the number.
-
-    :param x: An integer to square
-    :returns: The integer, squared
-
-    >>> square(5)
-    25
-    """
-    return x ** 2
