@@ -1,15 +1,16 @@
 """
-RDF Shapes Graph Generator
+RDF Configuration Parser
 
 This module provides functionality to parse RDF-config YAML models and generate
-schema graphs. It follows the Ruby RDFConfig library logic for handling
-blank nodes and URI resolution.
+schema graphs. Handling blank nodes, URI resolution, and model processing.
+
 """
 
 import os
 import re
 import yaml
 from typing import Dict, List, Any, Optional
+from ..utils import resolve_curie, normalize_uri, clean_predicate, is_blank_node
 
 
 # Custom YAML constructor to handle blank node keys ([] as keys)
@@ -129,58 +130,15 @@ class RDFConfigParser:
 
     def resolve_curie(self, curie: str) -> Optional[str]:
         """Convert CURIE to full IRI"""
-        if not curie or curie in ["BN", "null", "", "[]"]:
-            return None
-
-        curie = str(curie).strip()
-
-        # Already full IRI
-        if curie.startswith("<") and curie.endswith(">"):
-            return curie
-        if curie.startswith("http"):
-            return f"<{curie}>"
-
-        # Handle 'a' as rdf:type
-        if curie == "a":
-            return "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
-
-        # Handle CURIE
-        if ":" in curie:
-            prefix, localname = curie.split(":", 1)
-            if prefix in self.prefixes:
-                base_uri = self.prefixes[prefix].strip("<>")
-                return f"<{base_uri}{localname}>"
-
-        return None
+        return resolve_curie(curie, self.prefixes)
 
     def clean_predicate(self, predicate: str) -> str:
         """Remove cardinality markers from predicate"""
-        cleaned = predicate.rstrip("*+?")
-        brace_pos = cleaned.rfind("{")
-        if brace_pos > 0 and cleaned.endswith("}"):
-            cleaned = cleaned[:brace_pos]
-        return cleaned.strip()
+        return clean_predicate(predicate)
 
     def is_blank_node(self, value: Any) -> bool:
         """Check if value represents a blank node"""
-        if isinstance(value, dict):
-            keys = list(value.keys())
-            if len(keys) == 1 and keys[0] == "[]":
-                return True
-            # Also check for array key (blank node in Ruby logic)
-            if len(keys) == 1 and isinstance(keys[0], list):
-                return True
-        elif isinstance(value, list):
-            if len(value) == 1 and value[0] == "[]":
-                return True
-            # Empty list after key like "core:range:" indicates blank node
-            if len(value) == 1 and isinstance(value[0], dict):
-                keys = list(value[0].keys())
-                if len(keys) == 1 and keys[0] == "[]":
-                    return True
-        elif value == "[]":
-            return True
-        return False
+        return is_blank_node(value)
 
     def extract_rdf_types(self, properties_list: List[Dict]) -> List[str]:
         """Extract rdf:type URIs from properties"""

@@ -1,17 +1,11 @@
-from rdflib import ConjunctiveGraph
-from rdfsolve.tools.utils import (
-    make_rdf_config,
-    get_void_jar,
-    run_void_generator_endpoint,
-    get_graph_iris,
-    IGNORE_GRAPH_IRIS,
-)
+from rdflib import ConjunctiveGraph, Graph
 import os
-import yaml
+from typing import Optional
+
 
 class RDFSolver:
     """
-    A class to manage RDF schema/shape specifications and generate RDF models in YAML format.
+    A class to manage RDF datasets and generate VoID descriptions.
 
     :param str endpoint: SPARQL endpoint URL.
     :param str path: Path for storing temporary files.
@@ -20,7 +14,12 @@ class RDFSolver:
     """
 
     def __init__(
-        self, endpoint=None, path=None, void_iri=None, dataset_name=None, void=None
+        self,
+        endpoint=None,
+        path=None,
+        void_iri=None,
+        dataset_name=None,
+        void=None,
     ):
         """
         Initialize the RDFSolver class.
@@ -29,27 +28,22 @@ class RDFSolver:
         :param str path: Path for storing temporary files.
         :param str void_iri: VoID IRI.
         :param str dataset_name: Dataset name for VoID generation.
-        :param ConjunctiveGraph or str or None void: VoID graph or path or 'get' to auto-generate.
+        :param ConjunctiveGraph or str or None void: VoID graph or path.
         """
         self._endpoint = endpoint
         self._path = path
         self._void_iri = void_iri
         self._dataset_name = dataset_name
         self._void = None
-        self._rdfconfig = None
-        self._graph_iris = None
 
         self.validate_initialization()
-
-        if self._endpoint:
-            self.graph_iris = endpoint  # Triggers graph_iris setter
 
         if void:
             self.void = void  # Triggers void setter
 
     def validate_initialization(self):
         """
-        Validate initialization parameters and raise exceptions for missing values.
+        Validate initialization parameters and raise exceptions.
         """
         if not self._endpoint:
             raise ValueError("Missing required attribute: 'endpoint'.")
@@ -67,22 +61,10 @@ class RDFSolver:
     @path.setter
     def path(self, path):
         if not os.path.isdir(path):
-            raise ValueError(f"Invalid path: {path}. Directory does not exist.")
+            raise ValueError(
+                f"Invalid path: {path}. Directory does not exist."
+            )
         self._path = path
-
-    @property
-    def graph_iris(self):
-        return self._graph_iris
-
-    @graph_iris.setter
-    def graph_iris(self, endpoint):
-        if not endpoint or not isinstance(endpoint, str):
-            raise ValueError("The endpoint must be a non-empty string.")
-        self._graph_iris = [
-            iri
-            for iri in get_graph_iris(endpoint)
-            if iri.startswith("http") and iri not in IGNORE_GRAPH_IRIS
-        ]
 
     @property
     def void(self):
@@ -131,42 +113,86 @@ class RDFSolver:
             raise ValueError("The endpoint must be a non-empty string.")
         self._endpoint = value
 
-    @property
-    def rdfconfig(self):
-        if self._rdfconfig:
-            return self._rdfconfig
-        else:
-            raise ValueError("Use self.rdfconfig_generator to set the rdfconfig")
+    def get_void_queries(self, graph_uri: str) -> dict:
+        """
+        Get formatted CONSTRUCT queries for VoID generation without executing.
 
-    @rdfconfig.setter
-    def rdfconfig(self, value):
-        if not value or not isinstance(yaml, str):
-            raise ValueError("The endpoint must be a YAML.")
-        self._endpoint = value
+        Args:
+            graph_uri: Specific graph URI to analyze
 
+        Returns:
+            Dictionary containing the formatted queries
+        """
+        from .void_parser import VoidParser
+        return VoidParser.get_void_queries(graph_uri, counts=True)
 
-    def rdfconfig_generator(self):
-        if not self.endpoint:
-            raise ValueError(
-                "SPARQL endpoint is not set. Set it using the 'endpoint' property."
+    def void_generator(
+        self,
+        graph_uri: str,
+        output_file: Optional[str] = None,
+        counts: bool = True,
+        sample_limit: Optional[int] = None,
+    ) -> Graph:
+        """
+        Generate VoID description using CONSTRUCT queries.
+
+        Args:
+            graph_uri: Specific graph URI to analyze
+            output_file: Optional output file path for TTL
+            counts: If True, include COUNT aggregations; if False, faster
+            sample_limit: Optional LIMIT for sampling (speeds up discovery)
+
+        Returns:
+            RDF Graph containing the VoID description
+        """
+        from .void_parser import VoidParser
+
+        try:
+            if not output_file:
+                output_file = f"{self._dataset_name}_void.ttl"
+
+            if not self._endpoint:
+                raise ValueError("No endpoint configured")
+
+            print(f"Generating VoID from endpoint: {self._endpoint}")
+            print(f"Using graph URI: {graph_uri}")
+            if not counts:
+                print("Fast mode: Skipping COUNT aggregations")
+            if sample_limit:
+                print(f"Using sample limit: {sample_limit}")
+
+            void_graph = VoidParser.generate_void_from_sparql(
+                self._endpoint, graph_uri, output_file, counts, sample_limit
             )
+
+            self._void = void_graph
+            print("VoID generation completed successfully")
+            return void_graph
+
+        except Exception as e:
+            print(f"\nVoID generation failed: {str(e)}")
+
+            raise RuntimeError(
+                f"VoID generation failed. "
+                f"Original error: {str(e)}"
+            ) from e
+
+    def extract_schema(self, filter_void_nodes: bool = True):
+        """
+        Extract schema from the VoID description.
+
+        Args:
+            filter_void_nodes: Whether to filter out VoID-specific nodes
+
+        Returns:
+            VoidParser instance for schema extraction
+        """
         if not self._void:
             raise ValueError(
-                "The VoID description is needed first. Set it via the 'void' property."
+                "No VoID description available. " "Run void_generator() first."
             )
-        else:
-            self._rdfconfig = make_rdf_config(self._void)
-            return self._rdfconfig
-        
 
-    def void_generator(self):
-        jar_path = get_void_jar(path=self._path)
-        void_ttl = run_void_generator_endpoint(
-            jar_path,
-            endpoint=self._endpoint,
-            void_file=f"{self._dataset_name}_void.ttl",
-            void_iri=self._void_iri,
-            graph_iris=self._graph_iris,
-        )
-        g = ConjunctiveGraph()
-        self._void = g.parse(void_ttl)
+        from .void_parser import VoidParser
+
+        parser = VoidParser(self._void)
+        return parser
