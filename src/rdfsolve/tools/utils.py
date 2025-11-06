@@ -157,7 +157,7 @@ def retrieve_data_from_graph(graph):
 # VoID Generator stuff below
 
 
-VOID_GENERATOR_URL = "https://github.com/JervenBolleman/void-generator/releases/download/v0.6/void-generator-0.6-uber.jar"
+VOID_GENERATOR_URL = "https://github.com/sib-swiss/void-generator/releases/download/v0.19/void-generator-0.19-uber.jar"
 
 
 def get_void_jar(path):

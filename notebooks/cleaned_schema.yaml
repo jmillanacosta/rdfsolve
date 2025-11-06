@@ -1,0 +1,2241 @@
+- <http://biohackathon.org/resource/vg#Step:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/vg#Step>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#Region>
+- <http://biohackathon.org/resource/vg#Path:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/vg#Path>
+- <http://biohackathon.org/resource/vg#Node:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/vg#Node>
+- <http://biohackathon.org/resource/vg#Position:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#ExactPosition>
+- <PutativeRegulation:
+  - <rdf:type>: <http://chip-atlas.org/ontology/PutativeRegulation>
+- <Colocalization:
+  - <rdf:type>: <http://chip-atlas.org/ontology/Colocalization>
+- <http://purl.obolibrary.org/obo/go#Class:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2000/01/rdf-schema#Resource>
+- <DatabaseInfo:
+  - <rdf:type>: <http://www.w3.org/ns/dcat#Dataset>
+- <DatabaseTag:
+  - <rdf:type>: <http://www.w3.org/2004/02/skos/core#Concept>
+- <http://identifiers.org/hgnc/HGNC:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0000704>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf.org/ontology/med2rdf#Gene>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/NCBIGene>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/Ensembl>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/ENA>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/INSDC>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/RefSeq>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/CCDS>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/UniProt>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/MGI>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/RGD>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/LRG>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/OMIM>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/MiRBase>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/Orphanet>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <http://identifiers.org/hgnc/EC>
+- <http://identifiers.org/hgnc/NCBIGene:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/ncbigene>
+- <http://identifiers.org/hgnc/Ensembl:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/ensembl>
+- <http://identifiers.org/hgnc/ENA:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/ena.embl>
+- <http://identifiers.org/hgnc/INSDC:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/insdc>
+- <http://identifiers.org/hgnc/RefSeq:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/refseq>
+- <http://identifiers.org/hgnc/CCDS:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/ccds>
+- <http://identifiers.org/hgnc/UniProt:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/uniprot>
+- <http://identifiers.org/hgnc/PubMed:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/pubmed>
+- <http://identifiers.org/hgnc/MGI:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/mgi>
+- <http://identifiers.org/hgnc/RGD:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/rgd>
+- <http://identifiers.org/hgnc/LRG:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/lrg>
+- <http://identifiers.org/hgnc/OMIM:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/omim>
+- <http://identifiers.org/hgnc/Orphanet:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/orphanet>
+- <http://identifiers.org/hgnc/MiRBase:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/mirbase>
+- <http://identifiers.org/hgnc/EC:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/ec-code>
+- <http://identifiers.org/ncbigene/Gene:
+  - <http://identifiers.org/ncbigene/rdf:type>: <http://ddbj.nig.ac.jp/ontologies/nucleotide/Gene>
+- <http://rdf.glycoinfo.org/glycan/wurcs/2.0/Glycan:
+  - <http://rdf.glycoinfo.org/glycan/wurcs/2.0/rdf:type>: <http://rdf.glycoinfo.org/glycan/saccharide>
+- <http://rdf.glycoinfo.org/glycan/wurcs/2.0/Wurcs:
+  - <http://rdf.glycoinfo.org/glycan/wurcs/2.0/rdf:type>: <http://rdf.glycoinfo.org/glycan/glycosequence>
+- <http://rdf.glycoinfo.org/glycan/wurcs/2.0/Lin:
+  - <http://rdf.glycoinfo.org/glycan/wurcs/2.0/rdf:type>: <http://rdf.glycoinfo.org/glycan/wurcs/2.0/LIN>
+- <http://rdf.glycoinfo.org/glycan/wurcs/2.0/Res:
+  - <http://rdf.glycoinfo.org/glycan/wurcs/2.0/rdf:type>: <http://rdf.glycoinfo.org/glycan/wurcs/2.0/RES>
+- <http://rdf.glycoinfo.org/glycan/wurcs/2.0/UniqueRES:
+  - <http://rdf.glycoinfo.org/glycan/wurcs/2.0/rdf:type>: <http://rdf.glycoinfo.org/glycan/wurcs/2.0/UniqueRES>
+- <http://rdf.glycoinfo.org/glycan/wurcs/2.0/Glips:
+  - <http://rdf.glycoinfo.org/glycan/wurcs/2.0/rdf:type>: <http://rdf.glycoinfo.org/glycan/wurcs/2.0/GLIPS>
+- <http://rdf.glycoinfo.org/glycan/wurcs/2.0/Glip:
+  - <http://rdf.glycoinfo.org/glycan/wurcs/2.0/rdf:type>: <http://rdf.glycoinfo.org/glycan/wurcs/2.0/GLIP>
+- <http://purl.jp/bio/103/nite/cultures/Culture:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/mccv#MCCV_000001>
+- <http://www.reactome.org/biopax/84/48887#Pathway:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Pathway>
+  - <http://www.biopax.org/release/biopax-level3.owl#pathwayComponent+>: <http://www.reactome.org/biopax/84/48887#Pathway>
+  - <http://www.biopax.org/release/biopax-level3.owl#pathwayComponent+>: <http://www.reactome.org/biopax/84/48887#BiochemicalReaction>
+  - <http://www.biopax.org/release/biopax-level3.owl#pathwayComponent+>: <http://www.reactome.org/biopax/84/48887#TemplateReaction>
+  - <http://www.biopax.org/release/biopax-level3.owl#pathwayComponent+>: <http://www.reactome.org/biopax/84/48887#Degradation>
+  - <http://www.biopax.org/release/biopax-level3.owl#xref>: <http://www.reactome.org/biopax/84/48887#PublicationXref>
+  - <http://www.biopax.org/release/biopax-level3.owl#xref>: <http://www.reactome.org/biopax/84/48887#RelationshipXref>
+  - <http://www.biopax.org/release/biopax-level3.owl#xref>: <http://www.reactome.org/biopax/84/48887#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#PathwayStep:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#PathwayStep>
+  - <http://www.biopax.org/release/biopax-level3.owl#stepProcess>: <http://www.reactome.org/biopax/84/48887#Catalysis>
+  - <http://www.biopax.org/release/biopax-level3.owl#stepProcess>: <http://www.reactome.org/biopax/84/48887#Control>
+- <http://www.reactome.org/biopax/84/48887#PublicationXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#PublicationXref>
+- <http://www.reactome.org/biopax/84/48887#RelationshipXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#RelationshipXref>
+- <http://www.reactome.org/biopax/84/48887#UnificationXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#Organism:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#BioSource>
+- <http://www.reactome.org/biopax/84/48887#OrganismXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#BiochemicalReaction:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#BiochemicalReaction>
+  - <http://www.biopax.org/release/biopax-level3.owl#left>: <http://www.reactome.org/biopax/84/48887#LeftComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#left>: <http://www.reactome.org/biopax/84/48887#LeftSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#left>: <http://www.reactome.org/biopax/84/48887#LeftProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#left>: <http://www.reactome.org/biopax/84/48887#LeftDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#left>: <http://www.reactome.org/biopax/84/48887#LeftRna>
+  - <http://www.biopax.org/release/biopax-level3.owl#left>: <http://www.reactome.org/biopax/84/48887#LeftPhysicalEntity>
+  - <http://www.biopax.org/release/biopax-level3.owl#right>: <http://www.reactome.org/biopax/84/48887#RightComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#right>: <http://www.reactome.org/biopax/84/48887#RightSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#right>: <http://www.reactome.org/biopax/84/48887#RightProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#right>: <http://www.reactome.org/biopax/84/48887#RightDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#right>: <http://www.reactome.org/biopax/84/48887#RightRna>
+  - <http://www.biopax.org/release/biopax-level3.owl#right>: <http://www.reactome.org/biopax/84/48887#RightPhysicalEntity>
+  - <http://www.biopax.org/release/biopax-level3.owl#xref>: <http://www.reactome.org/biopax/84/48887#PublicationXref>
+  - <http://www.biopax.org/release/biopax-level3.owl#xref>: <http://www.reactome.org/biopax/84/48887#RelationshipXref>
+  - <http://www.biopax.org/release/biopax-level3.owl#xref>: <http://www.reactome.org/biopax/84/48887#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#TemplateReaction:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#TemplateReaction>
+  - <http://www.biopax.org/release/biopax-level3.owl#product>: <http://www.reactome.org/biopax/84/48887#TempSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#product>: <http://www.reactome.org/biopax/84/48887#TempProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#product>: <http://www.reactome.org/biopax/84/48887#TempPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#Degradation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Degradation>
+  - <http://www.biopax.org/release/biopax-level3.owl#left>: <http://www.reactome.org/biopax/84/48887#DegradationComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#left>: <http://www.reactome.org/biopax/84/48887#DegradationProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#left>: <http://www.reactome.org/biopax/84/48887#DegradationPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#Catalysis:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Catalysis>
+  - <http://www.biopax.org/release/biopax-level3.owl#controller>: <http://www.reactome.org/biopax/84/48887#CatalysisComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#controller>: <http://www.reactome.org/biopax/84/48887#CatalysisSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#controller>: <http://www.reactome.org/biopax/84/48887#CatalysisProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#controller>: <http://www.reactome.org/biopax/84/48887#CatalysisPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#Control:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Control>
+  - <http://www.biopax.org/release/biopax-level3.owl#controller>: <http://www.reactome.org/biopax/84/48887#ControlComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#controller>: <http://www.reactome.org/biopax/84/48887#ControlSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#controller>: <http://www.reactome.org/biopax/84/48887#ControlProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#controller>: <http://www.reactome.org/biopax/84/48887#ControlRna>
+  - <http://www.biopax.org/release/biopax-level3.owl#controller>: <http://www.reactome.org/biopax/84/48887#ControlPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#LeftComplex:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Complex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#LeftComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#LeftSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#LeftProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#LeftDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#LeftPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#LeftSmallMolecule:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMolecule>
+- <http://www.reactome.org/biopax/84/48887#LeftSmallMoleculeReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMoleculeReference>
+- <http://www.reactome.org/biopax/84/48887#LeftSmallMoleculeRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#LeftProtein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Protein>
+- <http://www.reactome.org/biopax/84/48887#LeftProteinReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#ProteinReference>
+- <http://www.reactome.org/biopax/84/48887#LeftProteinRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#LeftDna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#LeftDnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#DnaReference>
+- <http://www.reactome.org/biopax/84/48887#LeftRna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#LeftRnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#RnaReference>
+- <http://www.reactome.org/biopax/84/48887#LeftPhysicalEntity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#PhysicalEntity>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LeftComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LeftSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LefProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LeftDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LeftRna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LeftPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#RightComplex:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Complex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#RightComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#RightSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#RightProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#RightDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#RightPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#RightSmallMolecule:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMolecule>
+- <http://www.reactome.org/biopax/84/48887#RightSmallMoleculeReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMoleculeReference>
+- <http://www.reactome.org/biopax/84/48887#RightSmallMoleculeRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#RightProtein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Protein>
+- <http://www.reactome.org/biopax/84/48887#RightProteinReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#ProteinReference>
+- <http://www.reactome.org/biopax/84/48887#RightProteinRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#RightDna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#RightDnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#DnaReference>
+- <http://www.reactome.org/biopax/84/48887#RightRna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#RightRnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#RnaReference>
+- <http://www.reactome.org/biopax/84/48887#RightPhysicalEntity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#PhysicalEntity>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#RightComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#RightSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LefProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#RightDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#RightRna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#RightPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#TempComplex:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Complex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#TempComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#TempSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#TempProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#TempDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#TempPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#TempSmallMolecule:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMolecule>
+- <http://www.reactome.org/biopax/84/48887#TempSmallMoleculeReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMoleculeReference>
+- <http://www.reactome.org/biopax/84/48887#TempSmallMoleculeRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#TempProtein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Protein>
+- <http://www.reactome.org/biopax/84/48887#TempProteinReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#ProteinReference>
+- <http://www.reactome.org/biopax/84/48887#TempProteinRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#TempDna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#TempDnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#DnaReference>
+- <http://www.reactome.org/biopax/84/48887#TempRna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#TempRnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#RnaReference>
+- <http://www.reactome.org/biopax/84/48887#TempPhysicalEntity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#PhysicalEntity>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#TempComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#TempSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LefProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#TempDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#TempRna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#TempPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#DegradationComplex:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Complex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#DegradationComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#DegradationSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#DegradationProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#DegradationDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#DegradationPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#DegradationSmallMolecule:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMolecule>
+- <http://www.reactome.org/biopax/84/48887#DegradationSmallMoleculeReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMoleculeReference>
+- <http://www.reactome.org/biopax/84/48887#DegradationSmallMoleculeRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#DegradationProtein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Protein>
+- <http://www.reactome.org/biopax/84/48887#DegradationProteinReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#ProteinReference>
+- <http://www.reactome.org/biopax/84/48887#DegradationProteinRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#DegradationDna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#DegradationDnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#DnaReference>
+- <http://www.reactome.org/biopax/84/48887#DegradationRna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#DegradationRnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#RnaReference>
+- <http://www.reactome.org/biopax/84/48887#DegradationPhysicalEntity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#PhysicalEntity>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#DegradationComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#DegradationSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LefProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#DegradationDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#DegradationRna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#DegradationPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#CatalysisComplex:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Complex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#CatalysisComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#CatalysisSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#CatalysisProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#CatalysisDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#CatalysisPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#CatalysisSmallMolecule:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMolecule>
+- <http://www.reactome.org/biopax/84/48887#CatalysisSmallMoleculeReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMoleculeReference>
+- <http://www.reactome.org/biopax/84/48887#CatalysisSmallMoleculeRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#CatalysisProtein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Protein>
+- <http://www.reactome.org/biopax/84/48887#CatalysisProteinReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#ProteinReference>
+- <http://www.reactome.org/biopax/84/48887#CatalysisProteinRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#CatalysisDna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#CatalysisDnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#DnaReference>
+- <http://www.reactome.org/biopax/84/48887#CatalysisRna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#CatalysisRnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#RnaReference>
+- <http://www.reactome.org/biopax/84/48887#CatalysisPhysicalEntity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#PhysicalEntity>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#CatalysisComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#CatalysisSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LefProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#CatalysisDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#CatalysisRna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#CatalysisPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#ControlComplex:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Complex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#ControlComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#ControlSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#ControlProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#ControlDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#component>: <http://www.reactome.org/biopax/84/48887#ControlPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#ControlSmallMolecule:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMolecule>
+- <http://www.reactome.org/biopax/84/48887#ControlSmallMoleculeReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#SmallMoleculeReference>
+- <http://www.reactome.org/biopax/84/48887#ControlSmallMoleculeRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#ControlProtein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Protein>
+- <http://www.reactome.org/biopax/84/48887#ControlProteinReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#ProteinReference>
+- <http://www.reactome.org/biopax/84/48887#ControlProteinRefXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#UnificationXref>
+- <http://www.reactome.org/biopax/84/48887#ControlDna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#ControlDnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#DnaReference>
+- <http://www.reactome.org/biopax/84/48887#ControlRna:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Dna>
+- <http://www.reactome.org/biopax/84/48887#ControlRnaReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#RnaReference>
+- <http://www.reactome.org/biopax/84/48887#ControlPhysicalEntity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#PhysicalEntity>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#ControlComplex>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#ControlSmallMolecule>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#LefProtein>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#ControlDna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#ControlRna>
+  - <http://www.biopax.org/release/biopax-level3.owl#memberPhysicalEntity>: <http://www.reactome.org/biopax/84/48887#ControlPhysicalEntity>
+- <http://www.reactome.org/biopax/84/48887#Provenance:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Provenance>
+- <http://purl.jp/knapsack/resource#KNApSAcKCoreRecord:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#KNApSAcKCoreRecord>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#KNApSAcKMetaboliteRecord>
+- <http://purl.jp/knapsack/resource#MolFile:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000058>
+- <http://purl.jp/knapsack/resource#CDXfile:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#CDXfile>
+- <http://purl.jp/knapsack/resource#GIFFile:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#SDfile>
+- <http://purl.jp/knapsack/resource#MolecularFormula:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000042>
+- <http://purl.jp/knapsack/resource#MolecularEntityName:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000043>
+- <http://purl.jp/knapsack/resource#MolecularWeight:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000334>
+- <http://purl.jp/knapsack/resource#Smiles:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000018>
+- <http://purl.jp/knapsack/resource#StandardInchikey:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000059>
+- <http://purl.jp/knapsack/resource#StandardInchi:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000113>
+- <http://purl.jp/knapsack/resource#StartSubstance:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#Start_substance>
+- <http://purl.jp/knapsack/resource#CoreAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#KNApSAcKCoreAnnotation>
+- <http://purl.jp/knapsack/resource#CoreReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#KNApSAcKReference>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/ontology/bibo/Article>
+- <http://purl.jp/knapsack/resource#KnapsackBiologicalActivity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://purl.jp/knapsack/resource#KnapsackNaturalActivity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://purl.jp/knapsack/resource#KnapsackMetaboliteActivity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://purl.jp/knapsack/resource#NaturalActivity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#KnapsackNaturalActivity>
+  - <http://semanticscience.org/resource/SIO_000255>: <http://purl.jp/knapsack/resource#NaturalAnnotation>
+- <http://purl.jp/knapsack/resource#NaturalAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#KnapsackNaturalActivityAnnotation>
+- <http://purl.jp/knapsack/resource#NaturalReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#KNApSAcKReference>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/ontology/bibo/Article>
+- <http://purl.jp/knapsack/resource#MetaboliteActivity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#KnapsackMetaboliteActivity>
+  - <http://semanticscience.org/resource/SIO_000255>: <http://purl.jp/knapsack/resource#MetaboliteAnnotation>
+- <http://purl.jp/knapsack/resource#MetaboliteAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#KNApSAcKMetaboliteActivityAnnotation>
+- <http://purl.jp/knapsack/resource#MetaboliteReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/knapsack/resource#KNApSAcKReference>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/ontology/bibo/Article>
+  - <http://purl.org/dc/terms/isReferencedBy>: <http://purl.jp/knapsack/resource#MetaboliteAnnotation>
+  - <http://purl.org/dc/terms/isReferencedBy>: <http://purl.jp/knapsack/resource#MetaboliteActivity>
+- <DataSet:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/microarray_1colour_mrna_differential>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/microarray_1colour_microrna_differential>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/microarray_2colour_mrna_differential>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/rnaseq_mrna_baseline>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/rnaseq_mrna_differential>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/proteomics_baseline>
+- <DifferentialAnalysis:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/RNASeqDifferentialAnalysis>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/MicroarrayDifferentialExpressionAnalysis>
+- <BaselineAnalysis:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/BaselineExpressionAnalysis>
+- <Assay:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/Assay>
+- <DifferentialExpression:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/IncreasedDifferentialExpressionRatio>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/DecreasedDifferentialExpressionRatio>
+- <BaselineExpression:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/BaselineExpressionValue>
+- <Factor:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.ebi.ac.uk/efo/EFO_0000001>
+- <Sample:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/UBERON_0000001>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/DbNSFP:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DbNSFP>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/Variation:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://med2rdf.org/ontology/med2rdf#Variation>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/Location:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://biohackathon.org/resource/faldo#ExactPosition>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/Gene:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://med2rdf.org/ontology/med2rdf#Gene>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/Transcript:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://med2rdf.org/ontology/med2rdf#Transcript>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/Protein:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://med2rdf.org/ontology/med2rdf#Protein>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/PhyloP100wayVertebrate:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlleleConservation>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/PhyloP100wayVertebrate>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/PhyloP470wayMammalian:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlleleConservation>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/PhyloP470wayMammalian>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/PhyloP17wayPrimate:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlleleConservation>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/PhyloP17wayPrimate>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/PhastCons100wayVertebrate:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlleleConservation>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/PhastCons100wayVertebrate>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/PhastCons470wayMammalian:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlleleConservation>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/PhastCons470wayMammalian>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/PhastCons17wayPrimate:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlleleConservation>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/PhastCons17wayPrimate>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/GERPRs:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlleleConservation>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/GERPRs>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/SiPhy29wayLogodds:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlleleConservation>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/SiPhy29wayLogodds>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/BStatistic:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlleleConservation>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/BStatistic>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/Gerp91Mammals:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlleleConservation>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/Gerp91Mammals>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/SIFT:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/SIFT>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/SIFT4G:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/SIFT4G>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/PROVEAN:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/PROVEAN>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/Polyphen2Hdiv:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/Polyphen2Hdiv>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/Polyphen2Hvar:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/Polyphen2Hvar>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/LRT:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/LRT>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/MutationTaster:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/MutationTaster>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/MutationAssessor:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/MutationAssessor>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/FATHMM:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/FATHMM>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/FathmmMklCoding:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/FathmmMklCoding>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/FathmmXfCoding:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/FathmmXfCoding>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/CADD:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/CADD>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/CADDHg19:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/CADDHg19>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/CADDPhred:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/CADDPhred>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/CADDPhredHg19:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/CADDPhredHg19>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/VEST4:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/VEST4>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/IntegratedFitcons:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/IntegratedFitcons>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/GM12878Fitcons:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/GM12878Fitcons>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/H1HescFitcons:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/H1HescFitcons>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/HUVECFitcons:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/HUVECFitcons>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/LINSIGHT:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/LINSIGHT>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/DANN:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DANN>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/MetaLR:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/MetaLR>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/MetaSVM:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/MetaSVM>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/GenoCanyon:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/GenoCanyon>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/EigenRawCoding:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/EigenRawCoding>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/EigenPhredCoding:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/EigenPhredCoding>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/EigenPcRawCoding:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/EigenPcRawCoding>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/EigenPcPhredCoding:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/EigenPcPhredCoding>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/MCap:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/MCap>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/REVEL:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/REVEL>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/MutPred:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/MutPred>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/MVP:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/MVP>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/MPC:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/MPC>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/PrimateAI:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/PrimateAI>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/DEOGEN2:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DEOGEN2>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/BayesDelAddAF:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/BayesDelAddAF>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/BayesDelNoAF:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/BayesDelNoAF>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/ClinPred:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/ClinPred>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/LISTS2:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/LISTS2>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/MetaRNN:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/MetaRNN>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/GMVP:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/GMVP>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/VARITYR:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/VARITYR>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/VARITYEr:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/VARITYEr>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/VARITYRLoo:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/VARITYRLoo>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/VARITYErLoo:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/VARITYErLoo>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/ESM1b:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/ESM1b>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/EVE:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/EVE>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/AlphaMissense:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/AlphaMissense>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/PHACTBoost:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/PHACTBoost>
+- <http://purl.jp/bio/10/med2rdf/dbnsfp/MutFormer:
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbnsfp/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbnsfp/MutFormer>
+- <EnsemblGene:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/ensembl/EnsemblGene>
+- <EnsemblTranscript:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/ensembl/EnsemblTranscript>
+- <EnsemblTranscriptFlagComment:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement>
+- <EnsemblExon:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/ensembl/EnsemblExon>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0000147>
+- <EnsemblOrderedExon:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/ensembl/EnsemblOrderedExon>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_001261>
+- <EnsemblProtein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/ensembl/EnsemblProtein>
+- <PubCaseFinder:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C7057>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf.org/ontology/Disease>
+  - <http://nanbyodata.jp/ontology/nando#hasInheritance>: <http://purl.obolibrary.org/obo/HP_0000006>
+- <Nextprot:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Entry>
+- <EnsenblGene:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Gene>
+- <Isoform:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Isoform>
+- <Evidence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Evidence>
+- <Identifier>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Identifier>
+- <Provenance:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Database>
+- <Xref>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Xref>
+- <AbsorptionMax:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#AbsorptionMax>
+- <ActiveSite:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#ActiveSite>
+- <ActivityRegulation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#ActivityRegulation>
+- <AntibodyMapping:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#AntibodyMapping>
+- <Allergen:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Allergen>
+- <BetaStrand:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#BetaStrand>
+- <BinaryInteraction:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#BinaryInteraction>
+- <BindingSite:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#BindingSite>
+- <CalciumBindingRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#CalciumBindingRegion>
+- <CatalyticActivity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#CatalyticActivity>
+- <Caution:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Caution>
+- <CleavageSite:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#CleavageSite>
+- <Cofactor:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Cofactor>
+- <CofactorInfo:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#CofactorInfo>
+- <CoiledCoilRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#CoiledCoilRegion>
+- <CompositionallyBiasedRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#CompositionallyBiasedRegion>
+- <CrossLink:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#CrossLink>
+- <DevelopmentalStage:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#DevelopmentalStageInfo>
+- <Disease:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Disease>
+- <DisulfideBond:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#DisulfideBond>
+- <DnaBindingRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#DnaBindingRegion>
+- <Domain:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Domain>
+- <DomainInfo:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#DomainInfo>
+- <ElectrophysiologicalParameter:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#ElectrophysiologicalParameter>
+- <EnzymeClassification:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#EnzymeClassification>
+- <ExpressionInfo:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#ExpressionInfo>
+- <ExpressionProfile:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#ExpressionProfile>
+- <FunctionInfo:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#FunctionInfo>
+- <GlycosylationSite:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#GlycosylationSite>
+- <GoBiologicalProcess:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#GoBiologicalProcess>
+- <GoCellularComponent:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#GoCellularComponent>
+- <GoMolecularFunction:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#GoMolecularFunction>
+- <Helix:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Helix>
+- <Induction:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Induction>
+- <InitiatorMethionine:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#InitiatorMethionine>
+- <InteractingRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#InteractingRegion>
+- <InteractionInfo:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#InteractionInfo>
+- <InteractionMapping:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#InteractionMapping>
+- <IntramembraneRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#IntramembraneRegion>
+- <KineticKm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#KineticKM>
+- <KineticNote:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#KineticNote>
+- <KineticVmax:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#KineticVmax>
+- <LipidationSite:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#LipidationSite>
+- <MatureProtein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#MatureProtein>
+- <MetalBindingSite:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#MetalBindingSite>
+- <Miscellaneous:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Miscellaneous>
+- <MiscellaneousRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#MiscellaneousRegion>
+- <MiscellaneousSite:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#MiscellaneousSite>
+- <MitochondrialTransitPeptide:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#MitochondrialTransitPeptide>
+- <ModifiedResidue:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#ModifiedResidue>
+- <Mutagenesis:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Mutagenesis>
+- <NonConsecutiveResidue:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#NonConsecutiveResidue>
+- <NonTerminalResidue:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#NonTerminalResidue>
+- <NucleotidePhosphateBindingRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#NucleotidePhosphateBindingRegion>
+- <Pathway:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Pathway>
+- <PdbMapping:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#PdbMapping>
+- <PeptideMapping:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#PeptideMapping>
+- <PeroxisomeTransitPeptide:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#PeroxisomeTransitPeptide>
+- <PhDependence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#PhDependence>
+- <Pharmaceutical:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Pharmaceutical>
+- <Propeptide:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Propeptide>
+- <PtmInfo:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#PtmInfo>
+- <RedoxPotential:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#RedoxPotential>
+- <Repeat:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Repeat>
+- <Selenocysteine:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Selenocysteine>
+- <SequenceCaution:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#SequenceCaution>
+- <SequenceConflict:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#SequenceConflict>
+- <ShortSequenceMotif:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#ShortSequenceMotif>
+- <SignalPeptide:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#SignalPeptide>
+- <SmallMoleculeInteraction:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#SmallMoleculeInteraction>
+- <SrmPeptideMapping:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#SrmPeptideMapping>
+- <SubcellularLocation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#SubcellularLocation>
+- <SubcellularLocationInfo:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#SubcellularLocationNote>
+- <TemperatureDependence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#TemperatureDependence>
+- <TopologicalDomain:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#TopologicalDomain>
+- <TransmembraneRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#TransmembraneRegion>
+- <TransportActivity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#TransportActivity>
+- <Turn:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Turn>
+- <UniprotKeyword:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#UniprotKeyword>
+- <Variant:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#Variant>
+- <VariantInfo:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#VariantInfo>
+- <ZincFingerRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#ZincFingerRegion>
+- <AnatomyTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#NextprotAnatomyCv>
+- <DiseaseTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#UniprotDiseaseCv>
+- <DomainTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#NextprotDomainCv>
+- <EcTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#EnzymeClassificationCv>
+- <IonChannelElectrophysiologyTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#NextprotIcepoCv>
+- <EvidenceCodeTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#EvidenceCodeOntologyCv>
+- <GoTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#GoBiologicalProcessCv>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#GoCellularComponentCv>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#GoMolecularFunctionCv>
+- <MeshTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#MeshCv>
+- <MetalTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#NextprotMetalCv>
+- <NextprotFamilyTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#NextprotFamilyCv>
+- <NonStandardAminoAcidTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#NonStandardAminoAcidCv>
+- <OrganelleTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#OrganelleCv>
+- <PtmTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#UniprotPtmCv>
+- <SubcellularLocationTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#UniprotSubcellularLocationCv>
+- <TopologyTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#NextprotTopologyCv>
+- <UnipathwayTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#UnipathwayCv>
+- <UniprotKeywordTerm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://nextprot.org/rdf#UniprotKeywordCv>
+- <http://purl.jp/bio/18/nadd/Naddentry:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://vocab.jst.go.jp/terms/sti#Chemical>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/innovation/Innovation>
+- <http://purl.jp/bio/ncgm/Genotype:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf.org/ontology/med2rdf#Genotype>
+- <http://purl.jp/bio/ncgm/Sample:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_001050>
+- <http://purl.jp/bio/ncgm/Variation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf.org/ontology/med2rdf#Variation>
+- <Glycan:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/12/glyco/glycan#Saccharide>
+- <Wurcs:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/12/glyco/glycan#glycosequence>
+- <Source:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/12/glyco/glycan#Source>
+- <UniProt:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Protein>
+- <RecommendedNameNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Structured_Name>
+- <SubmitedNameNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Structured_Name>
+- <AlternativeNameNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Structured_Name>
+- <Gene:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Gene>
+- <Component:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Part>
+- <ComponentNameNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Structured_Name>
+- <ComponentAltNameNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Structured_Name>
+- <SimpleSequence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Simple_Sequence>
+- <ModifiedSequence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Modificated_Sequence>
+- <ExternalSequence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/External_Sequence>
+- <UnknownSequence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Unknown_Sequence>
+- <GO:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <Keyword:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Concept>
+- <DbResource:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Resource>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Nucleotide_Resource>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Transcript_Resource>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Structure_Resource>
+- <AbsorptionAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Absorption_Annotation>
+- <ActiveSiteAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Active_Site_Annotation>
+- <ActivityRegulationAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Activity_Regulation_Annotation>
+- <AllergenAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Allergen_Annotation>
+- <AlternativeInitiationAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Alternative_Initiation_Annotation>
+- <AlternativePromoterUsageAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Alternative_Promoter_Usage_Annotation>
+- <AlternativeSequenceAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Alternative_Sequence_Annotation>
+- <AlternativeSplicingAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Alternative_Splicing_Annotation>
+- <Annotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Annotation>
+- <BetaStrandAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Beta_Strand_Annotation>
+- <BindingSiteAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Binding_Site_Annotation>
+- <BiotechnologyAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Biotechnology_Annotation>
+- <CatalyticActivityAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Catalytic_Activity_Annotation>
+- <CautionAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Caution_Annotation>
+- <ChainAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Chain_Annotation>
+- <CofactorAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Cofactor_Annotation>
+- <CoiledCoilAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Coiled_Coil_Annotation>
+- <CompositionalBiasAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Compositional_Bias_Annotation>
+- <CrossLinkAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Cross-link_Annotation>
+- <DevelopmentalStageAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Developmental_Stage_Annotation>
+- <DiseaseAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Disease_Annotation>
+- <DisruptionPhenotypeAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Disruption_Phenotype_Annotation>
+- <DisulfideBondAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Disulfide_Bond_Annotation>
+- <DomainAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Domain_Annotation>
+- <DomainExtentAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Domain_Extent_Annotation>
+- <ErroneousGeneModelPredictionAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Erroneous_Gene_Model_Prediction_Annotation>
+- <ErrGeneModelPredicationConflictSeqNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/External_Sequence>
+- <ErroneousInitiationAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Erroneous_Initiation_Annotation>
+- <ErrInitConflictSeqNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/External_Sequence>
+- <ErroneousTerminationAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Erroneous_Termination_Annotation>
+- <ErrTermConflictSeqNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/External_Sequence>
+- <ErroneousTranslationAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Erroneous_Translation_Annotation>
+- <ErrTranslateConflictSeqNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/External_Sequence>
+- <FrameshiftAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Frameshift_Annotation>
+- <FrameshiftSeqNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/External_Sequence>
+- <FunctionAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Function_Annotation>
+- <GlycosylationAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Glycosylation_Annotation>
+- <HelixAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Helix_Annotation>
+- <InductionAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Induction_Annotation>
+- <InitiatorMethionineAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Initiator_Methionine_Annotation>
+- <IntramembraneAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Intramembrane_Annotation>
+- <KineticsAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Kinetics_Annotation>
+- <LipidationAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Lipidation_Annotation>
+- <MassSpectrometryAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Mass_Spectrometry_Annotation>
+- <ModifiedResidueAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Modified_Residue_Annotation>
+- <MotifAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Motif_Annotation>
+- <MutagenesisAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Mutagenesis_Annotation>
+- <NaturalVariantAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Natural_Variant_Annotation>
+- <NonAdjacentResiduesAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Non-adjacent_Residues_Annotation>
+- <NonStandardResidueAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Non-standard_Residue_Annotation>
+- <NonTerminalResidueAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Non-Terminal_Residue_Annotation>
+- <NucleotideBindingAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Nucleotide_Binding_Annotation>
+- <PhDependenceAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/PH_Dependence_Annotation>
+- <PtmAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/PTM_Annotation>
+- <PathwayAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Pathway_Annotation>
+- <PeptideAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Peptide_Annotation>
+- <PharmaceuticalAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Pharmaceutical_Annotation>
+- <PolymorphismAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Polymorphism_Annotation>
+- <PropeptideAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Propeptide_Annotation>
+- <RnaEditingAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/RNA_Editing_Annotation>
+- <RedoxPotentialAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Redox_Potential_Annotation>
+- <RegionAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Region_Annotation>
+- <RepeatAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Repeat_Annotation>
+- <RibosomalFrameshifting:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Ribosomal_Frameshifting>
+- <SequenceCautionAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Sequence_Caution_Annotation>
+- <CautionSeqNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/External_Sequence>
+- <SequenceConflictAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Sequence_Conflict_Annotation>
+- <ConflictSeqNode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/External_Sequence>
+- <SequenceUncertaintyAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Sequence_Uncertainty_Annotation>
+- <SignalPeptideAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Signal_Peptide_Annotation>
+- <SimilarityAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Similarity_Annotation>
+- <SiteAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Site_Annotation>
+- <SubcellularLocationAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Subcellular_Location_Annotation>
+- <SubunitAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Subunit_Annotation>
+- <TemperatureDependenceAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Temperature_Dependence_Annotation>
+- <TissueSpecificityAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Tissue_Specificity_Annotation>
+- <TopologicalDomainAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Topological_Domain_Annotation>
+- <TransitPeptideAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Transit_Peptide_Annotation>
+- <TransmembraneAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Transmembrane_Annotation>
+- <TurnAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Turn_Annotation>
+- <ZincFingerAnnotation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Zinc_Finger_Annotation>
+- <Intact:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Interaction>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Self_Interaction>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Non_Self_Interaction>
+- <IntactPaticipant:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Participant>
+- <Citation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Journal_Citation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Submission_Citation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Thesis_Citation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Observation_Citation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Patent_Citation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Book_Citation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Electronic_Citation>
+- <https://purl.dsmz.de/mediadive/medium/Growth:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/GrowthCondition>
+  - <https://purl.dsmz.de/schema/partOfMedium>: <https://purl.dsmz.de/mediadive/medium/Medium>
+  - <https://purl.dsmz.de/schema/relatedToStrain>: <https://purl.dsmz.de/mediadive/medium/Strain>
+- <https://purl.dsmz.de/mediadive/medium/MediumComposition:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MediumComposition>
+  - <https://purl.dsmz.de/schema/containsIngredient>: <https://purl.dsmz.de/mediadive/medium/Ingredient>
+  - <https://purl.dsmz.de/schema/modifiedBy>: <https://purl.dsmz.de/mediadive/medium/Modification>
+  - <https://purl.dsmz.de/schema/partOfMedium>: <https://purl.dsmz.de/mediadive/medium/Medium>
+- <https://purl.dsmz.de/mediadive/medium/Medium:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CultureMedium>
+- <https://purl.dsmz.de/mediadive/medium/SolutionRecipe:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/SolutionRecipe>
+  - <https://purl.dsmz.de/schema/partOfSolution>: <https://purl.dsmz.de/mediadive/medium/Solution>
+- <https://purl.dsmz.de/mediadive/medium/Ingredient:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Ingredient>
+- <https://purl.dsmz.de/mediadive/medium/Equipment:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Equipment>
+- <https://purl.dsmz.de/mediadive/medium/Step:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/OperationalStep>
+  - <https://purl.dsmz.de/schema/partOfMedium>: <https://purl.dsmz.de/mediadive/medium/Medium>
+  - <https://purl.dsmz.de/schema/relatedToSolution>: <https://purl.dsmz.de/mediadive/medium/Solution>
+- <https://purl.dsmz.de/mediadive/medium/Solution:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Solution>
+- <https://purl.dsmz.de/mediadive/medium/Strain:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Strain>
+- <https://purl.dsmz.de/mediadive/medium/Modification:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Modification>
+  - <https://purl.dsmz.de/schema/appliesToMedium>: <https://purl.dsmz.de/mediadive/medium/Medium>
+  - <https://purl.dsmz.de/schema/appliesToSolution>: <https://purl.dsmz.de/mediadive/medium/Solution>
+- <https://purl.dsmz.de/mediadive/medium/ModificationDetail:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ModificationDetail>
+  - <https://purl.dsmz.de/schema/partOfModification>: <https://purl.dsmz.de/mediadive/medium/Modification>
+  - <https://purl.dsmz.de/schema/relatedIngredient>: <https://purl.dsmz.de/mediadive/medium/Ingredient>
+- <https://purl.dsmz.de/mediadive/medium/Gas:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/GasComponent>
+  - <https://purl.dsmz.de/schema/partOfMedium>: <https://purl.dsmz.de/mediadive/medium/Medium>
+- <http://purl.jp/bio/10/civic/Gene:
+  - <http://purl.jp/bio/10/civic/rdf:type>: <http://med2rdf.org/ontology/med2rdf#Gene>
+- <http://purl.jp/bio/10/civic/Variation:
+  - <http://purl.jp/bio/10/civic/rdf:type>: <http://med2rdf.org/ontology/med2rdf#Variation>
+- <http://purl.jp/bio/10/civic/Evidence:
+  - <http://purl.jp/bio/10/civic/rdf:type>: <http://med2rdf.org/ontology/med2rdf#Evidence>
+- <PubChemBioAssay:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000015>
+- <PubChemConcept:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2004/02/skos/core#Concept>
+- <PubChemConservedDomain:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0000417>
+- <PubChemDescriptor:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/IAO_0000129>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000334>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000335>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000336>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000337>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000338>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000369>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000370>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000371>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000372>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000373>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000374>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000375>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000376>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000379>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000382>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000387>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000388>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000389>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000390>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000391>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000392>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000395>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000396>
+- <PubChemGene:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_010035>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_001383>
+- <PubChemEndpoint:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000034>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000186>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000187>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000188>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000189>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000190>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000192>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000194>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000349>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000477>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002117>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002144>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002145>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002146>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002162>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002862>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002877>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002878>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002879>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002880>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002881>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002882>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002883>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002884>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002886>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0002887>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0003036>
+- <PubChemInchiKey:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000399>
+- <PubChemPatent:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://data.epo.org/linked-data/def/patent/Publication>
+- <PubChemPatentCPC:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://data.epo.org/linked-data/def/cpc/Section>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://data.epo.org/linked-data/def/cpc/SubSection>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://data.epo.org/linked-data/def/cpc/Class>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://data.epo.org/linked-data/def/cpc/SubClass>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://data.epo.org/linked-data/def/cpc/MainGroup>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://data.epo.org/linked-data/def/cpc/SubGroup>
+- <PubChemMeasureGroup:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.bioassayontology.org/bao#BAO_0000040>
+- <PubChemPathway:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#Pathway>
+- <PubChemProtein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_010043>
+- <PubChemEnzyme:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Enzyme>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_010343>
+- <PubChemSource:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/dc/terms/Dataset>
+- <PubChemTaxonomy:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_010000>
+- <PubChemSynonym:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000109>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000339>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000382>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000406>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000407>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000409>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000412>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000446>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000447>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000467>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000561>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000562>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000563>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000564>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000565>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000566>
+- <PubChemCompoundCompoundCooccurrence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_001435>
+- <PubChemCompoundGeneCooccurrence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_001257>
+- <PubChemCompoundDiseaseCooccurrence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_000993>
+- <PubChemDiseaseDiseaseCooccurrence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_001436>
+- <PubChemDiseaseGeneCooccurrence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_000983>
+- <PubChemGeneGeneCooccurrence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_001437>
+- <PubChemBook:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/spar/fabio/Book>
+- <PubChemCell:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/CLO_0000031>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SIO_010054>
+- <PubChemDisease:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/DOID_4>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/MONDO_0000001>
+- <PubChemGrant:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/cerif/frapo/Grant>
+- <PubChemJournal:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/spar/fabio/Journal>
+- <PubChemOrganization:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/cerif/frapo/FundingAgency>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2006/vcard/ns#Organization>
+- <DGIdbInteraction:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/dgidb/Interaction>
+- <DGIdbDrug:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/dgidb/Drug>
+- <DGIdbGene:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/dgidb/Gene>
+- <IMethyl>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#>: <http://purl.jp/bio/10/imethyl/ontology/>
+- <SRAExperiment:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/dra/Experiment>
+- <Probe:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/Probe>
+- <Chip:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/Array/Rat230_2>
+- <UnitSet:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/UnitSet>
+- <UnitSetProfile:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/UnitSetProfile>
+- <ExperimentSet:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/ExperimentSet>
+- <ExperimentalCondition:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/ExperimentalCondition>
+- <Sample:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/Sample>
+- <IndividualAnimal:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/IndividualAnimal>
+- <ChemicalCompound:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/ChemicalCompound>
+- <Pathology:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/Pathology>
+- <PathologicalGrade:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/PathologicalGrade>
+- <PathologicalFindings:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/PathologicalFindings>
+- <PathologicalTopography:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/101/opentggates/ontology/PathologicalTopography>
+- <http://purl.jp/bio/10/med2rdf/dbscsnv/DbscSNV:
+  - <http://purl.jp/bio/10/med2rdf/dbscsnv/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbscsnv/DbscSNV>
+- <http://purl.jp/bio/10/med2rdf/dbscsnv/DbscSNVEnsembl:
+  - <http://purl.jp/bio/10/med2rdf/dbscsnv/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbscsnv/Ensembl>
+- <http://purl.jp/bio/10/med2rdf/dbscsnv/DbscSNVRefSeq:
+  - <http://purl.jp/bio/10/med2rdf/dbscsnv/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbscsnv/RefSeq>
+- <http://purl.jp/bio/10/med2rdf/dbscsnv/RandomForest:
+  - <http://purl.jp/bio/10/med2rdf/dbscsnv/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbscsnv/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbscsnv/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbscsnv/RandomForest>
+- <http://purl.jp/bio/10/med2rdf/dbscsnv/AdaBoost:
+  - <http://purl.jp/bio/10/med2rdf/dbscsnv/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbscsnv/DamagePrediction>
+  - <http://purl.jp/bio/10/med2rdf/dbscsnv/rdf:type>: <http://purl.jp/bio/10/med2rdf/dbscsnv/AdaBoost>
+- <Class:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <Molecule:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#SmallMolecule>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ProteinMolecule>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#UnknownSubstance>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Oligosaccharide>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#UnclassifiedSubstance>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#CellTherapy>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Enzyme>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Antibody>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Oligonucleotide>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#UnclassifiedMolecule>
+- <Image:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://xmlns.com/foaf/0.1/Image>
+- <StandardInchi:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000113>
+- <StandardInchiKey:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000059>
+- <CanonicalSmiles:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000018>
+- <ALogP:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000251>
+- <MolecularWeightOfTheCorrespondingFreeBase:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000350>
+- <HydrogenBondAcceptors:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000245>
+- <HydrogenBondDonors:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000244>
+- <PolarSurfaceArea:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000307>
+- <RotatableBonds:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000254>
+- <RuleOfThreePassesDescriptor:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000315>
+- <RuleOfFiveViolations:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000312>
+- <ChemAxonMostBasicPka:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000195>
+- <ChemAxonLogP:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000251>
+- <ChemAxonLogD:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000322>
+- <MolecularSpecies:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000326>
+- <FullMolecularWeight:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000216>
+- <AromaticRingsCount:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000381>
+- <HeavyAtoms:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000300>
+- <QEDWeightedScore:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000431>
+- <FullMolFormula:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000042>
+- <MonoisotopicMass:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000218>
+- <ChemAxonMostAcidicPka:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/CHEMINF_000195>
+- <BioComponent:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#BioComponent>
+- <Target:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ADMET>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ProteinComplexGroup>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ProteinComplex>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ProteinSelectivityGroup>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Phenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#SingleProtein>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#NucleicAcid>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Organism>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Metal>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Macromolecule>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#SmallMoleculeTarget>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#SubCellular>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#OligosaccharideTarget>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#UnknownTarget>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#UnclassifiedTarget>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#CellLineTarget>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Tissue>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#NonMolecular>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ChimericProtein>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ProteinNucleicAcidComplex>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ProteinFamily>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ProteinProteinInteraction>
+- <ChemblTargetcomponent:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#TargetComponent>
+- <ChemblProteinclassification:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ProteinClassification>
+- <ChemblBindingSite:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#BindingSite>
+- <ChemblActivity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Activity>
+- <ChemblAssay:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Assay>
+- <ChemblSource:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Source>
+- <CellLine:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#CellLine>
+- <DrugMechanism:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Mechanism>
+- <ChemblDrugIndication:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#DrugIndication>
+- <ChemblDocument:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Document>
+- <ChemblJournal:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#Journal>
+- <SurechemblCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#SureChemblRef>
+- <ActorCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ActorRef>
+- <PubchemCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#PubchemRef>
+- <NikkajiCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#NikkajiRef>
+- <IbmPatentStructuresCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#IbmPatentStructureRef>
+- <ReactomeCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ReactomeRef>
+- <GoProcessCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#GoProcessRef>
+- <GoFunctionCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#GoFunctionRef>
+- <GoComponentCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#GoComponentRef>
+- <PfamCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#PfamRef>
+- <UniprotCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#UniprotRef>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/ensembl/EnsemblDBEntry>
+- <InterproCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#InterproRef>
+- <IntactCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#IntactRef>
+- <WikipediaCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#WikipediaMolRef>
+- <DrugBankCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#DrugbankRef>
+- <ZinkCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ZincRef>
+- <EmoleculesCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#EmoleculesRef>
+- <PDBCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/pdb>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/ensembl/EnsemblDBEntry>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ProteinDataBankRef>
+- <PDBeCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#PdbeRef>
+- <MculeCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#MculeRef>
+- <MolPortCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#MolportRef>
+- <EnsemblCrossReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/ensembl>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#EnsemblGeneRef>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/expressionatlas/EnsemblDatabaseReference>
+- <FdaSrsRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#FdaSrsRef>
+- <NmrShiftDb2Ref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#NmrShiftDb2Ref>
+- <PubchemThomPharmRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#PubchemThomPharmRef>
+- <ChebiRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ChebiRef>
+- <AtlasRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#AtlasRef>
+- <KeggLigandRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#KeggLigandRef>
+- <IupharRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#IupharRef>
+- <HmdbRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#HmdbRef>
+- <SelleckRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#SelleckRef>
+- <ReconRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#ReconRef>
+- <PharmGkbRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#PharmGkbRef>
+- <PubchemDotfRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#PubchemDotfRef>
+- <LincsRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#LincsRef>
+- <TimbalRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#TimbalRef>
+- <CGDRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#CGDRef>
+- <PharmgkbRef:
+  - <a>: <http://rdf.ebi.ac.uk/terms/chembl#PharmgkbRef>
+- <EnzymeClassRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#EnzymeClassRef>
+- <CellXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#LincsCellRef>
+- <AssayXref:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/chembl#PubchemBioassayRef>
+- <http://id.nlm.nih.gov/mesh/Concept:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#Concept>
+- <http://id.nlm.nih.gov/mesh/Term:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#Term>
+- <http://id.nlm.nih.gov/mesh/Descriptor:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#seeAlso>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#seeAlso>: <http://id.nlm.nih.gov/mesh/PublicationType>
+- <http://id.nlm.nih.gov/mesh/PublicationType:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#PublicationType>
+- <http://id.nlm.nih.gov/mesh/CheckTag:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#CheckTag>
+- <http://id.nlm.nih.gov/mesh/Geographic:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor>
+- <http://id.nlm.nih.gov/mesh/Qualifier:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#Qualifier>
+  - <http://id.nlm.nih.gov/mesh/vocab#lastActiveYear>: <http://id.nlm.nih.gov/mesh/A-Z##.###.###..)>
+- <http://id.nlm.nih.gov/mesh/TreeNumber:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#TreeNumber>
+- <http://id.nlm.nih.gov/mesh/Chemical:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#SCR_Chemical>
+  - <http://id.nlm.nih.gov/mesh/vocab#preferredMappedTo>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#preferredMappedTo>: <http://id.nlm.nih.gov/mesh/AllowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#indexerConsiderAlso>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#indexerConsiderAlso>: <http://id.nlm.nih.gov/mesh/AllowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#indexerConsiderAlso>: <http://id.nlm.nih.gov/mesh/DisallowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#mappedTo>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#mappedTo>: <http://id.nlm.nih.gov/mesh/DescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#mappedTo>: <http://id.nlm.nih.gov/mesh/DisallowedDescriptorQualifierPair>
+- <http://id.nlm.nih.gov/mesh/Disease:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease>
+  - <http://id.nlm.nih.gov/mesh/vocab#preferredMappedTo>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#preferredMappedTo>: <http://id.nlm.nih.gov/mesh/AllowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#preferredMappedTo>: <http://id.nlm.nih.gov/mesh/DisallowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#indexerConsiderAlso>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#indexerConsiderAlso>: <http://id.nlm.nih.gov/mesh/AllowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#indexerConsiderAlso>: <http://id.nlm.nih.gov/mesh/DisallowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#mappedTo>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#mappedTo>: <http://id.nlm.nih.gov/mesh/AllowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#mappedTo>: <http://id.nlm.nih.gov/mesh/DisallowedDescriptorQualifierPair>
+- <http://id.nlm.nih.gov/mesh/Protocol:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#SCR_Protocol>
+  - <http://id.nlm.nih.gov/mesh/vocab#mappedTo>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#mappedTo>: <http://id.nlm.nih.gov/mesh/AllowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#preferredMappedTo>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#preferredMappedTo>: <http://id.nlm.nih.gov/mesh/AllowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#indexerConsiderAlso>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#indexerConsiderAlso>: <http://id.nlm.nih.gov/mesh/AllowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#indexerConsiderAlso>: <http://id.nlm.nih.gov/mesh/DisallowedDescriptorQualifierPair>
+- <http://id.nlm.nih.gov/mesh/Organism:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#SCR_Organism>
+- <http://id.nlm.nih.gov/mesh/AllowedDescriptorQualifierPair:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#AllowedDescriptorQualifierPair>
+- <http://id.nlm.nih.gov/mesh/DisallowedDescriptorQualifierPair:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://id.nlm.nih.gov/mesh/vocab#DisallowedDescriptorQualifierPair>
+  - <http://id.nlm.nih.gov/mesh/vocab#useInstead>: <http://id.nlm.nih.gov/mesh/Descriptor>
+  - <http://id.nlm.nih.gov/mesh/vocab#useInstead>: <http://id.nlm.nih.gov/mesh/AllowedDescriptorQualifierPair>
+- <Class:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://purl.jp/bio/11/mbgd#Cluster:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/net/orth#OrthologsCluster>
+- <http://purl.jp/bio/11/mbgd#Dataset:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdfs.org/ns/void#Dataset>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/net/orth#OrthologyDataset>
+- <http://purl.jp/bio/11/mbgd#Domain:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/net/orth#Subgene>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/11/mbgd#Domain>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#Region>
+- <http://purl.jp/bio/11/mbgd#Gene:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/net/orth#Gene>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/11/mbgd#CDS>
+- <http://purl.jp/bio/11/mbgd#Nucseq:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/11/mbgd#Chromosome>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/11/mbgd#Circular>
+- <http://purl.jp/bio/11/mbgd#Organism:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/11/mbgd#Genome>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/11/mbgd#CompleteGenome>
+- <FantaBioCre:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://fanta.bio/ontology/CisRegulatoryElement>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://fanta.bio/ontology/PLA>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://fanta.bio/ontology/ELA>
+- <http://kero.hgc.jp/ontology/kero.owl#Sample:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_001050>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#SampleType>
+- <http://kero.hgc.jp/ontology/kero.owl#Region:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#Region>
+- <http://kero.hgc.jp/ontology/kero.owl#Reference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0000957>
+- <http://kero.hgc.jp/ontology/kero.owl#Position:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#ExactPosition>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#StrandedPosition>
+- <http://kero.hgc.jp/ontology/kero.owl#BsSeqDataset:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#MethylseqDataset>
+- <http://kero.hgc.jp/ontology/kero.owl#BsSeqData:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0000306>
+- <http://kero.hgc.jp/ontology/kero.owl#ChipSeqDataset:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#ChIPseqDataset>
+- <http://kero.hgc.jp/ontology/kero.owl#ChipSeqData:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0001697>
+- <http://kero.hgc.jp/ontology/kero.owl#ChromhmmDataset:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#ChromHMMDataset>
+- <http://kero.hgc.jp/ontology/kero.owl#StrongEnhancer:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#StrongEnhancer>
+- <http://kero.hgc.jp/ontology/kero.owl#WeakEnhancer:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#WeakEnhancer>
+- <http://kero.hgc.jp/ontology/kero.owl#InactiveRegion:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#InactiveRegion>
+- <http://kero.hgc.jp/ontology/kero.owl#ActivePromoter:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#ActivePromoter>
+- <http://kero.hgc.jp/ontology/kero.owl#WeakOrPoisedPromoter:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#WeakOrPoisedPromoter>
+- <http://kero.hgc.jp/ontology/kero.owl#LowOrNoSignal:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#LowOrNoSignal>
+- <http://kero.hgc.jp/ontology/kero.owl#TranscriptionalElongation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#TranscriptionalElongation>
+- <http://kero.hgc.jp/ontology/kero.owl#InactiveRegionOrHeterochroma:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#InactiveRegionOrHeterochroma>
+- <http://kero.hgc.jp/ontology/kero.owl#RnaSeqDataset:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#RNAseqDataset>
+- <http://kero.hgc.jp/ontology/kero.owl#RnaSeqData:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0000673>
+- <http://kero.hgc.jp/ontology/kero.owl#SnvDataset:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#SNVDataset>
+- <http://kero.hgc.jp/ontology/kero.owl#SnvData:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0001483>
+- <http://kero.hgc.jp/ontology/kero.owl#TssSeqDataset:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://kero.hgc.jp/ontology/kero.owl#TSSseqDataset>
+- <http://kero.hgc.jp/ontology/kero.owl#TssSeqData:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0000315>
+- <http://ddbj.nig.ac.jp/biosample/BioSample:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/biosample/BioSampleRecord>
+- <http://ddbj.nig.ac.jp/biosample/SRAStudy:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/dra/Study>
+- <http://ddbj.nig.ac.jp/biosample/SRAExperiment:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/dra/Experiment>
+- <http://ddbj.nig.ac.jp/biosample/SRAAccession:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/dra/Accession>
+- <http://ddbj.nig.ac.jp/biosample/SRASample:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/dra/Sample>
+- <http://ddbj.nig.ac.jp/biosample/SRARun:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/dra/Run>
+- <http://ddbj.nig.ac.jp/biosample/BioProject:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/bioproject/BioProjectRecord>
+- <http://ddbj.nig.ac.jp/biosample/OriginalSampleProperty:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://schema.org/PropertyValue>
+- <http://ddbj.nig.ac.jp/biosample/AnnotatedSampleType:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://schema.org/PropertyValue>
+- <http://jcggdb.jp/rdf/diseases/ggdonto#DiseaseConcept:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2004/02/skos/core#Concept>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/ggdonto-schema#DiseaseDescriptionGGDonto>
+  - <http://jcggdb.jp/rdf/diseases/gdgdb-schema#diseaseSynonyms+>: <http://jcggdb.jp/rdf/diseases/ggdonto#CLUBFOOT>
+  - <http://jcggdb.jp/rdf/diseases/gdgdb-schema#diseaseSynonyms+>: <http://jcggdb.jp/rdf/diseases/ggdonto#ARTHROGRYPOSIS>
+  - <http://jcggdb.jp/rdf/diseases/gdgdb-schema#diseaseSynonyms+>: <http://jcggdb.jp/rdf/diseases/ggdonto#DISTAL>
+  - <http://jcggdb.jp/rdf/diseases/gdgdb-schema#diseaseSynonyms+>: <http://jcggdb.jp/rdf/diseases/ggdonto#ATCS"@en>
+  - <http://jcggdb.jp/rdf/diseases/gdgdb-schema#diseaseSynonyms+>: <http://jcggdb.jp/rdf/diseases/ggdonto#EDS6B>
+  - <http://jcggdb.jp/rdf/diseases/gdgdb-schema#diseaseSynonyms+>: <http://jcggdb.jp/rdf/diseases/ggdonto#FORMERLY"@en>
+  - <http://jcggdb.jp/rdf/diseases/gdgdb-schema#diseaseSynonyms+>: <http://jcggdb.jp/rdf/diseases/ggdonto#FORMERLY"@en>
+  - <http://jcggdb.jp/rdf/diseases/gdgdb-schema#omimGeneMIMnumber>: <http://jcggdb.jp/rdf/diseases/ggdonto#608429>
+- <Strain:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Strain>
+- <CellMotility:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CellMotility>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MicrobialPhenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Phenotype>
+- <CellShape:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CellMorphology>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CellShape>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Phenotype>
+- <CellSize:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CellMorphology>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CellSize>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MicrobialPhenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Phenotype>
+- <ColonyMorphology:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ColonyMorphology>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MicrobialPhenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Phenotype>
+- <CultureCollectionNumber:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CultureCollectionNumber>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Identifier>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/OrganismIdentifier>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/StrainNumber>
+  - <https://purl.dsmz.de/schema/hasLink>: <https://www.dsmz.de/collection/catalogue/details/culture/DSM-16746>
+- <CultureMedium:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ConceptualEntity>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CultureCondition>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CultureMedium>
+- <CulturePH:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ConceptualEntity>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CultureCondition>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CulturePH>
+- <CultureTemp:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ConceptualEntity>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CultureCondition>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CultureTemperature>
+- <Enzyme:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Enzyme>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/GeneProduct>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Protein>
+- <GCContent:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/GCContent>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MolecularProperty>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/PropertyOrAttribute>
+- <GramStain:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CellMorphology>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/GramStain>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MicrobialPhenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Phenotype>
+- <Halophily:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MetabolicPhenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Phenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/SaltTolerance>
+- <Isolation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/IsolationInformation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/IsolationSource>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Origin>
+- <Location:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/LocationOfOrigin>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Origin>
+- <OxygenTolerance:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MetabolicPhenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/OxygenTolerance>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Phenotype>
+- <RiskAssessment:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/RiskAssessment>
+- <Sequence16S:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/16SSequence>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/NucleotideSequence>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/RNASequence>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/rRNASequence>
+- <SequenceGenomes:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/DNASequence>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/GenomeSequence>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/NucleotideSequence>
+- <StrainDesignation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Identifier>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/OrganismIdentifier>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/StrainDesignation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/StrainNumber>
+- <Reference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Reference>
+  - <http://www.w3.org/2000/01/rdf-schema#seeAlso>: <https://www.dsmz.de/collection/catalogue/details/culture/DSM-16746>
+- <Entichment:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/EnrichmentProcedure>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/IsolationInformation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/IsolationProcedures>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Origin>
+- <NutritionType:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MetabolicPhenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/NutritionType>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Phenotype>
+- <Pathogenicity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ConceptualEntity>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Pathogenicity>
+- <Pigmentation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CellMorphology>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/CellPigmentation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MicrobialPhenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Phenotype>
+- <SporeFormation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MicrobialPhenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Phenotype>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/SporeFormation>
+- <http://purl.jp/bio/01/quanto/resource/QuantoReport:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/01/quanto/ontology/sos#SequenceStatisticsReport>
+- <https://rdf.wwpdb.org/pdb/PDB:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#datablock>
+- <https://rdf.wwpdb.org/pdb/EntityCategory:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#entityCategory>
+- <https://rdf.wwpdb.org/pdb/Entity:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#entity>
+- <https://rdf.wwpdb.org/pdb/EntityPoly:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#entity_poly>
+- <https://rdf.wwpdb.org/pdb/PDBxPolySeqScheme:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#pdbx_poly_seq_scheme>
+- <https://rdf.wwpdb.org/pdb/EntitySrcGen:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#entity_src_gen>
+- <https://rdf.wwpdb.org/pdb/StructRef:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#struct_ref>
+- <https://rdf.wwpdb.org/pdb/StructConfCategory:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#struct_confCategory>
+- <https://rdf.wwpdb.org/pdb/Conformation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#struct_conf>
+- <https://rdf.wwpdb.org/pdb/StructSheetCategory:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#struct_sheetCategory>
+- <https://rdf.wwpdb.org/pdb/Sheet:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#struct_sheet>
+- <https://rdf.wwpdb.org/pdb/SheetStrand:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#struct_sheet_range>
+- <https://rdf.wwpdb.org/pdb/ExptlCategory:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#exptlCategory>
+- <https://rdf.wwpdb.org/pdb/AssemblyCategory:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#pdbx_struct_assemblyCategory>
+- <https://rdf.wwpdb.org/pdb/Assembly:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#pdbx_struct_assembly>
+- <http://nanbyodata.jp/ontology/NANDO_Nando:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://metadb.riken.jp/db/SSBD/QuantitativeBiologicalDynamicsData:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://metadb.riken.jp/ontology/SSBD/QuantitativeData>
+- <http://metadb.riken.jp/db/SSBD/Depositor:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://metadb.riken.jp/ontology/SSBD/Depositor>
+- <http://metadb.riken.jp/db/SSBD/CollectionOfImages:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://metadb.riken.jp/ontology/SSBD/XYZTImageCollection>
+- <Gene:
+  - <rdf:type>: <http://purl.jp/bio/10/mccv#MCCV_000001>
+- <Group:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/11/orth#OrthologGroup>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/11/orth#ParalogGroup>
+- <Protein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/11/orth#Protein>
+- <TaxonomyId:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/11/orth#Taxon>
+- <Class:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <SubClass:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Restriction>
+- <UnionOf:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <Relation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#ObjectProperty>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#SymmetricProperty>
+- <DataType:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#DatatypeProperty>
+- <http://www.glycoepitope.jp/epitopes/GlycanEpitope:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/12/glyco/glycan#Glycan_epitope>
+  - <http://purl.org/dc/terms/identifier>: <http://www.glycoepitope.jp/epitopes/EP0001>
+- <http://www.glycoepitope.jp/epitopes/Enzyme:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/12/glyco/glycan#Enzyme>
+- <http://www.glycoepitope.jp/epitopes/Glyep:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/12/glyco/glycan#Glycosequence>
+  - <http://purl.jp/bio/12/glyco/glycan#has_sequence>: <http://www.glycoepitope.jp/epitopes/"HSO3(-3)GlcA(b1-3)Gal(b1-4)GlcNAc-R"^^xsd:string>
+- <http://www.glycoepitope.jp/epitopes/Jcggdb:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/12/glyco/glycan#Resource_entry>
+  - <http://purl.org/dc/terms/identifier>: <http://www.glycoepitope.jp/epitopes/JCGG-STR032038>
+- <http://www.glycoepitope.jp/epitopes/Receptor:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/12/glyco/glycan#Receptor>
+  - <http://www.w3.org/2000/01/rdf-schema#label>: <http://www.glycoepitope.jp/epitopes/L-selectin>
+- <http://www.glycoepitope.jp/epitopes/Antibody:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/12/glyco/glycan#Antibody>
+  - <http://purl.org/dc/terms/identifier>: <http://www.glycoepitope.jp/epitopes/AN0008>
+  - <http://www.glycoepitope.jp/epitopes/has_affinity_to>: <http://www.glycoepitope.jp/epitopes/Glycan_epitope>
+  - <http://www.glycoepitope.jp/epitopes/organism>: <http://www.glycoepitope.jp/epitopes/Rat>
+  - <http://www.w3.org/2000/01/rdf-schema#label>: <http://www.glycoepitope.jp/epitopes/334>
+- <http://www.glycoepitope.jp/epitopes/Tissue:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.uniprot.org/core/Tissue>
+- <http://identifiers.org/homologene/Group:
+  - <http://identifiers.org/homologene/rdf:type>: <http://purl.org/net/orth#OrthologsCluster>
+- <http://identifiers.org/homologene/Dataset:
+  - <http://identifiers.org/homologene/rdf:type>: <http://purl.org/net/orth#OrthologyDataset>
+- <http://identifiers.org/homologene/Gene:
+  - <http://identifiers.org/homologene/rdf:type>: <http://purl.org/net/orth#Gene>
+- <http://identifiers.org/homologene/Taxon:
+  - <http://identifiers.org/homologene/rdf:type>: <http://ddbj.nig.ac.jp/ontologies/taxonomy/Taxon>
+- <http://identifiers.org/homologene/Protein:
+  - <http://identifiers.org/homologene/rdf:type>: <http://purl.org/net/orth#Protein>
+- <http://identifiers.org/gtdb/GtdbStrain:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/gtdb/Taxon>
+- <http://identifiers.org/gtdb/GtdbSpecies:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/gtdb/Taxon>
+- <http://identifiers.org/gtdb/GtdbGenus:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/gtdb/Taxon>
+- <http://identifiers.org/gtdb/GtdbsFamily:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/gtdb/Taxon>
+- <http://identifiers.org/gtdb/GtdbsOrder:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/gtdb/Taxon>
+- <http://identifiers.org/gtdb/GtdbsClass:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/gtdb/Taxon>
+- <http://identifiers.org/gtdb/GtdbsPhylum:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/gtdb/Taxon>
+- <http://identifiers.org/gtdb/GtdbsDomain:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/gtdb/Taxon>
+- <InterviewForm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf.org/ontology/ifo/InterviewForm>
+- <Drug:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf.org/ontology/ifo/Drug>
+- <Section:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf.org/ontology/ifo/IF_8_1>
+- <Item:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf.org/ontology/ifo/Item>
+- <Reference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/ontology/bibo/Article>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/ontology/bibo/BookSection>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/ontology/bibo/Document>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/ontology/bibo/Webpage>
+- <GWASAssociation>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/gwas/Association>
+- <GWASStudy:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.ebi.ac.uk/terms/gwas/Study>
+- <http://ncbi.nlm.nih.gov/clinvar/variation/Clinvar:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/clinvar/VariationArchiveType>
+- <http://ncbi.nlm.nih.gov/clinvar/variation/Ncbigene:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/clinvar/Gene>
+- <INstruct:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#MolecularInteraction>
+- <http://omabrowser.org/ontology/oma#ClusterOfOrthologs:
+  - <http://omabrowser.org/ontology/oma#rdf:type>: <http://purl.org/net/orth#OrthologsCluster>
+- <http://omabrowser.org/ontology/oma#Protein:
+  - <http://omabrowser.org/ontology/oma#rdf:type>: <http://purl.org/net/orth#Protein>
+- <http://omabrowser.org/ontology/oma#Organism:
+  - <http://omabrowser.org/ontology/oma#rdf:type>: <http://purl.org/net/orth#Organism>
+- <http://metadb.riken.jp/db/rikenbrc_jcm_microbe/CultureJcm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/mccv#MCCV_000001>
+- <http://metadb.riken.jp/db/rikenbrc_jcm_microbe/IsolatedFrom:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://metadb.riken.jp/db/rikenbrc_jcm_microbe/mic_000006>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/mccv#MCCV_000006>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_001050>
+- <http://rdf.jpostdb.org/entry/JpostProject:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#Project>
+- <http://rdf.jpostdb.org/entry/JpostDataset:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#Dataset>
+- <http://rdf.jpostdb.org/entry/Protein:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#Protein>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/MS_1002401>
+- <http://rdf.jpostdb.org/entry/Peptide:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#Peptide>
+- <http://rdf.jpostdb.org/entry/PeptideSpectrumMatch:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#PeptideSpectrumMatch>
+  - <http://rdf.jpostdb.org/ontology/jpost.owl#hasModification>: <http://rdf.jpostdb.org/entry/Phospho>
+  - <http://rdf.jpostdb.org/ontology/jpost.owl#hasModification>: <http://rdf.jpostdb.org/entry/Acetyl>
+  - <http://rdf.jpostdb.org/ontology/jpost.owl#hasModification>: <http://rdf.jpostdb.org/entry/Oxidation>
+- <http://rdf.jpostdb.org/entry/Phospho>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.unimod.org/obo/unimod.obo#UNIMOD_21>
+- <http://rdf.jpostdb.org/entry/Acetyl>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.unimod.org/obo/unimod.obo#UNIMOD_1>
+- <http://rdf.jpostdb.org/entry/Oxidation>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.unimod.org/obo/unimod.obo#UNIMOD_35>
+- <http://rdf.jpostdb.org/entry/Spectrum:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#Spectrum>
+- <http://rdf.jpostdb.org/entry/Profile:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#Profile>
+- <http://rdf.jpostdb.org/entry/Sample:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://semanticscience.org/resource/SIO_001050>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#Sample>
+- <http://rdf.jpostdb.org/entry/EnzymeModification:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#EnzymeAndModification>
+- <http://rdf.jpostdb.org/entry/Fractionation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#Fractionation>
+- <http://rdf.jpostdb.org/entry/MsInstrumentMode:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#MsMode>
+- <http://rdf.jpostdb.org/entry/RawData:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://rdf.jpostdb.org/ontology/jpost.owl#RawData>
+- <FAMSBASEEntry:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/01/famsbase/ontology/Protein3DModel>
+- <ProteinStructure:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://edamontology.org/data_1460>
+- <ProteinModelling>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://edamontology.org/operation_0477>
+- <InputAlignment:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://edamontology.org/data_0863>
+- <PDBRegion>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#Region>
+- <RefSeqRegion>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#Region>
+- <FaldoBegin>:
+  - <FaldoBegin>: <http://biohackathon.org/resource/faldo#Position>
+  - <FaldoBegin>: <http://biohackathon.org/resource/faldo#ExactPosition>
+- <FaldoEnd>:
+  - <FaldoEnd>: <http://biohackathon.org/resource/faldo#Position>
+  - <FaldoEnd>: <http://biohackathon.org/resource/faldo#ExactPosition>
+- <LocalAlignment>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://edamontology.org/operation_0495>
+- <NASequence>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://edamontology.org/data_2976>
+- <ChebiMolecule:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <AnnotationProperty:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#AnnotationProperty>
+- <ObjectProperty:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#ObjectProperty>
+  - <a>: <http://www.w3.org/2002/07/owl#TransitiveProperty>
+- <AnnotationProperty:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#AnnotationProperty>
+- <ChebiOwl:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Ontology>
+- <TransitiveProperty:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#TransitiveProperty>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#ObjectProperty>
+- <Class:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <Enzyme:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Enzyme>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Protein>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/GeneProduct>
+- <ECNumber:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ECNumber>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/EnzymeIdentifier>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MoleculeIdentifier>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Identifier>
+- <Tissue:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Tissue>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/AnatomicStructure>
+- <Activator:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Activator>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Effector>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ChemicalRole>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ConceptualEntity>
+- <Inhibitor:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Inhibitor>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Effector>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ChemicalRole>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ConceptualEntity>
+- <Cofactor:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Cofactor>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ChemicalRole>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ConceptualEntity>
+- <Reaction:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Reaction>
+- <Localization:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Localization>
+- <Organism:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/BiologicalMaterial>
+- <Product:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Product>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ChemicalRole>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ConceptualEntity>
+- <Substrate:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Substrate>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ChemicalRole>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ConceptualEntity>
+- <Pathway:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Pathway>
+- <Compound:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ChemicalMaterial>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/ChemicalCompound>
+- <Reference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/Reference>
+- <Structure:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <https://purl.dsmz.de/schema/MolecularStructure>
+- <BioDegradation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/polymer-bio-ont/Schema#BioDegradation>
+- <Homopolymer:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#Homopolymer>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/CHEBI_33839>
+- <ConstitutionalUnit:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#ConstitutionalUnit>
+- <MolecularFormula:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#MolecularFormula>
+- <MolecularWeight:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#MolecularWeight>
+- <RationalFormula:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#RationalFormula>
+- <Smiles:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#Smiles>
+- <Abbreviation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#Abbreviation>
+- <JapaneseName:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#JapaneseName>
+- <MonomerBasedName:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#MonomerBasedName>
+- <OtherName:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#OtherName>
+- <StructureBasedName:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://dice.nims.go.jp/ontology/PoLyInfo-ont/Schema#StructureBasedName>
+- <Reference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.org/ontology/bibo/Article>
+- <http://stirdf.jst.go.jp/cde/nikkaji/Compound:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://vocab.jst.go.jp/terms/sti#Chemical>
+- <http://stirdf.jst.go.jp/cde/nikkaji/NikkajiIDList>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>
+- <http://stirdf.jst.go.jp/cde/nikkaji/NikkajiID>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/1999/02/22-rdf-syntax-ns#Datatype>
+- <http://stirdf.jst.go.jp/cde/nikkaji/JGlobalNikkajiEntry:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://vocab.jst.go.jp/terms/sti#Chemical>
+- <RefExEntry:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/01/refexo#RefExEntry>
+- <RefExSample:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/01/refexo#RefExSample>
+- <http://jcggdb.jp/rdf/diseases/paconto#Diseaseconcept:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2004/02/skos/core#Concept>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/paconto-schema#DiseasesPACDB>
+- <http://jcggdb.jp/rdf/diseases/paconto#DiseasesPACDB:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://jcggdb.jp/rdf/diseases/paconto#DiseasNameConceptType:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Thing>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/ggdonto-schema#ConceptType>
+- <http://jcggdb.jp/rdf/diseases/paconto#Upec:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2004/02/skos/core#Concept>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.uniprot.org/core/Strain>
+- <http://jcggdb.jp/rdf/diseases/paconto#Ecoli:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2004/02/skos/core#Concept>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/paconto-schema#Microorganisms>
+- <http://jcggdb.jp/rdf/diseases/paconto#DiseasesClassificationSystems:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2004/02/skos/core#Concept>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/paconto-schema#DiseasesPACDB>
+- <http://jcggdb.jp/rdf/diseases/paconto#DiseaseClassConceptType:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Thing>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/ggdonto-schema#ConceptType>
+- <http://jcggdb.jp/rdf/diseases/paconto#PacdbDiseases:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2004/02/skos/core#Concept>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/paconto-schema#DiseasesPACDB>
+- <http://jcggdb.jp/rdf/diseases/paconto#Conceptpathogenic:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Thing>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/ggdonto-schema#ConceptType>
+- <http://jcggdb.jp/rdf/diseases/paconto#OrganismForm:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Thing>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/paconto-schema#OrganismForms>
+- <http://jcggdb.jp/rdf/diseases/paconto#TropismInReference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/paconto-schema#TropismInReference>
+- <http://jcggdb.jp/rdf/diseases/paconto#TargetTissuesAndCells:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2004/02/skos/core#Concept>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/paconto-schema#TargetTissuesAndCells>
+- <http://jcggdb.jp/rdf/diseases/paconto#TargetClassification:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2004/02/skos/core#Concept>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/paconto-schema#TargetTissuesAndCells>
+- <http://jcggdb.jp/rdf/diseases/paconto#TargetsClassification:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Thing>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://jcggdb.jp/rdf/diseases/ggdonto-schema#ConceptType>
+- <Mondo:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://identifiers.org/exac.variant/ExACValiation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/exac/Variant>
+- <NLMCatalog:
+  - <rdf:type>: <http://purl.org/ontology/bibo/Journal>
+- <http://identifiers.org/hco/HCO:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Ontology>
+- <http://identifiers.org/hco/HumanChromosomeClass:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://identifiers.org/hco/GenomeBuildClass:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://identifiers.org/hco/CytobandRootClass:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://identifiers.org/hco/CytobandTypeClass:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://identifiers.org/hco/ChromosomeClass:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://identifiers.org/hco/GenomeBuild:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/hco/GRCh37>
+- <http://identifiers.org/hco/CytobandType:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/hco/CytobandType>
+- <http://identifiers.org/hco/CytobandClass:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://identifiers.org/hco/Cytoband:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://identifiers.org/hco/1p36.33>
+- <http://identifiers.org/hco/Position>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#BothStrandsPosition>
+- <http://identifiers.org/dbsnpDbSNPValiation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf.org/ontology/med2rdf#Variation>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0001483>
+- <http://identifiers.org/dbsnpDbSNPAllele:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/dbsnp/Allele>
+- <Source:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://togoid.dbcls.jp/ontology#Dataset>
+- <Target:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://togoid.dbcls.jp/ontology#Dataset>
+- <HiNT:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.biopax.org/release/biopax-level3.owl#MolecularInteraction>
+- <http://www.ncbi.nlm.nih.gov/medgen/MedGen:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf/ontology/medgen#ConceptID>
+- <http://www.ncbi.nlm.nih.gov/medgen/MedGenMgrel>:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://med2rdf/ontology/medgen#MGREL>
+- <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#Class:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2002/07/owl#Class>
+- <http://www.glytoucan.org/glyco/owl/glytoucan#Glycan:
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://purl.jp/bio/12/glyco/glycan#saccharide>
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://purl.jp/bio/12/glyco/glycan#glycan_motif>
+- <http://www.glytoucan.org/glyco/owl/glytoucan#GlycanMotif:
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://purl.jp/bio/12/glyco/glycan#glycan_motif>
+- <http://www.glytoucan.org/glyco/owl/glytoucan#DerivatizedMass:
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://www.glytoucan.org/glyco/owl/glytoucan#derivatized_mass>
+- <http://www.glytoucan.org/glyco/owl/glytoucan#GlycanImage:
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://purl.jp/bio/12/glyco/glycan#image>
+- <http://www.glytoucan.org/glyco/owl/glytoucan#ResourceEntry:
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://purl.jp/bio/12/glyco/glycan#resource_entry>
+- <http://www.glytoucan.org/glyco/owl/glytoucan#ContributerName:
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://xmlns.com/foaf/0.1/Person>
+- <http://www.glytoucan.org/glyco/owl/glytoucan#Glycosequence:
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://purl.jp/bio/12/glyco/glycan#glycosequence>
+- <http://www.glytoucan.org/glyco/owl/glytoucan#Component:
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://purl.jp/bio/12/glyco/glycan#component>
+- <http://www.glytoucan.org/glyco/owl/glytoucan#MonosaccharideInfo:
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://purl.jp/bio/12/glyco/glycan#monosaccharide>
+- <http://www.glytoucan.org/glyco/owl/glytoucan#AliasInfo:
+  - <http://www.glytoucan.org/glyco/owl/glytoucan#rdf:type>: <http://purl.jp/bio/12/glyco/glycan#monosaccharide_alias>
+- <Variation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://genome-variation.org/resource#SNV>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://genome-variation.org/resource#Insertion>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://genome-variation.org/resource#Deletion>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://genome-variation.org/resource#Indel>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://genome-variation.org/resource#Substitution>
+- <http://med2rdf.org/dbvar/variation/Dbvar:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.jp/bio/10/dbvar/VariantCall>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://purl.obolibrary.org/obo/SO_0001743>
+- <http://med2rdf.org/dbvar/variation/Location:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#Region>
+- <http://med2rdf.org/dbvar/variation/LocationBegin:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#FuzzyPosition>
+- <http://med2rdf.org/dbvar/variation/LocaltionEnd:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#FuzzyPosition>
+- <SubjectA>:
+  - <rdf:type>: <http://example.org/ClassA>
+- <SubjectB>:
+  - <rdf:type>: <http://example.org/ClassB>
+- <SubjectC>:
+  - <rdf:type>: <http://example.org/ClassC>
+- <SubjectD>:
+  - <rdf:type>: <http://example.org/ClassD>
+- <SubjectE>:
+  - <rdf:type>: <http://example.org/ClassE>
+- <http://rdf.rhea-db.org/Reaction:
+  - <http://rdf.rhea-db.org/rdf:type>: <http://www.w3.org/2000/01/rdf-schema#Class>
+- <http://rdf.rhea-db.org/Side:
+  - <http://rdf.rhea-db.org/rdf:type>: <http://www.w3.org/2000/01/rdf-schema#Class>
+- <http://rdf.rhea-db.org/Participant:
+  - <http://rdf.rhea-db.org/rdf:type>: <http://www.w3.org/2000/01/rdf-schema#Class>
+- <http://rdf.rhea-db.org/Compound:
+  - <http://rdf.rhea-db.org/rdf:type>: <http://www.w3.org/2000/01/rdf-schema#Class>
+- <Mutation:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://icgc.link/Mutation>
+- <Effect:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://icgc.link/Effect>
+- <Detection:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://icgc.link/Detection>
+- <DonorID:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://icgc.link/Donor>
+- <Project:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://icgc.link/Project>
+- <AffectedGene:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://icgc.link/Gene>
+- <http://purl.org/net/orthordf/hOP/ontology#OrthologGroup:
+  - <http://purl.org/net/orthordf/hOP/ontology#rdf:type>: <http://purl.org/net/orth#OrthologsCluster>
+- <http://purl.org/net/orthordf/hOP/ontology#Dataset:
+  - <http://purl.org/net/orthordf/hOP/ontology#rdf:type>: <http://purl.org/net/orth#OrthologyDataset>
+- <http://purl.org/net/orthordf/hOP/ontology#HumanGene:
+  - <http://purl.org/net/orthordf/hOP/ontology#rdf:type>: <http://purl.org/net/orth#Gene>
+- <http://purl.org/net/orthordf/hOP/ontology#Organism:
+  - <http://purl.org/net/orthordf/hOP/ontology#rdf:type>: <http://purl.org/net/orth#Organism>
+- <http://getentry.ddbj.nig.ac.jp/getentry/na/DdbjEntry:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/nucleotide/Entry>
+- <http://getentry.ddbj.nig.ac.jp/getentry/na/Reference:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/nucleotide/Entry>
+- <http://getentry.ddbj.nig.ac.jp/getentry/na/Sequence:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2000/01/rdf-schema#Resource>
+- <http://getentry.ddbj.nig.ac.jp/getentry/na/Feature:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://ddbj.nig.ac.jp/ontologies/nucleotide/Gene>
+- <http://getentry.ddbj.nig.ac.jp/getentry/na/SourceFeature:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://www.w3.org/2000/01/rdf-schema#Resource>
+- <http://getentry.ddbj.nig.ac.jp/getentry/na/Region:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#Region>
+- <http://getentry.ddbj.nig.ac.jp/getentry/na/Position:
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#ForwardStrandPosition>
+  - <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>: <http://biohackathon.org/resource/faldo#ExactPosition>
