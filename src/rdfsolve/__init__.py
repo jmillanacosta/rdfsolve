@@ -1,9 +1,28 @@
-"""Wraps several RDF schema solver tools."""
+"""RDFSolve: A library for RDF schema analysis and VoID generation.
 
-from .api import hello, square
+Main modules:
+- rdfsolve: Core RDFSolver class for SPARQL endpoints and VoID generation
+- void_parser: VoidParser class for parsing VoID descriptions and schemas
+- config: RDF configuration tools for YAML model processing (separate module)
+- utils: Common utility functions for RDF processing
+"""
 
-# being explicit about exports is important!
+from .rdfsolve import RDFSolver
+from .void_parser import (
+    VoidParser,
+    parse_void_file,
+    generate_void_from_endpoint,
+)
+from . import utils
+
+# Import version information
+from .version import VERSION
+
 __all__ = [
-    "hello",
-    "square",
+    "RDFSolver",
+    "VoidParser",
+    "parse_void_file",
+    "generate_void_from_endpoint",
+    "utils",
+    "VERSION",
 ]
