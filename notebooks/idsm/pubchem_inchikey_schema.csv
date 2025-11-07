@@ -1,0 +1,13 @@
+subject_class,subject_uri,property,property_uri,object_class,object_uri
+CHEMINF_000399,http://semanticscience.org/resource/CHEMINF_000399,has-value,http://semanticscience.org/resource/has-value,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+InChIKey,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey,has-value,http://semanticscience.org/resource/has-value,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+CHEMINF_000399,http://semanticscience.org/resource/CHEMINF_000399,SIO_000300,http://semanticscience.org/resource/SIO_000300,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+InChIKey,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey,SIO_000300,http://semanticscience.org/resource/SIO_000300,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+CHEMINF_000399,http://semanticscience.org/resource/CHEMINF_000399,is-attribute-of,http://semanticscience.org/resource/is-attribute-of,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+InChIKey,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey,is-attribute-of,http://semanticscience.org/resource/is-attribute-of,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+CHEMINF_000399,http://semanticscience.org/resource/CHEMINF_000399,subject,http://purl.org/dc/terms/subject,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+InChIKey,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey,subject,http://purl.org/dc/terms/subject,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+CHEMINF_000399,http://semanticscience.org/resource/CHEMINF_000399,type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+InChIKey,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey,type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+CHEMINF_000399,http://semanticscience.org/resource/CHEMINF_000399,SIO_000011,http://semanticscience.org/resource/SIO_000011,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+InChIKey,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey,SIO_000011,http://semanticscience.org/resource/SIO_000011,Resource,http://www.w3.org/2000/01/rdf-schema#Resource

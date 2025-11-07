@@ -1,0 +1,25 @@
+{
+  "@context": {
+    "@context": {
+      "drugbank": "https://identifiers.org/drugbank:",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "sio": "http://semanticscience.org/resource/",
+      "void": "http://rdfs.org/ns/void#"
+    }
+  },
+  "@id": "sio:SIO_011120",
+  "@type": "rdfs:Resource",
+  "sio:SIO_000011": {
+    "@id": "rdfs:Resource"
+  },
+  "sio:SIO_000300": {
+    "@id": "rdfs:Literal"
+  },
+  "sio:has-value": {
+    "@id": "rdfs:Literal"
+  },
+  "sio:is-attribute-of": {
+    "@id": "rdfs:Resource"
+  }
+}

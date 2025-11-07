@@ -1,0 +1,3234 @@
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix gpml: <http://vocabularies.wikipathways.org/gpml#> .
+@prefix ns0: <http://ldf.fi/void-ext#> .
+@prefix ns1: <http://rdf.wikipathways.org//void/> .
+@prefix ns11: <http://purl.org/spar/cito/> .
+@prefix ns15: <http://purl.obolibrary.org/obo/> .
+@prefix ns16: <http://purl.obolibrary.org/obo/chebi/> .
+@prefix ns17: <http://www.w3.org/ns/dcat#> .
+@prefix ns18: <http://www.wikidata.org/prop/qualifier/> .
+@prefix obo: <http://www.geneontology.org/formats/oboInOwl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pav: <http://purl.org/pav/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix wp: <http://vocabularies.wikipathways.org/wp#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_01c0d9b6938fc7067f9c28f6fff663c4 void:class gpml:Comment .
+
+ns1:class_partition_0460e71d58bbe7969893ff9f0ed95f71 void:class gpml:Group .
+
+ns1:class_partition_083e9bb7c6598d12d8ffa792171bd5cf void:class gpml:GraphicalLine .
+
+ns1:class_partition_1031caa54bc7453311f1985f8dc65e00 void:class wp:Complex .
+
+ns1:class_partition_18c1b22de8ee2f4c163b7edfd71c84a7 void:class wp:Metabolite .
+
+ns1:class_partition_1ca745c9f8b3c9769bd64e64b306d5f2 void:class owl:Axiom .
+
+ns1:class_partition_1cddc7678138e131c27295251d3efc38 void:class gpml:DataNode .
+
+ns1:class_partition_22b1d81a384f04553486c205b6ff1f7d void:class wp:Conversion .
+
+ns1:class_partition_2da485065084f8f502f337b7d2fd9cbd void:class gpml:Interaction .
+
+ns1:class_partition_339548d88b30e46066d71cd88f341d8f void:class gpml:Anchor .
+
+ns1:class_partition_341f218a8fbafc4e32e1848abbd9786f void:class wp:Interaction .
+
+ns1:class_partition_373fcfe158bc73a88b676d642d9cb262 void:class gpml:Label .
+
+ns1:class_partition_3eb1053bfb8d8e3227c72df7638cd75d void:class ns17:Distribution .
+
+ns1:class_partition_3fb6ff86370e59e28c2d3851e5b3f004 void:class void:Dataset .
+
+ns1:class_partition_40eba1efc1c2ce022d45fe71ee01192c void:class wp:Translocation .
+
+ns1:class_partition_451d0a3f2a26fc1cc7de109eb7227f88 void:class wp:Stimulation .
+
+ns1:class_partition_45bd4cc124b49a6cd688bd098511c2de void:class wp:Catalysis .
+
+ns1:class_partition_472ee8b9e92f00863f1b11929967a7fa void:class owl:ObjectProperty .
+
+ns1:class_partition_55439a5d90df8ccad534dc9af3fc4aee void:class owl:AnnotationProperty .
+
+ns1:class_partition_564d1421e28e133e497020baa41a3c9d void:class gpml:PublicationXref .
+
+ns1:class_partition_57a0b477fd0495fda4a349ed6ce42801 void:class gpml:InfoBox .
+
+ns1:class_partition_583ee322e80e919bce2a2e4ebed8473b void:class void:Linkset .
+
+ns1:class_partition_6be100d081a438502013ba4e5fef3db7 void:class owl:Class .
+
+ns1:class_partition_73364f473e9282b8e22319be3905e769 void:class skos:Collection .
+
+ns1:class_partition_766c8598d27d563e655cd92f85ce6781 void:class void:DatasetDescription .
+
+ns1:class_partition_7a49f5dd0954737e0f7e916a39e41c59 void:class foaf:Image .
+
+ns1:class_partition_865a64a0703cd460cf19b5fa272e61e5 void:class wp:TranscriptionTranslation .
+
+ns1:class_partition_89d1898ea62c8516a389ddd61a7670d2 void:class gpml:Point .
+
+ns1:class_partition_89df24df35df8882616112ab6a78df83 void:class owl:Ontology .
+
+ns1:class_partition_9e6d9eddc19d6811c0a885c828aceb63 void:class owl:DatatypeProperty .
+
+ns1:class_partition_9ed2fb7d3b7985c23e788a879a4db9d7 void:class owl:Restriction .
+
+ns1:class_partition_a73fdb647f5f5c3c88b9b3dd2b353603 void:class gpml:shape .
+
+ns1:class_partition_a84f26b9b1e98a4e5fe0db42224ff31d void:class wp:Binding .
+
+ns1:class_partition_aef1a78016b3598e01dd7671934b50b4 void:class skos:ConceptScheme .
+
+ns1:class_partition_b146f25348b90d3405d93c2555dfc85e void:class foaf:Person .
+
+ns1:class_partition_beb95903f82e1994b9eade714df10e33 void:class wp:ComplexBinding .
+
+ns1:class_partition_ccce9ce070be22a53b900c6898c637ea void:class wp:DirectedInteraction .
+
+ns1:class_partition_d1c6155b3690e0809b3496519a6f34fb void:class wp:Inhibition .
+
+ns1:class_partition_ddb56acb3c002d0f4b32048c5d751360 void:class wp:Rna .
+
+ns1:class_partition_efde6f79fcfe1ec2087a18b247292122 void:class wp:DataNode .
+
+ns1:class_partition_f2a00617f1e1c0872e8c99e8f4a73c2e void:class wp:GeneProduct .
+
+ns1:class_partition_f6bd5618acad322ed4ed0a0c43046d7a void:class wp:PublicationReference .
+
+ns1:class_partition_fb19700307cc88494ecfde249f4a40cb void:class wp:Pathway .
+
+ns1:class_partition_fe4fd2973fc0114ef0187001d34a5577 void:class wp:Protein .
+
+ns1:class_partition_fe94fa00cb9a3d6b5804d2fc8c981749 void:class gpml:State .
+
+ns1:datatype_partition_018c8a13e573859883274351d92b8129 ns0:datatypePartition xsd:double .
+
+ns1:datatype_partition_10c08cb2b733eef75e01e5e0496706c2 ns0:datatypePartition xsd:dateTime .
+
+ns1:datatype_partition_13be789b5fffdc118f154b0b918ff747 ns0:datatypePartition xsd:boolean .
+
+ns1:datatype_partition_1cdd48aca019a5c5be924cd5fb15d312 ns0:datatypePartition xsd:long .
+
+ns1:datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a ns0:datatypePartition xsd:string .
+
+ns1:property_partition_000ca7ea38c490a2773e1c38246c0df6 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Ontology ;
+    void:property obo:default-namespace .
+
+ns1:property_partition_002ab8b8c4cca81cb14e4b43791df612 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:PublicationReference ;
+    void:property gpml:id .
+
+ns1:property_partition_01097de635119e255180fea4d9c2a763 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:shapeType .
+
+ns1:property_partition_015ed02a00e93f1e472cbacb64e48bef ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Pathway,
+        wp:Stimulation,
+        wp:TranscriptionTranslation,
+        skos:Collection ;
+    ns0:subjectClass wp:Rna ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_01e7552957c85eb95b6526fc1d37c56a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_01fc07d3445092b9a7bf5a711e200ae4 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:groupRef .
+
+ns1:property_partition_02c390aaeca6af139a7b5a4cbfaa44c3 ns0:objectClass owl:DatatypeProperty ;
+    ns0:subjectClass gpml:shape ;
+    void:property rdf:type .
+
+ns1:property_partition_02dba9e066a047174ab1fa55b71d61e4 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:TranscriptionTranslation ;
+    void:property wp:isAbout .
+
+ns1:property_partition_047500c7234e6a945662a152a15c6753 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:lineStyle .
+
+ns1:property_partition_04b8bca6324685a147f494ca59ac8208 ns0:objectClass gpml:Comment ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:hasComment .
+
+ns1:property_partition_05610b4004a565cd559231823d377a0d ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:bdbKeggCompound .
+
+ns1:property_partition_05bbe465ac7f5acc47827867761b96b4 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbHmdb .
+
+ns1:property_partition_068151ed294befe6e3ac5467c5ef088d ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:participants .
+
+ns1:property_partition_06d33c820163c18f70a6944a7572506e ns0:objectClass wp:Binding,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Conversion ;
+    void:property wp:target .
+
+ns1:property_partition_06f15da2dbcc9e2f1ed38971f4b2c716 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:color .
+
+ns1:property_partition_0713bdb277f25bfcbe9903a09ad3dd15 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Point ;
+    void:property gpml:y .
+
+ns1:property_partition_071eb6030c68509b22beb2ad49ef4466 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:fontDecoration .
+
+ns1:property_partition_07990b38fd26dfc500b8decc400fbba5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_079df522615c808a20513a4ac4f2fa3a ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Pathway,
+        wp:Protein ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:bdbEnsembl .
+
+ns1:property_partition_09d33cb9eb7318e37e6ecf901ddb6e79 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:shapeType .
+
+ns1:property_partition_09e474761e923f7f4acde47f3c465693 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:ObjectProperty ;
+    void:property obo:hasOBONamespace .
+
+ns1:property_partition_0a66eb26ae212325441e2f9c38b5a850 ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:Anchor ;
+    void:property rdf:type .
+
+ns1:property_partition_0aa0560db07982822c346e68ba77155f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_0ae4c4b57ec68b514b393dd3b90e221b ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Pathway,
+        wp:Stimulation,
+        wp:TranscriptionTranslation,
+        skos:Collection ;
+    ns0:subjectClass wp:Pathway ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_0afc0fa9b7b85419955dbbdb46c657be ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:isAbout .
+
+ns1:property_partition_0b57968a29e1165c35f79a38ccdbb03a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property rdf:type .
+
+ns1:property_partition_0b8fdfa0aa507fd5df14599ac72124f9 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:valign .
+
+ns1:property_partition_0bcc37af8192e487b0fd4b65510df351 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass skos:Collection ;
+    void:property wp:cellTypeOntologyTag .
+
+ns1:property_partition_0befa7c9065b33b9dfcbe1bbfc471b2d ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_0c1ca00807028c2fca9e29a7a5cb4610 ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:Binding ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_0d3aefa3157ec8c4ba35f36e21f495cc ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:bdbRhea .
+
+ns1:property_partition_0d8d78e0c40c56c78e17e0e548f6f00e ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:DatasetDescription ;
+    void:property dcterms:title .
+
+ns1:property_partition_0ddc680a9a23f44d6b997ac0ae0f4e3c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:fontDecoration .
+
+ns1:property_partition_0ea2f63017d91f5fcc0a1c9ed9d877a7 ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:diseaseOntologyTag .
+
+ns1:property_partition_0f32248351028e915c6ab2cf93b0f170 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property rdfs:label .
+
+ns1:property_partition_0f5dd982648ffd36830f4f172cecb5e9 ns0:objectClass gpml:Point ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:hasPoint .
+
+ns1:property_partition_0f88a966e74b5cba17f046613cd1e89e ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:bdbRhea .
+
+ns1:property_partition_1034df446eb2a2b466bd890a59d8996a ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:centerX .
+
+ns1:property_partition_11f17b170af558cbe260c3f0919b8d4b ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbEnsembl .
+
+ns1:property_partition_120e2ad2092e3f66432b7f30dbbd727e ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Group ;
+    void:property gpml:style .
+
+ns1:property_partition_1273e8739e0e872b65685a6a6c7b89b2 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:InfoBox ;
+    void:property gpml:centerY .
+
+ns1:property_partition_127a2a5fa834e0af423d3ce75fd92e67 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:DatasetDescription ;
+    void:property pav:lastUpdateOn .
+
+ns1:property_partition_12885dee7f0c28dbb39923a166da5765 ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Pathway,
+        wp:Stimulation,
+        wp:TranscriptionTranslation,
+        wp:Translocation,
+        skos:Collection ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_1298b05bb1a048567b0c3a8d95cd6159 ns0:objectClass foaf:Image ;
+    ns0:subjectClass wp:Pathway ;
+    void:property foaf:img .
+
+ns1:property_partition_1440d38770653f484b4eb1902e2a8511 ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass skos:Collection ;
+    void:property wp:ontologyTag .
+
+ns1:property_partition_148add1e6b4d392c747cc990915cfcde ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:type .
+
+ns1:property_partition_14c27dc271472b0df2e4cf49f49838e4 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property wp:bdbRhea .
+
+ns1:property_partition_14ed1422a4479f95c99b9a0b7afa7eee ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property obo:hasOBONamespace .
+
+ns1:property_partition_157c684988a2aaef6b2099d1ed4c84ed ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:zorder .
+
+ns1:property_partition_15830f04b14ad323da8e0e658a946aa4 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbKeggCompound .
+
+ns1:property_partition_176566357078eb74f913e847b3de4170 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Dataset ;
+    void:property dcterms:description .
+
+ns1:property_partition_17c86f0a86b220933c6e2444c116224d ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:bdbEnsembl .
+
+ns1:property_partition_180421f9e8d9eecda2051a1a7fa195b7 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property dcterms:references .
+
+ns1:property_partition_180d06df4f4117d6a52814f60717f40a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:bdbChEBI .
+
+ns1:property_partition_1834751fb834edf91588cbefca5e7564 ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:DataNode ;
+    void:property pav:hasVersion .
+
+ns1:property_partition_186a221018a6a45139f65f10ed2c6910 ns0:objectClass wp:PublicationReference,
+        rdfs:Resource ;
+    ns0:subjectClass wp:PublicationReference ;
+    void:property foaf:page .
+
+ns1:property_partition_188ee90435bcac86540c5d25db9a7edd ns0:objectClass wp:Binding,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property wp:target .
+
+ns1:property_partition_18cb2069963d5b533ff0c11c0ad31b38 ns0:objectClass wp:Binding,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Conversion ;
+    void:property wp:participants .
+
+ns1:property_partition_191b3d3fe047a2cf5378367f33d173ef ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property rdf:type .
+
+ns1:property_partition_1987c487daaf24ad47761d8a7782f025 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:bdbChemspider .
+
+ns1:property_partition_1a3fd029024ac4020c74d03f0810ea81 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:source .
+
+ns1:property_partition_1a41119bc7b436e61954f3de20c2a232 ns0:objectClass foaf:Person ;
+    ns0:subjectClass wp:Pathway ;
+    void:property dc:creator .
+
+ns1:property_partition_1a75520c8dd3583070f3b0a8d86d1e8b ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass skos:Collection ;
+    void:property wp:pathwayOntologyTag .
+
+ns1:property_partition_1ab841b5440f5b87b2e875d4a3d40b08 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:textlabel .
+
+ns1:property_partition_1ab9a5f9a3f17cd44fd120dab0c749db ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:bdbPubChem .
+
+ns1:property_partition_1ac13a41a96ba63dd50dcfad5e47a133 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:width .
+
+ns1:property_partition_1b2368a8831d9c55fff6b8002daae215 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:fillColor .
+
+ns1:property_partition_1bfeab96a07634584e6bff219702c618 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:InfoBox ;
+    void:property gpml:centerX .
+
+ns1:property_partition_1c13462245a62980e40f731236c83a50 ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property pav:hasVersion .
+
+ns1:property_partition_1c3a1036b09151e418c7e1b6d1a289e5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:fontStyle .
+
+ns1:property_partition_1e3a33e75bee9f633875d25e0e2521c0 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:bdbEntrezGene .
+
+ns1:property_partition_1ed9f8d1fefdbedda8d602a7361a72a8 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbChEBI .
+
+ns1:property_partition_1edc1d589ae2cb3c92f6a5c161a28ca1 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:hasPublicationXref .
+
+ns1:property_partition_1f0a83c0e75821f7c0b76a1b83ad0cd2 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property dcterms:references .
+
+ns1:property_partition_1f3614eb503a664b1ec3f252399f9e31 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass foaf:Person ;
+    void:property foaf:name .
+
+ns1:property_partition_1fed4c0278ccfba2c402abe880d37649 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:DataNode ;
+    void:property dc:source .
+
+ns1:property_partition_2006ecebcbb06132fd7d50a4310ea733 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property dcterms:references .
+
+ns1:property_partition_205b94aee18780f8915955c3adffca8c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:lineThickness .
+
+ns1:property_partition_20b180bcad82743d396f287b2c235fe7 ns0:objectClass gpml:DataNode,
+        gpml:GraphicalLine,
+        gpml:Group,
+        gpml:Interaction,
+        gpml:Label,
+        gpml:State,
+        gpml:shape,
+        wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation,
+        skos:Collection ;
+    ns0:subjectClass wp:PublicationReference ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_20d20eb36b4b6025fb4e8c245a191dbf ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:PublicationReference ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_212ed18e804d9c52fd90d873c92eba16 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:hasPublicationXref .
+
+ns1:property_partition_2178cdadc406a8bb23312bd1b539e8c7 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:href .
+
+ns1:property_partition_2206b095f9916837003642864c17b07a ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:Conversion ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_228ca9024f36c17f1eed5617927a928d ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property foaf:page .
+
+ns1:property_partition_22d1952dd4caa0d958d4a9936cc32fc5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property pav:createdBy .
+
+ns1:property_partition_22db38947b82b6daab785216a1ed624e ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass owl:DatatypeProperty ;
+    void:property rdfs:range .
+
+ns1:property_partition_233a134ca29e9822092df870d96b84c7 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Rna ;
+    void:property wp:bdbKeggCompound .
+
+ns1:property_partition_234a4e4410c06e22abf1fc22227f6ea9 ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:pathwayOntologyTag .
+
+ns1:property_partition_239b1e602e345fcaf94ee7fa2a577db0 ns0:objectClass wp:DataNode,
+        wp:GeneProduct ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:bdbHgncSymbol .
+
+ns1:property_partition_23c195fcb60c575c2f1c9cc0853e93f7 ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:participants .
+
+ns1:property_partition_24c69cab18331035d582866cf3f5a49b ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:TranscriptionTranslation ;
+    void:property rdf:type .
+
+ns1:property_partition_254de5ab4a12f8225e4e5e333d0f7823 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Linkset ;
+    void:property void:objectsTarget .
+
+ns1:property_partition_258ab5f100f6d2e2944e8dccd5100a59 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:DataNode ;
+    void:property rdfs:label .
+
+ns1:property_partition_2596356105d2c43fd7031fcba85a8d26 ns0:objectClass owl:ObjectProperty ;
+    ns0:subjectClass owl:Restriction ;
+    void:property owl:onProperty .
+
+ns1:property_partition_261795ff5dee26e69ca2c354d7bff82a ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:fontDecoration .
+
+ns1:property_partition_26361fe9cf586bb1f540a49f779595d0 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property rdfs:label .
+
+ns1:property_partition_26b5c0a080dd826f4857def76fec4b22 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:align .
+
+ns1:property_partition_270f9f450f2d3ff49792d49b91df0115 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:biopaxRef .
+
+ns1:property_partition_27eafd0dc193938a90bb2b80f4de1d67 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:fillColor .
+
+ns1:property_partition_28697aa4cd9913c79a04db4295cd2ddb ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_288665450485c09d2418259aa4b5ac0e ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:Ontology ;
+    void:property rdf:type .
+
+ns1:property_partition_289d5d9d6716e358eb1fd5031af579a4 ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:Interaction ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_29091635679a08c4dcf92338ca79e068 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:DatatypeProperty ;
+    void:property rdfs:label .
+
+ns1:property_partition_2958b5d1c576bd3fd402307b5c35ff78 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Binding ;
+    void:property dcterms:bibliographicCitation .
+
+ns1:property_partition_296bbaa941e951d3ee9b8e52bd3dcc1b ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:isAbout .
+
+ns1:property_partition_29a23f3ad21f708912122f857d279d3b ns0:objectClass gpml:Comment ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:hasComment .
+
+ns1:property_partition_2ae4531ddbd1673378a837557f0dcdb0 ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Pathway,
+        wp:Stimulation,
+        wp:TranscriptionTranslation,
+        skos:Collection ;
+    ns0:subjectClass wp:Protein ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_2af08efe51016bb6ed6a5bea49c3f5e5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:color .
+
+ns1:property_partition_2b1a59b069ea9938a235789cacbf42a7 ns0:objectClass wp:DataNode,
+        wp:Metabolite ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:bdbHmdb .
+
+ns1:property_partition_2b28c2d5b1e1a7a0a604340a22ac1cfa ns0:objectClass void:Dataset ;
+    ns0:subjectClass void:Linkset ;
+    void:property void:subjectsTarget .
+
+ns1:property_partition_2c4bfdc28e9afa0182b7b19e070771d0 ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:Rna ;
+    void:property rdf:type .
+
+ns1:property_partition_2c550a9a648d2a5c3dda3db45bed4875 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass foaf:Person ;
+    void:property dc:identifier .
+
+ns1:property_partition_2c8ead5c8de738c17dda31982d9022c5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:fillColor .
+
+ns1:property_partition_2ca114bf9729d16d775b769e5fe92ba0 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:xrefId .
+
+ns1:property_partition_2d823d3888c3203526d538f77bfd1e70 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Conversion ;
+    void:property dc:source .
+
+ns1:property_partition_2dba19b051e15137598bf9b1623fc9e5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:Ontology ;
+    void:property owl:versionIRI .
+
+ns1:property_partition_2dd3bba8cd0c83b84c423d9086d4c8de ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Dataset ;
+    void:property pav:importedOn .
+
+ns1:property_partition_2e0025d080c2e81a62eeaf6242813c27 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_2e6a61cddc6cd338c21d282cd7a59f06 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbKeggCompound .
+
+ns1:property_partition_2e9c7e0e63497312b937746789345d1f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Axiom ;
+    void:property rdfs:comment .
+
+ns1:property_partition_2ebe3af5e774987757edfbc13f154b6c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:groupRef .
+
+ns1:property_partition_2ebe647601d49ad7daca70bfc4313791 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:graphId .
+
+ns1:property_partition_2f48c0520988974354588d23c752bcca ns0:objectClass owl:Class,
+        owl:ObjectProperty ;
+    ns0:subjectClass owl:Axiom ;
+    void:property owl:annotatedSource .
+
+ns1:property_partition_2f8b9dd2503d39ca77124749852bfabc ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:align .
+
+ns1:property_partition_2fce4b419ad4b747d30d57db01edb186 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:centerY .
+
+ns1:property_partition_3020328acd02a609b0755f08d3829017 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property wp:bdbReactome .
+
+ns1:property_partition_31012c3dafffe893a6b3ea2050472f86 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:DatatypeProperty ;
+    void:property rdfs:comment .
+
+ns1:property_partition_310211741162f84ffe58c9cb24b01797 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Pathway ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_31abe33cdb1df494dac3bc2dd6e6e999 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein ;
+    ns0:subjectClass wp:Complex ;
+    void:property dc:identifier .
+
+ns1:property_partition_32907be79ccf09e084e14981cbd0322c ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Protein ;
+    void:property dcterms:references .
+
+ns1:property_partition_32a64523421d5df644f9a4613f64f9f9 ns0:objectClass wp:DataNode,
+        wp:Metabolite ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:bdbHmdb .
+
+ns1:property_partition_32cb8bf92b4f068d3ce01586fa535f0f ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Complex ;
+    void:property dcterms:references .
+
+ns1:property_partition_33363562bc40bed06c886d24cc932bf5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:height .
+
+ns1:property_partition_33a5a45ca05ed7e27faf20a821fe9abd ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property dc:source .
+
+ns1:property_partition_33d77b0189084034cc09ea61e6e4b5e6 ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:Pathway ;
+    void:property pav:hasVersion .
+
+ns1:property_partition_341f233fd123b57614326957ccbed3dd ns0:objectClass owl:Ontology,
+        skos:ConceptScheme ;
+    ns0:subjectClass owl:DatatypeProperty ;
+    void:property skos:inScheme .
+
+ns1:property_partition_3453bd2c1dbde41d7a8d0bd791be5d80 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_34a5c73bffae76c822fcc3928a4c8431 ns0:objectClass gpml:Comment ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:hasComment .
+
+ns1:property_partition_34fc680dc2e0ec7ac5034c813e6a8f99 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:DatasetDescription ;
+    void:property dcterms:issued .
+
+ns1:property_partition_358d7e7d35240afa3d620bd757a86110 ns0:objectClass gpml:DataNode ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:stateOf .
+
+ns1:property_partition_35aab7636f1fe5eacf2b2ddf13ffa698 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:ObjectProperty ;
+    void:property ns15:IAO_0000115 .
+
+ns1:property_partition_3630f9f4d2255ebef87a92e62b726988 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:fontSize .
+
+ns1:property_partition_36f40b21d84fa4e9e54f784f5978436c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:fontStrikethru .
+
+ns1:property_partition_37af70967760c9488c7ed6ed12e46e4f ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Pathway,
+        wp:Stimulation,
+        wp:TranscriptionTranslation,
+        skos:Collection ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_37b21f7e6aa777677cd05b82dda007d3 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Rna ;
+    void:property foaf:page .
+
+ns1:property_partition_37c75d0c601d9e7450e981614dd3a227 ns0:objectClass wp:DataNode,
+        wp:Metabolite ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbReactome .
+
+ns1:property_partition_37d96e7e4d5e7978eafaf7e2b03b3615 ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:ComplexBinding ;
+    void:property rdf:type .
+
+ns1:property_partition_386deb0a69169276dc44745a20e4b78f ns0:objectClass owl:AnnotationProperty ;
+    ns0:subjectClass owl:Class ;
+    void:property obo:inSubset .
+
+ns1:property_partition_393899676b4f28d235cbd463a8abc411 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:width .
+
+ns1:property_partition_3a32e1b53dcfafda966c4dc979aeea3c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Binding ;
+    void:property dc:source .
+
+ns1:property_partition_3b88134a3d0bb5dd9710e651cc4268d4 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Dataset ;
+    void:property void:uriSpace .
+
+ns1:property_partition_3bfd9fe48945a3426da1d697b668f1f1 ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:Label ;
+    void:property rdf:type .
+
+ns1:property_partition_3c4514eb0ba19048a28d3617135880aa ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_3c4e159a2dcbfef93f7c0314c4dfa8c9 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass skos:Collection ;
+    void:property wp:organismName .
+
+ns1:property_partition_3c989cc16d575bc751d8f0fe27b422fa ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass foaf:Person ;
+    void:property rdf:type .
+
+ns1:property_partition_3cb941a9fee4560eeda5b76a6f180bbd ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property foaf:page .
+
+ns1:property_partition_3cdffd5ed1fb3dd02930a544e3f2068e ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:target .
+
+ns1:property_partition_3d407e8446675fc8cbe017ba35db44a0 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns17:Distribution ;
+    void:property rdf:type .
+
+ns1:property_partition_3d41a3048b97a7a1434189315f1336a8 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_3d6e2eb5822a6c1c060b6f30614810bc ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property rdf:type .
+
+ns1:property_partition_3dd17d8083e605ba3ed4ca397af4687c ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Rna ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_3e1f82aa84aaf9fd8179ac3ff4f48576 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_3e61185998cbbb4a6ca374dc5eb26e2e ns0:objectClass gpml:Comment ;
+    ns0:subjectClass gpml:Group ;
+    void:property gpml:hasComment .
+
+ns1:property_partition_3e6d8aa84e348a4d067033db65fb96dc ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:isAbout .
+
+ns1:property_partition_3e7c970ca2f6643c90d1c8bf63677421 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbHgncSymbol .
+
+ns1:property_partition_3e8992827b85a4284b2fd838f6d24cef ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:textlabel .
+
+ns1:property_partition_3f0b797c4966ea7ffc9426f8013d2828 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass gpml:InfoBox ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_3f0d53a9841a296233f25aedfdf87d47 ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:Comment ;
+    void:property rdf:type .
+
+ns1:property_partition_3f3461a15fdf7414e652ccde1a337462 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:color .
+
+ns1:property_partition_3f8fd38fa7679ad6c52339773856a1b4 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass skos:Collection ;
+    void:property dcterms:description .
+
+ns1:property_partition_40e33e30c62f724ba80ae2ce098ccb35 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:PublicationReference ;
+    void:property gpml:database .
+
+ns1:property_partition_40e65cb8453277f33a3808f96b86709d ns0:objectClass gpml:Group,
+        rdfs:Resource ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_4113333afdcf929c620fb654a9078b72 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property obo:hasAlternativeId .
+
+ns1:property_partition_4175f18c5c204fd5cbe17d81e1c629ee ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:stateType .
+
+ns1:property_partition_41b6b487bb2fff041e1fc7655a6de3e6 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:Axiom ;
+    void:property rdf:type .
+
+ns1:property_partition_424d9f824dffeb4a9344ca7622c70843 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:biopaxRef .
+
+ns1:property_partition_42b365350ae92634ebec0a6ce41d1ffe ns0:objectClass gpml:Group,
+        rdfs:Resource ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_42b45695ca07937f12f61e1fd75a3b96 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property obo:hasDbXref .
+
+ns1:property_partition_42b7a5ac5f288c6645e9c8b2588d2464 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:width .
+
+ns1:property_partition_42d43a332949386c6b3d795e90bc2ad7 ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:Point ;
+    void:property rdf:type .
+
+ns1:property_partition_42db0a354fa8eb14cbb4fe4f629125e4 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass skos:ConceptScheme ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_43d3b25019225b4602823eb83ff199fd ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:biopaxRef .
+
+ns1:property_partition_4406311996a2c25fdaa0a90c033393de ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:ComplexBinding ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_44ec883ea6762afa96e8541a1dc01fc5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Ontology ;
+    void:property rdfs:comment .
+
+ns1:property_partition_4543fd84e24f8df5b7ff615b8e2ebe88 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbHmdb .
+
+ns1:property_partition_45db122f9d83e8f6042313a03e2e6577 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:source .
+
+ns1:property_partition_46f91286aedd7426708d988baac7e3ce ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:InfoBox ;
+    void:property rdf:type .
+
+ns1:property_partition_472307a09246505092bf51a8c325ef88 ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass skos:Collection ;
+    void:property wp:diseaseOntologyTag .
+
+ns1:property_partition_473ca9ca8cc4d31556aed4b6235d9438 ns0:objectClass rdfs:Resource,
+        owl:Ontology,
+        skos:ConceptScheme ;
+    ns0:subjectClass void:Dataset ;
+    void:property void:vocabulary .
+
+ns1:property_partition_47677970793e90722e0e3902c5c0859f ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Linkset ;
+    void:property dcterms:license .
+
+ns1:property_partition_477288d5b4e55855727ea5af43b45dbe ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:Class ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_479abf2f8aff3ba9ad0ddf2b9c6bc929 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:zorder .
+
+ns1:property_partition_482d314a3cfd99df1e00cf2292eaf43c ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property wp:source .
+
+ns1:property_partition_487edd6278eea998ad95c994b7bde57f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Dataset ;
+    void:property pav:createdOn .
+
+ns1:property_partition_48a0e9e8b873c1bee82f5ce81f811012 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Ontology ;
+    void:property dcterms:contributor .
+
+ns1:property_partition_4a598d8a7f4b5fea3310773e3be39c4c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Point ;
+    void:property gpml:graphRef .
+
+ns1:property_partition_4a84c3eacf536a143fe260c73f8ac816 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:biopaxRef .
+
+ns1:property_partition_4ab8e5796df77a5132f6154942d47ab6 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_4b1ddada8148a8cc9a2a0fd454e41d09 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property dcterms:references .
+
+ns1:property_partition_4b85c596e9b2dd2f58e4eb72bd9cc0d2 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass foaf:Image ;
+    void:property dcterms:format .
+
+ns1:property_partition_4bea4799eff3a738dcde51ae19404977 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Ontology ;
+    void:property obo:auto-generated-by .
+
+ns1:property_partition_4c8a169bd54aea4b4657562a25684e75 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:lineStyle .
+
+ns1:property_partition_4ce636bdb759af74bd706998fee5f00c ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Rna ;
+    void:property dcterms:references .
+
+ns1:property_partition_4d632ecbfc66b448e2b4363323e342f1 ns0:objectClass wp:DataNode,
+        wp:Metabolite ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:bdbChEBI .
+
+ns1:property_partition_4efd42858a6ad6736c22878c58e1c3fe ns0:objectClass wp:DataNode,
+        wp:Pathway,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:bdbReactome .
+
+ns1:property_partition_4f96dc2fdc4d8e5bc3e665d70a6d5cce ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property rdf:type .
+
+ns1:property_partition_50192973f404404a6ec6a3e4d9aca383 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbChemspider .
+
+ns1:property_partition_5085d004c2bc20d3a637c6e9eae4ee70 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:PublicationXref ;
+    void:property gpml:id .
+
+ns1:property_partition_51005392af2fc88a42cc232d33932f1d ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:centerY .
+
+ns1:property_partition_512f13fe01f80b9ae399eb7a32240a94 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:bdbUniprot .
+
+ns1:property_partition_519b829927ee97b9a09814a6245ed0f9 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:ObjectProperty ;
+    void:property rdfs:comment .
+
+ns1:property_partition_51c12e4060d437cbd49968c22d710fcc ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property rdfs:Label .
+
+ns1:property_partition_52536aa05644dbeb8c4086c3fd8e8159 ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_52e356bb5d678a051d88c7178b4ef6c7 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:bdbRhea .
+
+ns1:property_partition_5326705b67fd2c710da07596c274b47d ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbEntrezGene .
+
+ns1:property_partition_53d71fca95ed9e97ded4e6a96b6a5cbd ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Rna ;
+    void:property rdfs:label .
+
+ns1:property_partition_54cac25b752118de1f3e125490733426 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns17:Distribution ;
+    void:property ns17:downloadURL .
+
+ns1:property_partition_5523c5d052b5a2878a493953c20d0e52 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbUniprot .
+
+ns1:property_partition_55dc7d6eb8df6534b5f37eda30da0a82 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:bdbHgncSymbol .
+
+ns1:property_partition_5663648af8ee5a4bcbc733305cf941a2 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Conversion ;
+    void:property dcterms:references .
+
+ns1:property_partition_568921fb4de9f75c82717f5467c52d8a ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Interaction ;
+    void:property dcterms:bibliographicCitation .
+
+ns1:property_partition_586c57a4379c5c22646fb0c9fd2de863 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Pathway,
+        rdfs:Resource ;
+    ns0:subjectClass skos:Collection ;
+    void:property dc:identifier .
+
+ns1:property_partition_587e5b38625951abe1d9776173225416 ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:TranscriptionTranslation ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_58aefc50c07fdcd8030cfdbf31a33dbc ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Interaction ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_590c3f82867b419543c5a25918193e50 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Rna ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_59476828d7d674721b4ae34323df136f ns0:objectClass gpml:Anchor ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:hasAnchor .
+
+ns1:property_partition_5956b00689cef11cf737c896a6a79601 ns0:objectClass wp:DataNode,
+        wp:Pathway,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:bdbReactome .
+
+ns1:property_partition_5b8a05cf0408791d01088a6dd43e7352 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:bdbChemspider .
+
+ns1:property_partition_5c7a43b8acf878188e1ce4271ed0e1a9 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:width .
+
+ns1:property_partition_5c944c84e6263e61d5fc45f69f1f06e3 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:height .
+
+ns1:property_partition_5cb26798aca1f4de7671be161b33afe7 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Interaction ;
+    void:property dcterms:references .
+
+ns1:property_partition_5cb8d3dc29f12ae49344bacc1a774265 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property dcterms:license .
+
+ns1:property_partition_5d5b21490b992dcc06e39a51351e76fa ns0:objectClass rdfs:Resource,
+        owl:ObjectProperty ;
+    ns0:subjectClass void:Linkset ;
+    void:property void:linkPredicate .
+
+ns1:property_partition_5d99b721130cf3155fb1a0d36f0328b2 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:DatatypeProperty ;
+    void:property rdfs:domain .
+
+ns1:property_partition_5f07127a03c1e9496c68db9731f25fab ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Conversion ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_5f3cdd295d50828d0a34c2f4f324a798 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:organismName .
+
+ns1:property_partition_605a209057fc46b8a6769a50b72d4ecf ns0:objectClass gpml:Group,
+        rdfs:Resource ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_60aea81a82e743a0fa3b3d1049929143 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Anchor ;
+    void:property gpml:graphId .
+
+ns1:property_partition_62fadd3676ea77666f799c0f0ca6a9fa ns0:objectClass foaf:Person ;
+    ns0:subjectClass wp:DataNode ;
+    void:property dc:creator .
+
+ns1:property_partition_638a47609bd28d5a5b2e46bfb2e25c07 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass foaf:Person ;
+    void:property ns18:series_ordinal .
+
+ns1:property_partition_63a9a0bb9c902af901b17aac0e3b8b1b ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Pathway ;
+    void:property dc:identifier .
+
+ns1:property_partition_640155fbef15d751a63e2fb9164b6da3 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property pav:importedFrom .
+
+ns1:property_partition_64b9f43a88a1cb3bcc063ba79c0241f9 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Interaction ;
+    void:property dc:source .
+
+ns1:property_partition_652666b556a5cca75df5ecc0b152fdd9 ns0:objectClass owl:AnnotationProperty ;
+    ns0:subjectClass owl:Axiom ;
+    void:property obo:hasSynonymType .
+
+ns1:property_partition_656d6787e000fd2cffa6693ae61a705f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Linkset ;
+    void:property pav:createdOn .
+
+ns1:property_partition_67645c4098fe64ef0fc38591e1cfe94f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property obo:id .
+
+ns1:property_partition_6785b1b7c484cd720e92fabfc4f250b1 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:fontWeight .
+
+ns1:property_partition_686021fdec635b2fa77fb31a0cc5fea7 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_693952fceb66fd84f7f645d59341d5bf ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Stimulation,
+        wp:TranscriptionTranslation ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property wp:target .
+
+ns1:property_partition_693fe3b54fb37bac7ce90f2806436961 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:fontName .
+
+ns1:property_partition_6991c81447412398515b8deb0f908d82 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Ontology ;
+    void:property obo:hasOBOFormatVersion .
+
+ns1:property_partition_6a8535cb5594966e5875d7e5f7f8711c ns0:objectClass gpml:Group,
+        rdfs:Resource ;
+    ns0:subjectClass gpml:Label ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_6ac6ea4bb294afc60f34bfb9ca1d369b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_6ad5c55e4105a0977d14b1fb8fefc4d5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass skos:Collection ;
+    void:property dc:title .
+
+ns1:property_partition_6c6a5419e468f5e77be23535e129400e ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:fontSize .
+
+ns1:property_partition_6c8ec5ecb31d14c525aaaf9c51148b4a ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property rdf:type .
+
+ns1:property_partition_6ca63edd002eb53c1a854f6882b93baf ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:fontStrikethru .
+
+ns1:property_partition_6cc0d5490557ec90da4bc8fed369e4d4 ns0:objectClass wp:DataNode,
+        wp:Pathway,
+        rdfs:Resource ;
+    ns0:subjectClass wp:PublicationReference ;
+    void:property ns11:cites .
+
+ns1:property_partition_6d8b65a6f80376753a95a8f4bf31454a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:bdbRhea .
+
+ns1:property_partition_6de2da5dacc48b07ddf4742341c74449 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property dc:source .
+
+ns1:property_partition_6e091fb2f4ce971751c10f5e0bc55b01 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property ns16:formula .
+
+ns1:property_partition_6f92d4ad7a627406f8b9c8d2c3628335 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:bdbChemspider .
+
+ns1:property_partition_6fd5106d331e52202c854d46ad029c83 ns0:objectClass gpml:Point ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:hasPoint .
+
+ns1:property_partition_6fe77686f4b70ef240331c9f09fdde6d ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Group ;
+    void:property gpml:groupId .
+
+ns1:property_partition_700a68fbc07e15a5ee467d47192a57b2 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbUniprot .
+
+ns1:property_partition_71295cbf1bb3bd03314f6f434d14d8c0 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbPubChem .
+
+ns1:property_partition_71302e8b02d715741f759fe37dee28cc ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Ontology ;
+    void:property pav:importedFrom .
+
+ns1:property_partition_7214c6550d9bddb94baa32cfac9d7af5 ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass skos:Collection ;
+    void:property rdf:type .
+
+ns1:property_partition_73e7e7707136d008d54038ca657b4529 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Comment ;
+    void:property gpml:source .
+
+ns1:property_partition_749d5c469b9fcde67dce1aac36ee8ff6 ns0:objectClass gpml:GraphicalLine,
+        gpml:Interaction,
+        rdfs:Resource ;
+    ns0:subjectClass gpml:Point ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_777406ad71a1a4c8eb25e9539534a5f9 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Conversion ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_77970a97797e35dca8ba80c583a84c95 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbHgncSymbol .
+
+ns1:property_partition_77f7e14f1ff8bc7b4b32057ce7b4fdae ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Group ;
+    void:property gpml:textlabel .
+
+ns1:property_partition_78af1c1861d7f33d36140f99e5499de1 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:bdbKeggCompound .
+
+ns1:property_partition_78d629342a1c42b411d261c5919d92ee ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:AnnotationProperty ;
+    void:property rdf:type .
+
+ns1:property_partition_78fe316aeec7c1e7d43b122135b1a7e5 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbReactome .
+
+ns1:property_partition_798d856cbd804c4769984fc944fe3450 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:graphId .
+
+ns1:property_partition_79d3597490ca4d9742f4b5cdbd5e14d0 ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:ontologyTag .
+
+ns1:property_partition_7ad5cdc9038755e9af009cd57544993e ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass skos:Collection ;
+    void:property dc:source .
+
+ns1:property_partition_7ae3489793b2d4f5728b2875c5a05ae9 ns0:objectClass wp:DataNode,
+        wp:Metabolite ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:bdbHmdb .
+
+ns1:property_partition_7b22ca6da7b7b3d57e54b5b8b33e6b8d ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property foaf:page .
+
+ns1:property_partition_7b7c5d666c53511a91d933207fac0063 ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass wp:Interaction ;
+    void:property rdf:type .
+
+ns1:property_partition_7bb9e18c8e546ca5639842ea1f23a977 ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property rdf:type .
+
+ns1:property_partition_7cb4efe4428bcfc8281b53fafa6cedf5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbInChIKey .
+
+ns1:property_partition_7ce3dade2887449a9f048916a37e3863 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:fontStyle .
+
+ns1:property_partition_7d1ee44d05afbea1ccd6249537473fe3 ns0:objectClass wp:DataNode,
+        wp:Metabolite ;
+    ns0:subjectClass wp:Translocation ;
+    void:property wp:participants .
+
+ns1:property_partition_7d38e2a76c5ed2fa1b308aa77e763bf0 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbInChIKey .
+
+ns1:property_partition_7d3f1b94d4087a2759d467ec239e6dc8 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:bdbEntrezGene .
+
+ns1:property_partition_7db55e035c33dab9761f3f6ee3ec274f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:groupRef .
+
+ns1:property_partition_7dd6d0401f60976e88f72f1d8a6928b8 ns0:objectClass ns17:Distribution ;
+    ns0:subjectClass void:Dataset ;
+    void:property ns17:distribution .
+
+ns1:property_partition_7ed8ce9e9b7274ba3a3df95b7921be60 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:isAbout .
+
+ns1:property_partition_804102958021017e743b688fa435c438 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:fontName .
+
+ns1:property_partition_806534d8fa218a2a72e4cf80c5f7f318 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:shapeType .
+
+ns1:property_partition_8134bcf77f55bdf39ce4ead5be8e8364 ns0:objectClass wp:DataNode,
+        wp:Metabolite ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:bdbChEBI .
+
+ns1:property_partition_8228ba03f6861de6c3f073c4412c89d2 ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:PublicationReference ;
+    void:property rdf:type .
+
+ns1:property_partition_82314b228f4048b26de4bd66caa6a449 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:shape .
+
+ns1:property_partition_826c85c2d14a7ec6c152fcafaee4dcbe ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property dcterms:bibliographicCitation .
+
+ns1:property_partition_82bede27ffd675df40a53cae78e72d0a ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property rdf:type .
+
+ns1:property_partition_833f2aba403f4a199cf94ab907daf868 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property dc:source .
+
+ns1:property_partition_83ac8cfa75503fde07067882fa50a6c4 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbEnsembl .
+
+ns1:property_partition_845da9c0280f32959474da28ffd5fc08 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:DataNode ;
+    void:property dc:identifier .
+
+ns1:property_partition_846288e01788fc8fa4449a83e7412933 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property obo:created_by .
+
+ns1:property_partition_84845fe7ba9870230361fde008d2eca4 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Ontology ;
+    void:property obo:date .
+
+ns1:property_partition_84c742935d9ab54763c9f6cc4671344b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:TranscriptionTranslation ;
+    void:property dc:source .
+
+ns1:property_partition_8612347d24c18674a9214793c2cee4ca ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbEnsembl .
+
+ns1:property_partition_86283d81239606d8ddae71d8318c142c ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass skos:Collection ;
+    void:property ns11:cites .
+
+ns1:property_partition_864780def1cb06165474c901b8237a2c ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbKeggCompound .
+
+ns1:property_partition_86644949f049002c3e14330d7a01e580 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Protein ;
+    void:property dc:identifier .
+
+ns1:property_partition_86d41e0d8708c03cefee38e40799819d ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:DataNode ;
+    void:property dcterms:references .
+
+ns1:property_partition_86d7c5e02b3f83a2d23ac479fb529750 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:graphId .
+
+ns1:property_partition_87005e6d09b967bbd64f4ee5c72be35c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:zorder .
+
+ns1:property_partition_8775b7949c8b56cd28ba42b5e76a1708 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:PublicationXref ;
+    void:property dc:source .
+
+ns1:property_partition_8801cc1b843e782d4b7a915e0c77d6d5 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbComplexPortal .
+
+ns1:property_partition_88507e23ffea0b3494c1bfbda25a3c82 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:shapeType .
+
+ns1:property_partition_8b3dbcc4bcc7f3f2a93d4691e404f7cf ns0:objectClass owl:AnnotationProperty ;
+    ns0:subjectClass owl:Axiom ;
+    void:property owl:annotatedProperty .
+
+ns1:property_partition_8bccfa8d592e759393eeb4463aeee67c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property ns16:monoisotopicmass .
+
+ns1:property_partition_8c04518960930a74230ac3c734e403d2 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass skos:ConceptScheme ;
+    void:property rdfs:label .
+
+ns1:property_partition_8c70d96a581b8a04ac6342eafd6e9da2 ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property rdf:type .
+
+ns1:property_partition_8c85e9360dabbae9999a3b2130ab1f84 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:cellTypeOntologyTag .
+
+ns1:property_partition_8ce9b5fa4e9f3f89f7846f7dc20699be ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Group ;
+    void:property gpml:biopaxRef .
+
+ns1:property_partition_8d2531122267348c9cde72d4619336e7 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Dataset ;
+    void:property dcterms:issued .
+
+ns1:property_partition_8d32e8b0423f65c9e0f9861168738081 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:centerX .
+
+ns1:property_partition_8d5328b5d47aa36f5817aba4e99ded85 ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:Binding ;
+    void:property rdf:type .
+
+ns1:property_partition_8d6347a0f0ce7ebb76ff6df796d4eb96 ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:target .
+
+ns1:property_partition_8df84d654258d6d6ed0b6c20c23c20c9 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:bdbInChIKey .
+
+ns1:property_partition_8df94257505c71106281cb9b7ca47a41 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:bdbComplexPortal .
+
+ns1:property_partition_8e134a4d0d17e94fc08e0a6ff823a5b8 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Complex ;
+    void:property dc:source .
+
+ns1:property_partition_8f0bd56592f0e0d53b2e4874a534c2af ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:connectorType .
+
+ns1:property_partition_8fd938ece4cc40f53f5b30c00538c1b5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property ns16:charge .
+
+ns1:property_partition_8fed2814248752a1fe0b8dedac5a3ea1 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:hasPublicationXref .
+
+ns1:property_partition_9008da14f8c24a451074da2465091e6a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Conversion ;
+    void:property wp:bdbRhea .
+
+ns1:property_partition_904b6a0da5ebdbc32709000e315813fd ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:biopaxRef .
+
+ns1:property_partition_910b116e2f714f00e259e5d48c463ddb ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass void:Dataset ;
+    void:property dcterms:subject .
+
+ns1:property_partition_912ccd10ac935ef02c4e17b2089f9826 ns0:objectClass gpml:DataNode,
+        gpml:GraphicalLine,
+        gpml:Group,
+        gpml:Interaction,
+        gpml:Label,
+        gpml:State,
+        gpml:shape,
+        wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation,
+        skos:Collection ;
+    ns0:subjectClass gpml:PublicationXref ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_91316752ccf526885be9c047a5d3082e ns0:objectClass foaf:Person ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property dc:creator .
+
+ns1:property_partition_929cf150a6b5b45e976aaddf6b1556ec ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:PublicationReference ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_92ae7d4dbf46d38462af4761ae2d4c72 ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_937240978a1873a6d1d34714863fe489 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:bdbPubChem .
+
+ns1:property_partition_9379cd7dd6acb95677a1cb25058767c5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_940f01a1b12bbadf53f6dbf87f640f17 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Axiom ;
+    void:property owl:annotatedTarget .
+
+ns1:property_partition_941f847654d147376dc0703119722cf3 ns0:objectClass foaf:Image ;
+    ns0:subjectClass skos:Collection ;
+    void:property foaf:img .
+
+ns1:property_partition_943e390633978221997c993fb020e4fa ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:ComplexBinding ;
+    void:property wp:isAbout .
+
+ns1:property_partition_951810cc40325d95c3d6aed1bc069f3d ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Point ;
+    void:property gpml:relX .
+
+ns1:property_partition_954dce5e9e14406f655a0a21397a3a4c ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property foaf:page .
+
+ns1:property_partition_959c1e1c5e0f461189609f3ba47dbc9a ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbUniprot .
+
+ns1:property_partition_95fd9800c8757c45e1b2bcab84e5a08d ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass wp:Pathway ;
+    void:property rdf:type .
+
+ns1:property_partition_97002b9deb0bb4399540038a73cc2214 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbRhea .
+
+ns1:property_partition_97658109ed21f07512a33a0e1f2b2ec7 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbLipidMaps .
+
+ns1:property_partition_98945f8cb004dd0a2ff16a7187a5cb4b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Linkset ;
+    void:property dcterms:title .
+
+ns1:property_partition_9913d9739f8c79c1c561f6b60f82a60d ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Ontology ;
+    void:property owl:versionInfo .
+
+ns1:property_partition_992e86d5a2de5c3bf20434cc25e0e008 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property wp:source .
+
+ns1:property_partition_99803e40db68e0708d6c8c5de6caec1a ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:TranscriptionTranslation ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_998b920bc190edd2eaba88c6da804730 ns0:objectClass gpml:PublicationXref,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:PublicationReference,
+        rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property void:exampleResource .
+
+ns1:property_partition_9996aae47648988511a76698242e4b49 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Anchor ;
+    void:property gpml:position .
+
+ns1:property_partition_99a89946ff9d4ae1398024e35fb9efba ns0:objectClass owl:AnnotationProperty ;
+    ns0:subjectClass owl:AnnotationProperty ;
+    void:property rdfs:subPropertyOf .
+
+ns1:property_partition_99cc06d71a25c2aba8348eb11714a852 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_99ce9c808499cb606461577b9c4db3a2 ns0:objectClass wp:DataNode,
+        wp:Metabolite ;
+    ns0:subjectClass wp:Translocation ;
+    void:property wp:target .
+
+ns1:property_partition_99de69d30cc0aaf7544abd70226ab4f1 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property dc:source .
+
+ns1:property_partition_99ec93b7e66515da515594ab199a3c1c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:xrefDataSource .
+
+ns1:property_partition_9a4126c2488e03a942d7f993a47ab117 ns0:objectClass owl:Ontology,
+        skos:ConceptScheme ;
+    ns0:subjectClass owl:ObjectProperty ;
+    void:property skos:inScheme .
+
+ns1:property_partition_9a41eac8d3fac9d0dc90d3833b6d28a0 ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:Translocation ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_9a6a4d1317c485fceca91bda36f5da10 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Conversion ;
+    void:property wp:isAbout .
+
+ns1:property_partition_9a9c9503724f37f9bf60586d05d515d8 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:isAbout .
+
+ns1:property_partition_9ac8fb778bdad338b2581d787b271cad ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_9b1c50953c2dcd31a306f7142ee02f64 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass gpml:State ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_9b34a54cf14b677ce04db0477a047af4 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property obo:creation_date .
+
+ns1:property_partition_9c314e5fd2f05cadf19aa87546ef7f8d ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property ns15:IAO_0000115 .
+
+ns1:property_partition_9c8d130c3a2a043c005e64bbc234425f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:AnnotationProperty ;
+    void:property rdfs:comment .
+
+ns1:property_partition_9cb1dcff07d6a4d5dfa93d2c917d6422 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass skos:ConceptScheme ;
+    void:property owl:versionIRI .
+
+ns1:property_partition_9cf51d6c5b98bf278f2bf20fa643bc48 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:lineThickness .
+
+ns1:property_partition_9d0d0d3fb119463dc62ea738bacc5695 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:Ontology ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_9d0ea9b705f1dc7d07a56f6d9250a082 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_9d285b9071487b6d506951275b512e0b ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference,
+        rdfs:Resource ;
+    ns0:subjectClass wp:ComplexBinding ;
+    void:property dcterms:bibliographicCitation .
+
+ns1:property_partition_9d5f2e97f4c802282fcb9d2895212d4f ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_9dddb628164160f84760cf320c1f8f78 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Axiom ;
+    void:property obo:hasDbXref .
+
+ns1:property_partition_9ddfa512f42984cd2a00c415954e63af ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_9e6e010f57e0811a8498bf0a8ad6968a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_9e8c0bfa4a287c6aa23b800ef8a17d4e ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Rna ;
+    void:property wp:bdbUniprot .
+
+ns1:property_partition_9f03a36fa0f9f1cd525108466986a42a ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property owl:deprecated .
+
+ns1:property_partition_9f330f7959d83d409b63054eb8b1bf21 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:align .
+
+ns1:property_partition_9f45ee117faa89923eab6db8d194ba2e ns0:objectClass gpml:Comment ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:hasComment .
+
+ns1:property_partition_9f614a702502083f818a869a18ef82bc ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Rna ;
+    void:property wp:bdbEnsembl .
+
+ns1:property_partition_9fd5db3ec0c0454a32967d5ae4a7ba72 ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:DataNode ;
+    void:property rdf:type .
+
+ns1:property_partition_a06d6f4f7501cb81f9d3d990eb4b3c05 ns0:objectClass owl:Ontology,
+        skos:ConceptScheme ;
+    ns0:subjectClass owl:Class ;
+    void:property skos:inScheme .
+
+ns1:property_partition_a0d40530f4c6730f58d9d40d2647327d ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:bdbUniprot .
+
+ns1:property_partition_a29b6f6ccb635902b9f52e7102aa1dbc ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:DatasetDescription ;
+    void:property pav:createdOn .
+
+ns1:property_partition_a336b4ec4632a734bc16d40e7ea285a6 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Axiom ;
+    void:property obo:source .
+
+ns1:property_partition_a34063a5c0bb1ff4717f7e07d2badee3 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Conversion ;
+    void:property wp:bdbReactome .
+
+ns1:property_partition_a3b8d86105cc913cc8a37540af79dc48 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:graphId .
+
+ns1:property_partition_a3e758d1644a6e7e34c0def60fa64f56 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:color .
+
+ns1:property_partition_a40457bbc83871b2a980fa839806c9ac ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:bdbEnsembl .
+
+ns1:property_partition_a4061739d2b865d51b6234f733a80b14 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:lineThickness .
+
+ns1:property_partition_a429cc95c5d30a352b0feb50df879809 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property dc:identifier .
+
+ns1:property_partition_a48a12431992a00798f5f08d6aad8fe2 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:participants .
+
+ns1:property_partition_a4cc02775f708c5e66b4fea1bcd6b1de ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property dcterms:references .
+
+ns1:property_partition_a4cc4f7a7b2114c90064b4b5b8e1d055 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:graphId .
+
+ns1:property_partition_a5373e441abc2bf87d684eff7a69225d ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Pathway ;
+    void:property rdfs:label .
+
+ns1:property_partition_a54c31cc13cfbf222394bc54b6ecaabd ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_a5bc357034fa8e8c5ba36b35d8d79862 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property dc:identifier .
+
+ns1:property_partition_a6a5bd2df79253f80e024f583b0be193 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:DatasetDescription ;
+    void:property pav:createdBy .
+
+ns1:property_partition_a7108783af8b9de06b7745b706568975 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:lineStyle .
+
+ns1:property_partition_a7d2ab35f96b4535775ef5a7bf17dd78 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:hasPublicationXref .
+
+ns1:property_partition_a84a41b788f0c5dba55e310f3a1872a5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns17:Distribution ;
+    void:property ns17:mediaType .
+
+ns1:property_partition_aa388f3eb73b2b4ef18991857daae846 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:textlabel .
+
+ns1:property_partition_aa8fcd878752acc68f81e6ee5b9031ef ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:State ;
+    void:property rdf:type .
+
+ns1:property_partition_aa8fd75b008af799ceca13b5516006e8 ns0:objectClass owl:Class ;
+    ns0:subjectClass owl:Restriction ;
+    void:property owl:someValuesFrom .
+
+ns1:property_partition_aa9eafeeb41294107bd6b1860913cd13 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property dcterms:references .
+
+ns1:property_partition_aad528b1810a395444c0f551cd3dbbe3 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property ns17:landingPage .
+
+ns1:property_partition_aaea79b0d4ca683eecbd0035971c3846 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbInChIKey .
+
+ns1:property_partition_ac6a66083a63eecf128d62bc8e2afa80 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass skos:Collection ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_acc8c4ea9d4272b1eedb95f605ad3e3f ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Pathway ;
+    void:property foaf:page .
+
+ns1:property_partition_acd1e6fcfaa8bae4c1dfefd3d0cafc0c ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbPubChem .
+
+ns1:property_partition_acdac4701a13b43c1e34cd22e702bcd2 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:xrefDataSource .
+
+ns1:property_partition_ad147d8ae9cb01d3b5fa46da0e4a8bc6 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Pathway ;
+    void:property dcterms:description .
+
+ns1:property_partition_af1cd4fc48a633d3b4550cdbd87b2098 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property dcterms:bibliographicCitation .
+
+ns1:property_partition_aff42ff5d4d30858ccba8a4e412a3768 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:isAbout .
+
+ns1:property_partition_b0b7b5b6578944257932de5f16259a7e ns0:objectClass wp:DataNode,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbReactome .
+
+ns1:property_partition_b10ddc69548b701b58aa333a81d0d358 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:PublicationXref ;
+    void:property gpml:database .
+
+ns1:property_partition_b12a711382a4f42a692b94655a9c511d ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property rdf:type .
+
+ns1:property_partition_b1aabeee6eaaaf8b22a15d32532483bc ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:textlabel .
+
+ns1:property_partition_b1c92a11dce94acef7e2ef65a81ae62d ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property wp:isAbout .
+
+ns1:property_partition_b214a4bdf45da74aa43114bd64949bc7 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass gpml:Group ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_b2eafcde94e7c9f0b7db3dc7c9afa34d ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbHgncSymbol .
+
+ns1:property_partition_b2f2f5e6b8e9fae07bfd396fdc597409 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Complex ;
+    void:property rdfs:label .
+
+ns1:property_partition_b3b10e47e7fabc455d6d5a6ea3a02e71 ns0:objectClass gpml:Comment ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:hasComment .
+
+ns1:property_partition_b4d5fdd95e3afa92543227b1a94f1dea ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass foaf:Image ;
+    void:property rdf:type .
+
+ns1:property_partition_b51f623ff2ba44a3c3030eeded0a71e7 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:lineThickness .
+
+ns1:property_partition_b525a189ac0cca9636427b0897a78eca ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property foaf:homepage .
+
+ns1:property_partition_b5f7f66b458d4c4b3f741df984a8fe56 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:DatasetDescription ;
+    void:property pav:createdWith .
+
+ns1:property_partition_b63c4674eb9455f6f2abf20c1b214838 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:xrefId .
+
+ns1:property_partition_b66ae871f2b51647cc7d63545892c090 ns0:objectClass wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:TranscriptionTranslation ;
+    void:property wp:target .
+
+ns1:property_partition_b706aa9544933893fcc29400a919b18f ns0:objectClass wp:DataNode,
+        wp:Metabolite ;
+    ns0:subjectClass wp:Translocation ;
+    void:property wp:source .
+
+ns1:property_partition_b77950a62194655352ab1ccd20c2f416 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:DatatypeProperty ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_b77e71d1eb194feb3c98be51324735d6 ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:Group ;
+    void:property rdf:type .
+
+ns1:property_partition_b80f845f078ffdef693dab7448fb576c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:connectorType .
+
+ns1:property_partition_b85e2af96c2937aaca8516e630975e39 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:Restriction ;
+    void:property rdf:type .
+
+ns1:property_partition_b871bff4cdbd67a672d17ece75600c2c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Pathway ;
+    void:property dc:title .
+
+ns1:property_partition_b93a9cd0ec4800b7091526a7e1f135fd ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property rdfs:label .
+
+ns1:property_partition_b9a75062b358fd8221c040f6b1da127a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:Class ;
+    void:property ns15:IAO_0000231 .
+
+ns1:property_partition_b9c89f95dec4df615e39be4d08e432ee ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:fontWeight .
+
+ns1:property_partition_b9d41f5892904c11c1817536e95507d9 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:groupRef .
+
+ns1:property_partition_b9e3af336d65cd36f3970ae861f6ba30 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property ns17:theme .
+
+ns1:property_partition_bba7175d88f89ea1eb4864c2bbbceadd ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:fontSize .
+
+ns1:property_partition_bd843581ac311d3b496b1fb7e940879b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:relX .
+
+ns1:property_partition_be7f3bfb4b5849c4fa56ea7c2e557447 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass gpml:PublicationXref ;
+    void:property foaf:page .
+
+ns1:property_partition_bec55fe7440995851b26265aa204b2f1 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Ontology ;
+    void:property obo:saved-by .
+
+ns1:property_partition_bf498f85d358970beb26b74b8a5ba587 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Point ;
+    void:property gpml:x .
+
+ns1:property_partition_bf70a0dc50aa2cddf7c08e0e6d55ff84 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:zorder .
+
+ns1:property_partition_bfa7ac237633ca410787313ac87e9f42 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass gpml:Group ;
+    void:property gpml:hasPublicationXref .
+
+ns1:property_partition_bfc6696baf5b2536d7f8367fc3ccfdcc ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:participants .
+
+ns1:property_partition_c178e16cb69a3327b9d915360919c6e5 ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass wp:Translocation ;
+    void:property rdf:type .
+
+ns1:property_partition_c187b77ce23aa846c026a5d8c80b46e1 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Complex ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_c236fc7037b3f8b13eb4b2538a1b3f69 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:DataNode ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_c24af67a856c475df163a693549127fa ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass gpml:PublicationXref ;
+    void:property owl:sameAs .
+
+ns1:property_partition_c28848560fa1b732c92dd325996066a7 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:ComplexBinding ;
+    void:property wp:participants .
+
+ns1:property_partition_c2974d6058ca5b5d64660dfc1404a6d8 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property rdfs:comment .
+
+ns1:property_partition_c2b6c81c4a3f3f80aa74099e76fbd0b5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbRhea .
+
+ns1:property_partition_c3888403c8e5d793ccd1d3d386a48ba3 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:zorder .
+
+ns1:property_partition_c47e751383265eace96730f485e793c3 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Rna ;
+    void:property wp:isAbout .
+
+ns1:property_partition_c4f9becd6b50d2123729dcd631823eb9 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:source .
+
+ns1:property_partition_c5eaf8400de8198b79fc5935c4e3efa8 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Translocation ;
+    void:property wp:isAbout .
+
+ns1:property_partition_c612b9beff07a135a7b68b2f4b129d7f ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:organism .
+
+ns1:property_partition_c656b0c5a910d055a932c3b1a559277d ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:centerY .
+
+ns1:property_partition_c7519879fbd1b62d7eb4ea649e1a5c27 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:fontWeight .
+
+ns1:property_partition_c789a29f8c07ec5f01c21f4d42115b60 ns0:objectClass owl:Class ;
+    ns0:subjectClass owl:Class ;
+    void:property owl:disjointWith .
+
+ns1:property_partition_c7a5d8baf79c236e0e324d73aab4c37d ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass skos:Collection ;
+    void:property wp:isAbout .
+
+ns1:property_partition_c7b1f554559d4fc3fc64a855e7467fd5 ns0:objectClass wp:DataNode,
+        wp:Metabolite ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:bdbChEBI .
+
+ns1:property_partition_c82988a5d2c36be437e3b51ec7209b4e ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbChEBI .
+
+ns1:property_partition_c86193802bd680a18119fc18d3ae82a1 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property ns16:inchikey .
+
+ns1:property_partition_c9359a14e81c1b36cf1f887401dcb547 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Pathway ;
+    void:property dcterms:references .
+
+ns1:property_partition_c998fdeec847bdf2a7362986eb84240a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Interaction ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_c9fdead9e04b800d206fa13e0eb6bbd3 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass gpml:PublicationXref ;
+    void:property wp:bdbWikidata .
+
+ns1:property_partition_cb046b0a4d4292cae17690cf37d3b1ba ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property dc:source .
+
+ns1:property_partition_cb3635a5624685d6cec0647d634d531a ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:graphRef .
+
+ns1:property_partition_cba4da5bad4879295b688862f35ec03c ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:bdbInChIKey .
+
+ns1:property_partition_cbf51c9070d4a43cfb3a1d9a24f99d6d ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:participants .
+
+ns1:property_partition_cdce581c4fa4719a596a39bf46b7f884 ns0:objectClass void:Dataset,
+        void:Linkset ;
+    ns0:subjectClass void:Dataset ;
+    void:property void:subset .
+
+ns1:property_partition_cdd0d37049df3e9390bec295ad00df1c ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:hasPublicationXref .
+
+ns1:property_partition_ce1f42a41aa3365e9b7ce3f2cd8b8c5c ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Binding ;
+    void:property dcterms:references .
+
+ns1:property_partition_ce545a40236f2f67373ec829c632b34b ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass owl:Class ;
+    void:property rdfs:subClassOf .
+
+ns1:property_partition_ceb2dd1b52d149a7ef927f272578a251 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:DatasetDescription ;
+    void:property dcterms:description .
+
+ns1:property_partition_cedc3733976305b17b074340031c0b88 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:DatatypeProperty ;
+    void:property rdf:type .
+
+ns1:property_partition_cf23d3de83c73b51f6e4d57c88eab944 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbEntrezGene .
+
+ns1:property_partition_cf390e41cb332df2cc50727214a479e5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property pav:createdAt .
+
+ns1:property_partition_cf80888598b723f8f498cf5874807d6b ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property dcterms:accuralPeriodicity .
+
+ns1:property_partition_cf8d9e313eaa9f00ba3e3ee066404c68 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:Pathway ;
+    void:property ns11:cites .
+
+ns1:property_partition_cf9ae160356f40e8535bd0ae719c2cc5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_d0677d8b72731d14e5d6f12d13b21a8a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Binding ;
+    void:property wp:isAbout .
+
+ns1:property_partition_d0b5903ada01b75e657fafc77cfce32e ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbHmdb .
+
+ns1:property_partition_d0c617d6533079f2fe3e8e0089ed800b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:graphId .
+
+ns1:property_partition_d0d6e2945c72d500d7ead47eb8c5f07e ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property foaf:page .
+
+ns1:property_partition_d0dc4f245ee9849caf3f2a11aae10ad3 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:height .
+
+ns1:property_partition_d0e66146eab7b70cf8bd4a36055571a4 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Complex ;
+    void:property wp:bdbReactome .
+
+ns1:property_partition_d2a0c8517b8e3c30af07fd67184bf6e0 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:Class ;
+    void:property rdf:type .
+
+ns1:property_partition_d31f780433e7cd52ea27a3f0d0acbf4c ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:bdbUniprot .
+
+ns1:property_partition_d3328a089af948edc3aeed56b5f39811 ns0:objectClass gpml:Anchor ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:hasAnchor .
+
+ns1:property_partition_d3a7293b56102ccf44906bb4f7dcf1e8 ns0:objectClass wp:Pathway,
+        skos:Collection ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_d3aef364eb5cfb2397ec4be0a70b4f97 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:zorder .
+
+ns1:property_partition_d408fed5c7b70d7fbf8ba94fa1dafd77 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:bdbRhea .
+
+ns1:property_partition_d489cdea300b28848fee0c58112e1471 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property dc:source .
+
+ns1:property_partition_d53285cf8849c246816d8274fa0f8eec ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:xrefDataSource .
+
+ns1:property_partition_d53ec73c060622279d202d4ddac9ed61 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:bdbPubChem .
+
+ns1:property_partition_d61b430c3d488ca03fa0195cc4b4883f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:centerX .
+
+ns1:property_partition_d68ddcebed24fc455bc75bb79a11354d ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass foaf:Person ;
+    void:property foaf:homepage .
+
+ns1:property_partition_d6da51c4b9bdc3381acc6b4b3c730f51 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property ns16:inchi .
+
+ns1:property_partition_d6e68ec814b171003aed0d62ea021196 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass skos:Collection ;
+    void:property foaf:page .
+
+ns1:property_partition_d79c9daa678351426a9f3d44c1b145a4 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbChemspider .
+
+ns1:property_partition_d7d56e41d9751ded8f91b359fb56d541 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:bdbInChIKey .
+
+ns1:property_partition_d7e99c17406b63deec77fae7175e83d0 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:bdbPubChem .
+
+ns1:property_partition_d80a36d9408cd44646072b149f6cffd7 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:bdbChEBI .
+
+ns1:property_partition_d82aa803cbc04ebaefb4d07fa7045d2a ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass owl:ObjectProperty ;
+    void:property rdfs:domain .
+
+ns1:property_partition_d82e515a865de0186f24382302b6eaa1 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:lineThickness .
+
+ns1:property_partition_d84ae9a16692e2f7c8e54eded86c8746 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Interaction ;
+    void:property wp:bdbKeggCompound .
+
+ns1:property_partition_d93425229d156b22995d8efa31f94cd4 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:fontStrikethru .
+
+ns1:property_partition_d94fe5d78afc8b75dbbca98da882c2c5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property ns16:mass .
+
+ns1:property_partition_d987cbb640bf8210ea9fe4a64aea60f2 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property obo:hasRelatedSynonym .
+
+ns1:property_partition_d9e36f11d217eb4af1a1ddbfb4cd2fe8 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass owl:ObjectProperty ;
+    void:property rdf:type .
+
+ns1:property_partition_d9fa4044fd3299184fe7baec0523519e ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:isAbout .
+
+ns1:property_partition_da040076ccfe8971b9a3bf64874e2031 ns0:objectClass gpml:DataNode,
+        gpml:GraphicalLine,
+        gpml:Group,
+        gpml:Interaction,
+        gpml:Label,
+        gpml:State,
+        gpml:shape ;
+    ns0:subjectClass gpml:Comment ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_da410d0da1819b85556b08fad51e1f1b ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:hasPublicationXref .
+
+ns1:property_partition_dab6428aa2d60d6e584e94dbdcbcf863 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:fontName .
+
+ns1:property_partition_dc6246e9365b87fd1d81a342320291ca ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property obo:hasExactSynonym .
+
+ns1:property_partition_dc981ce6390486dad2b6e91984bc2680 ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:Protein ;
+    void:property rdf:type .
+
+ns1:property_partition_dcf666b881bf4deafc7ca8226ca802d3 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property ns16:smiles .
+
+ns1:property_partition_dd05edece4ed9ff0a61d79e446adea35 ns0:objectClass rdfs:Resource,
+        owl:Class ;
+    ns0:subjectClass owl:ObjectProperty ;
+    void:property rdfs:range .
+
+ns1:property_partition_dd71703f62d7fa7257777ce0d7e01fe3 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbLipidMaps .
+
+ns1:property_partition_dddedb635edd2fdbf72ed79d0d30a3f4 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Ontology ;
+    void:property rdfs:label .
+
+ns1:property_partition_de2191512543132b599c98c5bcfa3050 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Protein ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_de5263679033ca6ac9996245c619bb7c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:PublicationXref ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_deabdacb872385954e3c17333e79083b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:Class ;
+    void:property obo:hasNarrowSynonym .
+
+ns1:property_partition_def07db3d306663e5b9cd1d386c353e4 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property wp:bdbReactome .
+
+ns1:property_partition_df0b8fd4ec679dd65aabcdccd7168bec ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein ;
+    ns0:subjectClass wp:Pathway ;
+    void:property wp:bdbEntrezGene .
+
+ns1:property_partition_df3f2445bd5741bb5e6bf67bcb885354 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:TranscriptionTranslation ;
+    void:property wp:source .
+
+ns1:property_partition_df4b6b3ff11ee66e98e5effa93ffd169 ns0:objectClass gpml:Group,
+        rdfs:Resource ;
+    ns0:subjectClass gpml:shape ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_e0f96e2b88084d6960f891317128f7a3 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:color .
+
+ns1:property_partition_e0fee70de46284bd17931c73197a1b3f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Group ;
+    void:property gpml:graphId .
+
+ns1:property_partition_e11b6b860372f25921b44c58c975ba07 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Pathway ;
+    void:property dc:source .
+
+ns1:property_partition_e12dead1e75fb0481a50a3155292998a ns0:objectClass owl:ObjectProperty ;
+    ns0:subjectClass owl:ObjectProperty ;
+    void:property rdfs:subClassOf .
+
+ns1:property_partition_e24568e8d0456aad1bc8ca747735dc59 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass wp:TranscriptionTranslation ;
+    void:property dcterms:references .
+
+ns1:property_partition_e3030b3452b43f0a2d89b76404a1eaaa ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:lineStyle .
+
+ns1:property_partition_e30b1ca4f459d28fc09afa820482032c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:AnnotationProperty ;
+    void:property rdfs:label .
+
+ns1:property_partition_e390bf4954799b94cbfe59b367e1b5ea ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:fillColor .
+
+ns1:property_partition_e3a95f258ed7ae95f5d7af165bf1be9d ns0:objectClass owl:Class ;
+    ns0:subjectClass owl:Class ;
+    void:property ns15:IAO_0100001 .
+
+ns1:property_partition_e3b5d697029bd383006d8b485404d3cb ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:isAbout .
+
+ns1:property_partition_e40fb0f195c8934a85c4ce891f697b8c ns0:objectClass wp:Binding,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation ;
+    ns0:subjectClass wp:Binding ;
+    void:property wp:target .
+
+ns1:property_partition_e43a90cfa6a3cb70f3830dea4cb56de5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:valign .
+
+ns1:property_partition_e51ccc2577e27b35d429b719041ed1b3 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Point ;
+    void:property gpml:relY .
+
+ns1:property_partition_e53b3524a499e3c362ab484d98408c63 ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        wp:Protein,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbChEBI .
+
+ns1:property_partition_e579734d0c4ab4cb7d030d7677837597 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Binding ;
+    void:property wp:source .
+
+ns1:property_partition_e63d15a206e4419cb4c52aab1f9059ac ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass foaf:Person ;
+    void:property owl:sameAs .
+
+ns1:property_partition_e66c8a112d6b3c07c56fe2bad7bdf386 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Protein ;
+    void:property rdfs:label .
+
+ns1:property_partition_e8a386914879469c713a5568a8c9c174 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Rna ;
+    void:property wp:bdbHgncSymbol .
+
+ns1:property_partition_e8fff93882748e29216ba5f82f4c0ca9 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:DirectedInteraction ;
+    void:property wp:bdbKeggCompound .
+
+ns1:property_partition_e9846783a7629b12b02e6f86be311491 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:lineStyle .
+
+ns1:property_partition_e9db04856d105f9ba8eb71212b917408 ns0:objectClass gpml:PublicationXref,
+        wp:PublicationReference ;
+    ns0:subjectClass skos:Collection ;
+    void:property dcterms:references .
+
+ns1:property_partition_ea3136d25ad4cca8d28cf6786ec16946 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:lineThickness .
+
+ns1:property_partition_ea785987a855b828b14a0be2f803f41a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Protein ;
+    void:property wp:isAbout .
+
+ns1:property_partition_eae8967cadf875b10e0c3b5b1c71af96 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:bdbHgncSymbol .
+
+ns1:property_partition_eafa93918ab869f39896ec0fbd589fa3 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Rna ;
+    void:property dc:source .
+
+ns1:property_partition_eb63edd217d082540db0e292ba6e1863 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:color .
+
+ns1:property_partition_ebf290f3b433cc723627ef85f9cd817e ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:ObjectProperty ;
+    void:property obo:id .
+
+ns1:property_partition_ec23a25bc8b89be8192134d257e14457 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Label ;
+    void:property gpml:valign .
+
+ns1:property_partition_ec7523c3343ba7c4aee5fa8007da34f9 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:Rna,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Rna ;
+    void:property wp:bdbEntrezGene .
+
+ns1:property_partition_ed158dbf24854dc2e2ed03d456798166 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:GraphicalLine ;
+    void:property gpml:biopaxRef .
+
+ns1:property_partition_edcc52a2cf587b410d3f3827b2e31855 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:height .
+
+ns1:property_partition_edef9c79022b5a4dbb1913261090f807 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:DatasetDescription ;
+    void:property dcterms:modified .
+
+ns1:property_partition_ef8d04321bc599850386c84d89ed7bae ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:xrefId .
+
+ns1:property_partition_efe8b1e15c3bac43290998b2f2247a2c ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:DatasetDescription ;
+    void:property rdf:type .
+
+ns1:property_partition_f02807ac94877853ccd93d891255c463 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Linkset ;
+    void:property rdf:type .
+
+ns1:property_partition_f048344e26d0c653f7cb7df4e790fadb ns0:objectClass wp:DataNode,
+        wp:Protein ;
+    ns0:subjectClass wp:Metabolite ;
+    void:property wp:bdbEntrezGene .
+
+ns1:property_partition_f1672e623ed3cd37600e19f47fe936b6 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns17:Distribution ;
+    void:property void:dataDump .
+
+ns1:property_partition_f19ab07d6f637fd0049299a78ecddce2 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Comment ;
+    void:property gpml:commentText .
+
+ns1:property_partition_f1b5fe46c9567f289681110a5d8532e7 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:lineStyle .
+
+ns1:property_partition_f28035d03f20d21b5573f6fff78e4add ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Rna ;
+    void:property dc:identifier .
+
+ns1:property_partition_f369117d554f3f0967ca999f8e05c958 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Anchor ;
+    void:property gpml:shape .
+
+ns1:property_partition_f386d0aad50de0fdcb9cf8836db1a44d ns0:objectClass gpml:GraphicalLine,
+        gpml:Interaction,
+        rdfs:Resource ;
+    ns0:subjectClass gpml:Anchor ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_f38b53d9b0f6675106a0872d86e1d416 ns0:objectClass wp:DataNode,
+        wp:GeneProduct,
+        rdfs:Resource ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:bdbReactome .
+
+ns1:property_partition_f41ebee3e47d0c6e06aa2a4398c4e392 ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:Conversion ;
+    void:property rdf:type .
+
+ns1:property_partition_f452af1b2f85a3b7d3cbbbbe4e8e7094 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:State ;
+    void:property gpml:relY .
+
+ns1:property_partition_f4b91faf0d330800b3896427b3cce4ba ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:shape ;
+    void:property gpml:fontStyle .
+
+ns1:property_partition_f5a84a7e170b6e7a2b22407b0f385ed3 ns0:objectClass wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:TranscriptionTranslation ;
+    void:property wp:participants .
+
+ns1:property_partition_f6207403f67bfdb3d1a006fb09b18e25 ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Pathway,
+        wp:Stimulation,
+        wp:TranscriptionTranslation,
+        wp:Translocation,
+        skos:Collection ;
+    ns0:subjectClass wp:DataNode ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_f62ca5ec60345319ced7ba11f343f969 ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation ;
+    ns0:subjectClass wp:Catalysis ;
+    void:property wp:participants .
+
+ns1:property_partition_f6974549f38693232f9b65776dddccdf ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass skos:ConceptScheme ;
+    void:property rdf:type .
+
+ns1:property_partition_f72f6d91c66d17b15ca54a2ac6f47fbf ns0:objectClass owl:Class ;
+    ns0:subjectClass gpml:PublicationXref ;
+    void:property rdf:type .
+
+ns1:property_partition_f7544ef1bbc23dba0169982c7448cecc ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass owl:ObjectProperty ;
+    void:property rdfs:label .
+
+ns1:property_partition_f7fbda792948d2332e856655369cdeaf ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property rdf:type .
+
+ns1:property_partition_f81feee88cf6871af95c5ba0f7f7e3ed ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna ;
+    ns0:subjectClass wp:Conversion ;
+    void:property wp:source .
+
+ns1:property_partition_f82c8d36cc60998dba6c4f14570d976d ns0:objectClass wp:Binding,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation ;
+    ns0:subjectClass wp:Binding ;
+    void:property wp:participants .
+
+ns1:property_partition_f837e4e6a15d89434222ce43821822ab ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:PublicationReference ;
+    void:property dc:source .
+
+ns1:property_partition_f84c1148a8c4e83a24b244965e776a1e ns0:objectClass gpml:Comment ;
+    ns0:subjectClass gpml:DataNode ;
+    void:property gpml:hasComment .
+
+ns1:property_partition_f8d9f439a8344903f43a33a966147596 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Dataset ;
+    void:property dcterms:title .
+
+ns1:property_partition_f92286d96355ece3aefbf991f79e5632 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass skos:Collection ;
+    void:property wp:organism .
+
+ns1:property_partition_f9787d2267af1a315cd110a2774a355a ns0:objectClass owl:Class ;
+    ns0:subjectClass wp:Complex ;
+    void:property rdf:type .
+
+ns1:property_partition_f9ee5c5320bbca43c5d65815dba5c655 ns0:objectClass wp:Complex,
+        wp:DataNode,
+        wp:GeneProduct ;
+    ns0:subjectClass wp:GeneProduct ;
+    void:property wp:bdbComplexPortal .
+
+ns1:property_partition_faf77d6a314a9fb6ed6290065772c19c ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property wp:isAbout .
+
+ns1:property_partition_fb4559f55cfb1b7a06465f9b8556e17a ns0:objectClass wp:Binding,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation ;
+    ns0:subjectClass wp:Stimulation ;
+    void:property wp:participants .
+
+ns1:property_partition_fb685ef1e156548fe2b8d75ea28ceb93 ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:GeneProduct,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Metabolite,
+        wp:Pathway,
+        wp:Protein,
+        wp:Rna,
+        wp:Stimulation,
+        wp:TranscriptionTranslation ;
+    ns0:subjectClass wp:Inhibition ;
+    void:property wp:target .
+
+ns1:property_partition_fb797fd87580474a9c18cbbc5bc7543f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass gpml:Interaction ;
+    void:property gpml:groupRef .
+
+ns1:property_partition_fc19be824e1e0b77ebf392683ffc743d ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Binding ;
+    void:property dcterms:identifier .
+
+ns1:property_partition_fcf96e98db76491797c794b3391e55cf ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:Rna ;
+    void:property wp:bdbChEBI .
+
+ns1:property_partition_fdd247814f1e3c4e8cf080cd20938401 ns0:objectClass wp:Binding,
+        wp:Catalysis,
+        wp:Complex,
+        wp:Conversion,
+        wp:DataNode,
+        wp:DirectedInteraction,
+        wp:Inhibition,
+        wp:Interaction,
+        wp:Pathway,
+        wp:Stimulation,
+        skos:Collection ;
+    ns0:subjectClass wp:Complex ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_fe0bfb81b684edf2c302a5f00ca79eee ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass wp:PublicationReference ;
+    void:property owl:sameAs .
+
+ns1:property_partition_fe0c7c3b1dcf21fb96f37e030252dc0c ns0:objectClass wp:DataNode,
+        wp:Metabolite,
+        rdfs:Resource ;
+    ns0:subjectClass wp:DataNode ;
+    void:property wp:bdbChemspider .
+
+ns1:property_partition_fe643b8b02534c6d10f753238e6602b5 ns0:objectClass void:Dataset ;
+    ns0:subjectClass void:DatasetDescription ;
+    void:property foaf:primaryTopic .
+
+ns1:property_partition_feb0013959f0da04edc726ba30d517ff ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass wp:Protein ;
+    void:property dc:source .
+

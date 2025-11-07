@@ -1,0 +1,79 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/class_partition_2f9fb92a815890a6f8a0ef6d924e9837> void:class <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization> ;
+    void:entities 2406719 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/class_partition_3c751bd0e15afade7ce17c2ea8b5a559> void:class <http://www.w3.org/2006/vcard/ns#Organization> ;
+    void:entities 2406719 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/class_partition_9c14198d9f601c827867ae04deef3388> void:class <http://purl.org/cerif/frapo/FundingAgency> ;
+    void:entities 2406719 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string ;
+    void:triples 2458530 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_081dc8f14665f4689f697b575ff92512> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://www.w3.org/2006/vcard/ns#Organization> ;
+    void:property skos:closeMatch ;
+    void:triples 232064 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_2268814b03fd81c4dfa1fd6cf5284464> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization> ;
+    void:property skos:closeMatch ;
+    void:triples 232064 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_3347ffd75d67c767b0c311304b239143> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://purl.org/cerif/frapo/FundingAgency> ;
+    void:property <http://www.w3.org/2006/vcard/ns#country-name> ;
+    void:triples 51519 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_3a40006f7fb564d6768df3aa1a69e84f> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://purl.org/cerif/frapo/FundingAgency> ;
+    void:property <http://www.w3.org/2006/vcard/ns#fn> ;
+    void:triples 2407011 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_5aded694b1b7caf5f96d7a5323829cb3> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization> ;
+    void:property <http://www.w3.org/2006/vcard/ns#country-name> ;
+    void:triples 51519 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_6b629f2b0b657cd5b4aec0fa57de83f8> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization> ;
+    void:property <http://www.w3.org/2006/vcard/ns#fn> ;
+    void:triples 2407011 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_8b2312e622793023d28fdf8018db8317> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://www.w3.org/2006/vcard/ns#Organization> ;
+    void:property rdf:type ;
+    void:triples 7220157 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_abfcd5414e2c293fc00d543c80a18190> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.org/cerif/frapo/FundingAgency> ;
+    void:property skos:closeMatch ;
+    void:triples 232064 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_b7ef279db6f503caa0c69dda10473152> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization> ;
+    void:property rdf:type ;
+    void:triples 7220157 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_c322e8e16ab5c835370a0c3b50cfde5a> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://www.w3.org/2006/vcard/ns#Organization> ;
+    void:property <http://www.w3.org/2006/vcard/ns#fn> ;
+    void:triples 2407011 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_ebac1876685a9fcf3e44873d8bbcca31> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.org/cerif/frapo/FundingAgency> ;
+    void:property rdf:type ;
+    void:triples 7220157 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_f2a579bdda1447428f3271bd343318a1> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://www.w3.org/2006/vcard/ns#Organization> ;
+    void:property <http://www.w3.org/2006/vcard/ns#country-name> ;
+    void:triples 51519 .
+

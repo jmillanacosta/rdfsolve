@@ -1,0 +1,82 @@
+{
+  "triples": [
+    [
+      "http://www.w3.org/2006/vcard/ns#Organization",
+      "http://www.w3.org/2004/02/skos/core#closeMatch",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization",
+      "http://www.w3.org/2004/02/skos/core#closeMatch",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://purl.org/cerif/frapo/FundingAgency",
+      "http://www.w3.org/2004/02/skos/core#closeMatch",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://purl.org/cerif/frapo/FundingAgency",
+      "http://www.w3.org/2006/vcard/ns#country-name",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization",
+      "http://www.w3.org/2006/vcard/ns#country-name",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://www.w3.org/2006/vcard/ns#Organization",
+      "http://www.w3.org/2006/vcard/ns#country-name",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://purl.org/cerif/frapo/FundingAgency",
+      "http://www.w3.org/2006/vcard/ns#fn",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization",
+      "http://www.w3.org/2006/vcard/ns#fn",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://www.w3.org/2006/vcard/ns#Organization",
+      "http://www.w3.org/2006/vcard/ns#fn",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://www.w3.org/2006/vcard/ns#Organization",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://purl.org/cerif/frapo/FundingAgency",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 12,
+    "classes": [
+      "http://www.w3.org/2006/vcard/ns#Organization",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization",
+      "http://purl.org/cerif/frapo/FundingAgency"
+    ],
+    "properties": [
+      "http://www.w3.org/2004/02/skos/core#closeMatch",
+      "http://www.w3.org/2006/vcard/ns#country-name",
+      "http://www.w3.org/2006/vcard/ns#fn",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    ],
+    "objects": [
+      "http://www.w3.org/2000/01/rdf-schema#Resource",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ]
+  }
+}

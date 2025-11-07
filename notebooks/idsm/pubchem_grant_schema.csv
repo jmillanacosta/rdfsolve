@@ -1,0 +1,7 @@
+subject_class,subject_uri,property,property_uri,object_class,object_uri
+Grant,http://purl.org/cerif/frapo/Grant,hasFundingAgency,http://purl.org/cerif/frapo/hasFundingAgency,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Grant,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant,hasFundingAgency,http://purl.org/cerif/frapo/hasFundingAgency,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Grant,http://purl.org/cerif/frapo/Grant,type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Grant,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant,type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Grant,http://purl.org/cerif/frapo/Grant,hasGrantNumber,http://purl.org/cerif/frapo/hasGrantNumber,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Grant,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant,hasGrantNumber,http://purl.org/cerif/frapo/hasGrantNumber,Literal,http://www.w3.org/2000/01/rdf-schema#Literal

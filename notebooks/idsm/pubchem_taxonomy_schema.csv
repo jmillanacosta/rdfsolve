@@ -1,0 +1,13 @@
+subject_class,subject_uri,property,property_uri,object_class,object_uri
+Taxonomy,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy,isDiscussedBy,http://purl.org/spar/cito/isDiscussedBy,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+SIO_010000,http://semanticscience.org/resource/SIO_010000,isDiscussedBy,http://purl.org/spar/cito/isDiscussedBy,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Taxonomy,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy,type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+SIO_010000,http://semanticscience.org/resource/SIO_010000,type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Taxonomy,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy,seeAlso,http://www.w3.org/2000/01/rdf-schema#seeAlso,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+SIO_010000,http://semanticscience.org/resource/SIO_010000,seeAlso,http://www.w3.org/2000/01/rdf-schema#seeAlso,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+SIO_010000,http://semanticscience.org/resource/SIO_010000,identifier,http://purl.org/dc/terms/identifier,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Taxonomy,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy,identifier,http://purl.org/dc/terms/identifier,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+SIO_010000,http://semanticscience.org/resource/SIO_010000,prefLabel,http://www.w3.org/2004/02/skos/core#prefLabel,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Taxonomy,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy,prefLabel,http://www.w3.org/2004/02/skos/core#prefLabel,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Taxonomy,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy,altLabel,http://www.w3.org/2004/02/skos/core#altLabel,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+SIO_010000,http://semanticscience.org/resource/SIO_010000,altLabel,http://www.w3.org/2004/02/skos/core#altLabel,Literal,http://www.w3.org/2000/01/rdf-schema#Literal

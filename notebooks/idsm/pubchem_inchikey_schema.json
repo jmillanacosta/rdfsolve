@@ -1,0 +1,83 @@
+{
+  "triples": [
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/has-value",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey",
+      "http://semanticscience.org/resource/has-value",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/SIO_000300",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey",
+      "http://semanticscience.org/resource/SIO_000300",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://purl.org/dc/terms/subject",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey",
+      "http://purl.org/dc/terms/subject",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 12,
+    "classes": [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey"
+    ],
+    "properties": [
+      "http://semanticscience.org/resource/has-value",
+      "http://semanticscience.org/resource/SIO_000300",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.org/dc/terms/subject",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://semanticscience.org/resource/SIO_000011"
+    ],
+    "objects": [
+      "http://www.w3.org/2000/01/rdf-schema#Literal",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ]
+  }
+}

@@ -1,0 +1,3150 @@
+{
+  "@context": {
+    "@context": {
+      "aopo": "http://aopkb.org/aop_ontology#",
+      "brick": "https://brickschema.org/schema/Brick#",
+      "csvw": "http://www.w3.org/ns/csvw#",
+      "dc": "http://purl.org/dc/elements/1.1/",
+      "dcam": "http://purl.org/dc/dcam/",
+      "dcat": "http://www.w3.org/ns/dcat#",
+      "dcmitype": "http://purl.org/dc/dcmitype/",
+      "dcterms": "http://purl.org/dc/terms/",
+      "doap": "http://usefulinc.com/ns/doap#",
+      "edam": "http://edamontology.org/",
+      "foaf": "http://xmlns.com/foaf/0.1/",
+      "geo": "http://www.opengis.net/ont/geosparql#",
+      "nci": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#",
+      "ns1": "http://aopwiki.org//void/",
+      "ns2": "http://ldf.fi/void-ext#",
+      "ns21": "http://purl.obolibrary.org/obo/",
+      "ns9": "http://semanticscience.org/resource/",
+      "odrl": "http://www.w3.org/ns/odrl/2/",
+      "org": "http://www.w3.org/ns/org#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "pav": "http://purl.org/pav/",
+      "prof": "http://www.w3.org/ns/dx/prof/",
+      "prov": "http://www.w3.org/ns/prov#",
+      "qb": "http://purl.org/linked-data/cube#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "schema": "https://schema.org/",
+      "sh": "http://www.w3.org/ns/shacl#",
+      "skos": "http://www.w3.org/2004/02/skos/core#",
+      "sosa": "http://www.w3.org/ns/sosa/",
+      "ssn": "http://www.w3.org/ns/ssn/",
+      "time": "http://www.w3.org/2006/time#",
+      "vann": "http://purl.org/vocab/vann/",
+      "void": "http://rdfs.org/ns/void#",
+      "void-ext": "http://ldf.fi/void-ext#",
+      "wgs": "https://www.w3.org/2003/01/geo/wgs84_pos#",
+      "xml": "http://www.w3.org/XML/1998/namespace",
+      "xsd": "http://www.w3.org/2001/XMLSchema#"
+    }
+  },
+  "@graph": [
+    {
+      "@id": "ns1:property_partition_87d394818bd709fc45e90bfdcb4b8146",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000409"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 466
+    },
+    {
+      "@id": "ns1:property_partition_5abae8b7ccb998f6e79b649561a0633f",
+      "void-ext:objectClass": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "rdfs:Literal"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "void:Dataset"
+      },
+      "void:property": {
+        "@id": "pav:createdWith"
+      },
+      "void:triples": 2
+    },
+    {
+      "@id": "ns1:property_partition_58ff161ec30c2a397221ffe6187dd9b1",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2298"
+      },
+      "void:property": {
+        "@id": "edam:data_2298"
+      },
+      "void:triples": 1630
+    },
+    {
+      "@id": "ns1:property_partition_24bb676758f4f36ab32198b24de4c344",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:triples": 406
+    },
+    {
+      "@id": "ns1:property_partition_3713428ab2b1b11d548e68d4c1891a0a",
+      "void-ext:objectClass": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "void:Linkset"
+        },
+        {
+          "@id": "void:Dataset"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "void:Dataset"
+      },
+      "void:property": {
+        "@id": "dcat:downloadURL"
+      },
+      "void:triples": [
+        1,
+        4
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_33fa43ac71522c17e93e19917a335b9e",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Dataset"
+      },
+      "void:property": {
+        "@id": "dc:description"
+      },
+      "void:triples": 4
+    },
+    {
+      "@id": "ns1:class_partition_0593966383c6cdb7d91809ce6aa80481",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000405"
+      },
+      "void:entities": 420
+    },
+    {
+      "@id": "ns1:property_partition_c9a729eeb54e1fa3870916fd28fceff9",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "dc:description"
+      },
+      "void:triples": 691
+    },
+    {
+      "@id": "ns1:property_partition_78091dbf19287027b3e0d0ac0e9e9a32",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1025"
+      },
+      "void:property": {
+        "@id": "edam:data_2298"
+      },
+      "void:triples": 1630
+    },
+    {
+      "@id": "ns1:property_partition_7a9d44d509215ebda0050970ad5cdb76",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 406
+    },
+    {
+      "@id": "ns1:class_partition_60eafc7caeea4bfb6bed8ea2cff00d4b",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000567"
+      },
+      "void:entities": 417
+    },
+    {
+      "@id": "ns1:property_partition_08cc34884cfbe7c864be01aa9166c615",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "edam:data_2042"
+      },
+      "void:triples": 670
+    },
+    {
+      "@id": "ns1:property_partition_c374a15e2e60b1552cda8e794d6c9b53",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000407"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 432
+    },
+    {
+      "@id": "ns1:property_partition_9e572d08be03064bf849ee61f739f8a6",
+      "void-ext:objectClass": [
+        {
+          "@id": "edam:data_1027"
+        },
+        {
+          "@id": "edam:data_2291"
+        },
+        {
+          "@id": "edam:data_2298"
+        },
+        {
+          "@id": "edam:data_1025"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "ns21:PATO_0001241"
+      },
+      "void:property": {
+        "@id": "skos:exactMatch"
+      },
+      "void:triples": [
+        123,
+        43,
+        724,
+        558
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_1096fa9c9ce948c3de7f56a71f00319b",
+      "void-ext:objectClass": {
+        "@id": "nci:C54571"
+      },
+      "void-ext:subjectClass": {
+        "@id": "nci:C54571"
+      },
+      "void:property": {
+        "@id": "foaf:page"
+      },
+      "void:triples": 728
+    },
+    {
+      "@id": "ns1:property_partition_7a21b625db980ae9b9afb4d434c77cb8",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "ns21:PATO_0000047"
+      },
+      "void:triples": 337
+    },
+    {
+      "@id": "ns1:property_partition_487edd6278eea998ad95c994b7bde57f",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Dataset"
+      },
+      "void:property": {
+        "@id": "pav:createdOn"
+      },
+      "void:triples": 2
+    },
+    {
+      "@id": "ns1:property_partition_53e92b96add98055f06a1ccbb2295fa4",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns21:PATO_0001241"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 550
+    },
+    {
+      "@id": "ns1:property_partition_879cac9d61fab57d00f0ca53f1c1c12f",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000407"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 432
+    },
+    {
+      "@id": "ns1:property_partition_f0c0657b2ab1f8ca2234f633b5cf4074",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000408"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 420
+    },
+    {
+      "@id": "ns1:property_partition_e89e198d543775df010e0fa708a1e67b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000406"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 215
+    },
+    {
+      "@id": "ns1:property_partition_fe08d80dad6c8d1b703622e92ed97e94",
+      "void-ext:objectClass": {
+        "@id": "nci:C54571"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "nci:C54571"
+      },
+      "void:triples": 759
+    },
+    {
+      "@id": "ns1:class_partition_f40618e8ae287fe195941c285abbebde",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:entities": 406
+    },
+    {
+      "@id": "ns1:property_partition_9c3262d8fbdf2e664e765274e12a13bc",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000568"
+      },
+      "void:triples": 406
+    },
+    {
+      "@id": "ns1:property_partition_45480f9d317bd8362658dfb2a2cff1b5",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1025"
+      },
+      "void:property": {
+        "@id": "owl:sameAs"
+      },
+      "void:triples": 558
+    },
+    {
+      "@id": "ns1:property_partition_9826a62096ed1583773e691e0c8b7500",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2298"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 1630
+    },
+    {
+      "@id": "ns1:class_partition_f6f34daa25db2276b08b4d576564285b",
+      "void:class": {
+        "@id": "edam:data_1033"
+      },
+      "void:entities": 1481
+    },
+    {
+      "@id": "ns1:class_partition_78c723fdd657305a2bcb28f459cba690",
+      "void:class": {
+        "@id": "edam:data_2298"
+      },
+      "void:entities": 1630
+    },
+    {
+      "@id": "ns1:property_partition_a94c6dafbc79f47ef74ca2fafb2885df",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "dc:creator"
+      },
+      "void:triples": 423
+    },
+    {
+      "@id": "ns1:property_partition_0335835308c976c8fc7e53695435f696",
+      "void-ext:objectClass": [
+        {
+          "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+        },
+        {
+          "@id": "rdfs:Literal"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+      },
+      "void:triples": [
+        746,
+        586
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_9dfdc70a9581c16bf439f96934d96807",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "dcterms:modified"
+      },
+      "void:triples": 2242
+    },
+    {
+      "@id": "ns1:property_partition_bcdb9ad1936f20e47a766cdab1d510c4",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000412"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 344
+    },
+    {
+      "@id": "ns1:property_partition_f1dd91adce18124d10bd24bdad5f4359",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000564"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 35
+    },
+    {
+      "@id": "ns1:class_partition_6687515ef18de95e8a99d1af26448210",
+      "void:class": {
+        "@id": "nci:C54571"
+      },
+      "void:entities": 728
+    },
+    {
+      "@id": "ns1:property_partition_91d605dff2dd4f0062420689543efc72",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns21:PATO_0001241"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 483
+    },
+    {
+      "@id": "ns1:property_partition_559d5e8e8b6072bbc16e4e96924a86f5",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1027"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 3068
+    },
+    {
+      "@id": "ns1:property_partition_d505062b9e46307416ea8e6ebd8f8efe",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:property": {
+        "@id": "dcterms:alternative"
+      },
+      "void:triples": 13444
+    },
+    {
+      "@id": "ns1:property_partition_4e0c3aa8de9b2106934a883172664eed",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 559
+    },
+    {
+      "@id": "ns1:property_partition_d6d855ff871cc9d435c98cbbfabfe444",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "nci:C25725"
+      },
+      "void:triples": 137
+    },
+    {
+      "@id": "ns1:class_partition_05326e66ffdb699ddd0db33c8b07af4e",
+      "void:class": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:entities": 2242
+    },
+    {
+      "@id": "ns1:property_partition_a31371c60c82743a6268b4f813d748a4",
+      "void-ext:objectClass": [
+        {
+          "@id": "edam:data_1027"
+        },
+        {
+          "@id": "edam:data_2291"
+        },
+        {
+          "@id": "edam:data_1025"
+        },
+        {
+          "@id": "edam:data_1033"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1025"
+      },
+      "void:property": {
+        "@id": "skos:exactMatch"
+      },
+      "void:triples": [
+        7374,
+        10346,
+        1491,
+        1481
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_e4fb4df66f6561021ebbc76e61d2edca",
+      "void-ext:objectClass": [
+        {
+          "@id": "ns9:CHEMINF_000446"
+        },
+        {
+          "@id": "ns9:CHEMINF_000000"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 406
+    },
+    {
+      "@id": "ns1:property_partition_d7f71b5ac07cecea58d12c3e66b6242c",
+      "void-ext:objectClass": [
+        {
+          "@id": "ns21:PATO_0001241"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:CellTypeContext"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": [
+        68,
+        1,
+        31
+      ]
+    },
+    {
+      "@id": "ns1:class_partition_860fa71e750521c61147f43b932a1eac",
+      "void:class": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:entities": 559
+    },
+    {
+      "@id": "ns1:property_partition_ff1c029bd49ff9512f30e4c7d085900e",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 175
+    },
+    {
+      "@id": "ns1:property_partition_21848450e6cbf77ba9c0a5c69b7c71e0",
+      "void-ext:objectClass": [
+        {
+          "@id": "rdfs:Literal"
+        },
+        {
+          "@id": "ns9:CHEMINF_000000"
+        },
+        {
+          "@id": "ns9:CHEMINF_000446"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "nci:C54571"
+      },
+      "void:property": {
+        "@id": "aopo:has_chemical_entity"
+      },
+      "void:triples": [
+        7,
+        415
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_29a893bb2d3016598669285e920b060e",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2298"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 3260
+    },
+    {
+      "@id": "ns1:property_partition_07e1e7aa43dc1d72941fd07ad85e5443",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000409"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000409"
+      },
+      "void:triples": 466
+    },
+    {
+      "@id": "ns1:property_partition_1d75b9d047e4ecb5244c3fd3a4a4cd7a",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000567"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 417
+    },
+    {
+      "@id": "ns1:property_partition_08f5010121ea89a877e3b26b7fb33ef6",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000567"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 417
+    },
+    {
+      "@id": "ns1:property_partition_b90a0ee25bdfaf1f433e4e4653561ef8",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 1541
+    },
+    {
+      "@id": "ns1:property_partition_ea26054a81ced0c607dfe2b03260018d",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Linkset"
+      },
+      "void:property": {
+        "@id": "pav:importedOn"
+      },
+      "void:triples": 2
+    },
+    {
+      "@id": "ns1:property_partition_1f2aa4a2d14ab6031824b25206236fef",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000406"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 215
+    },
+    {
+      "@id": "ns1:property_partition_fb5bbb8ff59803f2b9f8ae4646b6c18c",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000405"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000405"
+      },
+      "void:triples": 420
+    },
+    {
+      "@id": "ns1:property_partition_0b1a48c7ac801642cad9b1e10176a9ed",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1025"
+      },
+      "void:property": {
+        "@id": "edam:data_2291"
+      },
+      "void:triples": 7845
+    },
+    {
+      "@id": "ns1:property_partition_f02807ac94877853ccd93d891255c463",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Linkset"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 4
+    },
+    {
+      "@id": "ns1:property_partition_b90599fd7e4c38699a35f5156c0fdfb3",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "rdfs:label"
+      },
+      "void:triples": 1541
+    },
+    {
+      "@id": "ns1:class_partition_0c45c6209894ccdbe319372370b38cfa",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000564"
+      },
+      "void:entities": 35
+    },
+    {
+      "@id": "ns1:class_partition_9cb842ffe3bab74258e8454a9a9ad638",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000407"
+      },
+      "void:entities": 432
+    },
+    {
+      "@id": "ns1:property_partition_b1657f14473057cb5a846faf0946753b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1025"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 12490
+    },
+    {
+      "@id": "ns1:property_partition_513a1fed0df3e057741baa7df1478066",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000412"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 344
+    },
+    {
+      "@id": "ns1:property_partition_43b1bba27307bec1c9ab9bb9d00e690c",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "aopo:AopContext"
+      },
+      "void:triples": 203
+    },
+    {
+      "@id": "ns1:property_partition_1b1090935993761aff882df6f8f75997",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 1541
+    },
+    {
+      "@id": "ns1:property_partition_00dabb563ac63265c8623267fdb200fb",
+      "void-ext:objectClass": [
+        {
+          "@id": "ns21:GO_0008150"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "ns21:GO_0008150"
+      },
+      "void:triples": [
+        889,
+        6
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_c1be38106a06c50719cc80a2e234fe7b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "nci:C25688"
+      },
+      "void:triples": 139
+    },
+    {
+      "@id": "ns1:class_partition_be3d9cb9234a78e8d9549f89cb426ba6",
+      "void:class": {
+        "@id": "edam:data_1025"
+      },
+      "void:entities": 12490
+    },
+    {
+      "@id": "ns1:property_partition_ae3eb84cdd7674d9e23783caf23ccaa6",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1027"
+      },
+      "void:property": {
+        "@id": "edam:data_1027"
+      },
+      "void:triples": 1534
+    },
+    {
+      "@id": "ns1:property_partition_d372b296a8c88ad007c8689f4f7d030c",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "aopo:has_molecular_initiating_event"
+      },
+      "void:triples": 515
+    },
+    {
+      "@id": "ns1:class_partition_172e57c59558e48f8ee14841b778d071",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000412"
+      },
+      "void:entities": 344
+    },
+    {
+      "@id": "ns1:class_partition_68cf9a8c2b0c75d9cbc8d9df131e1d50",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:entities": 406
+    },
+    {
+      "@id": "ns1:property_partition_08410b4f2fb7bea94c977439aafcadfd",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "nci:C80263"
+      },
+      "void:triples": 686
+    },
+    {
+      "@id": "ns1:property_partition_ed7f08e8dffd90047c7a77ce37519653",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "ns21:MMO_0000000"
+      },
+      "void:triples": 566
+    },
+    {
+      "@id": "ns1:datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a",
+      "void-ext:datatypePartition": {
+        "@id": "xsd:string"
+      },
+      "void:triples": 96572
+    },
+    {
+      "@id": "ns1:property_partition_0147ef0093fc5a2145614bd89f77a440",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1033"
+      },
+      "void:property": {
+        "@id": "edam:data_1033"
+      },
+      "void:triples": 1481
+    },
+    {
+      "@id": "ns1:property_partition_229ab5aef77d60a193934d5a545db8da",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000407"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 432
+    },
+    {
+      "@id": "ns1:property_partition_66220bb322d09b11c18f0a980136cfab",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:BiologicalEvent"
+      },
+      "void:property": {
+        "@id": "aopo:hasAction"
+      },
+      "void:triples": 1095
+    },
+    {
+      "@id": "ns1:property_partition_b8d58e7113b0425a8a36956971c68419",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "aopo:has_evidence"
+      },
+      "void:triples": 184
+    },
+    {
+      "@id": "ns1:property_partition_22d1952dd4caa0d958d4a9936cc32fc5",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Dataset"
+      },
+      "void:property": {
+        "@id": "pav:createdBy"
+      },
+      "void:triples": 2
+    },
+    {
+      "@id": "ns1:property_partition_76c1696379446271e3a48706330d2adb",
+      "void-ext:objectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "dcterms:isPartOf"
+      },
+      "void:triples": 3080
+    },
+    {
+      "@id": "ns1:property_partition_e152bd568a4ac355059cb431693efa2f",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "nci:C71478"
+      },
+      "void:triples": 556
+    },
+    {
+      "@id": "ns1:property_partition_26116da9ef122babb9234cc0b8c17bf4",
+      "void-ext:objectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "rdfs:seeAlso"
+      },
+      "void:triples": 559
+    },
+    {
+      "@id": "ns1:property_partition_e8903ed176f1195f83cafd583cf87a76",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Dataset"
+      },
+      "void:property": {
+        "@id": "dcterms:modified"
+      },
+      "void:triples": 1
+    },
+    {
+      "@id": "ns1:property_partition_039c35a679125476b9075fee7b3e00d9",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2291"
+      },
+      "void:property": {
+        "@id": "edam:data_2291"
+      },
+      "void:triples": 7845
+    },
+    {
+      "@id": "ns1:property_partition_af1538c26f394f40bef49d0b578e2fe2",
+      "void-ext:objectClass": [
+        {
+          "@id": "edam:data_2298"
+        },
+        {
+          "@id": "edam:data_1025"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "edam:data_1025"
+      },
+      "void:triples": 1724
+    },
+    {
+      "@id": "ns1:property_partition_3c2766aeb192d6f5d5692c29eadf9bec",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000564"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000564"
+      },
+      "void:triples": 35
+    },
+    {
+      "@id": "ns1:property_partition_159ee7a5f2e1b7a0f917bbe0dad6e0aa",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2291"
+      },
+      "void:property": {
+        "@id": "owl:sameAs"
+      },
+      "void:triples": 558
+    },
+    {
+      "@id": "ns1:class_partition_a6bb7211c33071c99a0c30f96d378ed8",
+      "void:class": {
+        "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+      },
+      "void:entities": 175
+    },
+    {
+      "@id": "ns1:property_partition_75bfcd8822ee5bf80b5c66abcc3d7364",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000405"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 420
+    },
+    {
+      "@id": "ns1:property_partition_a061f64db43c5010ffc5e97989a725b1",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000409"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 466
+    },
+    {
+      "@id": "ns1:property_partition_1a1ac50dbd9799e6c3e00b8811c2cbfc",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "ns21:PATO_0000047"
+      },
+      "void:triples": 497
+    },
+    {
+      "@id": "ns1:property_partition_a59e928574125da5a8c588e5d2ea7b57",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "nci:C54571"
+      },
+      "void:property": {
+        "@id": "dc:title"
+      },
+      "void:triples": 728
+    },
+    {
+      "@id": "ns1:class_partition_88e66dd5c8f9733a5a09908aaf1e14ca",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000140"
+      },
+      "void:entities": 417
+    },
+    {
+      "@id": "ns1:class_partition_4ba782b6170fa6712d37c53a834e40b3",
+      "void:class": {
+        "@id": "edam:data_1027"
+      },
+      "void:entities": 1534
+    },
+    {
+      "@id": "ns1:property_partition_7e795806b05a0b7d1b83a3dd685913e9",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000140"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 417
+    },
+    {
+      "@id": "ns1:property_partition_0db7fc5c1fdaf462b526eb9eec715e81",
+      "void-ext:objectClass": [
+        {
+          "@id": "ns21:GO_0008150"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        },
+        {
+          "@id": "rdfs:Literal"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "ns21:PATO_0001241"
+      },
+      "void:triples": [
+        14,
+        3,
+        45,
+        58,
+        738
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_29427e22043ac714c330268c976c3dde",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000412"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000412"
+      },
+      "void:triples": 344
+    },
+    {
+      "@id": "ns1:property_partition_65683c40273d95a0b542119dec7c11ad",
+      "void-ext:objectClass": {
+        "@id": "nci:C54571"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:property": {
+        "@id": "dcterms:isPartOf"
+      },
+      "void:triples": 415
+    },
+    {
+      "@id": "ns1:property_partition_6c81d6d4ceae572aa14da733f8cb4b9d",
+      "void-ext:objectClass": [
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        },
+        {
+          "@id": "rdfs:Literal"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "aopo:CellTypeContext"
+      },
+      "void:triples": [
+        191,
+        417,
+        1
+      ]
+    },
+    {
+      "@id": "ns1:class_partition_d004dac86eac0101e0e3f12301402fd8",
+      "void:class": {
+        "@id": "aopo:BiologicalEvent"
+      },
+      "void:entities": 1095
+    },
+    {
+      "@id": "ns1:property_partition_a59f555449c53de4fee89c75d794c9f8",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "edam:operation_3799"
+      },
+      "void:triples": 150
+    },
+    {
+      "@id": "ns1:property_partition_a28cd7e472d790d5959f88ddb9b986fe",
+      "void-ext:objectClass": [
+        {
+          "@id": "ns21:GO_0008150"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "ns21:PATO_0001241"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": [
+        5,
+        31,
+        483
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_c21c989bfea13f99195213e318520820",
+      "void-ext:objectClass": {
+        "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 175
+    },
+    {
+      "@id": "ns1:property_partition_2dd3bba8cd0c83b84c423d9086d4c8de",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Dataset"
+      },
+      "void:property": {
+        "@id": "pav:importedOn"
+      },
+      "void:triples": 2
+    },
+    {
+      "@id": "ns1:property_partition_008d6e53a9156587455c4794a81e339c",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "nci:C54571"
+      },
+      "void:property": {
+        "@id": "rdfs:label"
+      },
+      "void:triples": 728
+    },
+    {
+      "@id": "ns1:property_partition_7250898735ed80c483ee7fb42581774e",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 1541
+    },
+    {
+      "@id": "ns1:property_partition_304b289684154a0b27c7185d4e346c44",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "foaf:page"
+      },
+      "void:triples": 1541
+    },
+    {
+      "@id": "ns1:property_partition_6d5af5e69a76b5c80f8b10b9521fbb8e",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+      },
+      "void:property": {
+        "@id": "dc:title"
+      },
+      "void:triples": 213
+    },
+    {
+      "@id": "ns1:property_partition_884adf09c055857af57dc68102d8d359",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Linkset"
+      },
+      "void:property": {
+        "@id": "dc:description"
+      },
+      "void:triples": 2
+    },
+    {
+      "@id": "ns1:property_partition_a79e3b757172bc2e96d99ff545e1604c",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "foaf:page"
+      },
+      "void:triples": 2242
+    },
+    {
+      "@id": "ns1:property_partition_575a8dda0dd03c1c3c15bb75b936f315",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2291"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 15690
+    },
+    {
+      "@id": "ns1:property_partition_d605a3c9b9a42e4a5f2acb9e42f9af9a",
+      "void-ext:objectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 559
+    },
+    {
+      "@id": "ns1:property_partition_d1815a36368dee93f513c1f62a492d50",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "dcterms:alternative"
+      },
+      "void:triples": 559
+    },
+    {
+      "@id": "ns1:property_partition_9cba7b418356f7f8631775bf9a1292c6",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 559
+    },
+    {
+      "@id": "ns1:class_partition_d8227896bbe7fa00754f516a08ee34da",
+      "void:class": {
+        "@id": "ns21:PATO_0001241"
+      },
+      "void:entities": 483
+    },
+    {
+      "@id": "ns1:property_partition_c66a9079603ab8d5381d883d2dac427c",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "nci:C54571"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 728
+    },
+    {
+      "@id": "ns1:property_partition_30ffdfb45432039b92bc284a91ac1085",
+      "void-ext:objectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "dcterms:isPartOf"
+      },
+      "void:triples": 3472
+    },
+    {
+      "@id": "ns1:property_partition_fe263a0087d5c0902f8db918c564f9f8",
+      "void-ext:objectClass": {
+        "@id": "nci:C54571"
+      },
+      "void-ext:subjectClass": {
+        "@id": "nci:C54571"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 728
+    },
+    {
+      "@id": "ns1:property_partition_ec022ba77704eac44bae9acd328c2480",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "dc:title"
+      },
+      "void:triples": 1541
+    },
+    {
+      "@id": "ns1:property_partition_5434c2ef0373f7731a027357dacd5e03",
+      "void-ext:objectClass": [
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "rdfs:Literal"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "aopo:OrganContext"
+      },
+      "void:triples": [
+        200,
+        1,
+        2,
+        323
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_599e86aba76928d49c980dd289b556aa",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "dc:title"
+      },
+      "void:triples": 559
+    },
+    {
+      "@id": "ns1:property_partition_30622980098876571a3e74be7fff7644",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "rdfs:seeAlso"
+      },
+      "void:triples": 1541
+    },
+    {
+      "@id": "ns1:property_partition_ff624964120ba48b1ba53083769ca35d",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1033"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 2962
+    },
+    {
+      "@id": "ns1:property_partition_7ac15e57d1280f9f9e615fc4a23ea19b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000140"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 417
+    },
+    {
+      "@id": "ns1:property_partition_8f7ac3b13fbb8011fd0e72613440d1c5",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000408"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000408"
+      },
+      "void:triples": 420
+    },
+    {
+      "@id": "ns1:property_partition_4cfd307ad243f6a90a363c3776b85d96",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:CellTypeContext"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 68
+    },
+    {
+      "@id": "ns1:property_partition_8b9bd211af2fb6ba06a65d958870dcad",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "aopo:has_upstream_key_event"
+      },
+      "void:triples": 2242
+    },
+    {
+      "@id": "ns1:property_partition_82dda64dd02a6d5f82e27a2f462f9aa9",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 2242
+    },
+    {
+      "@id": "ns1:property_partition_226d58f64f9b9b791f09d2f57f2112fb",
+      "void-ext:objectClass": [
+        {
+          "@id": "ns9:CHEMINF_000406"
+        },
+        {
+          "@id": "ns9:CHEMINF_000412"
+        },
+        {
+          "@id": "ns9:CHEMINF_000408"
+        },
+        {
+          "@id": "ns9:CHEMINF_000409"
+        },
+        {
+          "@id": "ns9:CHEMINF_000405"
+        },
+        {
+          "@id": "ns9:CHEMINF_000407"
+        },
+        {
+          "@id": "ns9:CHEMINF_000140"
+        },
+        {
+          "@id": "ns9:CHEMINF_000564"
+        },
+        {
+          "@id": "ns9:CHEMINF_000567"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:property": {
+        "@id": "skos:exactMatch"
+      },
+      "void:triples": [
+        35,
+        466,
+        432,
+        420,
+        417,
+        344,
+        215
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_59d27b6fda3748e7703d40e31a66e0ac",
+      "void-ext:objectClass": [
+        {
+          "@id": "edam:data_2298"
+        },
+        {
+          "@id": "edam:data_1025"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "edam:data_1025"
+      },
+      "void:triples": 3547
+    },
+    {
+      "@id": "ns1:property_partition_8c9f246734f36ceb63dd499516a873a0",
+      "void-ext:objectClass": [
+        {
+          "@id": "ns21:GO_0008150"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "ns21:GO_0008150"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": [
+        546,
+        5
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_5ae541ad501ede64864233d4eca736ec",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns21:GO_0008150"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 546
+    },
+    {
+      "@id": "ns1:property_partition_0568eb312293d78ecc9cad3fbcea88cc",
+      "void-ext:objectClass": {
+        "@id": "aopo:BiologicalEvent"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "aopo:hasBiologicalEvent"
+      },
+      "void:triples": 1095
+    },
+    {
+      "@id": "ns1:class_partition_cb325b5edd79e219356c602ed9e29f31",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000408"
+      },
+      "void:entities": 420
+    },
+    {
+      "@id": "ns1:datatype_partition_b8840ae319dd17775a4c3ff2c43caeca",
+      "void-ext:datatypePartition": {
+        "@id": "xsd:date"
+      },
+      "void:triples": 2
+    },
+    {
+      "@id": "ns1:property_partition_c6cd0dc5d9498e3eeebcf2aab368d769",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:property": {
+        "@id": "dc:title"
+      },
+      "void:triples": 406
+    },
+    {
+      "@id": "ns1:property_partition_b8ff9340a1bfee39f1f3d0fe7145433b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "dc:description"
+      },
+      "void:triples": 601
+    },
+    {
+      "@id": "ns1:class_partition_583ee322e80e919bce2a2e4ebed8473b",
+      "void:class": {
+        "@id": "void:Linkset"
+      },
+      "void:entities": 2
+    },
+    {
+      "@id": "ns1:property_partition_631b0b8b17573462d7f3cec264ebca37",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns21:GO_0008150"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 551
+    },
+    {
+      "@id": "ns1:property_partition_4ebf3d8b47d834509f52e0dfbbcf88a2",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 812
+    },
+    {
+      "@id": "ns1:property_partition_cf80888598b723f8f498cf5874807d6b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Dataset"
+      },
+      "void:property": {
+        "@id": "dcterms:accuralPeriodicity"
+      },
+      "void:triples": 2
+    },
+    {
+      "@id": "ns1:property_partition_22e5d31bf97cd2b15c8b0ca2ab63208c",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2291"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 7845
+    },
+    {
+      "@id": "ns1:property_partition_3d08c4528abbf64115592b755fa61e4b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1027"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 1534
+    },
+    {
+      "@id": "ns1:property_partition_0fdc34bd8dba265a8995a26f04914d77",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "dcterms:created"
+      },
+      "void:triples": 2242
+    },
+    {
+      "@id": "ns1:property_partition_7d4927a921a6ec422b7c1d06b1bd8be1",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1025"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 12490
+    },
+    {
+      "@id": "ns1:property_partition_f8d9705308e6ab41822c96b42c200a72",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2291"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 7845
+    },
+    {
+      "@id": "ns1:property_partition_f902a6176e015bcb7a531fd35eb01d24",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000564"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 35
+    },
+    {
+      "@id": "ns1:property_partition_7a0f691382fa8d907b88bfd4ebf87a10",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "nci:C54571"
+      },
+      "void:property": {
+        "@id": "dcterms:modified"
+      },
+      "void:triples": 728
+    },
+    {
+      "@id": "ns1:property_partition_c24e39f65bc7bba1926df32288991705",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1033"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 1481
+    },
+    {
+      "@id": "ns1:datatype_partition_a072d6925e53f477008d80cf3492e74b",
+      "void-ext:datatypePartition": {
+        "@id": "xsd:anyURI"
+      },
+      "void:triples": 50
+    },
+    {
+      "@id": "ns1:class_partition_71e025e3ed797d25ced0e579c55c4253",
+      "void:class": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:entities": 1541
+    },
+    {
+      "@id": "ns1:property_partition_aa9d6a1f73babd7605ce8649f9b0cf73",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1033"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 1481
+    },
+    {
+      "@id": "ns1:property_partition_4442b67a092f5e8a87e3850dc8fa2fe9",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "rdfs:label"
+      },
+      "void:triples": 2242
+    },
+    {
+      "@id": "ns1:property_partition_fbec1f513731cd330944d72b13e6ca66",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 175
+    },
+    {
+      "@id": "ns1:property_partition_d210ab1358e5e570af70819d45ff2313",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000059"
+      },
+      "void:triples": 389
+    },
+    {
+      "@id": "ns1:property_partition_ddd501414404b854ba3f707eb1fea113",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "nci:C25664"
+      },
+      "void:triples": 1541
+    },
+    {
+      "@id": "ns1:class_partition_3fb6ff86370e59e28c2d3851e5b3f004",
+      "void:class": {
+        "@id": "void:Dataset"
+      },
+      "void:entities": 4
+    },
+    {
+      "@id": "ns1:property_partition_94316742a2815a4efa2a42057cb66194",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "dcterms:alternative"
+      },
+      "void:triples": 1541
+    },
+    {
+      "@id": "ns1:property_partition_bc382244ae8f15045ef3b5d3de3b502c",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns21:GO_0008150"
+      },
+      "void:property": {
+        "@id": "dc:title"
+      },
+      "void:triples": 546
+    },
+    {
+      "@id": "ns1:property_partition_c97968d63a332f06d75aabfc2138be79",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2298"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 1630
+    },
+    {
+      "@id": "ns1:property_partition_ffd55166100b6f821bd70f889e15856a",
+      "void-ext:objectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "foaf:page"
+      },
+      "void:triples": 559
+    },
+    {
+      "@id": "ns1:property_partition_4d3fc16faf92777a19a3088179e76b4e",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "nci:C48192"
+      },
+      "void:triples": 190
+    },
+    {
+      "@id": "ns1:property_partition_9a099d5636b92f66f79283c08aff6a78",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000140"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 417
+    },
+    {
+      "@id": "ns1:property_partition_6578b6c6ee67734836daf83b44004c18",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000405"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 420
+    },
+    {
+      "@id": "ns1:property_partition_250dd4aac888c810087382b0a0accb39",
+      "void-ext:objectClass": [
+        {
+          "@id": "ns9:CHEMINF_000406"
+        },
+        {
+          "@id": "ns9:CHEMINF_000405"
+        },
+        {
+          "@id": "ns9:CHEMINF_000407"
+        },
+        {
+          "@id": "ns9:CHEMINF_000140"
+        },
+        {
+          "@id": "ns9:CHEMINF_000412"
+        },
+        {
+          "@id": "ns9:CHEMINF_000408"
+        },
+        {
+          "@id": "ns9:CHEMINF_000409"
+        },
+        {
+          "@id": "ns9:CHEMINF_000564"
+        },
+        {
+          "@id": "ns9:CHEMINF_000567"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:property": {
+        "@id": "skos:exactMatch"
+      },
+      "void:triples": [
+        35,
+        466,
+        432,
+        417,
+        420,
+        344,
+        215
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_212318137f8d00b8ef37c89cee119f08",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1025"
+      },
+      "void:property": {
+        "@id": "edam:data_1027"
+      },
+      "void:triples": 1534
+    },
+    {
+      "@id": "ns1:property_partition_c9625c09485272da5680c659c095e2b8",
+      "void-ext:objectClass": [
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        },
+        {
+          "@id": "rdfs:Literal"
+        },
+        {
+          "@id": "ns21:GO_0008150"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:BiologicalEvent"
+      },
+      "void:property": {
+        "@id": "aopo:hasObject"
+      },
+      "void:triples": [
+        781,
+        60,
+        46,
+        15,
+        3
+      ]
+    },
+    {
+      "@id": "ns1:class_partition_4f8a247d89cb1df0828f28d262266208",
+      "void:class": {
+        "@id": "edam:data_2291"
+      },
+      "void:entities": 7845
+    },
+    {
+      "@id": "ns1:property_partition_ed81c9ad4f2f7047d84119716eedc43a",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1025"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 24980
+    },
+    {
+      "@id": "ns1:property_partition_b525a189ac0cca9636427b0897a78eca",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Dataset"
+      },
+      "void:property": {
+        "@id": "foaf:homepage"
+      },
+      "void:triples": 2
+    },
+    {
+      "@id": "ns1:property_partition_dd15871b29b353f60273cd01d8bb1d1b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000408"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 420
+    },
+    {
+      "@id": "ns1:property_partition_6682a247479f6bf46c6ec14fe814534c",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "dc:description"
+      },
+      "void:triples": 668
+    },
+    {
+      "@id": "ns1:property_partition_bf805b0a9ab32ee3c02022d47c956f6a",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "rdfs:seeAlso"
+      },
+      "void:triples": 2242
+    },
+    {
+      "@id": "ns1:property_partition_0b57968a29e1165c35f79a38ccdbb03a",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "void:Dataset"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 6
+    },
+    {
+      "@id": "ns1:property_partition_9a84935456d59aa18a0570084338fc01",
+      "void-ext:objectClass": {
+        "@id": "nci:C54571"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:property": {
+        "@id": "dcterms:isPartOf"
+      },
+      "void:triples": 415
+    },
+    {
+      "@id": "ns1:property_partition_af3bd757cfc91559c5c861aa39e2fcd4",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000567"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 417
+    },
+    {
+      "@id": "ns1:property_partition_85e5bb9c71be76cda1979f2c12984ce5",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "nci:C25217"
+      },
+      "void:triples": 174
+    },
+    {
+      "@id": "ns1:property_partition_d8b9144c5e5f133d1961bbf3e64eabf0",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000140"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000140"
+      },
+      "void:triples": 417
+    },
+    {
+      "@id": "ns1:property_partition_f9cb71cd960f255c7920e6917dec9b2a",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000412"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 344
+    },
+    {
+      "@id": "ns1:property_partition_d31fec952bb050c04df6c8f9677b2ad6",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:CellTypeContext"
+      },
+      "void:property": {
+        "@id": "dc:title"
+      },
+      "void:triples": 69
+    },
+    {
+      "@id": "ns1:property_partition_7881c4ddc8cfd77ded8a95b7058aaf66",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "dcterms:created"
+      },
+      "void:triples": 559
+    },
+    {
+      "@id": "ns1:property_partition_26382dbdfe43d34405232f8b9830f13b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000408"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 420
+    },
+    {
+      "@id": "ns1:property_partition_fb3d44d24b23058aa6f551659b692394",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2291"
+      },
+      "void:property": {
+        "@id": "rdfs:seeAlso"
+      },
+      "void:triples": 558
+    },
+    {
+      "@id": "ns1:property_partition_1866edab6b76e992d30878060c97a3b8",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:property": {
+        "@id": "dcterms:alternative"
+      },
+      "void:triples": 13444
+    },
+    {
+      "@id": "ns1:property_partition_f13edc43b6092150b6e22fa72ccfedaa",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000564"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 35
+    },
+    {
+      "@id": "ns1:property_partition_b5fab8fb214ca877bb3451c0545a488b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "aopo:LifeStageContext"
+      },
+      "void:triples": 525
+    },
+    {
+      "@id": "ns1:property_partition_db776f8d92631f66652b5ce00c9bcd67",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "aopo:has_adverse_outcome"
+      },
+      "void:triples": 604
+    },
+    {
+      "@id": "ns1:property_partition_4190c3fdcd707d5d8a1348a8a5bc2380",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "nci:C54571"
+      },
+      "void:property": {
+        "@id": "dcterms:created"
+      },
+      "void:triples": 728
+    },
+    {
+      "@id": "ns1:property_partition_9519be9914fa1e7e2f1c9d95e677e900",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:OrganContext"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 127
+    },
+    {
+      "@id": "ns1:property_partition_82c996b0aa22ca6862e2a09c46adbf90",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "aopo:has_downstream_key_event"
+      },
+      "void:triples": 2242
+    },
+    {
+      "@id": "ns1:property_partition_3c854630b95984685e5e2063eb804931",
+      "void-ext:objectClass": [
+        {
+          "@id": "ns9:CHEMINF_000000"
+        },
+        {
+          "@id": "ns9:CHEMINF_000446"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 406
+    },
+    {
+      "@id": "ns1:property_partition_f02af5bb64720b385dcf025bcb30f92c",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1027"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 1534
+    },
+    {
+      "@id": "ns1:property_partition_31fe8e485596e8d41e63f314ebc494b2",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "aopo:has_key_event_relationship"
+      },
+      "void:triples": 3080
+    },
+    {
+      "@id": "ns1:property_partition_3160acbbd7ae99280e125598ade2871b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:OrganContext"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 95
+    },
+    {
+      "@id": "ns1:property_partition_2b4a8b119bbb15d97cf16359465ea5aa",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 812
+    },
+    {
+      "@id": "ns1:property_partition_c45a1a03bb2eaa087511bcc16a2f0171",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 406
+    },
+    {
+      "@id": "ns1:property_partition_acaa7e880a635962e04fed19c847c43b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:BiologicalEvent"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 1095
+    },
+    {
+      "@id": "ns1:property_partition_8efc3712e96ad0c908c150c038ffe93e",
+      "void-ext:objectClass": [
+        {
+          "@id": "ns21:GO_0008150"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:BiologicalEvent"
+      },
+      "void:property": {
+        "@id": "aopo:hasProcess"
+      },
+      "void:triples": [
+        930,
+        7
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_2a826c6d5bb73223312e549215879a25",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000568"
+      },
+      "void:triples": 406
+    },
+    {
+      "@id": "ns1:class_partition_1ca0598f5b02a4d08467b27f368abaec",
+      "void:class": {
+        "@id": "aopo:OrganContext"
+      },
+      "void:entities": 95
+    },
+    {
+      "@id": "ns1:property_partition_1e6282fe3472c1c71c1c21f44e2de853",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "dcterms:abstract"
+      },
+      "void:triples": 329
+    },
+    {
+      "@id": "ns1:property_partition_f1003b172c80163de577621bb9f440f1",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "aopo:LifeStageContext"
+      },
+      "void:triples": 348
+    },
+    {
+      "@id": "ns1:property_partition_fb3c61fe9065a102863f2afeebf577ab",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 2242
+    },
+    {
+      "@id": "ns1:property_partition_78eaf8734903858bfb0ae22101ff5abb",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:triples": 406
+    },
+    {
+      "@id": "ns1:class_partition_1ca93c070cae8a59512cc8676a780fcd",
+      "void:class": {
+        "@id": "ns21:GO_0008150"
+      },
+      "void:entities": 546
+    },
+    {
+      "@id": "ns1:property_partition_163c7d5ee5dc045d9d49c7e37f219085",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1025"
+      },
+      "void:property": {
+        "@id": "edam:data_1033"
+      },
+      "void:triples": 1481
+    },
+    {
+      "@id": "ns1:property_partition_0e5e3346363b1779c657343e0dc329e0",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "dcterms:modified"
+      },
+      "void:triples": 559
+    },
+    {
+      "@id": "ns1:property_partition_8b7a4982267b286e04681b178d3484a5",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000409"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 466
+    },
+    {
+      "@id": "ns1:property_partition_02b5bfc3c6f1d3c8a26f48d40bd94c1a",
+      "void-ext:objectClass": [
+        {
+          "@id": "edam:data_1027"
+        },
+        {
+          "@id": "edam:data_2291"
+        },
+        {
+          "@id": "edam:data_1025"
+        },
+        {
+          "@id": "edam:data_1033"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "edam:data_2298"
+      },
+      "void:property": {
+        "@id": "skos:exactMatch"
+      },
+      "void:triples": [
+        1491,
+        1481,
+        7374,
+        10346
+      ]
+    },
+    {
+      "@id": "ns1:property_partition_05a2042fb4aad1ff11da5b6894d39343",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000407"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000407"
+      },
+      "void:triples": 432
+    },
+    {
+      "@id": "ns1:property_partition_b35ae9182e7317c35d1bbfaff8108525",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "rdfs:label"
+      },
+      "void:triples": 559
+    },
+    {
+      "@id": "ns1:property_partition_c4239e34c5df24dc749d276b69d181f3",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000406"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000406"
+      },
+      "void:triples": 215
+    },
+    {
+      "@id": "ns1:property_partition_d4fd92f03178ec8a7c17e643e700961a",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000000"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000059"
+      },
+      "void:triples": 389
+    },
+    {
+      "@id": "ns1:property_partition_d8724a2d6b762ce549468ab1425c81aa",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000567"
+      },
+      "void:property": {
+        "@id": "ns9:CHEMINF_000567"
+      },
+      "void:triples": 417
+    },
+    {
+      "@id": "ns1:property_partition_46c459e988a7f690d85bac49a1ae0e89",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns21:PATO_0001241"
+      },
+      "void:property": {
+        "@id": "dc:title"
+      },
+      "void:triples": 484
+    },
+    {
+      "@id": "ns1:property_partition_58b8e9066c9942ea7c3d54bd3c3a805d",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000405"
+      },
+      "void:property": {
+        "@id": "dc:source"
+      },
+      "void:triples": 420
+    },
+    {
+      "@id": "ns1:property_partition_6e2e154578a147ca5f1b7f58e0ee3d00",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000406"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": 215
+    },
+    {
+      "@id": "ns1:property_partition_823607f98a4facb319cb485369a7dca8",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void:property": {
+        "@id": "ns21:PATO_0000001"
+      },
+      "void:triples": 912
+    },
+    {
+      "@id": "ns1:property_partition_932e1329ae9b137e14ec8e48d7a497d6",
+      "void-ext:objectClass": [
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "aopo:OrganContext"
+      },
+      "void:property": {
+        "@id": "dc:identifier"
+      },
+      "void:triples": [
+        1,
+        31,
+        95
+      ]
+    },
+    {
+      "@id": "ns1:class_partition_27a742e6d62e356debb8b3a69e1d1153",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000409"
+      },
+      "void:entities": 466
+    },
+    {
+      "@id": "ns1:class_partition_b2a5899c913623a2df950463ff405044",
+      "void:class": {
+        "@id": "ns9:CHEMINF_000406"
+      },
+      "void:entities": 215
+    },
+    {
+      "@id": "ns1:class_partition_f8f2877f90fab58296d2757fe888609f",
+      "void:class": {
+        "@id": "aopo:CellTypeContext"
+      },
+      "void:entities": 68
+    },
+    {
+      "@id": "ns1:property_partition_c1ae151dbd4099f75c2222f10cc7a36f",
+      "void-ext:objectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void-ext:subjectClass": {
+        "@id": "nci:C54571"
+      },
+      "void:property": {
+        "@id": "dcterms:isPartOf"
+      },
+      "void:triples": 759
+    },
+    {
+      "@id": "ns1:property_partition_d2983fcd22695cecda7baee220cdc13b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "ns9:CHEMINF_000446"
+      },
+      "void:property": {
+        "@id": "dc:title"
+      },
+      "void:triples": 406
+    },
+    {
+      "@id": "ns1:property_partition_231f9e4d57c5aa975cd571aaefe66c08",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:CellTypeContext"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 100
+    },
+    {
+      "@id": "ns1:property_partition_43767cdaa03afeb4fdb2757e982eb7cc",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "edam:data_1025"
+      },
+      "void:property": {
+        "@id": "rdfs:seeAlso"
+      },
+      "void:triples": 558
+    },
+    {
+      "@id": "ns1:property_partition_22512d1a0b75a9b2a5125292ca81f3a0",
+      "void-ext:objectClass": [
+        {
+          "@id": "void:Dataset"
+        },
+        {
+          "@id": "void:Linkset"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "void:Linkset"
+      },
+      "void:property": {
+        "@id": "dcat:downloadURL"
+      },
+      "void:triples": 1
+    },
+    {
+      "@id": "ns1:property_partition_24fe843257f9c9cb8496f52fdca03fdd",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "nci:C54571"
+      },
+      "void:property": {
+        "@id": "dc:description"
+      },
+      "void:triples": 17
+    },
+    {
+      "@id": "ns1:property_partition_6de1ffee7ea263a10569de73c4a232ac",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:OrganContext"
+      },
+      "void:property": {
+        "@id": "dc:title"
+      },
+      "void:triples": 96
+    },
+    {
+      "@id": "ns1:property_partition_f322bfa8770cc6ad3a1d02f562618d1f",
+      "void-ext:objectClass": {
+        "@id": "aopo:KeyEvent"
+      },
+      "void-ext:subjectClass": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "void:property": {
+        "@id": "aopo:has_key_event"
+      },
+      "void:triples": 3472
+    }
+  ]
+}

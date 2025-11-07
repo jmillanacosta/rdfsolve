@@ -1,0 +1,834 @@
+{
+  "@context": {
+    "@context": {
+      "aopo": "http://aopkb.org/aop_ontology#",
+      "brick": "https://brickschema.org/schema/Brick#",
+      "csvw": "http://www.w3.org/ns/csvw#",
+      "dc": "http://purl.org/dc/elements/1.1/",
+      "dcam": "http://purl.org/dc/dcam/",
+      "dcat": "http://www.w3.org/ns/dcat#",
+      "dcmitype": "http://purl.org/dc/dcmitype/",
+      "dcterms": "http://purl.org/dc/terms/",
+      "doap": "http://usefulinc.com/ns/doap#",
+      "edam": "http://edamontology.org/",
+      "foaf": "http://xmlns.com/foaf/0.1/",
+      "geo": "http://www.opengis.net/ont/geosparql#",
+      "nci": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#",
+      "ns1": "http://aopwiki.org//void/",
+      "ns2": "http://ldf.fi/void-ext#",
+      "ns21": "http://purl.obolibrary.org/obo/",
+      "ns9": "http://semanticscience.org/resource/",
+      "odrl": "http://www.w3.org/ns/odrl/2/",
+      "org": "http://www.w3.org/ns/org#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "pav": "http://purl.org/pav/",
+      "prof": "http://www.w3.org/ns/dx/prof/",
+      "prov": "http://www.w3.org/ns/prov#",
+      "qb": "http://purl.org/linked-data/cube#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "schema": "https://schema.org/",
+      "sh": "http://www.w3.org/ns/shacl#",
+      "skos": "http://www.w3.org/2004/02/skos/core#",
+      "sosa": "http://www.w3.org/ns/sosa/",
+      "ssn": "http://www.w3.org/ns/ssn/",
+      "time": "http://www.w3.org/2006/time#",
+      "vann": "http://purl.org/vocab/vann/",
+      "void": "http://rdfs.org/ns/void#",
+      "void-ext": "http://ldf.fi/void-ext#",
+      "wgs": "https://www.w3.org/2003/01/geo/wgs84_pos#",
+      "xml": "http://www.w3.org/XML/1998/namespace",
+      "xsd": "http://www.w3.org/2001/XMLSchema#"
+    }
+  },
+  "@graph": [
+    {
+      "@id": "ns9:CHEMINF_000407",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000407": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "ns9:CHEMINF_000409",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000409": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "aopo:KeyEvent",
+      "@type": "rdfs:Resource",
+      "aopo:CellTypeContext": [
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        },
+        {
+          "@id": "rdfs:Literal"
+        }
+      ],
+      "aopo:LifeStageContext": {
+        "@id": "rdfs:Literal"
+      },
+      "aopo:OrganContext": [
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "rdfs:Literal"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        }
+      ],
+      "aopo:hasBiologicalEvent": {
+        "@id": "aopo:BiologicalEvent"
+      },
+      "dc:description": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:identifier": {
+        "@id": "aopo:KeyEvent"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:title": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:alternative": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:isPartOf": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "edam:data_1025": [
+        {
+          "@id": "edam:data_2298"
+        },
+        {
+          "@id": "edam:data_1025"
+        }
+      ],
+      "foaf:page": {
+        "@id": "aopo:KeyEvent"
+      },
+      "http://purl.bioontology.org/ontology/NCBITAXON/131567": [
+        {
+          "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+        },
+        {
+          "@id": "rdfs:Literal"
+        }
+      ],
+      "nci:C25664": {
+        "@id": "rdfs:Literal"
+      },
+      "ns21:GO_0008150": [
+        {
+          "@id": "ns21:GO_0008150"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        }
+      ],
+      "ns21:MMO_0000000": {
+        "@id": "rdfs:Literal"
+      },
+      "ns21:PATO_0000001": {
+        "@id": "rdfs:Literal"
+      },
+      "ns21:PATO_0000047": {
+        "@id": "rdfs:Literal"
+      },
+      "ns21:PATO_0001241": [
+        {
+          "@id": "ns21:GO_0008150"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        },
+        {
+          "@id": "rdfs:Literal"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "rdfs:Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "aopo:KeyEvent"
+      }
+    },
+    {
+      "@id": "aopo:CellTypeContext",
+      "@type": "rdfs:Resource",
+      "dc:identifier": [
+        {
+          "@id": "ns21:PATO_0001241"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        }
+      ],
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:title": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "aopo:AdverseOutcomePathway",
+      "@type": "rdfs:Resource",
+      "aopo:AopContext": {
+        "@id": "rdfs:Literal"
+      },
+      "aopo:LifeStageContext": {
+        "@id": "rdfs:Literal"
+      },
+      "aopo:has_adverse_outcome": {
+        "@id": "aopo:KeyEvent"
+      },
+      "aopo:has_evidence": {
+        "@id": "rdfs:Literal"
+      },
+      "aopo:has_key_event": {
+        "@id": "aopo:KeyEvent"
+      },
+      "aopo:has_key_event_relationship": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "aopo:has_molecular_initiating_event": {
+        "@id": "aopo:KeyEvent"
+      },
+      "dc:creator": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:description": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:identifier": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:title": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:abstract": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:alternative": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:created": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:modified": {
+        "@id": "rdfs:Literal"
+      },
+      "edam:operation_3799": {
+        "@id": "rdfs:Literal"
+      },
+      "foaf:page": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "nci:C25217": {
+        "@id": "rdfs:Literal"
+      },
+      "nci:C25688": {
+        "@id": "rdfs:Literal"
+      },
+      "nci:C25725": {
+        "@id": "rdfs:Literal"
+      },
+      "nci:C48192": {
+        "@id": "rdfs:Literal"
+      },
+      "nci:C54571": {
+        "@id": "nci:C54571"
+      },
+      "ns21:PATO_0000047": {
+        "@id": "rdfs:Literal"
+      },
+      "rdfs:label": {
+        "@id": "rdfs:Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "aopo:AdverseOutcomePathway"
+      }
+    },
+    {
+      "@id": "edam:data_1033",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "edam:data_1033": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "aopo:OrganContext",
+      "@type": "rdfs:Resource",
+      "dc:identifier": [
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        }
+      ],
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:title": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "ns9:CHEMINF_000405",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000405": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "aopo:BiologicalEvent",
+      "@type": "rdfs:Resource",
+      "aopo:hasAction": {
+        "@id": "rdfs:Literal"
+      },
+      "aopo:hasObject": [
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        },
+        {
+          "@id": "rdfs:Literal"
+        },
+        {
+          "@id": "ns21:GO_0008150"
+        }
+      ],
+      "aopo:hasProcess": [
+        {
+          "@id": "ns21:GO_0008150"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        }
+      ]
+    },
+    {
+      "@id": "ns9:CHEMINF_000140",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000140": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "ns9:CHEMINF_000564",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000564": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:title": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "ns21:PATO_0001241",
+      "@type": "rdfs:Resource",
+      "dc:identifier": [
+        {
+          "@id": "ns21:GO_0008150"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        }
+      ],
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:title": {
+        "@id": "rdfs:Literal"
+      },
+      "skos:exactMatch": [
+        {
+          "@id": "edam:data_1027"
+        },
+        {
+          "@id": "edam:data_2291"
+        },
+        {
+          "@id": "edam:data_2298"
+        },
+        {
+          "@id": "edam:data_1025"
+        }
+      ]
+    },
+    {
+      "@id": "edam:data_1027",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "edam:data_1027": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "ns9:CHEMINF_000408",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000408": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "ns21:GO_0008150",
+      "@type": "rdfs:Resource",
+      "dc:identifier": [
+        {
+          "@id": "ns21:GO_0008150"
+        },
+        {
+          "@id": "ns21:PATO_0001241"
+        }
+      ],
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:title": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "ns9:CHEMINF_000000",
+      "@type": "rdfs:Resource",
+      "dc:identifier": [
+        {
+          "@id": "ns9:CHEMINF_000000"
+        },
+        {
+          "@id": "ns9:CHEMINF_000446"
+        }
+      ],
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:title": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:alternative": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:isPartOf": {
+        "@id": "nci:C54571"
+      },
+      "ns9:CHEMINF_000059": {
+        "@id": "rdfs:Resource"
+      },
+      "ns9:CHEMINF_000446": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000568": {
+        "@id": "rdfs:Resource"
+      },
+      "skos:exactMatch": [
+        {
+          "@id": "ns9:CHEMINF_000406"
+        },
+        {
+          "@id": "ns9:CHEMINF_000405"
+        },
+        {
+          "@id": "ns9:CHEMINF_000407"
+        },
+        {
+          "@id": "ns9:CHEMINF_000140"
+        },
+        {
+          "@id": "ns9:CHEMINF_000412"
+        },
+        {
+          "@id": "ns9:CHEMINF_000408"
+        },
+        {
+          "@id": "ns9:CHEMINF_000409"
+        },
+        {
+          "@id": "ns9:CHEMINF_000564"
+        },
+        {
+          "@id": "ns9:CHEMINF_000567"
+        }
+      ]
+    },
+    {
+      "@id": "ns9:CHEMINF_000567",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000567": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "edam:data_2298",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "edam:data_2298": {
+        "@id": "rdfs:Literal"
+      },
+      "skos:exactMatch": [
+        {
+          "@id": "edam:data_1027"
+        },
+        {
+          "@id": "edam:data_2291"
+        },
+        {
+          "@id": "edam:data_1025"
+        },
+        {
+          "@id": "edam:data_1033"
+        }
+      ]
+    },
+    {
+      "@id": "nci:C54571",
+      "@type": "rdfs:Resource",
+      "aopo:has_chemical_entity": [
+        {
+          "@id": "rdfs:Literal"
+        },
+        {
+          "@id": "ns9:CHEMINF_000000"
+        },
+        {
+          "@id": "ns9:CHEMINF_000446"
+        }
+      ],
+      "dc:description": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:identifier": {
+        "@id": "nci:C54571"
+      },
+      "dc:title": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:created": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:isPartOf": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "dcterms:modified": {
+        "@id": "rdfs:Literal"
+      },
+      "foaf:page": {
+        "@id": "nci:C54571"
+      },
+      "rdfs:label": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "aopo:KeyEventRelationship",
+      "@type": "rdfs:Resource",
+      "aopo:has_downstream_key_event": {
+        "@id": "aopo:KeyEvent"
+      },
+      "aopo:has_upstream_key_event": {
+        "@id": "aopo:KeyEvent"
+      },
+      "dc:description": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:identifier": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "dcterms:created": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:isPartOf": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "dcterms:modified": {
+        "@id": "rdfs:Literal"
+      },
+      "edam:data_1025": [
+        {
+          "@id": "edam:data_2298"
+        },
+        {
+          "@id": "edam:data_1025"
+        }
+      ],
+      "edam:data_2042": {
+        "@id": "rdfs:Literal"
+      },
+      "foaf:page": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "nci:C71478": {
+        "@id": "rdfs:Literal"
+      },
+      "nci:C80263": {
+        "@id": "rdfs:Literal"
+      },
+      "rdfs:label": {
+        "@id": "rdfs:Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "aopo:KeyEventRelationship"
+      }
+    },
+    {
+      "@id": "ns9:CHEMINF_000412",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000412": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "ns9:CHEMINF_000446",
+      "@type": "rdfs:Resource",
+      "dc:identifier": [
+        {
+          "@id": "ns9:CHEMINF_000446"
+        },
+        {
+          "@id": "ns9:CHEMINF_000000"
+        }
+      ],
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:title": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:alternative": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:isPartOf": {
+        "@id": "nci:C54571"
+      },
+      "ns9:CHEMINF_000059": {
+        "@id": "rdfs:Resource"
+      },
+      "ns9:CHEMINF_000446": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000568": {
+        "@id": "rdfs:Resource"
+      },
+      "skos:exactMatch": [
+        {
+          "@id": "ns9:CHEMINF_000406"
+        },
+        {
+          "@id": "ns9:CHEMINF_000412"
+        },
+        {
+          "@id": "ns9:CHEMINF_000408"
+        },
+        {
+          "@id": "ns9:CHEMINF_000409"
+        },
+        {
+          "@id": "ns9:CHEMINF_000405"
+        },
+        {
+          "@id": "ns9:CHEMINF_000407"
+        },
+        {
+          "@id": "ns9:CHEMINF_000140"
+        },
+        {
+          "@id": "ns9:CHEMINF_000564"
+        },
+        {
+          "@id": "ns9:CHEMINF_000567"
+        }
+      ]
+    },
+    {
+      "@id": "edam:data_2291",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "edam:data_2291": {
+        "@id": "rdfs:Literal"
+      },
+      "owl:sameAs": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "ns9:CHEMINF_000406",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "ns9:CHEMINF_000406": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "edam:data_1025",
+      "@type": "rdfs:Resource",
+      "dc:identifier": {
+        "@id": "rdfs:Literal"
+      },
+      "dc:source": {
+        "@id": "rdfs:Literal"
+      },
+      "edam:data_1027": {
+        "@id": "rdfs:Literal"
+      },
+      "edam:data_1033": {
+        "@id": "rdfs:Literal"
+      },
+      "edam:data_2291": {
+        "@id": "rdfs:Literal"
+      },
+      "edam:data_2298": {
+        "@id": "rdfs:Literal"
+      },
+      "owl:sameAs": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      },
+      "skos:exactMatch": [
+        {
+          "@id": "edam:data_1027"
+        },
+        {
+          "@id": "edam:data_2291"
+        },
+        {
+          "@id": "edam:data_1025"
+        },
+        {
+          "@id": "edam:data_1033"
+        }
+      ]
+    }
+  ]
+}

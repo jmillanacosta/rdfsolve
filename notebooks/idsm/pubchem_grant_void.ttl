@@ -1,0 +1,45 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/class_partition_9dc32939fa1dbabed3a6a0e66e138f43> void:class <http://purl.org/cerif/frapo/Grant> ;
+    void:entities 1716322 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/class_partition_d16063817f6b5e8271813b2b96f6a292> void:class <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant> ;
+    void:entities 1716322 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string ;
+    void:triples 1716322 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/property_partition_0578705361376c8b80104cb935f508e7> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.org/cerif/frapo/Grant> ;
+    void:property <http://purl.org/cerif/frapo/hasFundingAgency> ;
+    void:triples 1716322 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/property_partition_3cb6c904dc30dd76cbaad375bed62615> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant> ;
+    void:property <http://purl.org/cerif/frapo/hasFundingAgency> ;
+    void:triples 1716322 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/property_partition_504766cd76d2982b6cb30330f0e91d65> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.org/cerif/frapo/Grant> ;
+    void:property rdf:type ;
+    void:triples 3432644 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/property_partition_5428005b6ea5feda02208535d26da34e> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://purl.org/cerif/frapo/Grant> ;
+    void:property <http://purl.org/cerif/frapo/hasGrantNumber> ;
+    void:triples 1716322 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/property_partition_a5c28514dd34e4e03abe485eccda8f0f> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant> ;
+    void:property <http://purl.org/cerif/frapo/hasGrantNumber> ;
+    void:triples 1716322 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/property_partition_bdfb6e3d5f5d8e07c286d6d3af581bd1> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant> ;
+    void:property rdf:type ;
+    void:triples 3432644 .
+

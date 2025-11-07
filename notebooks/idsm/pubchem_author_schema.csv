@@ -1,0 +1,8 @@
+subject_class,subject_uri,property,property_uri,object_class,object_uri
+Author,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author,family-name,http://www.w3.org/2006/vcard/ns#family-name,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Author,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author,hasUID,http://www.w3.org/2006/vcard/ns#hasUID,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Author,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author,organization-name,http://www.w3.org/2006/vcard/ns#organization-name,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Author,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author,source,http://purl.org/dc/terms/source,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Author,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author,given-name,http://www.w3.org/2006/vcard/ns#given-name,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Author,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author,fn,http://www.w3.org/2006/vcard/ns#fn,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Author,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author,type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,Resource,http://www.w3.org/2000/01/rdf-schema#Resource

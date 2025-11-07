@@ -1,0 +1,66 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/class_partition_98fb997d3b8783cf9187290ae01704af> void:class <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup> ;
+    void:entities 1798097 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/class_partition_f284e99d3bfae81f05c2990245660c48> void:class <http://www.bioassayontology.org/bao#BAO_0000040> ;
+    void:entities 1798097 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string ;
+    void:triples 1713419 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/property_partition_02a1d82c90acb4a999b8b8ef383e4e44> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://www.bioassayontology.org/bao#BAO_0000040> ;
+    void:property <http://purl.obolibrary.org/obo/OBI_0000299> ;
+    void:triples 268314653 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/property_partition_2931b287ca6c55d1476074b2cdeb9844> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup> ;
+    void:property dcterms:source ;
+    void:triples 1708411 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/property_partition_618bca54b4f0bf21ae543178798e7141> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://www.bioassayontology.org/bao#BAO_0000040> ;
+    void:property rdf:type ;
+    void:triples 3596194 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/property_partition_6abf6c85355b34c6ef55e71328fe840e> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup> ;
+    void:property dcterms:title ;
+    void:triples 1713419 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/property_partition_79b9cfb2350b7bded677e2e2e677af87> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup> ;
+    void:property <http://purl.obolibrary.org/obo/OBI_0000299> ;
+    void:triples 268314653 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/property_partition_7c19e46f966e8a11795f90535faa1e7a> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://www.bioassayontology.org/bao#BAO_0000040> ;
+    void:property <http://purl.obolibrary.org/obo/RO_0000057> ;
+    void:triples 2220065 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/property_partition_82e54ad447b377905ec65c83457daad5> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup> ;
+    void:property rdf:type ;
+    void:triples 3596194 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/property_partition_b630c07a8113afdc3a2f19897c78bb1a> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://www.bioassayontology.org/bao#BAO_0000040> ;
+    void:property dcterms:source ;
+    void:triples 1708411 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/property_partition_b842b2bfcbf4755ac0227074fc5fdf40> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup> ;
+    void:property <http://purl.obolibrary.org/obo/RO_0000057> ;
+    void:triples 2220065 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup/void/property_partition_e049416aac0273f72973af234cd204d2> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://www.bioassayontology.org/bao#BAO_0000040> ;
+    void:property dcterms:title ;
+    void:triples 1713419 .
+

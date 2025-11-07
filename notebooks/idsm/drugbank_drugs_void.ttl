@@ -1,0 +1,37 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/class_partition_0b000f10de42df65322ae0f4b937de62> void:class <http://semanticscience.org/resource/SIO_011120> ;
+    void:entities 12316 .
+
+<http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string ;
+    void:triples 24632 .
+
+<http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/property_partition_1f41277cedd3c2cd5676a13f6a8bc2ec> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property <http://semanticscience.org/resource/SIO_000011> ;
+    void:triples 12316 .
+
+<http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/property_partition_3bdee6d34d9948f2273787cbbf730a92> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 12316 .
+
+<http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/property_partition_962a44af98a8dafdcb42033e8f66b553> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property <http://semanticscience.org/resource/is-attribute-of> ;
+    void:triples 12316 .
+
+<http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/property_partition_eb440c7ebff437a231bec8be359a936f> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property rdf:type ;
+    void:triples 12316 .
+
+<http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/property_partition_f7cd505948e97063772410f8b59ad714> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property <http://semanticscience.org/resource/has-value> ;
+    void:triples 12316 .
+

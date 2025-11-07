@@ -1,0 +1,58 @@
+{
+  "triples": [
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author",
+      "http://www.w3.org/2006/vcard/ns#family-name",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author",
+      "http://www.w3.org/2006/vcard/ns#hasUID",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author",
+      "http://www.w3.org/2006/vcard/ns#organization-name",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author",
+      "http://purl.org/dc/terms/source",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author",
+      "http://www.w3.org/2006/vcard/ns#given-name",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author",
+      "http://www.w3.org/2006/vcard/ns#fn",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 7,
+    "classes": [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author"
+    ],
+    "properties": [
+      "http://www.w3.org/2006/vcard/ns#family-name",
+      "http://www.w3.org/2006/vcard/ns#hasUID",
+      "http://www.w3.org/2006/vcard/ns#organization-name",
+      "http://purl.org/dc/terms/source",
+      "http://www.w3.org/2006/vcard/ns#given-name",
+      "http://www.w3.org/2006/vcard/ns#fn",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    ],
+    "objects": [
+      "http://www.w3.org/2000/01/rdf-schema#Literal",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "triples": [
+    [
+      "http://www.bioassayontology.org/bao#BAO_0000040",
+      "http://purl.obolibrary.org/obo/OBI_0000299",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup",
+      "http://purl.obolibrary.org/obo/OBI_0000299",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup",
+      "http://purl.org/dc/terms/source",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://www.bioassayontology.org/bao#BAO_0000040",
+      "http://purl.org/dc/terms/source",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://www.bioassayontology.org/bao#BAO_0000040",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup",
+      "http://purl.org/dc/terms/title",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://www.bioassayontology.org/bao#BAO_0000040",
+      "http://purl.org/dc/terms/title",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://www.bioassayontology.org/bao#BAO_0000040",
+      "http://purl.obolibrary.org/obo/RO_0000057",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup",
+      "http://purl.obolibrary.org/obo/RO_0000057",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 10,
+    "classes": [
+      "http://www.bioassayontology.org/bao#BAO_0000040",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup"
+    ],
+    "properties": [
+      "http://purl.obolibrary.org/obo/OBI_0000299",
+      "http://purl.org/dc/terms/source",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://purl.org/dc/terms/title",
+      "http://purl.obolibrary.org/obo/RO_0000057"
+    ],
+    "objects": [
+      "http://www.w3.org/2000/01/rdf-schema#Resource",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ]
+  }
+}

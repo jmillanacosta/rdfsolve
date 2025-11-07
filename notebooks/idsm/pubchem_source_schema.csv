@@ -1,0 +1,15 @@
+subject_class,subject_uri,property,property_uri,object_class,object_uri
+Source,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source,rights,http://purl.org/dc/terms/rights,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Dataset,http://purl.org/dc/terms/Dataset,rights,http://purl.org/dc/terms/rights,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Source,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source,title,http://purl.org/dc/terms/title,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Dataset,http://purl.org/dc/terms/Dataset,title,http://purl.org/dc/terms/title,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Dataset,http://purl.org/dc/terms/Dataset,alternative,http://purl.org/dc/terms/alternative,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Source,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source,alternative,http://purl.org/dc/terms/alternative,Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Dataset,http://purl.org/dc/terms/Dataset,type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Source,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source,type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Source,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source,subject,http://purl.org/dc/terms/subject,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Dataset,http://purl.org/dc/terms/Dataset,subject,http://purl.org/dc/terms/subject,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Source,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source,license,http://purl.org/dc/terms/license,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Dataset,http://purl.org/dc/terms/Dataset,license,http://purl.org/dc/terms/license,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Dataset,http://purl.org/dc/terms/Dataset,homepage,http://xmlns.com/foaf/0.1/homepage,Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Source,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source,homepage,http://xmlns.com/foaf/0.1/homepage,Resource,http://www.w3.org/2000/01/rdf-schema#Resource

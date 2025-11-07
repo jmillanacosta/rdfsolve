@@ -1,0 +1,45 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance/void/class_partition_03864e17d1a98543902c8eed35fd04a0> void:class <http://purl.obolibrary.org/obo/IAO_0000129> ;
+    void:entities 338009330 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance/void/class_partition_d0621112fe42d43ea319fac7fbcfea5f> void:class <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Descriptor> ;
+    void:entities 338009330 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance/void/datatype_partition_0ebe96c7396884ec39ea3d0cc92e67dd> ns1:datatypePartition xsd:int ;
+    void:triples 676018660 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance/void/property_partition_108844416a56f3eb3a0a742d87e4ed98> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/IAO_0000129> ;
+    void:property <http://semanticscience.org/resource/has-value> ;
+    void:triples 338009330 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance/void/property_partition_12e766f638eb4bba73dee06c7dd33507> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Descriptor> ;
+    void:property <http://semanticscience.org/resource/has-value> ;
+    void:triples 338009330 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance/void/property_partition_2622f24a56272160c354562d86ba915e> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/IAO_0000129> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 338009330 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance/void/property_partition_3dbeec41a10774beff3edbaf6121e431> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Descriptor> ;
+    void:property rdf:type ;
+    void:triples 676018660 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance/void/property_partition_8e1e8ce88c286504174d640b52c06c72> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/IAO_0000129> ;
+    void:property rdf:type ;
+    void:triples 676018660 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance/void/property_partition_c5018aa807dce6268141a189518b63d2> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Descriptor> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 338009330 .
+

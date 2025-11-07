@@ -1,0 +1,79 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/class_partition_91a0cab7f1fff01b0b5f00bdadf9d4d1> void:class <http://semanticscience.org/resource/CHEMINF_000399> ;
+    void:entities 121854862 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/class_partition_e01bbca186b7ab99588f1359a196cf45> void:class <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey> ;
+    void:entities 121854862 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string ;
+    void:triples 121854862 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/datatype_partition_a293c1c4f80b12331668319d522ad018> ns1:datatypePartition rdf:langString ;
+    void:triples 121854862 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_0e40c07929f605f18a2cfc949696c303> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/CHEMINF_000399> ;
+    void:property <http://semanticscience.org/resource/has-value> ;
+    void:triples 121854862 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_137902ae89b33e01801423b9ee0b9123> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/CHEMINF_000399> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 121854862 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_34a6cd93b798e063242f93ef46446b6e> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 121854862 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_3966a54d6c5cd8e3172bc7a8304b93b1> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/CHEMINF_000399> ;
+    void:property <http://semanticscience.org/resource/is-attribute-of> ;
+    void:triples 122266138 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_42c5f6af5a4d938d2f7679f9c90696b5> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey> ;
+    void:property <http://semanticscience.org/resource/is-attribute-of> ;
+    void:triples 122266138 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_5680f66283ba3249501bdea9d4b82c0e> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/CHEMINF_000399> ;
+    void:property dcterms:subject ;
+    void:triples 10540 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_62d0b30f18e59b4ead596968065f639e> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/CHEMINF_000399> ;
+    void:property rdf:type ;
+    void:triples 243709724 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_a85f61322613f4249c68a5d17521f983> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey> ;
+    void:property <http://semanticscience.org/resource/has-value> ;
+    void:triples 121854862 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_ad0ae8ac9caa8967e82bd9bb23d59f7e> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/CHEMINF_000399> ;
+    void:property <http://semanticscience.org/resource/SIO_000011> ;
+    void:triples 122266138 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_b3c9fd2a225dddab2389b4a5bee6df06> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey> ;
+    void:property dcterms:subject ;
+    void:triples 10540 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_dce96d1cebe86fffe900d03bf614951a> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey> ;
+    void:property rdf:type ;
+    void:triples 243709724 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey/void/property_partition_ecbefc62a1dfd8c4a8c023a2e38beb15> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#InChIKey> ;
+    void:property <http://semanticscience.org/resource/SIO_000011> ;
+    void:triples 122266138 .
+

@@ -1,0 +1,77 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/class_partition_6805feb7c6ad0b4d863927ae742220d5> void:class <http://semanticscience.org/resource/SIO_010000> ;
+    void:entities 329726 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/class_partition_8f3c09e8d5ef75cd335682001a7c1c54> void:class <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy> ;
+    void:entities 329726 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string ;
+    void:triples 1441153 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_0758942919a225fdf3e1ea73b274319c> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy> ;
+    void:property <http://purl.org/spar/cito/isDiscussedBy> ;
+    void:triples 52974947 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_0f0bfb78bb8184ea4e66b866185b707f> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy> ;
+    void:property rdf:type ;
+    void:triples 659452 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_2bc10259ef8f98187e19e2551f7008a0> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy> ;
+    void:property rdfs:seeAlso ;
+    void:triples 1719309 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_2fadf7f80f68cea3d8f5f640c86eed7d> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_010000> ;
+    void:property dcterms:identifier ;
+    void:triples 329726 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_33e58aa00f6cd6eef6de6bbff6993ee4> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_010000> ;
+    void:property skos:prefLabel ;
+    void:triples 329262 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_3e44e4b7b2aa5185f0287546da32231c> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_010000> ;
+    void:property <http://purl.org/spar/cito/isDiscussedBy> ;
+    void:triples 52974947 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_8960b0f594c75aea869cfb0ee5d8dc16> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy> ;
+    void:property skos:prefLabel ;
+    void:triples 329262 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_9f3ecd0f07b09274754a94bc4d8577d6> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_010000> ;
+    void:property rdf:type ;
+    void:triples 659452 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_9fd3a7b933f887018ae0e5400fe42d40> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy> ;
+    void:property dcterms:identifier ;
+    void:triples 329726 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_cd210628e8d82daa7685fa80a475a438> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy> ;
+    void:property skos:altLabel ;
+    void:triples 782165 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_cfb07204f6ae19bb40577d935610dc3b> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_010000> ;
+    void:property rdfs:seeAlso ;
+    void:triples 1719309 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_f78f4fa78bfe99ca36d99fb1e2fa353e> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_010000> ;
+    void:property skos:altLabel ;
+    void:triples 782165 .
+

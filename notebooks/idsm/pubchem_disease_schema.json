@@ -1,0 +1,72 @@
+{
+  "triples": [
+    [
+      "http://semanticscience.org/resource/SIO_010299",
+      "http://www.w3.org/2004/02/skos/core#closeMatch",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease",
+      "http://www.w3.org/2004/02/skos/core#closeMatch",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010299",
+      "http://www.w3.org/2004/02/skos/core#altLabel",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease",
+      "http://www.w3.org/2004/02/skos/core#altLabel",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010299",
+      "http://www.w3.org/2004/02/skos/core#prefLabel",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease",
+      "http://www.w3.org/2004/02/skos/core#prefLabel",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease",
+      "http://www.w3.org/2004/02/skos/core#relatedMatch",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010299",
+      "http://www.w3.org/2004/02/skos/core#relatedMatch",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010299",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2000/01/rdf-schema#Resource"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 10,
+    "classes": [
+      "http://semanticscience.org/resource/SIO_010299",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease"
+    ],
+    "properties": [
+      "http://www.w3.org/2004/02/skos/core#closeMatch",
+      "http://www.w3.org/2004/02/skos/core#altLabel",
+      "http://www.w3.org/2004/02/skos/core#prefLabel",
+      "http://www.w3.org/2004/02/skos/core#relatedMatch",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    ],
+    "objects": [
+      "http://www.w3.org/2000/01/rdf-schema#Resource",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ]
+  }
+}

@@ -1,0 +1,205 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/class_partition_258df20004e9abc16a259849a577370f> void:class <http://semanticscience.org/resource/SIO_000993> ;
+    void:entities 8535718 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/class_partition_37dfcb9e3f919f3fe6ea11fb72f79d45> void:class <http://semanticscience.org/resource/SIO_001257> ;
+    void:entities 13637060 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/class_partition_6b9ec8e045612293b1321515f85c9f88> void:class <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cooccurrence> ;
+    void:entities 60145650 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/class_partition_aafb401a6235a34e0f479716d217291c> void:class <http://semanticscience.org/resource/SIO_001437> ;
+    void:entities 7520462 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/class_partition_b4e3c4a0e06f0b6a554fe463e0a38f9a> void:class <http://semanticscience.org/resource/SIO_001435> ;
+    void:entities 20661457 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/class_partition_c1c75e7c862677e314348c052532808d> void:class <http://semanticscience.org/resource/SIO_001436> ;
+    void:entities 3371887 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/class_partition_f083253e7d2814aa4552a9d2da96c75a> void:class <http://semanticscience.org/resource/SIO_000983> ;
+    void:entities 6419066 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/datatype_partition_0ebe96c7396884ec39ea3d0cc92e67dd> ns1:datatypePartition xsd:int ;
+    void:triples 60145650 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_08c86ac6be840a8316f909ff9aa1a08c> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001257> ;
+    void:property rdf:subject ;
+    void:triples 13637060 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_19ac639f9516dadca66e96c04d4ec30f> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001437> ;
+    void:property rdf:type ;
+    void:triples 15040924 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_2235d546a152a1fc221c4bb471b0ca4a> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_000993> ;
+    void:property rdf:subject ;
+    void:triples 8535718 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_2693fad55f414aad97894a748da894f2> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_000993> ;
+    void:property <http://semanticscience.org/resource/SIO_001157> ;
+    void:triples 8535718 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_2cc3ccdf8d6b996ad1aeaa6f70c1b2e9> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001257> ;
+    void:property rdf:type ;
+    void:triples 27274120 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_56cd483b3ce289952ef19c7d57925469> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001435> ;
+    void:property rdf:object ;
+    void:triples 20661457 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_5a537a7103031257de6ce0d27cff20aa> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001436> ;
+    void:property rdf:subject ;
+    void:triples 3371887 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_5b077ecf4f5e22b47f05eab6545ec7a4> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001257> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 13637060 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_6c0e2e648a02359f96b46157b6a017d0> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001435> ;
+    void:property rdf:subject ;
+    void:triples 20661457 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_6e627d8c2cc5a1d5d107fd2977267e87> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_000983> ;
+    void:property rdf:subject ;
+    void:triples 6419066 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_6f6b49628604d4444da72c4c969f013f> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_000993> ;
+    void:property rdf:object ;
+    void:triples 8535718 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_70e6c818341b578c2abd1e2e1b5ebe21> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_000983> ;
+    void:property rdf:object ;
+    void:triples 6419066 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_77037817567752258af1a95b73e82cbc> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cooccurrence> ;
+    void:property rdf:type ;
+    void:triples 120291300 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_9616519fedc351bf874ee6620fb3e7dc> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001436> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 3371887 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_9a185226a58bad761b4478b5d3757d68> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001257> ;
+    void:property rdf:object ;
+    void:triples 13637060 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_a86f4995107cbd6b64ef93570bec28c6> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cooccurrence> ;
+    void:property <http://semanticscience.org/resource/SIO_001157> ;
+    void:triples 60145650 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_b9f2308dc381e1094d593b6a14835d0d> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001435> ;
+    void:property <http://semanticscience.org/resource/SIO_001157> ;
+    void:triples 20661457 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_cbb0345a91cad0dcbd27b406b35e2e60> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001437> ;
+    void:property rdf:subject ;
+    void:triples 7520462 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_d2c8e5bb6da769f4e81ccf0ed07e4627> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001436> ;
+    void:property <http://semanticscience.org/resource/SIO_001157> ;
+    void:triples 3371887 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_d8be229e70cc0f85b3c1c15bac1b761b> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001257> ;
+    void:property <http://semanticscience.org/resource/SIO_001157> ;
+    void:triples 13637060 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_d9004ea4fd1203a52c9eaff2544ef75d> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cooccurrence> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 60145650 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_da86ca43fbf0b95036e86e870d78d2d0> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001435> ;
+    void:property rdf:type ;
+    void:triples 41322914 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_dbed1450353670e8302dd5d2502f0b2b> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_000983> ;
+    void:property rdf:type ;
+    void:triples 12838132 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_dd3c16abbedae669305c5d7cd62451fb> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001435> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 20661457 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_ddbce45f80788e1f2b9e2041f07e7414> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001437> ;
+    void:property rdf:object ;
+    void:triples 7520462 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_de65d8dac827e10fdc326e77004ad2bd> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_000983> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 6419066 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_e0df0822b16617d3f847c41ad7ac6c5b> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_000983> ;
+    void:property <http://semanticscience.org/resource/SIO_001157> ;
+    void:triples 6419066 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_e3a182ecbdd04c1b0b9d962973b682bd> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001436> ;
+    void:property rdf:object ;
+    void:triples 3371887 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_e8bd88f546f54672e2ce17f37d4014a8> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_000993> ;
+    void:property rdf:type ;
+    void:triples 17071436 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_eaa6cb94c4189abbb7e4480913de769e> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001437> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 7520462 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_ed3340889b7c7bab0d930a3f2000d566> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cooccurrence> ;
+    void:property rdf:subject ;
+    void:triples 60145650 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_ed8e9ace21e46ae63effa02308c089c1> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_000993> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> ;
+    void:triples 8535718 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_f4794460260f4ec7c8d2d8430d49e3fe> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cooccurrence> ;
+    void:property rdf:object ;
+    void:triples 60145650 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_f6d93f99cdc44f92caefdf9b2367175d> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001436> ;
+    void:property rdf:type ;
+    void:triples 6743774 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence/void/property_partition_fb70fc0d37b50b32cea4d39ab578273f> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001437> ;
+    void:property <http://semanticscience.org/resource/SIO_001157> ;
+    void:triples 7520462 .
+
