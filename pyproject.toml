@@ -51,12 +51,27 @@ license = { file = "LICENSE" }
 
 requires-python = ">=3.10"
 dependencies = [
+    # Core RDF processing
+    "rdflib>=7.0.0", # RDF graph processing and parsing
+    "sparqlwrapper>=2.0.0", # SPARQL endpoint communication
+    
+    # Data processing and analysis
+    "pandas>=2.0.0", # DataFrame operations for analysis results
+    "numpy", # Numerical operations (pandas dependency)
+    
+    # Utility libraries
     "more_itertools", # missing from itertools in stdlib
     "tqdm", # progress bars
     
+    # CLI and web framework
     "click",
     "more_click",
     "flask", # web framework
+    
+    # Jupyter notebook support (for schema extraction workflows)
+    "jupyter",
+    "nbconvert", # Converting notebooks to HTML
+    "ipykernel", # Jupyter kernel support
     
 ]
 
@@ -69,7 +84,7 @@ docs = [
     "sphinx>=8",
     "sphinx-rtd-theme>=3.0",
     "sphinx-click", 
-    "sphinx_automodapi",
+    "sphinx_automodami",
     # Include if your project uses Pydantic:
     # "autodoc_pydantic",
     # To include LaTeX comments easily in your docs.
@@ -78,6 +93,15 @@ docs = [
 ]
 web = [
     "flask>=2.0",
+]
+notebooks = [
+    # Additional packages for notebook development and analysis
+    "matplotlib>=3.5.0", # Plotting and visualization
+    "seaborn>=0.11.0", # Statistical visualization
+    "plotly>=5.0.0", # Interactive plots (optional)
+    "networkx>=2.8", # Network analysis for RDF graphs
+    "jupyterlab>=4.0.0", # Full Jupyter Lab environment
+    "ipywidgets>=8.0.0", # Interactive widgets for notebooks
 ]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
