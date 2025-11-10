@@ -1,0 +1,350 @@
+name: Generate Schema Notebooks
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'notebooks/sources.csv'
+      - 'notebooks/schema_extraction/_schema_template.ipynb'
+      - 'notebooks/schema_extraction/make_notebooks.py'
+      - '.github/workflows/generate-schema-notebooks.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'notebooks/sources.csv'
+      - 'notebooks/schema_extraction/_schema_template.ipynb'
+      - 'notebooks/schema_extraction/make_notebooks.py'
+      - '.github/workflows/generate-schema-notebooks.yml'
+  workflow_dispatch:
+    inputs:
+      dataset_name:
+        description: 'Specific dataset name to process (leave empty for all)'
+        required: false
+        type: string
+
+# Prevent concurrent runs of schema generation workflows
+concurrency:
+  group: schema-notebooks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate-notebooks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pandoc
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install jupyter nbconvert pandas
+
+    - name: List available datasets
+      run: |
+        cd notebooks/schema_extraction
+        python make_notebooks.py --list
+
+    - name: Generate notebooks from template
+      run: |
+        cd notebooks/schema_extraction
+        if [ -n "${{ github.event.inputs.dataset_name }}" ]; then
+          echo "Generating notebook for specific dataset: ${{ github.event.inputs.dataset_name }}"
+          python make_notebooks.py --dataset "${{ github.event.inputs.dataset_name }}"
+        else
+          echo "Generating notebooks for all datasets"
+          python make_notebooks.py
+        fi
+
+    - name: Execute notebooks and convert to HTML
+      run: |
+        cd notebooks/schema_extraction
+        echo "Converting notebooks to HTML..."
+        
+        # Create HTML output directory
+        mkdir -p ../../docs/notebooks/schema_extraction
+        
+        # Process notebooks (either specific dataset or all)
+        if [ -n "${{ github.event.inputs.dataset_name }}" ]; then
+          notebook_pattern="${{ github.event.inputs.dataset_name }}_schema.ipynb"
+        else
+          notebook_pattern="*_schema.ipynb"
+        fi
+        
+        # Convert each notebook with timeout
+        for nb in $notebook_pattern; do
+          if [ -f "$nb" ]; then
+            echo "Processing: $nb"
+            
+            # Execute and convert to HTML with error handling
+            if timeout 1200 jupyter nbconvert --execute --to html "$nb" --output-dir ../../docs/notebooks/schema_extraction --ExecutePreprocessor.timeout=1200; then
+              echo "Successfully converted: $nb"
+            else
+              echo "Failed to convert: $nb"
+              # Create a basic HTML file indicating failure
+              base_name=$(basename "$nb" .ipynb)
+              cat > "../../docs/notebooks/schema_extraction/${base_name}.html" << EOF
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Schema Analysis Failed - ${base_name}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                .error { color: #d32f2f; background: #ffebee; padding: 20px; border-radius: 4px; }
+            </style>
+        </head>
+        <body>
+            <h1>Schema Analysis Failed</h1>
+            <div class="error">
+                <h2>Dataset: ${base_name}</h2>
+                <p>The notebook execution failed, possibly due to:</p>
+                <ul>
+                    <li>Network timeout accessing the SPARQL endpoint</li>
+                    <li>Endpoint temporarily unavailable</li>
+                    <li>Query complexity or dataset size</li>
+                </ul>
+                <p>This is expected for some datasets due to external dependencies.</p>
+            </div>
+            <p><em>Generated on: $(date)</em></p>
+        </body>
+        </html>
+        EOF
+            fi
+          fi
+        done
+
+    - name: Create index HTML file
+      run: |
+        cd docs/notebooks/schema_extraction
+        
+        # Create an index.html file listing all generated HTML files
+        cat > index.html << EOF
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>RDFSolve Schema Analysis Results</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    margin: 40px; 
+                    line-height: 1.6; 
+                }
+                .header { 
+                    background: #f5f5f5; 
+                    padding: 20px; 
+                    border-radius: 8px; 
+                    margin-bottom: 30px; 
+                }
+                .dataset-list { 
+                    display: grid; 
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+                    gap: 20px; 
+                }
+                .dataset-card { 
+                    border: 1px solid #ddd; 
+                    padding: 15px; 
+                    border-radius: 8px; 
+                    background: white; 
+                }
+                .dataset-card:hover { 
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+                }
+                .dataset-name { 
+                    font-weight: bold; 
+                    color: #1976d2; 
+                    margin-bottom: 8px; 
+                }
+                .dataset-link { 
+                    text-decoration: none; 
+                    color: inherit; 
+                }
+                .success { color: #388e3c; }
+                .error { color: #d32f2f; }
+                .footer { 
+                    margin-top: 40px; 
+                    padding-top: 20px; 
+                    border-top: 1px solid #eee; 
+                    color: #666; 
+                    text-align: center; 
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>RDFSolve Schema Analysis Results</h1>
+                <p>Automated schema extraction and analysis for RDF datasets using RDFSolve.</p>
+                <p><strong>Generated:</strong> $(date)</p>
+                <p><strong>Total Datasets:</strong> $(ls -1 *.html | grep -v index.html | wc -l)</p>
+            </div>
+            
+            <div class="dataset-list">
+        EOF
+        
+        # Add each HTML file to the index
+        for html_file in *.html; do
+          if [ "$html_file" != "index.html" ]; then
+            dataset_name=$(basename "$html_file" .html)
+            dataset_name_clean=$(echo "$dataset_name" | sed 's/_schema$//')
+            
+            # Check if it's a success or failure file
+            if grep -q "Schema Analysis Failed" "$html_file"; then
+              status_class="error"
+              status_icon="[FAIL]"
+              status_text="Failed"
+            else
+              status_class="success"
+              status_icon="[OK]"
+              status_text="Completed"
+            fi
+            
+            cat >> index.html << EOF
+                <div class="dataset-card">
+                    <div class="dataset-name">
+                        <a href="$html_file" class="dataset-link">
+                            $status_icon $dataset_name_clean
+                        </a>
+                    </div>
+                    <div class="$status_class">Status: $status_text</div>
+                    <div><a href="$html_file">View Analysis →</a></div>
+                </div>
+        EOF
+          fi
+        done
+        
+        cat >> index.html << EOF
+            </div>
+            
+            <div class="footer">
+                <p>Generated by <strong>RDFSolve</strong> automated workflow</p>
+                <p>Repository: <a href="https://github.com/jmillanacosta/rdfsolve">github.com/jmillanacosta/rdfsolve</a></p>
+            </div>
+        </body>
+        </html>
+        EOF
+
+    - name: Commit and push results with retry logic
+      run: |
+        # Configure git with proper settings
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git config --local pull.rebase true
+        
+        # Function to safely commit and push with retries
+        commit_and_push() {
+          local attempt=1
+          local max_attempts=3
+          local delay=5
+          
+          while [ $attempt -le $max_attempts ]; do
+            echo "Commit attempt $attempt of $max_attempts"
+            
+            # Ensure we're up to date
+            git pull origin main --rebase || echo "Pull failed, continuing"
+            
+            # Add generated files
+            git add notebooks/schema_extraction/*.ipynb docs/notebooks/schema_extraction/ 2>/dev/null || true
+            
+            # Check if there are changes to commit
+            if git diff --cached --quiet; then
+              echo "No changes to commit"
+              return 0
+            fi
+            
+            # Create commit message
+            if [ -n "${{ github.event.inputs.dataset_name }}" ]; then
+              commit_msg="Generate schema notebook and HTML for dataset: ${{ github.event.inputs.dataset_name }}"
+              commit_detail="Sequential workflow - Single dataset: ${{ github.event.inputs.dataset_name }}"
+            else
+              commit_msg="Generate all schema notebooks and HTML files"
+              commit_detail="Sequential workflow - All datasets processed"
+            fi
+            
+            # Attempt to commit and push
+            if git commit -m "$commit_msg" -m "$commit_detail" -m "Auto-generated on $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)"; then
+              echo "Successfully created commit"
+              
+              if git push origin main; then
+                echo "Successfully pushed changes"
+                return 0
+              else
+                echo "Push failed on attempt $attempt"
+                # Reset the commit and try again
+                git reset --hard HEAD~1
+              fi
+            else
+              echo "Commit failed on attempt $attempt"
+            fi
+            
+            echo "Waiting ${delay}s before retry..."
+            sleep $delay
+            delay=$((delay + 3))
+            attempt=$((attempt + 1))
+          done
+          
+          echo "Failed to commit and push after $max_attempts attempts"
+          return 1
+        }
+        
+        # Execute the commit and push
+        if commit_and_push; then
+          echo "Results successfully committed and pushed"
+        else
+          echo "Failed to push results, but artifacts are still available"
+          # Don't fail the workflow, artifacts are still created
+        fi
+
+    - name: Upload HTML artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: schema-analysis-html
+        path: docs/notebooks/schema_extraction/
+        retention-days: 30
+
+    - name: Summary
+      run: |
+        echo "## Schema Analysis Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        cd docs/notebooks/schema_extraction
+        
+        if [ -n "${{ github.event.inputs.dataset_name }}" ]; then
+          echo "**Target Dataset:** ${{ github.event.inputs.dataset_name }}" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Processing:** All datasets from sources.csv" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Generated Files:**" >> $GITHUB_STEP_SUMMARY
+        
+        # Count notebooks
+        notebook_count=$(ls -1 ../../notebooks/schema_extraction/*_schema.ipynb 2>/dev/null | wc -l)
+        echo "- Notebooks: $notebook_count" >> $GITHUB_STEP_SUMMARY
+        
+        # Count HTML files  
+        html_count=$(ls -1 *.html 2>/dev/null | grep -v index.html | wc -l)
+        echo "- HTML Reports: $html_count" >> $GITHUB_STEP_SUMMARY
+        
+        # Count successful vs failed
+        success_count=$(grep -L "Schema Analysis Failed" *.html 2>/dev/null | grep -v index.html | wc -l)
+        failed_count=$(grep -l "Schema Analysis Failed" *.html 2>/dev/null | wc -l)
+        echo "- Successful: $success_count" >> $GITHUB_STEP_SUMMARY
+        echo "- Failed: $failed_count" >> $GITHUB_STEP_SUMMARY
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Artifacts:** Check the 'schema-analysis-html' artifact for downloadable HTML reports." >> $GITHUB_STEP_SUMMARY

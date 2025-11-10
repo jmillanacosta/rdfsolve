@@ -29,8 +29,8 @@ jobs:
       run: |
         cd notebooks/schema_extraction
         
-        # Extract dataset names from sources.csv
-        datasets=$(tail -n +2 ../sources.csv | cut -d',' -f1 | jq -R . | jq -s .)
+        # Extract dataset names from sources.csv and create proper JSON
+        datasets=$(tail -n +2 ../sources.csv | cut -d',' -f1 | grep -v '^$' | jq -R . | jq -s . | jq -c .)
         
         # Create matrix for parallel processing
         echo "datasets=$datasets" >> $GITHUB_OUTPUT
@@ -174,7 +174,7 @@ jobs:
         fi
 
     - name: Upload individual result
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: schema-${{ matrix.dataset }}
         path: |
@@ -206,9 +206,11 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: artifacts/
+        pattern: schema-*
+        merge-multiple: true
       continue-on-error: true
 
     - name: Collect and organize results
@@ -550,7 +552,7 @@ jobs:
         fi
 
     - name: Upload final results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: schema-analysis-matrix-complete
         path: docs/notebooks/schema_extraction/
