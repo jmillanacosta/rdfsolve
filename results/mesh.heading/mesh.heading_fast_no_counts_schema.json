@@ -1,0 +1,79 @@
+{
+  "triples": [
+    [
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#broaderDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor"
+    ],
+    [
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#broaderDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://id.nlm.nih.gov/mesh/vocab#PublicationType",
+      "http://id.nlm.nih.gov/mesh/vocab#broaderDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#PublicationType"
+    ],
+    [
+      "http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#broaderDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor"
+    ],
+    [
+      "http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#broaderDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://id.nlm.nih.gov/mesh/vocab#Qualifier",
+      "http://id.nlm.nih.gov/mesh/vocab#onlineNote",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#onlineNote",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#onlineNote",
+      "http://www.w3.org/2000/01/rdf-schema#Literal"
+    ],
+    [
+      "http://id.nlm.nih.gov/mesh/vocab#Concept",
+      "http://id.nlm.nih.gov/mesh/vocab#broaderConcept",
+      "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    ],
+    [
+      "http://id.nlm.nih.gov/mesh/vocab#TreeNumber",
+      "http://id.nlm.nih.gov/mesh/vocab#parentTreeNumber",
+      "http://id.nlm.nih.gov/mesh/vocab#TreeNumber"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 10,
+    "classes": [
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#PublicationType",
+      "http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#Qualifier",
+      "http://id.nlm.nih.gov/mesh/vocab#Concept",
+      "http://id.nlm.nih.gov/mesh/vocab#TreeNumber"
+    ],
+    "properties": [
+      "http://id.nlm.nih.gov/mesh/vocab#broaderDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#onlineNote",
+      "http://id.nlm.nih.gov/mesh/vocab#broaderConcept",
+      "http://id.nlm.nih.gov/mesh/vocab#parentTreeNumber"
+    ],
+    "objects": [
+      "http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor",
+      "http://id.nlm.nih.gov/mesh/vocab#PublicationType",
+      "http://www.w3.org/2000/01/rdf-schema#Literal",
+      "http://id.nlm.nih.gov/mesh/vocab#Concept",
+      "http://id.nlm.nih.gov/mesh/vocab#TreeNumber"
+    ]
+  }
+}

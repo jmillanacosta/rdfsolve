@@ -1,0 +1,72 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_1566d52c2ba2eb552ace3f08ed99c200> void:class <http://semanticscience.org/resource/SIO_011125> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_1a3d0de597b35daa5f6c6b51e1e670ce> void:class <http://purl.obolibrary.org/obo/MS_1000744> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_316bed77f18c69ce8ce1dfba2a50da9e> void:class <http://purl.obolibrary.org/obo/MS_1000130> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_3bfcb47fd0085d31f48f8dd7acb81923> void:class <http://semanticscience.org/resource/CHEMINF_000113> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_7feb69f685913271fbd6dc2bd2351900> void:class <http://purl.obolibrary.org/obo/MS_1000294> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_91672aac5769d957e2a561ddb23ab509> void:class <http://semanticscience.org/resource/CHEMINF_000217> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_97c594bec1a97f6e5024023aa1a6d73d> void:class <http://purl.obolibrary.org/obo/MS_1000129> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_a5dc610b80d46b9b015e0b4e0bd17376> void:class <http://semanticscience.org/resource/SIO_000089> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_d335a820f41e3fb49aad23e64baff095> void:class <http://semanticscience.org/resource/CHEMINF_000042> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_ec10a46057d9bc2fcb3054a4826dd202> void:class <http://purl.obolibrary.org/obo/MS_1000463> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/datatype_partition_0ebe96c7396884ec39ea3d0cc92e67dd> ns1:datatypePartition xsd:int .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/datatype_partition_512e3ad3197eb11ad2129cce7b72863c> ns1:datatypePartition <http://bioinfo.uochb.cas.cz/rdf/v1.0/ms#spectrum> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/datatype_partition_c7ad2d0b02fcfefaf443acf0c533b817> ns1:datatypePartition xsd:float .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_01f936efa0f06ce70a42636ffd95d7e7> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/MS_1000511> ;
+    void:property rdf:type .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_2ccc6cc468cc656c211efadff9b45bc7> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/MS_1000041> ;
+    void:property rdf:type .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_3c7436b92376893c06e71bae7e6306d0> ns1:objectClass <http://semanticscience.org/resource/SIO_011125> ;
+    ns1:subjectClass <http://semanticscience.org/resource/CHEMINF_000018> ;
+    void:property <http://semanticscience.org/resource/SIO_000011> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_4549c460cea86ca2ae97710e8c0a63a3> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/CHEMINF_000113> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_582ef4d7bf86a945d3ce210a3b60fa55> ns1:objectClass <http://semanticscience.org/resource/SIO_001180> ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/MS_1002813> ;
+    void:property <http://semanticscience.org/resource/SIO_000553> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_7f261cbb32ec26a3fb461cbafda8f0f3> ns1:objectClass <http://semanticscience.org/resource/SIO_001166> ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001180> ;
+    void:property <http://semanticscience.org/resource/SIO_000255> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_8efc146aff8bcd320b4e17d10b872c37> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/CHEMINF_000042> ;
+    void:property rdf:type .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_96cf2da44740dd83a7a17caa4ee6a26b> ns1:objectClass <http://purl.obolibrary.org/obo/MS_1000130>,
+        <http://purl.obolibrary.org/obo/MS_1000463> ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_001180> ;
+    void:property <http://semanticscience.org/resource/SIO_000552> .
+
+<https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_bbc374c1a4b3414f05d2023325d807aa> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011125> ;
+    void:property skos:closeMatch .
+

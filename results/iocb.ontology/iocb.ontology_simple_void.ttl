@@ -1,0 +1,5 @@
+class_name,class_uri,total_instances,instances_in_partitions,partition_occurrences,occurrence_coverage_percent,avg_occurrences_per_instance
+Class,http://www.w3.org/2002/07/owl#Class,6123721,6123721,6123721,100.0,1.0
+Restriction,http://www.w3.org/2002/07/owl#Restriction,1885349,1885349,1885349,100.0,1.0
+Property,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property,20571,20571,20571,100.0,1.0
+NamedIndividual,http://www.w3.org/2002/07/owl#NamedIndividual,1189,1189,1189,100.0,1.0

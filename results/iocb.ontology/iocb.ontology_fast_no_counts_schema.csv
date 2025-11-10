@@ -1,0 +1,11 @@
+subject_class,subject_uri,property,property_uri,object_class,object_uri
+rdf:Property,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property,rdfs:subClassOf,http://www.w3.org/2000/01/rdf-schema#subClassOf,owl:Class,http://www.w3.org/2002/07/owl#Class
+owl:Restriction,http://www.w3.org/2002/07/owl#Restriction,owl:onProperty,http://www.w3.org/2002/07/owl#onProperty,rdf:Property,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+owl:Restriction,http://www.w3.org/2002/07/owl#Restriction,owl:onProperty,http://www.w3.org/2002/07/owl#onProperty,owl:Class,http://www.w3.org/2002/07/owl#Class
+owl:NamedIndividual,http://www.w3.org/2002/07/owl#NamedIndividual,rdf:type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,owl:Class,http://www.w3.org/2002/07/owl#Class
+owl:Restriction,http://www.w3.org/2002/07/owl#Restriction,rdf:type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,owl:Class,http://www.w3.org/2002/07/owl#Class
+owl:Restriction,http://www.w3.org/2002/07/owl#Restriction,owl:someValuesFrom,http://www.w3.org/2002/07/owl#someValuesFrom,rdf:Property,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+owl:Restriction,http://www.w3.org/2002/07/owl#Restriction,owl:someValuesFrom,http://www.w3.org/2002/07/owl#someValuesFrom,owl:Class,http://www.w3.org/2002/07/owl#Class
+rdf:Property,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property,rdfs:domain,http://www.w3.org/2000/01/rdf-schema#domain,owl:Class,http://www.w3.org/2002/07/owl#Class
+rdf:Property,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property,rdfs:domain,http://www.w3.org/2000/01/rdf-schema#domain,owl:Restriction,http://www.w3.org/2002/07/owl#Restriction
+owl:Class,http://www.w3.org/2002/07/owl#Class,owl:minCardinality,http://www.w3.org/2002/07/owl#minCardinality,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal

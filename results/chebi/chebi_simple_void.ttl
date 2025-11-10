@@ -1,0 +1,170 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/class_partition_0b000f10de42df65322ae0f4b937de62> void:class <http://semanticscience.org/resource/SIO_011120> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/class_partition_1ca745c9f8b3c9769bd64e64b306d5f2> void:class owl:Axiom .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/class_partition_6be100d081a438502013ba4e5fef3db7> void:class owl:Class .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/class_partition_9ed2fb7d3b7985c23e788a879a4db9d7> void:class owl:Restriction .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/datatype_partition_13be789b5fffdc118f154b0b918ff747> ns1:datatypePartition xsd:boolean .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_02ba11b55bed665908479c44892d853e> ns1:objectClass <http://semanticscience.org/resource/SIO_011120> ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://semanticscience.org/resource/SIO_000008> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_0f32248351028e915c6ab2cf93b0f170> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property rdfs:label .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_14ed1422a4479f95c99b9a0b7afa7eee> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://www.geneontology.org/formats/oboInOwl#hasOBONamespace> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_1f41277cedd3c2cd5676a13f6a8bc2ec> ns1:objectClass rdfs:Resource,
+        owl:Class ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property <http://semanticscience.org/resource/SIO_000011> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_2596356105d2c43fd7031fcba85a8d26> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass owl:Restriction ;
+    void:property owl:onProperty .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_2f48c0520988974354588d23c752bcca> ns1:objectClass owl:Class ;
+    ns1:subjectClass owl:Axiom ;
+    void:property owl:annotatedSource .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_386deb0a69169276dc44745a20e4b78f> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://www.geneontology.org/formats/oboInOwl#inSubset> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_3bdee6d34d9948f2273787cbbf730a92> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property <http://semanticscience.org/resource/SIO_000300> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_4113333afdcf929c620fb654a9078b72> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://www.geneontology.org/formats/oboInOwl#hasAlternativeId> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_41b6b487bb2fff041e1fc7655a6de3e6> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass owl:Axiom ;
+    void:property rdf:type .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_42b45695ca07937f12f61e1fd75a3b96> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://www.geneontology.org/formats/oboInOwl#hasDbXref> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_652666b556a5cca75df5ecc0b152fdd9> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass owl:Axiom ;
+    void:property <http://www.geneontology.org/formats/oboInOwl#hasSynonymType> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_67645c4098fe64ef0fc38591e1cfe94f> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://www.geneontology.org/formats/oboInOwl#id> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_6e091fb2f4ce971751c10f5e0bc55b01> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://purl.obolibrary.org/obo/chebi/formula> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_8b3dbcc4bcc7f3f2a93d4691e404f7cf> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass owl:Axiom ;
+    void:property owl:annotatedProperty .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_8bccfa8d592e759393eeb4463aeee67c> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://purl.obolibrary.org/obo/chebi/monoisotopicmass> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_8fd938ece4cc40f53f5b30c00538c1b5> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://purl.obolibrary.org/obo/chebi/charge> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_940f01a1b12bbadf53f6dbf87f640f17> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Axiom ;
+    void:property owl:annotatedTarget .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_962a44af98a8dafdcb42033e8f66b553> ns1:objectClass rdfs:Resource,
+        owl:Class ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property <http://semanticscience.org/resource/is-attribute-of> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_9c314e5fd2f05cadf19aa87546ef7f8d> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://purl.obolibrary.org/obo/IAO_0000115> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_9dddb628164160f84760cf320c1f8f78> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Axiom ;
+    void:property <http://www.geneontology.org/formats/oboInOwl#hasDbXref> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_9f03a36fa0f9f1cd525108466986a42a> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property owl:deprecated .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_a336b4ec4632a734bc16d40e7ea285a6> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Axiom ;
+    void:property <http://www.geneontology.org/formats/oboInOwl#source> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_aa8fd75b008af799ceca13b5516006e8> ns1:objectClass owl:Class ;
+    ns1:subjectClass owl:Restriction ;
+    void:property owl:someValuesFrom .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_b85e2af96c2937aaca8516e630975e39> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass owl:Restriction ;
+    void:property rdf:type .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_b9a75062b358fd8221c040f6b1da127a> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://purl.obolibrary.org/obo/IAO_0000231> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_c86193802bd680a18119fc18d3ae82a1> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://purl.obolibrary.org/obo/chebi/inchikey> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_ce545a40236f2f67373ec829c632b34b> ns1:objectClass owl:Class,
+        owl:Restriction ;
+    ns1:subjectClass owl:Class ;
+    void:property rdfs:subClassOf .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_d2a0c8517b8e3c30af07fd67184bf6e0> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass owl:Class ;
+    void:property rdf:type .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_d6da51c4b9bdc3381acc6b4b3c730f51> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://purl.obolibrary.org/obo/chebi/inchi> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_d94fe5d78afc8b75dbbca98da882c2c5> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://purl.obolibrary.org/obo/chebi/mass> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_d987cbb640bf8210ea9fe4a64aea60f2> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_dc6246e9365b87fd1d81a342320291ca> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_dcf666b881bf4deafc7ca8226ca802d3> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://purl.obolibrary.org/obo/chebi/smiles> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_e3a95f258ed7ae95f5d7af165bf1be9d> ns1:objectClass owl:Class ;
+    ns1:subjectClass owl:Class ;
+    void:property <http://purl.obolibrary.org/obo/IAO_0100001> .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_eb440c7ebff437a231bec8be359a936f> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property rdf:type .
+
+<http://rdf.ebi.ac.uk/dataset/chebi/void/property_partition_f7cd505948e97063772410f8b59ad714> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property <http://semanticscience.org/resource/has-value> .
+

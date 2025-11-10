@@ -1,0 +1,11 @@
+subject_class,subject_uri,property,property_uri,object_class,object_uri
+ms:1000511,http://purl.obolibrary.org/obo/MS_1000511,rdf:type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,rdfs:Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+ms:1000041,http://purl.obolibrary.org/obo/MS_1000041,rdf:type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,rdfs:Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+cheminf:000042,http://semanticscience.org/resource/CHEMINF_000042,rdf:type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,rdfs:Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+cheminf:000018,http://semanticscience.org/resource/CHEMINF_000018,sio:000011,http://semanticscience.org/resource/SIO_000011,sio:011125,http://semanticscience.org/resource/SIO_011125
+cheminf:000113,http://semanticscience.org/resource/CHEMINF_000113,sio:000300,http://semanticscience.org/resource/SIO_000300,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+ms:1002813,http://purl.obolibrary.org/obo/MS_1002813,sio:000553,http://semanticscience.org/resource/SIO_000553,sio:001180,http://semanticscience.org/resource/SIO_001180
+sio:001180,http://semanticscience.org/resource/SIO_001180,sio:000255,http://semanticscience.org/resource/SIO_000255,sio:001166,http://semanticscience.org/resource/SIO_001166
+sio:001180,http://semanticscience.org/resource/SIO_001180,sio:000552,http://semanticscience.org/resource/SIO_000552,ms:1000130,http://purl.obolibrary.org/obo/MS_1000130
+sio:001180,http://semanticscience.org/resource/SIO_001180,sio:000552,http://semanticscience.org/resource/SIO_000552,ms:1000463,http://purl.obolibrary.org/obo/MS_1000463
+sio:011125,http://semanticscience.org/resource/SIO_011125,skos:closeMatch,http://www.w3.org/2004/02/skos/core#closeMatch,rdfs:Resource,http://www.w3.org/2000/01/rdf-schema#Resource

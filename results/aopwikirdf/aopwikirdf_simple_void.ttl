@@ -1,0 +1,934 @@
+@prefix aopo: <http://aopkb.org/aop_ontology#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix edam: <http://edamontology.org/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix nci: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#> .
+@prefix ns0: <http://ldf.fi/void-ext#> .
+@prefix ns1: <http://aopwiki.org//void/> .
+@prefix ns21: <http://purl.obolibrary.org/obo/> .
+@prefix ns9: <http://semanticscience.org/resource/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pav: <http://purl.org/pav/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_05326e66ffdb699ddd0db33c8b07af4e void:class aopo:KeyEventRelationship .
+
+ns1:class_partition_0593966383c6cdb7d91809ce6aa80481 void:class ns9:CHEMINF_000405 .
+
+ns1:class_partition_0c45c6209894ccdbe319372370b38cfa void:class ns9:CHEMINF_000564 .
+
+ns1:class_partition_172e57c59558e48f8ee14841b778d071 void:class ns9:CHEMINF_000412 .
+
+ns1:class_partition_1ca0598f5b02a4d08467b27f368abaec void:class aopo:OrganContext .
+
+ns1:class_partition_1ca93c070cae8a59512cc8676a780fcd void:class ns21:GO_0008150 .
+
+ns1:class_partition_27a742e6d62e356debb8b3a69e1d1153 void:class ns9:CHEMINF_000409 .
+
+ns1:class_partition_3fb6ff86370e59e28c2d3851e5b3f004 void:class void:Dataset .
+
+ns1:class_partition_4ba782b6170fa6712d37c53a834e40b3 void:class edam:data_1027 .
+
+ns1:class_partition_4f8a247d89cb1df0828f28d262266208 void:class edam:data_2291 .
+
+ns1:class_partition_583ee322e80e919bce2a2e4ebed8473b void:class void:Linkset .
+
+ns1:class_partition_60eafc7caeea4bfb6bed8ea2cff00d4b void:class ns9:CHEMINF_000567 .
+
+ns1:class_partition_6687515ef18de95e8a99d1af26448210 void:class nci:C54571 .
+
+ns1:class_partition_68cf9a8c2b0c75d9cbc8d9df131e1d50 void:class ns9:CHEMINF_000000 .
+
+ns1:class_partition_71e025e3ed797d25ced0e579c55c4253 void:class aopo:KeyEvent .
+
+ns1:class_partition_78c723fdd657305a2bcb28f459cba690 void:class edam:data_2298 .
+
+ns1:class_partition_860fa71e750521c61147f43b932a1eac void:class aopo:AdverseOutcomePathway .
+
+ns1:class_partition_88e66dd5c8f9733a5a09908aaf1e14ca void:class ns9:CHEMINF_000140 .
+
+ns1:class_partition_9cb842ffe3bab74258e8454a9a9ad638 void:class ns9:CHEMINF_000407 .
+
+ns1:class_partition_a6bb7211c33071c99a0c30f96d378ed8 void:class <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
+
+ns1:class_partition_b2a5899c913623a2df950463ff405044 void:class ns9:CHEMINF_000406 .
+
+ns1:class_partition_be3d9cb9234a78e8d9549f89cb426ba6 void:class edam:data_1025 .
+
+ns1:class_partition_cb325b5edd79e219356c602ed9e29f31 void:class ns9:CHEMINF_000408 .
+
+ns1:class_partition_d004dac86eac0101e0e3f12301402fd8 void:class aopo:BiologicalEvent .
+
+ns1:class_partition_d8227896bbe7fa00754f516a08ee34da void:class ns21:PATO_0001241 .
+
+ns1:class_partition_f40618e8ae287fe195941c285abbebde void:class ns9:CHEMINF_000446 .
+
+ns1:class_partition_f6f34daa25db2276b08b4d576564285b void:class edam:data_1033 .
+
+ns1:class_partition_f8f2877f90fab58296d2757fe888609f void:class aopo:CellTypeContext .
+
+ns1:datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a ns0:datatypePartition xsd:string .
+
+ns1:datatype_partition_a072d6925e53f477008d80cf3492e74b ns0:datatypePartition xsd:anyURI .
+
+ns1:datatype_partition_b8840ae319dd17775a4c3ff2c43caeca ns0:datatypePartition xsd:date .
+
+ns1:property_partition_008d6e53a9156587455c4794a81e339c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass nci:C54571 ;
+    void:property rdfs:label .
+
+ns1:property_partition_00dabb563ac63265c8623267fdb200fb ns0:objectClass ns21:GO_0008150,
+        ns21:PATO_0001241 ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property ns21:GO_0008150 .
+
+ns1:property_partition_0147ef0093fc5a2145614bd89f77a440 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1033 ;
+    void:property edam:data_1033 .
+
+ns1:property_partition_02b5bfc3c6f1d3c8a26f48d40bd94c1a ns0:objectClass edam:data_1025,
+        edam:data_1027,
+        edam:data_1033,
+        edam:data_2291 ;
+    ns0:subjectClass edam:data_2298 ;
+    void:property skos:exactMatch .
+
+ns1:property_partition_0335835308c976c8fc7e53695435f696 ns0:objectClass <http://purl.bioontology.org/ontology/NCBITAXON/131567>,
+        rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
+
+ns1:property_partition_039c35a679125476b9075fee7b3e00d9 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_2291 ;
+    void:property edam:data_2291 .
+
+ns1:property_partition_0568eb312293d78ecc9cad3fbcea88cc ns0:objectClass aopo:BiologicalEvent ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property aopo:hasBiologicalEvent .
+
+ns1:property_partition_05a2042fb4aad1ff11da5b6894d39343 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000407 ;
+    void:property ns9:CHEMINF_000407 .
+
+ns1:property_partition_07e1e7aa43dc1d72941fd07ad85e5443 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000409 ;
+    void:property ns9:CHEMINF_000409 .
+
+ns1:property_partition_08410b4f2fb7bea94c977439aafcadfd ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property nci:C80263 .
+
+ns1:property_partition_08cc34884cfbe7c864be01aa9166c615 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property edam:data_2042 .
+
+ns1:property_partition_08f5010121ea89a877e3b26b7fb33ef6 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000567 ;
+    void:property rdf:type .
+
+ns1:property_partition_0b1a48c7ac801642cad9b1e10176a9ed ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1025 ;
+    void:property edam:data_2291 .
+
+ns1:property_partition_0b57968a29e1165c35f79a38ccdbb03a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property rdf:type .
+
+ns1:property_partition_0db7fc5c1fdaf462b526eb9eec715e81 ns0:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns21:GO_0008150,
+        ns21:PATO_0001241,
+        rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property ns21:PATO_0001241 .
+
+ns1:property_partition_0e5e3346363b1779c657343e0dc329e0 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property dcterms:modified .
+
+ns1:property_partition_0fdc34bd8dba265a8995a26f04914d77 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property dcterms:created .
+
+ns1:property_partition_1096fa9c9ce948c3de7f56a71f00319b ns0:objectClass nci:C54571 ;
+    ns0:subjectClass nci:C54571 ;
+    void:property foaf:page .
+
+ns1:property_partition_159ee7a5f2e1b7a0f917bbe0dad6e0aa ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass edam:data_2291 ;
+    void:property owl:sameAs .
+
+ns1:property_partition_163c7d5ee5dc045d9d49c7e37f219085 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1025 ;
+    void:property edam:data_1033 .
+
+ns1:property_partition_1866edab6b76e992d30878060c97a3b8 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000000 ;
+    void:property dcterms:alternative .
+
+ns1:property_partition_1a1ac50dbd9799e6c3e00b8811c2cbfc ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property ns21:PATO_0000047 .
+
+ns1:property_partition_1b1090935993761aff882df6f8f75997 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property dc:source .
+
+ns1:property_partition_1d75b9d047e4ecb5244c3fd3a4a4cd7a ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000567 ;
+    void:property dc:source .
+
+ns1:property_partition_1e6282fe3472c1c71c1c21f44e2de853 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property dcterms:abstract .
+
+ns1:property_partition_1f2aa4a2d14ab6031824b25206236fef ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000406 ;
+    void:property dc:source .
+
+ns1:property_partition_212318137f8d00b8ef37c89cee119f08 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1025 ;
+    void:property edam:data_1027 .
+
+ns1:property_partition_21848450e6cbf77ba9c0a5c69b7c71e0 ns0:objectClass ns9:CHEMINF_000000,
+        ns9:CHEMINF_000446,
+        rdfs:Literal ;
+    ns0:subjectClass nci:C54571 ;
+    void:property aopo:has_chemical_entity .
+
+ns1:property_partition_22512d1a0b75a9b2a5125292ca81f3a0 ns0:objectClass void:Dataset,
+        void:Linkset,
+        rdfs:Resource ;
+    ns0:subjectClass void:Linkset ;
+    void:property dcat:downloadURL .
+
+ns1:property_partition_226d58f64f9b9b791f09d2f57f2112fb ns0:objectClass ns9:CHEMINF_000140,
+        ns9:CHEMINF_000405,
+        ns9:CHEMINF_000406,
+        ns9:CHEMINF_000407,
+        ns9:CHEMINF_000408,
+        ns9:CHEMINF_000409,
+        ns9:CHEMINF_000412,
+        ns9:CHEMINF_000564,
+        ns9:CHEMINF_000567 ;
+    ns0:subjectClass ns9:CHEMINF_000446 ;
+    void:property skos:exactMatch .
+
+ns1:property_partition_229ab5aef77d60a193934d5a545db8da ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000407 ;
+    void:property rdf:type .
+
+ns1:property_partition_22d1952dd4caa0d958d4a9936cc32fc5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property pav:createdBy .
+
+ns1:property_partition_22e5d31bf97cd2b15c8b0ca2ab63208c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_2291 ;
+    void:property dc:identifier .
+
+ns1:property_partition_231f9e4d57c5aa975cd571aaefe66c08 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass aopo:CellTypeContext ;
+    void:property rdf:type .
+
+ns1:property_partition_24bb676758f4f36ab32198b24de4c344 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000446 ;
+    void:property ns9:CHEMINF_000446 .
+
+ns1:property_partition_24fe843257f9c9cb8496f52fdca03fdd ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass nci:C54571 ;
+    void:property dc:description .
+
+ns1:property_partition_250dd4aac888c810087382b0a0accb39 ns0:objectClass ns9:CHEMINF_000140,
+        ns9:CHEMINF_000405,
+        ns9:CHEMINF_000406,
+        ns9:CHEMINF_000407,
+        ns9:CHEMINF_000408,
+        ns9:CHEMINF_000409,
+        ns9:CHEMINF_000412,
+        ns9:CHEMINF_000564,
+        ns9:CHEMINF_000567 ;
+    ns0:subjectClass ns9:CHEMINF_000000 ;
+    void:property skos:exactMatch .
+
+ns1:property_partition_26116da9ef122babb9234cc0b8c17bf4 ns0:objectClass aopo:AdverseOutcomePathway ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_26382dbdfe43d34405232f8b9830f13b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000408 ;
+    void:property dc:identifier .
+
+ns1:property_partition_29427e22043ac714c330268c976c3dde ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000412 ;
+    void:property ns9:CHEMINF_000412 .
+
+ns1:property_partition_29a893bb2d3016598669285e920b060e ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass edam:data_2298 ;
+    void:property rdf:type .
+
+ns1:property_partition_2a826c6d5bb73223312e549215879a25 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000000 ;
+    void:property ns9:CHEMINF_000568 .
+
+ns1:property_partition_2b4a8b119bbb15d97cf16359465ea5aa ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000000 ;
+    void:property rdf:type .
+
+ns1:property_partition_2dd3bba8cd0c83b84c423d9086d4c8de ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Dataset ;
+    void:property pav:importedOn .
+
+ns1:property_partition_304b289684154a0b27c7185d4e346c44 ns0:objectClass aopo:KeyEvent ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property foaf:page .
+
+ns1:property_partition_30622980098876571a3e74be7fff7644 ns0:objectClass aopo:KeyEvent ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_30ffdfb45432039b92bc284a91ac1085 ns0:objectClass aopo:AdverseOutcomePathway ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_3160acbbd7ae99280e125598ade2871b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:OrganContext ;
+    void:property dc:source .
+
+ns1:property_partition_31fe8e485596e8d41e63f314ebc494b2 ns0:objectClass aopo:KeyEventRelationship ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:has_key_event_relationship .
+
+ns1:property_partition_33fa43ac71522c17e93e19917a335b9e ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Dataset ;
+    void:property dc:description .
+
+ns1:property_partition_3713428ab2b1b11d548e68d4c1891a0a ns0:objectClass void:Dataset,
+        void:Linkset,
+        rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property dcat:downloadURL .
+
+ns1:property_partition_3c2766aeb192d6f5d5692c29eadf9bec ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000564 ;
+    void:property ns9:CHEMINF_000564 .
+
+ns1:property_partition_3c854630b95984685e5e2063eb804931 ns0:objectClass ns9:CHEMINF_000000,
+        ns9:CHEMINF_000446 ;
+    ns0:subjectClass ns9:CHEMINF_000000 ;
+    void:property dc:identifier .
+
+ns1:property_partition_3d08c4528abbf64115592b755fa61e4b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1027 ;
+    void:property dc:source .
+
+ns1:property_partition_4190c3fdcd707d5d8a1348a8a5bc2380 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass nci:C54571 ;
+    void:property dcterms:created .
+
+ns1:property_partition_43767cdaa03afeb4fdb2757e982eb7cc ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass edam:data_1025 ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_43b1bba27307bec1c9ab9bb9d00e690c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:AopContext .
+
+ns1:property_partition_4442b67a092f5e8a87e3850dc8fa2fe9 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property rdfs:label .
+
+ns1:property_partition_45480f9d317bd8362658dfb2a2cff1b5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass edam:data_1025 ;
+    void:property owl:sameAs .
+
+ns1:property_partition_46c459e988a7f690d85bac49a1ae0e89 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns21:PATO_0001241 ;
+    void:property dc:title .
+
+ns1:property_partition_487edd6278eea998ad95c994b7bde57f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Dataset ;
+    void:property pav:createdOn .
+
+ns1:property_partition_4cfd307ad243f6a90a363c3776b85d96 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:CellTypeContext ;
+    void:property dc:source .
+
+ns1:property_partition_4d3fc16faf92777a19a3088179e76b4e ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property nci:C48192 .
+
+ns1:property_partition_4e0c3aa8de9b2106934a883172664eed ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property rdf:type .
+
+ns1:property_partition_4ebf3d8b47d834509f52e0dfbbcf88a2 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000446 ;
+    void:property rdf:type .
+
+ns1:property_partition_513a1fed0df3e057741baa7df1478066 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000412 ;
+    void:property dc:source .
+
+ns1:property_partition_53e92b96add98055f06a1ccbb2295fa4 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns21:PATO_0001241 ;
+    void:property rdf:type .
+
+ns1:property_partition_5434c2ef0373f7731a027357dacd5e03 ns0:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns21:PATO_0001241,
+        rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property aopo:OrganContext .
+
+ns1:property_partition_559d5e8e8b6072bbc16e4e96924a86f5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass edam:data_1027 ;
+    void:property rdf:type .
+
+ns1:property_partition_575a8dda0dd03c1c3c15bb75b936f315 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass edam:data_2291 ;
+    void:property rdf:type .
+
+ns1:property_partition_58b8e9066c9942ea7c3d54bd3c3a805d ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000405 ;
+    void:property dc:source .
+
+ns1:property_partition_58ff161ec30c2a397221ffe6187dd9b1 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_2298 ;
+    void:property edam:data_2298 .
+
+ns1:property_partition_599e86aba76928d49c980dd289b556aa ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property dc:title .
+
+ns1:property_partition_59d27b6fda3748e7703d40e31a66e0ac ns0:objectClass edam:data_1025,
+        edam:data_2298 ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property edam:data_1025 .
+
+ns1:property_partition_5abae8b7ccb998f6e79b649561a0633f ns0:objectClass rdfs:Literal,
+        rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property pav:createdWith .
+
+ns1:property_partition_5ae541ad501ede64864233d4eca736ec ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns21:GO_0008150 ;
+    void:property dc:source .
+
+ns1:property_partition_631b0b8b17573462d7f3cec264ebca37 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns21:GO_0008150 ;
+    void:property rdf:type .
+
+ns1:property_partition_65683c40273d95a0b542119dec7c11ad ns0:objectClass nci:C54571 ;
+    ns0:subjectClass ns9:CHEMINF_000446 ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_6578b6c6ee67734836daf83b44004c18 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000405 ;
+    void:property rdf:type .
+
+ns1:property_partition_66220bb322d09b11c18f0a980136cfab ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:BiologicalEvent ;
+    void:property aopo:hasAction .
+
+ns1:property_partition_6682a247479f6bf46c6ec14fe814534c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property dc:description .
+
+ns1:property_partition_6c81d6d4ceae572aa14da733f8cb4b9d ns0:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns21:PATO_0001241,
+        rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property aopo:CellTypeContext .
+
+ns1:property_partition_6d5af5e69a76b5c80f8b10b9521fbb8e ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass <http://purl.bioontology.org/ontology/NCBITAXON/131567> ;
+    void:property dc:title .
+
+ns1:property_partition_6de1ffee7ea263a10569de73c4a232ac ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:OrganContext ;
+    void:property dc:title .
+
+ns1:property_partition_6e2e154578a147ca5f1b7f58e0ee3d00 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000406 ;
+    void:property dc:identifier .
+
+ns1:property_partition_7250898735ed80c483ee7fb42581774e ns0:objectClass aopo:KeyEvent ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property dc:identifier .
+
+ns1:property_partition_75bfcd8822ee5bf80b5c66abcc3d7364 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000405 ;
+    void:property dc:identifier .
+
+ns1:property_partition_76c1696379446271e3a48706330d2adb ns0:objectClass aopo:AdverseOutcomePathway ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_78091dbf19287027b3e0d0ac0e9e9a32 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1025 ;
+    void:property edam:data_2298 .
+
+ns1:property_partition_7881c4ddc8cfd77ded8a95b7058aaf66 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property dcterms:created .
+
+ns1:property_partition_78eaf8734903858bfb0ae22101ff5abb ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000000 ;
+    void:property ns9:CHEMINF_000446 .
+
+ns1:property_partition_7a0f691382fa8d907b88bfd4ebf87a10 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass nci:C54571 ;
+    void:property dcterms:modified .
+
+ns1:property_partition_7a21b625db980ae9b9afb4d434c77cb8 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property ns21:PATO_0000047 .
+
+ns1:property_partition_7a9d44d509215ebda0050970ad5cdb76 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000446 ;
+    void:property dc:source .
+
+ns1:property_partition_7ac15e57d1280f9f9e615fc4a23ea19b ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000140 ;
+    void:property rdf:type .
+
+ns1:property_partition_7d4927a921a6ec422b7c1d06b1bd8be1 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1025 ;
+    void:property dc:identifier .
+
+ns1:property_partition_7e795806b05a0b7d1b83a3dd685913e9 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000140 ;
+    void:property dc:identifier .
+
+ns1:property_partition_823607f98a4facb319cb485369a7dca8 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property ns21:PATO_0000001 .
+
+ns1:property_partition_82c996b0aa22ca6862e2a09c46adbf90 ns0:objectClass aopo:KeyEvent ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property aopo:has_downstream_key_event .
+
+ns1:property_partition_82dda64dd02a6d5f82e27a2f462f9aa9 ns0:objectClass aopo:KeyEventRelationship ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property dc:identifier .
+
+ns1:property_partition_85e5bb9c71be76cda1979f2c12984ce5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property nci:C25217 .
+
+ns1:property_partition_879cac9d61fab57d00f0ca53f1c1c12f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000407 ;
+    void:property dc:identifier .
+
+ns1:property_partition_87d394818bd709fc45e90bfdcb4b8146 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000409 ;
+    void:property dc:source .
+
+ns1:property_partition_884adf09c055857af57dc68102d8d359 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Linkset ;
+    void:property dc:description .
+
+ns1:property_partition_8b7a4982267b286e04681b178d3484a5 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000409 ;
+    void:property rdf:type .
+
+ns1:property_partition_8b9bd211af2fb6ba06a65d958870dcad ns0:objectClass aopo:KeyEvent ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property aopo:has_upstream_key_event .
+
+ns1:property_partition_8c9f246734f36ceb63dd499516a873a0 ns0:objectClass ns21:GO_0008150,
+        ns21:PATO_0001241 ;
+    ns0:subjectClass ns21:GO_0008150 ;
+    void:property dc:identifier .
+
+ns1:property_partition_8efc3712e96ad0c908c150c038ffe93e ns0:objectClass ns21:GO_0008150,
+        ns21:PATO_0001241 ;
+    ns0:subjectClass aopo:BiologicalEvent ;
+    void:property aopo:hasProcess .
+
+ns1:property_partition_8f7ac3b13fbb8011fd0e72613440d1c5 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000408 ;
+    void:property ns9:CHEMINF_000408 .
+
+ns1:property_partition_91d605dff2dd4f0062420689543efc72 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns21:PATO_0001241 ;
+    void:property dc:source .
+
+ns1:property_partition_932e1329ae9b137e14ec8e48d7a497d6 ns0:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns21:PATO_0001241 ;
+    ns0:subjectClass aopo:OrganContext ;
+    void:property dc:identifier .
+
+ns1:property_partition_94316742a2815a4efa2a42057cb66194 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property dcterms:alternative .
+
+ns1:property_partition_9519be9914fa1e7e2f1c9d95e677e900 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass aopo:OrganContext ;
+    void:property rdf:type .
+
+ns1:property_partition_9826a62096ed1583773e691e0c8b7500 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_2298 ;
+    void:property dc:identifier .
+
+ns1:property_partition_9a099d5636b92f66f79283c08aff6a78 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000140 ;
+    void:property dc:source .
+
+ns1:property_partition_9a84935456d59aa18a0570084338fc01 ns0:objectClass nci:C54571 ;
+    ns0:subjectClass ns9:CHEMINF_000000 ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_9c3262d8fbdf2e664e765274e12a13bc ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000446 ;
+    void:property ns9:CHEMINF_000568 .
+
+ns1:property_partition_9cba7b418356f7f8631775bf9a1292c6 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property dc:source .
+
+ns1:property_partition_9dfdc70a9581c16bf439f96934d96807 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property dcterms:modified .
+
+ns1:property_partition_9e572d08be03064bf849ee61f739f8a6 ns0:objectClass edam:data_1025,
+        edam:data_1027,
+        edam:data_2291,
+        edam:data_2298 ;
+    ns0:subjectClass ns21:PATO_0001241 ;
+    void:property skos:exactMatch .
+
+ns1:property_partition_a061f64db43c5010ffc5e97989a725b1 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000409 ;
+    void:property dc:identifier .
+
+ns1:property_partition_a28cd7e472d790d5959f88ddb9b986fe ns0:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns21:GO_0008150,
+        ns21:PATO_0001241 ;
+    ns0:subjectClass ns21:PATO_0001241 ;
+    void:property dc:identifier .
+
+ns1:property_partition_a31371c60c82743a6268b4f813d748a4 ns0:objectClass edam:data_1025,
+        edam:data_1027,
+        edam:data_1033,
+        edam:data_2291 ;
+    ns0:subjectClass edam:data_1025 ;
+    void:property skos:exactMatch .
+
+ns1:property_partition_a59e928574125da5a8c588e5d2ea7b57 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass nci:C54571 ;
+    void:property dc:title .
+
+ns1:property_partition_a59f555449c53de4fee89c75d794c9f8 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property edam:operation_3799 .
+
+ns1:property_partition_a79e3b757172bc2e96d99ff545e1604c ns0:objectClass aopo:KeyEventRelationship ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property foaf:page .
+
+ns1:property_partition_a94c6dafbc79f47ef74ca2fafb2885df ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property dc:creator .
+
+ns1:property_partition_aa9d6a1f73babd7605ce8649f9b0cf73 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1033 ;
+    void:property dc:identifier .
+
+ns1:property_partition_acaa7e880a635962e04fed19c847c43b ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass aopo:BiologicalEvent ;
+    void:property rdf:type .
+
+ns1:property_partition_ae3eb84cdd7674d9e23783caf23ccaa6 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1027 ;
+    void:property edam:data_1027 .
+
+ns1:property_partition_af1538c26f394f40bef49d0b578e2fe2 ns0:objectClass edam:data_1025,
+        edam:data_2298 ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property edam:data_1025 .
+
+ns1:property_partition_af3bd757cfc91559c5c861aa39e2fcd4 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000567 ;
+    void:property dc:identifier .
+
+ns1:property_partition_b1657f14473057cb5a846faf0946753b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1025 ;
+    void:property dc:source .
+
+ns1:property_partition_b35ae9182e7317c35d1bbfaff8108525 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property rdfs:label .
+
+ns1:property_partition_b525a189ac0cca9636427b0897a78eca ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property foaf:homepage .
+
+ns1:property_partition_b5fab8fb214ca877bb3451c0545a488b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property aopo:LifeStageContext .
+
+ns1:property_partition_b8d58e7113b0425a8a36956971c68419 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:has_evidence .
+
+ns1:property_partition_b8ff9340a1bfee39f1f3d0fe7145433b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property dc:description .
+
+ns1:property_partition_b90599fd7e4c38699a35f5156c0fdfb3 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property rdfs:label .
+
+ns1:property_partition_b90a0ee25bdfaf1f433e4e4653561ef8 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property rdf:type .
+
+ns1:property_partition_bc382244ae8f15045ef3b5d3de3b502c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns21:GO_0008150 ;
+    void:property dc:title .
+
+ns1:property_partition_bcdb9ad1936f20e47a766cdab1d510c4 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000412 ;
+    void:property dc:identifier .
+
+ns1:property_partition_bf805b0a9ab32ee3c02022d47c956f6a ns0:objectClass aopo:KeyEventRelationship ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_c1ae151dbd4099f75c2222f10cc7a36f ns0:objectClass aopo:AdverseOutcomePathway ;
+    ns0:subjectClass nci:C54571 ;
+    void:property dcterms:isPartOf .
+
+ns1:property_partition_c1be38106a06c50719cc80a2e234fe7b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property nci:C25688 .
+
+ns1:property_partition_c21c989bfea13f99195213e318520820 ns0:objectClass <http://purl.bioontology.org/ontology/NCBITAXON/131567> ;
+    ns0:subjectClass <http://purl.bioontology.org/ontology/NCBITAXON/131567> ;
+    void:property dc:identifier .
+
+ns1:property_partition_c24e39f65bc7bba1926df32288991705 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1033 ;
+    void:property dc:source .
+
+ns1:property_partition_c374a15e2e60b1552cda8e794d6c9b53 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000407 ;
+    void:property dc:source .
+
+ns1:property_partition_c4239e34c5df24dc749d276b69d181f3 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000406 ;
+    void:property ns9:CHEMINF_000406 .
+
+ns1:property_partition_c45a1a03bb2eaa087511bcc16a2f0171 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000000 ;
+    void:property dc:source .
+
+ns1:property_partition_c66a9079603ab8d5381d883d2dac427c ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass nci:C54571 ;
+    void:property rdf:type .
+
+ns1:property_partition_c6cd0dc5d9498e3eeebcf2aab368d769 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000000 ;
+    void:property dc:title .
+
+ns1:property_partition_c9625c09485272da5680c659c095e2b8 ns0:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns21:GO_0008150,
+        ns21:PATO_0001241,
+        rdfs:Literal ;
+    ns0:subjectClass aopo:BiologicalEvent ;
+    void:property aopo:hasObject .
+
+ns1:property_partition_c97968d63a332f06d75aabfc2138be79 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_2298 ;
+    void:property dc:source .
+
+ns1:property_partition_c9a729eeb54e1fa3870916fd28fceff9 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property dc:description .
+
+ns1:property_partition_cf80888598b723f8f498cf5874807d6b ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Dataset ;
+    void:property dcterms:accuralPeriodicity .
+
+ns1:property_partition_d1815a36368dee93f513c1f62a492d50 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property dcterms:alternative .
+
+ns1:property_partition_d210ab1358e5e570af70819d45ff2313 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000446 ;
+    void:property ns9:CHEMINF_000059 .
+
+ns1:property_partition_d2983fcd22695cecda7baee220cdc13b ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000446 ;
+    void:property dc:title .
+
+ns1:property_partition_d31fec952bb050c04df6c8f9677b2ad6 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:CellTypeContext ;
+    void:property dc:title .
+
+ns1:property_partition_d372b296a8c88ad007c8689f4f7d030c ns0:objectClass aopo:KeyEvent ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:has_molecular_initiating_event .
+
+ns1:property_partition_d4fd92f03178ec8a7c17e643e700961a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000000 ;
+    void:property ns9:CHEMINF_000059 .
+
+ns1:property_partition_d505062b9e46307416ea8e6ebd8f8efe ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000446 ;
+    void:property dcterms:alternative .
+
+ns1:property_partition_d605a3c9b9a42e4a5f2acb9e42f9af9a ns0:objectClass aopo:AdverseOutcomePathway ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property dc:identifier .
+
+ns1:property_partition_d6d855ff871cc9d435c98cbbfabfe444 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property nci:C25725 .
+
+ns1:property_partition_d7f71b5ac07cecea58d12c3e66b6242c ns0:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns21:PATO_0001241 ;
+    ns0:subjectClass aopo:CellTypeContext ;
+    void:property dc:identifier .
+
+ns1:property_partition_d8724a2d6b762ce549468ab1425c81aa ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000567 ;
+    void:property ns9:CHEMINF_000567 .
+
+ns1:property_partition_d8b9144c5e5f133d1961bbf3e64eabf0 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000140 ;
+    void:property ns9:CHEMINF_000140 .
+
+ns1:property_partition_db776f8d92631f66652b5ce00c9bcd67 ns0:objectClass aopo:KeyEvent ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:has_adverse_outcome .
+
+ns1:property_partition_dd15871b29b353f60273cd01d8bb1d1b ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000408 ;
+    void:property rdf:type .
+
+ns1:property_partition_ddd501414404b854ba3f707eb1fea113 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property nci:C25664 .
+
+ns1:property_partition_e152bd568a4ac355059cb431693efa2f ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property nci:C71478 .
+
+ns1:property_partition_e4fb4df66f6561021ebbc76e61d2edca ns0:objectClass ns9:CHEMINF_000000,
+        ns9:CHEMINF_000446 ;
+    ns0:subjectClass ns9:CHEMINF_000446 ;
+    void:property dc:identifier .
+
+ns1:property_partition_e8903ed176f1195f83cafd583cf87a76 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Dataset ;
+    void:property dcterms:modified .
+
+ns1:property_partition_e89e198d543775df010e0fa708a1e67b ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000406 ;
+    void:property rdf:type .
+
+ns1:property_partition_ea26054a81ced0c607dfe2b03260018d ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass void:Linkset ;
+    void:property pav:importedOn .
+
+ns1:property_partition_ec022ba77704eac44bae9acd328c2480 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property dc:title .
+
+ns1:property_partition_ed7f08e8dffd90047c7a77ce37519653 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:KeyEvent ;
+    void:property ns21:MMO_0000000 .
+
+ns1:property_partition_ed81c9ad4f2f7047d84119716eedc43a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass edam:data_1025 ;
+    void:property rdf:type .
+
+ns1:property_partition_f02807ac94877853ccd93d891255c463 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass void:Linkset ;
+    void:property rdf:type .
+
+ns1:property_partition_f02af5bb64720b385dcf025bcb30f92c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_1027 ;
+    void:property dc:identifier .
+
+ns1:property_partition_f0c0657b2ab1f8ca2234f633b5cf4074 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000408 ;
+    void:property dc:source .
+
+ns1:property_partition_f1003b172c80163de577621bb9f440f1 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:LifeStageContext .
+
+ns1:property_partition_f13edc43b6092150b6e22fa72ccfedaa ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000564 ;
+    void:property dc:identifier .
+
+ns1:property_partition_f1dd91adce18124d10bd24bdad5f4359 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000564 ;
+    void:property rdf:type .
+
+ns1:property_partition_f322bfa8770cc6ad3a1d02f562618d1f ns0:objectClass aopo:KeyEvent ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:has_key_event .
+
+ns1:property_partition_f8d9705308e6ab41822c96b42c200a72 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass edam:data_2291 ;
+    void:property dc:source .
+
+ns1:property_partition_f902a6176e015bcb7a531fd35eb01d24 ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000564 ;
+    void:property dc:source .
+
+ns1:property_partition_f9cb71cd960f255c7920e6917dec9b2a ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass ns9:CHEMINF_000412 ;
+    void:property rdf:type .
+
+ns1:property_partition_fb3c61fe9065a102863f2afeebf577ab ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass aopo:KeyEventRelationship ;
+    void:property rdf:type .
+
+ns1:property_partition_fb3d44d24b23058aa6f551659b692394 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass edam:data_2291 ;
+    void:property rdfs:seeAlso .
+
+ns1:property_partition_fb5bbb8ff59803f2b9f8ae4646b6c18c ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass ns9:CHEMINF_000405 ;
+    void:property ns9:CHEMINF_000405 .
+
+ns1:property_partition_fbec1f513731cd330944d72b13e6ca66 ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass <http://purl.bioontology.org/ontology/NCBITAXON/131567> ;
+    void:property rdf:type .
+
+ns1:property_partition_fe08d80dad6c8d1b703622e92ed97e94 ns0:objectClass nci:C54571 ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property nci:C54571 .
+
+ns1:property_partition_fe263a0087d5c0902f8db918c564f9f8 ns0:objectClass nci:C54571 ;
+    ns0:subjectClass nci:C54571 ;
+    void:property dc:identifier .
+
+ns1:property_partition_ff1c029bd49ff9512f30e4c7d085900e ns0:objectClass rdfs:Literal ;
+    ns0:subjectClass <http://purl.bioontology.org/ontology/NCBITAXON/131567> ;
+    void:property dc:source .
+
+ns1:property_partition_ff624964120ba48b1ba53083769ca35d ns0:objectClass rdfs:Resource ;
+    ns0:subjectClass edam:data_1033 ;
+    void:property rdf:type .
+
+ns1:property_partition_ffd55166100b6f821bd70f889e15856a ns0:objectClass aopo:AdverseOutcomePathway ;
+    ns0:subjectClass aopo:AdverseOutcomePathway ;
+    void:property foaf:page .
+

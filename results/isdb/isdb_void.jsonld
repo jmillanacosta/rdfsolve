@@ -1,0 +1,990 @@
+{
+  "@context": {
+    "@context": {
+      "brick": "https://brickschema.org/schema/Brick#",
+      "csvw": "http://www.w3.org/ns/csvw#",
+      "dc": "http://purl.org/dc/elements/1.1/",
+      "dcam": "http://purl.org/dc/dcam/",
+      "dcat": "http://www.w3.org/ns/dcat#",
+      "dcmitype": "http://purl.org/dc/dcmitype/",
+      "dcterms": "http://purl.org/dc/terms/",
+      "doap": "http://usefulinc.com/ns/doap#",
+      "foaf": "http://xmlns.com/foaf/0.1/",
+      "geo": "http://www.opengis.net/ont/geosparql#",
+      "ns1": "http://ldf.fi/void-ext#",
+      "odrl": "http://www.w3.org/ns/odrl/2/",
+      "org": "http://www.w3.org/ns/org#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "prof": "http://www.w3.org/ns/dx/prof/",
+      "prov": "http://www.w3.org/ns/prov#",
+      "qb": "http://purl.org/linked-data/cube#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "schema": "https://schema.org/",
+      "sh": "http://www.w3.org/ns/shacl#",
+      "skos": "http://www.w3.org/2004/02/skos/core#",
+      "sosa": "http://www.w3.org/ns/sosa/",
+      "ssn": "http://www.w3.org/ns/ssn/",
+      "time": "http://www.w3.org/2006/time#",
+      "vann": "http://purl.org/vocab/vann/",
+      "void": "http://rdfs.org/ns/void#",
+      "void-ext": "http://ldf.fi/void-ext#",
+      "wgs": "https://www.w3.org/2003/01/geo/wgs84_pos#",
+      "xml": "http://www.w3.org/XML/1998/namespace",
+      "xsd": "http://www.w3.org/2001/XMLSchema#"
+    }
+  },
+  "@graph": [
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_55ab98e6920d0c4baaf3c535833cc772",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000511"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_ee024713384110d21df474f6da4bc0c5",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000073"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000553"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_bf8f497c87a9b9bf3f44fb2b95a37743",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_000089"
+      },
+      "void:property": {
+        "@id": "dcterms:title"
+      },
+      "void:triples": 1
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_34c7e885e7deacf5e1d65d4af5448056",
+      "void:class": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1002813"
+      },
+      "void:entities": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_8efc146aff8bcd320b4e17d10b872c37",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000042"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_b2bf31bd1f335f7d5938dc597d742a80",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000129"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000553"
+      },
+      "void:triples": 272840
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_25348f38268fc77e4ff31d6799fd60b3",
+      "void-ext:objectClass": [
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000294"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000580"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000229"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_49a3542aa2ec886f83b966961331bc39",
+      "void-ext:objectClass": [
+        {
+          "@id": "http://semanticscience.org/resource/CHEMINF_000018"
+        },
+        {
+          "@id": "http://semanticscience.org/resource/CHEMINF_000042"
+        },
+        {
+          "@id": "http://semanticscience.org/resource/CHEMINF_000113"
+        },
+        {
+          "@id": "http://semanticscience.org/resource/CHEMINF_000217"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000008"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_e05cd8939a9a95ccf3c75677677122ba",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000580"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_27914f8bd33e6609a76f9ad9815bdf7e",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000217"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000221"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_97c594bec1a97f6e5024023aa1a6d73d",
+      "void:class": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000129"
+      },
+      "void:entities": 272840
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_b08c25bbda073fb16a3b003fc0252804",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000018"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_a0c7d985fd331a3d51b639e93148c3a9",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001166"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_339c581bf318e8266599fc460c0b07d9",
+      "void:class": {
+        "@id": "http://semanticscience.org/resource/SIO_001166"
+      },
+      "void:entities": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_4bd0c534dcb034bf2e5f529b18501dd5",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000073"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_01f936efa0f06ce70a42636ffd95d7e7",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000511"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_e148add66786c98c585e1878f1683a9d",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000463"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_a7f3e0d128ee43749921eb5249588ed7",
+      "void:class": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000041"
+      },
+      "void:entities": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_5b472c30a513b22a86e2e848c5041b5e",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000294"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 1124538
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_ad4d630642e0d88438ae50ad5c80df44",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001166"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_e8b5ea4fd33cbcf8a5805691f24697c6",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000018"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_91672aac5769d957e2a561ddb23ab509",
+      "void:class": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000217"
+      },
+      "void:entities": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_4b5354463b0b96902c1f84c70b788b23",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000294"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_7f261cbb32ec26a3fb461cbafda8f0f3",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001166"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000255"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_e9a06a7b8798c9050d522114c2dacab9",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_000089"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_001277"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_35c05dc4ae236f374bf9979f4d556b50",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000230"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_de26383b60e3ee1afd16d6fd93288c52",
+      "void:class": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void:entities": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_7d0619e02134b63ce590003dd946c899",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_000089"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 1
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_a5dc610b80d46b9b015e0b4e0bd17376",
+      "void:class": {
+        "@id": "http://semanticscience.org/resource/SIO_000089"
+      },
+      "void:entities": 1
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_0d6644b75d6d16719ea56fb2a9c82769",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000217"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_bbc374c1a4b3414f05d2023325d807aa",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "void:property": {
+        "@id": "skos:closeMatch"
+      },
+      "void:triples": 1205797
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_a3a8e0cd1fdb8d0eff0296356c6282f2",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000463"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000553"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_0c685e0643119be185e33353df06e07c",
+      "void:class": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000018"
+      },
+      "void:entities": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_96cf2da44740dd83a7a17caa4ee6a26b",
+      "void-ext:objectClass": [
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000041"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000073"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000129"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000130"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000463"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000511"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000744"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1002813"
+        }
+      ],
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000552"
+      },
+      "void:triples": [
+        272840,
+        289429,
+        562269
+      ]
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_295934df5a8dbeb0b9c6dbe8b29dd93b",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000231"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_de2b3550cb148d9ab368626eabac2811",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001166"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000254"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_39ea252f5a1c7c103486cb345f761e21",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000042"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000011"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_4999cd7794d7827567d3228c1cc4f802",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000744"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_a2459b366cd878de1b205b8d62878e33",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000744"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000221"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_4549c460cea86ca2ae97710e8c0a63a3",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000113"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_1b4fab76d9d5885044247a6da9270ba4",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000113"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000011"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_9cad25a3961d69eb36d03882fa5e91d8",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_1a09c8afb24c803d5ca5b82507f6768e",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000130"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 289429
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_9a5634d04a2959f92baf23e313d576e6",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000041"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_c708000694ec76bfc6555fc20f5c168c",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000217"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000011"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/datatype_partition_512e3ad3197eb11ad2129cce7b72863c",
+      "void-ext:datatypePartition": {
+        "@id": "http://bioinfo.uochb.cas.cz/rdf/v1.0/ms#spectrum"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_ec10a46057d9bc2fcb3054a4826dd202",
+      "void:class": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000463"
+      },
+      "void:entities": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_4af63741daaac6f3e521c0b5fc759ca0",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000744"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_a630b2e970d8e9d000256dbe5847f6ed",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1002813"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_549876df1b121af6229949933088fcdc",
+      "void:class": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000511"
+      },
+      "void:entities": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_d335a820f41e3fb49aad23e64baff095",
+      "void:class": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000042"
+      },
+      "void:entities": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/datatype_partition_c7ad2d0b02fcfefaf443acf0c533b817",
+      "void-ext:datatypePartition": {
+        "@id": "xsd:float"
+      },
+      "void:triples": 853256
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_316bed77f18c69ce8ce1dfba2a50da9e",
+      "void:class": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000130"
+      },
+      "void:entities": 289429
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_72fd4ffee7776f216bcc9c04a1ec3974",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000129"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 272840
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_55f90f55cf38642332a06126efa85c62",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000744"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000553"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a",
+      "void-ext:datatypePartition": {
+        "@id": "xsd:string"
+      },
+      "void:triples": 2559770
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_3c7436b92376893c06e71bae7e6306d0",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000018"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000011"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_a689ede3a945e04c1efbd74a99290592",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_000089"
+      },
+      "void:property": {
+        "@id": "dcterms:description"
+      },
+      "void:triples": 1
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_e261b65aed1292fd93d57930cd25c56a",
+      "void:class": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000073"
+      },
+      "void:entities": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/datatype_partition_0ebe96c7396884ec39ea3d0cc92e67dd",
+      "void-ext:datatypePartition": {
+        "@id": "xsd:int"
+      },
+      "void:triples": 1124538
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_7f2ea972cf0f11362eb06a4ad2842e9b",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000511"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000553"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_7feb69f685913271fbd6dc2bd2351900",
+      "void:class": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000294"
+      },
+      "void:entities": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_360af1e2eed42dac75c2584c6d66802b",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_1566d52c2ba2eb552ace3f08ed99c200",
+      "void:class": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "void:entities": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_ad88cbdf05d434a151ac38f8fa28605b",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000041"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000553"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_9bb4d17dbae8846f1740bb0f8426768b",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000130"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000553"
+      },
+      "void:triples": 289429
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_9ff129515ae9cd2ea0959fef389fddc3",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000294"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000232"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_394a5b0d2bf29ab0f90913a283eb0e03",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000580"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 1124538
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_8417ed20a9ca7955d13ac5e15f28f36a",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1002813"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_582ef4d7bf86a945d3ce210a3b60fa55",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1002813"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000553"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_92c2c3515dbc144bacddbfca79626758",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000113"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_6623eadf8fdc3dbc83bbec423ab9c73f",
+      "void:class": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000580"
+      },
+      "void:entities": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_d6e30bebaded81cc4dafac317c198ea7",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000042"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_e503d2493f72341298c768ff9f90b213",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000580"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000232"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_8493393d1979e77498db630777ac5e24",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000217"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_1a3d0de597b35daa5f6c6b51e1e670ce",
+      "void:class": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000744"
+      },
+      "void:entities": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_cbf229ce095b0a1072a0d624564e3ae4",
+      "void-ext:objectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_000089"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_001278"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/class_partition_3bfcb47fd0085d31f48f8dd7acb81923",
+      "void:class": {
+        "@id": "http://semanticscience.org/resource/CHEMINF_000113"
+      },
+      "void:entities": 290987
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_2ccc6cc468cc656c211efadff9b45bc7",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Resource"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000041"
+      },
+      "void:property": {
+        "@id": "rdf:type"
+      },
+      "void:triples": 562269
+    },
+    {
+      "@id": "https://idsm.elixir-czech.cz/rdf/isdb//void/property_partition_9cbf3f394365531c1f9d93a7de4359bd",
+      "void-ext:objectClass": {
+        "@id": "rdfs:Literal"
+      },
+      "void-ext:subjectClass": {
+        "@id": "http://purl.obolibrary.org/obo/MS_1000463"
+      },
+      "void:property": {
+        "@id": "http://semanticscience.org/resource/SIO_000300"
+      },
+      "void:triples": 562269
+    }
+  ]
+}

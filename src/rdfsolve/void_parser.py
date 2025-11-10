@@ -12,7 +12,7 @@ import time
 import pandas as pd
 from typing import Dict, Union, Optional
 from SPARQLWrapper import SPARQLWrapper, TURTLE
-
+from bioregistry import curie_from_iri
 
 class VoidParser:
     """Parser for VoID (Vocabulary of Interlinked Datasets) files."""
@@ -69,20 +69,20 @@ class VoidParser:
     def _extract_schema_triples(self):
         """Extract schema triples by analyzing property partitions."""
         self.schema_triples = []
-        
+
         # Try enhanced extraction first (with subjectClass/objectClass)
         enhanced_triples = self._extract_enhanced_schema()
         if enhanced_triples:
             self.schema_triples = enhanced_triples
             return
-            
+
         # Fall back to original method for legacy VoID files
         self._extract_legacy_schema()
 
     def _extract_enhanced_schema(self):
         """Extract schema from enhanced property partitions with type info."""
         triples = []
-        
+
         # Find all property partitions with subject/object class info
         for partition, _, property_uri in self.graph.triples(
                 (None, self.void_property, None)):
@@ -92,46 +92,49 @@ class VoidParser:
             # Get object class
             object_classes = list(self.graph.triples(
                 (partition, self.void_objectClass, None)))
-            
+
             if subject_classes and object_classes:
                 for _, _, subject_class in subject_classes:
                     for _, _, object_class in object_classes:
                         triples.append((subject_class, property_uri,
                                        object_class))
-        
+
         return triples
 
     def _extract_legacy_schema(self):
         """Extract schema triples by analyzing class property partitions (legacy)."""
         for class_dataset, class_uri in self.classes.items():
             # Find property partitions for this class
-            for s, p, o in self.graph.triples((class_dataset,
-                                               self.void_propertyPartition,
-                                               None)):
+            for s, p, o in self.graph.triples(
+                (class_dataset, self.void_propertyPartition, None)
+            ):
                 property_partition = o
 
                 # Find what property this partition describes
-                prop_triples = self.graph.triples((property_partition,
-                                                   self.void_property, None))
+                prop_triples = self.graph.triples(
+                    (property_partition, self.void_property, None)
+                )
                 for s2, p2, property_uri in prop_triples:
 
                     # Find object types for this property
                     object_classes = []
-                    class_part_triples = self.graph.triples((
-                        property_partition, self.void_classPartition, None))
+                    class_part_triples = self.graph.triples(
+                        (property_partition, self.void_classPartition, None)
+                    )
                     for s3, p3, o3 in class_part_triples:
                         class_partition = o3
                         # Get the actual class from the partition
-                        class_triples = self.graph.triples((class_partition,
-                                                            self.void_class,
-                                                            None))
+                        class_triples = self.graph.triples(
+                            (class_partition, self.void_class, None)
+                        )
                         for s4, p4, target_class in class_triples:
                             object_classes.append(target_class)
 
                     # Check for datatype partitions (literal objects)
                     datatype_partitions = []
-                    dtype_triples = self.graph.triples((
-                        property_partition, self.void_datatypePartition, None))
+                    dtype_triples = self.graph.triples(
+                        (property_partition, self.void_datatypePartition, None)
+                    )
                     for s3, p3, o3 in dtype_triples:
                         datatype_partitions.append(o3)
 
@@ -174,14 +177,22 @@ class VoidParser:
         # Convert to DataFrame format
         schema_data = []
         for s, p, o in self.schema_triples:
-            # Extract readable names TODO use bioregistry
-            s_name = (str(s).split('#')[-1].split('/')[-1]
-                      if '#' in str(s) else str(s).split('/')[-1])
-            p_name = (str(p).split('#')[-1].split('/')[-1]
-                      if '#' in str(p) else str(p).split('/')[-1])
-            o_name = (str(o).split('#')[-1].split('/')[-1]
-                      if '#' in str(o) else str(o).split('/')[-1]
-                      if o not in ["Literal", "Resource"] else o)
+            # Use bioregistry.curie_from_iri for readable names, fallback to local part
+            s_name = (
+                curie_from_iri(str(s))
+                or (str(s).split('#')[-1].split('/')[-1] if '#' in str(s) else str(s).split('/')[-1])
+            )
+            p_name = (
+                curie_from_iri(str(p))
+                or (str(p).split('#')[-1].split('/')[-1] if '#' in str(p) else str(p).split('/')[-1])
+            )
+            if o not in ["Literal", "Resource"]:
+                o_name = (
+                    curie_from_iri(str(o))
+                    or (str(o).split('#')[-1].split('/')[-1] if '#' in str(o) else str(o).split('/')[-1])
+                )
+            else:
+                o_name = o
 
             schema_data.append({
                 'subject_class': s_name,
@@ -249,7 +260,7 @@ class VoidParser:
             Dictionary containing the formatted queries
         """
         limit_clause = f"LIMIT {sample_limit}" if sample_limit else ""
-        
+
         if counts:
             # Count-based queries (slower but complete)
             class_q = f"""PREFIX void: <http://rdfs.org/ns/void#>
@@ -272,10 +283,11 @@ WHERE {{
     BIND(IRI(CONCAT('{graph_uri}/void/class_partition_',
                    MD5(STR(?class)))) AS ?cp)
 }}"""
-            
+
             prop_q = f"""PREFIX void: <http://rdfs.org/ns/void#>
 PREFIX void-ext: <http://ldf.fi/void-ext#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 CONSTRUCT {{
     ?pp void:property ?property ;
         void:triples ?count ;
@@ -286,20 +298,36 @@ WHERE {{
     {{
         SELECT ?property ?subject_class ?object_class (COUNT(*) AS ?count)
         WHERE {{
-            GRAPH <{graph_uri}> {{
-                ?subject ?property ?object .
-                ?subject rdf:type ?subject_class .
-                OPTIONAL {{
+            {{
+                # Handle literal objects (fastest path)
+                GRAPH <{graph_uri}> {{
+                    ?subject ?property ?object .
+                    ?subject rdf:type ?subject_class .
+                    FILTER(isLiteral(?object))
+                }}
+                BIND(rdfs:Literal AS ?object_class)
+            }}
+            UNION
+            {{
+                # Handle URI objects with known types
+                GRAPH <{graph_uri}> {{
+                    ?subject ?property ?object .
+                    ?subject rdf:type ?subject_class .
                     ?object rdf:type ?obj_type .
                     FILTER(isURI(?object))
                 }}
-                BIND(
-                    IF(isLiteral(?object),
-                       <http://www.w3.org/2000/01/rdf-schema#Literal>,
-                       COALESCE(?obj_type,
-                               <http://www.w3.org/2000/01/rdf-schema#Resource>)
-                    ) AS ?object_class
-                )
+                BIND(?obj_type AS ?object_class)
+            }}
+            UNION
+            {{
+                # Handle URI objects without explicit types (fallback)
+                GRAPH <{graph_uri}> {{
+                    ?subject ?property ?object .
+                    ?subject rdf:type ?subject_class .
+                    FILTER(isURI(?object))
+                    FILTER NOT EXISTS {{ ?object rdf:type ?any_type }}
+                }}
+                BIND(rdfs:Resource AS ?object_class)
             }}
         }}
         GROUP BY ?property ?subject_class ?object_class
@@ -354,6 +382,7 @@ WHERE {{
             prop_q = f"""PREFIX void: <http://rdfs.org/ns/void#>
 PREFIX void-ext: <http://ldf.fi/void-ext#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 CONSTRUCT {{
     ?pp void:property ?property ;
         void-ext:subjectClass ?subject_class ;
@@ -363,20 +392,36 @@ WHERE {{
     {{
         SELECT DISTINCT ?property ?subject_class ?object_class
         WHERE {{
-            GRAPH <{graph_uri}> {{
-                ?subject ?property ?object .
-                ?subject rdf:type ?subject_class .
-                OPTIONAL {{
+            {{
+                # Handle literal objects (fastest path)
+                GRAPH <{graph_uri}> {{
+                    ?subject ?property ?object .
+                    ?subject rdf:type ?subject_class .
+                    FILTER(isLiteral(?object))
+                }}
+                BIND(rdfs:Literal AS ?object_class)
+            }}
+            UNION
+            {{
+                # Handle URI objects with known types
+                GRAPH <{graph_uri}> {{
+                    ?subject ?property ?object .
+                    ?subject rdf:type ?subject_class .
                     ?object rdf:type ?obj_type .
                     FILTER(isURI(?object))
                 }}
-                BIND(
-                    IF(isLiteral(?object),
-                       <http://www.w3.org/2000/01/rdf-schema#Literal>,
-                       COALESCE(?obj_type,
-                               <http://www.w3.org/2000/01/rdf-schema#Resource>)
-                    ) AS ?object_class
-                )
+                BIND(?obj_type AS ?object_class)
+            }}
+            UNION
+            {{
+                # Handle URI objects without explicit types (fallback)
+                GRAPH <{graph_uri}> {{
+                    ?subject ?property ?object .
+                    ?subject rdf:type ?subject_class .
+                    FILTER(isURI(?object))
+                    FILTER NOT EXISTS {{ ?object rdf:type ?any_type }}
+                }}
+                BIND(rdfs:Resource AS ?object_class)
             }}
         }}
         {limit_clause}
@@ -405,7 +450,7 @@ WHERE {{
     BIND(IRI(CONCAT('{graph_uri}/void/datatype_partition_',
                    MD5(STR(?datatype)))) AS ?dp)
 }}"""
-        
+
         return {
             'class_partitions': class_q,
             'property_partitions': prop_q,
@@ -443,13 +488,31 @@ WHERE {{
 
         merged_graph = Graph()
 
+        # Ensure we're in a valid working directory for RDFLib parsing
+        import os
+        import tempfile
+        try:
+            current_dir = os.getcwd()
+            # Check if current directory exists and is accessible
+            if (not os.path.exists(current_dir) or
+                    not os.access(current_dir, os.R_OK)):
+                # Use temporary directory as fallback
+                temp_dir = tempfile.gettempdir()
+                os.chdir(temp_dir)
+                print(f"Changed working directory to: {temp_dir}")
+        except (FileNotFoundError, OSError, PermissionError):
+            # If we can't get cwd or it doesn't exist, use temp directory
+            temp_dir = tempfile.gettempdir()
+            os.chdir(temp_dir)
+            print(f"Working directory issue resolved, using: {temp_dir}")
+
         def run_construct(query_text: str, name: str,
                           is_optional: bool = False):
             sparql.setQuery(query_text)
             sparql.setReturnFormat(TURTLE)
             print(f"Starting query: {name}")
             t0 = time.monotonic()
-            
+
             try:
                 results = sparql.query().convert()
                 dt = time.monotonic() - t0
@@ -463,10 +526,11 @@ WHERE {{
                             result_str = results.decode('utf-8')
                         else:
                             result_str = str(results)
-                        
+
                         if result_str.strip():
                             merged_graph.parse(data=result_str,
-                                               format="turtle")
+                                               format="turtle",
+                                               publicID=graph_uri)
                         else:
                             print(f"Empty results for {name}")
                     else:
@@ -475,11 +539,11 @@ WHERE {{
                     print(f"Failed to parse results for {name}: {e}")
                     if not is_optional:
                         raise
-                        
+
             except Exception as e:
                 dt = time.monotonic() - t0
                 print(f"Query {name} failed after {dt:.2f}s: {e}")
-                
+
                 # Check for timeout conditions
                 timeout_keywords = ["timeout", "timed out"]
                 if any(keyword in str(e).lower()
@@ -531,6 +595,215 @@ WHERE {{
             endpoint_url, graph_uri, output_file
         )
         return cls(void_graph)
+
+    def count_instances_per_class(self, endpoint_url: str, graph_uri: str,
+                                  sample_limit: Optional[int] = None) -> Dict:
+        """
+        Count instances for each class in the dataset.
+        
+        Args:
+            endpoint_url: SPARQL endpoint URL
+            graph_uri: Graph URI to analyze
+            sample_limit: Optional limit for sampling
+            
+        Returns:
+            Dictionary mapping class URIs to instance counts
+        """
+        from SPARQLWrapper import SPARQLWrapper, JSON
+
+        limit_clause = f"LIMIT {sample_limit}" if sample_limit else ""
+
+        query = f"""
+        SELECT ?class (COUNT(DISTINCT ?instance) AS ?count) WHERE {{
+            GRAPH <{graph_uri}> {{
+                ?instance a ?class .
+            }}
+        }}
+        GROUP BY ?class
+        ORDER BY DESC(?count)
+        {limit_clause}
+        """
+
+        sparql = SPARQLWrapper(endpoint_url)
+        sparql.setQuery(query)
+        sparql.setReturnFormat(JSON)
+
+        try:
+            results = sparql.query().convert()
+            instance_counts = {}
+
+            for result in results["results"]["bindings"]:
+                class_uri = result["class"]["value"]
+                count = int(result["count"]["value"])
+                instance_counts[class_uri] = count
+
+            return instance_counts
+
+        except Exception as e:
+            print(f"Failed to count instances: {e}")
+            return {}
+
+    def get_class_mappings(self, endpoint_url: str, graph_uri: str,
+                           sample_limit: Optional[int] = None) -> Dict:
+        """
+        Get mapping of instances to their classes.
+        
+        Args:
+            endpoint_url: SPARQL endpoint URL
+            graph_uri: Graph URI to analyze
+            sample_limit: Optional limit for sampling
+            
+        Returns:
+            Dictionary mapping instance URIs to class URIs
+        """
+        from SPARQLWrapper import SPARQLWrapper, JSON
+
+        limit_clause = f"LIMIT {sample_limit}" if sample_limit else ""
+
+        query = f"""
+        SELECT ?instance ?class WHERE {{
+            GRAPH <{graph_uri}> {{
+                ?instance a ?class .
+            }}
+        }}
+        {limit_clause}
+        """
+
+        sparql = SPARQLWrapper(endpoint_url)
+        sparql.setQuery(query)
+        sparql.setReturnFormat(JSON)
+
+        try:
+            results = sparql.query().convert()
+            class_mappings = {}
+
+            for result in results["results"]["bindings"]:
+                instance_uri = result["instance"]["value"]
+                class_uri = result["class"]["value"]
+
+                if instance_uri not in class_mappings:
+                    class_mappings[instance_uri] = []
+                class_mappings[instance_uri].append(class_uri)
+
+            return class_mappings
+
+        except Exception as e:
+            print(f"Failed to get class mappings: {e}")
+            return {}
+
+    def calculate_coverage_statistics(self, instance_counts: Dict,
+                                      class_mappings: Dict) -> Dict:
+        """
+        Calculate coverage statistics for class partitions.
+        
+        Args:
+            instance_counts: Dictionary of class URIs to instance counts
+            class_mappings: Dictionary of instance URIs to class lists
+            
+        Returns:
+            Dictionary with coverage statistics per class
+        """
+        coverage_stats = {}
+
+        for class_uri, total_instances in instance_counts.items():
+            # Count how many instances of this class appear in partitions
+            partition_occurrences = 0
+            instances_in_partitions = set()
+
+            for instance_uri, classes in class_mappings.items():
+                if class_uri in classes:
+                    partition_occurrences += 1
+                    instances_in_partitions.add(instance_uri)
+
+            # Calculate coverage percentages
+            if total_instances > 0:
+                coverage_percent = (len(instances_in_partitions) / 
+                                  total_instances) * 100
+                avg_occurrences = (partition_occurrences / 
+                                 len(instances_in_partitions) 
+                                 if instances_in_partitions else 0)
+            else:
+                coverage_percent = 0.0
+                avg_occurrences = 0.0
+
+            coverage_stats[class_uri] = {
+                'total_instances': total_instances,
+                'instances_in_partitions': len(instances_in_partitions),
+                'partition_occurrences': partition_occurrences,
+                'occurrence_coverage_percent': coverage_percent,
+                'avg_occurrences_per_instance': avg_occurrences
+            }
+
+        return coverage_stats
+
+    def analyze_class_partition_usage(self, endpoint_url: str, graph_uri: str,
+                                       sample_limit: Optional[int] = None):
+        """
+        Complete analysis of class partition usage and coverage.
+        
+        Args:
+            endpoint_url: SPARQL endpoint URL
+            graph_uri: Graph URI to analyze
+            sample_limit: Optional limit for sampling
+            
+        Returns:
+            Tuple of (instance_counts, class_mappings, coverage_stats)
+        """
+        print("Counting instances per class...")
+        instance_counts = self.count_instances_per_class(
+            endpoint_url, graph_uri, sample_limit
+        )
+
+        print("Getting class mappings...")
+        class_mappings = self.get_class_mappings(
+            endpoint_url, graph_uri, sample_limit
+        )
+
+        print("Calculating coverage statistics...")
+        coverage_stats = self.calculate_coverage_statistics(
+            instance_counts, class_mappings
+        )
+
+        return instance_counts, class_mappings, coverage_stats
+
+    def export_coverage_analysis(self, coverage_stats: Dict,
+                                output_file: Optional[str] = None):
+        """
+        Export coverage analysis to CSV format.
+        
+        Args:
+            coverage_stats: Dictionary with coverage statistics
+            output_file: Optional output CSV file path
+            
+        Returns:
+            DataFrame with coverage analysis
+        """
+        coverage_data = []
+
+        for class_uri, stats in coverage_stats.items():
+            # Extract readable class name
+            class_name = (class_uri.split('#')[-1].split('/')[-1] 
+                         if '#' in class_uri or '/' in class_uri 
+                         else class_uri)
+
+            coverage_data.append({
+                'class_name': class_name,
+                'class_uri': class_uri,
+                'total_instances': stats['total_instances'],
+                'instances_in_partitions': stats['instances_in_partitions'],
+                'partition_occurrences': stats['partition_occurrences'],
+                'occurrence_coverage_percent': stats['occurrence_coverage_percent'],
+                'avg_occurrences_per_instance': stats['avg_occurrences_per_instance']
+            })
+
+        df = pd.DataFrame(coverage_data)
+        df = df.sort_values('total_instances', ascending=False)
+
+        if output_file:
+            df.to_csv(output_file, index=False)
+            print(f"Coverage analysis exported to: {output_file}")
+
+        return df
 
 
 def parse_void_file(void_file_path: str,

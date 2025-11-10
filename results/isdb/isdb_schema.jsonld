@@ -1,0 +1,270 @@
+{
+  "@context": {
+    "@context": {
+      "brick": "https://brickschema.org/schema/Brick#",
+      "csvw": "http://www.w3.org/ns/csvw#",
+      "dc": "http://purl.org/dc/elements/1.1/",
+      "dcam": "http://purl.org/dc/dcam/",
+      "dcat": "http://www.w3.org/ns/dcat#",
+      "dcmitype": "http://purl.org/dc/dcmitype/",
+      "dcterms": "http://purl.org/dc/terms/",
+      "doap": "http://usefulinc.com/ns/doap#",
+      "foaf": "http://xmlns.com/foaf/0.1/",
+      "geo": "http://www.opengis.net/ont/geosparql#",
+      "ns1": "http://ldf.fi/void-ext#",
+      "odrl": "http://www.w3.org/ns/odrl/2/",
+      "org": "http://www.w3.org/ns/org#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "prof": "http://www.w3.org/ns/dx/prof/",
+      "prov": "http://www.w3.org/ns/prov#",
+      "qb": "http://purl.org/linked-data/cube#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "schema": "https://schema.org/",
+      "sh": "http://www.w3.org/ns/shacl#",
+      "skos": "http://www.w3.org/2004/02/skos/core#",
+      "sosa": "http://www.w3.org/ns/sosa/",
+      "ssn": "http://www.w3.org/ns/ssn/",
+      "time": "http://www.w3.org/2006/time#",
+      "vann": "http://purl.org/vocab/vann/",
+      "void": "http://rdfs.org/ns/void#",
+      "void-ext": "http://ldf.fi/void-ext#",
+      "wgs": "https://www.w3.org/2003/01/geo/wgs84_pos#",
+      "xml": "http://www.w3.org/XML/1998/namespace",
+      "xsd": "http://www.w3.org/2001/XMLSchema#"
+    }
+  },
+  "@graph": [
+    {
+      "@id": "http://purl.obolibrary.org/obo/MS_1000041",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      },
+      "http://semanticscience.org/resource/SIO_000553": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      }
+    },
+    {
+      "@id": "http://semanticscience.org/resource/SIO_000089",
+      "@type": "rdfs:Resource",
+      "dcterms:description": {
+        "@id": "rdfs:Literal"
+      },
+      "dcterms:title": {
+        "@id": "rdfs:Literal"
+      },
+      "http://semanticscience.org/resource/SIO_001277": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      }
+    },
+    {
+      "@id": "http://purl.obolibrary.org/obo/MS_1000073",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000553": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      }
+    },
+    {
+      "@id": "http://semanticscience.org/resource/SIO_001166",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000254": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "http://purl.obolibrary.org/obo/MS_1000129",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000553": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      }
+    },
+    {
+      "@id": "http://purl.obolibrary.org/obo/MS_1002813",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      },
+      "http://semanticscience.org/resource/SIO_000553": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      }
+    },
+    {
+      "@id": "http://purl.obolibrary.org/obo/MS_1000294",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000232": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "http://purl.obolibrary.org/obo/MS_1000463",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      },
+      "http://semanticscience.org/resource/SIO_000553": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      }
+    },
+    {
+      "@id": "http://semanticscience.org/resource/CHEMINF_000217",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000011": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "http://semanticscience.org/resource/SIO_000221": {
+        "@id": "rdfs:Resource"
+      },
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "http://purl.obolibrary.org/obo/MS_1000744",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000221": {
+        "@id": "rdfs:Resource"
+      },
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      },
+      "http://semanticscience.org/resource/SIO_000553": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      }
+    },
+    {
+      "@id": "http://semanticscience.org/resource/SIO_011125",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000008": [
+        {
+          "@id": "http://semanticscience.org/resource/CHEMINF_000018"
+        },
+        {
+          "@id": "http://semanticscience.org/resource/CHEMINF_000042"
+        },
+        {
+          "@id": "http://semanticscience.org/resource/CHEMINF_000113"
+        },
+        {
+          "@id": "http://semanticscience.org/resource/CHEMINF_000217"
+        }
+      ],
+      "http://semanticscience.org/resource/SIO_000231": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "skos:closeMatch": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "http://purl.obolibrary.org/obo/MS_1000511",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      },
+      "http://semanticscience.org/resource/SIO_000553": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      }
+    },
+    {
+      "@id": "http://semanticscience.org/resource/SIO_001180",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000229": [
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000294"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000580"
+        }
+      ],
+      "http://semanticscience.org/resource/SIO_000230": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "http://semanticscience.org/resource/SIO_000255": {
+        "@id": "http://semanticscience.org/resource/SIO_001166"
+      },
+      "http://semanticscience.org/resource/SIO_000552": [
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000041"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000073"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000129"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000130"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000463"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000511"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1000744"
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/MS_1002813"
+        }
+      ],
+      "http://semanticscience.org/resource/SIO_001278": {
+        "@id": "http://semanticscience.org/resource/SIO_000089"
+      }
+    },
+    {
+      "@id": "http://purl.obolibrary.org/obo/MS_1000130",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000553": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      }
+    },
+    {
+      "@id": "http://semanticscience.org/resource/CHEMINF_000113",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000011": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "http://purl.obolibrary.org/obo/MS_1000580",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000232": {
+        "@id": "http://semanticscience.org/resource/SIO_001180"
+      },
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "http://semanticscience.org/resource/CHEMINF_000042",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000011": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      }
+    },
+    {
+      "@id": "http://semanticscience.org/resource/CHEMINF_000018",
+      "@type": "rdfs:Resource",
+      "http://semanticscience.org/resource/SIO_000011": {
+        "@id": "http://semanticscience.org/resource/SIO_011125"
+      },
+      "http://semanticscience.org/resource/SIO_000300": {
+        "@id": "rdfs:Literal"
+      }
+    }
+  ]
+}

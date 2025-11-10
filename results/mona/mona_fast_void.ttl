@@ -1,0 +1,75 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/class_partition_06385e90c0f97b8e7b9a9a99e976e91c> void:class <http://purl.obolibrary.org/obo/CHEMONTID_0000004> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/class_partition_3bc2838187c619a7cf2ed4a89e3d0164> void:class <http://purl.obolibrary.org/obo/CHEMONTID_0000007> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/class_partition_498e2a8335a834e8684e06915c88cd53> void:class <http://purl.obolibrary.org/obo/CHEMONTID_0000014> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/class_partition_5ac5a78f8160c34636ff23429356e0dc> void:class <http://purl.obolibrary.org/obo/CHEMONTID_0000012> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/class_partition_75dd01e486e70c2e14ea6532d64ac14a> void:class <http://purl.obolibrary.org/obo/CHEMONTID_0000008> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/class_partition_7ccf2f301d53ebb71e577a8b908cc5b6> void:class <http://purl.obolibrary.org/obo/CHEMONTID_0000002> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/class_partition_88b4dd55bf5dc60f826081e7f4c7e928> void:class <http://purl.obolibrary.org/obo/CHEMONTID_0000011> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/class_partition_9bf7198f54c5c6b280c6044ab22e1b54> void:class <http://purl.obolibrary.org/obo/CHEMONTID_0000001> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/class_partition_f1e98e3f6e23bc22a3c73a8ed6436280> void:class <http://purl.obolibrary.org/obo/CHEMONTID_0000013> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/class_partition_fab3598aebef367825f03419d3b0834a> void:class <http://purl.obolibrary.org/obo/CHEMONTID_0000000> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/datatype_partition_0ebe96c7396884ec39ea3d0cc92e67dd> ns1:datatypePartition xsd:int .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/datatype_partition_512e3ad3197eb11ad2129cce7b72863c> ns1:datatypePartition <http://bioinfo.uochb.cas.cz/rdf/v1.0/ms#spectrum> .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/datatype_partition_b8840ae319dd17775a4c3ff2c43caeca> ns1:datatypePartition xsd:date .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/datatype_partition_c7ad2d0b02fcfefaf443acf0c533b817> ns1:datatypePartition xsd:float .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/property_partition_23d42fec7113647dd26b30fd94d26be5> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/CHEBI_4986> ;
+    void:property rdfs:seeAlso .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/property_partition_4d70d57d1f58012e87ac2813ce0db4f0> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/CHEBI_598> ;
+    void:property rdfs:seeAlso .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/property_partition_57db5d6c422eabadaf7fb0d059cffd26> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/CHEBI_2571> ;
+    void:property rdfs:seeAlso .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/property_partition_80d80c5204c9148f1d13644aae1d6834> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/CHEBI_3992> ;
+    void:property rdfs:seeAlso .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/property_partition_8912635388de5727367cb05ed00c2d79> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/CHEBI_3098> ;
+    void:property rdfs:seeAlso .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/property_partition_aa40e83bd464a1f6f4bb48fbf23fb963> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/CHEBI_6497> ;
+    void:property rdfs:seeAlso .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/property_partition_d3c56a5324d1100f6ddd25c84fe00d3f> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/CHEBI_5457> ;
+    void:property rdfs:seeAlso .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/property_partition_d7755df06a73d435b9ec40c5b064c550> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/CHEBI_5653> ;
+    void:property rdfs:seeAlso .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/property_partition_e433548f503dafd43465d5b373cc80a4> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/CHEBI_5686> ;
+    void:property rdfs:seeAlso .
+
+<https://idsm.elixir-czech.cz/rdf/mona//void/property_partition_eada8f13a97ae1a5dffa631824081d3f> ns1:objectClass rdfs:Resource ;
+    ns1:subjectClass <http://purl.obolibrary.org/obo/CHEBI_10036> ;
+    void:property rdfs:seeAlso .
+

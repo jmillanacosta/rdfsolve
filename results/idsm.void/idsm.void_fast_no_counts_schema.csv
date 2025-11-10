@@ -1,0 +1,4 @@
+subject_class,subject_uri,property,property_uri,object_class,object_uri
+GraphCollection,http://www.w3.org/ns/sparql-service-description#GraphCollection,namedGraph,http://www.w3.org/ns/sparql-service-description#namedGraph,rdfs:Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+Graph,http://www.w3.org/ns/sparql-service-description#Graph,dcterms:issued,http://purl.org/dc/terms/issued,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+Dataset,http://www.w3.org/ns/sparql-service-description#Dataset,defaultGraph,http://www.w3.org/ns/sparql-service-description#defaultGraph,Graph,http://www.w3.org/ns/sparql-service-description#Graph

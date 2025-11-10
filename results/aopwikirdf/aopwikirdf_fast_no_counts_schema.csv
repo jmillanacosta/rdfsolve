@@ -1,0 +1,10 @@
+subject_class,subject_uri,property,property_uri,object_class,object_uri
+AdverseOutcomePathway,http://aopkb.org/aop_ontology#AdverseOutcomePathway,dcterms:created,http://purl.org/dc/terms/created,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+KeyEventRelationship,http://aopkb.org/aop_ontology#KeyEventRelationship,dcterms:created,http://purl.org/dc/terms/created,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+ncit:C54571,http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571,dcterms:created,http://purl.org/dc/terms/created,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+KeyEventRelationship,http://aopkb.org/aop_ontology#KeyEventRelationship,dcterms:modified,http://purl.org/dc/terms/modified,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+AdverseOutcomePathway,http://aopkb.org/aop_ontology#AdverseOutcomePathway,dcterms:modified,http://purl.org/dc/terms/modified,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+ncit:C54571,http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571,dcterms:modified,http://purl.org/dc/terms/modified,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+AdverseOutcomePathway,http://aopkb.org/aop_ontology#AdverseOutcomePathway,rdfs:label,http://www.w3.org/2000/01/rdf-schema#label,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+KeyEvent,http://aopkb.org/aop_ontology#KeyEvent,rdfs:label,http://www.w3.org/2000/01/rdf-schema#label,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+KeyEventRelationship,http://aopkb.org/aop_ontology#KeyEventRelationship,rdfs:label,http://www.w3.org/2000/01/rdf-schema#label,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal

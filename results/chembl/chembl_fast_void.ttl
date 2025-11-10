@@ -1,0 +1,34 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_12cc88fd9ec46aba52ac5234681a0c5b> void:class <http://rdf.ebi.ac.uk/terms/chembl#Oligonucleotide> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_2918edb8afa5943b7e7c8c43aaaab2d6> void:class <http://rdf.ebi.ac.uk/terms/chembl#ADMET> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_31ece56e0786e0e5036adfb5edbc5033> void:class <http://semanticscience.org/resource/CHEMINF_000251> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_664ebe557b56cf9fc5b6e5201cf2abe0> void:class <http://semanticscience.org/resource/CHEMINF_000244> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_88b962b2f203640be3ac2d7e08a2a3b0> void:class <http://semanticscience.org/resource/CHEMINF_000381> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_9bdf9cb56e78702bc0c37af00e04b4be> void:class <http://rdf.ebi.ac.uk/terms/chembl#Substance> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_b52f1857e54b78ba63ebd96603e33757> void:class <http://rdf.ebi.ac.uk/terms/chembl#IntactRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f0cd0824ce712ba47052020248a070c3> void:class <http://rdf.ebi.ac.uk/terms/chembl#Macromolecule> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f2da5b6d1fd5b7e918c11bb4a1fe9ff6> void:class <http://rdf.ebi.ac.uk/terms/chembl#UnclassifiedTarget> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f964c821d0a08a9c7008302fcdf24a97> void:class <http://rdf.ebi.ac.uk/terms/chembl#ProteinNucleicAcidComplex> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_018c8a13e573859883274351d92b8129> ns1:datatypePartition xsd:double .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_0ebe96c7396884ec39ea3d0cc92e67dd> ns1:datatypePartition xsd:int .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_13be789b5fffdc118f154b0b918ff747> ns1:datatypePartition xsd:boolean .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_c7ad2d0b02fcfefaf443acf0c533b817> ns1:datatypePartition xsd:float .
+

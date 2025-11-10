@@ -1,0 +1,219 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_01a6917f538858823d53439df865b7fb> void:class <http://rdf.ebi.ac.uk/terms/chembl#FdaSrsRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_030139958d8daffc67f956ba630b700f> void:class <http://rdf.ebi.ac.uk/terms/chembl#PharmgkbRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_09539d16cd8532157d786d141581f8c1> void:class <http://rdf.ebi.ac.uk/terms/chembl#PubchemThomPharmRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_0ad9465a82e48971b1eeb10c9f3b0bbe> void:class <http://rdf.ebi.ac.uk/terms/chembl#PdbeRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_0b000f10de42df65322ae0f4b937de62> void:class <http://semanticscience.org/resource/SIO_011120> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_0b99870bc632c7ada814d2503c857858> void:class <http://rdf.ebi.ac.uk/terms/chembl#TargetComponent> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_0c685e0643119be185e33353df06e07c> void:class <http://semanticscience.org/resource/CHEMINF_000018> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_0e26f9609814c8da4063c7788d4ef3ab> void:class <http://rdf.ebi.ac.uk/terms/chembl#InterproRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_12cc88fd9ec46aba52ac5234681a0c5b> void:class <http://rdf.ebi.ac.uk/terms/chembl#Oligonucleotide> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_1608726f95fde4bd180ee56f10d03827> void:class <http://rdf.ebi.ac.uk/terms/chembl#NikkajiRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_1688af04d65cd98f5fadac9af170406f> void:class <http://rdf.ebi.ac.uk/terms/chembl#GoComponentRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_173281175dc3cfe691c314807e25c981> void:class <http://rdf.ebi.ac.uk/terms/chembl#NonMolecular> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_1c8afe701783711c2d97be5d2f94afde> void:class <http://rdf.ebi.ac.uk/terms/chembl#UnknownSubstance> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_207718635df6610f5d285af3ef5661f1> void:class <http://semanticscience.org/resource/CHEMINF_000245> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_242e06f8c7161013a70b339f8911bb0f> void:class <http://semanticscience.org/resource/CHEMINF_000300> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_2918edb8afa5943b7e7c8c43aaaab2d6> void:class <http://rdf.ebi.ac.uk/terms/chembl#ADMET> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_29f933011c7d4bcf1f38bb57c3e17307> void:class <http://rdf.ebi.ac.uk/terms/chembl#Target> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_2ad9943b5f77abfc9de028d9add401e5> void:class <http://rdf.ebi.ac.uk/terms/chembl#SmallMolecule> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_2cdb570199852babb8f1e7621fcd2ff5> void:class <http://semanticscience.org/resource/CHEMINF_000059> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_2f7934ff48a8fc29feca85ebb1b0d202> void:class <http://rdf.ebi.ac.uk/terms/chembl#ProteinClassification> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_31ece56e0786e0e5036adfb5edbc5033> void:class <http://semanticscience.org/resource/CHEMINF_000251> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_39aa3a5958ec294999afa259a892904e> void:class <http://semanticscience.org/resource/CHEMINF_000431> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_3a82accd071f5253c0e9ebef59d84bf4> void:class <http://rdf.ebi.ac.uk/terms/chembl#ProteinMolecule> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_3b0277cce9cf410920646f9154d880c5> void:class <http://rdf.ebi.ac.uk/terms/chembl#HmdbRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_3bfcb47fd0085d31f48f8dd7acb81923> void:class <http://semanticscience.org/resource/CHEMINF_000113> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_3e1c64c925e6a742b7b00849380c1b8c> void:class <http://rdf.ebi.ac.uk/terms/chembl#Antibody> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_40503eb65c87dfa277ee684c9d329e25> void:class <http://rdf.ebi.ac.uk/terms/chembl#Metal> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_43c7db3591589f49fb2d322ed77f9089> void:class <http://rdf.ebi.ac.uk/terms/chembl#Tissue> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_473e1e99531a256e57ed72364a4b56b5> void:class <http://rdf.ebi.ac.uk/terms/chembl#DrugbankRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_47c81d2bce5696004c3ea409f8a2af99> void:class <http://rdf.ebi.ac.uk/terms/chembl#SingleProtein> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_4bc14d57d7a0097b660c6f74a6b0ae18> void:class <http://rdf.ebi.ac.uk/terms/chembl#DrugIndication> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_4bcce3be15c23c30bd6db8006f07d18f> void:class <http://rdf.ebi.ac.uk/terms/chembl#AtlasRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_4fa62bebfef885ee39647294140c416a> void:class <http://rdf.ebi.ac.uk/terms/chembl#PubchemRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_58431ee436e83e22d93eb396ebe49ef5> void:class <http://rdf.ebi.ac.uk/terms/chembl#Source> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_5dfe292374bb075308e26db9df1084bd> void:class <http://rdf.ebi.ac.uk/terms/chembl#PubchemDotfRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_64bbf78c24d4a3a55e01bd74b5e53274> void:class <http://rdf.ebi.ac.uk/terms/chembl#PharmGkbRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_6562c9476a285863f2562b1bc3a28baa> void:class <http://rdf.ebi.ac.uk/terms/chembl#UniprotRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_664ebe557b56cf9fc5b6e5201cf2abe0> void:class <http://semanticscience.org/resource/CHEMINF_000244> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_6ae0ec70e23928b38318f73798b521fd> void:class <http://rdf.ebi.ac.uk/terms/chembl#Oligosaccharide> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_6bdd109186b870d1b84c16b096fae2f7> void:class <http://rdf.ebi.ac.uk/terms/chembl#Mechanism> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_6d9d5de2d4ab1abb6536d7b465394ea9> void:class <http://semanticscience.org/resource/CHEMINF_000307> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_7244cf93c9bbdedc513b665535659cb5> void:class <http://semanticscience.org/resource/CHEMINF_000312> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_73f7f6ea053b97db095feb749d941c3c> void:class <http://semanticscience.org/resource/CHEMINF_000315> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_73fe2d828b19285508b03d12d5ffcab2> void:class <http://rdf.ebi.ac.uk/terms/chembl#Phenotype> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_74975dc490895e72969ad186dd410c5f> void:class <http://rdf.ebi.ac.uk/terms/chembl#ReactomeRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_7579da474a9299019fdaac922d2844e2> void:class <http://rdf.ebi.ac.uk/terms/chembl#KeggLigandRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_79660b12fa3ee5ea47a74add017063ab> void:class <http://rdf.ebi.ac.uk/terms/chembl#Assay> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_7a49f5dd0954737e0f7e916a39e41c59> void:class foaf:Image .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_7b0257bbd3337672f03a3c5862d7d5c5> void:class <http://rdf.ebi.ac.uk/terms/chembl#NucleicAcid> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_7d2cfff9c2a9627dbd1ef0ea9b5d6f16> void:class <http://rdf.ebi.ac.uk/terms/chembl#SureChemblRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_7d3a5851c75408deb7091ae97de91295> void:class <http://rdf.ebi.ac.uk/terms/chembl#EnzymeClassRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_7dbc953312f67adf45c10a1e3f2c5cdf> void:class <http://rdf.ebi.ac.uk/terms/chembl#MculeRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_81eb3b738509631f1bf728a333c0bbbc> void:class <http://semanticscience.org/resource/CHEMINF_000254> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_843f54f249686eb98ebc04ac5a03f2e5> void:class <http://rdf.ebi.ac.uk/terms/chembl#ChebiRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_858c4a3d1cc0adf8144f80c8abd1e00b> void:class <http://rdf.ebi.ac.uk/terms/chembl#CellLineTarget> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_88b962b2f203640be3ac2d7e08a2a3b0> void:class <http://semanticscience.org/resource/CHEMINF_000381> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_8c6882990b8b0cefea3df308a86757e0> void:class <http://rdf.ebi.ac.uk/terms/chembl#ZincRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_8d3115c093e6b72db0e2b4ef0e3b22e9> void:class <http://rdf.ebi.ac.uk/terms/chembl#GoProcessRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_8e99e8651d89aa13f6d4e86054fe27fd> void:class <http://semanticscience.org/resource/CHEMINF_000322> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_94aeee92f60a9e8a0bf794c446b33e19> void:class <http://rdf.ebi.ac.uk/terms/chembl#GoFunctionRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_97d3b95c79cccea6ab18f5c027024db0> void:class <http://semanticscience.org/resource/CHEMINF_000218> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_9975e648833262cd6616862a9bdb44b9> void:class <http://rdf.ebi.ac.uk/terms/chembl#ProteinFamily> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_9bdf9cb56e78702bc0c37af00e04b4be> void:class <http://rdf.ebi.ac.uk/terms/chembl#Substance> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_a03eb0f60584973718941a61f5cf7682> void:class <http://semanticscience.org/resource/CHEMINF_000216> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_a0f88f8508485e949fdbc30549805398> void:class <http://rdf.ebi.ac.uk/terms/chembl#LincsCellRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_a2956932dd977d6b39951d671aac5878> void:class <http://rdf.ebi.ac.uk/terms/chembl#BioComponent> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_a90c09759739390213e989b7cb526d70> void:class <http://rdf.ebi.ac.uk/terms/chembl#SubCellular> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_aac337cb6ccb174a102edcd0a51effda> void:class <http://rdf.ebi.ac.uk/terms/chembl#CellTherapy> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_ad77a6593282646494438dca3c7cca2e> void:class <http://rdf.ebi.ac.uk/terms/chembl#Enzyme> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_afb5e80b8f94a25d56d9c4183977bb4e> void:class <http://rdf.ebi.ac.uk/terms/chembl#ProteinSelectivityGroup> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_b17ef1bfee8a0cfed8742b94c94c5bd7> void:class <http://rdf.ebi.ac.uk/terms/chembl#IupharRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_b2fdc144a67dd76b054d9abcfb62a83a> void:class <http://rdf.ebi.ac.uk/terms/chembl#PfamRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_b52f1857e54b78ba63ebd96603e33757> void:class <http://rdf.ebi.ac.uk/terms/chembl#IntactRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_bc8a0359255de679c6962574921eb0ad> void:class <http://rdf.ebi.ac.uk/terms/chembl#ProteinComplex> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_bdfffab7039ed3fd5d8bea540e6991bd> void:class <http://rdf.ebi.ac.uk/terms/chembl#BindingSite> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_c9f6f5a792946a2ee3e4acc4059f7825> void:class <http://rdf.ebi.ac.uk/terms/chembl#ChimericProtein> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_cd98d0e4eaaa42ed1cad5a67b9253f8b> void:class <http://rdf.ebi.ac.uk/terms/chembl#LincsRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_d2f13ff710e82fc0234e9e90fe47beef> void:class <http://semanticscience.org/resource/CHEMINF_000195> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_d335a820f41e3fb49aad23e64baff095> void:class <http://semanticscience.org/resource/CHEMINF_000042> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_d4802b3fc1d8c335f79804b7e98f2e01> void:class <http://rdf.ebi.ac.uk/terms/chembl#ReconRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_d678c325364c911eb47373b290b7e91d> void:class <http://rdf.ebi.ac.uk/terms/chembl#CGDRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_d73e0d4a7ae43d3b3763e173df5cb3c8> void:class <http://rdf.ebi.ac.uk/terms/chembl#ActorRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_d7646241d24675b16208d732e550afb8> void:class <http://rdf.ebi.ac.uk/terms/chembl#SmallMoleculeTarget> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_d9fb66e5c2a44104de736e50a1fb6c55> void:class <http://semanticscience.org/resource/CHEMINF_000350> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_dabe8666cb219f735fab8214303e2857> void:class <http://rdf.ebi.ac.uk/terms/chembl#ProteinComplexGroup> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_db48d5e4b3432d6d31d604a6db453d3a> void:class <http://rdf.ebi.ac.uk/terms/chembl#OligosaccharideTarget> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_dbb16f832a6c23bc11e97cb8f0c3e67d> void:class <http://rdf.ebi.ac.uk/terms/chembl#NmrShiftDb2Ref> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_dd87797a531bf372036ac6a4f2e7c75c> void:class <http://semanticscience.org/resource/CHEMINF_000326> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_e3a5f4636da7fd6dcf1d20b6d5397f5f> void:class <http://rdf.ebi.ac.uk/terms/chembl#UnknownTarget> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_e66174a23ad022e81eee2da241478f66> void:class <http://rdf.ebi.ac.uk/terms/chembl#Activity> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_e6cb419ea2c0b705905442924f2a5235> void:class <http://rdf.ebi.ac.uk/terms/chembl#Organism> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_e9b165cd08691640bfd5fda790cfea61> void:class <http://rdf.ebi.ac.uk/terms/chembl#ProteinProteinInteraction> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f0cd0824ce712ba47052020248a070c3> void:class <http://rdf.ebi.ac.uk/terms/chembl#Macromolecule> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f1975f967c766102af66cd786c8572e4> void:class <http://rdf.ebi.ac.uk/terms/chembl#Journal> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f2da5b6d1fd5b7e918c11bb4a1fe9ff6> void:class <http://rdf.ebi.ac.uk/terms/chembl#UnclassifiedTarget> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f376ba2298b0d8c42b74ba66f0a9385b> void:class <http://rdf.ebi.ac.uk/terms/chembl#EmoleculesRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f4389a08744b8ad143e63a19cad831c1> void:class <http://rdf.ebi.ac.uk/terms/chembl#SelleckRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f661387250cf535acb51eed7b8482d29> void:class <http://rdf.ebi.ac.uk/terms/chembl#PubchemBioassayRef> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f7978823ef1816e993bb1a928d71000c> void:class <http://rdf.ebi.ac.uk/terms/chembl#CellLine> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_f964c821d0a08a9c7008302fcdf24a97> void:class <http://rdf.ebi.ac.uk/terms/chembl#ProteinNucleicAcidComplex> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_fb6424e14c4c5f2c970042b387a6b0f6> void:class <http://rdf.ebi.ac.uk/terms/chembl#Document> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_fcc4bf03b847b30b7bbfed9a1b81bfcd> void:class <http://rdf.ebi.ac.uk/terms/chembl#UnclassifiedMolecule> .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_018c8a13e573859883274351d92b8129> ns1:datatypePartition xsd:double .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_0ebe96c7396884ec39ea3d0cc92e67dd> ns1:datatypePartition xsd:int .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_13be789b5fffdc118f154b0b918ff747> ns1:datatypePartition xsd:boolean .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string .
+
+<http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_c7ad2d0b02fcfefaf443acf0c533b817> ns1:datatypePartition xsd:float .
+

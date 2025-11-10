@@ -1,0 +1,70 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/class_partition_313ac0436ea4d0b80165752fb860ea00> void:class <http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/class_partition_40a022a81f543c6346eee1bbc7dc05e9> void:class <http://id.nlm.nih.gov/mesh/vocab#Qualifier> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/class_partition_513376c2bcdb7adc5bb5a9f495b299ba> void:class <http://id.nlm.nih.gov/mesh/vocab#Concept> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/class_partition_6d3ce23ce57062810687561e0559ffbe> void:class <http://id.nlm.nih.gov/mesh/vocab#DisallowedDescriptorQualifierPair> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/class_partition_79bcb5d9ee35d2089dd187f2160963c0> void:class <http://id.nlm.nih.gov/mesh/vocab#SCR_Chemical> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/class_partition_9b34458b5017cab97f8f1791d5495e3c> void:class <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/class_partition_a90788e936d65bd25db0da3e02ccf41d> void:class <http://id.nlm.nih.gov/mesh/vocab#CheckTag> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/class_partition_b9f2a47fe463dcd9f0eaac8109aaf24c> void:class <http://id.nlm.nih.gov/mesh/vocab#SCR_Organism> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/class_partition_c2edf55b80f3f12dbc19209b737193b7> void:class <http://id.nlm.nih.gov/mesh/vocab#AllowedDescriptorQualifierPair> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/class_partition_cb32885a35b6d2e800863f40ac320cb0> void:class <http://id.nlm.nih.gov/mesh/vocab#PublicationType> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/datatype_partition_0ebe96c7396884ec39ea3d0cc92e67dd> ns1:datatypePartition xsd:int .
+
+<http://id.nlm.nih.gov/mesh/heading/void/datatype_partition_13be789b5fffdc118f154b0b918ff747> ns1:datatypePartition xsd:boolean .
+
+<http://id.nlm.nih.gov/mesh/heading/void/datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a> ns1:datatypePartition xsd:string .
+
+<http://id.nlm.nih.gov/mesh/heading/void/datatype_partition_a293c1c4f80b12331668319d522ad018> ns1:datatypePartition rdf:langString .
+
+<http://id.nlm.nih.gov/mesh/heading/void/datatype_partition_b8840ae319dd17775a4c3ff2c43caeca> ns1:datatypePartition xsd:date .
+
+<http://id.nlm.nih.gov/mesh/heading/void/property_partition_03a1f263cdf9b302e36e6f79ba27d467> ns1:objectClass <http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor>,
+        <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> ;
+    ns1:subjectClass <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> ;
+    void:property <http://id.nlm.nih.gov/mesh/vocab#broaderDescriptor> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/property_partition_0ef6e6c4a56fbc9bbad9b82ee8ea121c> ns1:objectClass <http://id.nlm.nih.gov/mesh/vocab#PublicationType> ;
+    ns1:subjectClass <http://id.nlm.nih.gov/mesh/vocab#PublicationType> ;
+    void:property <http://id.nlm.nih.gov/mesh/vocab#broaderDescriptor> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/property_partition_69400281e48c6caed4dab1f105104c63> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://id.nlm.nih.gov/mesh/vocab#Qualifier> ;
+    void:property <http://id.nlm.nih.gov/mesh/vocab#onlineNote> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/property_partition_6fb190a4c3966c580a0859cf3ce8c3f4> ns1:objectClass <http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor>,
+        <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> ;
+    ns1:subjectClass <http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor> ;
+    void:property <http://id.nlm.nih.gov/mesh/vocab#broaderDescriptor> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/property_partition_723c9213abed4afb3c5d2d7ac23a01ed> ns1:objectClass <http://id.nlm.nih.gov/mesh/vocab#Concept> ;
+    ns1:subjectClass <http://id.nlm.nih.gov/mesh/vocab#Concept> ;
+    void:property <http://id.nlm.nih.gov/mesh/vocab#broaderConcept> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/property_partition_9accf758cbf0529b21345493855408bc> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://id.nlm.nih.gov/mesh/vocab#GeographicalDescriptor> ;
+    void:property <http://id.nlm.nih.gov/mesh/vocab#onlineNote> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/property_partition_9ff8fc4798f2c6c5dd491a012c5e50e5> ns1:objectClass <http://id.nlm.nih.gov/mesh/vocab#TreeNumber> ;
+    ns1:subjectClass <http://id.nlm.nih.gov/mesh/vocab#TreeNumber> ;
+    void:property <http://id.nlm.nih.gov/mesh/vocab#parentTreeNumber> .
+
+<http://id.nlm.nih.gov/mesh/heading/void/property_partition_a2a93712b37f7b9866b1bc575fba43df> ns1:objectClass rdfs:Literal ;
+    ns1:subjectClass <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> ;
+    void:property <http://id.nlm.nih.gov/mesh/vocab#onlineNote> .
+

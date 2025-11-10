@@ -1,0 +1,26 @@
+@prefix ns1: <https://bgee.org/rdf_v15_2/void/> .
+@prefix ns4: <http://purl.obolibrary.org/obo/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+
+ns1:class_partition_137c9dc1cb27b23cc8bf8dc3ec2d5c89 void:class rdf:List .
+
+ns1:class_partition_472ee8b9e92f00863f1b11929967a7fa void:class owl:ObjectProperty .
+
+ns1:class_partition_55439a5d90df8ccad534dc9af3fc4aee void:class owl:AnnotationProperty .
+
+ns1:class_partition_6be100d081a438502013ba4e5fef3db7 void:class owl:Class .
+
+ns1:class_partition_717e1ac2dd567ad1567ba802cdb67e2a void:class owl:FunctionalProperty .
+
+ns1:class_partition_80029ef2380309dbd92f6d593c9c1f20 void:class rdf:Property .
+
+ns1:class_partition_89df24df35df8882616112ab6a78df83 void:class owl:Ontology .
+
+ns1:class_partition_9e6d9eddc19d6811c0a885c828aceb63 void:class owl:DatatypeProperty .
+
+ns1:class_partition_9ed2fb7d3b7985c23e788a879a4db9d7 void:class owl:Restriction .
+
+ns1:class_partition_b5be57efd4210b8b5ec1b5f811ecd784 void:class ns4:CARO_0000000 .
+

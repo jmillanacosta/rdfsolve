@@ -1,0 +1,5 @@
+class_name,class_uri,total_instances,instances_in_partitions,partition_occurrences,occurrence_coverage_percent,avg_occurrences_per_instance
+Axiom,http://www.w3.org/2002/07/owl#Axiom,590906,590906,590906,100.0,1.0
+Class,http://www.w3.org/2002/07/owl#Class,220816,220816,220816,100.0,1.0
+SIO_011120,http://semanticscience.org/resource/SIO_011120,191606,191606,191606,100.0,1.0
+Restriction,http://www.w3.org/2002/07/owl#Restriction,93423,93423,93423,100.0,1.0

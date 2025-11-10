@@ -1,0 +1,6 @@
+subject_class,subject_uri,property,property_uri,object_class,object_uri
+sio:011120,http://semanticscience.org/resource/SIO_011120,has-value,http://semanticscience.org/resource/has-value,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+sio:011120,http://semanticscience.org/resource/SIO_011120,sio:000300,http://semanticscience.org/resource/SIO_000300,rdfs:Literal,http://www.w3.org/2000/01/rdf-schema#Literal
+sio:011120,http://semanticscience.org/resource/SIO_011120,rdf:type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,rdfs:Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+sio:011120,http://semanticscience.org/resource/SIO_011120,is-attribute-of,http://semanticscience.org/resource/is-attribute-of,rdfs:Resource,http://www.w3.org/2000/01/rdf-schema#Resource
+sio:011120,http://semanticscience.org/resource/SIO_011120,sio:000011,http://semanticscience.org/resource/SIO_000011,rdfs:Resource,http://www.w3.org/2000/01/rdf-schema#Resource

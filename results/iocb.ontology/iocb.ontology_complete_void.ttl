@@ -1,0 +1,24 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://bioinfo.iocb.cz/dataset/ontology/void/class_partition_6be100d081a438502013ba4e5fef3db7> void:class owl:Class ;
+    void:entities 6123721 .
+
+<http://bioinfo.iocb.cz/dataset/ontology/void/class_partition_80029ef2380309dbd92f6d593c9c1f20> void:class rdf:Property ;
+    void:entities 20571 .
+
+<http://bioinfo.iocb.cz/dataset/ontology/void/class_partition_9ed2fb7d3b7985c23e788a879a4db9d7> void:class owl:Restriction ;
+    void:entities 1885349 .
+
+<http://bioinfo.iocb.cz/dataset/ontology/void/class_partition_bb70ba4af84eba77e76cf90374b5e869> void:class owl:NamedIndividual ;
+    void:entities 1189 .
+
+<http://bioinfo.iocb.cz/dataset/ontology/void/datatype_partition_0ebe96c7396884ec39ea3d0cc92e67dd> ns1:datatypePartition xsd:int ;
+    void:triples 22873 .
+
+<http://bioinfo.iocb.cz/dataset/ontology/void/datatype_partition_a293c1c4f80b12331668319d522ad018> ns1:datatypePartition rdf:langString ;
+    void:triples 3858115 .
+
