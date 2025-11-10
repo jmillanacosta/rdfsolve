@@ -7,8 +7,9 @@
 <h1 align="center">
   RDF solve [WiP]
 </h1>
-
 <p align="center">
+    <a href="https://github.com/jmillanacosta/rdfsolve/actions/workflows/generate-schema-notebooks-matrix.yml/badge.svg">
+        <img alt="Tests" src="https://github.com/jmillanacosta/rdfsolve/actions/workflows/generate-schema-notebooks-matrix.yml/badge.svg" /></a>
     <a href="https://github.com/Maastricht University/rdfsolve/actions/workflows/tests.yml">
         <img alt="Tests" src="https://github.com/Maastricht University/rdfsolve/actions/workflows/tests.yml/badge.svg" /></a>
     <a href="https://pypi.org/project/rdfsolve">
