@@ -58,7 +58,7 @@ dependencies = [
     # Data processing and analysis
     "pandas>=2.0.0", # DataFrame operations for analysis results
     "numpy", # Numerical operations (pandas dependency)
-    
+    "bioregistry>=0.13.2",
     # Utility libraries
     "more_itertools", # missing from itertools in stdlib
     "tqdm", # progress bars
