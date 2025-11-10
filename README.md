@@ -33,9 +33,7 @@
     -->
 </p>
 
-Wraps several RDF schema standards and solvers to figure out SPARQL endpoint / triplestore database schemas.
-
-![workflow](https://github.com/BioDataFuse/biohackarvix-2024/blob/main/images/Dataschemas-biohack24.png?raw=true)
+Wraps several RDF schema standards and solvers to figure out SPARQL endpoint / triplestore database schemas. WIP
 
 [Figure source](https://github.com/BioDataFuse/biohackarvix-2024/tree/main)
 
