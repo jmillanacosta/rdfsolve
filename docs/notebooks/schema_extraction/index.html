@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RDFSolve Schema Analysis - Matrix Results</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            line-height: 1.6; 
+            background: #f8f9fa;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px; 
+            border-radius: 12px; 
+            margin-bottom: 30px; 
+            text-align: center;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-number { font-size: 2em; font-weight: bold; }
+        .success-number { color: #28a745; }
+        .error-number { color: #dc3545; }
+        .total-number { color: #007bff; }
+        .dataset-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 20px; 
+        }
+        .dataset-card { 
+            background: white;
+            border-radius: 8px; 
+            padding: 20px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .dataset-card:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .dataset-name { 
+            font-weight: 600; 
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            color: #2c3e50;
+        }
+        .status-success { 
+            color: #28a745; 
+            background: #d4edda;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .status-error { 
+            color: #721c24; 
+            background: #f8d7da;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .view-link {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+        .view-link:hover {
+            background: #0056b3;
+            color: white;
+        }
+        .footer { 
+            margin-top: 50px; 
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            text-align: center; 
+            color: #6c757d; 
+        }
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 30px 0 20px 0;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>RDFSolve Schema Analysis</h1>
+            <p>Matrix-based parallel processing results</p>
+            <p><strong>Generated:</strong> Tue Nov 11 11:46:13 UTC 2025</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number total-number">40</div>
+                <div>Total Datasets</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number success-number">38</div>
+                <div>Successful</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number error-number">2</div>
+                <div>Failed</div>
+            </div>
+        </div>
+        
+        <div class="section-title">Analysis Results</div>
+        <div class="dataset-grid">
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] aopwikirdf</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 285K
+                </div>
+                <a href="aopwikirdf_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] bgee</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 283K
+                </div>
+                <a href="bgee_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] chebi</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 287K
+                </div>
+                <a href="chebi_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] chembl</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 281K
+                </div>
+                <a href="chembl_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] drugbank.drugs</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 283K
+                </div>
+                <a href="drugbank.drugs_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] idsm.void</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 285K
+                </div>
+                <a href="idsm.void_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] iocb.ontology</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 285K
+                </div>
+                <a href="iocb.ontology_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] isdb</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 285K
+                </div>
+                <a href="isdb_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] mesh.heading</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 285K
+                </div>
+                <a href="mesh.heading_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] nanosafetyrdf</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 281K
+                </div>
+                <a href="nanosafetyrdf_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.anatomy</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.anatomy_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.bioassay</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 285K
+                </div>
+                <a href="pubchem.bioassay_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.book</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.book_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.cell</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.cell_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.compound</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.compound_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.concept</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.concept_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.conserveddomain</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.conserveddomain_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[FAIL] pubchem.descriptor.compound</div>
+                <div class="status-error">Analysis Failed</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 2.4K
+                </div>
+                <a href="pubchem.descriptor.compound_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.disease</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.disease_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.gene</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 285K
+                </div>
+                <a href="pubchem.gene_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.grant</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 283K
+                </div>
+                <a href="pubchem.grant_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.journal</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.journal_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.measuregroup</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.measuregroup_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.organization</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.organization_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.patent</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.patent_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.pathway</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.pathway_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[FAIL] pubchem.protein</div>
+                <div class="status-error">Analysis Failed</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 2.4K
+                </div>
+                <a href="pubchem.protein_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.source</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.source_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.synonym</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 282K
+                </div>
+                <a href="pubchem.synonym_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] pubchem.taxonomy</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="pubchem.taxonomy_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] uniprot.chebi</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 291K
+                </div>
+                <a href="uniprot.chebi_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] uniprot.citationmapping</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 291K
+                </div>
+                <a href="uniprot.citationmapping_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] uniprot.citations</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 291K
+                </div>
+                <a href="uniprot.citations_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] uniprot.core</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 291K
+                </div>
+                <a href="uniprot.core_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] uniprot.database</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 291K
+                </div>
+                <a href="uniprot.database_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] uniprot.diseases</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 289K
+                </div>
+                <a href="uniprot.diseases_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] uniprot.enzymes</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 291K
+                </div>
+                <a href="uniprot.enzymes_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] uniprot.go</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 291K
+                </div>
+                <a href="uniprot.go_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] wikidata.idsm.entity</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 284K
+                </div>
+                <a href="wikidata.idsm.entity_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+            <div class="dataset-card">
+                <div class="dataset-name">[OK] wikipathways</div>
+                <div class="status-success">Completed Successfully</div>
+                <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                    Size: 281K
+                </div>
+                <a href="wikipathways_schema.html" class="view-link">View Analysis Report →</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <h3>RDFSolve</h3>
+            <p>Automated RDF schema extraction and analysis toolkit</p>
+            <p><strong>Repository:</strong> <a href="https://github.com/jmillanacosta/rdfsolve">github.com/jmillanacosta/rdfsolve</a></p>
+            <p><em>Matrix processing enables parallel analysis of multiple datasets</em></p>
+        </div>
+    </div>
+</body>
+</html>
