@@ -34,7 +34,7 @@ jobs:
         cd notebooks/schema_extraction
         
         # Extract dataset names from sources.csv and create proper JSON
-        datasets=$(tail -n +2 ../sources.csv | cut -d',' -f1 | grep -v '^$' | jq -R . | jq -s . | jq -c .)
+        datasets=$(tail -n +2 ../../data/sources.csv | cut -d',' -f1 | grep -v '^$' | jq -R . | jq -s . | jq -c .)
         
         # Create matrix for parallel processing
         echo "datasets=$datasets" >> $GITHUB_OUTPUT
