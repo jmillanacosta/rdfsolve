@@ -1,0 +1,607 @@
+@prefix aopo: <http://aopkb.org/aop_ontology#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix edam: <http://edamontology.org/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix nci: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#> .
+@prefix ns1: <http://example.org/dataset/void/> .
+@prefix ns10: <http://purl.obolibrary.org/obo/> .
+@prefix ns11: <http://semanticscience.org/resource/> .
+@prefix ns2: <http://ldf.fi/void-ext#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix virtrdf: <http://www.openlinksw.com/schemas/virtrdf#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_05326e66ffdb699ddd0db33c8b07af4e void:class aopo:KeyEventRelationship ;
+    void:entities 2255 .
+
+ns1:class_partition_0593966383c6cdb7d91809ce6aa80481 void:class ns11:CHEMINF_000405 ;
+    void:entities 420 .
+
+ns1:class_partition_0c45c6209894ccdbe319372370b38cfa void:class ns11:CHEMINF_000564 ;
+    void:entities 35 .
+
+ns1:class_partition_172e57c59558e48f8ee14841b778d071 void:class ns11:CHEMINF_000412 ;
+    void:entities 344 .
+
+ns1:class_partition_1ca0598f5b02a4d08467b27f368abaec void:class aopo:OrganContext ;
+    void:entities 95 .
+
+ns1:class_partition_1ca93c070cae8a59512cc8676a780fcd void:class ns10:GO_0008150 ;
+    void:entities 547 .
+
+ns1:class_partition_27a742e6d62e356debb8b3a69e1d1153 void:class ns11:CHEMINF_000409 ;
+    void:entities 466 .
+
+ns1:class_partition_3156c2be5f2705bb78b8d9952d7447b3 void:class virtrdf:QuadMapATable ;
+    void:entities 2 .
+
+ns1:class_partition_3493b417fa8aa38a583b17b046787cf8 void:class virtrdf:array-of-QuadMap ;
+    void:entities 3 .
+
+ns1:class_partition_3fb6ff86370e59e28c2d3851e5b3f004 void:class void:Dataset ;
+    void:entities 4 .
+
+ns1:class_partition_44d37d62239ba75375f1682353aea45d void:class virtrdf:array-of-QuadMapFormat ;
+    void:entities 98 .
+
+ns1:class_partition_4ba782b6170fa6712d37c53a834e40b3 void:class edam:data_1027 ;
+    void:entities 1534 .
+
+ns1:class_partition_4f8a247d89cb1df0828f28d262266208 void:class edam:data_2291 ;
+    void:entities 7845 .
+
+ns1:class_partition_583ee322e80e919bce2a2e4ebed8473b void:class void:Linkset ;
+    void:entities 2 .
+
+ns1:class_partition_60eafc7caeea4bfb6bed8ea2cff00d4b void:class ns11:CHEMINF_000567 ;
+    void:entities 417 .
+
+ns1:class_partition_6687515ef18de95e8a99d1af26448210 void:class nci:C54571 ;
+    void:entities 730 .
+
+ns1:class_partition_68cf9a8c2b0c75d9cbc8d9df131e1d50 void:class ns11:CHEMINF_000000 ;
+    void:entities 406 .
+
+ns1:class_partition_7148b7ced389b31208aac3508e29bb6f void:class virtrdf:QuadMapFText ;
+    void:entities 4 .
+
+ns1:class_partition_71e025e3ed797d25ced0e579c55c4253 void:class aopo:KeyEvent ;
+    void:entities 1549 .
+
+ns1:class_partition_77cbfa3c5c00c3867b26350ca6e6ed39 void:class virtrdf:QuadStorage ;
+    void:entities 3 .
+
+ns1:class_partition_78c723fdd657305a2bcb28f459cba690 void:class edam:data_2298 ;
+    void:entities 1630 .
+
+ns1:class_partition_847efc57958e85ccf2615ae9db656fa9 void:class virtrdf:array-of-string ;
+    void:entities 2 .
+
+ns1:class_partition_84e0217cdb8ab6e318b17878f51a4286 void:class virtrdf:QuadMapFormat ;
+    void:entities 130 .
+
+ns1:class_partition_860fa71e750521c61147f43b932a1eac void:class aopo:AdverseOutcomePathway ;
+    void:entities 562 .
+
+ns1:class_partition_88e66dd5c8f9733a5a09908aaf1e14ca void:class ns11:CHEMINF_000140 ;
+    void:entities 417 .
+
+ns1:class_partition_9cb842ffe3bab74258e8454a9a9ad638 void:class ns11:CHEMINF_000407 ;
+    void:entities 432 .
+
+ns1:class_partition_9cdf241d5f05a64857dbedd67fea65db void:class virtrdf:array-of-QuadMapATable ;
+    void:entities 2 .
+
+ns1:class_partition_9ecddfdc562308396732db59c9a2289a void:class virtrdf:array-of-QuadMapColumn ;
+    void:entities 8 .
+
+ns1:class_partition_a6bb7211c33071c99a0c30f96d378ed8 void:class <http://purl.bioontology.org/ontology/NCBITAXON/131567> ;
+    void:entities 175 .
+
+ns1:class_partition_b2a5899c913623a2df950463ff405044 void:class ns11:CHEMINF_000406 ;
+    void:entities 215 .
+
+ns1:class_partition_be3d9cb9234a78e8d9549f89cb426ba6 void:class edam:data_1025 ;
+    void:entities 12490 .
+
+ns1:class_partition_cb325b5edd79e219356c602ed9e29f31 void:class ns11:CHEMINF_000408 ;
+    void:entities 420 .
+
+ns1:class_partition_cd0323095809228c7d3792a5cabae308 void:class virtrdf:QuadMapValue ;
+    void:entities 8 .
+
+ns1:class_partition_ce0c384f947a7e51c0fa02499043c4a8 void:class virtrdf:QuadMap ;
+    void:entities 2 .
+
+ns1:class_partition_cf0228a016dacbaa5cc8bcf3fb044cd5 void:class sd:Service ;
+    void:entities 1 .
+
+ns1:class_partition_d004dac86eac0101e0e3f12301402fd8 void:class aopo:BiologicalEvent ;
+    void:entities 1096 .
+
+ns1:class_partition_d3504b7574b31cc49e6f7934d893a8f9 void:class sd:Dataset ;
+    void:entities 1 .
+
+ns1:class_partition_d8227896bbe7fa00754f516a08ee34da void:class ns10:PATO_0001241 ;
+    void:entities 483 .
+
+ns1:class_partition_f40618e8ae287fe195941c285abbebde void:class ns11:CHEMINF_000446 ;
+    void:entities 406 .
+
+ns1:class_partition_f6f34daa25db2276b08b4d576564285b void:class edam:data_1033 ;
+    void:entities 1481 .
+
+ns1:class_partition_f8f2877f90fab58296d2757fe888609f void:class aopo:CellTypeContext ;
+    void:entities 68 .
+
+ns1:class_partition_fa342d0664eccd218d99356af76358ac void:class virtrdf:QuadMapColumn ;
+    void:entities 8 .
+
+ns1:datatype_partition_10c08cb2b733eef75e01e5e0496706c2 ns2:datatypePartition xsd:dateTime ;
+    void:triples 1 .
+
+ns1:datatype_partition_2aeef4d4f936d0da7bddf7649d68fbc6 ns2:datatypePartition xsd:integer ;
+    void:triples 290 .
+
+ns1:datatype_partition_4e598fd1b2c9ef9bd360334e0ef7610a ns2:datatypePartition xsd:string ;
+    void:triples 97911 .
+
+ns1:datatype_partition_a072d6925e53f477008d80cf3492e74b ns2:datatypePartition xsd:anyURI ;
+    void:triples 50 .
+
+ns1:datatype_partition_b8840ae319dd17775a4c3ff2c43caeca ns2:datatypePartition xsd:date ;
+    void:triples 2 .
+
+ns1:property_partition_00dabb563ac63265c8623267fdb200fb ns2:objectClass ns10:GO_0008150,
+        ns10:PATO_0001241 ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property ns10:GO_0008150 ;
+    void:triples 6,
+        890 .
+
+ns1:property_partition_02b5bfc3c6f1d3c8a26f48d40bd94c1a ns2:objectClass edam:data_1025,
+        edam:data_1027,
+        edam:data_1033,
+        edam:data_2291 ;
+    ns2:subjectClass edam:data_2298 ;
+    void:property skos:exactMatch ;
+    void:triples 1481,
+        1491,
+        7374,
+        10346 .
+
+ns1:property_partition_0335835308c976c8fc7e53695435f696 ns2:objectClass <http://purl.bioontology.org/ontology/NCBITAXON/131567> ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property <http://purl.bioontology.org/ontology/NCBITAXON/131567> ;
+    void:triples 748 .
+
+ns1:property_partition_0568eb312293d78ecc9cad3fbcea88cc ns2:objectClass aopo:BiologicalEvent ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property aopo:hasBiologicalEvent ;
+    void:triples 1096 .
+
+ns1:property_partition_0db7fc5c1fdaf462b526eb9eec715e81 ns2:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns10:GO_0008150,
+        ns10:PATO_0001241 ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property ns10:PATO_0001241 ;
+    void:triples 14,
+        45,
+        58,
+        738 .
+
+ns1:property_partition_0def97cc22eb0f25cd0bd6b58c482731 ns2:objectClass sd:Service ;
+    ns2:subjectClass sd:Service ;
+    void:property sd:endpoint ;
+    void:triples 1 .
+
+ns1:property_partition_1096fa9c9ce948c3de7f56a71f00319b ns2:objectClass nci:C54571 ;
+    ns2:subjectClass nci:C54571 ;
+    void:property foaf:page ;
+    void:triples 730 .
+
+ns1:property_partition_15b5fc3d9dc3708bd3062b6ffc7e5d49 ns2:objectClass virtrdf:QuadMapFormat ;
+    ns2:subjectClass virtrdf:array-of-QuadMapFormat ;
+    void:property rdf:_4 ;
+    void:triples 3 .
+
+ns1:property_partition_2001191d2abef6dc5ac1f279a85f9768 ns2:objectClass virtrdf:QuadMapFText ;
+    ns2:subjectClass virtrdf:QuadMapValue ;
+    void:property virtrdf:qmvFText ;
+    void:triples 2 .
+
+ns1:property_partition_21848450e6cbf77ba9c0a5c69b7c71e0 ns2:objectClass ns11:CHEMINF_000000,
+        ns11:CHEMINF_000446 ;
+    ns2:subjectClass nci:C54571 ;
+    void:property aopo:has_chemical_entity ;
+    void:triples 415 .
+
+ns1:property_partition_22512d1a0b75a9b2a5125292ca81f3a0 ns2:objectClass void:Dataset,
+        void:Linkset ;
+    ns2:subjectClass void:Linkset ;
+    void:property dcat:downloadURL ;
+    void:triples 1 .
+
+ns1:property_partition_226d58f64f9b9b791f09d2f57f2112fb ns2:objectClass ns11:CHEMINF_000140,
+        ns11:CHEMINF_000405,
+        ns11:CHEMINF_000406,
+        ns11:CHEMINF_000407,
+        ns11:CHEMINF_000408,
+        ns11:CHEMINF_000409,
+        ns11:CHEMINF_000412,
+        ns11:CHEMINF_000564,
+        ns11:CHEMINF_000567 ;
+    ns2:subjectClass ns11:CHEMINF_000446 ;
+    void:property skos:exactMatch ;
+    void:triples 35,
+        215,
+        344,
+        417,
+        420,
+        432,
+        466 .
+
+ns1:property_partition_250dd4aac888c810087382b0a0accb39 ns2:objectClass ns11:CHEMINF_000140,
+        ns11:CHEMINF_000405,
+        ns11:CHEMINF_000406,
+        ns11:CHEMINF_000407,
+        ns11:CHEMINF_000408,
+        ns11:CHEMINF_000409,
+        ns11:CHEMINF_000412,
+        ns11:CHEMINF_000564,
+        ns11:CHEMINF_000567 ;
+    ns2:subjectClass ns11:CHEMINF_000000 ;
+    void:property skos:exactMatch ;
+    void:triples 35,
+        215,
+        344,
+        417,
+        420,
+        432,
+        466 .
+
+ns1:property_partition_26116da9ef122babb9234cc0b8c17bf4 ns2:objectClass aopo:AdverseOutcomePathway ;
+    ns2:subjectClass aopo:AdverseOutcomePathway ;
+    void:property rdfs:seeAlso ;
+    void:triples 562 .
+
+ns1:property_partition_28ced8532aa338adf7fa43ee28094652 ns2:objectClass virtrdf:QuadMapColumn ;
+    ns2:subjectClass virtrdf:array-of-QuadMapColumn ;
+    void:property rdf:_1 ;
+    void:triples 8 .
+
+ns1:property_partition_2d961c370a38de78a52098df6823ded3 ns2:objectClass virtrdf:QuadMapFormat ;
+    ns2:subjectClass virtrdf:array-of-QuadMapFormat ;
+    void:property rdf:_3 ;
+    void:triples 10 .
+
+ns1:property_partition_2e0559215c7f1ed578edab001320d847 ns2:objectClass virtrdf:QuadMap ;
+    ns2:subjectClass virtrdf:QuadStorage ;
+    void:property virtrdf:qsDefaultMap ;
+    void:triples 2 .
+
+ns1:property_partition_304b289684154a0b27c7185d4e346c44 ns2:objectClass aopo:KeyEvent ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property foaf:page ;
+    void:triples 1549 .
+
+ns1:property_partition_30622980098876571a3e74be7fff7644 ns2:objectClass aopo:KeyEvent ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property rdfs:seeAlso ;
+    void:triples 1549 .
+
+ns1:property_partition_30ffdfb45432039b92bc284a91ac1085 ns2:objectClass aopo:AdverseOutcomePathway ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property dcterms:isPartOf ;
+    void:triples 3485 .
+
+ns1:property_partition_31fe8e485596e8d41e63f314ebc494b2 ns2:objectClass aopo:KeyEventRelationship ;
+    ns2:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:has_key_event_relationship ;
+    void:triples 3093 .
+
+ns1:property_partition_32642034832d34386977aeedfc173f40 ns2:objectClass virtrdf:array-of-QuadMap ;
+    ns2:subjectClass virtrdf:QuadStorage ;
+    void:property virtrdf:qsUserMaps ;
+    void:triples 3 .
+
+ns1:property_partition_3713428ab2b1b11d548e68d4c1891a0a ns2:objectClass void:Dataset,
+        void:Linkset ;
+    ns2:subjectClass void:Dataset ;
+    void:property dcat:downloadURL ;
+    void:triples 1 .
+
+ns1:property_partition_3c854630b95984685e5e2063eb804931 ns2:objectClass ns11:CHEMINF_000000,
+        ns11:CHEMINF_000446 ;
+    ns2:subjectClass ns11:CHEMINF_000000 ;
+    void:property dc:identifier ;
+    void:triples 406 .
+
+ns1:property_partition_4aa3fea6a8d8ae48cf812ebab3cd1f27 ns2:objectClass virtrdf:QuadMapFormat ;
+    ns2:subjectClass virtrdf:QuadMapFormat ;
+    void:property virtrdf:qmfSubFormatForRefs ;
+    void:triples 2 .
+
+ns1:property_partition_5434c2ef0373f7731a027357dacd5e03 ns2:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns10:PATO_0001241 ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property aopo:OrganContext ;
+    void:triples 2,
+        201,
+        324 .
+
+ns1:property_partition_59d27b6fda3748e7703d40e31a66e0ac ns2:objectClass edam:data_1025,
+        edam:data_2298 ;
+    ns2:subjectClass aopo:KeyEventRelationship ;
+    void:property edam:data_1025 ;
+    void:triples 3547 .
+
+ns1:property_partition_65683c40273d95a0b542119dec7c11ad ns2:objectClass nci:C54571 ;
+    ns2:subjectClass ns11:CHEMINF_000446 ;
+    void:property dcterms:isPartOf ;
+    void:triples 415 .
+
+ns1:property_partition_6c81d6d4ceae572aa14da733f8cb4b9d ns2:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns10:PATO_0001241 ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property aopo:CellTypeContext ;
+    void:triples 1,
+        191,
+        417 .
+
+ns1:property_partition_7250898735ed80c483ee7fb42581774e ns2:objectClass aopo:KeyEvent ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property dc:identifier ;
+    void:triples 1549 .
+
+ns1:property_partition_76c1696379446271e3a48706330d2adb ns2:objectClass aopo:AdverseOutcomePathway ;
+    ns2:subjectClass aopo:KeyEventRelationship ;
+    void:property dcterms:isPartOf ;
+    void:triples 3093 .
+
+ns1:property_partition_82c996b0aa22ca6862e2a09c46adbf90 ns2:objectClass aopo:KeyEvent ;
+    ns2:subjectClass aopo:KeyEventRelationship ;
+    void:property aopo:has_downstream_key_event ;
+    void:triples 2255 .
+
+ns1:property_partition_82dda64dd02a6d5f82e27a2f462f9aa9 ns2:objectClass aopo:KeyEventRelationship ;
+    ns2:subjectClass aopo:KeyEventRelationship ;
+    void:property dc:identifier ;
+    void:triples 2255 .
+
+ns1:property_partition_8a567ca51e44ab87566460d70e029d39 ns2:objectClass virtrdf:QuadMapFormat ;
+    ns2:subjectClass virtrdf:array-of-QuadMapFormat ;
+    void:property rdf:_1 ;
+    void:triples 56 .
+
+ns1:property_partition_8b9bd211af2fb6ba06a65d958870dcad ns2:objectClass aopo:KeyEvent ;
+    ns2:subjectClass aopo:KeyEventRelationship ;
+    void:property aopo:has_upstream_key_event ;
+    void:triples 2255 .
+
+ns1:property_partition_8c9f246734f36ceb63dd499516a873a0 ns2:objectClass ns10:GO_0008150,
+        ns10:PATO_0001241 ;
+    ns2:subjectClass ns10:GO_0008150 ;
+    void:property dc:identifier ;
+    void:triples 5,
+        547 .
+
+ns1:property_partition_8c9f344ab304c91101cbf899a8295926 ns2:objectClass virtrdf:QuadMapFormat ;
+    ns2:subjectClass virtrdf:QuadMapFormat ;
+    void:property virtrdf:inheritFrom ;
+    void:triples 99 .
+
+ns1:property_partition_8efc3712e96ad0c908c150c038ffe93e ns2:objectClass ns10:GO_0008150,
+        ns10:PATO_0001241 ;
+    ns2:subjectClass aopo:BiologicalEvent ;
+    void:property aopo:hasProcess ;
+    void:triples 7,
+        931 .
+
+ns1:property_partition_8ff6f3aa3a4b4ca3e2c9c33a0a51b3fa ns2:objectClass virtrdf:QuadMapFormat ;
+    ns2:subjectClass virtrdf:array-of-QuadMapFormat ;
+    void:property rdf:_2 ;
+    void:triples 13 .
+
+ns1:property_partition_932e1329ae9b137e14ec8e48d7a497d6 ns2:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns10:PATO_0001241 ;
+    ns2:subjectClass aopo:OrganContext ;
+    void:property dc:identifier ;
+    void:triples 1,
+        31,
+        95 .
+
+ns1:property_partition_9a84935456d59aa18a0570084338fc01 ns2:objectClass nci:C54571 ;
+    ns2:subjectClass ns11:CHEMINF_000000 ;
+    void:property dcterms:isPartOf ;
+    void:triples 415 .
+
+ns1:property_partition_9ab43603fa48c33dcaa286da66be7db5 ns2:objectClass virtrdf:QuadMapValue ;
+    ns2:subjectClass virtrdf:QuadMap ;
+    void:property virtrdf:qmGraphMap ;
+    void:triples 2 .
+
+ns1:property_partition_9e572d08be03064bf849ee61f739f8a6 ns2:objectClass edam:data_1025,
+        edam:data_1027,
+        edam:data_2291,
+        edam:data_2298 ;
+    ns2:subjectClass ns10:PATO_0001241 ;
+    void:property skos:exactMatch ;
+    void:triples 43,
+        123,
+        558,
+        724 .
+
+ns1:property_partition_a28cd7e472d790d5959f88ddb9b986fe ns2:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns10:GO_0008150,
+        ns10:PATO_0001241 ;
+    ns2:subjectClass ns10:PATO_0001241 ;
+    void:property dc:identifier ;
+    void:triples 5,
+        31,
+        483 .
+
+ns1:property_partition_a31371c60c82743a6268b4f813d748a4 ns2:objectClass edam:data_1025,
+        edam:data_1027,
+        edam:data_1033,
+        edam:data_2291 ;
+    ns2:subjectClass edam:data_1025 ;
+    void:property skos:exactMatch ;
+    void:triples 1481,
+        1491,
+        7374,
+        10346 .
+
+ns1:property_partition_a79e3b757172bc2e96d99ff545e1604c ns2:objectClass aopo:KeyEventRelationship ;
+    ns2:subjectClass aopo:KeyEventRelationship ;
+    void:property foaf:page ;
+    void:triples 2255 .
+
+ns1:property_partition_a9a169cef3adb69089e60580305a7835 ns2:objectClass virtrdf:array-of-QuadMapATable ;
+    ns2:subjectClass virtrdf:QuadMapValue ;
+    void:property virtrdf:qmvATables ;
+    void:triples 8 .
+
+ns1:property_partition_af1538c26f394f40bef49d0b578e2fe2 ns2:objectClass edam:data_1025,
+        edam:data_2298 ;
+    ns2:subjectClass aopo:KeyEvent ;
+    void:property edam:data_1025 ;
+    void:triples 1724 .
+
+ns1:property_partition_b318c8b16ff7f6c2a86c4c80a52c676f ns2:objectClass virtrdf:QuadMapValue ;
+    ns2:subjectClass virtrdf:QuadMap ;
+    void:property virtrdf:qmPredicateMap ;
+    void:triples 2 .
+
+ns1:property_partition_b6038e2adb2b848d4ab89bedba7110e9 ns2:objectClass virtrdf:array-of-QuadMapColumn ;
+    ns2:subjectClass virtrdf:QuadMapValue ;
+    void:property virtrdf:qmvColumns ;
+    void:triples 8 .
+
+ns1:property_partition_bf805b0a9ab32ee3c02022d47c956f6a ns2:objectClass aopo:KeyEventRelationship ;
+    ns2:subjectClass aopo:KeyEventRelationship ;
+    void:property rdfs:seeAlso ;
+    void:triples 2255 .
+
+ns1:property_partition_c036c0f0b18bc971f0cd9a4dab45e468 ns2:objectClass virtrdf:QuadMapFormat ;
+    ns2:subjectClass virtrdf:QuadMapValue ;
+    void:property virtrdf:qmvFormat ;
+    void:triples 8 .
+
+ns1:property_partition_c1ae151dbd4099f75c2222f10cc7a36f ns2:objectClass aopo:AdverseOutcomePathway ;
+    ns2:subjectClass nci:C54571 ;
+    void:property dcterms:isPartOf ;
+    void:triples 765 .
+
+ns1:property_partition_c21c989bfea13f99195213e318520820 ns2:objectClass <http://purl.bioontology.org/ontology/NCBITAXON/131567> ;
+    ns2:subjectClass <http://purl.bioontology.org/ontology/NCBITAXON/131567> ;
+    void:property dc:identifier ;
+    void:triples 175 .
+
+ns1:property_partition_c9625c09485272da5680c659c095e2b8 ns2:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns10:GO_0008150,
+        ns10:PATO_0001241 ;
+    ns2:subjectClass aopo:BiologicalEvent ;
+    void:property aopo:hasObject ;
+    void:triples 15,
+        46,
+        60,
+        781 .
+
+ns1:property_partition_c9bdfedff68c2f2b7a43a16790b50892 ns2:objectClass virtrdf:QuadMapATable ;
+    ns2:subjectClass virtrdf:array-of-QuadMapATable ;
+    void:property rdf:_1 ;
+    void:triples 2 .
+
+ns1:property_partition_cb015f7c92ab61b6ac8cf9ef7759db39 ns2:objectClass virtrdf:array-of-string ;
+    ns2:subjectClass virtrdf:QuadMapFText ;
+    void:property virtrdf:qmvftConds ;
+    void:triples 2 .
+
+ns1:property_partition_cb7fef37f54f967c092dcbf25754986b ns2:objectClass virtrdf:QuadMapValue ;
+    ns2:subjectClass virtrdf:QuadMap ;
+    void:property virtrdf:qmObjectMap ;
+    void:triples 2 .
+
+ns1:property_partition_ccdf576e5b7ffc56672b8f07a5bfecb0 ns2:objectClass virtrdf:QuadMapFormat ;
+    ns2:subjectClass virtrdf:array-of-QuadMapFormat ;
+    void:property rdf:_5 ;
+    void:triples 3 .
+
+ns1:property_partition_d372b296a8c88ad007c8689f4f7d030c ns2:objectClass aopo:KeyEvent ;
+    ns2:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:has_molecular_initiating_event ;
+    void:triples 518 .
+
+ns1:property_partition_d605a3c9b9a42e4a5f2acb9e42f9af9a ns2:objectClass aopo:AdverseOutcomePathway ;
+    ns2:subjectClass aopo:AdverseOutcomePathway ;
+    void:property dc:identifier ;
+    void:triples 562 .
+
+ns1:property_partition_d7f71b5ac07cecea58d12c3e66b6242c ns2:objectClass aopo:CellTypeContext,
+        aopo:OrganContext,
+        ns10:PATO_0001241 ;
+    ns2:subjectClass aopo:CellTypeContext ;
+    void:property dc:identifier ;
+    void:triples 1,
+        31,
+        68 .
+
+ns1:property_partition_db776f8d92631f66652b5ce00c9bcd67 ns2:objectClass aopo:KeyEvent ;
+    ns2:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:has_adverse_outcome ;
+    void:triples 606 .
+
+ns1:property_partition_e4fb4df66f6561021ebbc76e61d2edca ns2:objectClass ns11:CHEMINF_000000,
+        ns11:CHEMINF_000446 ;
+    ns2:subjectClass ns11:CHEMINF_000446 ;
+    void:property dc:identifier ;
+    void:triples 406 .
+
+ns1:property_partition_e932427ed25652cbf584e145111cc63e ns2:objectClass virtrdf:array-of-QuadMapFormat ;
+    ns2:subjectClass virtrdf:QuadMapFormat ;
+    void:property virtrdf:qmfSuperFormats ;
+    void:triples 98 .
+
+ns1:property_partition_f322bfa8770cc6ad3a1d02f562618d1f ns2:objectClass aopo:KeyEvent ;
+    ns2:subjectClass aopo:AdverseOutcomePathway ;
+    void:property aopo:has_key_event ;
+    void:triples 3485 .
+
+ns1:property_partition_f588acdda9ea7387d7297190c514f2fb ns2:objectClass virtrdf:QuadMapFText ;
+    ns2:subjectClass virtrdf:QuadMapValue ;
+    void:property virtrdf:qmvGeo ;
+    void:triples 2 .
+
+ns1:property_partition_fc2801d0cd01548d0fb36e1c064d0feb ns2:objectClass virtrdf:QuadMapValue ;
+    ns2:subjectClass virtrdf:QuadMap ;
+    void:property virtrdf:qmSubjectMap ;
+    void:triples 2 .
+
+ns1:property_partition_fe08d80dad6c8d1b703622e92ed97e94 ns2:objectClass nci:C54571 ;
+    ns2:subjectClass aopo:AdverseOutcomePathway ;
+    void:property nci:C54571 ;
+    void:triples 765 .
+
+ns1:property_partition_fe263a0087d5c0902f8db918c564f9f8 ns2:objectClass nci:C54571 ;
+    ns2:subjectClass nci:C54571 ;
+    void:property dc:identifier ;
+    void:triples 730 .
+
+ns1:property_partition_ffd55166100b6f821bd70f889e15856a ns2:objectClass aopo:AdverseOutcomePathway ;
+    ns2:subjectClass aopo:AdverseOutcomePathway ;
+    void:property foaf:page ;
+    void:triples 562 .
+

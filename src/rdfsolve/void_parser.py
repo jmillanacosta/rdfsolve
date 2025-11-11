@@ -10,35 +10,54 @@ Adapted from https://github.com/sib-swiss/kgsteward/blob/0d7ec07715c1fcdce19c824
 from rdflib import Graph, URIRef
 import time
 import pandas as pd
-from typing import Dict, Union, Optional
+from typing import Dict, Union, Optional, List
 from SPARQLWrapper import SPARQLWrapper, TURTLE
 from bioregistry import curie_from_iri
+from linkml_runtime.utils.schemaview import SchemaView
+from linkml.generators.yamlgen import YAMLGenerator
+from linkml_runtime.linkml_model import (
+    SchemaDefinition,
+    ClassDefinition,
+    SlotDefinition,
+    TypeDefinition,
+    Annotation,
+)
+
 
 class VoidParser:
     """Parser for VoID (Vocabulary of Interlinked Datasets) files."""
 
-    def __init__(self, void_source: Optional[Union[str, Graph]] = None):
+    def __init__(
+        self,
+        void_source: Optional[Union[str, Graph]] = None,
+        graph_uris: Optional[Union[str, List[str]]] = None,
+        exclude_other_graphs: bool = True,
+    ):
         """
         Initialize the VoID parser.
-        
+
         Args:
             void_source: Either a file path (str) or an RDF Graph object
+            graph_uris: Single graph URI (str) or list of graph URIs to analyze.
+                        If None, queries all graphs except Virtuoso system graphs
+            exclude_other_graphs: Whether to exclude Virtuoso system graphs by default
         """
         self.void_file_path = None
         self.graph = Graph()
         self.schema_triples = []
         self.classes = {}
         self.properties = {}
+        self.graph_uris = self._normalize_graph_uris(graph_uris)
+        self.exclude_other_graphs = exclude_other_graphs
 
         # VoID namespace URIs
         self.void_class = URIRef("http://rdfs.org/ns/void#class")
         self.void_property = URIRef("http://rdfs.org/ns/void#property")
         self.void_propertyPartition = URIRef(
-            "http://rdfs.org/ns/void#propertyPartition")
-        self.void_classPartition = URIRef(
-            "http://rdfs.org/ns/void#classPartition")
-        self.void_datatypePartition = URIRef(
-            "http://ldf.fi/void-ext#datatypePartition")
+            "http://rdfs.org/ns/void#propertyPartition"
+        )
+        self.void_classPartition = URIRef("http://rdfs.org/ns/void#classPartition")
+        self.void_datatypePartition = URIRef("http://ldf.fi/void-ext#datatypePartition")
         # Extended VoID properties for enhanced schema
         self.void_subjectClass = URIRef("http://ldf.fi/void-ext#subjectClass")
         self.void_objectClass = URIRef("http://ldf.fi/void-ext#objectClass")
@@ -50,9 +69,380 @@ class VoidParser:
             elif isinstance(void_source, Graph):
                 self.graph = void_source
 
+    def _normalize_graph_uris(
+        self, graph_uris: Optional[Union[str, List[str]]]
+    ) -> Optional[List[str]]:
+        """Normalize graph URIs input to a list."""
+        if graph_uris is None:
+            return None
+        elif isinstance(graph_uris, str):
+            return [graph_uris]
+        elif isinstance(graph_uris, list):
+            return graph_uris
+        else:
+            raise ValueError("graph_uris must be str, list of str, or None")
+
+    def _generate_graph_clause(self, graph_uris: Optional[List[str]] = None) -> str:
+        """
+        Generate appropriate GRAPH clause for SPARQL queries.
+
+        Args:
+            graph_uris: List of specific graph URIs. If None, uses instance URIs
+
+        Returns:
+            String containing the graph clause or filter clause
+        """
+        # Use instance graph_uris if none provided
+        if graph_uris is None:
+            graph_uris = self.graph_uris
+
+        # If no specific graphs, query all graphs with optional filtering
+        if not graph_uris:
+            if self.exclude_other_graphs:
+                return """
+                GRAPH ?g {
+                    # Query content will be here
+                }
+                # Filter out Virtuoso system graphs
+                FILTER(!REGEX(STR(?g), "http://www.openlinksw.com/"))
+                FILTER(!REGEX(STR(?g), "http://localhost:8890/"))
+                FILTER(!REGEX(STR(?g), "^urn:virtuoso:"))
+                FILTER(?g != <http://www.w3.org/2002/07/owl#>)"""
+            else:
+                return "GRAPH ?g { # Query content will be here }"
+
+        # Single graph
+        elif len(graph_uris) == 1:
+            return f"GRAPH <{graph_uris[0]}> {{ # Query content will be here }}"
+
+        # Multiple graphs using VALUES clause for efficiency
+        else:
+            values_clause = " ".join([f"<{uri}>" for uri in graph_uris])
+            return f"""
+            VALUES ?g {{ {values_clause} }}
+            GRAPH ?g {{ # Query content will be here }}"""
+
+    def _replace_graph_clause_placeholder(
+        self, query: str, graph_uris: Optional[List[str]] = None
+    ) -> str:
+        """
+        Replace #GRAPH_CLAUSE placeholder with appropriate graph clause.
+
+        Args:
+            query: SPARQL query string with #GRAPH_CLAUSE placeholder
+            graph_uris: Optional list of specific graph URIs
+
+        Returns:
+            Query with graph clause properly inserted
+        """
+        # Use instance graph_uris if none provided
+        if graph_uris is None:
+            graph_uris = self.graph_uris
+
+        # Replace graph clause markers
+        if not graph_uris:
+            # No specific graphs - query all graphs (no GRAPH clause)
+            result = query.replace("#GRAPH_CLAUSE", "")
+            result = result.replace("#END_GRAPH_CLAUSE", "")
+        elif len(graph_uris) == 1:
+            # Single specific graph
+            graph_clause = f"GRAPH <{graph_uris[0]}> {{"
+            result = query.replace("#GRAPH_CLAUSE", graph_clause)
+            result = result.replace("#END_GRAPH_CLAUSE", "}")
+        else:
+            # Multiple specific graphs - for now, just use the first one
+            graph_clause = f"GRAPH <{graph_uris[0]}> {{"
+            result = query.replace("#GRAPH_CLAUSE", graph_clause)
+            result = result.replace("#END_GRAPH_CLAUSE", "}")
+
+        return result
+
     def _load_graph(self):
         """Load the VoID file into an RDF graph."""
         self.graph.parse(self.void_file_path, format="turtle")
+
+    def discover_void_graphs(self, endpoint_url: str) -> Dict:
+        """
+        Discover existing VoID graphs in the endpoint.
+
+        Args:
+            endpoint_url: SPARQL endpoint URL
+
+        Returns:
+            Dictionary with discovery results
+        """
+        from SPARQLWrapper import SPARQLWrapper, JSON
+
+        try:
+            sparql = SPARQLWrapper(endpoint_url)
+            sparql.setReturnFormat(JSON)
+
+            # First, discover graphs that might contain VoID content
+            graph_discovery_query = """
+            SELECT DISTINCT ?g WHERE {
+                GRAPH ?g {
+                    ?s ?p ?o
+                }
+                FILTER(
+                    REGEX(STR(?g), "void", "i") || 
+                    REGEX(STR(?g), "well-known", "i") ||
+                    REGEX(STR(?g), "\\\\.well-known", "i")
+                )
+            }
+            ORDER BY ?g
+            """
+
+            sparql.setQuery(graph_discovery_query)
+            graph_results = sparql.query().convert()
+
+            candidate_graphs = []
+            for result in graph_results["results"]["bindings"]:
+                candidate_graphs.append(result["g"]["value"])
+
+            if not candidate_graphs:
+                return {
+                    "has_void_descriptions": False,
+                    "found_graphs": [],
+                    "total_graphs": 0,
+                    "void_content": {},
+                }
+
+            # Now check each candidate graph for actual VoID content
+            found_graphs = []
+            void_content = {}
+
+            for graph_uri in candidate_graphs:
+                # Query to check VoID content in this specific graph
+                void_check_query = f"""
+                SELECT 
+                (COUNT(DISTINCT ?cp) as ?class_partitions)
+                (COUNT(DISTINCT ?pp) as ?property_partitions) 
+                (COUNT(DISTINCT ?dp) as ?datatype_partitions)
+                WHERE {{
+                  OPTIONAL {{
+                    GRAPH <{graph_uri}> {{
+                      ?cp <http://rdfs.org/ns/void#class> ?class .
+                    }}
+                  }}
+                  OPTIONAL {{
+                    GRAPH <{graph_uri}> {{
+                      ?pp <http://rdfs.org/ns/void#property> ?property .
+                    }}
+                  }}
+                  OPTIONAL {{
+                    GRAPH <{graph_uri}> {{
+                      ?dp <http://ldf.fi/void-ext#datatypePartition> ?datatype .
+                    }}
+                  }}
+                }}
+                """
+
+                try:
+                    sparql.setQuery(void_check_query)
+                    void_results = sparql.query().convert()
+
+                    if void_results["results"]["bindings"]:
+                        result = void_results["results"]["bindings"][0]
+                        class_partitions = int(
+                            result.get("class_partitions", {}).get("value", "0")
+                        )
+                        property_partitions = int(
+                            result.get("property_partitions", {}).get("value", "0")
+                        )
+                        datatype_partitions = int(
+                            result.get("datatype_partitions", {}).get("value", "0")
+                        )
+
+                        has_partitions = (
+                            class_partitions + property_partitions + datatype_partitions
+                        ) > 0
+
+                        void_content[graph_uri] = {
+                            "class_partition_count": class_partitions,
+                            "property_partition_count": property_partitions,
+                            "datatype_partition_count": datatype_partitions,
+                            "has_any_partitions": has_partitions,
+                        }
+
+                        if has_partitions:
+                            found_graphs.append(graph_uri)
+
+                except Exception as e:
+                    print(f"Error checking VoID content in {graph_uri}: {e}")
+                    void_content[graph_uri] = {
+                        "class_partition_count": 0,
+                        "property_partition_count": 0,
+                        "datatype_partition_count": 0,
+                        "has_any_partitions": False,
+                        "error": str(e),
+                    }
+
+            return {
+                "has_void_descriptions": len(found_graphs) > 0,
+                "found_graphs": found_graphs,
+                "total_graphs": len(candidate_graphs),
+                "void_content": void_content,
+            }
+
+        except Exception as e:
+            print(f"VoID discovery failed: {e}")
+            return {
+                "has_void_descriptions": False,
+                "found_graphs": [],
+                "total_graphs": 0,
+                "void_content": {},
+                "error": str(e),
+            }
+
+    def void_querier(self, endpoint_url: str, graph_uris: List[str]) -> Graph:
+        """
+        Query existing VoID descriptions from specific graphs.
+
+        Args:
+            endpoint_url: SPARQL endpoint URL
+            graph_uris: List of graph URIs containing VoID descriptions
+
+        Returns:
+            RDF Graph containing the retrieved VoID descriptions
+        """
+        from SPARQLWrapper import SPARQLWrapper, TURTLE
+
+        merged_graph = Graph()
+
+        for graph_uri in graph_uris:
+            try:
+                sparql = SPARQLWrapper(endpoint_url)
+                sparql.setReturnFormat(TURTLE)
+
+                # Query to retrieve all VoID content from the graph
+                void_query = f"""
+                CONSTRUCT {{
+                    ?s ?p ?o
+                }}
+                WHERE {{
+                    GRAPH <{graph_uri}> {{
+                        ?s ?p ?o .
+                        {{
+                            ?s a <http://rdfs.org/ns/void#Dataset> .
+                        }}
+                        UNION
+                        {{
+                            ?s <http://rdfs.org/ns/void#class> ?class .
+                        }}
+                        UNION
+                        {{
+                            ?s <http://rdfs.org/ns/void#property> ?property .
+                        }}
+                        UNION
+                        {{
+                            ?s <http://ldf.fi/void-ext#datatypePartition> ?datatype .
+                        }}
+                        UNION
+                        {{
+                            ?s <http://ldf.fi/void-ext#subjectClass> ?subjectClass .
+                        }}
+                        UNION
+                        {{
+                            ?s <http://ldf.fi/void-ext#objectClass> ?objectClass .
+                        }}
+                    }}
+                }}
+                """
+
+                sparql.setQuery(void_query)
+                results = sparql.query().convert()
+
+                if results and isinstance(results, bytes):
+                    result_str = results.decode("utf-8")
+                elif results:
+                    result_str = str(results)
+                else:
+                    continue
+
+                if result_str.strip():
+                    merged_graph.parse(data=result_str, format="turtle")
+                    print(f"Retrieved VoID from: {graph_uri}")
+
+            except Exception as e:
+                print(f"Failed to retrieve VoID from {graph_uri}: {e}")
+                continue
+
+        return merged_graph
+
+    def void_querier(self, endpoint_url: str, void_graphs: List[str]) -> Graph:
+        """
+        Query and retrieve existing VoID descriptions from discovered graphs.
+
+        Args:
+            endpoint_url: SPARQL endpoint URL
+            void_graphs: List of graph URIs containing VoID descriptions
+
+        Returns:
+            RDF Graph containing the retrieved VoID descriptions
+        """
+        from SPARQLWrapper import SPARQLWrapper, TURTLE
+
+        if not void_graphs:
+            print("ℹ️ No VoID graphs provided, returning empty graph")
+            return Graph()
+
+        print(f"📥 Retrieving VoID descriptions from {len(void_graphs)} graphs...")
+
+        merged_graph = Graph()
+
+        for graph_uri in void_graphs:
+            print(f"📊 Querying VoID data from: {graph_uri}")
+
+            # CONSTRUCT query to retrieve all VoID-related triples
+            construct_query = f"""
+            PREFIX void: <http://rdfs.org/ns/void#>
+            PREFIX void-ext: <http://ldf.fi/void-ext#>
+            
+            CONSTRUCT {{
+                ?s ?p ?o
+            }}
+            WHERE {{
+                GRAPH <{graph_uri}> {{
+                    ?s ?p ?o .
+                    FILTER(
+                        ?p = void:class ||
+                        ?p = void:property ||
+                        ?p = void:entities ||
+                        ?p = void:triples ||
+                        ?p = void:propertyPartition ||
+                        ?p = void:classPartition ||
+                        ?p = void-ext:datatypePartition ||
+                        ?p = void-ext:subjectClass ||
+                        ?p = void-ext:objectClass
+                    )
+                }}
+            }}
+            """
+
+            sparql = SPARQLWrapper(endpoint_url)
+            sparql.setQuery(construct_query)
+            sparql.setReturnFormat(TURTLE)
+
+            try:
+                results = sparql.query().convert()
+
+                if results:
+                    if isinstance(results, bytes):
+                        result_str = results.decode("utf-8")
+                    else:
+                        result_str = str(results)
+
+                    if result_str.strip():
+                        merged_graph.parse(data=result_str, format="turtle")
+                        print(f"✅ Successfully retrieved VoID data from {graph_uri}")
+                    else:
+                        print(f"⚠️ Empty VoID data from {graph_uri}")
+
+            except Exception as e:
+                print(f"❌ Failed to retrieve VoID data from {graph_uri}: {e}")
+
+        print(f"📈 Retrieved {len(merged_graph)} VoID triples total")
+        return merged_graph
 
     def _extract_classes(self):
         """Extract class information from VoID description."""
@@ -85,19 +475,21 @@ class VoidParser:
 
         # Find all property partitions with subject/object class info
         for partition, _, property_uri in self.graph.triples(
-                (None, self.void_property, None)):
+            (None, self.void_property, None)
+        ):
             # Get subject class
-            subject_classes = list(self.graph.triples(
-                (partition, self.void_subjectClass, None)))
+            subject_classes = list(
+                self.graph.triples((partition, self.void_subjectClass, None))
+            )
             # Get object class
-            object_classes = list(self.graph.triples(
-                (partition, self.void_objectClass, None)))
+            object_classes = list(
+                self.graph.triples((partition, self.void_objectClass, None))
+            )
 
             if subject_classes and object_classes:
                 for _, _, subject_class in subject_classes:
                     for _, _, object_class in object_classes:
-                        triples.append((subject_class, property_uri,
-                                       object_class))
+                        triples.append((subject_class, property_uri, object_class))
 
         return triples
 
@@ -153,9 +545,9 @@ class VoidParser:
     def _filter_void_nodes(self, df: pd.DataFrame) -> pd.DataFrame:
         """Filter out VoID-related triples."""
         mask = (
-            ~df['subject_uri'].str.contains('void', case=False, na=False) &
-            ~df['property_uri'].str.contains('void', case=False, na=False) &
-            ~df['object_uri'].str.contains('void', case=False, na=False)
+            ~df["subject_uri"].str.contains("void", case=False, na=False)
+            & ~df["property_uri"].str.contains("void", case=False, na=False)
+            & ~df["object_uri"].str.contains("void", case=False, na=False)
         )
         return df[mask].copy()
 
@@ -178,30 +570,35 @@ class VoidParser:
         schema_data = []
         for s, p, o in self.schema_triples:
             # Use bioregistry.curie_from_iri for readable names, fallback to local part
-            s_name = (
-                curie_from_iri(str(s))
-                or (str(s).split('#')[-1].split('/')[-1] if '#' in str(s) else str(s).split('/')[-1])
+            s_name = curie_from_iri(str(s)) or (
+                str(s).split("#")[-1].split("/")[-1]
+                if "#" in str(s)
+                else str(s).split("/")[-1]
             )
-            p_name = (
-                curie_from_iri(str(p))
-                or (str(p).split('#')[-1].split('/')[-1] if '#' in str(p) else str(p).split('/')[-1])
+            p_name = curie_from_iri(str(p)) or (
+                str(p).split("#")[-1].split("/")[-1]
+                if "#" in str(p)
+                else str(p).split("/")[-1]
             )
             if o not in ["Literal", "Resource"]:
-                o_name = (
-                    curie_from_iri(str(o))
-                    or (str(o).split('#')[-1].split('/')[-1] if '#' in str(o) else str(o).split('/')[-1])
+                o_name = curie_from_iri(str(o)) or (
+                    str(o).split("#")[-1].split("/")[-1]
+                    if "#" in str(o)
+                    else str(o).split("/")[-1]
                 )
             else:
                 o_name = o
 
-            schema_data.append({
-                'subject_class': s_name,
-                'subject_uri': str(s),
-                'property': p_name,
-                'property_uri': str(p),
-                'object_class': o_name,
-                'object_uri': str(o) if o not in ["Literal", "Resource"] else o
-            })
+            schema_data.append(
+                {
+                    "subject_class": s_name,
+                    "subject_uri": str(s),
+                    "property": p_name,
+                    "property_uri": str(p),
+                    "object_class": o_name,
+                    "object_uri": str(o) if o not in ["Literal", "Resource"] else o,
+                }
+            )
 
         df = pd.DataFrame(schema_data)
 
@@ -209,6 +606,348 @@ class VoidParser:
             df = self._filter_void_nodes(df)
 
         return df
+
+    def to_linkml(
+        self,
+        filter_void_nodes: bool = True,
+        schema_name: Optional[str] = None,
+        schema_description: Optional[str] = None,
+    ) -> SchemaDefinition:
+        """
+        Parse VoID file and return schema as LinkML model.
+
+        Subjects from the schema are converted to LinkML classes (entries).
+        Properties become slots in those classes.
+
+        Args:
+            filter_void_nodes: Whether to filter out VoID-specific nodes
+            schema_name: Name for the LinkML schema
+            schema_description: Description for the LinkML schema
+
+        Returns:
+            LinkML SchemaDefinition with classes based on subjects
+        """
+        # Get the schema DataFrame
+        df = self.to_schema(filter_void_nodes=filter_void_nodes)
+
+        if df.empty:
+            # Return empty schema if no data
+            return SchemaDefinition(
+                id=schema_name or "empty_schema",
+                name=schema_name or "empty_schema",
+                description=(schema_description or "Empty schema - no data found"),
+            )
+
+        # Generate schema name from dataset if not provided
+        if not schema_name:
+            schema_name = getattr(self, "_dataset_name", "rdf_schema")
+            schema_name = schema_name.replace("-", "_").replace(".", "_")
+
+        # Extract prefixes from the VoID graph and schema data
+        extracted_prefixes = self._extract_prefixes_from_schema(df)
+
+        # Create the LinkML schema with extracted prefixes
+        schema_uri = f"https://w3id.org/{schema_name}/"
+
+        # Base prefixes
+        base_prefixes = {
+            schema_name: schema_uri,
+            "linkml": "https://w3id.org/linkml/",
+            "schema": "http://schema.org/",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+        }
+
+        # Merge with extracted prefixes
+        all_prefixes = {**base_prefixes, **extracted_prefixes}
+
+        schema = SchemaDefinition(
+            id=schema_name,
+            name=schema_name,
+            description=(
+                schema_description
+                or f"LinkML schema extracted from VoID analysis of " f"{schema_name}"
+            ),
+            default_prefix=schema_name,
+            prefixes=all_prefixes,
+            types={
+                "string": TypeDefinition(name="string", uri="xsd:string", base="str"),
+                "uriorcurie": TypeDefinition(
+                    name="uriorcurie", uri="xsd:anyURI", base="URIorCURIE"
+                ),
+            },
+        )
+
+        # First pass: collect all class names to avoid forward reference issues
+        all_class_names = set()
+        for subject_class in df["subject_class"].unique():
+            class_name = self._clean_class_name(subject_class)
+            all_class_names.add(class_name)
+
+        for object_class in df["object_class"].unique():
+            if object_class not in ["Literal", "rdfs:Literal", "Resource"]:
+                class_name = self._clean_class_name(object_class)
+                all_class_names.add(class_name)
+
+        # Create placeholder classes for all referenced classes
+        classes = {}
+        for class_name in all_class_names:
+            # Find original class info from dataframe if available
+            original_name = None
+            original_uri = None
+            for _, row in df.iterrows():
+                if self._clean_class_name(row["subject_class"]) == class_name:
+                    original_name = row["subject_class"]
+                    original_uri = row["subject_uri"]
+                    break
+                elif self._clean_class_name(row["object_class"]) == class_name:
+                    original_name = row["object_class"]
+                    original_uri = row["object_uri"]
+                    break
+
+            # Create basic class definition
+            class_def = ClassDefinition(
+                name=class_name,
+                description=(
+                    f"Class {original_name or class_name}"
+                    + (f" (URI: {original_uri})" if original_uri else "")
+                ),
+                slots=[],
+            )
+            classes[class_name] = class_def
+
+        # Group by subject class to create LinkML classes with properties
+        slots = {}
+
+        # Collect all slot names first to detect conflicts and apply consistent prefixing
+        all_slot_names = set()
+        for _, row in df.iterrows():
+            prop_name = self._clean_slot_name(row["property"])
+            all_slot_names.add(prop_name)
+
+        # Detect naming conflicts and resolve them
+        conflicts = all_class_names.intersection(all_slot_names)
+        slot_name_mapping = {}
+
+        for _, row in df.iterrows():
+            original_prop = row["property"]
+            base_slot_name = self._clean_slot_name(original_prop)
+
+            # Apply consistent prefixing rules
+            should_prefix = (
+                base_slot_name in conflicts  # Conflict with class name
+                or (
+                    base_slot_name.startswith("C") and base_slot_name[1:].isdigit()
+                )  # NCI codes
+                or base_slot_name.isdigit()  # Pure numeric
+                or base_slot_name.startswith("prop_")  # Already prefixed
+            )
+
+            # Keep common property names unprefixed for readability
+            common_props = {
+                "label",
+                "identifier",
+                "source",
+                "type",
+                "title",
+                "description",
+                "created",
+                "modified",
+                "page",
+                "alternative",
+                "abstract",
+                "seeAlso",
+                "sameAs",
+                "exactMatch",
+                "creator",
+                "isPartOf",
+            }
+
+            if base_slot_name in common_props:
+                final_slot_name = base_slot_name
+            elif should_prefix and not base_slot_name.startswith("prop_"):
+                final_slot_name = f"prop_{base_slot_name}"
+            elif base_slot_name.startswith("prop_"):
+                final_slot_name = base_slot_name
+            else:
+                final_slot_name = base_slot_name
+
+            slot_name_mapping[original_prop] = final_slot_name
+
+        for subject_class in df["subject_class"].unique():
+            # Create class definition
+            class_name = self._clean_class_name(subject_class)
+            subject_data = df[df["subject_class"] == subject_class]
+
+            # Get unique properties for this class
+            class_properties = []
+            for _, row in subject_data.iterrows():
+                original_prop = row["property"]
+                prop_name = slot_name_mapping[original_prop]
+
+                # Create slot definition if not exists
+                if prop_name not in slots:
+                    slot_def = SlotDefinition(
+                        name=prop_name,
+                        description=(
+                            f"Property {row['property']} "
+                            f"(URI: {row['property_uri']})"
+                        ),
+                    )
+
+                    # Set a meaningful owner (use the most common/representative class)
+                    prop_classes = df[df["property"] == original_prop][
+                        "subject_class"
+                    ].value_counts()
+                    if len(prop_classes) > 0:
+                        most_common_class = prop_classes.index[0]
+                        slot_def.owner = self._clean_class_name(most_common_class)
+
+                    # Set domain_of to all classes that use this property
+                    domain_classes = df[df["property"] == original_prop][
+                        "subject_class"
+                    ].unique()
+                    slot_def.domain_of = [
+                        self._clean_class_name(cls) for cls in domain_classes
+                    ]
+
+                    # Determine range based on object type
+                    object_class = row["object_class"]
+                    if object_class in ["Literal", "rdfs:Literal"]:
+                        slot_def.range = "string"
+                    elif object_class == "Resource":
+                        slot_def.range = "uriorcurie"
+                    else:
+                        # Reference to another class - check if in schema
+                        object_class_name = self._clean_class_name(object_class)
+                        if object_class_name in all_class_names:
+                            slot_def.range = object_class_name
+                            # Mark as inlined for object references
+                            slot_def.inlined = True
+                            slot_def.inlined_as_list = True
+                        else:
+                            # Fallback to string for unknown classes
+                            slot_def.range = "string"
+
+                    slots[prop_name] = slot_def
+
+                if prop_name not in class_properties:
+                    class_properties.append(prop_name)
+
+            # Update the existing class definition with slots
+            if class_name in classes:
+                classes[class_name].slots = class_properties
+                classes[class_name].description = (
+                    f"Class {subject_class} "
+                    f"(URI: {subject_data.iloc[0]['subject_uri']})"
+                )
+
+        # Add classes and slots to schema
+        schema.classes = classes
+        schema.slots = slots
+
+        return schema
+
+    def _clean_class_name(self, class_name: str) -> str:
+        """Clean class name to be valid LinkML identifier."""
+        # Remove namespace prefixes and special characters
+        name = class_name.split(":")[-1] if ":" in class_name else class_name
+        # Replace invalid characters with underscore
+        import re
+
+        name = re.sub(r"[^a-zA-Z0-9_]", "_", name)
+        # Ensure it starts with a letter
+        if name and name[0].isdigit():
+            name = f"class_{name}"
+        return name or "unknown_class"
+
+    def _clean_slot_name(self, slot_name: str) -> str:
+        """Clean slot name to be valid LinkML identifier using CURIE format."""
+        import re
+
+        # Convert CURIE to valid slot name
+        if ":" in slot_name:
+            prefix, local = slot_name.split(":", 1)
+            # Replace dots and other invalid characters with underscores
+            safe_prefix = re.sub(r"[^a-zA-Z0-9_]", "_", prefix)
+            safe_local = re.sub(r"[^a-zA-Z0-9_]", "_", local)
+            name = f"{safe_prefix}_{safe_local}"
+        else:
+            # Handle cases without prefix
+            name = re.sub(r"[^a-zA-Z0-9_]", "_", slot_name)
+
+        # Ensure it starts with a letter
+        if name and name[0].isdigit():
+            name = f"prop_{name}"
+
+        return name or "unknown_property"
+
+    def _extract_prefixes_from_schema(self, df):
+        """Extract prefixes from schema DataFrame by analyzing URIs."""
+        prefixes = {}
+
+        # Common namespace mappings
+        common_ns = {
+            "http://www.w3.org/2000/01/rdf-schema#": "rdfs",
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
+            "http://purl.org/dc/elements/1.1/": "dc",
+            "http://purl.org/dc/terms/": "dcterms",
+            "http://xmlns.com/foaf/0.1/": "foaf",
+            "http://www.w3.org/2004/02/skos/core#": "skos",
+            "http://www.w3.org/2002/07/owl#": "owl",
+            "http://purl.obolibrary.org/obo/GO_": "go",
+            "http://purl.obolibrary.org/obo/PATO_": "pato",
+            "http://purl.obolibrary.org/obo/MMO_": "mmo",
+            "http://edamontology.org/": "edam",
+            "http://semanticscience.org/resource/CHEMINF_": "cheminf",
+            "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#": "ncit",
+            "http://purl.bioontology.org/ontology/NCBITAXON/": "ncbitaxon",
+            "http://aopkb.org/aop_ontology#": "aop",
+        }
+
+        # Extract from property URIs
+        all_uris = set()
+        for col in ["property_uri", "subject_uri", "object_uri"]:
+            if col in df.columns:
+                all_uris.update(df[col].dropna().unique())
+
+        # Find matching prefixes
+        for uri in all_uris:
+            uri_str = str(uri)
+            for namespace, prefix in common_ns.items():
+                if uri_str.startswith(namespace):
+                    prefixes[prefix] = namespace
+                    break
+
+        return prefixes
+
+    def to_linkml_yaml(
+        self,
+        filter_void_nodes: bool = True,
+        schema_name: Optional[str] = None,
+        schema_description: Optional[str] = None,
+    ) -> str:
+        """
+        Parse VoID file and return LinkML schema as YAML string.
+
+        Args:
+            filter_void_nodes: Whether to filter out VoID-specific nodes
+            schema_name: Name for the LinkML schema
+            schema_description: Description for the LinkML schema
+
+        Returns:
+            LinkML schema as YAML string
+        """
+        linkml_schema = self.to_linkml(
+            filter_void_nodes=filter_void_nodes,
+            schema_name=schema_name,
+            schema_description=schema_description,
+        )
+
+        from linkml.generators.yamlgen import YAMLGenerator
+
+        return YAMLGenerator(linkml_schema).serialize()
 
     def to_json(self, filter_void_nodes: bool = True) -> Dict:
         """
@@ -226,44 +965,58 @@ class VoidParser:
             "triples": [],
             "metadata": {
                 "total_triples": len(df),
-                "classes": df['subject_uri'].unique().tolist()
-                if not df.empty else [],
-                "properties": df['property_uri'].unique().tolist()
-                if not df.empty else [],
-                "objects": df['object_uri'].unique().tolist()
-                if not df.empty else []
-            }
+                "classes": df["subject_uri"].unique().tolist() if not df.empty else [],
+                "properties": (
+                    df["property_uri"].unique().tolist() if not df.empty else []
+                ),
+                "objects": df["object_uri"].unique().tolist() if not df.empty else [],
+            },
         }
 
         # Add triples
         for _, row in df.iterrows():
-            schema_graph["triples"].append([
-                row['subject_uri'],
-                row['property_uri'],
-                row['object_uri']
-            ])
+            schema_graph["triples"].append(
+                [row["subject_uri"], row["property_uri"], row["object_uri"]]
+            )
 
         return schema_graph
 
     @staticmethod
-    def get_void_queries(graph_uri: str, counts: bool = True, 
-                        sample_limit: Optional[int] = None) -> Dict[str, str]:
+    def get_void_queries(
+        graph_uris: Optional[Union[str, List[str]]] = None,
+        counts: bool = True,
+        sample_limit: Optional[int] = None,
+        exclude_other_graphs: bool = True,
+    ) -> Dict[str, str]:
         """
         Get formatted CONSTRUCT queries for VoID generation.
-        
+
         Args:
-            graph_uri: Specific graph URI to analyze
-            counts: If True, include COUNT aggregations; if False, faster discovery
+            graph_uris: Graph URI(s) to analyze. If None, queries all graphs
+            counts: If True, include COUNT aggregations; else faster discovery
             sample_limit: Optional LIMIT for sampling (speeds up discovery)
-            
+            exclude_other_graphs: Whether to exclude Virtuoso system graphs
+
         Returns:
             Dictionary containing the formatted queries
         """
+        # Create a temporary instance to use the graph clause methods
+        temp_parser = VoidParser(
+            graph_uris=graph_uris, exclude_other_graphs=exclude_other_graphs
+        )
+
+        # Determine the base graph URI for VoID partition naming
+        if isinstance(graph_uris, str):
+            base_graph_uri = graph_uris
+        elif isinstance(graph_uris, list) and len(graph_uris) == 1:
+            base_graph_uri = graph_uris[0]
+        else:
+            base_graph_uri = "http://example.org/dataset"
         limit_clause = f"LIMIT {sample_limit}" if sample_limit else ""
 
         if counts:
             # Count-based queries (slower but complete)
-            class_q = f"""PREFIX void: <http://rdfs.org/ns/void#>
+            class_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
 PREFIX void-ext: <http://ldf.fi/void-ext#>
 CONSTRUCT {{
     ?cp void:class ?class ;
@@ -273,18 +1026,18 @@ WHERE {{
     {{
         SELECT ?class (COUNT(*) AS ?count)
         WHERE {{
-            GRAPH <{graph_uri}> {{
+            #GRAPH_CLAUSE
                 [] a ?class
-            }}
+            #END_GRAPH_CLAUSE
         }}
         GROUP BY ?class
         {limit_clause}
     }}
-    BIND(IRI(CONCAT('{graph_uri}/void/class_partition_',
+    BIND(IRI(CONCAT('{base_graph_uri}/void/class_partition_',
                    MD5(STR(?class)))) AS ?cp)
 }}"""
 
-            prop_q = f"""PREFIX void: <http://rdfs.org/ns/void#>
+            prop_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
 PREFIX void-ext: <http://ldf.fi/void-ext#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -298,46 +1051,36 @@ WHERE {{
     {{
         SELECT ?property ?subject_class ?object_class (COUNT(*) AS ?count)
         WHERE {{
+            #GRAPH_CLAUSE
+                ?subject ?property ?object .
+                ?subject rdf:type ?subject_class .
+            #END_GRAPH_CLAUSE
+            
+            # Determine object class based on object type
             {{
-                # Handle literal objects (fastest path)
-                GRAPH <{graph_uri}> {{
-                    ?subject ?property ?object .
-                    ?subject rdf:type ?subject_class .
-                    FILTER(isLiteral(?object))
-                }}
                 BIND(rdfs:Literal AS ?object_class)
+                FILTER(isLiteral(?object))
             }}
             UNION
             {{
-                # Handle URI objects with known types
-                GRAPH <{graph_uri}> {{
-                    ?subject ?property ?object .
-                    ?subject rdf:type ?subject_class .
-                    ?object rdf:type ?obj_type .
-                    FILTER(isURI(?object))
-                }}
-                BIND(?obj_type AS ?object_class)
+                ?object rdf:type ?object_class .
+                FILTER(isURI(?object))
             }}
             UNION
             {{
-                # Handle URI objects without explicit types (fallback)
-                GRAPH <{graph_uri}> {{
-                    ?subject ?property ?object .
-                    ?subject rdf:type ?subject_class .
-                    FILTER(isURI(?object))
-                    FILTER NOT EXISTS {{ ?object rdf:type ?any_type }}
-                }}
                 BIND(rdfs:Resource AS ?object_class)
+                FILTER(isURI(?object))
+                FILTER NOT EXISTS {{ ?object rdf:type ?any_type }}
             }}
         }}
         GROUP BY ?property ?subject_class ?object_class
         {limit_clause}
     }}
-    BIND(IRI(CONCAT('{graph_uri}/void/property_partition_',
+    BIND(IRI(CONCAT('{base_graph_uri}/void/property_partition_',
                    MD5(CONCAT(STR(?property), STR(?subject_class))))) AS ?pp)
 }}"""
 
-            dtype_q = f"""PREFIX void: <http://rdfs.org/ns/void#>
+            dtype_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
 PREFIX void-ext: <http://ldf.fi/void-ext#>
 CONSTRUCT {{
     ?dp void-ext:datatypePartition ?datatype ;
@@ -347,21 +1090,21 @@ WHERE {{
     {{
         SELECT ?datatype (COUNT(*) AS ?count)
         WHERE {{
-            GRAPH <{graph_uri}> {{
+            #GRAPH_CLAUSE
                 [] ?p ?o .
                 FILTER(isLiteral(?o))
                 BIND(datatype(?o) AS ?datatype)
-            }}
+            #END_GRAPH_CLAUSE
         }}
         GROUP BY ?datatype
         {limit_clause}
     }}
-    BIND(IRI(CONCAT('{graph_uri}/void/datatype_partition_',
+    BIND(IRI(CONCAT('{base_graph_uri}/void/datatype_partition_',
                    MD5(STR(?datatype)))) AS ?dp)
 }}"""
         else:
             # Discovery-only queries (faster)
-            class_q = f"""PREFIX void: <http://rdfs.org/ns/void#>
+            class_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
 CONSTRUCT {{
     ?cp void:class ?class .
 }}
@@ -369,17 +1112,17 @@ WHERE {{
     {{
         SELECT DISTINCT ?class
         WHERE {{
-            GRAPH <{graph_uri}> {{
+            #GRAPH_CLAUSE
                 [] a ?class
-            }}
+            #END_GRAPH_CLAUSE
         }}
         {limit_clause}
     }}
-    BIND(IRI(CONCAT('{graph_uri}/void/class_partition_',
+    BIND(IRI(CONCAT('{base_graph_uri}/void/class_partition_',
                    MD5(STR(?class)))) AS ?cp)
 }}"""
 
-            prop_q = f"""PREFIX void: <http://rdfs.org/ns/void#>
+            prop_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
 PREFIX void-ext: <http://ldf.fi/void-ext#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -392,45 +1135,35 @@ WHERE {{
     {{
         SELECT DISTINCT ?property ?subject_class ?object_class
         WHERE {{
+            #GRAPH_CLAUSE
+                ?subject ?property ?object .
+                ?subject rdf:type ?subject_class .
+            #END_GRAPH_CLAUSE
+            
+            # Determine object class based on object type
             {{
-                # Handle literal objects (fastest path)
-                GRAPH <{graph_uri}> {{
-                    ?subject ?property ?object .
-                    ?subject rdf:type ?subject_class .
-                    FILTER(isLiteral(?object))
-                }}
                 BIND(rdfs:Literal AS ?object_class)
+                FILTER(isLiteral(?object))
             }}
             UNION
             {{
-                # Handle URI objects with known types
-                GRAPH <{graph_uri}> {{
-                    ?subject ?property ?object .
-                    ?subject rdf:type ?subject_class .
-                    ?object rdf:type ?obj_type .
-                    FILTER(isURI(?object))
-                }}
-                BIND(?obj_type AS ?object_class)
+                ?object rdf:type ?object_class .
+                FILTER(isURI(?object))
             }}
             UNION
             {{
-                # Handle URI objects without explicit types (fallback)
-                GRAPH <{graph_uri}> {{
-                    ?subject ?property ?object .
-                    ?subject rdf:type ?subject_class .
-                    FILTER(isURI(?object))
-                    FILTER NOT EXISTS {{ ?object rdf:type ?any_type }}
-                }}
                 BIND(rdfs:Resource AS ?object_class)
+                FILTER(isURI(?object))
+                FILTER NOT EXISTS {{ ?object rdf:type ?any_type }}
             }}
         }}
         {limit_clause}
     }}
-    BIND(IRI(CONCAT('{graph_uri}/void/property_partition_',
+    BIND(IRI(CONCAT('{base_graph_uri}/void/property_partition_',
                    MD5(CONCAT(STR(?property), STR(?subject_class))))) AS ?pp)
 }}"""
 
-            dtype_q = f"""PREFIX void: <http://rdfs.org/ns/void#>
+            dtype_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
 PREFIX void-ext: <http://ldf.fi/void-ext#>
 CONSTRUCT {{
     ?dp void-ext:datatypePartition ?datatype .
@@ -439,43 +1172,55 @@ WHERE {{
     {{
         SELECT DISTINCT ?datatype
         WHERE {{
-            GRAPH <{graph_uri}> {{
+            #GRAPH_CLAUSE
                 [] ?p ?o .
                 FILTER(isLiteral(?o))
                 BIND(datatype(?o) AS ?datatype)
-            }}
+            #END_GRAPH_CLAUSE
         }}
         {limit_clause}
     }}
-    BIND(IRI(CONCAT('{graph_uri}/void/datatype_partition_',
+    BIND(IRI(CONCAT('{base_graph_uri}/void/datatype_partition_',
                    MD5(STR(?datatype)))) AS ?dp)
 }}"""
 
+        # Replace the graph clause placeholders in all queries
+        class_q = temp_parser._replace_graph_clause_placeholder(class_q_template)
+        prop_q = temp_parser._replace_graph_clause_placeholder(prop_q_template)
+        dtype_q = temp_parser._replace_graph_clause_placeholder(dtype_q_template)
+
         return {
-            'class_partitions': class_q,
-            'property_partitions': prop_q,
-            'datatype_partitions': dtype_q
+            "class_partitions": class_q,
+            "property_partitions": prop_q,
+            "datatype_partitions": dtype_q,
         }
 
     @staticmethod
-    def generate_void_from_sparql(endpoint_url: str, graph_uri: str,
-                                  output_file: Optional[str] = None,
-                                  counts: bool = True,
-                                  sample_limit: Optional[int] = None) -> Graph:
+    def generate_void_from_sparql(
+        endpoint_url: str,
+        graph_uris: Optional[Union[str, List[str]]] = None,
+        output_file: Optional[str] = None,
+        counts: bool = True,
+        sample_limit: Optional[int] = None,
+        exclude_other_graphs: bool = True,
+    ) -> Graph:
         """
         Generate VoID description from SPARQL endpoint using CONSTRUCT queries.
-        
+
         Args:
             endpoint_url: SPARQL endpoint URL
-            graph_uri: Graph URI for the dataset
+            graph_uris: Graph URI(s) for the dataset. If None, queries all graphs
             output_file: Optional output file path for TTL
-            counts: If True, include COUNT aggregations; if False, faster discovery
+            counts: If True, include COUNT aggregations; else faster discovery
             sample_limit: Optional LIMIT for sampling (speeds up discovery)
-            
+            exclude_other_graphs: Whether to exclude Virtuoso system graphs
+
         Returns:
             RDF Graph containing the VoID description
         """
-        queries = VoidParser.get_void_queries(graph_uri, counts, sample_limit)
+        queries = VoidParser.get_void_queries(
+            graph_uris, counts, sample_limit, exclude_other_graphs
+        )
 
         sparql = SPARQLWrapper(endpoint_url)
         # set a more aggressive timeout for fast queries
@@ -491,11 +1236,11 @@ WHERE {{
         # Ensure we're in a valid working directory for RDFLib parsing
         import os
         import tempfile
+
         try:
             current_dir = os.getcwd()
             # Check if current directory exists and is accessible
-            if (not os.path.exists(current_dir) or
-                    not os.access(current_dir, os.R_OK)):
+            if not os.path.exists(current_dir) or not os.access(current_dir, os.R_OK):
                 # Use temporary directory as fallback
                 temp_dir = tempfile.gettempdir()
                 os.chdir(temp_dir)
@@ -506,8 +1251,7 @@ WHERE {{
             os.chdir(temp_dir)
             print(f"Working directory issue resolved, using: {temp_dir}")
 
-        def run_construct(query_text: str, name: str,
-                          is_optional: bool = False):
+        def run_construct(query_text: str, name: str, is_optional: bool = False):
             sparql.setQuery(query_text)
             sparql.setReturnFormat(TURTLE)
             print(f"Starting query: {name}")
@@ -523,14 +1267,24 @@ WHERE {{
                     # Handle both bytes and string results
                     if results:
                         if isinstance(results, bytes):
-                            result_str = results.decode('utf-8')
+                            result_str = results.decode("utf-8")
                         else:
                             result_str = str(results)
 
                         if result_str.strip():
-                            merged_graph.parse(data=result_str,
-                                               format="turtle",
-                                               publicID=graph_uri)
+                            # Use the first graph URI for publicID, or a default
+                            public_id = (
+                                graph_uris[0]
+                                if isinstance(graph_uris, list) and graph_uris
+                                else (
+                                    graph_uris
+                                    if isinstance(graph_uris, str)
+                                    else "http://example.org/void"
+                                )
+                            )
+                            merged_graph.parse(
+                                data=result_str, format="turtle", publicID=public_id
+                            )
                         else:
                             print(f"Empty results for {name}")
                     else:
@@ -546,10 +1300,8 @@ WHERE {{
 
                 # Check for timeout conditions
                 timeout_keywords = ["timeout", "timed out"]
-                if any(keyword in str(e).lower()
-                       for keyword in timeout_keywords):
-                    print(f"Query {name} timed out - common with complex "
-                          "queries")
+                if any(keyword in str(e).lower() for keyword in timeout_keywords):
+                    print(f"Query {name} timed out - common with complex " "queries")
                     if is_optional:
                         print(f"Skipping optional query: {name}")
                         return
@@ -558,54 +1310,148 @@ WHERE {{
 
         try:
             # Execute queries with timing - property query is optional
-            run_construct(queries['class_partitions'], "class_partitions")
-            run_construct(queries['property_partitions'],
-                          "property_partitions", is_optional=True)
-            run_construct(queries['datatype_partitions'],
-                          "datatype_partitions", is_optional=True)
+            run_construct(queries["class_partitions"], "class_partitions")
+            run_construct(
+                queries["property_partitions"], "property_partitions", is_optional=True
+            )
+            run_construct(
+                queries["datatype_partitions"], "datatype_partitions", is_optional=True
+            )
 
             # Save to file if specified
             if output_file:
-                merged_graph.serialize(destination=output_file,
-                                       format="turtle")
+                merged_graph.serialize(destination=output_file, format="turtle")
                 print(f"VoID description saved to {output_file}")
 
             return merged_graph
 
         except Exception as e:
-            raise RuntimeError(
-                f"Failed to generate VoID from SPARQL endpoint: {e}"
-            )
+            raise RuntimeError(f"Failed to generate VoID from SPARQL endpoint: {e}")
 
     @classmethod
-    def from_sparql(cls, endpoint_url: str, graph_uri: str,
-                    output_file: Optional[str] = None) -> 'VoidParser':
+    def from_sparql(
+        cls,
+        endpoint_url: str,
+        graph_uris: Optional[Union[str, List[str]]] = None,
+        output_file: Optional[str] = None,
+        exclude_other_graphs: bool = True,
+    ) -> "VoidParser":
         """
         Create a VoidParser instance from a SPARQL endpoint.
-        
+
         Args:
             endpoint_url: SPARQL endpoint URL
-            graph_uri: Graph URI for the dataset
+            graph_uris: Graph URI(s) for the dataset. If None, queries all
             output_file: Optional output file path for TTL
-            
+            exclude_other_graphs: Whether to exclude Virtuoso system graphs
+
         Returns:
             VoidParser instance with generated VoID
         """
         void_graph = cls.generate_void_from_sparql(
-            endpoint_url, graph_uri, output_file
+            endpoint_url,
+            graph_uris,
+            output_file,
+            exclude_other_graphs=exclude_other_graphs,
         )
         return cls(void_graph)
 
-    def count_instances_per_class(self, endpoint_url: str, graph_uri: str,
-                                  sample_limit: Optional[int] = None) -> Dict:
+    @classmethod
+    def from_endpoint_with_discovery(
+        cls,
+        endpoint_url: str,
+        dataset_name: str,
+        exports_path: str,
+        prefer_existing: bool = True,
+    ) -> "VoidParser":
         """
-        Count instances for each class in the dataset.
-        
+        Create VoidParser by discovering existing VoID, then generating if needed.
+
+        This method abstracts away the complex logic of:
+        1. Discovering existing VoID graphs in the endpoint
+        2. Retrieving and validating existing VoID descriptions
+        3. Falling back to generating new VoID if none exist or insufficient
+        4. Saving VoID descriptions to files
+
         Args:
             endpoint_url: SPARQL endpoint URL
-            graph_uri: Graph URI to analyze
+            dataset_name: Name for the dataset (used for file naming)
+            exports_path: Path where VoID files should be saved
+            prefer_existing: If True, prefer existing VoID over generation
+
+        Returns:
+            VoidParser instance with the best available VoID
+        """
+        import os
+
+        # Step 1: Discover existing VoID graphs
+        temp_parser = cls()
+        discovery_result = temp_parser.discover_void_graphs(endpoint_url)
+
+        existing_void_graph = None
+        existing_parser = None
+
+        # Step 2: Try to retrieve existing VoID if available
+        if discovery_result.get("has_void_descriptions", False):
+            valid_void_graphs = [
+                graph_uri
+                for graph_uri, content in discovery_result.get(
+                    "void_content", {}
+                ).items()
+                if content.get("has_any_partitions", False)
+            ]
+
+            if valid_void_graphs:
+                existing_void_graph = temp_parser.void_querier(
+                    endpoint_url, valid_void_graphs
+                )
+
+                if len(existing_void_graph) > 0:
+                    existing_parser = cls(existing_void_graph)
+                    existing_schema_df = existing_parser.to_schema(
+                        filter_void_nodes=True
+                    )
+
+                    # Check if existing VoID has sufficient content
+                    if prefer_existing and len(existing_schema_df) > 10:
+                        print(
+                            f"Using existing VoID with "
+                            f"{len(existing_schema_df):,} schema triples"
+                        )
+
+                        # Save existing VoID
+                        existing_void_path = os.path.join(
+                            exports_path, f"{dataset_name}_existing_void.ttl"
+                        )
+                        existing_void_graph.serialize(
+                            destination=existing_void_path, format="turtle"
+                        )
+                        print(f"Existing VoID saved to: {existing_void_path}")
+
+                        return existing_parser
+
+        # Step 3: Generate new VoID if no suitable existing VoID found
+        print("No suitable existing VoID found, generating new VoID...")
+        output_path = os.path.join(exports_path, f"{dataset_name}_generated_void.ttl")
+
+        generated_void_graph = cls.generate_void_from_sparql(
+            endpoint_url=endpoint_url,
+            output_file=output_path,
+            counts=False,  # Start with fast generation
+        )
+
+        return cls(generated_void_graph)
+
+    def count_instances_per_class(
+        self, endpoint_url: str, sample_limit: Optional[int] = None
+    ) -> Dict:
+        """
+        Count instances for each class in the dataset.
+
+        Args:
+            endpoint_url: SPARQL endpoint URL
             sample_limit: Optional limit for sampling
-            
+
         Returns:
             Dictionary mapping class URIs to instance counts
         """
@@ -613,16 +1459,18 @@ WHERE {{
 
         limit_clause = f"LIMIT {sample_limit}" if sample_limit else ""
 
-        query = f"""
+        query_template = f"""
         SELECT ?class (COUNT(DISTINCT ?instance) AS ?count) WHERE {{
-            GRAPH <{graph_uri}> {{
+            #GRAPH_CLAUSE
                 ?instance a ?class .
-            }}
+            #END_GRAPH_CLAUSE
         }}
         GROUP BY ?class
         ORDER BY DESC(?count)
         {limit_clause}
         """
+
+        query = self._replace_graph_clause_placeholder(query_template)
 
         sparql = SPARQLWrapper(endpoint_url)
         sparql.setQuery(query)
@@ -643,16 +1491,16 @@ WHERE {{
             print(f"Failed to count instances: {e}")
             return {}
 
-    def get_class_mappings(self, endpoint_url: str, graph_uri: str,
-                           sample_limit: Optional[int] = None) -> Dict:
+    def get_class_mappings(
+        self, endpoint_url: str, sample_limit: Optional[int] = None
+    ) -> Dict:
         """
         Get mapping of instances to their classes.
-        
+
         Args:
             endpoint_url: SPARQL endpoint URL
-            graph_uri: Graph URI to analyze
             sample_limit: Optional limit for sampling
-            
+
         Returns:
             Dictionary mapping instance URIs to class URIs
         """
@@ -660,14 +1508,16 @@ WHERE {{
 
         limit_clause = f"LIMIT {sample_limit}" if sample_limit else ""
 
-        query = f"""
+        query_template = f"""
         SELECT ?instance ?class WHERE {{
-            GRAPH <{graph_uri}> {{
+            #GRAPH_CLAUSE
                 ?instance a ?class .
-            }}
+            #END_GRAPH_CLAUSE
         }}
         {limit_clause}
         """
+
+        query = self._replace_graph_clause_placeholder(query_template)
 
         sparql = SPARQLWrapper(endpoint_url)
         sparql.setQuery(query)
@@ -691,15 +1541,16 @@ WHERE {{
             print(f"Failed to get class mappings: {e}")
             return {}
 
-    def calculate_coverage_statistics(self, instance_counts: Dict,
-                                      class_mappings: Dict) -> Dict:
+    def calculate_coverage_statistics(
+        self, instance_counts: Dict, class_mappings: Dict
+    ) -> Dict:
         """
         Calculate coverage statistics for class partitions.
-        
+
         Args:
             instance_counts: Dictionary of class URIs to instance counts
             class_mappings: Dictionary of instance URIs to class lists
-            
+
         Returns:
             Dictionary with coverage statistics per class
         """
@@ -717,46 +1568,51 @@ WHERE {{
 
             # Calculate coverage percentages
             if total_instances > 0:
-                coverage_percent = (len(instances_in_partitions) / 
-                                  total_instances) * 100
-                avg_occurrences = (partition_occurrences / 
-                                 len(instances_in_partitions) 
-                                 if instances_in_partitions else 0)
+                coverage_percent = (
+                    len(instances_in_partitions) / total_instances
+                ) * 100
+                avg_occurrences = (
+                    partition_occurrences / len(instances_in_partitions)
+                    if instances_in_partitions
+                    else 0
+                )
             else:
                 coverage_percent = 0.0
                 avg_occurrences = 0.0
 
             coverage_stats[class_uri] = {
-                'total_instances': total_instances,
-                'instances_in_partitions': len(instances_in_partitions),
-                'partition_occurrences': partition_occurrences,
-                'occurrence_coverage_percent': coverage_percent,
-                'avg_occurrences_per_instance': avg_occurrences
+                "total_instances": total_instances,
+                "instances_in_partitions": len(instances_in_partitions),
+                "partition_occurrences": partition_occurrences,
+                "occurrence_coverage_percent": coverage_percent,
+                "avg_occurrences_per_instance": avg_occurrences,
             }
 
         return coverage_stats
 
-    def analyze_class_partition_usage(self, endpoint_url: str, graph_uri: str,
-                                       sample_limit: Optional[int] = None):
+    def analyze_class_partition_usage(
+        self,
+        endpoint_url: str,
+        sample_limit: Optional[int] = None,
+    ):
         """
         Complete analysis of class partition usage and coverage.
-        
+
         Args:
             endpoint_url: SPARQL endpoint URL
-            graph_uri: Graph URI to analyze
             sample_limit: Optional limit for sampling
-            
+
         Returns:
             Tuple of (instance_counts, class_mappings, coverage_stats)
         """
         print("Counting instances per class...")
         instance_counts = self.count_instances_per_class(
-            endpoint_url, graph_uri, sample_limit
+            endpoint_url, sample_limit=sample_limit
         )
 
         print("Getting class mappings...")
         class_mappings = self.get_class_mappings(
-            endpoint_url, graph_uri, sample_limit
+            endpoint_url, sample_limit=sample_limit
         )
 
         print("Calculating coverage statistics...")
@@ -766,15 +1622,16 @@ WHERE {{
 
         return instance_counts, class_mappings, coverage_stats
 
-    def export_coverage_analysis(self, coverage_stats: Dict,
-                                output_file: Optional[str] = None):
+    def export_coverage_analysis(
+        self, coverage_stats: Dict, output_file: Optional[str] = None
+    ):
         """
         Export coverage analysis to CSV format.
-        
+
         Args:
             coverage_stats: Dictionary with coverage statistics
             output_file: Optional output CSV file path
-            
+
         Returns:
             DataFrame with coverage analysis
         """
@@ -782,22 +1639,28 @@ WHERE {{
 
         for class_uri, stats in coverage_stats.items():
             # Extract readable class name
-            class_name = (class_uri.split('#')[-1].split('/')[-1] 
-                         if '#' in class_uri or '/' in class_uri 
-                         else class_uri)
+            class_name = (
+                class_uri.split("#")[-1].split("/")[-1]
+                if "#" in class_uri or "/" in class_uri
+                else class_uri
+            )
 
-            coverage_data.append({
-                'class_name': class_name,
-                'class_uri': class_uri,
-                'total_instances': stats['total_instances'],
-                'instances_in_partitions': stats['instances_in_partitions'],
-                'partition_occurrences': stats['partition_occurrences'],
-                'occurrence_coverage_percent': stats['occurrence_coverage_percent'],
-                'avg_occurrences_per_instance': stats['avg_occurrences_per_instance']
-            })
+            coverage_data.append(
+                {
+                    "class_name": class_name,
+                    "class_uri": class_uri,
+                    "total_instances": stats["total_instances"],
+                    "instances_in_partitions": stats["instances_in_partitions"],
+                    "partition_occurrences": stats["partition_occurrences"],
+                    "occurrence_coverage_percent": stats["occurrence_coverage_percent"],
+                    "avg_occurrences_per_instance": stats[
+                        "avg_occurrences_per_instance"
+                    ],
+                }
+            )
 
         df = pd.DataFrame(coverage_data)
-        df = df.sort_values('total_instances', ascending=False)
+        df = df.sort_values("total_instances", ascending=False)
 
         if output_file:
             df.to_csv(output_file, index=False)
@@ -806,8 +1669,9 @@ WHERE {{
         return df
 
 
-def parse_void_file(void_file_path: str,
-                    filter_void_nodes: bool = True) -> pd.DataFrame:
+def parse_void_file(
+    void_file_path: str, filter_void_nodes: bool = True
+) -> pd.DataFrame:
     """
     Convenience function to parse a VoID file and return schema DataFrame.
 
@@ -822,18 +1686,24 @@ def parse_void_file(void_file_path: str,
     return parser.to_schema(filter_void_nodes=filter_void_nodes)
 
 
-def generate_void_from_endpoint(endpoint_url: str, graph_uri: str,
-                                output_file: Optional[str] = None
-                                ) -> 'VoidParser':
+def generate_void_from_endpoint(
+    endpoint_url: str,
+    graph_uris: Optional[Union[str, List[str]]] = None,
+    output_file: Optional[str] = None,
+    exclude_other_graphs: bool = True,
+) -> "VoidParser":
     """
     Generate VoID from SPARQL endpoint and create parser.
-    
+
     Args:
         endpoint_url: SPARQL endpoint URL
-        graph_uri: Graph URI for the dataset
+        graph_uris: Graph URI(s) for the dataset. If None, queries all graphs
         output_file: Optional output file path for TTL
-        
+        exclude_other_graphs: Whether to exclude Virtuoso system graphs
+
     Returns:
         VoidParser instance with generated VoID
     """
-    return VoidParser.from_sparql(endpoint_url, graph_uri, output_file)
+    return VoidParser.from_sparql(
+        endpoint_url, graph_uris, output_file, exclude_other_graphs
+    )

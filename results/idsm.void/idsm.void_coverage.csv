@@ -1,9 +1,0 @@
-class_name,class_uri,total_instances,instances_in_partitions,partition_occurrences,occurrence_coverage_percent,avg_occurrences_per_instance
-Dataset,http://rdfs.org/ns/void#Dataset,29259,29259,29259,100.0,1.0
-Linkset,http://rdfs.org/ns/void#Linkset,20987,20987,20987,100.0,1.0
-Graph,http://www.w3.org/ns/sparql-service-description#Graph,38,38,38,100.0,1.0
-Feature,http://www.w3.org/ns/sparql-service-description#Feature,27,27,27,100.0,1.0
-Function,http://www.w3.org/ns/sparql-service-description#Function,6,6,6,100.0,1.0
-GraphCollection,http://www.w3.org/ns/sparql-service-description#GraphCollection,1,1,1,100.0,1.0
-Dataset,http://www.w3.org/ns/sparql-service-description#Dataset,1,1,1,100.0,1.0
-Service,http://www.w3.org/ns/sparql-service-description#Service,1,1,1,100.0,1.0

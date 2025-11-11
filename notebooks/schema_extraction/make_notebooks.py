@@ -30,7 +30,7 @@ def main():
     script_dir = Path(__file__).parent
     template_file = script_dir / "_schema_template.ipynb"
     sources_file = Path(os.path.abspath(
-        os.path.join(script_dir, "..", "sources.csv")
+        os.path.join(script_dir, "..", "..", "data", "sources.csv")
     ))
     
     # Check if template exists

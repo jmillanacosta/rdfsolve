@@ -1,7 +1,7 @@
 from rdflib import ConjunctiveGraph, Graph, URIRef
 from rdflib.namespace import RDFS
 import os
-from typing import Optional
+from typing import Optional, Union, List
 
 from rdfsolve.void_parser import VoidParser
 
@@ -129,19 +129,24 @@ class RDFSolver:
 
     def void_generator(
         self,
-        graph_uri: str,
+        graph_uris: Union[str, List[str], None] = None,
         output_file: Optional[str] = None,
         counts: bool = True,
         sample_limit: Optional[int] = None,
+        exclude_virtuoso_graphs: bool = True,
     ) -> Graph:
         """
         Generate VoID description using CONSTRUCT queries.
 
         Args:
-            graph_uri: Specific graph URI to analyze
+            graph_uris: Graph URI(s) to analyze. Can be:
+                       - str: Single graph URI
+                       - List[str]: Multiple graph URIs
+                       - None: Query all graphs (with optional filtering)
             output_file: Optional output file path for TTL
             counts: If True, include COUNT aggregations; if False, faster
             sample_limit: Optional LIMIT for sampling (speeds up discovery)
+            exclude_virtuoso_graphs: Whether to exclude Virtuoso system graphs
 
         Returns:
             RDF Graph containing the VoID description
@@ -149,21 +154,43 @@ class RDFSolver:
 
         try:
             if not output_file:
-                print("No output path specified, defaulting to current directory.")
+                print("No output path specified, defaulting to current "
+                      "directory.")
                 output_file = f"{self._dataset_name}_void.ttl"
 
             if not self._endpoint:
                 raise ValueError("No endpoint configured")
 
             print(f"Generating VoID from endpoint: {self._endpoint}")
-            print(f"Using graph URI: {graph_uri}")
+
+            # Display graph configuration
+            if graph_uris is None:
+                if exclude_virtuoso_graphs:
+                    print("Querying all graphs (excluding Virtuoso system "
+                          "graphs)")
+                else:
+                    print("Querying all graphs")
+            elif isinstance(graph_uris, str):
+                print(f"Using graph URI: {graph_uris}")
+            elif isinstance(graph_uris, list):
+                graph_display = (f"Using {len(graph_uris)} graph URIs: "
+                                 f"{graph_uris[:3]}")
+                if len(graph_uris) > 3:
+                    graph_display += "..."
+                print(graph_display)
+
             if not counts:
                 print("Fast mode: Skipping COUNT aggregations")
             if sample_limit:
                 print(f"Using sample limit: {sample_limit}")
 
             void_graph = VoidParser.generate_void_from_sparql(
-                self._endpoint, graph_uri, output_file, counts, sample_limit
+                endpoint_url=self._endpoint,
+                graph_uris=graph_uris,
+                output_file=output_file,
+                counts=counts,
+                sample_limit=sample_limit,
+                exclude_other_graphs=exclude_virtuoso_graphs
             )
 
             self._void = void_graph
@@ -196,7 +223,8 @@ class RDFSolver:
         parser = VoidParser(self._void)
         return parser
 
-    def _extract_prefixes_from_void(self) -> dict:  #TODO check bioregistry for functions?
+    def _extract_prefixes_from_void(self) -> dict:
+        # TODO: check bioregistry for functions?
         """
         Extract namespace prefixes from the VoID graph for JSON-LD context.
         
