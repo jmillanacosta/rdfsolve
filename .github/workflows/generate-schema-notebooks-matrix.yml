@@ -16,6 +16,10 @@ concurrency:
   group: schema-notebooks-matrix
   cancel-in-progress: false
 
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   prepare-matrix:
     runs-on: ubuntu-latest
@@ -198,6 +202,9 @@ jobs:
     needs: generate-notebooks
     runs-on: ubuntu-latest
     if: always()
+    permissions:
+      contents: write
+      actions: read
     
     steps:
     - uses: actions/checkout@v4
@@ -465,91 +472,35 @@ jobs:
         </html>
         EOF
 
-    - name: Commit and push all results with retry logic
+    - name: Commit and push all results
       run: |
         # Configure git with proper identity
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action Matrix"
-        git config --local pull.rebase true
         
-        # Function to safely commit and push with retries
-        commit_and_push() {
-          local attempt=1
-          local max_attempts=5
-          local delay=10
-          
-            while [ $attempt -le $max_attempts ]; do
-            echo "Commit attempt $attempt of $max_attempts"            # Ensure we're on the right branch and up to date
-            git checkout main || git checkout -b main
-            
-            # Pull latest changes to avoid conflicts
-            if git pull origin main --rebase; then
-              echo "Successfully pulled latest changes"
-            else
-              echo "Pull failed, continuing with local changes"
-            fi
-            
-            # Add all generated files
-            git add notebooks/schema_extraction/*.ipynb docs/notebooks/schema_extraction/ 2>/dev/null || true
-            
-            # Check if there are changes to commit
-            if git diff --cached --quiet; then
-              echo "No changes to commit"
-              return 0
-            fi
-            
-            # Create commit message with details
-            local total_files=$(find docs/notebooks/schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
-            local commit_msg="Matrix workflow: Generate schema notebooks and HTML
-
-            Parallel processing results:
-            - Total datasets processed: $total_files
-            - Generated on: $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)
-            - Workflow run: $GITHUB_RUN_ID
-            - Commit SHA: $GITHUB_SHA"
-            
-            # Attempt to commit
-            if git commit -m "$commit_msg"; then
-              echo "Successfully created commit"
-              
-              # Attempt to push with force-with-lease for safety
-              if git push origin main; then
-                echo "Successfully pushed changes"
-                return 0
-              else
-                echo "Push failed on attempt $attempt"
-                
-                # If push fails, fetch latest and try to rebase
-                git fetch origin main
-                if git rebase origin/main; then
-                  echo "Successfully rebased, retrying push..."
-                else
-                  echo "Rebase failed, resetting and retrying..."
-                  git rebase --abort 2>/dev/null || true
-                  git reset --hard HEAD~1
-                fi
-              fi
-            else
-              echo "Commit failed on attempt $attempt"
-            fi
-            
-            echo "Waiting ${delay}s before retry..."
-            sleep $delay
-            delay=$((delay + 5))  # Increase delay for next attempt
-            attempt=$((attempt + 1))
-          done
-          
-          echo "Failed to commit and push after $max_attempts attempts"
-          return 1
-        }
+        # Add all generated files
+        git add notebooks/schema_extraction/*.ipynb docs/notebooks/schema_extraction/ 2>/dev/null || true
         
-        # Execute the commit and push with retry logic
-        if commit_and_push; then
-          echo "All results successfully committed and pushed"
-        else
-          echo "Failed to push results, but artifacts are still available"
-          exit 1
+        # Check if there are changes to commit
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+          exit 0
         fi
+        
+        # Count results for commit message
+        total_files=$(find docs/notebooks/schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
+        
+        # Create commit message with details
+        commit_msg="Matrix workflow: Generate schema notebooks and HTML
+
+        Parallel processing results:
+        - Total datasets processed: $total_files
+        - Generated on: $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)
+        - Workflow run: $GITHUB_RUN_ID"
+        
+        # Commit and push
+        git commit -m "$commit_msg"
+        git push origin main
 
     - name: Upload final results
       uses: actions/upload-artifact@v4
