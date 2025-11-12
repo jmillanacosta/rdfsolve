@@ -293,72 +293,49 @@ jobs:
         cd ../../..
         current_date=$(date +%d/%m/%Y)
         
-        # Create temporary content for the schema-reports div
-        temp_content=$(mktemp)
-        echo "Last updated: $current_date" > "$temp_content"
-        echo "" >> "$temp_content"
+        # Create index.md if it doesn't exist with basic structure
+        if [ ! -f "docs/index.md" ]; then
+          echo "# RDFSolve" > docs/index.md
+          echo "" >> docs/index.md
+          echo "RDF schema extraction and analysis toolkit." >> docs/index.md
+          echo "" >> docs/index.md
+          echo "## Latest Analysis Results" >> docs/index.md
+          echo "" >> docs/index.md
+          echo '<div class="schema-reports">' >> docs/index.md
+          echo "<!-- This section is automatically updated by the workflow -->" >> docs/index.md
+          echo "</div>" >> docs/index.md
+          echo "" >> docs/index.md
+        fi
+        
+        # Create new content for the div
+        new_content_file=$(mktemp)
+        echo "Last updated: $current_date" > "$new_content_file"
+        echo "" >> "$new_content_file"
         
         # Add links to each HTML report
         cd docs/notebooks/schema_extraction
         for html_file in *_schema.html; do
           if [ -f "$html_file" ]; then
             dataset_name=$(basename "$html_file" .html | sed 's/_schema$//')
-            echo "- [$dataset_name](notebooks/schema_extraction/$html_file) - $current_date" >> "$temp_content"
+            echo "- [$dataset_name](notebooks/schema_extraction/$html_file) - $current_date" >> "$new_content_file"
           fi
         done
         
-        echo "" >> "$temp_content"
-        echo "**Total datasets analyzed**: $total_files" >> "$temp_content"
-        echo "**Successful**: $success_count" >> "$temp_content"  
-        echo "**Failed**: $failed_count" >> "$temp_content"
-        echo "" >> "$temp_content"
-        echo "Generated on: $current_date" >> "$temp_content"
+        echo "" >> "$new_content_file"
+        echo "**Total datasets analyzed**: $total_files" >> "$new_content_file"
+        echo "**Successful**: $success_count" >> "$new_content_file"  
+        echo "**Failed**: $failed_count" >> "$new_content_file"
+        echo "" >> "$new_content_file"
+        echo "Generated on: $current_date" >> "$new_content_file"
         
         cd ../../..
         
-        # Create index.md if it doesn't exist with basic structure
-        if [ ! -f "docs/index.md" ]; then
-          cat > docs/index.md << 'EOF'
-# RDFSolve
-
-RDF schema extraction and analysis toolkit.
-
-## Latest Analysis Results
-
-<div class="schema-reports">
-<!-- This section is automatically updated by the workflow -->
-</div>
-
-EOF
-        fi
+        # Replace content between div tags using sed
+        sed -i '/<div class="schema-reports">/,/<\/div>/{//!d;}' docs/index.md
+        sed -i '/<div class="schema-reports">/r '"$new_content_file" docs/index.md
         
-        # Update the schema-reports div content using sed
-        # First, extract content between div tags
-        start_marker='<div class="schema-reports">'
-        end_marker='</div>'
-        
-        # Use awk to replace content between the div tags
-        awk -v RS="" -v ORS="" -v start="$start_marker" -v end="$end_marker" '
-        BEGIN { in_div = 0; printed_start = 0 }
-        {
-          if ($0 ~ start && !printed_start) {
-            print start "\n"
-            while ((getline line < "'"$temp_content"'") > 0) {
-              print line "\n"
-            }
-            close("'"$temp_content"'")
-            print end "\n"
-            printed_start = 1
-            in_div = 1
-          } else if ($0 ~ end && in_div) {
-            in_div = 0
-          } else if (!in_div) {
-            print $0 "\n"
-          }
-        }' docs/index.md > docs/index.md.tmp && mv docs/index.md.tmp docs/index.md
-        
-        # Clean up temporary file
-        rm -f "$temp_content"
+        # Clean up
+        rm -f "$new_content_file"
         
         # Create comprehensive index.html
         cat > index.html << EOF
