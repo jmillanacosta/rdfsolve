@@ -1,0 +1,1228 @@
+name: aopwikirdf_schema
+description: LinkML schema extracted from aopwikirdf
+id: aopwikirdf_schema
+prefixes:
+  aopwikirdf_schema:
+    prefix_prefix: aopwikirdf_schema
+    prefix_reference: https://w3id.org/aopwikirdf_schema/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+default_prefix: aopwikirdf_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: https://w3id.org/aopwikirdf_schema/String
+    from_schema: aopwikirdf_schema
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: https://w3id.org/aopwikirdf_schema/Uriorcurie
+    from_schema: aopwikirdf_schema
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  prop_0001241:
+    name: prop_0001241
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_0001241
+    description: 'Property pato:0001241 (URI: http://purl.obolibrary.org/obo/PATO_0001241)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_0001241
+    owner: KeyEvent
+    domain_of:
+    - KeyEvent
+    range: class_0008150
+    inlined: true
+    inlined_as_list: true
+  label:
+    name: label
+    definition_uri: https://w3id.org/aopwikirdf_schema/label
+    description: 'Property rdfs:label (URI: http://www.w3.org/2000/01/rdf-schema#label)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:label
+    owner: KeyEventRelationship
+    domain_of:
+    - AdverseOutcomePathway
+    - KeyEvent
+    - KeyEventRelationship
+    - C54571
+    range: string
+  identifier:
+    name: identifier
+    definition_uri: https://w3id.org/aopwikirdf_schema/identifier
+    description: 'Property dc:identifier (URI: http://purl.org/dc/elements/1.1/identifier)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:identifier
+    owner: class_000407
+    domain_of:
+    - class_0001241
+    - class_000406
+    - class_000409
+    - KeyEvent
+    - class_2298
+    - C54571
+    - class_000407
+    - CellTypeContext
+    - class_000446
+    - class_000408
+    - class_000140
+    - class_000567
+    - class_131567
+    - class_000412
+    - class_1033
+    - class_000405
+    - OrganContext
+    - AdverseOutcomePathway
+    - class_000564
+    - class_0008150
+    - class_000000
+    - class_1027
+    - KeyEventRelationship
+    - class_1025
+    - class_2291
+    range: KeyEvent
+    inlined: true
+    inlined_as_list: true
+  source:
+    name: source
+    definition_uri: https://w3id.org/aopwikirdf_schema/source
+    description: 'Property dc:source (URI: http://purl.org/dc/elements/1.1/source)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:source
+    owner: class_000407
+    domain_of:
+    - class_000408
+    - class_2291
+    - OrganContext
+    - class_000407
+    - class_000567
+    - class_0008150
+    - CellTypeContext
+    - class_131567
+    - class_000564
+    - AdverseOutcomePathway
+    - class_000409
+    - class_000412
+    - KeyEvent
+    - class_000000
+    - class_000446
+    - class_2298
+    - class_000406
+    - class_000405
+    - class_000140
+    - class_1027
+    - class_1025
+    - class_1033
+    - class_0001241
+    range: string
+  prop_0000047:
+    name: prop_0000047
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_0000047
+    description: 'Property pato:0000047 (URI: http://purl.obolibrary.org/obo/PATO_0000047)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_0000047
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    - KeyEvent
+    range: string
+  title:
+    name: title
+    definition_uri: https://w3id.org/aopwikirdf_schema/title
+    description: 'Property dc:title (URI: http://purl.org/dc/elements/1.1/title)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:title
+    owner: class_131567
+    domain_of:
+    - KeyEvent
+    - class_000446
+    - C54571
+    - AdverseOutcomePathway
+    - class_131567
+    - CellTypeContext
+    - class_0008150
+    - class_0001241
+    - class_000000
+    - OrganContext
+    range: string
+  alternative:
+    name: alternative
+    definition_uri: https://w3id.org/aopwikirdf_schema/alternative
+    description: 'Property dcterms:alternative (URI: http://purl.org/dc/terms/alternative)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:alternative
+    owner: class_000000
+    domain_of:
+    - AdverseOutcomePathway
+    - KeyEvent
+    - class_000446
+    - class_000000
+    range: string
+  isPartOf:
+    name: isPartOf
+    definition_uri: https://w3id.org/aopwikirdf_schema/isPartOf
+    description: 'Property dcterms:isPartOf (URI: http://purl.org/dc/terms/isPartOf)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:isPartOf
+    owner: KeyEventRelationship
+    domain_of:
+    - C54571
+    - KeyEventRelationship
+    - KeyEvent
+    - class_000446
+    - class_000000
+    range: AdverseOutcomePathway
+    inlined: true
+    inlined_as_list: true
+  prop_CellTypeContext:
+    name: prop_CellTypeContext
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_CellTypeContext
+    description: 'Property CellTypeContext (URI: http://aopkb.org/aop_ontology#CellTypeContext)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_CellTypeContext
+    owner: KeyEvent
+    domain_of:
+    - KeyEvent
+    range: class_0001241
+    inlined: true
+    inlined_as_list: true
+  type:
+    name: type
+    definition_uri: https://w3id.org/aopwikirdf_schema/type
+    description: 'Property rdf:type (URI: http://www.w3.org/1999/02/22-rdf-syntax-ns#type)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:type
+    owner: class_000407
+    domain_of:
+    - class_2298
+    - class_000409
+    - KeyEvent
+    - class_000406
+    - KeyEventRelationship
+    - class_0008150
+    - C54571
+    - class_131567
+    - OrganContext
+    - AdverseOutcomePathway
+    - class_000407
+    - CellTypeContext
+    - class_000000
+    - class_000140
+    - class_000412
+    - class_000567
+    - BiologicalEvent
+    - class_1027
+    - class_1025
+    - class_2291
+    - class_000408
+    - class_000564
+    - class_1033
+    - class_0001241
+    - class_000446
+    - class_000405
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  seeAlso:
+    name: seeAlso
+    definition_uri: https://w3id.org/aopwikirdf_schema/seeAlso
+    description: 'Property rdfs:seeAlso (URI: http://www.w3.org/2000/01/rdf-schema#seeAlso)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:seeAlso
+    owner: class_1025
+    domain_of:
+    - AdverseOutcomePathway
+    - KeyEvent
+    - class_1025
+    - KeyEventRelationship
+    - class_2291
+    range: KeyEvent
+    inlined: true
+    inlined_as_list: true
+  prop_1025:
+    name: prop_1025
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_1025
+    description: 'Property edam.data:1025 (URI: http://edamontology.org/data_1025)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_1025
+    owner: KeyEventRelationship
+    domain_of:
+    - KeyEventRelationship
+    - KeyEvent
+    range: class_2298
+    inlined: true
+    inlined_as_list: true
+  description:
+    name: description
+    definition_uri: https://w3id.org/aopwikirdf_schema/description
+    description: 'Property dc:description (URI: http://purl.org/dc/elements/1.1/description)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:description
+    owner: KeyEventRelationship
+    domain_of:
+    - KeyEventRelationship
+    - C54571
+    - KeyEvent
+    - AdverseOutcomePathway
+    range: string
+  prop_C25664:
+    name: prop_C25664
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_C25664
+    description: 'Property ncit:C25664 (URI: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C25664)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_C25664
+    owner: KeyEvent
+    domain_of:
+    - KeyEvent
+    range: string
+  prop_0008150:
+    name: prop_0008150
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_0008150
+    description: 'Property go:0008150 (URI: http://purl.obolibrary.org/obo/GO_0008150)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_0008150
+    owner: KeyEvent
+    domain_of:
+    - KeyEvent
+    range: class_0001241
+    inlined: true
+    inlined_as_list: true
+  page:
+    name: page
+    definition_uri: https://w3id.org/aopwikirdf_schema/page
+    description: 'Property foaf:page (URI: http://xmlns.com/foaf/0.1/page)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:page
+    owner: KeyEventRelationship
+    domain_of:
+    - KeyEventRelationship
+    - C54571
+    - KeyEvent
+    - AdverseOutcomePathway
+    range: KeyEvent
+    inlined: true
+    inlined_as_list: true
+  prop_131567:
+    name: prop_131567
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_131567
+    description: 'Property 131567 (URI: http://purl.bioontology.org/ontology/NCBITAXON/131567)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_131567
+    owner: KeyEvent
+    domain_of:
+    - KeyEvent
+    range: class_131567
+    inlined: true
+    inlined_as_list: true
+  LifeStageContext:
+    name: LifeStageContext
+    definition_uri: https://w3id.org/aopwikirdf_schema/LifeStageContext
+    description: 'Property LifeStageContext (URI: http://aopkb.org/aop_ontology#LifeStageContext)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:LifeStageContext
+    owner: AdverseOutcomePathway
+    domain_of:
+    - KeyEvent
+    - AdverseOutcomePathway
+    range: string
+  prop_0000001:
+    name: prop_0000001
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_0000001
+    description: 'Property pato:0000001 (URI: http://purl.obolibrary.org/obo/PATO_0000001)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_0000001
+    owner: KeyEvent
+    domain_of:
+    - KeyEvent
+    range: string
+  hasBiologicalEvent:
+    name: hasBiologicalEvent
+    definition_uri: https://w3id.org/aopwikirdf_schema/hasBiologicalEvent
+    description: 'Property hasBiologicalEvent (URI: http://aopkb.org/aop_ontology#hasBiologicalEvent)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:hasBiologicalEvent
+    owner: KeyEvent
+    domain_of:
+    - KeyEvent
+    range: BiologicalEvent
+    inlined: true
+    inlined_as_list: true
+  prop_OrganContext:
+    name: prop_OrganContext
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_OrganContext
+    description: 'Property OrganContext (URI: http://aopkb.org/aop_ontology#OrganContext)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_OrganContext
+    owner: KeyEvent
+    domain_of:
+    - KeyEvent
+    range: string
+  prop_0000000:
+    name: prop_0000000
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_0000000
+    description: 'Property mmo:0000000 (URI: http://purl.obolibrary.org/obo/MMO_0000000)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_0000000
+    owner: KeyEvent
+    domain_of:
+    - KeyEvent
+    range: string
+  created:
+    name: created
+    definition_uri: https://w3id.org/aopwikirdf_schema/created
+    description: 'Property dcterms:created (URI: http://purl.org/dc/terms/created)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:created
+    owner: KeyEventRelationship
+    domain_of:
+    - AdverseOutcomePathway
+    - KeyEventRelationship
+    - C54571
+    range: string
+  modified:
+    name: modified
+    definition_uri: https://w3id.org/aopwikirdf_schema/modified
+    description: 'Property dcterms:modified (URI: http://purl.org/dc/terms/modified)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:modified
+    owner: KeyEventRelationship
+    domain_of:
+    - KeyEventRelationship
+    - AdverseOutcomePathway
+    - C54571
+    range: string
+  prop_C25725:
+    name: prop_C25725
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_C25725
+    description: 'Property ncit:C25725 (URI: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C25725)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_C25725
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: string
+  prop_3799:
+    name: prop_3799
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_3799
+    description: 'Property edam.operation:3799 (URI: http://edamontology.org/operation_3799)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_3799
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: string
+  has_key_event:
+    name: has_key_event
+    definition_uri: https://w3id.org/aopwikirdf_schema/has_key_event
+    description: 'Property has_key_event (URI: http://aopkb.org/aop_ontology#has_key_event)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:has_key_event
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: KeyEvent
+    inlined: true
+    inlined_as_list: true
+  prop_C48192:
+    name: prop_C48192
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_C48192
+    description: 'Property ncit:C48192 (URI: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48192)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_C48192
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: string
+  has_molecular_initiating_event:
+    name: has_molecular_initiating_event
+    definition_uri: https://w3id.org/aopwikirdf_schema/has_molecular_initiating_event
+    description: 'Property has_molecular_initiating_event (URI: http://aopkb.org/aop_ontology#has_molecular_initiating_event)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:has_molecular_initiating_event
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: KeyEvent
+    inlined: true
+    inlined_as_list: true
+  creator:
+    name: creator
+    definition_uri: https://w3id.org/aopwikirdf_schema/creator
+    description: 'Property dc:creator (URI: http://purl.org/dc/elements/1.1/creator)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:creator
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: string
+  has_key_event_relationship:
+    name: has_key_event_relationship
+    definition_uri: https://w3id.org/aopwikirdf_schema/has_key_event_relationship
+    description: 'Property has_key_event_relationship (URI: http://aopkb.org/aop_ontology#has_key_event_relationship)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:has_key_event_relationship
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: KeyEventRelationship
+    inlined: true
+    inlined_as_list: true
+  prop_C25688:
+    name: prop_C25688
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_C25688
+    description: 'Property ncit:C25688 (URI: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C25688)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_C25688
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: string
+  prop_C54571:
+    name: prop_C54571
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_C54571
+    description: 'Property ncit:C54571 (URI: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_C54571
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: C54571
+    inlined: true
+    inlined_as_list: true
+  abstract:
+    name: abstract
+    definition_uri: https://w3id.org/aopwikirdf_schema/abstract
+    description: 'Property dcterms:abstract (URI: http://purl.org/dc/terms/abstract)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:abstract
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: string
+  AopContext:
+    name: AopContext
+    definition_uri: https://w3id.org/aopwikirdf_schema/AopContext
+    description: 'Property AopContext (URI: http://aopkb.org/aop_ontology#AopContext)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:AopContext
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: string
+  has_adverse_outcome:
+    name: has_adverse_outcome
+    definition_uri: https://w3id.org/aopwikirdf_schema/has_adverse_outcome
+    description: 'Property has_adverse_outcome (URI: http://aopkb.org/aop_ontology#has_adverse_outcome)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:has_adverse_outcome
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: KeyEvent
+    inlined: true
+    inlined_as_list: true
+  has_evidence:
+    name: has_evidence
+    definition_uri: https://w3id.org/aopwikirdf_schema/has_evidence
+    description: 'Property has_evidence (URI: http://aopkb.org/aop_ontology#has_evidence)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:has_evidence
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: string
+  prop_C25217:
+    name: prop_C25217
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_C25217
+    description: 'Property ncit:C25217 (URI: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C25217)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_C25217
+    owner: AdverseOutcomePathway
+    domain_of:
+    - AdverseOutcomePathway
+    range: string
+  prop_2042:
+    name: prop_2042
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_2042
+    description: 'Property edam.data:2042 (URI: http://edamontology.org/data_2042)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_2042
+    owner: KeyEventRelationship
+    domain_of:
+    - KeyEventRelationship
+    range: string
+  prop_C71478:
+    name: prop_C71478
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_C71478
+    description: 'Property ncit:C71478 (URI: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C71478)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_C71478
+    owner: KeyEventRelationship
+    domain_of:
+    - KeyEventRelationship
+    range: string
+  prop_C80263:
+    name: prop_C80263
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_C80263
+    description: 'Property ncit:C80263 (URI: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C80263)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_C80263
+    owner: KeyEventRelationship
+    domain_of:
+    - KeyEventRelationship
+    range: string
+  has_upstream_key_event:
+    name: has_upstream_key_event
+    definition_uri: https://w3id.org/aopwikirdf_schema/has_upstream_key_event
+    description: 'Property has_upstream_key_event (URI: http://aopkb.org/aop_ontology#has_upstream_key_event)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:has_upstream_key_event
+    owner: KeyEventRelationship
+    domain_of:
+    - KeyEventRelationship
+    range: KeyEvent
+    inlined: true
+    inlined_as_list: true
+  has_downstream_key_event:
+    name: has_downstream_key_event
+    definition_uri: https://w3id.org/aopwikirdf_schema/has_downstream_key_event
+    description: 'Property has_downstream_key_event (URI: http://aopkb.org/aop_ontology#has_downstream_key_event)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:has_downstream_key_event
+    owner: KeyEventRelationship
+    domain_of:
+    - KeyEventRelationship
+    range: KeyEvent
+    inlined: true
+    inlined_as_list: true
+  has_chemical_entity:
+    name: has_chemical_entity
+    definition_uri: https://w3id.org/aopwikirdf_schema/has_chemical_entity
+    description: 'Property has_chemical_entity (URI: http://aopkb.org/aop_ontology#has_chemical_entity)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:has_chemical_entity
+    owner: C54571
+    domain_of:
+    - C54571
+    range: string
+  exactMatch:
+    name: exactMatch
+    definition_uri: https://w3id.org/aopwikirdf_schema/exactMatch
+    description: 'Property skos:exactMatch (URI: http://www.w3.org/2004/02/skos/core#exactMatch)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:exactMatch
+    owner: class_1025
+    domain_of:
+    - class_2298
+    - class_0001241
+    - class_000446
+    - class_000000
+    - class_1025
+    range: class_1027
+    inlined: true
+    inlined_as_list: true
+  prop_2298:
+    name: prop_2298
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_2298
+    description: 'Property edam.data:2298 (URI: http://edamontology.org/data_2298)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_2298
+    owner: class_1025
+    domain_of:
+    - class_2298
+    - class_1025
+    range: string
+  prop_000059:
+    name: prop_000059
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000059
+    description: 'Property cheminf:000059 (URI: http://semanticscience.org/resource/CHEMINF_000059)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000059
+    owner: class_000000
+    domain_of:
+    - class_000446
+    - class_000000
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  prop_000568:
+    name: prop_000568
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000568
+    description: 'Property cheminf:000568 (URI: http://semanticscience.org/resource/CHEMINF_000568)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000568
+    owner: class_000000
+    domain_of:
+    - class_000446
+    - class_000000
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  prop_000446:
+    name: prop_000446
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000446
+    description: 'Property cheminf:000446 (URI: http://semanticscience.org/resource/CHEMINF_000446)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000446
+    owner: class_000000
+    domain_of:
+    - class_000000
+    - class_000446
+    range: string
+  prop_1033:
+    name: prop_1033
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_1033
+    description: 'Property edam.data:1033 (URI: http://edamontology.org/data_1033)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_1033
+    owner: class_1025
+    domain_of:
+    - class_1025
+    - class_1033
+    range: string
+  sameAs:
+    name: sameAs
+    definition_uri: https://w3id.org/aopwikirdf_schema/sameAs
+    description: 'Property owl:sameAs (URI: http://www.w3.org/2002/07/owl#sameAs)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:sameAs
+    owner: class_1025
+    domain_of:
+    - class_2291
+    - class_1025
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  prop_1027:
+    name: prop_1027
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_1027
+    description: 'Property edam.data:1027 (URI: http://edamontology.org/data_1027)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_1027
+    owner: class_1025
+    domain_of:
+    - class_1025
+    - class_1027
+    range: string
+  prop_2291:
+    name: prop_2291
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_2291
+    description: 'Property edam.data:2291 (URI: http://edamontology.org/data_2291)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_2291
+    owner: class_1025
+    domain_of:
+    - class_2291
+    - class_1025
+    range: string
+  prop_000406:
+    name: prop_000406
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000406
+    description: 'Property cheminf:000406 (URI: http://semanticscience.org/resource/CHEMINF_000406)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000406
+    owner: class_000406
+    domain_of:
+    - class_000406
+    range: string
+  prop_000409:
+    name: prop_000409
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000409
+    description: 'Property cheminf:000409 (URI: http://semanticscience.org/resource/CHEMINF_000409)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000409
+    owner: class_000409
+    domain_of:
+    - class_000409
+    range: string
+  prop_000407:
+    name: prop_000407
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000407
+    description: 'Property cheminf:000407 (URI: http://semanticscience.org/resource/CHEMINF_000407)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000407
+    owner: class_000407
+    domain_of:
+    - class_000407
+    range: string
+  prop_000408:
+    name: prop_000408
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000408
+    description: 'Property cheminf:000408 (URI: http://semanticscience.org/resource/CHEMINF_000408)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000408
+    owner: class_000408
+    domain_of:
+    - class_000408
+    range: string
+  prop_000140:
+    name: prop_000140
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000140
+    description: 'Property cheminf:000140 (URI: http://semanticscience.org/resource/CHEMINF_000140)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000140
+    owner: class_000140
+    domain_of:
+    - class_000140
+    range: string
+  prop_000567:
+    name: prop_000567
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000567
+    description: 'Property cheminf:000567 (URI: http://semanticscience.org/resource/CHEMINF_000567)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000567
+    owner: class_000567
+    domain_of:
+    - class_000567
+    range: string
+  prop_000412:
+    name: prop_000412
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000412
+    description: 'Property cheminf:000412 (URI: http://semanticscience.org/resource/CHEMINF_000412)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000412
+    owner: class_000412
+    domain_of:
+    - class_000412
+    range: string
+  prop_000405:
+    name: prop_000405
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000405
+    description: 'Property cheminf:000405 (URI: http://semanticscience.org/resource/CHEMINF_000405)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000405
+    owner: class_000405
+    domain_of:
+    - class_000405
+    range: string
+  prop_000564:
+    name: prop_000564
+    definition_uri: https://w3id.org/aopwikirdf_schema/prop_000564
+    description: 'Property cheminf:000564 (URI: http://semanticscience.org/resource/CHEMINF_000564)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:prop_000564
+    owner: class_000564
+    domain_of:
+    - class_000564
+    range: string
+  hasObject:
+    name: hasObject
+    definition_uri: https://w3id.org/aopwikirdf_schema/hasObject
+    description: 'Property hasObject (URI: http://aopkb.org/aop_ontology#hasObject)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:hasObject
+    owner: BiologicalEvent
+    domain_of:
+    - BiologicalEvent
+    range: string
+  hasAction:
+    name: hasAction
+    definition_uri: https://w3id.org/aopwikirdf_schema/hasAction
+    description: 'Property hasAction (URI: http://aopkb.org/aop_ontology#hasAction)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:hasAction
+    owner: BiologicalEvent
+    domain_of:
+    - BiologicalEvent
+    range: string
+  hasProcess:
+    name: hasProcess
+    definition_uri: https://w3id.org/aopwikirdf_schema/hasProcess
+    description: 'Property hasProcess (URI: http://aopkb.org/aop_ontology#hasProcess)'
+    from_schema: aopwikirdf_schema
+    slot_uri: aopwikirdf_schema:hasProcess
+    owner: BiologicalEvent
+    domain_of:
+    - BiologicalEvent
+    range: class_0008150
+    inlined: true
+    inlined_as_list: true
+classes:
+  KeyEvent:
+    name: KeyEvent
+    definition_uri: https://w3id.org/aopwikirdf_schema/KeyEvent
+    description: 'Class KeyEvent (URI: http://aopkb.org/aop_ontology#KeyEvent)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - prop_0001241
+    - label
+    - identifier
+    - source
+    - prop_0000047
+    - title
+    - alternative
+    - isPartOf
+    - prop_CellTypeContext
+    - type
+    - seeAlso
+    - prop_1025
+    - description
+    - prop_C25664
+    - prop_0008150
+    - page
+    - prop_131567
+    - LifeStageContext
+    - prop_0000001
+    - hasBiologicalEvent
+    - prop_OrganContext
+    - prop_0000000
+    class_uri: aopwikirdf_schema:KeyEvent
+  class_000409:
+    name: class_000409
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000409
+    description: 'Class cheminf:000409 (URI: http://semanticscience.org/resource/CHEMINF_000409)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - type
+    - prop_000409
+    class_uri: aopwikirdf_schema:Class000409
+  AdverseOutcomePathway:
+    name: AdverseOutcomePathway
+    definition_uri: https://w3id.org/aopwikirdf_schema/AdverseOutcomePathway
+    description: 'Class AdverseOutcomePathway (URI: http://aopkb.org/aop_ontology#AdverseOutcomePathway)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - created
+    - modified
+    - label
+    - identifier
+    - source
+    - prop_C25725
+    - prop_0000047
+    - title
+    - alternative
+    - prop_3799
+    - type
+    - seeAlso
+    - description
+    - has_key_event
+    - prop_C48192
+    - page
+    - has_molecular_initiating_event
+    - creator
+    - LifeStageContext
+    - has_key_event_relationship
+    - prop_C25688
+    - prop_C54571
+    - abstract
+    - AopContext
+    - has_adverse_outcome
+    - has_evidence
+    - prop_C25217
+    class_uri: aopwikirdf_schema:AdverseOutcomePathway
+  class_0001241:
+    name: class_0001241
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class0001241
+    description: 'Class pato:0001241 (URI: http://purl.obolibrary.org/obo/PATO_0001241)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - exactMatch
+    - identifier
+    - source
+    - title
+    - type
+    class_uri: aopwikirdf_schema:Class0001241
+  CellTypeContext:
+    name: CellTypeContext
+    definition_uri: https://w3id.org/aopwikirdf_schema/CellTypeContext
+    description: 'Class CellTypeContext (URI: http://aopkb.org/aop_ontology#CellTypeContext)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - title
+    - type
+    class_uri: aopwikirdf_schema:CellTypeContext
+  Resource:
+    name: Resource
+    definition_uri: https://w3id.org/aopwikirdf_schema/Resource
+    description: 'Class rdfs:Resource (URI: http://www.w3.org/2000/01/rdf-schema#Resource)'
+    from_schema: aopwikirdf_schema
+    class_uri: aopwikirdf_schema:Resource
+  class_0008150:
+    name: class_0008150
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class0008150
+    description: 'Class go:0008150 (URI: http://purl.obolibrary.org/obo/GO_0008150)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - title
+    - type
+    class_uri: aopwikirdf_schema:Class0008150
+  C54571:
+    name: C54571
+    definition_uri: https://w3id.org/aopwikirdf_schema/C54571
+    description: 'Class ncit:C54571 (URI: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - created
+    - modified
+    - label
+    - identifier
+    - has_chemical_entity
+    - title
+    - isPartOf
+    - type
+    - description
+    - page
+    class_uri: aopwikirdf_schema:C54571
+  class_000405:
+    name: class_000405
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000405
+    description: 'Class cheminf:000405 (URI: http://semanticscience.org/resource/CHEMINF_000405)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - prop_000405
+    - type
+    class_uri: aopwikirdf_schema:Class000405
+  class_2298:
+    name: class_2298
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class2298
+    description: 'Class edam.data:2298 (URI: http://edamontology.org/data_2298)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - exactMatch
+    - identifier
+    - source
+    - type
+    - prop_2298
+    class_uri: aopwikirdf_schema:Class2298
+  class_000140:
+    name: class_000140
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000140
+    description: 'Class cheminf:000140 (URI: http://semanticscience.org/resource/CHEMINF_000140)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - type
+    - prop_000140
+    class_uri: aopwikirdf_schema:Class000140
+  BiologicalEvent:
+    name: BiologicalEvent
+    definition_uri: https://w3id.org/aopwikirdf_schema/BiologicalEvent
+    description: 'Class BiologicalEvent (URI: http://aopkb.org/aop_ontology#BiologicalEvent)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - type
+    - hasObject
+    - hasAction
+    - hasProcess
+    class_uri: aopwikirdf_schema:BiologicalEvent
+  class_000446:
+    name: class_000446
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000446
+    description: 'Class cheminf:000446 (URI: http://semanticscience.org/resource/CHEMINF_000446)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - exactMatch
+    - identifier
+    - source
+    - title
+    - alternative
+    - isPartOf
+    - type
+    - prop_000059
+    - prop_000568
+    - prop_000446
+    class_uri: aopwikirdf_schema:Class000446
+  class_2291:
+    name: class_2291
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class2291
+    description: 'Class edam.data:2291 (URI: http://edamontology.org/data_2291)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - type
+    - seeAlso
+    - sameAs
+    - prop_2291
+    class_uri: aopwikirdf_schema:Class2291
+  class_000000:
+    name: class_000000
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000000
+    description: 'Class cheminf:000000 (URI: http://semanticscience.org/resource/CHEMINF_000000)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - exactMatch
+    - identifier
+    - source
+    - title
+    - alternative
+    - isPartOf
+    - type
+    - prop_000059
+    - prop_000568
+    - prop_000446
+    class_uri: aopwikirdf_schema:Class000000
+  class_000412:
+    name: class_000412
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000412
+    description: 'Class cheminf:000412 (URI: http://semanticscience.org/resource/CHEMINF_000412)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - type
+    - prop_000412
+    class_uri: aopwikirdf_schema:Class000412
+  class_1027:
+    name: class_1027
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class1027
+    description: 'Class edam.data:1027 (URI: http://edamontology.org/data_1027)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - type
+    - prop_1027
+    class_uri: aopwikirdf_schema:Class1027
+  class_1033:
+    name: class_1033
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class1033
+    description: 'Class edam.data:1033 (URI: http://edamontology.org/data_1033)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - prop_1033
+    - type
+    class_uri: aopwikirdf_schema:Class1033
+  class_000567:
+    name: class_000567
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000567
+    description: 'Class cheminf:000567 (URI: http://semanticscience.org/resource/CHEMINF_000567)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - type
+    - prop_000567
+    class_uri: aopwikirdf_schema:Class000567
+  OrganContext:
+    name: OrganContext
+    definition_uri: https://w3id.org/aopwikirdf_schema/OrganContext
+    description: 'Class OrganContext (URI: http://aopkb.org/aop_ontology#OrganContext)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - title
+    - type
+    class_uri: aopwikirdf_schema:OrganContext
+  class_000564:
+    name: class_000564
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000564
+    description: 'Class cheminf:000564 (URI: http://semanticscience.org/resource/CHEMINF_000564)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - type
+    - prop_000564
+    class_uri: aopwikirdf_schema:Class000564
+  KeyEventRelationship:
+    name: KeyEventRelationship
+    definition_uri: https://w3id.org/aopwikirdf_schema/KeyEventRelationship
+    description: 'Class KeyEventRelationship (URI: http://aopkb.org/aop_ontology#KeyEventRelationship)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - created
+    - modified
+    - label
+    - identifier
+    - isPartOf
+    - type
+    - seeAlso
+    - prop_1025
+    - description
+    - prop_2042
+    - page
+    - prop_C71478
+    - prop_C80263
+    - has_upstream_key_event
+    - has_downstream_key_event
+    class_uri: aopwikirdf_schema:KeyEventRelationship
+  class_131567:
+    name: class_131567
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class131567
+    description: 'Class 131567 (URI: http://purl.bioontology.org/ontology/NCBITAXON/131567)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - title
+    - type
+    class_uri: aopwikirdf_schema:Class131567
+  class_1025:
+    name: class_1025
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class1025
+    description: 'Class edam.data:1025 (URI: http://edamontology.org/data_1025)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - exactMatch
+    - identifier
+    - source
+    - prop_1033
+    - type
+    - seeAlso
+    - sameAs
+    - prop_2298
+    - prop_1027
+    - prop_2291
+    class_uri: aopwikirdf_schema:Class1025
+  class_000406:
+    name: class_000406
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000406
+    description: 'Class cheminf:000406 (URI: http://semanticscience.org/resource/CHEMINF_000406)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - type
+    - prop_000406
+    class_uri: aopwikirdf_schema:Class000406
+  class_000408:
+    name: class_000408
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000408
+    description: 'Class cheminf:000408 (URI: http://semanticscience.org/resource/CHEMINF_000408)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - type
+    - prop_000408
+    class_uri: aopwikirdf_schema:Class000408
+  class_000407:
+    name: class_000407
+    definition_uri: https://w3id.org/aopwikirdf_schema/Class000407
+    description: 'Class cheminf:000407 (URI: http://semanticscience.org/resource/CHEMINF_000407)'
+    from_schema: aopwikirdf_schema
+    slots:
+    - identifier
+    - source
+    - type
+    - prop_000407
+    class_uri: aopwikirdf_schema:Class000407
+metamodel_version: 1.7.0
+generation_date: '2025-11-11T15:12:30'

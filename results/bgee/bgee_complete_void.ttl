@@ -1,0 +1,126 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ns1: <https://bgee.org/rdf_v15_2/void/> .
+@prefix ns10: <http://purl.org/genex#> .
+@prefix ns11: <http://www.ifomis.org/bfo/1.1/snap#> .
+@prefix ns2: <http://purl.obolibrary.org/obo/> .
+@prefix ns3: <http://purl.uniprot.org/core/> .
+@prefix ns7: <http://purl.org/net/orth#> .
+@prefix ns8: <http://www.ifomis.org/bfo/1.1/span#> .
+@prefix ns9: <http://www.ebi.ac.uk/efo/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_02499b17f94d6514063b58c4b624b78e void:class ns9:EFO_0000399 ;
+    void:entities 1239 .
+
+ns1:class_partition_122fc1a301d39a7bfa9bb421af04cdef void:class ns2:CDAO_0000140 ;
+    void:entities 1559014 .
+
+ns1:class_partition_137c9dc1cb27b23cc8bf8dc3ec2d5c89 void:class rdf:List ;
+    void:entities 7 .
+
+ns1:class_partition_1fd0b20e8cecdf131e4620e33112573b void:class ns9:EFO_0005135 ;
+    void:entities 1 .
+
+ns1:class_partition_237d58b9a424ff36e5cbd1dfa57c773e void:class ns2:BFO_0000004 ;
+    void:entities 162009 .
+
+ns1:class_partition_472ee8b9e92f00863f1b11929967a7fa void:class owl:ObjectProperty ;
+    void:entities 23 .
+
+ns1:class_partition_5192bd4012546876e17387cec79301a1 void:class foaf:Organization ;
+    void:entities 2 .
+
+ns1:class_partition_55439a5d90df8ccad534dc9af3fc4aee void:class owl:AnnotationProperty ;
+    void:entities 38 .
+
+ns1:class_partition_5c9b74fd60217d53eb4dac037cb9b177 void:class ns8:ProcessualEntity ;
+    void:entities 1239 .
+
+ns1:class_partition_5eed5c49d71a869bf6ca173b0006310b void:class ns3:Taxon ;
+    void:entities 52 .
+
+ns1:class_partition_6493ba7c426773f6bfdb9812b4068a95 void:class ns3:Rank ;
+    void:entities 1 .
+
+ns1:class_partition_6be100d081a438502013ba4e5fef3db7 void:class owl:Class ;
+    void:entities 48 .
+
+ns1:class_partition_6ec3892e3f7d0019501ecc7598788c99 void:class ns7:SequenceUnit ;
+    void:entities 1559014 .
+
+ns1:class_partition_6f318209a73aad41436b9942f1ef8de5 void:class ns10:AbsenceExpression ;
+    void:entities 4642933 .
+
+ns1:class_partition_711abf9fb89fcf04d373c000915903f5 void:class ns2:CARO_0030000 ;
+    void:entities 40646 .
+
+ns1:class_partition_717e1ac2dd567ad1567ba802cdb67e2a void:class owl:FunctionalProperty ;
+    void:entities 9 .
+
+ns1:class_partition_72a763dbcc6cf60eb7114bcf6057792f void:class ns11:MaterialEntity ;
+    void:entities 38370 .
+
+ns1:class_partition_7ea297bba0db63b825e3bee174a81dc8 void:class ns2:BFO_0000002 ;
+    void:entities 1524130 .
+
+ns1:class_partition_80029ef2380309dbd92f6d593c9c1f20 void:class rdf:Property ;
+    void:entities 1 .
+
+ns1:class_partition_85ee7ff7784262baf61378508ff11275 void:class ns7:GeneTreeNode ;
+    void:entities 1559014 .
+
+ns1:class_partition_89df24df35df8882616112ab6a78df83 void:class owl:Ontology ;
+    void:entities 2 .
+
+ns1:class_partition_8de8016c955644c9cc5eb68d2695da5d void:class ns7:Gene ;
+    void:entities 1559014 .
+
+ns1:class_partition_9e6d9eddc19d6811c0a885c828aceb63 void:class owl:DatatypeProperty ;
+    void:entities 8 .
+
+ns1:class_partition_9ed2fb7d3b7985c23e788a879a4db9d7 void:class owl:Restriction ;
+    void:entities 19 .
+
+ns1:class_partition_a73b3e01a3b5af6fb9097a0666a112bc void:class ns10:Expression ;
+    void:entities 709482280 .
+
+ns1:class_partition_b5be57efd4210b8b5ec1b5f811ecd784 void:class ns2:CARO_0000000 ;
+    void:entities 40646 .
+
+ns1:class_partition_bac8e7b2db20035daef6bad02bf7d497 void:class ns9:EFO_0000001 ;
+    void:entities 39609 .
+
+ns1:class_partition_bb70ba4af84eba77e76cf90374b5e869 void:class owl:NamedIndividual ;
+    void:entities 12 .
+
+ns1:class_partition_c6cd2a26cdef0cc87ed14b820e6b7161 void:class ns10:AnatomicalEntity ;
+    void:entities 40646 .
+
+ns1:class_partition_cc25a21f241d07258994a3b49ab0a164 void:class ns2:NCIT_C14250 ;
+    void:entities 52 .
+
+ns1:class_partition_d442fd21f2228c88652c68a6b19b58a7 void:class ns2:BFO_0000001 ;
+    void:entities 1524130 .
+
+ns1:class_partition_da0f7b05f630145ec46b16003f1e650b void:class ns2:SO_0000704 ;
+    void:entities 1559014 .
+
+ns1:class_partition_e685cdf61c384a479935833a720d8a53 void:class ns2:OBI_0000181 ;
+    void:entities 1 .
+
+ns1:class_partition_e70106cf33c4a8d55f7031297af9b64e void:class rdfs:Datatype ;
+    void:entities 2 .
+
+ns1:class_partition_ec0d6136dc2db81e75b598efd400b407 void:class ns7:Organism ;
+    void:entities 52 .
+
+ns1:class_partition_f3d13a8a553a19e9c111f653285e4bf9 void:class ns9:EFO_0000635 ;
+    void:entities 38370 .
+
+ns1:class_partition_fcedd828a1352e699e4fb1baac32c79e void:class ns10:ExpressionCondition ;
+    void:entities 123467 .
+

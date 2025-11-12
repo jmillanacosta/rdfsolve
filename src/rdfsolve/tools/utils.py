@@ -3,12 +3,12 @@
 import requests
 
 __all__ = [
-    "get_graph_iris",
-    "IGNORE_GRAPH_IRIS",
+    "get_graph_uris",
+    "IGNORE_graph_uris",
 ]
 
 
-def get_graph_iris(endpoint_url):
+def get_graph_uris(endpoint_url):
     """
     Discover named graphs in a SPARQL endpoint.
     
@@ -46,6 +46,6 @@ def get_graph_iris(endpoint_url):
     return graph_list
 
 
-IGNORE_GRAPH_IRIS = [
+IGNORE_graph_uris = [
     "http://www.openlinksw.com/schemas/virtrdf#",
 ]
