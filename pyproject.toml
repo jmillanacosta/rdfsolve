@@ -103,16 +103,16 @@ notebooks = [
     "matplotlib>=3.10.7", # Plotting and visualization
     "seaborn>=0.11.0", # Statistical visualization
     "plotly>=5.0.0", # Interactive plots (optional)
-    "networkx>=2.8", # Network analysis for RDF graphs
+    "networkx>=2.8", # Network analysis
     "jupyterlab>=4.0.0", # Full Jupyter Lab environment
     "ipywidgets>=8.0.0", # Interactive widgets for notebooks
 ]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
 [project.urls]
-"Bug Tracker" = "https://github.com/Maastricht University/rdfsolve/issues"
-Homepage = "https://github.com/Maastricht University/rdfsolve"
-Repository = "https://github.com/Maastricht University/rdfsolve.git"
+"Bug Tracker" = "https://github.com/jmillanacosta/rdfsolve/issues"
+Homepage = "https://github.com/jmillanacosta/rdfsolve"
+Repository = "https://github.com/jmillanacosta/rdfsolve.git"
 Documentation = "https://rdfsolve.readthedocs.io"
 
 [tool.setuptools]
