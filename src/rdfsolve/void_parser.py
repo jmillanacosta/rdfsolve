@@ -141,8 +141,11 @@ class VoidParser:
 
         # Replace graph clause markers
         if not graph_uris:
-            # No specific graphs - query all graphs (no GRAPH clause)
-            result = query.replace("#GRAPH_CLAUSE", "")
+            # No specific graphs - query default graph (remove GRAPH clause)
+            # Simply remove the markers and keep the content
+            result = query.replace("#GRAPH_CLAUSE\n", "")
+            result = result.replace("#GRAPH_CLAUSE", "")
+            result = result.replace("#END_GRAPH_CLAUSE\n", "")
             result = result.replace("#END_GRAPH_CLAUSE", "")
         elif len(graph_uris) == 1:
             # Single specific graph
@@ -213,7 +216,7 @@ class VoidParser:
             void_content = {}
 
             for graph_uri in candidate_graphs:
-                print(f"Found graph: {graph_uri}")
+                
                 # Query to check VoID content in this specific graph
                 void_check_query = f"""
                 SELECT 
@@ -827,7 +830,7 @@ class VoidParser:
             for prefix, namespace in self.graph.namespace_manager.namespaces():
                 if prefix and namespace:
                     common_ns[str(namespace)] = str(prefix)
-        
+
         # Fallback common namespace mappings if graph has no prefixes
         if not common_ns:
             common_ns = {
@@ -911,9 +914,7 @@ class VoidParser:
     @staticmethod
     def get_void_queries(
         graph_uris: Optional[Union[str, List[str]]] = None,
-        counts: bool = True,
-        sample_limit: Optional[int] = None,
-        sample_offset: Optional[int] = None,
+        counts: bool = True,        
         offset_limit_steps: Optional[int] = None,
         exclude_graphs: bool = True,
     ) -> Dict[str, str]:
@@ -923,8 +924,7 @@ class VoidParser:
         Args:
             graph_uris: Graph URI(s) to analyze. If None, queries all graphs
             counts: If True, include COUNT aggregations; else faster discovery
-            sample_limit: Optional LIMIT for sampling (speeds up discovery)
-            sample_offset: Optional OFFSET for pagination (starts from offset)
+            
             offset_limit_steps: If provided, use this as both LIMIT and OFFSET step
             exclude_graphs: Whether to exclude system or any specific graphs
 
@@ -943,18 +943,13 @@ class VoidParser:
             base_graph_uri = graph_uris[0]
         else:
             base_graph_uri = "http://example.org/dataset"
-        
+
         # Build limit and offset clause
         limit_offset_clause = ""
-        
+
         # Use offset_limit_steps if provided, otherwise fall back to individual params
         if offset_limit_steps is not None:
             limit_offset_clause += f"LIMIT {offset_limit_steps}"
-        else:
-            if sample_offset is not None:
-                limit_offset_clause += f"OFFSET {sample_offset}\n        "
-            if sample_limit is not None:
-                limit_offset_clause += f"LIMIT {sample_limit}"
 
         if counts:
             # Count-based queries (slower but complete)
@@ -1142,9 +1137,7 @@ WHERE {{
         endpoint_url: str,
         graph_uris: Optional[Union[str, List[str]]] = None,
         output_file: Optional[str] = None,
-        counts: bool = True,
-        sample_limit: Optional[int] = None,
-        sample_offset: Optional[int] = None,
+        counts: bool = True,        
         offset_limit_steps: Optional[int] = None,
         exclude_graphs: bool = True,
     ) -> Graph:
@@ -1156,16 +1149,14 @@ WHERE {{
             graph_uris: Graph URI(s) for the dataset. If None, queries all graphs
             output_file: Optional output file path for TTL
             counts: If True, include COUNT aggregations; else faster discovery
-            sample_limit: Optional LIMIT for sampling (speeds up discovery)
-            sample_offset: Optional OFFSET for pagination (starts from offset)
+            
             exclude_graphs: Whether to exclude Virtuoso system graphs
 
         Returns:
             RDF Graph containing the VoID description
         """
         queries = VoidParser.get_void_queries(
-            graph_uris, counts, sample_limit, sample_offset,
-            offset_limit_steps, exclude_graphs
+            graph_uris, counts, offset_limit_steps, exclude_graphs
         )
 
         sparql = SPARQLWrapper(endpoint_url)
@@ -1183,24 +1174,24 @@ WHERE {{
                 # Use temporary directory as fallback
                 temp_dir = tempfile.gettempdir()
                 os.chdir(temp_dir)
-                print(f"Changed working directory to: {temp_dir}")
+                
         except (FileNotFoundError, OSError, PermissionError):
             # If we can't get cwd or it doesn't exist, use temp directory
             temp_dir = tempfile.gettempdir()
             os.chdir(temp_dir)
-            print(f"Working directory issue resolved, using: {temp_dir}")
+            
 
         def run_construct(query_text: str, name: str, is_optional: bool = False, public_id: str = "http://jmillanacosta.github.io/"):
             public_id = f"{public_id}/{name}/void"
             sparql.setQuery(query_text)
             sparql.setReturnFormat(TURTLE)
-            print(f"Starting query: {name}")
+            
             t0 = time.monotonic()
 
             try:
                 results = sparql.query().convert()
                 dt = time.monotonic() - t0
-                print(f"Finished query: {name} (took {dt:.2f}s)")
+                
 
                 # Parse result - handle bytes properly
                 try:
@@ -1213,7 +1204,9 @@ WHERE {{
 
                         if result_str.strip():
                             merged_graph.parse(
-                                data=result_str, format="turtle", publicID=public_id
+                                data=result_str,
+                                format="turtle",
+                                publicID=public_id
                             )
                         else:
                             print(f"Empty results for {name}")
@@ -1231,9 +1224,9 @@ WHERE {{
                 # Check for timeout conditions
                 timeout_keywords = ["timeout", "timed out"]
                 if any(keyword in str(e).lower() for keyword in timeout_keywords):
-                    print(f"Query {name} timed out - common with complex " "queries")
+                    print(f"Query {name} timed out")
                     if is_optional:
-                        print(f"Skipping optional query: {name}")
+                        
                         return
                 if not is_optional:
                     raise
@@ -1251,7 +1244,7 @@ WHERE {{
             # Save to file if specified
             if output_file:
                 merged_graph.serialize(destination=output_file, format="turtle")
-                print(f"VoID description saved to {output_file}")
+                
 
             return merged_graph
 
@@ -1295,7 +1288,6 @@ WHERE {{
         prefer_existing: bool = True,
         counts: bool = True,
         sample_limit: Optional[int] = None,
-        sample_offset: Optional[int] = None,
         offset_limit_steps: Optional[int] = None,
         exclude_graphs: bool = True,
         graph_uris: Optional[Union[str, List[str]]] = None,
@@ -1310,7 +1302,7 @@ WHERE {{
             exports_path: Path where VoID files should be saved
             prefer_existing: If True, prefer existing VoID over generation
             sample_limit: Optional LIMIT for sampling (speeds up discovery)
-            sample_offset: Optional OFFSET for pagination (starts from offset)
+            
             exclude_graphs: Whether to exclude Virtuoso system graphs
             graph_uris: Graph URI(s) to analyze. If None, queries all graphs
         Returns:
@@ -1360,12 +1352,11 @@ WHERE {{
                         existing_void_graph.serialize(
                             destination=existing_void_path, format="turtle"
                         )
-                        print(f"Existing VoID saved to: {existing_void_path}")
 
                         return existing_parser
 
         # Step 3: Generate new VoID if no suitable existing VoID found
-        print("No suitable existing VoID found, generating new VoID...")
+        
         output_path = os.path.join(exports_path, f"{dataset_name}_generated_void.ttl")
 
         generated_void_graph = cls.generate_void_from_sparql(
@@ -1373,8 +1364,6 @@ WHERE {{
             graph_uris=graph_uris,
             output_file=output_path,
             counts=counts,
-            sample_limit=sample_limit,
-            sample_offset=sample_offset,
             offset_limit_steps=offset_limit_steps,
             exclude_graphs=exclude_graphs
         )
@@ -1389,7 +1378,7 @@ WHERE {{
         self, endpoint_url: str, sample_limit: Optional[int] = None,
         sample_offset: Optional[int] = None, chunk_size: Optional[int] = None,
         offset_limit_steps: Optional[int] = None,
-        delay_between_chunks: float = 1.0
+        delay_between_chunks: float = 20.0
     ) -> Dict:
         """
         Count instances for each class in the dataset.
@@ -1399,7 +1388,7 @@ WHERE {{
             sample_limit: Optional limit for total results (None = all results)
             sample_offset: Optional starting offset for pagination
             chunk_size: Optional size for chunked querying (enables pagination)
-            delay_between_chunks: Seconds to wait between chunk queries (default: 1.0)
+            delay_between_chunks: Seconds to wait between chunk queries (default: 20.0)
 
         Returns:
             Dictionary mapping class URIs to instance counts
@@ -1456,22 +1445,21 @@ WHERE {{
             return instance_counts
 
         except Exception as e:
-            print(f"Failed to count instances: {e}")
+            
             return {}
-    
+
     def _count_instances_chunked(self, sparql, total_limit: Optional[int], start_offset: int, chunk_size: int, delay_between_chunks: float = 1.0) -> Dict:
         """Helper method for chunked instance counting."""
         import time
         
         instance_counts = {}
         current_offset = start_offset or 0
-        total_fetched = 0
-        chunk_number = 0
+        total_classes_fetched = 0
         
         while True:
-            # Calculate how many to fetch in this chunk
+            # Calculate how many classes to fetch in this chunk
             if total_limit is not None:
-                remaining = total_limit - total_fetched
+                remaining = total_limit - total_classes_fetched
                 if remaining <= 0:
                     break
                 current_chunk_size = min(chunk_size, remaining)
@@ -1502,54 +1490,18 @@ WHERE {{
                     break
                 
                 # Process chunk results
+                classes_in_chunk = 0
                 for result in chunk_results:
                     class_uri = result["class"]["value"]
                     count = int(result["count"]["value"])
-                    # Aggregate counts if class already exists
-                    if class_uri in instance_counts:
-                        instance_counts[class_uri] += count
-                    else:
-                        instance_counts[class_uri] = count
+                    instance_counts[class_uri] = count  # Don't aggregate for class counts
+                    classes_in_chunk += 1
                 
-                fetched_in_chunk = len(chunk_results)
-                total_fetched += fetched_in_chunk
-                current_offset += fetched_in_chunk
+                total_classes_fetched += classes_in_chunk
+                current_offset += classes_in_chunk  # Increment by actual classes fetched
                 
                 # If we got fewer results than requested, we've reached the end
-                if fetched_in_chunk < current_chunk_size:
-                    # Make one final query to get any remaining results with no limit
-                    print(f"Final query for remaining results from offset {current_offset}...")
-                    final_query_template = f"""
-                    SELECT ?class (COUNT(DISTINCT ?instance) AS ?count) WHERE {{
-                        #GRAPH_CLAUSE
-                            ?instance a ?class .
-                        #END_GRAPH_CLAUSE
-                    }}
-                    GROUP BY ?class
-                    ORDER BY DESC(?count)
-                    OFFSET {current_offset}
-                    """
-                    
-                    final_query = self._replace_graph_clause_placeholder(final_query_template)
-                    sparql.setQuery(final_query)
-                    
-                    try:
-                        final_results = sparql.query().convert()
-                        final_chunk_results = final_results["results"]["bindings"]
-                        
-                        if final_chunk_results:
-                            for result in final_chunk_results:
-                                class_uri = result["class"]["value"]
-                                count = int(result["count"]["value"])
-                                if class_uri in instance_counts:
-                                    instance_counts[class_uri] += count
-                                else:
-                                    instance_counts[class_uri] = count
-                            
-                            print(f"Final query retrieved {len(final_chunk_results)} additional classes")
-                    except Exception as e:
-                        print(f"Final query failed: {e}")
-                    
+                if classes_in_chunk < current_chunk_size:
                     break
                 
                 # Add delay between chunks to be respectful to the endpoint
@@ -1565,7 +1517,8 @@ WHERE {{
     def get_class_mappings(
         self, endpoint_url: str, sample_limit: Optional[int] = None,
         sample_offset: Optional[int] = None, chunk_size: Optional[int] = None,
-        offset_limit_steps: Optional[int] = None, delay_between_chunks: float = 1.0
+        offset_limit_steps: Optional[int] = None,
+        delay_between_chunks: float = 1.0
     ) -> Dict:
         """
         Get mapping of instances to their classes.
@@ -1636,10 +1589,10 @@ WHERE {{
         except Exception as e:
             print(f"Failed to get class mappings: {e}")
             return {}
-    
+
     def _get_class_mappings_chunked(
         self, sparql, total_limit: Optional[int], start_offset: int,
-        chunk_size: int, delay_between_chunks: float = 1.0
+        chunk_size: int, delay_between_chunks: float = 20.0
     ) -> Dict:
         """Helper method for chunked class mappings retrieval."""
         import time
@@ -1647,7 +1600,6 @@ WHERE {{
         class_mappings = {}
         current_offset = start_offset or 0
         total_fetched = 0
-        
         while True:
             # Calculate how many to fetch in this chunk
             if total_limit is not None:
@@ -1711,6 +1663,7 @@ WHERE {{
                     break
                 
                 # Process chunk results
+                mappings_in_chunk = 0
                 for result in chunk_results:
                     instance_uri = result["instance"]["value"]
                     class_uri = result["class"]["value"]
@@ -1718,15 +1671,17 @@ WHERE {{
                     if instance_uri not in class_mappings:
                         class_mappings[instance_uri] = []
                     class_mappings[instance_uri].append(class_uri)
+                    mappings_in_chunk += 1
                 
                 fetched_in_chunk = len(chunk_results)
                 total_fetched += fetched_in_chunk
                 current_offset += fetched_in_chunk
                 
                 
+                
                 # If we got fewer results than requested, we've reached the end
                 if fetched_in_chunk < current_chunk_size:
-                    # Make one final query to get any remaining results with no limit
+                    # Make one final query to get any remaining results
                     
                     # Check if we need to avoid ORDER BY due to Virtuoso limit
                     if current_offset >= virtuoso_limit:
@@ -1749,7 +1704,9 @@ WHERE {{
                         OFFSET {current_offset}
                         """
                     
-                    final_query = self._replace_graph_clause_placeholder(final_query_template)
+                    final_query = self._replace_graph_clause_placeholder(
+                        final_query_template
+                    )
                     sparql.setQuery(final_query)
                     
                     try:
@@ -1847,22 +1804,36 @@ WHERE {{
         Returns:
             Tuple of (instance_counts, class_mappings, coverage_stats)
         """
-        print("Counting instances per class...")
+        
         instance_counts = self.count_instances_per_class(
             endpoint_url, sample_limit=sample_limit, sample_offset=sample_offset,
             offset_limit_steps=offset_limit_steps
         )
 
-        print("Getting class mappings...")
-        class_mappings = self.get_class_mappings(
-            endpoint_url, sample_limit=sample_limit, sample_offset=sample_offset,
-            offset_limit_steps=offset_limit_steps
-        )
-
-        print("Calculating coverage statistics...")
-        coverage_stats = self.calculate_coverage_statistics(
-            instance_counts, class_mappings
-        )
+        # For chunked queries, skip class mappings as they can be too large
+        if offset_limit_steps is not None:
+            
+            class_mappings = {}
+            # Create simplified coverage stats without detailed mappings
+            coverage_stats = {}
+            for class_uri, count in instance_counts.items():
+                coverage_stats[class_uri] = {
+                    "total_instances": count,
+                    "instances_in_partitions": count,  # Assume full coverage
+                    "partition_occurrences": count,
+                    "occurrence_coverage_percent": 100.0,
+                    "avg_occurrences_per_instance": 1.0,
+                }
+        else:
+            
+            class_mappings = self.get_class_mappings(
+                endpoint_url, sample_limit=sample_limit, sample_offset=sample_offset
+            )
+            
+            
+            coverage_stats = self.calculate_coverage_statistics(
+                instance_counts, class_mappings
+            )
 
         return instance_counts, class_mappings, coverage_stats
 
@@ -1908,7 +1879,7 @@ WHERE {{
 
         if output_file:
             df.to_csv(output_file, index=False)
-            print(f"Coverage analysis exported to: {output_file}")
+            
 
         return df
 
@@ -1926,17 +1897,16 @@ WHERE {{
 
         Args:
             endpoint_url: SPARQL endpoint URL
-            sample_limit: Optional limit for sampling
-            sample_offset: Optional offset for pagination
+            offset_limit_steps: Optional limit/offset combination for paginating.
 
         Returns:
             DataFrame with schema pattern coverage ratios and counts
         """
         from SPARQLWrapper import SPARQLWrapper, JSON
-        
+
         # Get the schema triples first
         schema_df = self.to_schema(filter_void_admin_nodes=True)
-        
+
         if schema_df.empty:
             return pd.DataFrame()
 
@@ -1944,7 +1914,7 @@ WHERE {{
         class_entity_counts = {}
         sparql = SPARQLWrapper(endpoint_url)
         sparql.setReturnFormat(JSON)
-        
+
         for subject_class_uri in schema_df['subject_uri'].unique():
             count_query = f"""
             SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE {{
@@ -1953,15 +1923,15 @@ WHERE {{
                 #END_GRAPH_CLAUSE
             }}
             """
-            
+
             if sample_limit:
                 count_query = count_query.replace(
                     "SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE {",
                     f"SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE {{\n                {{\n                    SELECT DISTINCT ?s WHERE {{"
                 ).replace("}", f"}}\n                    LIMIT {sample_limit}\n                }}\n            }}")
-                
+
             query = self._replace_graph_clause_placeholder(count_query)
-            
+
             try:
                 sparql.setQuery(query)
                 results = sparql.query().convert()
@@ -1974,14 +1944,14 @@ WHERE {{
 
         # Now calculate coverage for each schema pattern
         coverage_results = []
-        
+
         for idx, row in schema_df.iterrows():
             subject_class_uri = row['subject_uri']
             property_uri = row['property_uri']
             object_class_uri = row['object_uri']
-            
+
             total_entities = class_entity_counts.get(subject_class_uri, 0)
-            
+
             if total_entities == 0:
                 coverage_results.append({
                     "subject_class": row['subject_class'],
@@ -1998,7 +1968,7 @@ WHERE {{
                     "shape_pattern": f"{row['subject_class']} -> {row['property']} -> {row['object_class']}"
                 })
                 continue
-            
+
             # Count entities that participate in this pattern
             if object_class_uri in ['Literal', 'Resource']:
                 # For literals, count distinct subjects using this property with literal values
@@ -2040,19 +2010,19 @@ WHERE {{
                 )
 
             query = self._replace_graph_clause_placeholder(pattern_query)
-            
+
             try:
                 sparql.setQuery(query)
                 results = sparql.query().convert()
-                
+
                 participating = 0
                 if results["results"]["bindings"]:
                     participating = int(results["results"]["bindings"][0]["participating"]["value"])
-                
+
                 # Calculate coverage ratio and percentage
                 coverage_ratio = participating / total_entities if total_entities > 0 else 0
                 coverage_percent = coverage_ratio * 100
-                
+
                 coverage_results.append({
                     "subject_class": row['subject_class'],
                     "subject_uri": subject_class_uri,
@@ -2067,7 +2037,7 @@ WHERE {{
                     "coverage_percent": round(coverage_percent, 2),
                     "shape_pattern": f"{row['subject_class']} -> {row['property']} -> {row['object_class']}"
                 })
-                
+
             except Exception as e:
                 coverage_results.append({
                     "subject_class": row['subject_class'],
@@ -2089,7 +2059,7 @@ WHERE {{
         frequencies_df = pd.DataFrame(coverage_results)
         if not frequencies_df.empty:
             frequencies_df = frequencies_df.sort_values('coverage_ratio', ascending=False)
-        
+
         return frequencies_df
 
     def export_schema_shape_frequencies(
@@ -2107,7 +2077,7 @@ WHERE {{
         """
         if frequencies_df.empty:
             return pd.DataFrame()
-        
+
         # Save to file if specified
         if output_file:
             frequencies_df.to_csv(output_file, index=False)
@@ -2135,12 +2105,12 @@ WHERE {{
         instance_counts, class_mappings, coverage_stats = self.analyze_class_partition_usage(
             endpoint_url, sample_limit=sample_limit, sample_offset=sample_offset
         )
-        
+
         # Get schema shape frequencies
         shape_frequencies = self.count_schema_shape_frequencies(
             endpoint_url, sample_limit=sample_limit, sample_offset=sample_offset
         )
-        
+
         # Combine results
         analysis_results = {
             'instance_counts': instance_counts,
@@ -2154,7 +2124,7 @@ WHERE {{
                 'sampling_limit': sample_limit
             }
         }
-        
+
         return analysis_results
 
 
