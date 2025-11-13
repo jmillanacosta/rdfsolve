@@ -1515,8 +1515,6 @@ WHERE {{
                 total_fetched += fetched_in_chunk
                 current_offset += fetched_in_chunk
                 
-                print(f"Fetched chunk: {fetched_in_chunk} classes, total: {total_fetched}")
-                
                 # If we got fewer results than requested, we've reached the end
                 if fetched_in_chunk < current_chunk_size:
                     # Make one final query to get any remaining results with no limit
@@ -1556,7 +1554,6 @@ WHERE {{
                 
                 # Add delay between chunks to be respectful to the endpoint
                 if delay_between_chunks > 0:
-                    print(f"Waiting {delay_between_chunks}s before next chunk...")
                     time.sleep(delay_between_chunks)
                     
             except Exception as e:
@@ -1661,16 +1658,46 @@ WHERE {{
             else:
                 current_chunk_size = chunk_size
             
-            query_template = f"""
-            SELECT ?instance ?class WHERE {{
-                #GRAPH_CLAUSE
-                    ?instance a ?class .
-                #END_GRAPH_CLAUSE
-            }}
-            ORDER BY ?instance ?class
-            OFFSET {current_offset}
-            LIMIT {current_chunk_size}
-            """
+            # Virtuoso limit: OFFSET + LIMIT cannot exceed 10,000 for ORDER BY
+            virtuoso_limit = 10000
+            if current_offset + current_chunk_size > virtuoso_limit:
+                # Either reduce chunk size or remove ORDER BY
+                if current_offset >= virtuoso_limit:
+                    # Can't use ORDER BY anymore, switch to unordered
+                    query_template = f"""
+                    SELECT ?instance ?class WHERE {{
+                        #GRAPH_CLAUSE
+                            ?instance a ?class .
+                        #END_GRAPH_CLAUSE
+                    }}
+                    OFFSET {current_offset}
+                    LIMIT {current_chunk_size}
+                    """
+                else:
+                    # Reduce chunk size to stay within limit
+                    current_chunk_size = virtuoso_limit - current_offset
+                    query_template = f"""
+                    SELECT ?instance ?class WHERE {{
+                        #GRAPH_CLAUSE
+                            ?instance a ?class .
+                        #END_GRAPH_CLAUSE
+                    }}
+                    ORDER BY ?instance ?class
+                    OFFSET {current_offset}
+                    LIMIT {current_chunk_size}
+                    """
+            else:
+                # Normal case - we're within the limit
+                query_template = f"""
+                SELECT ?instance ?class WHERE {{
+                    #GRAPH_CLAUSE
+                        ?instance a ?class .
+                    #END_GRAPH_CLAUSE
+                }}
+                ORDER BY ?instance ?class
+                OFFSET {current_offset}
+                LIMIT {current_chunk_size}
+                """
             
             query = self._replace_graph_clause_placeholder(query_template)
             sparql.setQuery(query)
@@ -1700,16 +1727,27 @@ WHERE {{
                 # If we got fewer results than requested, we've reached the end
                 if fetched_in_chunk < current_chunk_size:
                     # Make one final query to get any remaining results with no limit
-                    print(f"Final query for remaining mappings from offset {current_offset}...")
-                    final_query_template = f"""
-                    SELECT ?instance ?class WHERE {{
-                        #GRAPH_CLAUSE
-                            ?instance a ?class .
-                        #END_GRAPH_CLAUSE
-                    }}
-                    ORDER BY ?instance ?class
-                    OFFSET {current_offset}
-                    """
+                    
+                    # Check if we need to avoid ORDER BY due to Virtuoso limit
+                    if current_offset >= virtuoso_limit:
+                        final_query_template = f"""
+                        SELECT ?instance ?class WHERE {{
+                            #GRAPH_CLAUSE
+                                ?instance a ?class .
+                            #END_GRAPH_CLAUSE
+                        }}
+                        OFFSET {current_offset}
+                        """
+                    else:
+                        final_query_template = f"""
+                        SELECT ?instance ?class WHERE {{
+                            #GRAPH_CLAUSE
+                                ?instance a ?class .
+                            #END_GRAPH_CLAUSE
+                        }}
+                        ORDER BY ?instance ?class
+                        OFFSET {current_offset}
+                        """
                     
                     final_query = self._replace_graph_clause_placeholder(final_query_template)
                     sparql.setQuery(final_query)
@@ -1727,7 +1765,6 @@ WHERE {{
                                     class_mappings[instance_uri] = []
                                 class_mappings[instance_uri].append(class_uri)
                             
-                            print(f"Final query retrieved {len(final_chunk_results)} additional mappings")
                     except Exception as e:
                         print(f"Final query failed: {e}")
                     
@@ -1735,7 +1772,6 @@ WHERE {{
                 
                 # Add delay between chunks to be respectful to the endpoint
                 if delay_between_chunks > 0:
-                    print(f"Waiting {delay_between_chunks}s before next...")
                     time.sleep(delay_between_chunks)
                     
             except Exception as e:
