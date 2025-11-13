@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Schema Analysis Failed - pubcasefinder</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .error { color: #d32f2f; background: #ffebee; padding: 20px; border-radius: 4px; margin: 20px 0; }
+        .info { background: #e3f2fd; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        .code { background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; }
+        h1 { color: #d32f2f; }
+        h2 { color: #1976d2; }
+    </style>
+</head>
+<body>
+    <h1>Schema Analysis Failed</h1>
+    
+    <div class="info">
+        <h2>Dataset Information</h2>
+        <p><strong>Dataset:</strong> pubcasefinder</p>
+        <p><strong>Attempted:</strong> $(date)</p>
+        <p><strong>Workflow:</strong> Matrix-based parallel processing</p>
+    </div>
+    
+    <div class="error">
+        <h2>Possible Causes</h2>
+        <ul>
+            <li><strong>Network timeout:</strong> SPARQL endpoint took too long to respond</li>
+            <li><strong>Endpoint unavailable:</strong> Service temporarily down or unreachable</li>
+            <li><strong>Dataset size:</strong> Too large for automated processing within time limits</li>
+            <li><strong>Query complexity:</strong> Schema extraction queries too complex for this dataset</li>
+            <li><strong>Rate limiting:</strong> Too many concurrent requests to the same endpoint</li>
+        </ul>
+    </div>
+    
+    <div class="info">
+        <h2>Troubleshooting</h2>
+        <p>This failure is expected for some datasets due to external dependencies. You can:</p>
+        <ul>
+            <li>Run the notebook manually with custom timeouts</li>
+            <li>Use sampling parameters for large datasets</li>
+            <li>Check endpoint availability and try again later</li>
+            <li>Contact the endpoint maintainer if consistently failing</li>
+        </ul>
+    </div>
+    
+    <div class="info">
+        <h2>Manual Execution</h2>
+        <p>To run this analysis manually:</p>
+        <div class="code">
+            cd notebooks/schema_extraction<br>
+            python make_notebooks.py --dataset pubcasefinder<br>
+            jupyter nbconvert --execute --to html pubcasefinder_schema.ipynb
+        </div>
+    </div>
+    
+    <p><em>Auto-generated error report by RDFSolve workflow</em></p>
+</body>
+</html>
