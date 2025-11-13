@@ -100,12 +100,11 @@ jobs:
         # Execute and convert with comprehensive error handling
         if jupyter nbconvert \
             --execute \
-            --to html_embed \
+            --to html \
             "$notebook" \
             --output-dir ../../docs/notebooks/schema_extraction \
             --ExecutePreprocessor.kernel_name=python3 \
-            --no-input \
-            --template=classic; then
+            --no-input; then
           echo "SUCCESS=true" >> $GITHUB_OUTPUT
           echo "Successfully converted: $notebook"
         else
