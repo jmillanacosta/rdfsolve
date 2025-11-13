@@ -57,7 +57,7 @@ def analyze(endpoint, graph_uri, dataset_name, void_iri, output_dir,
         parser = solver.extract_schema()
         
         # Generate schema DataFrame
-        schema_df = parser.to_schema(filter_void_nodes=True)
+        schema_df = parser.to_schema(filter_void_admin_nodes=True)
         schema_csv = Path(output_dir) / f"{dataset_name}_schema.csv"
         schema_df.to_csv(schema_csv, index=False)
         
@@ -91,7 +91,7 @@ def parse(void_file, output_dir):
         parser = VoidParser(void_file)
         
         # Generate schema DataFrame
-        schema_df = parser.to_schema(filter_void_nodes=True)
+        schema_df = parser.to_schema(filter_void_admin_nodes=True)
         
         # Extract dataset name from file
         dataset_name = Path(void_file).stem.replace("_void", "")

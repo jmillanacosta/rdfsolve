@@ -30,6 +30,7 @@ classifiers = [
     "Framework :: Sphinx",
     "Natural Language :: English",
     "Programming Language :: Python",
+   "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -49,19 +50,19 @@ keywords = [
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license
 license = { file = "LICENSE" }
 
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 dependencies = [
     # Core RDF processing
-    "rdflib>=7.0.0", # RDF graph processing and parsing
+    "rdflib>=6.0.0", # RDF graph processing and parsing
     "sparqlwrapper>=2.0.0", # SPARQL endpoint communication
     
     # Data processing and analysis
     "pandas>=2.0.0", # DataFrame operations for analysis results
     "numpy", # Numerical operations (pandas dependency)
-    "bioregistry>=0.13.2",
+    "bioregistry",
     
     # Schema modeling
-    "linkml>=1.9.5", # LinkML schema modeling and generation
+    "linkml>=1.9.1",
     
     # Utility libraries
     "more_itertools", # missing from itertools in stdlib
@@ -100,19 +101,21 @@ web = [
 ]
 notebooks = [
     # Additional packages for notebook development and analysis
-    "matplotlib>=3.5.0", # Plotting and visualization
+    "matplotlib>=3.10.7", # Plotting and visualization
     "seaborn>=0.11.0", # Statistical visualization
     "plotly>=5.0.0", # Interactive plots (optional)
-    "networkx>=2.8", # Network analysis for RDF graphs
+    "networkx>=2.8", # Network analysis
     "jupyterlab>=4.0.0", # Full Jupyter Lab environment
     "ipywidgets>=8.0.0", # Interactive widgets for notebooks
+    "narwhals==2.11.0",
+    "plotly==6.4.0"
 ]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
 [project.urls]
-"Bug Tracker" = "https://github.com/Maastricht University/rdfsolve/issues"
-Homepage = "https://github.com/Maastricht University/rdfsolve"
-Repository = "https://github.com/Maastricht University/rdfsolve.git"
+"Bug Tracker" = "https://github.com/jmillanacosta/rdfsolve/issues"
+Homepage = "https://github.com/jmillanacosta/rdfsolve"
+Repository = "https://github.com/jmillanacosta/rdfsolve.git"
 Documentation = "https://rdfsolve.readthedocs.io"
 
 [tool.setuptools]

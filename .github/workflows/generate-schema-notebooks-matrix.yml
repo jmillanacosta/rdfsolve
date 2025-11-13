@@ -34,7 +34,7 @@ jobs:
         cd notebooks/schema_extraction
         
         # Extract dataset names from sources.csv and create proper JSON
-        datasets=$(tail -n +2 ../sources.csv | cut -d',' -f1 | grep -v '^$' | jq -R . | jq -s . | jq -c .)
+        datasets=$(tail -n +2 ../../data/sources.csv | cut -d',' -f1 | grep -v '^$' | jq -R . | jq -s . | jq -c .)
         
         # Create matrix for parallel processing
         echo "datasets=$datasets" >> $GITHUB_OUTPUT
@@ -74,7 +74,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .
+        pip install -e .[notebooks]
         pip install jupyter nbconvert pandas
 
     - name: Generate notebook for ${{ matrix.dataset }}
@@ -95,18 +95,15 @@ jobs:
         echo "Processing: $notebook"
         
         # Set timeout and memory limits
-        export JUPYTER_TIMEOUT=1800  # 30 minutes
+        #export JUPYTER_TIMEOUT=1800  # 30 minutes
         
-        # Execute and convert with comprehensive error handling
-        if timeout 1800 jupyter nbconvert \
+        # Execute and convert to html
+        if jupyter nbconvert \
             --execute \
             --to html \
             "$notebook" \
             --output-dir ../../docs/notebooks/schema_extraction \
-            --ExecutePreprocessor.timeout=1800 \
-            --ExecutePreprocessor.kernel_name=python3 \
-            --no-input \
-            --template=classic; then
+            --ExecutePreprocessor.kernel_name=python3 ; then
           echo "SUCCESS=true" >> $GITHUB_OUTPUT
           echo "Successfully converted: $notebook"
         else
@@ -120,59 +117,18 @@ jobs:
         <html>
         <head>
             <title>Schema Analysis Failed - ${{ matrix.dataset }}</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .error { color: #d32f2f; background: #ffebee; padding: 20px; border-radius: 4px; margin: 20px 0; }
-                .info { background: #e3f2fd; padding: 15px; border-radius: 4px; margin: 20px 0; }
-                .code { background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; }
-                h1 { color: #d32f2f; }
-                h2 { color: #1976d2; }
-            </style>
         </head>
         <body>
             <h1>Schema Analysis Failed</h1>
-            
-            <div class="info">
-                <h2>Dataset Information</h2>
-                <p><strong>Dataset:</strong> ${{ matrix.dataset }}</p>
-                <p><strong>Attempted:</strong> $(date)</p>
-                <p><strong>Workflow:</strong> Matrix-based parallel processing</p>
-            </div>
-            
-            <div class="error">
-                <h2>Possible Causes</h2>
-                <ul>
-                    <li><strong>Network timeout:</strong> SPARQL endpoint took too long to respond</li>
-                    <li><strong>Endpoint unavailable:</strong> Service temporarily down or unreachable</li>
-                    <li><strong>Dataset size:</strong> Too large for automated processing within time limits</li>
-                    <li><strong>Query complexity:</strong> Schema extraction queries too complex for this dataset</li>
-                    <li><strong>Rate limiting:</strong> Too many concurrent requests to the same endpoint</li>
-                </ul>
-            </div>
-            
-            <div class="info">
-                <h2>Troubleshooting</h2>
-                <p>This failure is expected for some datasets due to external dependencies. You can:</p>
-                <ul>
-                    <li>Run the notebook manually with custom timeouts</li>
-                    <li>Use sampling parameters for large datasets</li>
-                    <li>Check endpoint availability and try again later</li>
-                    <li>Contact the endpoint maintainer if consistently failing</li>
-                </ul>
-            </div>
-            
-            <div class="info">
-                <h2>Manual Execution</h2>
-                <p>To run this analysis manually:</p>
-                <div class="code">
-                    cd notebooks/schema_extraction<br>
-                    python make_notebooks.py --dataset ${{ matrix.dataset }}<br>
-                    jupyter nbconvert --execute --to html ${{ matrix.dataset }}_schema.ipynb
-                </div>
-            </div>
-            
-            <p><em>Auto-generated error report by RDFSolve workflow</em></p>
-        </body>
+            <h2>Dataset Information</h2>
+            <p><strong>Dataset:</strong> ${{ matrix.dataset }}</p>
+            <p><strong>Attempted:</strong> <script>document.write(new Date().toUTCString())</script></p>
+            <p><strong>Workflow:</strong> <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Matrix-based parallel processing</a></p>
+            <h2>Manual Execution</h2>
+            <pre>cd notebooks/schema_extraction
+            python make_notebooks.py --dataset ${{ matrix.dataset }}
+            jupyter nbconvert --execute --to html ${{ matrix.dataset }}_schema.ipynb</pre>
+          </body>
         </html>
         EOF
         fi
@@ -288,6 +244,54 @@ jobs:
         total_files=$(ls -1 *_schema.html 2>/dev/null | wc -l)
         success_count=$(grep -L "Schema Analysis Failed" *_schema.html 2>/dev/null | wc -l)
         failed_count=$((total_files - success_count))
+        
+        # Update schema-reports div in existing docs/index.md file
+        cd ../../..
+        current_date=$(date +%d/%m/%Y)
+        
+        # Create index.md if it doesn't exist with basic structure
+        if [ ! -f "docs/index.md" ]; then
+          echo "# RDFSolve" > docs/index.md
+          echo "" >> docs/index.md
+          echo "RDF schema extraction and analysis toolkit." >> docs/index.md
+          echo "" >> docs/index.md
+          echo "## Latest Analysis Results" >> docs/index.md
+          echo "" >> docs/index.md
+          echo '<div class="schema-reports">' >> docs/index.md
+          echo "<!-- This section is automatically updated by the workflow -->" >> docs/index.md
+          echo "</div>" >> docs/index.md
+          echo "" >> docs/index.md
+        fi
+        
+        # Create new content for the div
+        new_content_file=$(mktemp)
+        echo "Last updated: $current_date" > "$new_content_file"
+        echo "" >> "$new_content_file"
+        
+        # Add HTML links to each HTML report
+        cd docs/notebooks/schema_extraction
+        for html_file in *_schema.html; do
+          if [ -f "$html_file" ]; then
+            dataset_name=$(basename "$html_file" .html | sed 's/_schema$//')
+            echo "<div><a href=\"notebooks/schema_extraction/$html_file\">$dataset_name</a> - $current_date</div>" >> "$new_content_file"
+          fi
+        done
+        
+        echo "" >> "$new_content_file"
+        echo "**Total datasets analyzed**: $total_files" >> "$new_content_file"
+        echo "**Successful**: $success_count" >> "$new_content_file"  
+        echo "**Failed**: $failed_count" >> "$new_content_file"
+        echo "" >> "$new_content_file"
+        echo "Generated on: $current_date" >> "$new_content_file"
+        
+        cd ../../..
+        
+        # Replace content between div tags using sed
+        sed -i '/<div class="schema-reports">/,/<\/div>/{//!d;}' docs/index.md
+        sed -i '/<div class="schema-reports">/r '"$new_content_file" docs/index.md
+        
+        # Clean up
+        rm -f "$new_content_file"
         
         # Create comprehensive index.html
         cat > index.html << EOF
@@ -479,7 +483,7 @@ jobs:
         git config --local user.name "GitHub Action Matrix"
         
         # Add all generated files
-        git add notebooks/schema_extraction/*.ipynb docs/notebooks/schema_extraction/ 2>/dev/null || true
+        git add docs/index.md notebooks/schema_extraction/*.ipynb docs/notebooks/schema_extraction/ 2>/dev/null || true
         
         # Check if there are changes to commit
         if git diff --cached --quiet; then
