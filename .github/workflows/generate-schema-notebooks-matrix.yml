@@ -95,15 +95,14 @@ jobs:
         echo "Processing: $notebook"
         
         # Set timeout and memory limits
-        export JUPYTER_TIMEOUT=1800  # 30 minutes
+        #export JUPYTER_TIMEOUT=1800  # 30 minutes
         
         # Execute and convert with comprehensive error handling
-        if timeout 1800 jupyter nbconvert \
+        if jupyter nbconvert \
             --execute \
-            --to html \
+            --to html_embed \
             "$notebook" \
             --output-dir ../../docs/notebooks/schema_extraction \
-            --ExecutePreprocessor.timeout=1800 \
             --ExecutePreprocessor.kernel_name=python3 \
             --no-input \
             --template=classic; then
