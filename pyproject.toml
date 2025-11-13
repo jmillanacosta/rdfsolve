@@ -106,6 +106,8 @@ notebooks = [
     "networkx>=2.8", # Network analysis
     "jupyterlab>=4.0.0", # Full Jupyter Lab environment
     "ipywidgets>=8.0.0", # Interactive widgets for notebooks
+    "narwhals==2.11.0",
+    "plotly==6.4.0"
 ]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls

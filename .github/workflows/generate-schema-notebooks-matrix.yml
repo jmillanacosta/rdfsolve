@@ -312,12 +312,12 @@ jobs:
         echo "Last updated: $current_date" > "$new_content_file"
         echo "" >> "$new_content_file"
         
-        # Add links to each HTML report
+        # Add HTML links to each HTML report
         cd docs/notebooks/schema_extraction
         for html_file in *_schema.html; do
           if [ -f "$html_file" ]; then
             dataset_name=$(basename "$html_file" .html | sed 's/_schema$//')
-            echo "- [$dataset_name](notebooks/schema_extraction/$html_file) - $current_date" >> "$new_content_file"
+            echo "<div><a href=\"notebooks/schema_extraction/$html_file\">$dataset_name</a> - $current_date</div>" >> "$new_content_file"
           fi
         done
         

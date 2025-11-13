@@ -50,11 +50,16 @@ def main():
         for row in reader:
             dataset_name = row['dataset_name'].strip().rstrip('/')
             if dataset_name:
+                # Parse use_graph flag (handle string boolean values)
+                use_graph_val = str(row.get('use_graph', 'False')).strip()
+                use_graph = use_graph_val.lower() in ['true', '1', 'yes']
+                
                 datasets.append({
                     'dataset_name': dataset_name,
-                    'void_iri': row['void_iri'].strip(),
-                    'graph_uri': row['graph_uri'].strip(),
-                    'endpoint_url': row['endpoint_url'].strip()
+                    'void_iri': (row['void_iri'] or '').strip(),
+                    'graph_uri': (row['graph_uri'] or '').strip(),
+                    'endpoint_url': (row['endpoint_url'] or '').strip(),
+                    'use_graph': use_graph
                 })
     
     # Handle --list option
@@ -66,8 +71,8 @@ def main():
     
     # Filter datasets if specific dataset requested
     if args.dataset:
-        filtered_datasets = [d for d in datasets 
-                           if d['dataset_name'] == args.dataset]
+        filtered_datasets = [d for d in datasets
+                             if d['dataset_name'] == args.dataset]
         if not filtered_datasets:
             print(f"Error: Dataset '{args.dataset}' not found in sources.csv")
             print("Available datasets:")
@@ -96,6 +101,7 @@ def main():
         void_iri = dataset_info['void_iri']
         graph_uri = dataset_info['graph_uri']
         endpoint_url = dataset_info['endpoint_url']
+        use_graph = dataset_info['use_graph']
         
         # Output filename
         output_file = script_dir / f"{dataset_name}_schema.ipynb"
@@ -105,6 +111,7 @@ def main():
         print(f"   VoID IRI: {void_iri}")
         print(f"   Graph URI: {graph_uri}")
         print(f"   Endpoint: {endpoint_url}")
+        print(f"   Use Graph: {use_graph}")
         
         # Create notebook content by replacing placeholders
         content = template_content
@@ -114,6 +121,13 @@ def main():
         content = content.replace('{{dataset_name}}', dataset_name)
         content = content.replace('{{void_iri}}', void_iri)
         content = content.replace('{{graph_uri}}', graph_uri)
+        
+        # Conditionally add graph_uri parameter based on use_graph flag
+        if use_graph:
+            graph_param = 'graph_uri=graph_uri,'
+        else:
+            graph_param = ''
+        content = content.replace('{{graph_uri_param}}', graph_param)
         
         # Replace text descriptions
         content = content.replace(

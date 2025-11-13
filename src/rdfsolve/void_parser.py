@@ -1149,13 +1149,6 @@ WHERE {{
         )
 
         sparql = SPARQLWrapper(endpoint_url)
-        # set a more aggressive timeout for fast queries
-        timeout_seconds = 30 if not counts else 60
-        try:
-            sparql.setTimeout(timeout_seconds)
-        except Exception:
-            # some SPARQLWrapper versions may not have setTimeout; ignore
-            pass
 
         merged_graph = Graph()
 
@@ -1283,6 +1276,7 @@ WHERE {{
         counts: bool = True,
         sample_limit: Optional[int] = None,
         exclude_graphs: bool = True,
+        graph_uris: Optional[Union[str, List[str]]] = None,
     ) -> "VoidParser":
         """
         Attempt to create VoidParser by discovering existing VoID,
@@ -1295,13 +1289,14 @@ WHERE {{
             prefer_existing: If True, prefer existing VoID over generation
             sample_limit: Optional LIMIT for sampling (speeds up discovery)
             exclude_graphs: Whether to exclude Virtuoso system graphs
+            graph_uris: Graph URI(s) to analyze. If None, queries all graphs
         Returns:
             VoidParser instance with the best available VoID
         """
         import os
 
         # Step 1: Discover existing VoID graphs
-        temp_parser = cls()
+        temp_parser = cls(graph_uris=graph_uris, exclude_graphs=exclude_graphs)
         discovery_result = temp_parser.discover_void_graphs(endpoint_url)
 
         existing_void_graph = None
@@ -1352,13 +1347,18 @@ WHERE {{
 
         generated_void_graph = cls.generate_void_from_sparql(
             endpoint_url=endpoint_url,
+            graph_uris=graph_uris,
             output_file=output_path,
             counts=counts,
             sample_limit=sample_limit,
             exclude_graphs=exclude_graphs
         )
 
-        return cls(generated_void_graph)
+        return cls(
+            generated_void_graph,
+            graph_uris=graph_uris,
+            exclude_graphs=exclude_graphs
+        )
 
     def count_instances_per_class(
         self, endpoint_url: str, sample_limit: Optional[int] = None
