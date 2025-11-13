@@ -190,6 +190,7 @@ class VoidParser:
                 )
             }
             ORDER BY ?g
+            LIMIT 100
             """
 
             sparql.setQuery(graph_discovery_query)
@@ -912,6 +913,8 @@ class VoidParser:
         graph_uris: Optional[Union[str, List[str]]] = None,
         counts: bool = True,
         sample_limit: Optional[int] = None,
+        sample_offset: Optional[int] = None,
+        offset_limit_steps: Optional[int] = None,
         exclude_graphs: bool = True,
     ) -> Dict[str, str]:
         """
@@ -921,6 +924,8 @@ class VoidParser:
             graph_uris: Graph URI(s) to analyze. If None, queries all graphs
             counts: If True, include COUNT aggregations; else faster discovery
             sample_limit: Optional LIMIT for sampling (speeds up discovery)
+            sample_offset: Optional OFFSET for pagination (starts from offset)
+            offset_limit_steps: If provided, use this as both LIMIT and OFFSET step
             exclude_graphs: Whether to exclude system or any specific graphs
 
         Returns:
@@ -938,7 +943,18 @@ class VoidParser:
             base_graph_uri = graph_uris[0]
         else:
             base_graph_uri = "http://example.org/dataset"
-        limit_clause = f"LIMIT {sample_limit}" if sample_limit else ""
+        
+        # Build limit and offset clause
+        limit_offset_clause = ""
+        
+        # Use offset_limit_steps if provided, otherwise fall back to individual params
+        if offset_limit_steps is not None:
+            limit_offset_clause += f"LIMIT {offset_limit_steps}"
+        else:
+            if sample_offset is not None:
+                limit_offset_clause += f"OFFSET {sample_offset}\n        "
+            if sample_limit is not None:
+                limit_offset_clause += f"LIMIT {sample_limit}"
 
         if counts:
             # Count-based queries (slower but complete)
@@ -957,7 +973,7 @@ WHERE {{
             #END_GRAPH_CLAUSE
         }}
         GROUP BY ?class
-        {limit_clause}
+        {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/class_partition_',
                    MD5(STR(?class)))) AS ?cp)
@@ -1000,7 +1016,7 @@ WHERE {{
             }}
         }}
         GROUP BY ?property ?subject_class ?object_class
-        {limit_clause}
+        {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/property_partition_',
                    MD5(CONCAT(STR(?property), STR(?subject_class))))) AS ?pp)
@@ -1023,7 +1039,7 @@ WHERE {{
             #END_GRAPH_CLAUSE
         }}
         GROUP BY ?datatype
-        {limit_clause}
+        {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/datatype_partition_',
                    MD5(STR(?datatype)))) AS ?dp)
@@ -1042,7 +1058,7 @@ WHERE {{
                 [] a ?class
             #END_GRAPH_CLAUSE
         }}
-        {limit_clause}
+        {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/class_partition_',
                    MD5(STR(?class)))) AS ?cp)
@@ -1083,7 +1099,7 @@ WHERE {{
                 FILTER NOT EXISTS {{ ?object rdf:type ?any_type }}
             }}
         }}
-        {limit_clause}
+        {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/property_partition_',
                    MD5(CONCAT(STR(?property), STR(?subject_class))))) AS ?pp)
@@ -1104,7 +1120,7 @@ WHERE {{
                 BIND(datatype(?o) AS ?datatype)
             #END_GRAPH_CLAUSE
         }}
-        {limit_clause}
+        {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/datatype_partition_',
                    MD5(STR(?datatype)))) AS ?dp)
@@ -1128,6 +1144,8 @@ WHERE {{
         output_file: Optional[str] = None,
         counts: bool = True,
         sample_limit: Optional[int] = None,
+        sample_offset: Optional[int] = None,
+        offset_limit_steps: Optional[int] = None,
         exclude_graphs: bool = True,
     ) -> Graph:
         """
@@ -1139,13 +1157,15 @@ WHERE {{
             output_file: Optional output file path for TTL
             counts: If True, include COUNT aggregations; else faster discovery
             sample_limit: Optional LIMIT for sampling (speeds up discovery)
+            sample_offset: Optional OFFSET for pagination (starts from offset)
             exclude_graphs: Whether to exclude Virtuoso system graphs
 
         Returns:
             RDF Graph containing the VoID description
         """
         queries = VoidParser.get_void_queries(
-            graph_uris, counts, sample_limit, exclude_graphs
+            graph_uris, counts, sample_limit, sample_offset,
+            offset_limit_steps, exclude_graphs
         )
 
         sparql = SPARQLWrapper(endpoint_url)
@@ -1275,6 +1295,8 @@ WHERE {{
         prefer_existing: bool = True,
         counts: bool = True,
         sample_limit: Optional[int] = None,
+        sample_offset: Optional[int] = None,
+        offset_limit_steps: Optional[int] = None,
         exclude_graphs: bool = True,
         graph_uris: Optional[Union[str, List[str]]] = None,
     ) -> "VoidParser":
@@ -1288,6 +1310,7 @@ WHERE {{
             exports_path: Path where VoID files should be saved
             prefer_existing: If True, prefer existing VoID over generation
             sample_limit: Optional LIMIT for sampling (speeds up discovery)
+            sample_offset: Optional OFFSET for pagination (starts from offset)
             exclude_graphs: Whether to exclude Virtuoso system graphs
             graph_uris: Graph URI(s) to analyze. If None, queries all graphs
         Returns:
@@ -1351,6 +1374,8 @@ WHERE {{
             output_file=output_path,
             counts=counts,
             sample_limit=sample_limit,
+            sample_offset=sample_offset,
+            offset_limit_steps=offset_limit_steps,
             exclude_graphs=exclude_graphs
         )
 
@@ -1361,21 +1386,49 @@ WHERE {{
         )
 
     def count_instances_per_class(
-        self, endpoint_url: str, sample_limit: Optional[int] = None
+        self, endpoint_url: str, sample_limit: Optional[int] = None,
+        sample_offset: Optional[int] = None, chunk_size: Optional[int] = None,
+        offset_limit_steps: Optional[int] = None,
+        delay_between_chunks: float = 1.0
     ) -> Dict:
         """
         Count instances for each class in the dataset.
 
         Args:
             endpoint_url: SPARQL endpoint URL
-            sample_limit: Optional limit for sampling
+            sample_limit: Optional limit for total results (None = all results)
+            sample_offset: Optional starting offset for pagination
+            chunk_size: Optional size for chunked querying (enables pagination)
+            delay_between_chunks: Seconds to wait between chunk queries (default: 1.0)
 
         Returns:
             Dictionary mapping class URIs to instance counts
         """
         from SPARQLWrapper import SPARQLWrapper, JSON
 
-        limit_clause = f"LIMIT {sample_limit}" if sample_limit else ""
+        sparql = SPARQLWrapper(endpoint_url)
+        sparql.setReturnFormat(JSON)
+        
+        # If offset_limit_steps is provided, use it for chunked querying
+        if offset_limit_steps is not None:
+            return self._count_instances_chunked(
+                sparql, sample_limit, sample_offset or 0, offset_limit_steps,
+                delay_between_chunks
+            )
+        # If chunk_size is provided, use chunked querying
+        elif chunk_size is not None:
+            return self._count_instances_chunked(
+                sparql, sample_limit, sample_offset, chunk_size,
+                delay_between_chunks
+            )
+        
+        # Otherwise, use single query with limit/offset
+        # Build limit and offset clause
+        limit_offset_clause = ""
+        if sample_offset is not None:
+            limit_offset_clause += f"OFFSET {sample_offset}\n        "
+        if sample_limit is not None:
+            limit_offset_clause += f"LIMIT {sample_limit}"
 
         query_template = f"""
         SELECT ?class (COUNT(DISTINCT ?instance) AS ?count) WHERE {{
@@ -1385,14 +1438,11 @@ WHERE {{
         }}
         GROUP BY ?class
         ORDER BY DESC(?count)
-        {limit_clause}
+        {limit_offset_clause}
         """
 
         query = self._replace_graph_clause_placeholder(query_template)
-
-        sparql = SPARQLWrapper(endpoint_url)
         sparql.setQuery(query)
-        sparql.setReturnFormat(JSON)
 
         try:
             results = sparql.query().convert()
@@ -1408,23 +1458,157 @@ WHERE {{
         except Exception as e:
             print(f"Failed to count instances: {e}")
             return {}
+    
+    def _count_instances_chunked(self, sparql, total_limit: Optional[int], start_offset: int, chunk_size: int, delay_between_chunks: float = 1.0) -> Dict:
+        """Helper method for chunked instance counting."""
+        import time
+        
+        instance_counts = {}
+        current_offset = start_offset or 0
+        total_fetched = 0
+        chunk_number = 0
+        
+        while True:
+            # Calculate how many to fetch in this chunk
+            if total_limit is not None:
+                remaining = total_limit - total_fetched
+                if remaining <= 0:
+                    break
+                current_chunk_size = min(chunk_size, remaining)
+            else:
+                current_chunk_size = chunk_size
+            
+            query_template = f"""
+            SELECT ?class (COUNT(DISTINCT ?instance) AS ?count) WHERE {{
+                #GRAPH_CLAUSE
+                    ?instance a ?class .
+                #END_GRAPH_CLAUSE
+            }}
+            GROUP BY ?class
+            ORDER BY DESC(?count)
+            OFFSET {current_offset}
+            LIMIT {current_chunk_size}
+            """
+            
+            query = self._replace_graph_clause_placeholder(query_template)
+            sparql.setQuery(query)
+            
+            try:
+                results = sparql.query().convert()
+                chunk_results = results["results"]["bindings"]
+                
+                # If no results, we've reached the end
+                if not chunk_results:
+                    break
+                
+                # Process chunk results
+                for result in chunk_results:
+                    class_uri = result["class"]["value"]
+                    count = int(result["count"]["value"])
+                    # Aggregate counts if class already exists
+                    if class_uri in instance_counts:
+                        instance_counts[class_uri] += count
+                    else:
+                        instance_counts[class_uri] = count
+                
+                fetched_in_chunk = len(chunk_results)
+                total_fetched += fetched_in_chunk
+                current_offset += fetched_in_chunk
+                
+                print(f"Fetched chunk: {fetched_in_chunk} classes, total: {total_fetched}")
+                
+                # If we got fewer results than requested, we've reached the end
+                if fetched_in_chunk < current_chunk_size:
+                    # Make one final query to get any remaining results with no limit
+                    print(f"Final query for remaining results from offset {current_offset}...")
+                    final_query_template = f"""
+                    SELECT ?class (COUNT(DISTINCT ?instance) AS ?count) WHERE {{
+                        #GRAPH_CLAUSE
+                            ?instance a ?class .
+                        #END_GRAPH_CLAUSE
+                    }}
+                    GROUP BY ?class
+                    ORDER BY DESC(?count)
+                    OFFSET {current_offset}
+                    """
+                    
+                    final_query = self._replace_graph_clause_placeholder(final_query_template)
+                    sparql.setQuery(final_query)
+                    
+                    try:
+                        final_results = sparql.query().convert()
+                        final_chunk_results = final_results["results"]["bindings"]
+                        
+                        if final_chunk_results:
+                            for result in final_chunk_results:
+                                class_uri = result["class"]["value"]
+                                count = int(result["count"]["value"])
+                                if class_uri in instance_counts:
+                                    instance_counts[class_uri] += count
+                                else:
+                                    instance_counts[class_uri] = count
+                            
+                            print(f"Final query retrieved {len(final_chunk_results)} additional classes")
+                    except Exception as e:
+                        print(f"Final query failed: {e}")
+                    
+                    break
+                
+                # Add delay between chunks to be respectful to the endpoint
+                if delay_between_chunks > 0:
+                    print(f"Waiting {delay_between_chunks}s before next chunk...")
+                    time.sleep(delay_between_chunks)
+                    
+            except Exception as e:
+                print(f"Failed to fetch chunk at offset {current_offset}: {e}")
+                break
+        
+        return instance_counts
 
     def get_class_mappings(
-        self, endpoint_url: str, sample_limit: Optional[int] = None
+        self, endpoint_url: str, sample_limit: Optional[int] = None,
+        sample_offset: Optional[int] = None, chunk_size: Optional[int] = None,
+        offset_limit_steps: Optional[int] = None, delay_between_chunks: float = 1.0
     ) -> Dict:
         """
         Get mapping of instances to their classes.
 
         Args:
             endpoint_url: SPARQL endpoint URL
-            sample_limit: Optional limit for sampling
+            sample_limit: Optional limit for total results (None = all results)
+            sample_offset: Optional starting offset for pagination
+            chunk_size: Optional size for chunked querying (enables pagination)
+            offset_limit_steps: If provided, use as both LIMIT and step size
+            delay_between_chunks: Seconds to wait between chunks (default: 1.0)
 
         Returns:
             Dictionary mapping instance URIs to class URIs
         """
         from SPARQLWrapper import SPARQLWrapper, JSON
 
-        limit_clause = f"LIMIT {sample_limit}" if sample_limit else ""
+        sparql = SPARQLWrapper(endpoint_url)
+        sparql.setReturnFormat(JSON)
+        
+        # If offset_limit_steps is provided, use it for chunked querying
+        if offset_limit_steps is not None:
+            return self._get_class_mappings_chunked(
+                sparql, sample_limit, sample_offset or 0, offset_limit_steps,
+                delay_between_chunks
+            )
+        # If chunk_size is provided, use chunked querying
+        elif chunk_size is not None:
+            return self._get_class_mappings_chunked(
+                sparql, sample_limit, sample_offset, chunk_size,
+                delay_between_chunks
+            )
+
+        # Otherwise, use single query with limit/offset
+        # Build limit and offset clause
+        limit_offset_clause = ""
+        if sample_offset is not None:
+            limit_offset_clause += f"OFFSET {sample_offset}\n        "
+        if sample_limit is not None:
+            limit_offset_clause += f"LIMIT {sample_limit}"
 
         query_template = f"""
         SELECT ?instance ?class WHERE {{
@@ -1432,14 +1616,11 @@ WHERE {{
                 ?instance a ?class .
             #END_GRAPH_CLAUSE
         }}
-        {limit_clause}
+        {limit_offset_clause}
         """
 
         query = self._replace_graph_clause_placeholder(query_template)
-
-        sparql = SPARQLWrapper(endpoint_url)
         sparql.setQuery(query)
-        sparql.setReturnFormat(JSON)
 
         try:
             results = sparql.query().convert()
@@ -1458,6 +1639,110 @@ WHERE {{
         except Exception as e:
             print(f"Failed to get class mappings: {e}")
             return {}
+    
+    def _get_class_mappings_chunked(
+        self, sparql, total_limit: Optional[int], start_offset: int,
+        chunk_size: int, delay_between_chunks: float = 1.0
+    ) -> Dict:
+        """Helper method for chunked class mappings retrieval."""
+        import time
+        
+        class_mappings = {}
+        current_offset = start_offset or 0
+        total_fetched = 0
+        
+        while True:
+            # Calculate how many to fetch in this chunk
+            if total_limit is not None:
+                remaining = total_limit - total_fetched
+                if remaining <= 0:
+                    break
+                current_chunk_size = min(chunk_size, remaining)
+            else:
+                current_chunk_size = chunk_size
+            
+            query_template = f"""
+            SELECT ?instance ?class WHERE {{
+                #GRAPH_CLAUSE
+                    ?instance a ?class .
+                #END_GRAPH_CLAUSE
+            }}
+            ORDER BY ?instance ?class
+            OFFSET {current_offset}
+            LIMIT {current_chunk_size}
+            """
+            
+            query = self._replace_graph_clause_placeholder(query_template)
+            sparql.setQuery(query)
+            
+            try:
+                results = sparql.query().convert()
+                chunk_results = results["results"]["bindings"]
+                
+                # If no results, we've reached the end
+                if not chunk_results:
+                    break
+                
+                # Process chunk results
+                for result in chunk_results:
+                    instance_uri = result["instance"]["value"]
+                    class_uri = result["class"]["value"]
+                    
+                    if instance_uri not in class_mappings:
+                        class_mappings[instance_uri] = []
+                    class_mappings[instance_uri].append(class_uri)
+                
+                fetched_in_chunk = len(chunk_results)
+                total_fetched += fetched_in_chunk
+                current_offset += fetched_in_chunk
+                
+                
+                # If we got fewer results than requested, we've reached the end
+                if fetched_in_chunk < current_chunk_size:
+                    # Make one final query to get any remaining results with no limit
+                    print(f"Final query for remaining mappings from offset {current_offset}...")
+                    final_query_template = f"""
+                    SELECT ?instance ?class WHERE {{
+                        #GRAPH_CLAUSE
+                            ?instance a ?class .
+                        #END_GRAPH_CLAUSE
+                    }}
+                    ORDER BY ?instance ?class
+                    OFFSET {current_offset}
+                    """
+                    
+                    final_query = self._replace_graph_clause_placeholder(final_query_template)
+                    sparql.setQuery(final_query)
+                    
+                    try:
+                        final_results = sparql.query().convert()
+                        final_chunk_results = final_results["results"]["bindings"]
+                        
+                        if final_chunk_results:
+                            for result in final_chunk_results:
+                                instance_uri = result["instance"]["value"]
+                                class_uri = result["class"]["value"]
+                                
+                                if instance_uri not in class_mappings:
+                                    class_mappings[instance_uri] = []
+                                class_mappings[instance_uri].append(class_uri)
+                            
+                            print(f"Final query retrieved {len(final_chunk_results)} additional mappings")
+                    except Exception as e:
+                        print(f"Final query failed: {e}")
+                    
+                    break
+                
+                # Add delay between chunks to be respectful to the endpoint
+                if delay_between_chunks > 0:
+                    print(f"Waiting {delay_between_chunks}s before next...")
+                    time.sleep(delay_between_chunks)
+                    
+            except Exception as e:
+                print(f"Failed to fetch chunk at offset {current_offset}: {e}")
+                break
+        
+        return class_mappings
 
     def calculate_coverage_statistics(
         self, instance_counts: Dict, class_mappings: Dict
@@ -1512,6 +1797,8 @@ WHERE {{
         self,
         endpoint_url: str,
         sample_limit: Optional[int] = None,
+        sample_offset: Optional[int] = None,
+        offset_limit_steps: Optional[int] = None,
     ):
         """
         Complete analysis of class partition usage and coverage.
@@ -1519,18 +1806,21 @@ WHERE {{
         Args:
             endpoint_url: SPARQL endpoint URL
             sample_limit: Optional limit for sampling
+            sample_offset: Optional offset for pagination
 
         Returns:
             Tuple of (instance_counts, class_mappings, coverage_stats)
         """
         print("Counting instances per class...")
         instance_counts = self.count_instances_per_class(
-            endpoint_url, sample_limit=sample_limit
+            endpoint_url, sample_limit=sample_limit, sample_offset=sample_offset,
+            offset_limit_steps=offset_limit_steps
         )
 
         print("Getting class mappings...")
         class_mappings = self.get_class_mappings(
-            endpoint_url, sample_limit=sample_limit
+            endpoint_url, sample_limit=sample_limit, sample_offset=sample_offset,
+            offset_limit_steps=offset_limit_steps
         )
 
         print("Calculating coverage statistics...")
@@ -1587,7 +1877,9 @@ WHERE {{
         return df
 
     def count_schema_shape_frequencies(
-        self, endpoint_url: str, sample_limit: Optional[int] = None
+        self, endpoint_url: str, sample_limit: Optional[int] = None,
+        sample_offset: Optional[int] = None, 
+        offset_limit_steps: Optional[int] = None
     ) -> pd.DataFrame:
         """
         Calculate schema pattern coverage: for each subject class, how many entities
@@ -1599,6 +1891,7 @@ WHERE {{
         Args:
             endpoint_url: SPARQL endpoint URL
             sample_limit: Optional limit for sampling
+            sample_offset: Optional offset for pagination
 
         Returns:
             DataFrame with schema pattern coverage ratios and counts
@@ -1789,6 +2082,7 @@ WHERE {{
         self,
         endpoint_url: str,
         sample_limit: Optional[int] = None,
+        sample_offset: Optional[int] = None,
     ) -> Dict:
         """
         Complete analysis combining class coverage and schema shape frequencies.
@@ -1796,18 +2090,19 @@ WHERE {{
         Args:
             endpoint_url: SPARQL endpoint URL
             sample_limit: Optional limit for sampling
+            sample_offset: Optional offset for pagination
 
         Returns:
             Dictionary containing all analysis results
         """
         # Get class partition coverage
         instance_counts, class_mappings, coverage_stats = self.analyze_class_partition_usage(
-            endpoint_url, sample_limit=sample_limit
+            endpoint_url, sample_limit=sample_limit, sample_offset=sample_offset
         )
         
         # Get schema shape frequencies
         shape_frequencies = self.count_schema_shape_frequencies(
-            endpoint_url, sample_limit=sample_limit
+            endpoint_url, sample_limit=sample_limit, sample_offset=sample_offset
         )
         
         # Combine results
