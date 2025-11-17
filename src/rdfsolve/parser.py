@@ -1271,13 +1271,12 @@ WHERE {{
 
         def run_construct(query_text: str, name: str, is_optional: bool = False, public_id: str = "http://jmillanacosta.github.io/"):  #TODO set as class argument
             public_id = f"{public_id}/{name}/void"
-            sparql.setQuery(query_text)
             sparql.setReturnFormat(TURTLE)
 
             t0 = time.monotonic()
 
             try:
-                results = sparql.query().convert()
+                results = VoidParser._safe_query(sparql, query_text)
                 dt = time.monotonic() - t0
 
                 # Parse result - handle bytes properly
@@ -1452,8 +1451,8 @@ Last query: {query_type}
                 for uri in candidate_uris:
                     try:
                         ask_q = f"ASK {{ GRAPH <{uri}> {{ ?s ?p ?o }} }}"
-                        sparql_checker.setQuery(ask_q)
-                        resp = sparql_checker.query().convert()
+                        # use safe query to retry transient failures
+                        resp = cls._safe_query(sparql_checker, ask_q)
                         exists = False
                         if isinstance(resp, dict):
                             # ASK returns {'boolean': True/False} in JSON
@@ -2037,9 +2036,9 @@ Last query: {query_type}
 
             try:
                 sparql.setQuery(query)
-                results = sparql.query().convert()
+                results = self._safe_query(sparql, query)
                 total = 0
-                if results["results"]["bindings"]:
+                if results and results.get("results", {}).get("bindings"):
                     total = int(results["results"]["bindings"][0]["total"]["value"])
                 class_entity_counts[subject_class_uri] = total
             except Exception:
@@ -2116,10 +2115,10 @@ Last query: {query_type}
 
             try:
                 sparql.setQuery(query)
-                results = sparql.query().convert()
+                results = self._safe_query(sparql, query)
 
                 participating = 0
-                if results["results"]["bindings"]:
+                if results and results.get("results", {}).get("bindings"):
                     participating = int(results["results"]["bindings"][0]["participating"]["value"])
 
                 # Calculate coverage ratio and percentage
