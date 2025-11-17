@@ -7595,7 +7595,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-17 18:45:54 INFO pubchem.cell: Notebook logger initialized. Logs will be written to /home/runner/work/rdfsolve/rdfsolve/notebooks/schema_extraction/../../docs/notebooks/pubchem.cell/pubchem.cell_notebook.log
+<pre>2025-11-17 19:33:52 INFO pubchem.cell: Notebook logger initialized. Logs will be written to /home/runner/work/rdfsolve/rdfsolve/notebooks/schema_extraction/../../docs/notebooks/pubchem.cell/pubchem.cell_notebook.log
 </pre>
 </div>
 </div>
@@ -7693,7 +7693,7 @@ a.anchor-link {
                             <span class="s2">"void"</span><span class="p">,</span>
                             <span class="s2">"service"</span><span class="p">],</span> <span class="c1"># Filter out service description and administrative graphs</span>
     <span class="n">counts</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">1000</span> <span class="c1"># pagination</span>
+    <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span> <span class="c1"># pagination</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -7883,7 +7883,7 @@ a.anchor-link {
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Calculate schema pattern coverage ratios using the enhanced parser</span>
 <span class="n">frequencies_df</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">count_schema_shape_frequencies</span><span class="p">(</span>
     <span class="n">endpoint_url</span><span class="o">=</span><span class="n">endpoint_url</span><span class="p">,</span>
-    <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">frequencies_df</span><span class="p">[[</span><span class="s1">'subject_class'</span><span class="p">,</span> <span class="s1">'property'</span><span class="p">,</span> <span class="s1">'object_class'</span><span class="p">,</span> <span class="s1">'coverage_percent'</span><span class="p">]]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
@@ -7925,10 +7925,24 @@ a.anchor-link {
 </thead>
 <tbody>
 <tr>
-<th>13</th>
+<th>0</th>
 <td>Cell</td>
-<td>rdfs:seeAlso</td>
+<td>rdf:type</td>
 <td>owl:Class</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>1</th>
+<td>sio:010054</td>
+<td>rdf:type</td>
+<td>owl:Class</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>3</th>
+<td>Cell</td>
+<td>cito:isDiscussedBy</td>
+<td>Reference</td>
 <td>0.0</td>
 </tr>
 <tr>
@@ -7936,20 +7950,6 @@ a.anchor-link {
 <td>Cell</td>
 <td>ro:0001000</td>
 <td>sio:001262</td>
-<td>0.0</td>
-</tr>
-<tr>
-<th>9</th>
-<td>sio:010054</td>
-<td>rdfs:seeAlso</td>
-<td>CellLine</td>
-<td>0.0</td>
-</tr>
-<tr>
-<th>6</th>
-<td>Cell</td>
-<td>ro:0001000</td>
-<td>Anatomy</td>
 <td>0.0</td>
 </tr>
 </tbody>
@@ -8239,9 +8239,9 @@ a.anchor-link {
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <div> <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script> <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="757cef0d-02a4-4c80-96fb-4c523d00bd93" style="height:668px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("757cef0d-02a4-4c80-96fb-4c523d00bd93")) {                    Plotly.newPlot(                        "757cef0d-02a4-4c80-96fb-4c523d00bd93",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"y":["\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eReference\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eReference\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ero:0001000\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eAnatomy\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ero:0001000\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003esio:001262\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ero:0001000\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eAnatomy\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ero:0001000\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003esio:001262\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eCellLine\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eCellLine\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003euniprot.core:organism\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eTaxonomy\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003euniprot.core:organism\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003esio:010000\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003euniprot.core:organism\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eTaxonomy\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003euniprot.core:organism\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003esio:010000\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for pubchem.cell","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":668,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "pubchem.cell_schema_coverage", "height": 668, "width": 600, "scale": 1}}                    ).then(function(){
+<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="73dcc477-778e-4862-9325-8e613008d4d4" style="height:668px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("73dcc477-778e-4862-9325-8e613008d4d4")) {                    Plotly.newPlot(                        "73dcc477-778e-4862-9325-8e613008d4d4",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"y":["\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eReference\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eReference\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ero:0001000\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eAnatomy\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ero:0001000\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003esio:001262\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ero:0001000\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eAnatomy\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ero:0001000\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003esio:001262\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eCellLine\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eCellLine\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003euniprot.core:organism\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eTaxonomy\u003c\u002fb\u003e","\u003cb\u003esio:010054\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003euniprot.core:organism\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003esio:010000\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003euniprot.core:organism\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eTaxonomy\u003c\u002fb\u003e","\u003cb\u003eCell\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003euniprot.core:organism\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003esio:010000\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for pubchem.cell","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":668,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "pubchem.cell_schema_coverage", "height": 668, "width": 600, "scale": 1}}                    ).then(function(){
                             
-var gd = document.getElementById('757cef0d-02a4-4c80-96fb-4c523d00bd93');
+var gd = document.getElementById('73dcc477-778e-4862-9325-8e613008d4d4');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
@@ -8592,7 +8592,7 @@ Class010054 ||--|o TopicalDescriptor : "rdfs_seeAlso"
 <span class="n">linkml_meta</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'default_prefix'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">,</span>
      <span class="s1">'default_range'</span><span class="p">:</span> <span class="s1">'string'</span><span class="p">,</span>
      <span class="s1">'description'</span><span class="p">:</span> <span class="s1">'LinkML schema for pubchem.cell'</span><span class="p">,</span>
-     <span class="s1">'generation_date'</span><span class="p">:</span> <span class="s1">'2025-11-17T18:46:22'</span><span class="p">,</span>
+     <span class="s1">'generation_date'</span><span class="p">:</span> <span class="s1">'2025-11-17T19:34:21'</span><span class="p">,</span>
      <span class="s1">'id'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">,</span>
      <span class="s1">'name'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">,</span>
      <span class="s1">'prefixes'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'linkml'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'prefix_prefix'</span><span class="p">:</span> <span class="s1">'linkml'</span><span class="p">,</span>
@@ -8622,114 +8622,12 @@ Class010054 ||--|o TopicalDescriptor : "rdfs_seeAlso"
                               <span class="s1">'uri'</span><span class="p">:</span> <span class="s1">'xsd:anyURI'</span><span class="p">}}}</span> <span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">Class</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Class owl:Class (URI: http://www.w3.org/2002/07/owl#Class)</span>
-<span class="sd">    """</span>
-    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Class'</span><span class="p">,</span>
-         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Class'</span><span class="p">,</span>
-         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
-
-    <span class="k">pass</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">TopicalDescriptor</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Class mesh.vocab:TopicalDescriptor (URI: http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor)</span>
-<span class="sd">    """</span>
-    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:TopicalDescriptor'</span><span class="p">,</span>
-         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/TopicalDescriptor'</span><span class="p">,</span>
-         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
-
-    <span class="k">pass</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">Class001262</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Class sio:001262 (URI: http://semanticscience.org/resource/SIO_001262)</span>
-<span class="sd">    """</span>
-    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Class001262'</span><span class="p">,</span>
-         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Class001262'</span><span class="p">,</span>
-         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
-
-    <span class="k">pass</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">Class010054</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Class sio:010054 (URI: http://semanticscience.org/resource/SIO_010054)</span>
-<span class="sd">    """</span>
-    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Class010054'</span><span class="p">,</span>
-         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Class010054'</span><span class="p">,</span>
-         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
-
-    <span class="n">rdf_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Class</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"""Property rdf:type (URI: http://www.w3.org/1999/02/22-rdf-syntax-ns#type)"""</span><span class="p">,</span> <span class="n">json_schema_extra</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">"linkml_meta"</span><span class="p">:</span> <span class="p">{</span><span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/rdf_type'</span><span class="p">,</span>
-         <span class="s1">'domain_of'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'Cell'</span><span class="p">,</span> <span class="s1">'class_010054'</span><span class="p">],</span>
-         <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:rdf_type'</span><span class="p">}</span> <span class="p">})</span>
-    <span class="n">cito_isDiscussedBy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Reference</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"""Property cito:isDiscussedBy (URI: http://purl.org/spar/cito/isDiscussedBy)"""</span><span class="p">,</span> <span class="n">json_schema_extra</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">"linkml_meta"</span><span class="p">:</span> <span class="p">{</span><span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/cito_isDiscussedBy'</span><span class="p">,</span>
-         <span class="s1">'domain_of'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'class_010054'</span><span class="p">,</span> <span class="s1">'Cell'</span><span class="p">],</span>
-         <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:cito_isDiscussedBy'</span><span class="p">}</span> <span class="p">})</span>
-    <span class="n">ro_0001000</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Anatomy</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"""Property ro:0001000 (URI: http://purl.obolibrary.org/obo/RO_0001000)"""</span><span class="p">,</span> <span class="n">json_schema_extra</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">"linkml_meta"</span><span class="p">:</span> <span class="p">{</span><span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/ro_0001000'</span><span class="p">,</span>
-         <span class="s1">'domain_of'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'class_010054'</span><span class="p">,</span> <span class="s1">'Cell'</span><span class="p">],</span>
-         <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:ro_0001000'</span><span class="p">}</span> <span class="p">})</span>
-    <span class="n">rdfs_seeAlso</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TopicalDescriptor</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"""Property rdfs:seeAlso (URI: http://www.w3.org/2000/01/rdf-schema#seeAlso)"""</span><span class="p">,</span> <span class="n">json_schema_extra</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">"linkml_meta"</span><span class="p">:</span> <span class="p">{</span><span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/rdfs_seeAlso'</span><span class="p">,</span>
-         <span class="s1">'domain_of'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'class_010054'</span><span class="p">,</span> <span class="s1">'Cell'</span><span class="p">],</span>
-         <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:rdfs_seeAlso'</span><span class="p">}</span> <span class="p">})</span>
-    <span class="n">uniprot_core_organism</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Taxonomy</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"""Property uniprot.core:organism (URI: http://purl.uniprot.org/core/organism)"""</span><span class="p">,</span> <span class="n">json_schema_extra</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">"linkml_meta"</span><span class="p">:</span> <span class="p">{</span><span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/uniprot_core_organism'</span><span class="p">,</span>
-         <span class="s1">'domain_of'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'class_010054'</span><span class="p">,</span> <span class="s1">'Cell'</span><span class="p">],</span>
-         <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:uniprot_core_organism'</span><span class="p">}</span> <span class="p">})</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">Anatomy</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Class Anatomy (URI: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy)</span>
-<span class="sd">    """</span>
-    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Anatomy'</span><span class="p">,</span>
-         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Anatomy'</span><span class="p">,</span>
-         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
-
-    <span class="k">pass</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">Taxonomy</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Class Taxonomy (URI: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy)</span>
-<span class="sd">    """</span>
-    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Taxonomy'</span><span class="p">,</span>
-         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Taxonomy'</span><span class="p">,</span>
-         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
-
-    <span class="k">pass</span>
-
-
 <span class="k">class</span><span class="w"> </span><span class="nc">Reference</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Class Reference (URI: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference)</span>
 <span class="sd">    """</span>
     <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Reference'</span><span class="p">,</span>
          <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Reference'</span><span class="p">,</span>
-         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
-
-    <span class="k">pass</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">Class010000</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Class sio:010000 (URI: http://semanticscience.org/resource/SIO_010000)</span>
-<span class="sd">    """</span>
-    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Class010000'</span><span class="p">,</span>
-         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Class010000'</span><span class="p">,</span>
-         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
-
-    <span class="k">pass</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">CellLine</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Class CellLine (URI: http://rdf.ebi.ac.uk/terms/chembl#CellLine)</span>
-<span class="sd">    """</span>
-    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:CellLine'</span><span class="p">,</span>
-         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/CellLine'</span><span class="p">,</span>
          <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
 
     <span class="k">pass</span>
@@ -8760,18 +8658,120 @@ Class010054 ||--|o TopicalDescriptor : "rdfs_seeAlso"
          <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:uniprot_core_organism'</span><span class="p">}</span> <span class="p">})</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">Taxonomy</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Class Taxonomy (URI: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy)</span>
+<span class="sd">    """</span>
+    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Taxonomy'</span><span class="p">,</span>
+         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Taxonomy'</span><span class="p">,</span>
+         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
+
+    <span class="k">pass</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TopicalDescriptor</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Class mesh.vocab:TopicalDescriptor (URI: http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor)</span>
+<span class="sd">    """</span>
+    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:TopicalDescriptor'</span><span class="p">,</span>
+         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/TopicalDescriptor'</span><span class="p">,</span>
+         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
+
+    <span class="k">pass</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Class010000</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Class sio:010000 (URI: http://semanticscience.org/resource/SIO_010000)</span>
+<span class="sd">    """</span>
+    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Class010000'</span><span class="p">,</span>
+         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Class010000'</span><span class="p">,</span>
+         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
+
+    <span class="k">pass</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Anatomy</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Class Anatomy (URI: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy)</span>
+<span class="sd">    """</span>
+    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Anatomy'</span><span class="p">,</span>
+         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Anatomy'</span><span class="p">,</span>
+         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
+
+    <span class="k">pass</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Class001262</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Class sio:001262 (URI: http://semanticscience.org/resource/SIO_001262)</span>
+<span class="sd">    """</span>
+    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Class001262'</span><span class="p">,</span>
+         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Class001262'</span><span class="p">,</span>
+         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
+
+    <span class="k">pass</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CellLine</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Class CellLine (URI: http://rdf.ebi.ac.uk/terms/chembl#CellLine)</span>
+<span class="sd">    """</span>
+    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:CellLine'</span><span class="p">,</span>
+         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/CellLine'</span><span class="p">,</span>
+         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
+
+    <span class="k">pass</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Class010054</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Class sio:010054 (URI: http://semanticscience.org/resource/SIO_010054)</span>
+<span class="sd">    """</span>
+    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Class010054'</span><span class="p">,</span>
+         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Class010054'</span><span class="p">,</span>
+         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
+
+    <span class="n">rdf_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Class</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"""Property rdf:type (URI: http://www.w3.org/1999/02/22-rdf-syntax-ns#type)"""</span><span class="p">,</span> <span class="n">json_schema_extra</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">"linkml_meta"</span><span class="p">:</span> <span class="p">{</span><span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/rdf_type'</span><span class="p">,</span>
+         <span class="s1">'domain_of'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'Cell'</span><span class="p">,</span> <span class="s1">'class_010054'</span><span class="p">],</span>
+         <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:rdf_type'</span><span class="p">}</span> <span class="p">})</span>
+    <span class="n">cito_isDiscussedBy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Reference</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"""Property cito:isDiscussedBy (URI: http://purl.org/spar/cito/isDiscussedBy)"""</span><span class="p">,</span> <span class="n">json_schema_extra</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">"linkml_meta"</span><span class="p">:</span> <span class="p">{</span><span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/cito_isDiscussedBy'</span><span class="p">,</span>
+         <span class="s1">'domain_of'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'class_010054'</span><span class="p">,</span> <span class="s1">'Cell'</span><span class="p">],</span>
+         <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:cito_isDiscussedBy'</span><span class="p">}</span> <span class="p">})</span>
+    <span class="n">ro_0001000</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Anatomy</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"""Property ro:0001000 (URI: http://purl.obolibrary.org/obo/RO_0001000)"""</span><span class="p">,</span> <span class="n">json_schema_extra</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">"linkml_meta"</span><span class="p">:</span> <span class="p">{</span><span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/ro_0001000'</span><span class="p">,</span>
+         <span class="s1">'domain_of'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'class_010054'</span><span class="p">,</span> <span class="s1">'Cell'</span><span class="p">],</span>
+         <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:ro_0001000'</span><span class="p">}</span> <span class="p">})</span>
+    <span class="n">rdfs_seeAlso</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TopicalDescriptor</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"""Property rdfs:seeAlso (URI: http://www.w3.org/2000/01/rdf-schema#seeAlso)"""</span><span class="p">,</span> <span class="n">json_schema_extra</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">"linkml_meta"</span><span class="p">:</span> <span class="p">{</span><span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/rdfs_seeAlso'</span><span class="p">,</span>
+         <span class="s1">'domain_of'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'class_010054'</span><span class="p">,</span> <span class="s1">'Cell'</span><span class="p">],</span>
+         <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:rdfs_seeAlso'</span><span class="p">}</span> <span class="p">})</span>
+    <span class="n">uniprot_core_organism</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Taxonomy</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"""Property uniprot.core:organism (URI: http://purl.uniprot.org/core/organism)"""</span><span class="p">,</span> <span class="n">json_schema_extra</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">"linkml_meta"</span><span class="p">:</span> <span class="p">{</span><span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/uniprot_core_organism'</span><span class="p">,</span>
+         <span class="s1">'domain_of'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'class_010054'</span><span class="p">,</span> <span class="s1">'Cell'</span><span class="p">],</span>
+         <span class="s1">'slot_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:uniprot_core_organism'</span><span class="p">}</span> <span class="p">})</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Class</span><span class="p">(</span><span class="n">ConfiguredBaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Class owl:Class (URI: http://www.w3.org/2002/07/owl#Class)</span>
+<span class="sd">    """</span>
+    <span class="n">linkml_meta</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">LinkMLMeta</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinkMLMeta</span><span class="p">({</span><span class="s1">'class_uri'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema:Class'</span><span class="p">,</span>
+         <span class="s1">'definition_uri'</span><span class="p">:</span> <span class="s1">'https://w3id.org/pubchem.cell_schema/Class'</span><span class="p">,</span>
+         <span class="s1">'from_schema'</span><span class="p">:</span> <span class="s1">'pubchem.cell_schema'</span><span class="p">})</span>
+
+    <span class="k">pass</span>
+
+
 <span class="c1"># Model rebuild</span>
 <span class="c1"># see https://pydantic-docs.helpmanual.io/usage/models/#rebuilding-a-model</span>
-<span class="n">Class</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
-<span class="n">TopicalDescriptor</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
-<span class="n">Class001262</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
-<span class="n">Class010054</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
-<span class="n">Anatomy</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
-<span class="n">Taxonomy</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
 <span class="n">Reference</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
-<span class="n">Class010000</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
-<span class="n">CellLine</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
 <span class="n">Cell</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
+<span class="n">Taxonomy</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
+<span class="n">TopicalDescriptor</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
+<span class="n">Class010000</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
+<span class="n">Anatomy</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
+<span class="n">Class001262</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
+<span class="n">CellLine</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
+<span class="n">Class010054</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
+<span class="n">Class</span><span class="o">.</span><span class="n">model_rebuild</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
