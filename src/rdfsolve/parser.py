@@ -452,10 +452,9 @@ class VoidParser:
                 }}
                 """
 
-                logger.debug(f"⏱️ Executing VoID CONSTRUCT query...")
-                sparql.setQuery(void_query)
-                results = sparql.query().convert()
-                logger.debug(f"VoID CONSTRUCT query completed")
+                logger.debug("⏱️ Executing VoID CONSTRUCT query...")
+                results = self._safe_query(sparql, void_query)
+                logger.debug("VoID CONSTRUCT query completed")
 
                 if results and isinstance(results, bytes):
                     result_str = results.decode("utf-8")
@@ -1652,7 +1651,7 @@ Last query: {query_type}
         sparql.setQuery(query)
 
         try:
-            results = sparql.query().convert()
+            results = self._safe_query(sparql, query)
             
             if streaming:
                 # Return generator for single query case
@@ -1725,10 +1724,10 @@ Last query: {query_type}
             """
 
             query = self._replace_graph_clause_placeholder(query_template)
-            sparql.setQuery(query)
+            query = self._replace_graph_clause_placeholder(query_template)
 
             try:
-                results = sparql.query().convert()
+                results = self._safe_query(sparql, query)
                 chunk_results = results["results"]["bindings"]
 
                 # If no results, we've reached the end
@@ -1796,11 +1795,12 @@ Last query: {query_type}
             )
             
             try:
-                logger.debug(f"Executing chunked query: offset={current_offset}, "
-                           f"limit={current_chunk_size}")
-                sparql.setQuery(query)
-                results = sparql.query().convert()
-                
+                logger.debug("Executing chunked query: offset=%d, limit=%d",
+                             current_offset, current_chunk_size)
+                # Use safe query with retries and backoff to be robust to transient
+                # network/server errors (RemoteDisconnected etc.)
+                results = self._safe_query(sparql, query)
+
                 # Extract bindings
                 bindings = results.get("results", {}).get("bindings", [])
                 
@@ -1847,6 +1847,47 @@ Last query: {query_type}
                     logger.debug("🔌 Network/connection issue with SPARQL endpoint")
                     
                 break
+
+    @staticmethod
+    def _safe_query(
+        sparql,
+        query: str,
+        max_retries: int = 4,
+        initial_backoff: float = 1.0,
+        max_backoff: float = 30.0,
+    ):
+        """
+        Execute a SPARQL query with retries and exponential backoff.
+
+        Transient failures (connection resets, RemoteDisconnected,
+        temporary endpoint failures). The function will raise the last
+        exception if all retries fail.
+        """
+        import random
+        import time
+
+        attempt = 0
+        while True:
+            attempt += 1
+            try:
+                sparql.setQuery(query)
+                # rely on underlying transport defaults; do not set a client
+                # timeout here to respect the user's requirement
+                results = sparql.query().convert()
+                return results
+            except Exception as e:
+                err_text = str(e)
+                logger.warning("Query attempt %d failed: %s", attempt, err_text)
+                logger.debug("Query (first 500 chars): %s...", query[:500])
+                if attempt >= max_retries:
+                    logger.error("Query failed after %d attempts", attempt)
+                    raise
+                # exponential backoff with jitter
+                backoff = min(initial_backoff * (2 ** (attempt - 1)), max_backoff)
+                jitter = random.uniform(0, backoff * 0.1)
+                sleep_time = backoff + jitter
+                logger.info("Retrying after %.1fs (attempt %d/%d)", sleep_time, attempt + 1, max_retries)
+                time.sleep(sleep_time)
 
     def analyze_class_partition_usage(
         self,
