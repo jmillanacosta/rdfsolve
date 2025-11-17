@@ -30,6 +30,7 @@ classifiers = [
     "Framework :: Sphinx",
     "Natural Language :: English",
     "Programming Language :: Python",
+   "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -49,19 +50,19 @@ keywords = [
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license
 license = { file = "LICENSE" }
 
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 dependencies = [
     # Core RDF processing
-    "rdflib>=7.0.0", # RDF graph processing and parsing
+    "rdflib>=6.0.0", # RDF graph processing and parsing
     "sparqlwrapper>=2.0.0", # SPARQL endpoint communication
     
     # Data processing and analysis
     "pandas>=2.0.0", # DataFrame operations for analysis results
     "numpy", # Numerical operations (pandas dependency)
-    "bioregistry>=0.13.2",
+    "bioregistry",
     
     # Schema modeling
-    "linkml>=1.9.5", # LinkML schema modeling and generation
+    "linkml>=1.9.1",
     
     # Utility libraries
     "more_itertools", # missing from itertools in stdlib

@@ -9,12 +9,10 @@ from .rdfsolve import RDFSolver
 from .void_parser import (
     VoidParser,
     parse_void_file,
-    generate_void_from_endpoint,
 )
 
 __all__ = [
     "RDFSolver",
     "VoidParser",
     "parse_void_file",
-    "generate_void_from_endpoint",
 ]

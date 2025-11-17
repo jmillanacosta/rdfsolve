@@ -97,13 +97,15 @@ jobs:
         # Set timeout and memory limits
         #export JUPYTER_TIMEOUT=1800  # 30 minutes
         
-        # Execute and convert with comprehensive error handling
+        # Execute and convert to html
         if jupyter nbconvert \
             --execute \
             --to html \
             "$notebook" \
             --output-dir ../../docs/notebooks/schema_extraction \
             --ExecutePreprocessor.kernel_name=python3 \
+            --ExecutePreprocessor.timeout=1800 \
+            --TemplateExporter.exclude_input=False; then
             --no-input; then
           echo "SUCCESS=true" >> $GITHUB_OUTPUT
           echo "Successfully converted: $notebook"
