@@ -103,10 +103,7 @@ jobs:
             --to html \
             "$notebook" \
             --output-dir ../../docs/notebooks/schema_extraction \
-            --ExecutePreprocessor.kernel_name=python3 \
-            --ExecutePreprocessor.timeout=1800 \
-            --TemplateExporter.exclude_input=False; then
-            --no-input; then
+            --ExecutePreprocessor.kernel_name=python3 ; then
           echo "SUCCESS=true" >> $GITHUB_OUTPUT
           echo "Successfully converted: $notebook"
         else
