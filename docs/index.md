@@ -3,8 +3,92 @@
 ## Latest Analysis Results
 
 <div class="schema-reports">
-Last updated: 17/11/2025
+Last updated: 18/11/2025
 
+<div><a href="notebooks/schema_extraction/affymetrix_schema.html">affymetrix</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/aopwikirdf_schema.html">aopwikirdf</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/apo_schema.html">apo</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/bgee_schema.html">bgee</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/chebi_schema.html">chebi</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/chembl_schema.html">chembl</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/clinicaltrials_schema.html">clinicaltrials</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/ctd_schema.html">ctd</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/drugbank.drugs_schema.html">drugbank.drugs</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/drugbank_schema.html">drugbank</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/eco_schema.html">eco</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/goa_schema.html">goa</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/hgnc_schema.html">hgnc</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/homologene_schema.html">homologene</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/hp_schema.html">hp</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/idsm.void_schema.html">idsm.void</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/interpro_schema.html">interpro</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/iocb.ontology_schema.html">iocb.ontology</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/irefindex_schema.html">irefindex</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/isdb_schema.html">isdb</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/jpost_schema.html">jpost</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/kegg_schema.html">kegg</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/lsr_schema.html">lsr</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/medgen_schema.html">medgen</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/mesh.heading_schema.html">mesh.heading</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/mesh_schema.html">mesh</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/mgi_schema.html">mgi</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/mona_schema.html">mona</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/nanosafetyrdf_schema.html">nanosafetyrdf</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/ncbigene_schema.html">ncbigene</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/ndc_schema.html">ndc</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/omim_schema.html">omim</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pdb_schema.html">pdb</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pharmgkb_schema.html">pharmgkb</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubcasefinder_schema.html">pubcasefinder</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.anatomy_schema.html">pubchem.anatomy</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.author_schema.html">pubchem.author</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.bioassay_schema.html">pubchem.bioassay</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.book_schema.html">pubchem.book</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.cell_schema.html">pubchem.cell</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.compound_schema.html">pubchem.compound</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.concept_schema.html">pubchem.concept</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.conserveddomain_schema.html">pubchem.conserveddomain</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.cooccurrence_schema.html">pubchem.cooccurrence</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.descriptor.compound_schema.html">pubchem.descriptor.compound</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.descriptor.substance_schema.html">pubchem.descriptor.substance</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.disease_schema.html">pubchem.disease</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.endpoint_schema.html">pubchem.endpoint</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.gene_schema.html">pubchem.gene</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.grant_schema.html">pubchem.grant</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.inchikey_schema.html">pubchem.inchikey</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.journal_schema.html">pubchem.journal</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.measuregroup_schema.html">pubchem.measuregroup</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.organization_schema.html">pubchem.organization</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.patent_schema.html">pubchem.patent</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.pathway_schema.html">pubchem.pathway</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.protein_schema.html">pubchem.protein</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.reference_schema.html">pubchem.reference</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.source_schema.html">pubchem.source</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.substance_schema.html">pubchem.substance</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.synonym_schema.html">pubchem.synonym</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/pubchem.taxonomy_schema.html">pubchem.taxonomy</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/rhea_schema.html">rhea</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/sgd_schema.html">sgd</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/sider_schema.html">sider</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/taxonomy_schema.html">taxonomy</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/uniprot.chebi_schema.html">uniprot.chebi</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/uniprot.citationmapping_schema.html">uniprot.citationmapping</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/uniprot.citations_schema.html">uniprot.citations</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/uniprot.core_schema.html">uniprot.core</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/uniprot.database_schema.html">uniprot.database</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/uniprot.diseases_schema.html">uniprot.diseases</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/uniprot.enzymes_schema.html">uniprot.enzymes</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/uniprot.go_schema.html">uniprot.go</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/uniprot_schema.html">uniprot</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/wikidata.idsm.entity_schema.html">wikidata.idsm.entity</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/wikipathways_schema.html">wikipathways</a> - 18/11/2025</div>
+<div><a href="notebooks/schema_extraction/wormbase_schema.html">wormbase</a> - 18/11/2025</div>
+
+**Total datasets analyzed**: 78
+**Successful**: 42
+**Failed**: 36
+
+Generated on: 18/11/2025
 <div><a href="notebooks/schema_extraction/affymetrix_schema.html">affymetrix</a> - 17/11/2025</div>
 <div><a href="notebooks/schema_extraction/aopwikirdf_schema.html">aopwikirdf</a> - 17/11/2025</div>
 <div><a href="notebooks/schema_extraction/apo_schema.html">apo</a> - 17/11/2025</div>
