@@ -4,7 +4,10 @@ Run with ``python -m rdfsolve.version``
 """
 
 import os
+import logging
 from subprocess import CalledProcessError, check_output
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "VERSION",
@@ -36,4 +39,4 @@ def get_version(with_git_hash: bool = False) -> str:
 
 
 if __name__ == "__main__":
-    print(get_version(with_git_hash=True))  # noqa:T201
+    logger.info(get_version(with_git_hash=True))  # noqa:T201

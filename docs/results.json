@@ -1,0 +1,62 @@
+{
+  "lastUpdated": "2025-11-20T13:45:00Z",
+  "stats": {
+    "totalDatasets": 3,
+    "successfulDatasets": 2,
+    "failedDatasets": 1,
+    "totalDataFiles": 18
+  },
+  "schemaResults": [
+    {
+      "name": "aopwikirdf",
+      "status": "success",
+      "reportSize": "2.1M",
+      "reportUrl": "notebooks/01_schema_extraction/aopwikirdf_schema.html",
+      "generated": "2025-11-20T13:30:00Z",
+      "dataFiles": {
+        "jsonld": "../data/aopwikirdf/aopwikirdf_schema.jsonld",
+        "linkml": "../data/aopwikirdf/aopwikirdf_linkml_schema.yaml",
+        "coverage": "../data/aopwikirdf/aopwikirdf_pattern_coverage.csv",
+        "void": "../data/aopwikirdf/aopwikirdf_generated_void.ttl",
+        "instances": "../data/aopwikirdf/aopwikirdf_instances.parquet",
+        "nquads": "../data/aopwikirdf/aopwikirdf_schema.nq"
+      }
+    },
+    {
+      "name": "bgee",
+      "status": "success", 
+      "reportSize": "1.8M",
+      "reportUrl": "notebooks/01_schema_extraction/bgee_schema.html",
+      "generated": "2025-11-20T13:35:00Z",
+      "dataFiles": {
+        "jsonld": "../data/bgee/bgee_schema.jsonld",
+        "linkml": "../data/bgee/bgee_linkml_schema.yaml",
+        "coverage": "../data/bgee/bgee_pattern_coverage.csv"
+      }
+    },
+    {
+      "name": "example_failed",
+      "status": "error",
+      "reportSize": "25K",
+      "reportUrl": "notebooks/01_schema_extraction/example_failed_schema.html", 
+      "generated": "2025-11-20T13:40:00Z",
+      "dataFiles": {}
+    }
+  ],
+  "pydanticResults": [
+    {
+      "name": "aopwikirdf",
+      "status": "success",
+      "reportSize": "890K",
+      "reportUrl": "notebooks/02_pydantic_models/aopwikirdf_pydantic.html",
+      "generated": "2025-11-20T13:42:00Z"
+    },
+    {
+      "name": "bgee",
+      "status": "error",
+      "reportSize": "15K", 
+      "reportUrl": "notebooks/02_pydantic_models/bgee_pydantic.html",
+      "generated": "2025-11-20T13:43:00Z"
+    }
+  ]
+}
