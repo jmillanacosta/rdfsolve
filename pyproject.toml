@@ -59,11 +59,11 @@ dependencies = [
     # Data processing and analysis
     "pandas>=2.0.0", # DataFrame operations for analysis results
     "numpy", # Numerical operations (pandas dependency)
-    "bioregistry",
-    
+    #"bioregistry",
+    "bioregistry @ git+https://github.com/biopragmatics/bioregistry@main", #Use latest, TODO replace with official release when available
     # Schema modeling
     "linkml>=1.9.1",
-    
+    "pyld",
     # Utility libraries
     "more_itertools", # missing from itertools in stdlib
     "tqdm", # progress bars

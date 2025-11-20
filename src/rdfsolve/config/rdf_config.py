@@ -9,6 +9,7 @@ schema graphs. Handling blank nodes, URI resolution, and model processing.
 import os
 import re
 import yaml
+import logging
 from typing import Dict, List, Any, Optional
 from ..utils import resolve_curie, normalize_uri, clean_predicate, is_blank_node
 
@@ -90,7 +91,8 @@ class RDFConfigParser:
             model_data = self._postprocess_blank_nodes(model_data)
 
         except yaml.YAMLError as e:
-            print(f"YAML Error loading {model_path}: {e}")
+            logger = logging.getLogger(__name__)
+            logger.error("YAML Error loading %s: %s", model_path, e)
             return []
 
         return model_data if isinstance(model_data, list) else [model_data]
@@ -710,9 +712,10 @@ def process_multiple_sources(
     combined_schema = {}
     source_schemas = {}
     
+    logger = logging.getLogger(__name__)
     for source in config_dirs:
         if verbose:
-            print(f"Processing {source}...")
+            logger.info("Processing %s...", source)
             
         # Method 1: Clean and normalize
         normalized = clean_and_normalize_schema(
@@ -728,8 +731,8 @@ def process_multiple_sources(
         
         if schema:
             if verbose:
-                print(f"  Found {len(schema)} subject classes")
-                print(f"  Generated {parser.blank_node_counter} blank nodes")
+                logger.info("  Found %s subject classes", len(schema))
+                logger.info("  Generated %s blank nodes", parser.blank_node_counter)
             source_schemas[source] = schema
             
             # Merge into combined schema
@@ -745,7 +748,7 @@ def process_multiple_sources(
                         if obj not in combined_schema[subject][prop]:
                             combined_schema[subject][prop].append(obj)
         elif verbose:
-            print(f"  No schema found")
+            logger.info("  No schema found")
     
     # Convert normalized schemas to target format
     final_clean_schema = convert_to_target_format(all_normalized)
@@ -798,34 +801,35 @@ def process_multiple_sources(
             )
         
         if verbose:
-            print(f"\nResults saved to:")
-            print(f"  - {output_file} (with metadata)")
-            print(f"  - {output_file_entries_only} (entries only)")
-            print(f"  - {cleaned_output_file} (cleaned normalized)")
+            logger.info("\nResults saved to:")
+            logger.info("  - %s (with metadata)", output_file)
+            logger.info("  - %s (entries only)", output_file_entries_only)
+            logger.info("  - %s (cleaned normalized)", cleaned_output_file)
     
     return schema_data
 
 
 def display_schema_sample(schema_data: Dict[str, Any], max_items: int = 3):
     """Display a sample of the schema graph structure."""
-    print(f"\n{'='*60}")
-    print(f"Summary:")
-    print(f"  Total classes: {schema_data['summary']['total_classes']}")
-    print(f"  Sources processed: {schema_data['summary']['sources_processed']}")
-    
-    print(f"\n{'='*60}")
-    print("Sample schema graph structure:")
-    print(f"{'='*60}\n")
-    
+    logger = logging.getLogger(__name__)
+    logger.info("\n%s", '=' * 60)
+    logger.info("Summary:")
+    logger.info("  Total classes: %s", schema_data['summary']['total_classes'])
+    logger.info("  Sources processed: %s", schema_data['summary']['sources_processed'])
+
+    logger.info("\n%s", '=' * 60)
+    logger.info("Sample schema graph structure:")
+    logger.info("%s\n", '=' * 60)
+
     count = 0
     combined_schema = schema_data.get("combined", {})
     for class_uri, properties in list(combined_schema.items())[:max_items]:
-        print(f"Class: {class_uri}")
+        logger.info("Class: %s", class_uri)
         for prop_uri, objects in list(properties.items())[:max_items]:
-            print(f"  Property: {prop_uri}")
+            logger.info("  Property: %s", prop_uri)
             for obj in objects[:max_items]:
-                print(f"    → {obj}")
-        print()
+                logger.info("    → %s", obj)
+        logger.info("")
         count += 1
         if count >= max_items:
             break

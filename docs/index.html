@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RDFSolve - Schema Analysis Results</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>RDFSolve</h1>
+            <p>RDF schema extraction and analysis toolkit</p>
+            <div id="last-updated" class="last-updated">Loading...</div>
+        </header>
+
+        <section class="stats" id="stats-section">
+            <div class="stat-card">
+                <div class="stat-number total-number" id="total-datasets">-</div>
+                <div>Total Datasets</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number success-number" id="successful-datasets">-</div>
+                <div>Successful</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number error-number" id="failed-datasets">-</div>
+                <div>Failed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number data-number" id="total-data-files">-</div>
+                <div>Data Files</div>
+            </div>
+        </section>
+
+        <section class="results-section">
+            <h2 class="section-title">Schema Analysis Results</h2>
+            <div id="datasets-grid" class="dataset-grid">
+                <!-- Datasets will be populated here by JavaScript -->
+            </div>
+        </section>
+
+        <section class="pydantic-section">
+            <h2 class="section-title">Pydantic Model Results</h2>
+            <div id="pydantic-grid" class="dataset-grid">
+                <!-- Pydantic results will be populated here by JavaScript -->
+            </div>
+        </section>
+
+        <footer class="footer">
+            <h3>RDFSolve</h3>
+            <p>Automated RDF schema extraction and analysis toolkit</p>
+            <p><strong>Repository:</strong> <a href="https://github.com/jmillanacosta/rdfsolve">github.com/jmillanacosta/rdfsolve</a></p>
+            <p><em>Matrix processing enables parallel analysis of multiple datasets</em></p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
