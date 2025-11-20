@@ -7517,7 +7517,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="apo-Schema-Extraction">apo Schema Extraction<a class="anchor-link" href="#apo-Schema-Extraction">¶</a></h1><p>This notebook demonstrates RDF schema extraction from the apo SPARQL endpoint using a unified JSON-LD first approach. It discovers VoID (Vocabulary of Interlinked Datasets) descriptions and generates standards-compliant JSON-LD as the source for all downstream outputs including frequency analysis and LinkML schemas.</p>
+<h1 id="apo-Schema-Extraction">apo Schema Extraction<a class="anchor-link" href="#apo-Schema-Extraction">¶</a></h1><p>This notebook demonstrates RDF schema extraction from the apo SPARQL endpoin. It discovers VoID (Vocabulary of Interlinked Datasets) descriptions and generates  JSON-LD as the source for all downstream outputs including frequency analysis and LinkML schemas.</p>
 </div>
 </div>
 </div>
@@ -7558,7 +7558,7 @@ a.anchor-link {
 
 <span class="c1"># Setup paths</span>
 <span class="n">working_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-<span class="n">exports_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">working_path</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">"docs"</span><span class="p">,</span> <span class="s2">"notebooks"</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
+<span class="n">exports_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">working_path</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="s2">"schema_extraction"</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
 <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -7609,7 +7609,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:52 INFO apo: Logging configured for apo
+<pre>2025-11-20 17:57:48 INFO apo: Logging configured for apo
 </pre>
 </div>
 </div>
@@ -7895,91 +7895,92 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>VoidParser not found in cache, generating...
-2025-11-20 15:03:54 DEBUG rdfsolve.parser: Starting endpoint discovery process...
+2025-11-20 17:57:50 DEBUG rdfsolve.parser: Starting endpoint discovery process...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:54 DEBUG rdfsolve.parser: Endpoint: https://bio2rdf.org/sparql
+<pre>2025-11-20 17:57:50 DEBUG rdfsolve.parser: Endpoint: https://bio2rdf.org/sparql
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:54 DEBUG rdfsolve.parser: Dataset: apo
+<pre>2025-11-20 17:57:50 DEBUG rdfsolve.parser: Dataset: apo
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:54 DEBUG rdfsolve.parser:  Provided graph URIs: ['http://bio2rdf.org/apo_resource:bio2rdf.dataset.apo.R3']
+<pre>2025-11-20 17:57:50 DEBUG rdfsolve.parser:  Provided graph URIs: ['http://bio2rdf.org/apo_resource:bio2rdf.dataset.apo.R3']
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:54 DEBUG rdfsolve.parser: Settings: prefer_existing=True, exclude_graphs=True
+<pre>2025-11-20 17:57:50 DEBUG rdfsolve.parser: Settings: prefer_existing=True, exclude_graphs=True
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:54 DEBUG rdfsolve.parser: Validating provided graph URIs...
+<pre>2025-11-20 17:57:50 DEBUG rdfsolve.parser: Validating provided graph URIs...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:59 DEBUG rdfsolve.parser: Step 1: Discovering existing VoID graphs...
+<pre>2025-11-20 17:57:55 DEBUG rdfsolve.parser: Step 1: Discovering existing VoID graphs...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:59 DEBUG rdfsolve.parser:  Starting chunked VoID graph discovery for https://bio2rdf.org/sparql
+<pre>2025-11-20 17:57:55 DEBUG rdfsolve.parser:  Starting chunked VoID graph discovery for https://bio2rdf.org/sparql
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:59 DEBUG rdfsolve.parser: Starting VoID graph discovery with pagination...
+<pre>2025-11-20 17:57:55 DEBUG rdfsolve.parser: Starting VoID graph discovery with pagination...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:59 INFO rdfsolve.parser: Discovering VoID candidate graphs with chunked approach
+<pre>2025-11-20 17:57:55 INFO rdfsolve.parser: Discovering VoID candidate graphs with chunked approach
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:03:59 DEBUG rdfsolve.parser: Executing chunked query: offset=0, limit=50
+<pre>2025-11-20 17:57:55 DEBUG rdfsolve.parser: Executing chunked query: offset=0, limit=50
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:05:04 WARNING rdfsolve.parser: Query attempt 1 failed: HTTP Error 504: Gateway Time-out
+<pre>2025-11-20 17:58:55 WARNING rdfsolve.parser: Query attempt 1 failed: HTTP Error 504: Gateway Time-out
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:05:04 DEBUG rdfsolve.parser: Query (first 500 chars): 
+<pre>2025-11-20 17:58:55 DEBUG rdfsolve.parser: Query:
+
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g {
                     ?s ?p ?o
@@ -7993,28 +7994,29 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
             ORDER BY ?g
             OFFSET 0
             LIMIT 50
-            ...
+            
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:05:04 INFO rdfsolve.parser: Retrying after 1.1s (attempt 2/4)
+<pre>2025-11-20 17:58:55 INFO rdfsolve.parser: Retrying after 1.0s (attempt 2/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:06:06 WARNING rdfsolve.parser: Query attempt 2 failed: HTTP Error 504: Gateway Time-out
+<pre>2025-11-20 17:59:57 WARNING rdfsolve.parser: Query attempt 2 failed: HTTP Error 504: Gateway Time-out
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:06:06 DEBUG rdfsolve.parser: Query (first 500 chars): 
+<pre>2025-11-20 17:59:57 DEBUG rdfsolve.parser: Query:
+
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g {
                     ?s ?p ?o
@@ -8028,28 +8030,29 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
             ORDER BY ?g
             OFFSET 0
             LIMIT 50
-            ...
+            
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:06:06 INFO rdfsolve.parser: Retrying after 2.1s (attempt 3/4)
+<pre>2025-11-20 17:59:57 INFO rdfsolve.parser: Retrying after 2.2s (attempt 3/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:07:09 WARNING rdfsolve.parser: Query attempt 3 failed: HTTP Error 504: Gateway Time-out
+<pre>2025-11-20 18:01:04 WARNING rdfsolve.parser: Query attempt 3 failed: HTTP Error 504: Gateway Time-out
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:07:09 DEBUG rdfsolve.parser: Query (first 500 chars): 
+<pre>2025-11-20 18:01:04 DEBUG rdfsolve.parser: Query:
+
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g {
                     ?s ?p ?o
@@ -8063,28 +8066,29 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
             ORDER BY ?g
             OFFSET 0
             LIMIT 50
-            ...
+            
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:07:09 INFO rdfsolve.parser: Retrying after 4.4s (attempt 4/4)
+<pre>2025-11-20 18:01:04 INFO rdfsolve.parser: Retrying after 4.0s (attempt 4/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 WARNING rdfsolve.parser: Query attempt 4 failed: HTTP Error 504: Gateway Time-out
+<pre>2025-11-20 18:02:13 WARNING rdfsolve.parser: Query attempt 4 failed: HTTP Error 504: Gateway Time-out
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser: Query (first 500 chars): 
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser: Query:
+
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g {
                     ?s ?p ?o
@@ -8098,49 +8102,50 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
             ORDER BY ?g
             OFFSET 0
             LIMIT 50
-            ...
+            
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 ERROR rdfsolve.parser: Query failed after 4 attempts
+<pre>2025-11-20 18:02:13 ERROR rdfsolve.parser: Query failed after 4 attempts
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 WARNING rdfsolve.parser: Chunk query failed at offset 0
+<pre>2025-11-20 18:02:13 WARNING rdfsolve.parser: Chunk query failed at offset 0
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser: Query error details:
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser: Query error details:
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser:    • Error type: HTTPError
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser:    • Error type: HTTPError
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser:    • Error message: HTTP Error 504: Gateway Time-out
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser:    • Error message: HTTP Error 504: Gateway Time-out
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser:    • Query (first 500 chars): 
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser:    • Query: 
+
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g {
                     ?s ?p ?o
@@ -8154,84 +8159,98 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
             ORDER BY ?g
             OFFSET 0
             LIMIT 50
-            ...
+            
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser: Found 0 candidate VoID graphs
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser: Found 0 candidate VoID graphs
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser: No candidate VoID graphs found
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser: No candidate VoID graphs found
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser: Discovery result: found=False
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser: Discovery result: found=False
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser: Found 0 graphs with VoID data
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser: Found 0 graphs with VoID data
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 INFO rdfsolve.parser: No suitable VoID found; generating from queries...
+<pre>2025-11-20 18:02:13 INFO rdfsolve.parser: No suitable VoID found; generating from queries...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser: Step 2: Generating new VoID from SPARQL queries...
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser: Step 2: Generating new VoID from SPARQL queries...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser: Generation settings: counts=True, offset_limit_steps=300
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser: Generation settings: counts=True, offset_limit_steps=300
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser: Output path: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/apo_generated_void.ttl
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser: Output path: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/apo_generated_void.ttl
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:14 DEBUG rdfsolve.parser: Starting VoID generation process...
+<pre>2025-11-20 18:02:13 DEBUG rdfsolve.parser: Starting VoID generation process...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:08:15 DEBUG rdfsolve.parser: VoID generation completed
+<pre>2025-11-20 18:02:23 INFO rdfsolve.parser: Successfully extracted 150 RDF triples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/cache/apo_voidparser.pkl
+<pre>2025-11-20 18:02:23 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/apo_generated_void.ttl
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-11-20 18:02:23 DEBUG rdfsolve.parser: VoID generation completed
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/cache/apo_voidparser.pkl
 </pre>
 </div>
 </div>
@@ -8276,7 +8295,7 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Primary JSON-LD schema export (source of truth for all other formats)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Primary JSON-LD schema export and basic summary</span>
 <span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_jsonld_schema"</span>
 <span class="n">jsonld_schema</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
 
@@ -8292,22 +8311,25 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">jsonld_file</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"JSON-LD Schema saved to: </span><span class="si">{</span><span class="n">jsonld_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"✅ JSON-LD Schema saved to: </span><span class="si">{</span><span class="n">jsonld_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="c1"># Display JSON-LD structure info</span>
+<span class="c1"># Display combined JSON-LD structure info and schema summary</span>
 <span class="k">if</span> <span class="s2">"@graph"</span> <span class="ow">in</span> <span class="n">jsonld_schema</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Standards-compliant JSON-LD with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">[</span><span class="s1">'@context'</span><span class="p">])</span><span class="si">}</span><span class="s2"> prefixes and </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">[</span><span class="s1">'@graph'</span><span class="p">])</span><span class="si">}</span><span class="s2"> resources"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">📊 Schema Summary:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Prefixes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">[</span><span class="s1">'@context'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Resources: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">[</span><span class="s1">'@graph'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     
     <span class="c1"># Show dataset metadata</span>
     <span class="n">dataset_info</span> <span class="o">=</span> <span class="n">jsonld_schema</span><span class="p">[</span><span class="s2">"@graph"</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">jsonld_schema</span><span class="p">[</span><span class="s2">"@graph"</span><span class="p">]</span> <span class="k">else</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">dataset_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"@type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"void:Dataset"</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset: </span><span class="si">{</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'dcterms:title'</span><span class="p">,</span><span class="w"> </span><span class="s1">'Unknown'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Classes: </span><span class="si">{</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'void:classes'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Properties: </span><span class="si">{</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'void:properties'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Triples: </span><span class="si">{</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'void:triples'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Dataset: </span><span class="si">{</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'dcterms:title'</span><span class="p">,</span><span class="w"> </span><span class="s1">'Unknown'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Classes: </span><span class="si">{</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'void:classes'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Properties: </span><span class="si">{</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'void:properties'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Triples: </span><span class="si">{</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'void:triples'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="c1"># Basic schema DataFrame derived from JSON-LD</span>
+<span class="c1"># Get schema DataFrame and show sample</span>
 <span class="n">schema_df</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">to_schema</span><span class="p">(</span><span class="n">filter_void_admin_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">📋 Schema Patterns Preview (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">schema_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> total):"</span><span class="p">)</span>
 <span class="n">display</span><span class="p">(</span><span class="n">schema_df</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
@@ -8328,9 +8350,14 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/cache/apo_jsonld_schema.pkl
-JSON-LD Schema saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/apo_schema.jsonld
-Standards-compliant JSON-LD with 5 prefixes and 9 resources
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/cache/apo_jsonld_schema.pkl
+✅ JSON-LD Schema saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/apo_schema.jsonld
+
+📊 Schema Summary:
+   • Prefixes: 5
+   • Resources: 9
+
+📋 Schema Patterns Preview (49 total):
 </pre>
 </div>
 </div>
@@ -8370,8 +8397,8 @@ Standards-compliant JSON-LD with 5 prefixes and 9 resources
 <td>http://bio2rdf.org/apo_vocabulary:Resource</td>
 <td>rdf:type</td>
 <td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
-<td>rdfs:Resource</td>
-<td>http://www.w3.org/2000/01/rdf-schema#Resource</td>
+<td>owl:Class</td>
+<td>http://www.w3.org/2002/07/owl#Class</td>
 </tr>
 <tr>
 <th>1</th>
@@ -8379,8 +8406,8 @@ Standards-compliant JSON-LD with 5 prefixes and 9 resources
 <td>http://bio2rdf.org/apo_vocabulary:Resource</td>
 <td>rdf:type</td>
 <td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
-<td>owl:Class</td>
-<td>http://www.w3.org/2002/07/owl#Class</td>
+<td>rdfs:Resource</td>
+<td>http://www.w3.org/2000/01/rdf-schema#Resource</td>
 </tr>
 <tr>
 <th>2</th>
@@ -8397,8 +8424,8 @@ Standards-compliant JSON-LD with 5 prefixes and 9 resources
 <td>http://bio2rdf.org/obo_vocabulary:Resource</td>
 <td>rdf:type</td>
 <td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
-<td>rdfs:Resource</td>
-<td>http://www.w3.org/2000/01/rdf-schema#Resource</td>
+<td>owl:Class</td>
+<td>http://www.w3.org/2002/07/owl#Class</td>
 </tr>
 <tr>
 <th>4</th>
@@ -8416,60 +8443,6 @@ Standards-compliant JSON-LD with 5 prefixes and 9 resources
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c8ab4a82">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Validate JSON-LD with pyld (optional - requires pyld installation)</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">pyld</span><span class="w"> </span><span class="kn">import</span> <span class="n">jsonld</span> <span class="k">as</span> <span class="n">pyld_lib</span>
-    
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Validating JSON-LD compliance..."</span><span class="p">)</span>
-    
-    <span class="c1"># Test JSON-LD expansion (validates structure)</span>
-    <span class="n">expanded</span> <span class="o">=</span> <span class="n">pyld_lib</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"JSON-LD expansion successful: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">expanded</span><span class="p">)</span><span class="si">}</span><span class="s2"> top-level items"</span><span class="p">)</span>
-    
-    <span class="c1"># Convert to RDF triples (validates semantic correctness)</span>
-    <span class="n">nquads</span> <span class="o">=</span> <span class="n">pyld_lib</span><span class="o">.</span><span class="n">to_rdf</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">,</span> <span class="p">{</span><span class="s1">'format'</span><span class="p">:</span> <span class="s1">'application/n-quads'</span><span class="p">})</span>
-    <span class="n">triples_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nquads</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">))</span> <span class="k">if</span> <span class="n">nquads</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"RDF conversion successful: </span><span class="si">{</span><span class="n">triples_count</span><span class="si">}</span><span class="s2"> triples generated"</span><span class="p">)</span>
-    
-    <span class="c1"># Save N-Quads for reference</span>
-    <span class="n">nquads_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_schema.nq"</span><span class="p">)</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">nquads_file</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">nquads</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"N-Quads saved to: </span><span class="si">{</span><span class="n">nquads_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"pyld not available - skipping JSON-LD validation (install with: pip install pyld)"</span><span class="p">)</span>
-<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"JSON-LD validation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Validating JSON-LD compliance...
-JSON-LD expansion successful: 9 top-level items
-RDF conversion successful: 49 triples generated
-N-Quads saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/apo_schema.nq
-</pre>
-</div>
-</div>
-</div>
-</div>
 </div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a3a530dd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
@@ -8477,7 +8450,7 @@ N-Quads saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extrac
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Schema-Pattern-Coverage-Analysis-(derived-from-JSON-LD)">Schema Pattern Coverage Analysis (derived from JSON-LD)<a class="anchor-link" href="#Schema-Pattern-Coverage-Analysis-(derived-from-JSON-LD)">¶</a></h2><p>For each subject class type, calculate how many entities participate in each schema pattern divided by the total number of entities of that class type. This gives coverage ratios showing what percentage of entities actually use each relationship pattern.</p>
+<h2 id="Schema-Pattern-Coverage-Analysis">Schema Pattern Coverage Analysis<a class="anchor-link" href="#Schema-Pattern-Coverage-Analysis">¶</a></h2><p>Calculate coverage ratios showing what percentage of entities use each relationship pattern.</p>
 </div>
 </div>
 </div>
@@ -8486,10 +8459,10 @@ N-Quads saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extrac
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Calculate schema pattern coverage ratios with caching</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Schema pattern coverage analysis and export</span>
 <span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_frequencies_basic"</span>
 <span class="n">cached_data</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
 
@@ -8504,7 +8477,28 @@ N-Quads saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extrac
     <span class="nb">print</span><span class="p">(</span><span class="s2">"Loaded frequencies DataFrame from cache"</span><span class="p">)</span>
     <span class="n">frequencies_df</span> <span class="o">=</span> <span class="n">cached_data</span>
 
-<span class="n">frequencies_df</span><span class="p">[[</span><span class="s1">'subject_class'</span><span class="p">,</span> <span class="s1">'property'</span><span class="p">,</span> <span class="s1">'object_class'</span><span class="p">,</span> <span class="s1">'coverage_percent'</span><span class="p">]]</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="c1"># Export coverage analysis</span>
+<span class="n">frequencies_output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_pattern_coverage.csv"</span><span class="p">)</span>
+<span class="n">exported_df</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">export_schema_shape_frequencies</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="n">frequencies_output_path</span><span class="p">)</span>
+
+<span class="c1"># Combined summary and sample</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+    <span class="n">avg_coverage</span> <span class="o">=</span> <span class="n">frequencies_df</span><span class="p">[</span><span class="s1">'coverage_percent'</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">high_coverage</span> <span class="o">=</span> <span class="p">(</span><span class="n">frequencies_df</span><span class="p">[</span><span class="s1">'coverage_percent'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">📈 Pattern Coverage Analysis:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Total patterns: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Average coverage: </span><span class="si">{</span><span class="n">avg_coverage</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • High coverage (&gt;50%): </span><span class="si">{</span><span class="n">high_coverage</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Exported to: </span><span class="si">{</span><span class="n">frequencies_output_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">📋 Sample Coverage Data:"</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">[[</span><span class="s1">'subject_class'</span><span class="p">,</span> <span class="s1">'property'</span><span class="p">,</span> <span class="s1">'object_class'</span><span class="p">,</span> <span class="s1">'coverage_percent'</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">📊 Coverage Statistics:"</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">[</span><span class="s1">'coverage_percent'</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">())</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"❌ No frequency data available"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8524,13 +8518,21 @@ N-Quads saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extrac
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/cache/apo_frequencies_basic.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/cache/apo_frequencies_basic.pkl
+
+📈 Pattern Coverage Analysis:
+   • Total patterns: 49
+   • Average coverage: 32.3%
+   • High coverage (&gt;50%): 16
+   • Exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/apo_pattern_coverage.csv
+
+📋 Sample Coverage Data:
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
     .dataframe tbody tr th:only-of-type {
@@ -8557,31 +8559,38 @@ N-Quads saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extrac
 </thead>
 <tbody>
 <tr>
-<th>27</th>
-<td>owl:Class</td>
-<td>rdfs:isDefinedBy</td>
-<td>dctypes:Dataset</td>
-<td>0.0</td>
-</tr>
-<tr>
-<th>33</th>
-<td>owl:DeprecatedClass</td>
-<td>rdfs:isDefinedBy</td>
-<td>bio2rdf:lsr_vocabulary:Resource</td>
-<td>0.0</td>
-</tr>
-<tr>
-<th>39</th>
+<th>0</th>
 <td>bio2rdf:apo_vocabulary:Resource</td>
-<td>rdfs:subClassOf</td>
-<td>rdfs:Class</td>
-<td>0.0</td>
+<td>rdf:type</td>
+<td>owl:Class</td>
+<td>100.0</td>
 </tr>
 <tr>
-<th>44</th>
+<th>8</th>
+<td>owl:DeprecatedClass</td>
+<td>rdf:type</td>
+<td>rdfs:Resource</td>
+<td>100.0</td>
+</tr>
+<tr>
+<th>6</th>
+<td>owl:DeprecatedClass</td>
+<td>rdf:type</td>
+<td>owl:Class</td>
+<td>100.0</td>
+</tr>
+<tr>
+<th>11</th>
+<td>owl:DatatypeProperty</td>
+<td>rdf:type</td>
+<td>rdfs:Resource</td>
+<td>100.0</td>
+</tr>
+<tr>
+<th>46</th>
 <td>bio2rdf:ypo_vocabulary:Resource</td>
 <td>rdfs:seeAlso</td>
-<td>owl:Class</td>
+<td>bio2rdf:apo_vocabulary:Resource</td>
 <td>100.0</td>
 </tr>
 </tbody>
@@ -8589,168 +8598,26 @@ N-Quads saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extrac
 </div>
 </div>
 </div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=33d82e37">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Export coverage analysis</span>
-<span class="n">frequencies_output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_pattern_coverage.csv"</span><span class="p">)</span>
-<span class="n">exported_df</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">export_schema_shape_frequencies</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="n">frequencies_output_path</span><span class="p">)</span>
-
-<span class="c1"># Simple summary</span>
-<span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-    <span class="n">avg_coverage</span> <span class="o">=</span> <span class="n">frequencies_df</span><span class="p">[</span><span class="s1">'coverage_percent'</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-    <span class="n">high_coverage</span> <span class="o">=</span> <span class="p">(</span><span class="n">frequencies_df</span><span class="p">[</span><span class="s1">'coverage_percent'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-    <span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">**Pattern Coverage Summary:**</span>
-<span class="s2">- Average pattern coverage: **</span><span class="si">{</span><span class="n">avg_coverage</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%**</span>
-<span class="s2">- Patterns with &gt;50% coverage: **</span><span class="si">{</span><span class="n">high_coverage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">)</span><span class="si">}</span><span class="s2">**</span>
-<span class="s2">- Exported to: `</span><span class="si">{</span><span class="n">frequencies_output_path</span><span class="si">}</span><span class="s2">`</span>
-<span class="s2">- Derived from JSON-LD schema for consistency</span>
-<span class="s2">"""</span><span class="p">))</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p><strong>Pattern Coverage Summary:</strong></p>
-<ul>
-<li>Average pattern coverage: <strong>32.3%</strong></li>
-<li>Patterns with &gt;50% coverage: <strong>16/49</strong></li>
-<li>Exported to: <code>/home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/apo_pattern_coverage.csv</code></li>
-<li>Derived from JSON-LD schema for consistency</li>
-</ul>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>
+📊 Coverage Statistics:
+</pre>
 </div>
 </div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f2ca31c4">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">frequencies_df</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[12]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>total_entities</th>
-<th>participating_entities</th>
-<th>occurrence_count</th>
-<th>coverage_ratio</th>
-<th>coverage_percent</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>count</th>
-<td>49.000000</td>
-<td>49.000000</td>
-<td>49.000000</td>
-<td>49.000000</td>
-<td>49.000000</td>
-</tr>
-<tr>
-<th>mean</th>
-<td>202.959184</td>
-<td>68.877551</td>
-<td>68.877551</td>
-<td>0.323453</td>
-<td>32.345306</td>
-</tr>
-<tr>
-<th>std</th>
-<td>155.191274</td>
-<td>125.619238</td>
-<td>125.619238</td>
-<td>0.455649</td>
-<td>45.564915</td>
-</tr>
-<tr>
-<th>min</th>
-<td>1.000000</td>
-<td>0.000000</td>
-<td>0.000000</td>
-<td>0.000000</td>
-<td>0.000000</td>
-</tr>
-<tr>
-<th>25%</th>
-<td>33.000000</td>
-<td>0.000000</td>
-<td>0.000000</td>
-<td>0.000000</td>
-<td>0.000000</td>
-</tr>
-<tr>
-<th>50%</th>
-<td>276.000000</td>
-<td>0.000000</td>
-<td>0.000000</td>
-<td>0.000000</td>
-<td>0.000000</td>
-</tr>
-<tr>
-<th>75%</th>
-<td>340.000000</td>
-<td>33.000000</td>
-<td>33.000000</td>
-<td>0.891200</td>
-<td>89.120000</td>
-</tr>
-<tr>
-<th>max</th>
-<td>341.000000</td>
-<td>341.000000</td>
-<td>341.000000</td>
-<td>1.000000</td>
-<td>100.000000</td>
-</tr>
-</tbody>
-</table>
-</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>count     49.000000
+mean      32.345306
+std       45.564915
+min        0.000000
+25%        0.000000
+50%        0.000000
+75%       89.120000
+max      100.000000
+Name: coverage_percent, dtype: float64</pre>
 </div>
 </div>
 </div>
@@ -8771,7 +8638,7 @@ N-Quads saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extrac
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Collect both frequency data and actual instances with caching</span>
@@ -8819,7 +8686,7 @@ N-Quads saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extrac
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-20 15:09:17 INFO rdfsolve.parser: Total instances collected: 3379
+<pre>2025-11-20 18:03:40 INFO rdfsolve.parser: Total instances collected: 3379
 </pre>
 </div>
 </div>
@@ -8833,652 +8700,11 @@ N-Quads saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extrac
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/cache/apo_frequencies_with_instances.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/cache/apo_frequencies_with_instances.pkl
 Frequencies DataFrame: 49 shapes
 Instances DataFrame: 3379 subject-object pairs
 Memory usage - Frequencies: 36.1 KB
 Memory usage - Instances: 595.3 KB
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4e42ae23">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Examine the structure of the linked DataFrames</span>
-<span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Frequencies DataFrame columns:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Instances DataFrame columns:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">instances_df</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Instances DataFrame dtypes (note categorical optimization):"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">instances_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">)</span>
-    
-    <span class="c1"># Show sample of frequencies data with shape_id for linking</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sample frequencies data:"</span><span class="p">)</span>
-    <span class="n">display</span><span class="p">(</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-    
-    <span class="c1"># Show sample instances data</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sample instances data:"</span><span class="p">)</span>
-    <span class="n">display</span><span class="p">(</span><span class="n">instances_df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Frequencies DataFrame columns:
-['shape_id', 'subject_class', 'subject_uri', 'property', 'property_uri', 'object_class', 'object_uri', 'total_entities', 'participating_entities', 'occurrence_count', 'coverage_ratio', 'coverage_percent', 'shape_pattern']
-
-Instances DataFrame columns:
-['shape_id', 'subject_iri', 'object_iri', 'subject_class', 'property', 'object_class']
-
-Instances DataFrame dtypes (note categorical optimization):
-shape_id         category
-subject_iri        object
-object_iri         object
-subject_class    category
-property         category
-object_class     category
-dtype: object
-
-Sample frequencies data:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>shape_id</th>
-<th>subject_class</th>
-<th>subject_uri</th>
-<th>property</th>
-<th>property_uri</th>
-<th>object_class</th>
-<th>object_uri</th>
-<th>total_entities</th>
-<th>participating_entities</th>
-<th>occurrence_count</th>
-<th>coverage_ratio</th>
-<th>coverage_percent</th>
-<th>shape_pattern</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>1</th>
-<td>shape_000001</td>
-<td>bio2rdf:apo_vocabulary:Resource</td>
-<td>http://bio2rdf.org/apo_vocabulary:Resource</td>
-<td>rdf:type</td>
-<td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
-<td>owl:Class</td>
-<td>http://www.w3.org/2002/07/owl#Class</td>
-<td>340</td>
-<td>340</td>
-<td>340</td>
-<td>1.0</td>
-<td>100.0</td>
-<td>bio2rdf:apo_vocabulary:Resource -&gt; rdf:type -&gt;...</td>
-</tr>
-<tr>
-<th>8</th>
-<td>shape_000008</td>
-<td>owl:DeprecatedClass</td>
-<td>http://www.w3.org/2002/07/owl#DeprecatedClass</td>
-<td>rdf:type</td>
-<td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
-<td>owl:Class</td>
-<td>http://www.w3.org/2002/07/owl#Class</td>
-<td>33</td>
-<td>33</td>
-<td>33</td>
-<td>1.0</td>
-<td>100.0</td>
-<td>owl:DeprecatedClass -&gt; rdf:type -&gt; owl:Class</td>
-</tr>
-<tr>
-<th>6</th>
-<td>shape_000006</td>
-<td>owl:DeprecatedClass</td>
-<td>http://www.w3.org/2002/07/owl#DeprecatedClass</td>
-<td>rdf:type</td>
-<td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
-<td>rdfs:Resource</td>
-<td>http://www.w3.org/2000/01/rdf-schema#Resource</td>
-<td>33</td>
-<td>33</td>
-<td>33</td>
-<td>1.0</td>
-<td>100.0</td>
-<td>owl:DeprecatedClass -&gt; rdf:type -&gt; rdfs:Resource</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-Sample instances data:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>shape_id</th>
-<th>subject_iri</th>
-<th>object_iri</th>
-<th>subject_class</th>
-<th>property</th>
-<th>object_class</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>0</th>
-<td>shape_000000</td>
-<td>http://bio2rdf.org/apo:0000016</td>
-<td>http://www.w3.org/2002/07/owl#DeprecatedClass</td>
-<td>bio2rdf:apo_vocabulary:Resource</td>
-<td>rdf:type</td>
-<td>rdfs:Resource</td>
-</tr>
-<tr>
-<th>1</th>
-<td>shape_000000</td>
-<td>http://bio2rdf.org/apo:0000019</td>
-<td>http://www.w3.org/2002/07/owl#DeprecatedClass</td>
-<td>bio2rdf:apo_vocabulary:Resource</td>
-<td>rdf:type</td>
-<td>rdfs:Resource</td>
-</tr>
-<tr>
-<th>2</th>
-<td>shape_000000</td>
-<td>http://bio2rdf.org/apo:0000067</td>
-<td>http://www.w3.org/2002/07/owl#DeprecatedClass</td>
-<td>bio2rdf:apo_vocabulary:Resource</td>
-<td>rdf:type</td>
-<td>rdfs:Resource</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d7a34768">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Example 1: Filter shapes by coverage threshold and get their instances</span>
-<span class="n">high_coverage_data</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">get_shape_instances</span><span class="p">(</span>
-    <span class="n">frequencies_with_instances_df</span><span class="p">,</span> 
-    <span class="n">instances_df</span><span class="p">,</span>
-    <span class="c1">#min_coverage=0.3</span>
-<span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">high_coverage_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> instance records"</span><span class="p">)</span>
-
-<span class="c1"># Example 2: Direct DataFrame operations for specific analysis</span>
-<span class="k">if</span> <span class="ow">not</span> <span class="n">instances_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-    <span class="c1"># Count unique subjects per shape</span>
-    <span class="n">subjects_per_shape</span> <span class="o">=</span> <span class="n">instances_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">'shape_id'</span><span class="p">)[</span><span class="s1">'subject_iri'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Shape with most unique subjects: </span><span class="si">{</span><span class="n">subjects_per_shape</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">}</span><span class="s2"> subjects"</span><span class="p">)</span>
-    
-    <span class="c1"># Find most common object types</span>
-    <span class="n">common_objects</span> <span class="o">=</span> <span class="n">instances_df</span><span class="p">[</span><span class="s1">'object_iri'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Most frequent object IRIs:"</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">iri</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">common_objects</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">iri</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> occurrences"</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>3405 instance records
-Shape with most unique subjects: 341 subjects
-Most frequent object IRIs:
-  http://www.w3.org/2002/07/owl#Class: 714 occurrences
-  http://bio2rdf.org/lsr:apo: 713 occurrences
-  http://www.w3.org/2002/07/owl#DeprecatedClass: 99 occurrences
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>/tmp/ipykernel_2858/2694033175.py:12: FutureWarning:
-
-The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
-
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b5de390c">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Analyze distribution and memory characteristics</span>
-<span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">distribution_analysis</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">analyze_shape_distribution</span><span class="p">(</span><span class="n">frequencies_with_instances_df</span><span class="p">,</span> <span class="n">instances_df</span><span class="p">)</span>
-    
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Distribution Analysis:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total shapes: </span><span class="si">{</span><span class="n">distribution_analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'total_shapes'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Shapes with instances: </span><span class="si">{</span><span class="n">distribution_analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'shapes_with_instances'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total instance records: </span><span class="si">{</span><span class="n">distribution_analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'total_instance_records'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Average instances per shape: </span><span class="si">{</span><span class="n">distribution_analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'avg_instances_per_shape'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Maximum instances per shape: </span><span class="si">{</span><span class="n">distribution_analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'max_instances_per_shape'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    
-    <span class="n">memory_info</span> <span class="o">=</span> <span class="n">distribution_analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'memory_usage_mb'</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Memory Usage:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Frequencies DataFrame: </span><span class="si">{</span><span class="n">memory_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'frequencies_df'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Instances DataFrame: </span><span class="si">{</span><span class="n">memory_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'instances_df'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB"</span><span class="p">)</span>
-    
-    <span class="c1"># Show top shapes by instance count</span>
-    <span class="n">top_shapes</span> <span class="o">=</span> <span class="n">distribution_analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'top_shapes_by_instances'</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="k">if</span> <span class="n">top_shapes</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Top shapes by instance count:"</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">shape_id</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">top_shapes</span><span class="o">.</span><span class="n">items</span><span class="p">())[:</span><span class="mi">3</span><span class="p">]:</span>
-            <span class="n">count</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'actual_instances'</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="n">pattern</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'shape_pattern'</span><span class="p">,</span> <span class="s1">'Unknown'</span><span class="p">)</span>
-            <span class="n">coverage</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'coverage_ratio'</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">pattern</span><span class="p">[:</span><span class="mi">50</span><span class="p">]</span><span class="si">}</span><span class="s2">... (</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> instances, </span><span class="si">{</span><span class="n">coverage</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2"> coverage)"</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Distribution Analysis:
-  Total shapes: 49
-  Shapes with instances: 49
-  Total instance records: 3379
-  Average instances per shape: 146.9
-  Maximum instances per shape: 341
-
-Memory Usage:
-  Frequencies DataFrame: 0.04 MB
-  Instances DataFrame: 0.58 MB
-
-Top shapes by instance count:
-  owl:Class -&gt; rdf:type -&gt; owl:Class... (341.0 instances, 100.0% coverage)
-  bio2rdf:apo_vocabulary:Resource -&gt; rdf:type -&gt; owl... (340.0 instances, 100.0% coverage)
-  bio2rdf:apo_vocabulary:Resource -&gt; rdfs:isDefinedB... (340.0 instances, 100.0% coverage)
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>/home/runner/work/rdfsolve/rdfsolve/src/rdfsolve/parser.py:2828: FutureWarning:
-
-The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
-
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0474e457">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Example of accessing specific shape instances</span>
-<span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-    <span class="c1"># Get instances for the fifth shape as an example</span>
-    <span class="n">sample_shape_id</span> <span class="o">=</span> <span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="s1">'shape_id'</span><span class="p">]</span>
-    <span class="n">sample_shape_pattern</span> <span class="o">=</span> <span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="s1">'shape_pattern'</span><span class="p">]</span>
-    
-    <span class="c1"># Filter instances for this specific shape</span>
-    <span class="n">shape_instances</span> <span class="o">=</span> <span class="n">instances_df</span><span class="p">[</span><span class="n">instances_df</span><span class="p">[</span><span class="s1">'shape_id'</span><span class="p">]</span> <span class="o">==</span> <span class="n">sample_shape_id</span><span class="p">]</span>
-    
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sample shape: </span><span class="si">{</span><span class="n">sample_shape_pattern</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Shape ID: </span><span class="si">{</span><span class="n">sample_shape_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Instance count: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">shape_instances</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">shape_instances</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sample instances:"</span><span class="p">)</span>
-        <span class="n">display</span><span class="p">(</span><span class="n">shape_instances</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-        
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Unique subjects: </span><span class="si">{</span><span class="n">shape_instances</span><span class="p">[</span><span class="s1">'subject_iri'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unique objects: </span><span class="si">{</span><span class="n">shape_instances</span><span class="p">[</span><span class="s1">'object_iri'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Sample shape: bio2rdf:ypo_vocabulary:Resource -&gt; rdfs:seeAlso -&gt; owl:Class
-Shape ID: shape_000044
-Instance count: 276
-
-Sample instances:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>shape_id</th>
-<th>subject_iri</th>
-<th>object_iri</th>
-<th>subject_class</th>
-<th>property</th>
-<th>object_class</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>2791</th>
-<td>shape_000044</td>
-<td>http://bio2rdf.org/ypo:0000272</td>
-<td>http://bio2rdf.org/apo:0000272</td>
-<td>bio2rdf:ypo_vocabulary:Resource</td>
-<td>rdfs:seeAlso</td>
-<td>owl:Class</td>
-</tr>
-<tr>
-<th>2792</th>
-<td>shape_000044</td>
-<td>http://bio2rdf.org/ypo:0000007</td>
-<td>http://bio2rdf.org/apo:0000007</td>
-<td>bio2rdf:ypo_vocabulary:Resource</td>
-<td>rdfs:seeAlso</td>
-<td>owl:Class</td>
-</tr>
-<tr>
-<th>2793</th>
-<td>shape_000044</td>
-<td>http://bio2rdf.org/ypo:0000009</td>
-<td>http://bio2rdf.org/apo:0000009</td>
-<td>bio2rdf:ypo_vocabulary:Resource</td>
-<td>rdfs:seeAlso</td>
-<td>owl:Class</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-Unique subjects: 276
-Unique objects: 276
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1ccaf728">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Analyze self-referential instances</span>
-<span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">instances_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Analyzing self-referential instances:"</span><span class="p">)</span>
-    
-    <span class="c1"># Find cases where subject and object are identical</span>
-    <span class="n">self_refs</span> <span class="o">=</span> <span class="n">instances_df</span><span class="p">[</span><span class="n">instances_df</span><span class="p">[</span><span class="s1">'subject_iri'</span><span class="p">]</span> <span class="o">==</span> <span class="n">instances_df</span><span class="p">[</span><span class="s1">'object_iri'</span><span class="p">]]</span>
-    
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total instances: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Self-referential instances: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">self_refs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Percentage self-referential: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">self_refs</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">instances_df</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%"</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">self_refs</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Properties involved in self-references:"</span><span class="p">)</span>
-        <span class="n">self_ref_props</span> <span class="o">=</span> <span class="n">self_refs</span><span class="p">[</span><span class="s1">'property'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
-        <span class="n">display</span><span class="p">(</span><span class="n">self_ref_props</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
-        
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sample self-referential cases:"</span><span class="p">)</span>
-        <span class="n">display</span><span class="p">(</span><span class="n">self_refs</span><span class="p">[[</span><span class="s1">'subject_iri'</span><span class="p">,</span> <span class="s1">'object_iri'</span><span class="p">,</span> <span class="s1">'property'</span><span class="p">,</span> <span class="s1">'subject_class'</span><span class="p">,</span> <span class="s1">'object_class'</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
-        
-        <span class="c1"># Check if these are meaningful or problematic</span>
-        <span class="n">meaningful_props</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'owl:sameAs'</span><span class="p">,</span> <span class="s1">'rdfs:seeAlso'</span><span class="p">,</span> <span class="s1">'skos:exactMatch'</span><span class="p">,</span> <span class="s1">'dc:identifier'</span><span class="p">,</span> <span class="s1">'foaf:primaryTopic'</span><span class="p">}</span>
-        <span class="n">problematic_self_refs</span> <span class="o">=</span> <span class="n">self_refs</span><span class="p">[</span><span class="o">~</span><span class="n">self_refs</span><span class="p">[</span><span class="s1">'property'</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">meaningful_props</span><span class="p">)]</span>
-        
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Potentially problematic self-references: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">problematic_self_refs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">problematic_self_refs</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">"Properties that shouldn't be self-referential:"</span><span class="p">)</span>
-            <span class="n">display</span><span class="p">(</span><span class="n">problematic_self_refs</span><span class="p">[</span><span class="s1">'property'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
-            
-    <span class="c1"># Check for potential data quality issues</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Data quality check:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unique subjects: </span><span class="si">{</span><span class="n">instances_df</span><span class="p">[</span><span class="s1">'subject_iri'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unique objects: </span><span class="si">{</span><span class="n">instances_df</span><span class="p">[</span><span class="s1">'object_iri'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unique properties: </span><span class="si">{</span><span class="n">instances_df</span><span class="p">[</span><span class="s1">'property'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    
-    <span class="c1"># Look for patterns in the problematic case you mentioned</span>
-    <span class="n">identifier_cases</span> <span class="o">=</span> <span class="n">instances_df</span><span class="p">[</span><span class="n">instances_df</span><span class="p">[</span><span class="s1">'property'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'dc:identifier'</span><span class="p">]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">identifier_cases</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Analyzing dc:identifier cases:"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total dc:identifier instances: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">identifier_cases</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">id_self_refs</span> <span class="o">=</span> <span class="n">identifier_cases</span><span class="p">[</span><span class="n">identifier_cases</span><span class="p">[</span><span class="s1">'subject_iri'</span><span class="p">]</span> <span class="o">==</span> <span class="n">identifier_cases</span><span class="p">[</span><span class="s1">'object_iri'</span><span class="p">]]</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"dc:identifier self-references: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">id_self_refs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">id_self_refs</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">"Sample dc:identifier self-references:"</span><span class="p">)</span>
-            <span class="n">display</span><span class="p">(</span><span class="n">id_self_refs</span><span class="p">[[</span><span class="s1">'subject_iri'</span><span class="p">,</span> <span class="s1">'object_iri'</span><span class="p">,</span> <span class="s1">'subject_class'</span><span class="p">,</span> <span class="s1">'object_class'</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Analyzing self-referential instances:
-Total instances: 3379
-Self-referential instances: 1
-Percentage self-referential: 0.0%
-
-Properties involved in self-references:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>property
-rdf:type                            1
-bio2rdf:obo_vocabulary:x-biogrid    0
-rdfs:isDefinedBy                    0
-rdfs:seeAlso                        0
-rdfs:subClassOf                     0
-Name: count, dtype: int64</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-Sample self-referential cases:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>subject_iri</th>
-<th>object_iri</th>
-<th>property</th>
-<th>subject_class</th>
-<th>object_class</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>510</th>
-<td>http://www.w3.org/2002/07/owl#Class</td>
-<td>http://www.w3.org/2002/07/owl#Class</td>
-<td>rdf:type</td>
-<td>owl:Class</td>
-<td>owl:Class</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-Potentially problematic self-references: 1
-Properties that shouldn't be self-referential:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>property
-rdf:type                            1
-bio2rdf:obo_vocabulary:x-biogrid    0
-rdfs:isDefinedBy                    0
-rdfs:seeAlso                        0
-rdfs:subClassOf                     0
-Name: count, dtype: int64</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-Data quality check:
-Unique subjects: 640
-Unique objects: 290
-Unique properties: 5
 </pre>
 </div>
 </div>
@@ -9489,7 +8715,7 @@ Unique properties: 5
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
@@ -9602,9 +8828,9 @@ Unique properties: 5
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <div> <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script> <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="a7255457-d084-4f76-a4c2-e565a4e0c109" style="height:1474px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("a7255457-d084-4f76-a4c2-e565a4e0c109")) {                    Plotly.newPlot(                        "a7255457-d084-4f76-a4c2-e565a4e0c109",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUA9CtejcO1YQI\u002fC9Shcr1dASOF6FK5HVkBI4XoUrkdWQNejcD0KN1ZA16NwPQo3VkCuR+F6FC4nQOxRuB6FayNAXI\u002fC9ShcI0DhehSuR+HyP7gehetRuPI\u002f4XoUrkfh4j\u002fhehSuR+HiPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","99.7%","94.7%","89.1%","89.1%","88.9%","88.9%","11.6%","9.7%","9.7%","1.2%","1.2%","0.6%","0.6%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUA9CtejcO1YQI\u002fC9Shcr1dASOF6FK5HVkBI4XoUrkdWQNejcD0KN1ZA16NwPQo3VkCuR+F6FC4nQOxRuB6FayNAXI\u002fC9ShcI0DhehSuR+HyP7gehetRuPI\u002f4XoUrkfh4j\u002fhehSuR+HiPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"y":["\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ypo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Ontology\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Ontology\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ypo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Ontology\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:obo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ypo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:obo_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:obo_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:obo_vocabulary:x-biogrid\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:biogrid_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:obo_vocabulary:x-biogrid\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:biogrid_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ypo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ypo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:obo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:biogrid_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:biogrid_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:obo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Dataset\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edctypes:Dataset\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Dataset\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Dataset\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edctypes:Dataset\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edctypes:Dataset\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Ontology\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for apo","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":1474,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "apo_schema_coverage", "height": 1474, "width": 600, "scale": 1}}                    ).then(function(){
+<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="905ea802-818b-496d-afa9-c8eb80a1d9b6" style="height:1474px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("905ea802-818b-496d-afa9-c8eb80a1d9b6")) {                    Plotly.newPlot(                        "905ea802-818b-496d-afa9-c8eb80a1d9b6",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUA9CtejcO1YQI\u002fC9Shcr1dASOF6FK5HVkBI4XoUrkdWQNejcD0KN1ZA16NwPQo3VkCuR+F6FC4nQOxRuB6FayNAXI\u002fC9ShcI0DhehSuR+HyP7gehetRuPI\u002f4XoUrkfh4j\u002fhehSuR+HiPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","99.7%","94.7%","89.1%","89.1%","88.9%","88.9%","11.6%","9.7%","9.7%","1.2%","1.2%","0.6%","0.6%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUA9CtejcO1YQI\u002fC9Shcr1dASOF6FK5HVkBI4XoUrkdWQNejcD0KN1ZA16NwPQo3VkCuR+F6FC4nQOxRuB6FayNAXI\u002fC9ShcI0DhehSuR+HyP7gehetRuPI\u002f4XoUrkfh4j\u002fhehSuR+HiPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"y":["\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ypo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Ontology\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Ontology\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ypo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Ontology\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:obo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ypo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:obo_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:obo_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:obo_vocabulary:x-biogrid\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:biogrid_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:obo_vocabulary:x-biogrid\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:biogrid_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ypo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ypo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:obo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:obo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:biogrid_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:biogrid_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Dataset\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edctypes:Dataset\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Dataset\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edctypes:Dataset\u003c\u002fb\u003e","\u003cb\u003eowl:Ontology\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Dataset\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edctypes:Dataset\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:apo_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:isDefinedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:lsr_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:DeprecatedClass\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for apo","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":1474,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "apo_schema_coverage", "height": 1474, "width": 600, "scale": 1}}                    ).then(function(){
                             
-var gd = document.getElementById('a7255457-d084-4f76-a4c2-e565a4e0c109');
+var gd = document.getElementById('905ea802-818b-496d-afa9-c8eb80a1d9b6');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
@@ -9647,7 +8873,7 @@ if (outputEl) {{
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Generate LinkML directly from JSON-LD with custom schema URI</span>
@@ -9688,129 +8914,8 @@ if (outputEl) {{
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>LinkML YAML saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/apo_linkml_schema.yaml
+<pre>LinkML YAML saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/apo_linkml_schema.yaml
 </pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2c7429b5">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Mermaid--diagram-for-LinkML-Schema">Mermaid  diagram for LinkML Schema<a class="anchor-link" href="#Mermaid--diagram-for-LinkML-Schema">¶</a></h3>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b7a4753d">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Generate Mermaid diagram</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">linkml.generators.erdiagramgen</span><span class="w"> </span><span class="kn">import</span> <span class="n">ERDiagramGenerator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">linkml_runtime.utils.schemaview</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchemaView</span>
-    
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Generating Mermaid class diagram..."</span><span class="p">)</span>
-    
- <span class="c1"># Reload schema to ensure we have the latest version</span>
-<span class="n">sv</span> <span class="o">=</span> <span class="n">SchemaView</span><span class="p">(</span><span class="n">linkml_file</span><span class="p">)</span>
-<span class="n">linkml_schema</span> <span class="o">=</span> <span class="n">sv</span><span class="o">.</span><span class="n">schema</span>
-
-<span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">"**Parsed LinkML schema:** Classes = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sv</span><span class="o">.</span><span class="n">all_classes</span><span class="p">())</span><span class="si">}</span><span class="s2">, Slots = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sv</span><span class="o">.</span><span class="n">all_slots</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
-
-<span class="c1"># Generate Mermaid diagram with error handling</span>
-<span class="n">mermaid_code</span> <span class="o">=</span> <span class="n">ERDiagramGenerator</span><span class="p">(</span><span class="n">linkml_file</span><span class="p">)</span><span class="o">.</span><span class="n">serialize</span><span class="p">()</span>
-<span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span><span class="n">mermaid_code</span><span class="p">))</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Generating Mermaid class diagram...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p><strong>Parsed LinkML schema:</strong> Classes = 12, Slots = 5</p>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<div class="jp-Mermaid"><pre class="mermaid">
-erDiagram
-Bio2rdfApoVocabularyResource {
-
-}
-Bio2rdfBiogridVocabularyResource {
-
-}
-Bio2rdfOboVocabularyResource {
-
-}
-Bio2rdfYpoVocabularyResource {
-
-}
-DctypesDataset {
-
-}
-OwlClass {
-
-}
-OwlDatatypeProperty {
-
-}
-OwlDeprecatedClass {
-
-}
-OwlObjectProperty {
-
-}
-OwlOntology {
-
-}
-RdfsClass {
-
-}
-RdfsResource {
-
-}
-
-Bio2rdfApoVocabularyResource ||--|o Bio2rdfBiogridVocabularyResource : "bio2rdf_obo_vocabulary_x_biogrid"
-Bio2rdfApoVocabularyResource ||--|o DctypesDataset : "rdfs_is_Defined_By"
-Bio2rdfApoVocabularyResource ||--|o RdfsClass : "rdf_type"
-Bio2rdfApoVocabularyResource ||--|o RdfsClass : "rdfs_sub_Class_Of"
-Bio2rdfBiogridVocabularyResource ||--|o RdfsClass : "rdf_type"
-Bio2rdfOboVocabularyResource ||--|o RdfsClass : "rdf_type"
-Bio2rdfYpoVocabularyResource ||--|o OwlClass : "rdfs_see_Also"
-Bio2rdfYpoVocabularyResource ||--|o RdfsClass : "rdf_type"
-OwlClass ||--|o Bio2rdfBiogridVocabularyResource : "bio2rdf_obo_vocabulary_x_biogrid"
-OwlClass ||--|o DctypesDataset : "rdfs_is_Defined_By"
-OwlClass ||--|o RdfsClass : "rdf_type"
-OwlClass ||--|o RdfsClass : "rdfs_sub_Class_Of"
-OwlDatatypeProperty ||--|o RdfsClass : "rdf_type"
-OwlDeprecatedClass ||--|o DctypesDataset : "rdfs_is_Defined_By"
-OwlDeprecatedClass ||--|o RdfsClass : "rdf_type"
-OwlDeprecatedClass ||--|o RdfsClass : "rdfs_sub_Class_Of"
-OwlObjectProperty ||--|o RdfsClass : "rdf_type"
-OwlOntology ||--|o RdfsClass : "rdf_type"
-</pre></div>
 </div>
 </div>
 </div>
@@ -9820,7 +8925,7 @@ OwlOntology ||--|o RdfsClass : "rdf_type"
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">json_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_schema.json"</span><span class="p">)</span>
@@ -9847,54 +8952,8 @@ OwlOntology ||--|o RdfsClass : "rdf_type"
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/apo_schema.csv
-JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/apo_schema.json
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a8ce627a">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Export instances DataFrame as parquet</span>
-<span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">instances_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-    <span class="c1"># Reset categorical columns to strings for better parquet compatibility</span>
-    <span class="n">instances_export</span> <span class="o">=</span> <span class="n">instances_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">instances_export</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s1">'category'</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="n">instances_export</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">instances_export</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
-    
-    <span class="n">parquet_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_instances.parquet"</span><span class="p">)</span>
-    <span class="n">instances_export</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="n">parquet_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported instances DataFrame to: </span><span class="si">{</span><span class="n">parquet_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Shape: </span><span class="si">{</span><span class="n">instances_export</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File size: </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">parquet_path</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Columns: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">instances_export</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Linked to frequencies via 'shape_id' column"</span><span class="p">)</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"No instances DataFrame available to export"</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Exported instances DataFrame to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/notebooks/apo/apo_instances.parquet
-Shape: (3379, 6)
-File size: 0.01 MB
-Columns: ['shape_id', 'subject_iri', 'object_iri', 'subject_class', 'property', 'object_class']
-Linked to frequencies via 'shape_id' column
+<pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/apo_schema.csv
+JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/apo/apo_schema.json
 </pre>
 </div>
 </div>
