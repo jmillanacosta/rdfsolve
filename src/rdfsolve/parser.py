@@ -247,19 +247,19 @@ class VoidParser:
                     # Escape the graph URI properly for SPARQL
                     escaped_uri = graph_uri.replace('\\', '\\\\').replace('"', '\\"')
                     
-                    # Check for class partitions - use f-string with proper escaping
-                    class_query_template = f"""
+                    # Check for class partitions
+                    class_query_template = """
                     SELECT DISTINCT ?cp WHERE {{
-                        GRAPH <{escaped_uri}> {{
+                        GRAPH <{graph_uri}> {{
                             ?cp <http://rdfs.org/ns/void#class> ?class .
                         }}
                     }}
                     ORDER BY ?cp
                     OFFSET {{offset}}
                     LIMIT {{limit}}
-                    """
+                    """.format(graph_uri=escaped_uri)
                     
-                    logger.debug(f"📝 Class partition query template: {class_query_template[:200]}...")
+                    logger.debug(f"Class partition query template: \n{class_query_template[:200]}...")
                     
                     class_partitions = 0
                     for chunk_bindings in self._execute_chunked_query(
@@ -268,16 +268,16 @@ class VoidParser:
                         class_partitions += len(chunk_bindings)
                         
                     # Check for property partitions
-                    property_query_template = f"""
+                    property_query_template = """
                     SELECT DISTINCT ?pp WHERE {{
-                        GRAPH <{escaped_uri}> {{
+                        GRAPH <{graph_uri}> {{
                             ?pp <http://rdfs.org/ns/void#property> ?property .
                         }}
                     }}
                     ORDER BY ?pp
                     OFFSET {{offset}}
                     LIMIT {{limit}}
-                    """
+                    """.format(graph_uri=escaped_uri)
                     
                     property_partitions = 0
                     for chunk_bindings in self._execute_chunked_query(
@@ -286,16 +286,16 @@ class VoidParser:
                         property_partitions += len(chunk_bindings)
                         
                     # Check for datatype partitions
-                    datatype_query_template = f"""
+                    datatype_query_template = """
                     SELECT DISTINCT ?dp WHERE {{
-                        GRAPH <{escaped_uri}> {{
+                        GRAPH <{graph_uri}> {{
                             ?dp <http://ldf.fi/void-ext#datatypePartition> ?datatype .
                         }}
                     }}
                     ORDER BY ?dp
                     OFFSET {{offset}}
                     LIMIT {{limit}}
-                    """
+                    """.format(graph_uri=escaped_uri)
                     
                     datatype_partitions = 0
                     for chunk_bindings in self._execute_chunked_query(
@@ -329,6 +329,13 @@ class VoidParser:
                 except Exception as e:
                     error_type = type(e).__name__
                     error_msg = str(e)
+                    
+                    # Check if this looks like an endpoint that doesn't support CONSTRUCT
+                    if any(indicator in error_msg.lower() for indicator in 
+                           ['html error page', 'returned html', 'construct']):
+                        logger.error(f"Endpoint appears to reject CONSTRUCT queries - failing fast")
+                        logger.info(f"Will skip remaining VoID discovery and proceed to generation")
+                        raise RuntimeError(f"Endpoint does not support CONSTRUCT queries: {error_msg}")
                     
                     # Log detailed error information for debugging
                     logger.warning(f"Error analyzing VoID partitions in {graph_uri}")
@@ -448,16 +455,16 @@ class VoidParser:
 
                 if results and isinstance(results, bytes):
                     result_str = results.decode("utf-8")
-                    logger.debug(f"📄 Got bytes result, size: {len(results)} bytes")
+                    logger.debug(f"Got bytes result, size: {len(results)} bytes")
                 elif results:
                     result_str = str(results)
-                    logger.debug(f"📄 Got string result, size: {len(result_str)} chars")
+                    logger.debug(f"Got string result, size: {len(result_str)} chars")
                 else:
                     logger.debug(f"No results from CONSTRUCT query")
                     continue
 
                 if result_str.strip():
-                    logger.debug(f"📝 Parsing VoID data (size: {len(result_str)} chars)")
+                    logger.debug(f"Parsing VoID data (size: {len(result_str)} chars)")
                     merged_graph.parse(data=result_str, format="turtle")
                     logger.info(f"Retrieved VoID from: {graph_uri}")
                     logger.debug(f"Successfully parsed VoID data")
@@ -659,9 +666,7 @@ class VoidParser:
             "pato": "http://purl.obolibrary.org/obo/PATO_",
             "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#",
             "cheminf": "http://semanticscience.org/resource/CHEMINF_",
-            
-            # Application specific (Eg, shouldn't be needed)
-            "aopo": "http://aopkb.org/aop_ontology#",
+
         }
         
         # Add prefixes from VoID graph namespace manager
@@ -1336,6 +1341,7 @@ class VoidParser:
         offset_limit_steps: Optional[int] = None,
         exclude_graphs: bool = True,
         exclude_graph_patterns: Optional[List[str]] = None,
+        endpoint_url: Optional[str] = None,
     ) -> Dict[str, str]:
         """
         Get formatted CONSTRUCT queries for VoID generation.
@@ -1345,6 +1351,8 @@ class VoidParser:
             counts: If True, include COUNT aggregations; else faster discovery
             offset_limit_steps: If provided, use this as both LIMIT and OFFSET step
             exclude_graphs: Whether to exclude system or any specific graphs
+            exclude_graph_patterns: List of regex patterns to exclude specific graphs
+            endpoint_url: SPARQL endpoint URL for generating meaningful base URIs
 
         Returns:
             Dictionary containing the formatted queries
@@ -1361,8 +1369,21 @@ class VoidParser:
             base_graph_uri = graph_uris
         elif isinstance(graph_uris, list) and len(graph_uris) == 1:
             base_graph_uri = graph_uris[0]
+        elif isinstance(graph_uris, list) and len(graph_uris) > 1:
+            # Multiple graphs - use the first one as base
+            base_graph_uri = graph_uris[0]
         else:
-            base_graph_uri = "http://example.org/dataset"
+            # No graph URIs provided - derive from endpoint URL
+            if endpoint_url:
+                # Extract meaningful base from endpoint URL
+                from urllib.parse import urlparse
+                parsed = urlparse(endpoint_url)
+                if parsed.netloc:
+                    base_graph_uri = f"{parsed.scheme}://{parsed.netloc}/default-graph"
+                else:
+                    base_graph_uri = endpoint_url.rstrip('/') + "/default-graph"
+            else:
+                base_graph_uri = "urn:sparql:default:graph"
 
         # Build limit and offset clause
         limit_offset_clause = ""
@@ -1381,17 +1402,17 @@ CONSTRUCT {{
 }}
 WHERE {{
     {{
-        SELECT ?class (COUNT(*) AS ?count)
+        SELECT ?class (COUNT(?s) AS ?count)
         WHERE {{
             #GRAPH_CLAUSE
-                [] a ?class
+                ?s a ?class
             #END_GRAPH_CLAUSE
         }}
         GROUP BY ?class
         {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/class_partition_',
-                   MD5(STR(?class)))) AS ?cp)
+                   REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
 }}"""
 
             prop_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
@@ -1434,7 +1455,7 @@ WHERE {{
         {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/property_partition_',
-                   MD5(CONCAT(STR(?property), STR(?subject_class))))) AS ?pp)
+                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
 }}"""
 
             dtype_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
@@ -1445,19 +1466,18 @@ CONSTRUCT {{
 }}
 WHERE {{
     {{
-        SELECT ?datatype (COUNT(*) AS ?count)
+        SELECT ?datatype (COUNT(?s) AS ?count)
         WHERE {{
             #GRAPH_CLAUSE
-                [] ?p ?o .
+                ?s ?p ?o .
                 FILTER(isLiteral(?o))
                 BIND(datatype(?o) AS ?datatype)
             #END_GRAPH_CLAUSE
         }}
         GROUP BY ?datatype
-        {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/datatype_partition_',
-                   MD5(STR(?datatype)))) AS ?dp)
+                   REPLACE(STR(?datatype), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?dp)
 }}"""
         else:
             # Discovery-only queries (faster)
@@ -1470,13 +1490,13 @@ WHERE {{
         SELECT DISTINCT ?class
         WHERE {{
             #GRAPH_CLAUSE
-                [] a ?class
+                ?s a ?class
             #END_GRAPH_CLAUSE
         }}
         {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/class_partition_',
-                   MD5(STR(?class)))) AS ?cp)
+                   REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
 }}"""
 
             prop_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
@@ -1517,7 +1537,7 @@ WHERE {{
         {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/property_partition_',
-                   MD5(CONCAT(STR(?property), STR(?subject_class))))) AS ?pp)
+                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
 }}"""
 
             dtype_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
@@ -1530,7 +1550,7 @@ WHERE {{
         SELECT DISTINCT ?datatype
         WHERE {{
             #GRAPH_CLAUSE
-                [] ?p ?o .
+                ?s ?p ?o .
                 FILTER(isLiteral(?o))
                 BIND(datatype(?o) AS ?datatype)
             #END_GRAPH_CLAUSE
@@ -1538,7 +1558,7 @@ WHERE {{
         {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/datatype_partition_',
-                   MD5(STR(?datatype)))) AS ?dp)
+                   REPLACE(STR(?datatype), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?dp)
 }}"""
 
         # Replace the graph clause placeholders in all queries
@@ -1577,7 +1597,7 @@ WHERE {{
             RDF Graph containing the VoID description
         """
         queries = VoidParser.get_void_queries(
-            graph_uris, counts, offset_limit_steps, exclude_graphs, exclude_graph_patterns
+            graph_uris, counts, offset_limit_steps, exclude_graphs, exclude_graph_patterns, endpoint_url
         )
 
         sparql = SPARQLWrapper(endpoint_url)
@@ -1587,6 +1607,7 @@ WHERE {{
         # Ensure we're in a valid working directory for RDFLib parsing
         import os
         import tempfile
+        from rdflib import URIRef, RDF
 
         try:
             current_dir = os.getcwd()
@@ -1625,6 +1646,48 @@ WHERE {{
                             result_str = str(results)
 
                         if result_str.strip():
+                            # Check if result looks like HTML (common error response)
+                            result_lower = result_str.lower().strip()
+                            if (result_lower.startswith('<!doctype html') or 
+                                result_lower.startswith('<html') or
+                                '<title>' in result_lower[:500]):
+                                logger.warning(f"Query {name} returned HTML error page with Turtle format")
+                                logger.info(f"Retrying {name} with N-Triples format...")
+                                
+                                # Retry with N-Triples format
+                                try:
+                                    from SPARQLWrapper import N3
+                                    sparql.setReturnFormat(N3)
+                                    retry_results = VoidParser._safe_query(sparql, query_text)
+                                    
+                                    if retry_results:
+                                        if isinstance(retry_results, bytes):
+                                            retry_str = retry_results.decode("utf-8")
+                                        else:
+                                            retry_str = str(retry_results)
+                                            
+                                        if retry_str.strip():
+                                            retry_lower = retry_str.lower().strip()
+                                            if not (retry_lower.startswith('<!doctype html') or 
+                                                   retry_lower.startswith('<html') or
+                                                   '<title>' in retry_lower[:500]):
+                                                logger.info(f"Success with N-Triples format for {name}")
+                                                merged_graph.parse(
+                                                    data=retry_str,
+                                                    format="nt",
+                                                    publicID=public_id
+                                                )
+                                                return
+                                            else:
+                                                logger.warning(f"N-Triples retry also returned HTML for {name}")
+                                except Exception as retry_e:
+                                    logger.warning(f"N-Triples retry failed for {name}: {retry_e}")
+                                
+                                # If retry failed and not optional, raise error
+                                if not is_optional:
+                                    raise RuntimeError(f"SPARQL endpoint returned HTML error page for {name} (tried both Turtle and N-Triples)")
+                                return
+                            
                             merged_graph.parse(
                                 data=result_str,
                                 format="turtle",
@@ -1636,6 +1699,11 @@ WHERE {{
                         logger.warning(f"No results for {name}")
                 except Exception as e:
                     logger.warning(f"Failed to parse results for {name}: {e}")
+                    # Check if this is likely an HTML error page in the exception message
+                    if any(html_indicator in str(e).lower() for html_indicator in ['<html', '<title>', 'xml:lang']):
+                        logger.warning(f"Query {name} appears to have returned HTML error page")
+                        if is_optional:
+                            return
                     if not is_optional:
                         raise
 
@@ -1652,48 +1720,46 @@ WHERE {{
                 if not is_optional:
                     raise
 
-        try:
-            # Execute queries for partitions
-            query_type = queries["class_partitions"]
-            run_construct(query_type, "class_partitions")
-        except Exception as e:
-            raise RuntimeError(
-                f"""
-Failed to generate VoID from SPARQL endpoint: {e}
-Last query: {query_type}
-"""
-            )
-        try:
-            query_type = queries["property_partitions"]
-            run_construct(
-                query_type, "property_partitions", is_optional=False
-            )
-        except Exception as e:
-            raise RuntimeError(f"""
-Failed to generate VoID from SPARQL endpoint: {e}
-Last query: {query_type}
-""")
-        try:
-            query_type = queries["datatype_partitions"]
-            run_construct(
-                query_type, "datatype_partitions", is_optional=False
-            )
-        except Exception as e:
-            raise RuntimeError(
-                f"""
-Failed to generate VoID from SPARQL endpoint: {e}
-Last query: {query_type}
-"""
-            )
-        try:
-            # Save to file if specified
-            if output_file:
+        # Execute partition queries - all are optional since endpoints vary widely
+        # The goal is to collect as much schema info as possible, not fail on any single query
+        
+        query_type = queries["class_partitions"]
+        run_construct(query_type, "class_partitions", is_optional=True)
+        
+        query_type = queries["property_partitions"] 
+        run_construct(query_type, "property_partitions", is_optional=True)
+        
+        query_type = queries["datatype_partitions"]
+        run_construct(query_type, "datatype_partitions", is_optional=True)
+        # Check if we got any useful data
+        if len(merged_graph) == 0:
+            logger.warning("No RDF data was successfully extracted from endpoint")
+            logger.info("This could indicate endpoint compatibility issues - creating minimal VoID")
+            # Create a minimal VoID dataset description
+            from rdflib import Namespace, Literal
+            from urllib.parse import urlparse
+            
+            VOID = Namespace("http://rdfs.org/ns/void#")
+            DCTERMS = Namespace("http://purl.org/dc/terms/")
+            
+            # Create dataset URI from endpoint
+            parsed = urlparse(endpoint_url)
+            dataset_uri = f"{parsed.scheme}://{parsed.netloc}/dataset" if parsed.netloc else endpoint_url.rstrip('/') + "/dataset"
+            
+            merged_graph.add((URIRef(dataset_uri), RDF.type, VOID.Dataset))
+            merged_graph.add((URIRef(dataset_uri), VOID.sparqlEndpoint, URIRef(endpoint_url)))
+            merged_graph.add((URIRef(dataset_uri), DCTERMS.title, Literal("Dataset discovered from SPARQL endpoint")))
+        else:
+            logger.info(f"Successfully extracted {len(merged_graph)} RDF triples")
+        
+        # Save to file if specified
+        if output_file:
+            try:
                 merged_graph.serialize(destination=output_file, format="turtle")
-        except Exception as e:
-            raise RuntimeError(f"""
-Failed to generate VoID from SPARQL endpoint: {e}
-Last query: {query_type}
-""")
+                logger.info(f"VoID description saved to {output_file}")
+            except Exception as e:
+                logger.error(f"Failed to save VoID file: {e}")
+                # Don't raise here - we still have the graph in memory
         try:
             return merged_graph 
         except Exception as e:
@@ -2112,8 +2178,14 @@ Last query: {query_type}
         """
         current_offset = 0
         total_fetched = 0
+        max_iterations = 1000  # Prevent infinite loops
+        iteration_count = 0
         
         while True:
+            iteration_count += 1
+            if iteration_count > max_iterations:
+                logger.error(f"Chunked query exceeded maximum iterations ({max_iterations})")
+                raise RuntimeError(f"Chunked query exceeded maximum iterations: {max_iterations}")
             # Calculate chunk size for this iteration
             if max_total_results is not None:
                 remaining = max_total_results - total_fetched
@@ -2156,7 +2228,7 @@ Last query: {query_type}
                 
                 # If chunk was smaller than requested, we've reached the end
                 if chunk_count < current_chunk_size:
-                    logger.debug("📄 Partial chunk received, pagination complete")
+                    logger.debug("Partial chunk received, pagination complete")
                     break
                     
                 # Respectful delay between chunks
@@ -2171,7 +2243,7 @@ Last query: {query_type}
                 logger.debug(f"Query error details:")
                 logger.debug(f"   • Error type: {error_type}")
                 logger.debug(f"   • Error message: {error_msg}")
-                logger.debug(f"   • Query (first 500 chars): {query[:500]}...")
+                logger.debug(f"   • Query: \n{query}")
                 
                 # Check for common SPARQL issues
                 if 'syntax' in error_msg.lower() or 'parse' in error_msg.lower():
@@ -2211,7 +2283,7 @@ Last query: {query_type}
             except Exception as e:
                 err_text = str(e)
                 logger.warning("Query attempt %d failed: %s", attempt, err_text)
-                logger.debug("Query (first 500 chars): %s...", query[:500])
+                logger.debug("Query:\n%s", query)
                 if attempt >= max_retries:
                     logger.error("Query failed after %d attempts", attempt)
                     raise
