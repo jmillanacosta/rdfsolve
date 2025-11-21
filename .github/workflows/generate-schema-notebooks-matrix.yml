@@ -146,6 +146,7 @@ jobs:
         path: |
           notebooks/01_schema_extraction/${{ matrix.dataset }}_schema.ipynb
           docs/notebooks/01_schema_extraction/${{ matrix.dataset }}_schema.html
+          data/**
         retention-days: 7
         if-no-files-found: warn
 
@@ -254,6 +255,7 @@ jobs:
         path: |
           notebooks/02_pydantic_models/${{ matrix.dataset }}_pydantic.ipynb
           docs/notebooks/02_pydantic_models/${{ matrix.dataset }}_pydantic.html
+          data/**
         retention-days: 7
         if-no-files-found: warn
 
