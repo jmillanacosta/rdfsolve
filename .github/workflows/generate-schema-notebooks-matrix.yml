@@ -146,7 +146,7 @@ jobs:
         path: |
           notebooks/01_schema_extraction/${{ matrix.dataset }}_schema.ipynb
           docs/notebooks/01_schema_extraction/${{ matrix.dataset }}_schema.html
-          data/**
+          data/schema_extraction/${{ matrix.dataset }}/**
         retention-days: 7
         if-no-files-found: warn
 
@@ -255,7 +255,7 @@ jobs:
         path: |
           notebooks/02_pydantic_models/${{ matrix.dataset }}_pydantic.ipynb
           docs/notebooks/02_pydantic_models/${{ matrix.dataset }}_pydantic.html
-          data/**
+          data/schema_extraction/${{ matrix.dataset }}/**
         retention-days: 7
         if-no-files-found: warn
 
@@ -299,6 +299,7 @@ jobs:
         mkdir -p docs/notebooks/02_pydantic_models
         mkdir -p notebooks/01_schema_extraction/
         mkdir -p notebooks/02_pydantic_models/
+        mkdir -p data/schema_extraction/
         
         # Check if artifacts directory exists and has content
         if [ ! -d "artifacts" ] || [ -z "$(ls -A artifacts/ 2>/dev/null)" ]; then
@@ -306,15 +307,12 @@ jobs:
           echo "This might happen if all matrix jobs failed"
           
           # Create a basic error report
-          cat > docs/notebooks/schema_extraction/error_report.html << 'EOF'
+          cat > docs/notebooks/01_schema_extraction/error_report.html << 'EOF'
         <!DOCTYPE html>
         <html>
         <head>
             <title>Matrix Workflow Error</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .error { color: #d32f2f; background: #ffebee; padding: 20px; border-radius: 4px; }
-            </style>
+
         </head>
         <body>
             <h1>Matrix Workflow Error</h1>
@@ -327,7 +325,7 @@ jobs:
         </html>
         EOF
         else
-          # Safely collect notebooks and HTML files
+          # Safely collect notebooks, HTML files, and data files
           echo "Collecting artifacts from matrix jobs..."
           
           # Count available artifacts first
@@ -335,9 +333,11 @@ jobs:
           schema_html=$(find artifacts/ -name "*_schema.html" 2>/dev/null | wc -l)
           pydantic_notebooks=$(find artifacts/ -name "*_pydantic.ipynb" 2>/dev/null | wc -l)
           pydantic_html=$(find artifacts/ -name "*_pydantic.html" 2>/dev/null | wc -l)
+          data_dirs=$(find artifacts/ -type d -path "*/data/schema_extraction/*" 2>/dev/null | wc -l)
           
           echo "Found artifacts: $schema_notebooks schema notebooks, $schema_html schema HTML files"
           echo "Found artifacts: $pydantic_notebooks pydantic notebooks, $pydantic_html pydantic HTML files"
+          echo "Found artifacts: $data_dirs data directories"
           
           # Copy files with error handling
           if [ "$schema_notebooks" -gt 0 ]; then
@@ -355,6 +355,20 @@ jobs:
           if [ "$pydantic_html" -gt 0 ]; then
             find artifacts/ -name "*_pydantic.html" -exec cp {} docs/notebooks/02_pydantic_models/ \; 2>/dev/null || echo "Some pydantic HTML copies failed"
           fi
+          
+          # Copy data files from artifacts
+          if [ "$data_dirs" -gt 0 ]; then
+            echo "Copying data files from artifacts..."
+            find artifacts/ -path "*/data/schema_extraction/*" -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) -exec bash -c '
+              file="$1"
+              relative_path="${file#*/data/schema_extraction/}"
+              dataset_name=$(echo "$relative_path" | cut -d/ -f1)
+              filename=$(basename "$relative_path")
+              mkdir -p "data/schema_extraction/$dataset_name"
+              cp "$file" "data/schema_extraction/$dataset_name/$filename"
+              echo "Copied: $filename to data/schema_extraction/$dataset_name/"
+            ' _ {} \; 2>/dev/null || echo "Some data file copies failed"
+          fi
         fi
         
         # Final count of collected files
@@ -362,12 +376,14 @@ jobs:
         final_schema_html=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
         final_pydantic_notebooks=$(find notebooks/02_pydantic_models/ -name "*_pydantic.ipynb" 2>/dev/null | wc -l)
         final_pydantic_html=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
+        final_data_files=$(find data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) 2>/dev/null | wc -l)
         
         echo "Final collection results:"
         echo "  Schema notebooks: $final_schema_notebooks"
         echo "  Schema HTML files: $final_schema_html"
         echo "  Pydantic notebooks: $final_pydantic_notebooks"
         echo "  Pydantic HTML files: $final_pydantic_html"
+        echo "  Data files: $final_data_files"
 
     - name: Generate results data
       run: |
@@ -382,7 +398,7 @@ jobs:
         pydantic_failed_count=$((total_pydantic_files - pydantic_success_count))
         
         # Count generated data files
-        data_files_count=$(find data/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) 2>/dev/null | wc -l)
+        data_files_count=$(find data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) 2>/dev/null | wc -l)
         
         # Generate JSON data for JavaScript consumption
         cat > docs/results.json << EOF
@@ -432,39 +448,39 @@ jobs:
             
             # Check for data files
             data_first=true
-            if [ -f "data/$dataset_name/${dataset_name}_schema.jsonld" ]; then
+            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_schema.jsonld" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
-              echo "        \"jsonld\": \"../data/$dataset_name/${dataset_name}_schema.jsonld\"" >> docs/results.json
+              echo "        \"jsonld\": \"../data/schema_extraction/$dataset_name/${dataset_name}_schema.jsonld\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/$dataset_name/${dataset_name}_linkml_schema.yaml" ]; then
+            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_linkml_schema.yaml" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
-              echo "        \"linkml\": \"../data/$dataset_name/${dataset_name}_linkml_schema.yaml\"" >> docs/results.json
+              echo "        \"linkml\": \"../data/schema_extraction/$dataset_name/${dataset_name}_linkml_schema.yaml\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/$dataset_name/${dataset_name}_pattern_coverage.csv" ]; then
+            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_pattern_coverage.csv" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
-              echo "        \"coverage\": \"../data/$dataset_name/${dataset_name}_pattern_coverage.csv\"" >> docs/results.json
+              echo "        \"coverage\": \"../data/schema_extraction/$dataset_name/${dataset_name}_pattern_coverage.csv\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/$dataset_name/${dataset_name}_generated_void.ttl" ]; then
+            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_generated_void.ttl" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
-              echo "        \"void\": \"../data/$dataset_name/${dataset_name}_generated_void.ttl\"" >> docs/results.json
+              echo "        \"void\": \"../data/schema_extraction/$dataset_name/${dataset_name}_generated_void.ttl\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/$dataset_name/${dataset_name}_instances.parquet" ]; then
+            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_instances.parquet" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
-              echo "        \"instances\": \"../data/$dataset_name/${dataset_name}_instances.parquet\"" >> docs/results.json
+              echo "        \"instances\": \"../data/schema_extraction/$dataset_name/${dataset_name}_instances.parquet\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/$dataset_name/${dataset_name}_schema.nq" ]; then
+            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_schema.nq" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
-              echo "        \"nquads\": \"../data/$dataset_name/${dataset_name}_schema.nq\"" >> docs/results.json
+              echo "        \"nquads\": \"../data/schema_extraction/$dataset_name/${dataset_name}_schema.nq\"" >> docs/results.json
               data_first=false
             fi
             
@@ -546,7 +562,7 @@ jobs:
         # Count results for commit message
         schema_files=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
         pydantic_files=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
-        data_files=$(find data/ -name "*.json*" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" 2>/dev/null | wc -l)
+        data_files=$(find data/schema_extraction/ -name "*.json*" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" 2>/dev/null | wc -l)
         
         # Create commit message with details
         commit_msg="Matrix workflow: Generate schema notebooks, reports, and data files
