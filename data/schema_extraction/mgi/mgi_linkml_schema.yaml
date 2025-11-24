@@ -1,0 +1,956 @@
+name: mgi_schema
+description: LinkML schema for mgi generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+prefixes:
+  mgi_schema:
+    prefix_prefix: mgi_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  bio2rdf:
+    prefix_prefix: bio2rdf
+    prefix_reference: http://bio2rdf.org/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  Cluster:
+    prefix_prefix: Cluster
+    prefix_reference: http://bio2rdf.org/mgi_vocabulary:Complex/Cluster/
+  dcat:
+    prefix_prefix: dcat
+    prefix_reference: http://www.w3.org/ns/dcat#
+  mgi_vocabu:
+    prefix_prefix: mgi_vocabu
+    prefix_reference: http://bio2rdf.org/mgi_vocabulary:BAC/
+  void:
+    prefix_prefix: void
+    prefix_reference: http://rdfs.org/ns/void#
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  ncit:
+    prefix_prefix: ncit
+    prefix_reference: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#
+default_prefix: mgi_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  dcat_distribution:
+    name: dcat_distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/dcat_distribution
+    description: Property dcat:distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/dcat_distribution
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/dcat_distribution
+    owner: dcterms_Dataset
+    domain_of:
+    - dcterms_Dataset
+    range: dcat_Distribution
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_disease:
+    name: bio2rdf_mgi_vocabulary_disease
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_disease
+    description: Property bio2rdf:mgi_vocabulary:disease
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_disease
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_disease
+    owner: bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association
+    - bio2rdf_mgi_vocabulary_Allele_Disease_Association
+    range: bio2rdf_omim_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_phenotype:
+    name: bio2rdf_mgi_vocabulary_phenotype
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_phenotype
+    description: Property bio2rdf:mgi_vocabulary:phenotype
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_phenotype
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_phenotype
+    owner: bio2rdf_mgi_vocabulary_Genotype
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Genotype
+    range: bio2rdf_mp_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_refseq_transcript:
+    name: bio2rdf_mgi_vocabulary_x_refseq_transcript
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_refseq_transcript
+    description: Property bio2rdf:mgi_vocabulary:x-refseq-transcript
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_refseq_transcript
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_refseq_transcript
+    owner: bio2rdf_mgi_vocabulary_DNA_Segment
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Marker
+    - Cluster_Region
+    - bio2rdf_mgi_vocabulary_Gene
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    range: bio2rdf_refseq_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/rdf_type
+    owner: owl_Object_Property
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_omim_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Other_Genome_Feature
+    - bio2rdf_mgi_vocabulary_Marker
+    - bio2rdf_unigene_vocabulary_Resource
+    - Cluster_Region
+    - bio2rdf_mgi_vocabulary_Allele
+    - owl_Datatype_Property
+    - bio2rdf_trembl_vocabulary_Resource
+    - bio2rdf_refseq_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Gene
+    - owl_Class
+    - owl_Object_Property
+    - bio2rdf_vega_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Genotype
+    - bio2rdf_ensembl_vocabulary_Resource
+    - bio2rdf_genbank_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Transgene
+    - bio2rdf_mgi_vocabulary_Strain
+    - bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association
+    - bio2rdf_mp_vocabulary_Resource
+    - dcat_Distribution
+    - bio2rdf_mgi_vocabulary_Allele_Disease_Association
+    - bio2rdf_pubmed_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    - bio2rdf_mgi_vocabulary_Cytogenetic_Marker
+    - bio2rdf_uniprot_vocabulary_Resource
+    - mgi_vocabu_YAC_end
+    range: rdfs_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_vega_transcript:
+    name: bio2rdf_mgi_vocabulary_x_vega_transcript
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_vega_transcript
+    description: Property bio2rdf:mgi_vocabulary:x-vega-transcript
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_vega_transcript
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_vega_transcript
+    owner: bio2rdf_mgi_vocabulary_DNA_Segment
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Marker
+    - bio2rdf_mgi_vocabulary_Gene
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    range: bio2rdf_vega_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_ensembl_transcript:
+    name: bio2rdf_mgi_vocabulary_x_ensembl_transcript
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_ensembl_transcript
+    description: Property bio2rdf:mgi_vocabulary:x-ensembl-transcript
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_ensembl_transcript
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_ensembl_transcript
+    owner: bio2rdf_mgi_vocabulary_DNA_Segment
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Marker
+    - bio2rdf_mgi_vocabulary_Gene
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    range: bio2rdf_ensembl_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_marker:
+    name: bio2rdf_mgi_vocabulary_marker
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_marker
+    description: Property bio2rdf:mgi_vocabulary:marker
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_marker
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_marker
+    owner: bio2rdf_mgi_vocabulary_Genotype
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Genotype
+    range: bio2rdf_mgi_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_bio_2rdf_vocabulary_x_identifiers_org:
+    name: bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    description: Property bio2rdf:bio2rdf_vocabulary:x-identifiers.org
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    owner: bio2rdf_pubmed_vocabulary_Resource
+    domain_of:
+    - bio2rdf_omim_vocabulary_Resource
+    - bio2rdf_pubmed_vocabulary_Resource
+    range: ncit_C_47902
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_pubmed:
+    name: bio2rdf_mgi_vocabulary_x_pubmed
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_pubmed
+    description: Property bio2rdf:mgi_vocabulary:x-pubmed
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_pubmed
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_pubmed
+    owner: bio2rdf_mgi_vocabulary_Strain
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Allele
+    - bio2rdf_mgi_vocabulary_Genotype
+    - bio2rdf_mgi_vocabulary_Strain
+    - bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association
+    - bio2rdf_mgi_vocabulary_Allele_Disease_Association
+    range: bio2rdf_pubmed_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_uniprot:
+    name: bio2rdf_mgi_vocabulary_x_uniprot
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_uniprot
+    description: Property bio2rdf:mgi_vocabulary:x-uniprot
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_uniprot
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_uniprot
+    owner: Cluster_Region
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Other_Genome_Feature
+    - bio2rdf_mgi_vocabulary_Marker
+    - Cluster_Region
+    - bio2rdf_mgi_vocabulary_Gene
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    range: bio2rdf_uniprot_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  void_in_Dataset:
+    name: void_in_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/void_in_Dataset
+    description: Property void:inDataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/void_in_Dataset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/void_in_Dataset
+    owner: owl_Object_Property
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_omim_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Other_Genome_Feature
+    - bio2rdf_mgi_vocabulary_Marker
+    - bio2rdf_unigene_vocabulary_Resource
+    - Cluster_Region
+    - bio2rdf_mgi_vocabulary_Allele
+    - owl_Datatype_Property
+    - bio2rdf_trembl_vocabulary_Resource
+    - bio2rdf_refseq_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Gene
+    - owl_Class
+    - owl_Object_Property
+    - bio2rdf_vega_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Genotype
+    - bio2rdf_ensembl_vocabulary_Resource
+    - bio2rdf_genbank_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Transgene
+    - bio2rdf_mgi_vocabulary_Strain
+    - bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association
+    - bio2rdf_mp_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Allele_Disease_Association
+    - bio2rdf_pubmed_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    - bio2rdf_mgi_vocabulary_Cytogenetic_Marker
+    - bio2rdf_uniprot_vocabulary_Resource
+    - mgi_vocabu_YAC_end
+    range: dcterms_Dataset
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_refseq_protein:
+    name: bio2rdf_mgi_vocabulary_x_refseq_protein
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_refseq_protein
+    description: Property bio2rdf:mgi_vocabulary:x-refseq-protein
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_refseq_protein
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_refseq_protein
+    owner: bio2rdf_mgi_vocabulary_DNA_Segment
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Marker
+    - Cluster_Region
+    - bio2rdf_mgi_vocabulary_Gene
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    range: bio2rdf_mi_0326
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_allele:
+    name: bio2rdf_mgi_vocabulary_allele
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_allele
+    description: Property bio2rdf:mgi_vocabulary:allele
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_allele
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_allele
+    owner: bio2rdf_mgi_vocabulary_Genotype
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Genotype
+    - bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association
+    - bio2rdf_mgi_vocabulary_Allele_Disease_Association
+    range: bio2rdf_mgi_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_unigene:
+    name: bio2rdf_mgi_vocabulary_x_unigene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_unigene
+    description: Property bio2rdf:mgi_vocabulary:x-unigene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_unigene
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_unigene
+    owner: bio2rdf_mgi_vocabulary_DNA_Segment
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Marker
+    - Cluster_Region
+    - bio2rdf_mgi_vocabulary_Gene
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    range: bio2rdf_unigene_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_strain_type:
+    name: bio2rdf_mgi_vocabulary_strain_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_strain_type
+    description: Property bio2rdf:mgi_vocabulary:strain-type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_strain_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_strain_type
+    owner: bio2rdf_mgi_vocabulary_Strain
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Allele
+    - bio2rdf_mgi_vocabulary_Strain
+    range: bio2rdf_mgi_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  dcterms_source:
+    name: dcterms_source
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/dcterms_source
+    description: Property dcterms:source
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/dcterms_source
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/dcterms_source
+    owner: dcat_Distribution
+    domain_of:
+    - dcat_Distribution
+    range: dcat_Distribution
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_ensembl_protein:
+    name: bio2rdf_mgi_vocabulary_x_ensembl_protein
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_ensembl_protein
+    description: Property bio2rdf:mgi_vocabulary:x-ensembl-protein
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_ensembl_protein
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_ensembl_protein
+    owner: bio2rdf_mgi_vocabulary_DNA_Segment
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Marker
+    - bio2rdf_mgi_vocabulary_Gene
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    range: bio2rdf_ensembl_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_trembl:
+    name: bio2rdf_mgi_vocabulary_x_trembl
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_trembl
+    description: Property bio2rdf:mgi_vocabulary:x-trembl
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_trembl
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_trembl
+    owner: bio2rdf_mgi_vocabulary_DNA_Segment
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Other_Genome_Feature
+    - bio2rdf_mgi_vocabulary_Marker
+    - Cluster_Region
+    - bio2rdf_mgi_vocabulary_Gene
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    range: bio2rdf_trembl_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_genbank:
+    name: bio2rdf_mgi_vocabulary_x_genbank
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_genbank
+    description: Property bio2rdf:mgi_vocabulary:x-genbank
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_genbank
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_genbank
+    owner: bio2rdf_mgi_vocabulary_DNA_Segment
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Other_Genome_Feature
+    - bio2rdf_mgi_vocabulary_Marker
+    - Cluster_Region
+    - bio2rdf_mgi_vocabulary_Gene
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Transgene
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    - bio2rdf_mgi_vocabulary_Cytogenetic_Marker
+    - mgi_vocabu_YAC_end
+    range: bio2rdf_genbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_mgi_vocabulary_x_vega_protein:
+    name: bio2rdf_mgi_vocabulary_x_vega_protein
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_vega_protein
+    description: Property bio2rdf:mgi_vocabulary:x-vega-protein
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_vega_protein
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_x_vega_protein
+    owner: bio2rdf_mgi_vocabulary_DNA_Segment
+    domain_of:
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Marker
+    - bio2rdf_mgi_vocabulary_Gene
+    - bio2rdf_mgi_vocabulary_DNA_Segment
+    - bio2rdf_mgi_vocabulary_Pseudogene
+    range: bio2rdf_vega_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+classes:
+  bio2rdf_mgi_vocabulary_Other_Genome_Feature:
+    name: bio2rdf_mgi_vocabulary_Other_Genome_Feature
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyOtherGenomeFeature
+    description: Class representing bio2rdf_mgi_vocabulary_Other_Genome_Feature
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Other_Genome_Feature
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_genbank
+    - bio2rdf_mgi_vocabulary_x_trembl
+    - bio2rdf_mgi_vocabulary_x_uniprot
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Other_Genome_Feature
+  bio2rdf_mgi_vocabulary_Marker:
+    name: bio2rdf_mgi_vocabulary_Marker
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyMarker
+    description: Class representing bio2rdf_mgi_vocabulary_Marker
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Marker
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_ensembl_protein
+    - bio2rdf_mgi_vocabulary_x_genbank
+    - bio2rdf_mgi_vocabulary_x_vega_transcript
+    - bio2rdf_mgi_vocabulary_x_refseq_protein
+    - bio2rdf_mgi_vocabulary_x_refseq_transcript
+    - bio2rdf_mgi_vocabulary_x_trembl
+    - bio2rdf_mgi_vocabulary_x_uniprot
+    - bio2rdf_mgi_vocabulary_x_vega_protein
+    - bio2rdf_mgi_vocabulary_x_ensembl_transcript
+    - bio2rdf_mgi_vocabulary_x_unigene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Marker
+  dcat_Distribution:
+    name: dcat_Distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/DcatDistribution
+    description: Class representing dcat_Distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/dcat_Distribution
+    slots:
+    - rdf_type
+    - dcterms_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/dcat_Distribution
+  bio2rdf_clinicaltrials_vocabulary_Reference:
+    name: bio2rdf_clinicaltrials_vocabulary_Reference
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfClinicaltrialsVocabularyReference
+    description: Class representing bio2rdf_clinicaltrials_vocabulary_Reference
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_clinicaltrials_vocabulary_Reference
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_clinicaltrials_vocabulary_Reference
+  bio2rdf_genbank_vocabulary_Resource:
+    name: bio2rdf_genbank_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfGenbankVocabularyResource
+    description: Class representing bio2rdf_genbank_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_genbank_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_genbank_vocabulary_Resource
+  bio2rdf_mgi_vocabulary_Allele_Disease_Association:
+    name: bio2rdf_mgi_vocabulary_Allele_Disease_Association
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyAlleleDiseaseAssociation
+    description: Class representing bio2rdf_mgi_vocabulary_Allele_Disease_Association
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Allele_Disease_Association
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_disease
+    - bio2rdf_mgi_vocabulary_allele
+    - bio2rdf_mgi_vocabulary_x_pubmed
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Allele_Disease_Association
+  bio2rdf_omim_vocabulary_Resource:
+    name: bio2rdf_omim_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfOmimVocabularyResource
+    description: Class representing bio2rdf_omim_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_omim_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_omim_vocabulary_Resource
+  mgi_vocabu_YAC_end:
+    name: mgi_vocabu_YAC_end
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/MgiVocabuYACEnd
+    description: Class representing mgi_vocabu_YAC_end
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/mgi_vocabu_YAC_end
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_genbank
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/mgi_vocabu_YAC_end
+  bio2rdf_mgi_vocabulary_Resource:
+    name: bio2rdf_mgi_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyResource
+    description: Class representing bio2rdf_mgi_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_ensembl_protein
+    - bio2rdf_mgi_vocabulary_x_genbank
+    - bio2rdf_mgi_vocabulary_x_vega_transcript
+    - bio2rdf_mgi_vocabulary_disease
+    - bio2rdf_mgi_vocabulary_allele
+    - bio2rdf_mgi_vocabulary_phenotype
+    - bio2rdf_mgi_vocabulary_x_pubmed
+    - bio2rdf_mgi_vocabulary_x_refseq_protein
+    - bio2rdf_mgi_vocabulary_x_refseq_transcript
+    - bio2rdf_mgi_vocabulary_x_trembl
+    - bio2rdf_mgi_vocabulary_x_uniprot
+    - bio2rdf_mgi_vocabulary_x_vega_protein
+    - bio2rdf_mgi_vocabulary_marker
+    - bio2rdf_mgi_vocabulary_x_ensembl_transcript
+    - bio2rdf_mgi_vocabulary_x_unigene
+    - bio2rdf_mgi_vocabulary_strain_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Resource
+  bio2rdf_refseq_vocabulary_Resource:
+    name: bio2rdf_refseq_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfRefseqVocabularyResource
+    description: Class representing bio2rdf_refseq_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_refseq_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_refseq_vocabulary_Resource
+  bio2rdf_pubmed_vocabulary_Resource:
+    name: bio2rdf_pubmed_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfPubmedVocabularyResource
+    description: Class representing bio2rdf_pubmed_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_pubmed_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_pubmed_vocabulary_Resource
+  ncit_C_7057:
+    name: ncit_C_7057
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/NcitC7057
+    description: Class representing ncit_C_7057
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/ncit_C_7057
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/ncit_C_7057
+  owl_Datatype_Property:
+    name: owl_Datatype_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/OwlDatatypeProperty
+    description: Class representing owl_Datatype_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/owl_Datatype_Property
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/owl_Datatype_Property
+  rdfs_Class:
+    name: rdfs_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/RdfsClass
+    description: Class representing rdfs_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/rdfs_Class
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/rdfs_Class
+  bio2rdf_goa_vocabulary_GO_Annotation:
+    name: bio2rdf_goa_vocabulary_GO_Annotation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfGoaVocabularyGOAnnotation
+    description: Class representing bio2rdf_goa_vocabulary_GO_Annotation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_goa_vocabulary_GO_Annotation
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_goa_vocabulary_GO_Annotation
+  bio2rdf_mi_0326:
+    name: bio2rdf_mi_0326
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMi0326
+    description: Class representing bio2rdf_mi_0326
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mi_0326
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mi_0326
+  bio2rdf_mgi_vocabulary_Transgene:
+    name: bio2rdf_mgi_vocabulary_Transgene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyTransgene
+    description: Class representing bio2rdf_mgi_vocabulary_Transgene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Transgene
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_genbank
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Transgene
+  bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association:
+    name: bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyAlleleDiseaseNonAssociation
+    description: Class representing bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_disease
+    - bio2rdf_mgi_vocabulary_allele
+    - bio2rdf_mgi_vocabulary_x_pubmed
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Allele_Disease_Non_Association
+  bio2rdf_mgi_vocabulary_Allele:
+    name: bio2rdf_mgi_vocabulary_Allele
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyAllele
+    description: Class representing bio2rdf_mgi_vocabulary_Allele
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Allele
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_pubmed
+    - bio2rdf_mgi_vocabulary_strain_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Allele
+  bio2rdf_mgi_vocabulary_Gene:
+    name: bio2rdf_mgi_vocabulary_Gene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyGene
+    description: Class representing bio2rdf_mgi_vocabulary_Gene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Gene
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_ensembl_protein
+    - bio2rdf_mgi_vocabulary_x_genbank
+    - bio2rdf_mgi_vocabulary_x_vega_transcript
+    - bio2rdf_mgi_vocabulary_x_refseq_protein
+    - bio2rdf_mgi_vocabulary_x_refseq_transcript
+    - bio2rdf_mgi_vocabulary_x_trembl
+    - bio2rdf_mgi_vocabulary_x_uniprot
+    - bio2rdf_mgi_vocabulary_x_vega_protein
+    - bio2rdf_mgi_vocabulary_x_ensembl_transcript
+    - bio2rdf_mgi_vocabulary_x_unigene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Gene
+  bio2rdf_mgi_vocabulary_Cytogenetic_Marker:
+    name: bio2rdf_mgi_vocabulary_Cytogenetic_Marker
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyCytogeneticMarker
+    description: Class representing bio2rdf_mgi_vocabulary_Cytogenetic_Marker
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Cytogenetic_Marker
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_genbank
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Cytogenetic_Marker
+  dcterms_Dataset:
+    name: dcterms_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/DctermsDataset
+    description: Class representing dcterms_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/dcterms_Dataset
+    slots:
+    - dcat_distribution
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/dcterms_Dataset
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/owl_Class
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/owl_Class
+  bio2rdf_vega_vocabulary_Resource:
+    name: bio2rdf_vega_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfVegaVocabularyResource
+    description: Class representing bio2rdf_vega_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_vega_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_vega_vocabulary_Resource
+  bio2rdf_mgi_vocabulary_Genotype:
+    name: bio2rdf_mgi_vocabulary_Genotype
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyGenotype
+    description: Class representing bio2rdf_mgi_vocabulary_Genotype
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Genotype
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_allele
+    - bio2rdf_mgi_vocabulary_phenotype
+    - bio2rdf_mgi_vocabulary_x_pubmed
+    - bio2rdf_mgi_vocabulary_marker
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Genotype
+  bio2rdf_omim_vocabulary_Predominantly_phenotypes:
+    name: bio2rdf_omim_vocabulary_Predominantly_phenotypes
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfOmimVocabularyPredominantlyPhenotypes
+    description: Class representing bio2rdf_omim_vocabulary_Predominantly_phenotypes
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_omim_vocabulary_Predominantly_phenotypes
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_omim_vocabulary_Predominantly_phenotypes
+  bio2rdf_mgi_vocabulary_Pseudogene:
+    name: bio2rdf_mgi_vocabulary_Pseudogene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyPseudogene
+    description: Class representing bio2rdf_mgi_vocabulary_Pseudogene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Pseudogene
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_ensembl_protein
+    - bio2rdf_mgi_vocabulary_x_genbank
+    - bio2rdf_mgi_vocabulary_x_vega_transcript
+    - bio2rdf_mgi_vocabulary_x_refseq_protein
+    - bio2rdf_mgi_vocabulary_x_refseq_transcript
+    - bio2rdf_mgi_vocabulary_x_trembl
+    - bio2rdf_mgi_vocabulary_x_uniprot
+    - bio2rdf_mgi_vocabulary_x_vega_protein
+    - bio2rdf_mgi_vocabulary_x_ensembl_transcript
+    - bio2rdf_mgi_vocabulary_x_unigene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Pseudogene
+  bio2rdf_ensembl_vocabulary_Resource:
+    name: bio2rdf_ensembl_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfEnsemblVocabularyResource
+    description: Class representing bio2rdf_ensembl_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_ensembl_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_ensembl_vocabulary_Resource
+  bio2rdf_trembl_vocabulary_Resource:
+    name: bio2rdf_trembl_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfTremblVocabularyResource
+    description: Class representing bio2rdf_trembl_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_trembl_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_trembl_vocabulary_Resource
+  ncit_C_47902:
+    name: ncit_C_47902
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/NcitC47902
+    description: Class representing ncit_C_47902
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/ncit_C_47902
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/ncit_C_47902
+  bio2rdf_mgi_vocabulary_Strain:
+    name: bio2rdf_mgi_vocabulary_Strain
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyStrain
+    description: Class representing bio2rdf_mgi_vocabulary_Strain
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Strain
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_pubmed
+    - bio2rdf_mgi_vocabulary_strain_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_Strain
+  Cluster_Region:
+    name: Cluster_Region
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/ClusterRegion
+    description: Class representing Cluster_Region
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Cluster_Region
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_genbank
+    - bio2rdf_mgi_vocabulary_x_refseq_protein
+    - bio2rdf_mgi_vocabulary_x_refseq_transcript
+    - bio2rdf_mgi_vocabulary_x_trembl
+    - bio2rdf_mgi_vocabulary_x_uniprot
+    - bio2rdf_mgi_vocabulary_x_unigene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Cluster_Region
+  rdfs_Resource:
+    name: rdfs_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/RdfsResource
+    description: Class representing rdfs_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/rdfs_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/rdfs_Resource
+  bio2rdf_unigene_vocabulary_Resource:
+    name: bio2rdf_unigene_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfUnigeneVocabularyResource
+    description: Class representing bio2rdf_unigene_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_unigene_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_unigene_vocabulary_Resource
+  bio2rdf_mp_vocabulary_Resource:
+    name: bio2rdf_mp_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMpVocabularyResource
+    description: Class representing bio2rdf_mp_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mp_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mp_vocabulary_Resource
+  bio2rdf_uniprot_vocabulary_Resource:
+    name: bio2rdf_uniprot_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfUniprotVocabularyResource
+    description: Class representing bio2rdf_uniprot_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_uniprot_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_uniprot_vocabulary_Resource
+  bio2rdf_mgi_vocabulary_DNA_Segment:
+    name: bio2rdf_mgi_vocabulary_DNA_Segment
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/Bio2rdfMgiVocabularyDNASegment
+    description: Class representing bio2rdf_mgi_vocabulary_DNA_Segment
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_DNA_Segment
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_mgi_vocabulary_x_ensembl_protein
+    - bio2rdf_mgi_vocabulary_x_genbank
+    - bio2rdf_mgi_vocabulary_x_vega_transcript
+    - bio2rdf_mgi_vocabulary_x_refseq_protein
+    - bio2rdf_mgi_vocabulary_x_refseq_transcript
+    - bio2rdf_mgi_vocabulary_x_trembl
+    - bio2rdf_mgi_vocabulary_x_vega_protein
+    - bio2rdf_mgi_vocabulary_x_ensembl_transcript
+    - bio2rdf_mgi_vocabulary_x_unigene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/bio2rdf_mgi_vocabulary_DNA_Segment
+  owl_Object_Property:
+    name: owl_Object_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/OwlObjectProperty
+    description: Class representing owl_Object_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mgi/linkml/owl_Object_Property
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mgi/linkml/owl_Object_Property
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T12:10:15'

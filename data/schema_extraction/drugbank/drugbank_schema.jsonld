@@ -1,0 +1,1260 @@
+{
+  "@context": {
+    "bio2rdf": "http://bio2rdf.org/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "void": "http://rdfs.org/ns/void#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#"
+  },
+  "@graph": [
+    {
+      "@id": "bio2rdf:atc_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:chebi_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Absorption",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Food-interaction",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Mechanism-of-action",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Manufacturer",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Physiological-Charge",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Source"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Salt",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Transporter-Relation",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:drugbank_vocabulary:transporter": {
+        "@id": "bio2rdf:drugbank_vocabulary:Enzyme"
+      },
+      "bio2rdf:drugbank_vocabulary:drug": {
+        "@id": "bio2rdf:drugbank_vocabulary:Small-molecule"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:SMILES",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Unit",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:International-brand",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Rule-of-Five",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:inchi_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:wikipedia_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:pubchem.substance_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ahfs_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Bioavailability",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Carrier",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:drugbank_vocabulary:x-genatlas": {
+        "@id": "bio2rdf:genatlas_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-genecards": {
+        "@id": "bio2rdf:genecards_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-uniprot": {
+        "@id": "bio2rdf:mi:0326"
+      },
+      "bio2rdf:drugbank_vocabulary:x-hgnc": [
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Gene-Symbol"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Category",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Drug-Drug-Interaction",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:H-Bond-Acceptor-Count",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Group",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Half-life",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:MDDR-Like-Rule",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Melting-Point",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Source"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Number-of-Rings",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:PKa-(strongest-acidic)",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Source"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Drug-Classification-Category",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Protein-binding",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Toxicity",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Clearance",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Enzyme-Relation",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:drug": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Drug"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Small-molecule"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:enzyme": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Enzyme"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Target"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Rotatable-Bond-Count",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:LogP",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Isoelectric-Point",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "owl:DatatypeProperty",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:genecards_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:bio2rdf_vocabulary:x-identifiers.org": {
+        "@id": "ncit:C16612"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:drugbank_vocabulary:x-pubchemcompound": {
+        "@id": "bio2rdf:pubchem.compound_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:brand": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:calculated-properties": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Bioavailability"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:IUPAC-Name"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Ghose-Filter"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Molecular-Formula"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:LogP"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Number-of-Rings"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Monoisotopic-Weight"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:PKa-(strongest-basic)"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:SMILES"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:category": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Category"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:dosage": {
+        "@id": "bio2rdf:drugbank_vocabulary:Dosage"
+      },
+      "bio2rdf:drugbank_vocabulary:experimental-properties": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Hydrophobicity"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:LogP"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:LogS"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Molecular-Formula"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Boiling-Point"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:food-interaction": {
+        "@id": "bio2rdf:drugbank_vocabulary:Food-interaction"
+      },
+      "bio2rdf:drugbank_vocabulary:half-life": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:ingredient": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:mixture": {
+        "@id": "bio2rdf:drugbank_vocabulary:Mixture"
+      },
+      "bio2rdf:drugbank_vocabulary:patent": {
+        "@id": "bio2rdf:uspto_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:reference": {
+        "@id": "bio2rdf:pubmed_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Source"
+      },
+      "bio2rdf:drugbank_vocabulary:target": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Enzyme"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:transporter": {
+        "@id": "bio2rdf:drugbank_vocabulary:Transporter"
+      },
+      "bio2rdf:drugbank_vocabulary:x-chebi": {
+        "@id": "bio2rdf:chebi_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-iuphar": {
+        "@id": "bio2rdf:iuphar_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-ndc": {
+        "@id": "bio2rdf:ndc_vocabulary:Package"
+      },
+      "bio2rdf:drugbank_vocabulary:x-uniprot": {
+        "@id": "bio2rdf:goa_vocabulary:GO-Annotation"
+      },
+      "bio2rdf:drugbank_vocabulary:drug-classification-category": {
+        "@id": "bio2rdf:drugbank_vocabulary:Drug-Classification-Category"
+      },
+      "bio2rdf:drugbank_vocabulary:enzyme": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Enzyme"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:mechanism-of-action": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:packager": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:pharmacodynamics": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:route-of-elimination": {
+        "@id": "bio2rdf:drugbank_vocabulary:Route-of-elimination"
+      },
+      "bio2rdf:drugbank_vocabulary:salt": {
+        "@id": "bio2rdf:drugbank_vocabulary:Salt"
+      },
+      "bio2rdf:drugbank_vocabulary:toxicity": {
+        "@id": "bio2rdf:drugbank_vocabulary:Toxicity"
+      },
+      "bio2rdf:drugbank_vocabulary:x-taxonomy": {
+        "@id": "bio2rdf:taxonomy_vocabulary:Resource"
+      },
+      "rdfs:subClassOf": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-bindingdb": {
+        "@id": "bio2rdf:bindingdb_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:carrier": {
+        "@id": "bio2rdf:drugbank_vocabulary:Carrier"
+      },
+      "bio2rdf:drugbank_vocabulary:x-pfam": {
+        "@id": "bio2rdf:pfam_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Ghose-Filter",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:H-Bond-Donor-Count",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:IUPAC-Name",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Source"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Hydrophobicity",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Name",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Pharmaceutical",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "owl:Class",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:subClassOf": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Dosage",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Source",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Carrier-Relation",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Monoisotopic-Weight",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Molecular-Formula",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:InChI",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "owl:ObjectProperty",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Synonym",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Traditional-IUPAC-Name",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Volume-of-distribution",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:gtp_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:iuphar_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:genbank_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Biotech",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:drugbank_vocabulary:x-pubchemsubstance": {
+        "@id": "bio2rdf:pubchem.substance_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:absorption": {
+        "@id": "bio2rdf:drugbank_vocabulary:Absorption"
+      },
+      "bio2rdf:drugbank_vocabulary:brand": {
+        "@id": "bio2rdf:drugbank_vocabulary:International-brand"
+      },
+      "bio2rdf:drugbank_vocabulary:experimental-properties": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Water-Solubility"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Boiling-Point"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:food-interaction": {
+        "@id": "bio2rdf:drugbank_vocabulary:Food-interaction"
+      },
+      "bio2rdf:drugbank_vocabulary:half-life": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Half-life"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:mixture": {
+        "@id": "bio2rdf:drugbank_vocabulary:Mixture"
+      },
+      "bio2rdf:drugbank_vocabulary:protein-binding": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Protein-binding"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:target": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Target"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:x-chebi": {
+        "@id": "bio2rdf:chebi_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-kegg": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Drug"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:x-uniprot": {
+        "@id": "bio2rdf:goa_vocabulary:GO-Annotation"
+      },
+      "bio2rdf:drugbank_vocabulary:affected-organism": {
+        "@id": "bio2rdf:drugbank_vocabulary:Affected-organism"
+      },
+      "bio2rdf:drugbank_vocabulary:clearance": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:mechanism-of-action": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Mechanism-of-action"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:pharmacodynamics": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:salt": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:toxicity": {
+        "@id": "bio2rdf:drugbank_vocabulary:Toxicity"
+      },
+      "bio2rdf:drugbank_vocabulary:x-cas": {
+        "@id": "bio2rdf:cas_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-pharmgkb": {
+        "@id": "bio2rdf:pharmgkb_vocabulary:Drug"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:InChIKey",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Source"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:PKa-(strongest-basic)",
+      "rdf:type": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:pfam_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:skos_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Mixture",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Affected-organism",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:hgnc_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:pubchem.compound_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Target",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:drugbank_vocabulary:x-genecards": {
+        "@id": "bio2rdf:genecards_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-uniprot": [
+        {
+          "@id": "bio2rdf:uniprot_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:mi:0326"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:x-gtp": {
+        "@id": "bio2rdf:gtp_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Transporter",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:drugbank_vocabulary:x-genbank": {
+        "@id": "bio2rdf:genbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-uniprot": {
+        "@id": "bio2rdf:goa_vocabulary:GO-Annotation"
+      },
+      "bio2rdf:drugbank_vocabulary:x-hgnc": {
+        "@id": "bio2rdf:hgnc_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-taxonomy": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:pubmed_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:chemspider_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Polar-Surface-Area-(PSA)",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:pdb_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Indication",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Drug",
+      "bio2rdf:drugbank_vocabulary:x-pubchemcompound": {
+        "@id": "bio2rdf:pubchem.compound_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-pubchemsubstance": {
+        "@id": "bio2rdf:pubchem.substance_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:brand": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:calculated-properties": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:H-Bond-Donor-Count"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:SMILES"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:PKa-(strongest-basic)"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Physiological-Charge"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Polar-Surface-Area-(PSA)"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:InChIKey"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:experimental-properties": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Water-Solubility"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Molecular-Formula"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Molecular-Weight"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Melting-Point"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:food-interaction": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:half-life": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:manufacturer": {
+        "@id": "bio2rdf:drugbank_vocabulary:Manufacturer"
+      },
+      "bio2rdf:drugbank_vocabulary:mixture": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:patent": {
+        "@id": "bio2rdf:drugbank_vocabulary:Patent"
+      },
+      "bio2rdf:drugbank_vocabulary:synonym": {
+        "@id": "bio2rdf:drugbank_vocabulary:Synonym"
+      },
+      "bio2rdf:drugbank_vocabulary:target": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:transporter": {
+        "@id": "bio2rdf:drugbank_vocabulary:Enzyme"
+      },
+      "bio2rdf:drugbank_vocabulary:x-genbank": {
+        "@id": "bio2rdf:genbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-ndc": {
+        "@id": "bio2rdf:ndc_vocabulary:Package"
+      },
+      "bio2rdf:drugbank_vocabulary:x-uniprot": {
+        "@id": "bio2rdf:goa_vocabulary:GO-Annotation"
+      },
+      "bio2rdf:drugbank_vocabulary:affected-organism": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Affected-organism"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:drug-classification-category": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:packager": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:pharmacodynamics": {
+        "@id": "bio2rdf:drugbank_vocabulary:Pharmacodynamics"
+      },
+      "bio2rdf:drugbank_vocabulary:product": {
+        "@id": "bio2rdf:drugbank_vocabulary:Pharmaceutical"
+      },
+      "bio2rdf:drugbank_vocabulary:x-ahfs": {
+        "@id": "bio2rdf:ahfs_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:carrier": {
+        "@id": "bio2rdf:drugbank_vocabulary:Transporter"
+      },
+      "bio2rdf:drugbank_vocabulary:group": {
+        "@id": "bio2rdf:drugbank_vocabulary:Group"
+      },
+      "bio2rdf:drugbank_vocabulary:x-wikipedia": {
+        "@id": "bio2rdf:wikipedia_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Small-molecule",
+      "bio2rdf:drugbank_vocabulary:x-pubchemcompound": {
+        "@id": "bio2rdf:pubchem.compound_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:absorption": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:calculated-properties": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:H-Bond-Donor-Count"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Traditional-IUPAC-Name"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:SMILES"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:PKa-(strongest-basic)"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Polar-Surface-Area-(PSA)"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:InChIKey"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:dosage": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:experimental-properties": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Water-Solubility"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:LogS"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:LogP"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:synonym": {
+        "@id": "bio2rdf:drugbank_vocabulary:Synonym"
+      },
+      "bio2rdf:drugbank_vocabulary:target": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Enzyme"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Transporter"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:transporter": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Target"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:x-iuphar": {
+        "@id": "bio2rdf:iuphar_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-kegg": {
+        "@id": "bio2rdf:kegg_vocabulary:Compound"
+      },
+      "bio2rdf:drugbank_vocabulary:x-ndc": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Package"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:x-chemspider": {
+        "@id": "bio2rdf:chemspider_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:affected-organism": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Affected-organism"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:clearance": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:enzyme": {
+        "@id": "bio2rdf:drugbank_vocabulary:Enzyme"
+      },
+      "bio2rdf:drugbank_vocabulary:product": {
+        "@id": "bio2rdf:drugbank_vocabulary:Pharmaceutical"
+      },
+      "bio2rdf:drugbank_vocabulary:route-of-elimination": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:carrier": {
+        "@id": "bio2rdf:drugbank_vocabulary:Carrier"
+      },
+      "bio2rdf:drugbank_vocabulary:ddi-interactor-in": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:group": {
+        "@id": "bio2rdf:drugbank_vocabulary:Group"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Target-Relation",
+      "bio2rdf:drugbank_vocabulary:reference": [
+        {
+          "@id": "bio2rdf:pubmed_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:clinicaltrials_vocabulary:Reference"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:target": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Enzyme"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Carrier"
+        }
+      ],
+      "bio2rdf:drugbank_vocabulary:transporter": {
+        "@id": "bio2rdf:drugbank_vocabulary:Target"
+      },
+      "bio2rdf:drugbank_vocabulary:enzyme": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Molecular-Weight",
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Source"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Water-Solubility",
+      "bio2rdf:drugbank_vocabulary:source": {
+        "@id": "bio2rdf:drugbank_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Enzyme",
+      "bio2rdf:drugbank_vocabulary:x-genatlas": {
+        "@id": "bio2rdf:genatlas_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-genecards": {
+        "@id": "bio2rdf:genecards_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-uniprot": {
+        "@id": "bio2rdf:uniprot_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-gi": {
+        "@id": "bio2rdf:gi_vocabulary:Resource"
+      },
+      "bio2rdf:drugbank_vocabulary:x-hgnc": {
+        "@id": "bio2rdf:hgnc_vocabulary:Resource"
+      }
+    }
+  ]
+}

@@ -1,0 +1,537 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix nci: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#> .
+@prefix ns1: <http://bio2rdf.org/goa_resource:bio2rdf.dataset.goa.R3/void/> .
+@prefix ns101: <http://bio2rdf.org/intact_vocabulary:> .
+@prefix ns11: <http://bio2rdf.org/eco_vocabulary:> .
+@prefix ns14: <http://bio2rdf.org/irefindex_vocabulary:> .
+@prefix ns15: <http://bio2rdf.org/clinicaltrials_vocabulary:> .
+@prefix ns16: <http://bio2rdf.org/pubmed_vocabulary:> .
+@prefix ns17: <http://www.w3.org/ns/dcat#> .
+@prefix ns18: <http://bio2rdf.org/taxonomy_vocabulary:> .
+@prefix ns3: <http://ldf.fi/void-ext#> .
+@prefix ns41: <http://bio2rdf.org/go_vocabulary:> .
+@prefix ns71: <http://bio2rdf.org/goa_vocabulary:> .
+@prefix ns81: <http://bio2rdf.org/uniprot_vocabulary:> .
+@prefix ns9: <http://bio2rdf.org/rnacentral_vocabulary:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___bio2rdf_org_eco_vocabulary_Resource void:class ns11:Resource ;
+    void:entities 20 .
+
+ns1:class_partition_http___bio2rdf_org_go_vocabulary_Resource void:class ns41:Resource ;
+    void:entities 21890 .
+
+ns1:class_partition_http___bio2rdf_org_goa_vocabulary_GO_Annotation void:class ns71:GO-Annotation ;
+    void:entities 2842379 .
+
+ns1:class_partition_http___bio2rdf_org_goa_vocabulary_Resource void:class ns71:Resource ;
+    void:entities 2540778 .
+
+ns1:class_partition_http___bio2rdf_org_intact_vocabulary_Resource void:class ns101:Resource ;
+    void:entities 496 .
+
+ns1:class_partition_http___bio2rdf_org_pubmed_vocabulary_Resource void:class ns16:Resource ;
+    void:entities 105063 .
+
+ns1:class_partition_http___bio2rdf_org_rnacentral_vocabulary_Resource void:class ns9:Resource ;
+    void:entities 245 .
+
+ns1:class_partition_http___bio2rdf_org_taxonomy_vocabulary_Resource void:class ns18:Resource ;
+    void:entities 101 .
+
+ns1:class_partition_http___bio2rdf_org_uniprot_vocabulary_Resource void:class ns81:Resource ;
+    void:entities 300881 .
+
+ns1:class_partition_http___purl_org_dc_terms_Dataset void:class dcterms:Dataset ;
+    void:entities 2 .
+
+ns1:class_partition_http___www_w3_org_2000_01_rdf_schema_Resource void:class rdfs:Resource ;
+    void:entities 8 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Class void:class owl:Class ;
+    void:entities 4 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DatatypeProperty void:class owl:DatatypeProperty ;
+    void:entities 7 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_ObjectProperty void:class owl:ObjectProperty ;
+    void:entities 15 .
+
+ns1:class_partition_http___www_w3_org_ns_dcat_Distribution void:class ns17:Distribution ;
+    void:entities 26 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass nci:C17021 ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 14371 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_pubmed_vocabulary_Resource ns3:objectClass nci:C47902 ;
+    ns3:subjectClass ns16:Resource ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 7308 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass nci:C17021 ;
+    ns3:subjectClass ns81:Resource ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 14371 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_article_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns15:Reference,
+        ns14:Homopolymeric-Complex,
+        ns14:Multimeric-Complex,
+        ns14:Pairwise-Interaction,
+        <http://bio2rdf.org/mi:0914>,
+        ns16:Resource ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:article ;
+    void:triples 187,
+        1504,
+        2558,
+        7729,
+        9420,
+        1978544 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_article_http___bio2rdf_org_goa_vocabulary_Resource ns3:objectClass ns15:Reference,
+        ns14:Homopolymeric-Complex,
+        ns14:Multimeric-Complex,
+        ns14:Pairwise-Interaction,
+        <http://bio2rdf.org/mi:0914>,
+        ns16:Resource ;
+    ns3:subjectClass ns71:Resource ;
+    void:property ns71:article ;
+    void:triples 187,
+        1504,
+        2558,
+        7729,
+        9420,
+        1978544 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_component_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:component ;
+    void:triples 564632,
+        3701655 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_component_http___bio2rdf_org_intact_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns101:Resource ;
+    void:property ns71:component ;
+    void:triples 493,
+        2421 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_component_http___bio2rdf_org_rnacentral_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns9:Resource ;
+    void:property ns71:component ;
+    void:triples 301,
+        1987 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_component_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns81:Resource ;
+    void:property ns71:component ;
+    void:triples 563838,
+        3697247 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_evidence_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns11:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:evidence ;
+    void:triples 2540757,
+        7973556 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_evidence_http___bio2rdf_org_goa_vocabulary_Resource ns3:objectClass ns11:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:Resource ;
+    void:property ns71:evidence ;
+    void:triples 2540757,
+        7973556 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_function_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:function ;
+    void:triples 563569,
+        3767665 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_function_http___bio2rdf_org_intact_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns101:Resource ;
+    void:property ns71:function ;
+    void:triples 678,
+        4533 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_function_http___bio2rdf_org_rnacentral_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns9:Resource ;
+    void:property ns71:function ;
+    void:triples 249,
+        1117 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_function_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns81:Resource ;
+    void:property ns71:function ;
+    void:triples 562642,
+        3762015 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_go_annotation_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns71:GO-Annotation,
+        ns71:Resource ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:go-annotation ;
+    void:triples 2540757 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_go_annotation_http___bio2rdf_org_intact_vocabulary_Resource ns3:objectClass ns71:GO-Annotation,
+        ns71:Resource ;
+    ns3:subjectClass ns101:Resource ;
+    void:property ns71:go-annotation ;
+    void:triples 2406 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_go_annotation_http___bio2rdf_org_rnacentral_vocabulary_Resource ns3:objectClass ns71:GO-Annotation,
+        ns71:Resource ;
+    ns3:subjectClass ns9:Resource ;
+    void:property ns71:go-annotation ;
+    void:triples 1294 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_go_annotation_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass ns71:GO-Annotation,
+        ns71:Resource ;
+    ns3:subjectClass ns81:Resource ;
+    void:property ns71:go-annotation ;
+    void:triples 2537057 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_go_category_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns71:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:go-category ;
+    void:triples 2540757 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_go_category_http___bio2rdf_org_goa_vocabulary_Resource ns3:objectClass ns71:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:Resource ;
+    void:property ns71:go-category ;
+    void:triples 2540757 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_go_term_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:go-term ;
+    void:triples 2540757,
+        16084216 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_go_term_http___bio2rdf_org_goa_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:Resource ;
+    void:property ns71:go-term ;
+    void:triples 2540757,
+        16084216 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_not_has_function_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:not-has-function ;
+    void:triples 3196,
+        21090 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_not_has_function_http___bio2rdf_org_intact_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns101:Resource ;
+    void:property ns71:not-has-function ;
+    void:triples 1,
+        5 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_not_has_function_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns81:Resource ;
+    void:property ns71:not-has-function ;
+    void:triples 3195,
+        21085 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_not_in_component_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:not-in-component ;
+    void:triples 2375,
+        15883 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_not_in_component_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns81:Resource ;
+    void:property ns71:not-in-component ;
+    void:triples 2375,
+        15883 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_not_in_process_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:not-in-process ;
+    void:triples 4000,
+        24277 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_not_in_process_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns81:Resource ;
+    void:property ns71:not-in-process ;
+    void:triples 4000,
+        24277 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_process_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:process ;
+    void:triples 1049858,
+        6228030 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_process_http___bio2rdf_org_intact_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns101:Resource ;
+    void:property ns71:process ;
+    void:triples 1065,
+        6498 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_process_http___bio2rdf_org_rnacentral_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns9:Resource ;
+    void:property ns71:process ;
+    void:triples 426,
+        2449 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_process_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass ns41:Resource,
+        owl:Class ;
+    ns3:subjectClass ns81:Resource ;
+    void:property ns71:process ;
+    void:triples 1048367,
+        6219083 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_target_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns71:GO-Annotation,
+        ns101:Resource,
+        <http://bio2rdf.org/mi:0326>,
+        ns9:Resource,
+        ns81:Resource ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:target ;
+    void:triples 1294,
+        2440,
+        784843,
+        2540757,
+        8300775 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_target_http___bio2rdf_org_goa_vocabulary_Resource ns3:objectClass ns71:GO-Annotation,
+        ns101:Resource,
+        <http://bio2rdf.org/mi:0326>,
+        ns9:Resource,
+        ns81:Resource ;
+    ns3:subjectClass ns71:Resource ;
+    void:property ns71:target ;
+    void:triples 1294,
+        2440,
+        784843,
+        2540757,
+        8300775 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_x_taxonomy_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns18:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property ns71:x-taxonomy ;
+    void:triples 301615,
+        1954502 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_x_taxonomy_http___bio2rdf_org_intact_vocabulary_Resource ns3:objectClass ns18:Resource,
+        owl:Class ;
+    ns3:subjectClass ns101:Resource ;
+    void:property ns71:x-taxonomy ;
+    void:triples 496,
+        2748 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_x_taxonomy_http___bio2rdf_org_rnacentral_vocabulary_Resource ns3:objectClass ns18:Resource,
+        owl:Class ;
+    ns3:subjectClass ns9:Resource ;
+    void:property ns71:x-taxonomy ;
+    void:triples 245,
+        1203 .
+
+ns1:property_partition_http___bio2rdf_org_goa_vocabulary_x_taxonomy_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass ns18:Resource,
+        owl:Class ;
+    ns3:subjectClass ns81:Resource ;
+    void:property ns71:x-taxonomy ;
+    void:triples 300874,
+        1950551 .
+
+ns1:property_partition_http___purl_org_dc_terms_source_http___www_w3_org_ns_dcat_Distribution ns3:objectClass ns17:Distribution ;
+    ns3:subjectClass ns17:Distribution ;
+    void:property dcterms:source ;
+    void:triples 13 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_eco_vocabulary_Resource ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass ns11:Resource ;
+    void:property void:inDataset ;
+    void:triples 20 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_go_vocabulary_Resource ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass ns41:Resource ;
+    void:property void:inDataset ;
+    void:triples 21890 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property void:inDataset ;
+    void:triples 2842379 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_goa_vocabulary_Resource ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass ns71:Resource ;
+    void:property void:inDataset ;
+    void:triples 2540778 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_intact_vocabulary_Resource ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass ns101:Resource ;
+    void:property void:inDataset ;
+    void:triples 496 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_pubmed_vocabulary_Resource ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass ns16:Resource ;
+    void:property void:inDataset ;
+    void:triples 105063 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_rnacentral_vocabulary_Resource ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass ns9:Resource ;
+    void:property void:inDataset ;
+    void:triples 245 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_taxonomy_vocabulary_Resource ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass ns18:Resource ;
+    void:property void:inDataset ;
+    void:triples 101 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass ns81:Resource ;
+    void:property void:inDataset ;
+    void:triples 300881 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_Class ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass owl:Class ;
+    void:property void:inDataset ;
+    void:triples 4 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_DatatypeProperty ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass owl:DatatypeProperty ;
+    void:property void:inDataset ;
+    void:triples 4 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_ObjectProperty ns3:objectClass dcterms:Dataset ;
+    ns3:subjectClass owl:ObjectProperty ;
+    void:property void:inDataset ;
+    void:triples 13 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_eco_vocabulary_Resource ns3:objectClass rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass ns11:Resource ;
+    void:property rdf:type ;
+    void:triples 20,
+        100 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_go_vocabulary_Resource ns3:objectClass rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass ns41:Resource ;
+    void:property rdf:type ;
+    void:triples 21890,
+        197010 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_goa_vocabulary_GO_Annotation ns3:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:GO-Annotation ;
+    void:property rdf:type ;
+    void:triples 5684758,
+        8092057,
+        8526892 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_goa_vocabulary_Resource ns3:objectClass ns71:Resource,
+        rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass ns71:Resource ;
+    void:property rdf:type ;
+    void:triples 21,
+        5081514,
+        5081556,
+        7622308 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_intact_vocabulary_Resource ns3:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass ns101:Resource ;
+    void:property rdf:type ;
+    void:triples 992,
+        1488 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_pubmed_vocabulary_Resource ns3:objectClass rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass ns16:Resource ;
+    void:property rdf:type ;
+    void:triples 105063,
+        1681008 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_rnacentral_vocabulary_Resource ns3:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass ns9:Resource ;
+    void:property rdf:type ;
+    void:triples 245,
+        490 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_taxonomy_vocabulary_Resource ns3:objectClass rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass ns18:Resource ;
+    void:property rdf:type ;
+    void:triples 101,
+        909 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_uniprot_vocabulary_Resource ns3:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass ns81:Resource ;
+    void:property rdf:type ;
+    void:triples 601762,
+        902643,
+        3008810 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_Class ns3:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass owl:Class ;
+    void:property rdf:type ;
+    void:triples 4,
+        8,
+        20 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_DatatypeProperty ns3:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass owl:DatatypeProperty ;
+    void:property rdf:type ;
+    void:triples 4,
+        7,
+        8 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_ObjectProperty ns3:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns3:subjectClass owl:ObjectProperty ;
+    void:property rdf:type ;
+    void:triples 13,
+        15,
+        26 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_ns_dcat_Distribution ns3:objectClass rdfs:Class ;
+    ns3:subjectClass ns17:Distribution ;
+    void:property rdf:type ;
+    void:triples 26 .
+
+ns1:property_partition_http___www_w3_org_ns_dcat_distribution_http___purl_org_dc_terms_Dataset ns3:objectClass ns17:Distribution ;
+    ns3:subjectClass dcterms:Dataset ;
+    void:property ns17:distribution ;
+    void:triples 26 .
+

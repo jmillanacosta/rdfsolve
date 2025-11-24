@@ -1,0 +1,93 @@
+name: pubchem.descriptor.substance_schema
+description: LinkML schema for pubchem.descriptor.substance generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
+prefixes:
+  pubchem.descriptor.substance_schema:
+    prefix_prefix: pubchem.descriptor.substance_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  iao:
+    prefix_prefix: iao
+    prefix_reference: http://purl.obolibrary.org/obo/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+default_prefix: pubchem.descriptor.substance_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/rdf_type
+    owner: iao_0000129
+    domain_of:
+    - iao_0000129
+    - vocabulary_Descriptor
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+classes:
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/owl_Class
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/owl_Class
+  vocabulary_Descriptor:
+    name: vocabulary_Descriptor
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/VocabularyDescriptor
+    description: Class representing vocabulary_Descriptor
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/vocabulary_Descriptor
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/vocabulary_Descriptor
+  iao_0000129:
+    name: iao_0000129
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/Iao0000129
+    description: Class representing iao_0000129
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/iao_0000129
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/iao_0000129
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T11:15:02'

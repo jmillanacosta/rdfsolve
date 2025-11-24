@@ -1,0 +1,699 @@
+{
+  "@context": {
+    "bio2rdf": "http://bio2rdf.org/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "void": "http://rdfs.org/ns/void#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#"
+  },
+  "@graph": [
+    {
+      "@id": "bio2rdf:omim_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:bio2rdf_vocabulary:x-identifiers.org": {
+        "@id": "ncit:C7057"
+      }
+    },
+    {
+      "@id": "owl:DatatypeProperty",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "rdf:Property",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:hgnc_vocabulary:Approved-Gene-Symbol",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:hgnc_vocabulary:is-approved-symbol-of": [
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Gene-Symbol"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:bio2rdf_vocabulary:x-identifiers.org": {
+        "@id": "ncit:C43568"
+      }
+    },
+    {
+      "@id": "bio2rdf:hgnc_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:hgnc_vocabulary:x-mgi": [
+        {
+          "@id": "bio2rdf:mgi_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:mgi_vocabulary:Gene"
+        },
+        {
+          "@id": "bio2rdf:mgi_vocabulary:Pseudogene"
+        },
+        {
+          "@id": "bio2rdf:mgi_vocabulary:Marker"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-ncbigene": [
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Unknown-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:NcRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:RRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:TRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:SnoRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Pseudo-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Other-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Protein-coding-Gene"
+        },
+        {
+          "@id": "bio2rdf:ctd_vocabulary:Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:SnRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-omim": [
+        {
+          "@id": "bio2rdf:omim_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Predominantly-phenotypes"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Phenotype"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Gene"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Gene-phenotype"
+        },
+        {
+          "@id": "bio2rdf:ctd_vocabulary:Disease"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-pubmed": [
+        {
+          "@id": "bio2rdf:irefindex_vocabulary:Multimeric-Complex"
+        },
+        {
+          "@id": "bio2rdf:irefindex_vocabulary:Pairwise-Interaction"
+        },
+        {
+          "@id": "bio2rdf:clinicaltrials_vocabulary:Reference"
+        },
+        {
+          "@id": "bio2rdf:mi:0914"
+        },
+        {
+          "@id": "bio2rdf:irefindex_vocabulary:Homopolymeric-Complex"
+        },
+        {
+          "@id": "bio2rdf:pubmed_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:previous-symbol": [
+        {
+          "@id": "bio2rdf:hgnc.symbol_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Approved-Gene-Symbol"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Previous-Symbol"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-ccds": {
+        "@id": "bio2rdf:ccds_vocabulary:Resource"
+      },
+      "bio2rdf:hgnc_vocabulary:x-ensembl": {
+        "@id": "bio2rdf:ensembl_vocabulary:Resource"
+      },
+      "bio2rdf:hgnc_vocabulary:x-refseq": [
+        {
+          "@id": "bio2rdf:refseq_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:mi:0326"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-ucsc": {
+        "@id": "bio2rdf:ucsc_vocabulary:Resource"
+      },
+      "bio2rdf:hgnc_vocabulary:x-uniprot": [
+        {
+          "@id": "bio2rdf:mi:0326"
+        },
+        {
+          "@id": "bio2rdf:uniprot_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:goa_vocabulary:GO-Annotation"
+        }
+      ],
+      "rdfs:subClassOf": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:hgnc_vocabulary:x-vega": {
+        "@id": "bio2rdf:vega_vocabulary:Resource"
+      },
+      "bio2rdf:hgnc_vocabulary:has-approved-symbol": [
+        {
+          "@id": "bio2rdf:hgnc.symbol_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Previous-Symbol"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Approved-Gene-Symbol"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:status": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-rgd": {
+        "@id": "bio2rdf:rgd_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:hgnc.symbol_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:hgnc_vocabulary:is-approved-symbol-of": [
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Gene-Symbol"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:bio2rdf_vocabulary:x-identifiers.org": {
+        "@id": "ncit:C43568"
+      }
+    },
+    {
+      "@id": "bio2rdf:refseq_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:vega_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:hgnc_vocabulary:Gene-Symbol",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:hgnc_vocabulary:x-mgi": [
+        {
+          "@id": "bio2rdf:mgi_vocabulary:Gene"
+        },
+        {
+          "@id": "bio2rdf:mgi_vocabulary:Pseudogene"
+        },
+        {
+          "@id": "bio2rdf:mgi_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:mgi_vocabulary:Marker"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-ncbigene": [
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Unknown-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:RRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:TRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:NcRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Pseudo-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Other-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Protein-coding-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:SnoRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ctd_vocabulary:Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:SnRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-omim": [
+        {
+          "@id": "bio2rdf:omim_vocabulary:Gene"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Gene-phenotype"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Predominantly-phenotypes"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Phenotype"
+        },
+        {
+          "@id": "bio2rdf:ctd_vocabulary:Disease"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-pubmed": [
+        {
+          "@id": "bio2rdf:pubmed_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:irefindex_vocabulary:Homopolymeric-Complex"
+        },
+        {
+          "@id": "bio2rdf:mi:0914"
+        },
+        {
+          "@id": "bio2rdf:clinicaltrials_vocabulary:Reference"
+        },
+        {
+          "@id": "bio2rdf:irefindex_vocabulary:Multimeric-Complex"
+        },
+        {
+          "@id": "bio2rdf:irefindex_vocabulary:Pairwise-Interaction"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:previous-symbol": [
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Approved-Gene-Symbol"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Previous-Symbol"
+        },
+        {
+          "@id": "bio2rdf:hgnc.symbol_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-ccds": {
+        "@id": "bio2rdf:ccds_vocabulary:Resource"
+      },
+      "bio2rdf:hgnc_vocabulary:x-ensembl": {
+        "@id": "bio2rdf:ensembl_vocabulary:Resource"
+      },
+      "bio2rdf:hgnc_vocabulary:x-refseq": [
+        {
+          "@id": "bio2rdf:mi:0326"
+        },
+        {
+          "@id": "bio2rdf:refseq_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-ucsc": {
+        "@id": "bio2rdf:ucsc_vocabulary:Resource"
+      },
+      "bio2rdf:hgnc_vocabulary:x-uniprot": [
+        {
+          "@id": "bio2rdf:uniprot_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:mi:0326"
+        },
+        {
+          "@id": "bio2rdf:goa_vocabulary:GO-Annotation"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-vega": {
+        "@id": "bio2rdf:vega_vocabulary:Resource"
+      },
+      "bio2rdf:hgnc_vocabulary:has-approved-symbol": [
+        {
+          "@id": "bio2rdf:hgnc.symbol_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Approved-Gene-Symbol"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Previous-Symbol"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:status": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:hgnc_vocabulary:x-rgd": {
+        "@id": "bio2rdf:rgd_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "owl:Class",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "rdfs:subClassOf": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "owl:ObjectProperty",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:hgnc_vocabulary:Previous-Symbol",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:hgnc_vocabulary:is-approved-symbol-of": [
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Gene-Symbol"
+        },
+        {
+          "@id": "bio2rdf:hgnc_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:bio2rdf_vocabulary:x-identifiers.org": {
+        "@id": "ncit:C43568"
+      }
+    },
+    {
+      "@id": "bio2rdf:ensembl_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ncbigene_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:bio2rdf_vocabulary:x-identifiers.org": {
+        "@id": "ncit:C16612"
+      }
+    },
+    {
+      "@id": "bio2rdf:rgd_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "dcat:Distribution",
+      "rdf:type": {
+        "@id": "rdfs:Class"
+      },
+      "dcterms:source": {
+        "@id": "dcat:Distribution"
+      }
+    },
+    {
+      "@id": "bio2rdf:pubmed_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:bio2rdf_vocabulary:x-identifiers.org": {
+        "@id": "ncit:C47902"
+      }
+    },
+    {
+      "@id": "bio2rdf:ccds_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:uniprot_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:bio2rdf_vocabulary:x-identifiers.org": {
+        "@id": "ncit:C17021"
+      }
+    },
+    {
+      "@id": "bio2rdf:mgi_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ucsc_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "dcterms:Dataset",
+      "dcat:distribution": {
+        "@id": "dcat:Distribution"
+      }
+    }
+  ]
+}

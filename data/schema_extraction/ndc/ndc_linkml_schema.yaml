@@ -1,0 +1,498 @@
+name: ndc_schema
+description: LinkML schema for ndc generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+prefixes:
+  ndc_schema:
+    prefix_prefix: ndc_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  bio2rdf:
+    prefix_prefix: bio2rdf
+    prefix_reference: http://bio2rdf.org/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  dcat:
+    prefix_prefix: dcat
+    prefix_reference: http://www.w3.org/ns/dcat#
+  void:
+    prefix_prefix: void
+    prefix_reference: http://rdfs.org/ns/void#
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+default_prefix: ndc_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/rdf_type
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Labeller
+    - bio2rdf_ndc_vocabulary_Unit
+    - bio2rdf_ndc_vocabulary_Package
+    - bio2rdf_ndc_vocabulary_Dosage_Form
+    - bio2rdf_ndc_vocabulary_Pharmacological_Class
+    - owl_Datatype_Property
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Substance
+    - owl_Class
+    - owl_Object_Property
+    - bio2rdf_ndc_vocabulary_Ingredient
+    - bio2rdf_ndc_vocabulary_Product_Type
+    - dcat_Distribution
+    - bio2rdf_ndc_vocabulary_Package_Component
+    - bio2rdf_ndc_vocabulary_Route
+    - bio2rdf_ndc_vocabulary_Product
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_ndc_vocabulary_ingredient:
+    name: bio2rdf_ndc_vocabulary_ingredient
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_ingredient
+    description: Property bio2rdf:ndc_vocabulary:ingredient
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_ingredient
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_ingredient
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Product
+    range: bio2rdf_ndc_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_ndc_vocabulary_dosage_form:
+    name: bio2rdf_ndc_vocabulary_dosage_form
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_dosage_form
+    description: Property bio2rdf:ndc_vocabulary:dosage-form
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_dosage_form
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_dosage_form
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Product
+    range: bio2rdf_ndc_vocabulary_Dosage_Form
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_ndc_vocabulary_pharmacological_class:
+    name: bio2rdf_ndc_vocabulary_pharmacological_class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_pharmacological_class
+    description: Property bio2rdf:ndc_vocabulary:pharmacological-class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_pharmacological_class
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_pharmacological_class
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Product
+    range: bio2rdf_ndc_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  dcterms_source:
+    name: dcterms_source
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/dcterms_source
+    description: Property dcterms:source
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/dcterms_source
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/dcterms_source
+    owner: dcat_Distribution
+    domain_of:
+    - dcat_Distribution
+    range: dcat_Distribution
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_ndc_vocabulary_labeller:
+    name: bio2rdf_ndc_vocabulary_labeller
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_labeller
+    description: Property bio2rdf:ndc_vocabulary:labeller
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_labeller
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_labeller
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Product
+    range: bio2rdf_ndc_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_ndc_vocabulary_product_type:
+    name: bio2rdf_ndc_vocabulary_product_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_product_type
+    description: Property bio2rdf:ndc_vocabulary:product-type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_product_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_product_type
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Product
+    range: bio2rdf_ndc_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_ndc_vocabulary_has_package:
+    name: bio2rdf_ndc_vocabulary_has_package
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_has_package
+    description: Property bio2rdf:ndc_vocabulary:has-package
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_has_package
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_has_package
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Product
+    range: bio2rdf_ndc_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  dcat_distribution:
+    name: dcat_distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/dcat_distribution
+    description: Property dcat:distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/dcat_distribution
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/dcat_distribution
+    owner: dcterms_Dataset
+    domain_of:
+    - dcterms_Dataset
+    range: dcat_Distribution
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_ndc_vocabulary_has_part:
+    name: bio2rdf_ndc_vocabulary_has_part
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_has_part
+    description: Property bio2rdf:ndc_vocabulary:has-part
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_has_part
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_has_part
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Package
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Product
+    range: bio2rdf_ndc_vocabulary_Substance
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_ndc_vocabulary_route:
+    name: bio2rdf_ndc_vocabulary_route
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_route
+    description: Property bio2rdf:ndc_vocabulary:route
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_route
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_route
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Product
+    range: bio2rdf_ndc_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_ndc_vocabulary_amount_unit:
+    name: bio2rdf_ndc_vocabulary_amount_unit
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_amount_unit
+    description: Property bio2rdf:ndc_vocabulary:amount_unit
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_amount_unit
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_amount_unit
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Substance
+    range: bio2rdf_ndc_vocabulary_Unit
+    inlined: true
+    inlined_as_list: true
+  void_in_Dataset:
+    name: void_in_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/void_in_Dataset
+    description: Property void:inDataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/void_in_Dataset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/void_in_Dataset
+    owner: bio2rdf_ndc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ndc_vocabulary_Labeller
+    - bio2rdf_ndc_vocabulary_Unit
+    - bio2rdf_ndc_vocabulary_Package
+    - bio2rdf_ndc_vocabulary_Dosage_Form
+    - bio2rdf_ndc_vocabulary_Pharmacological_Class
+    - owl_Datatype_Property
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Substance
+    - owl_Class
+    - owl_Object_Property
+    - bio2rdf_ndc_vocabulary_Ingredient
+    - bio2rdf_ndc_vocabulary_Product_Type
+    - bio2rdf_ndc_vocabulary_Package_Component
+    - bio2rdf_ndc_vocabulary_Route
+    - bio2rdf_ndc_vocabulary_Product
+    range: dcterms_Dataset
+    inlined: true
+    inlined_as_list: true
+classes:
+  bio2rdf_ndc_vocabulary_Package:
+    name: bio2rdf_ndc_vocabulary_Package
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyPackage
+    description: Class representing bio2rdf_ndc_vocabulary_Package
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Package
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_ndc_vocabulary_has_part
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Package
+  rdfs_Resource:
+    name: rdfs_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/RdfsResource
+    description: Class representing rdfs_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/rdfs_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/rdfs_Resource
+  bio2rdf_ndc_vocabulary_Labeller:
+    name: bio2rdf_ndc_vocabulary_Labeller
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyLabeller
+    description: Class representing bio2rdf_ndc_vocabulary_Labeller
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Labeller
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Labeller
+  dcterms_Dataset:
+    name: dcterms_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/DctermsDataset
+    description: Class representing dcterms_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/dcterms_Dataset
+    slots:
+    - dcat_distribution
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/dcterms_Dataset
+  bio2rdf_ndc_vocabulary_Substance:
+    name: bio2rdf_ndc_vocabulary_Substance
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularySubstance
+    description: Class representing bio2rdf_ndc_vocabulary_Substance
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Substance
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_ndc_vocabulary_amount_unit
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Substance
+  owl_Datatype_Property:
+    name: owl_Datatype_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/OwlDatatypeProperty
+    description: Class representing owl_Datatype_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/owl_Datatype_Property
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/owl_Datatype_Property
+  rdfs_Class:
+    name: rdfs_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/RdfsClass
+    description: Class representing rdfs_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/rdfs_Class
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/rdfs_Class
+  bio2rdf_ndc_vocabulary_Dosage_Form:
+    name: bio2rdf_ndc_vocabulary_Dosage_Form
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyDosageForm
+    description: Class representing bio2rdf_ndc_vocabulary_Dosage_Form
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Dosage_Form
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Dosage_Form
+  bio2rdf_ndc_vocabulary_Ingredient:
+    name: bio2rdf_ndc_vocabulary_Ingredient
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyIngredient
+    description: Class representing bio2rdf_ndc_vocabulary_Ingredient
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Ingredient
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Ingredient
+  owl_Object_Property:
+    name: owl_Object_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/OwlObjectProperty
+    description: Class representing owl_Object_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/owl_Object_Property
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/owl_Object_Property
+  bio2rdf_ndc_vocabulary_Route:
+    name: bio2rdf_ndc_vocabulary_Route
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyRoute
+    description: Class representing bio2rdf_ndc_vocabulary_Route
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Route
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Route
+  bio2rdf_ndc_vocabulary_Pharmacological_Class:
+    name: bio2rdf_ndc_vocabulary_Pharmacological_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyPharmacologicalClass
+    description: Class representing bio2rdf_ndc_vocabulary_Pharmacological_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Pharmacological_Class
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Pharmacological_Class
+  bio2rdf_ndc_vocabulary_Product_Type:
+    name: bio2rdf_ndc_vocabulary_Product_Type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyProductType
+    description: Class representing bio2rdf_ndc_vocabulary_Product_Type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Product_Type
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Product_Type
+  bio2rdf_ndc_vocabulary_Package_Component:
+    name: bio2rdf_ndc_vocabulary_Package_Component
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyPackageComponent
+    description: Class representing bio2rdf_ndc_vocabulary_Package_Component
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Package_Component
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Package_Component
+  bio2rdf_ndc_vocabulary_Unit:
+    name: bio2rdf_ndc_vocabulary_Unit
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyUnit
+    description: Class representing bio2rdf_ndc_vocabulary_Unit
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Unit
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Unit
+  bio2rdf_ndc_vocabulary_Product:
+    name: bio2rdf_ndc_vocabulary_Product
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyProduct
+    description: Class representing bio2rdf_ndc_vocabulary_Product
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Product
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_ndc_vocabulary_has_part
+    - bio2rdf_ndc_vocabulary_pharmacological_class
+    - bio2rdf_ndc_vocabulary_product_type
+    - bio2rdf_ndc_vocabulary_route
+    - bio2rdf_ndc_vocabulary_ingredient
+    - bio2rdf_ndc_vocabulary_labeller
+    - bio2rdf_ndc_vocabulary_dosage_form
+    - bio2rdf_ndc_vocabulary_has_package
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Product
+  dcat_Distribution:
+    name: dcat_Distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/DcatDistribution
+    description: Class representing dcat_Distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/dcat_Distribution
+    slots:
+    - rdf_type
+    - dcterms_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/dcat_Distribution
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/owl_Class
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/owl_Class
+  bio2rdf_ndc_vocabulary_Resource:
+    name: bio2rdf_ndc_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/Bio2rdfNdcVocabularyResource
+    description: Class representing bio2rdf_ndc_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_ndc_vocabulary_has_part
+    - bio2rdf_ndc_vocabulary_pharmacological_class
+    - bio2rdf_ndc_vocabulary_product_type
+    - bio2rdf_ndc_vocabulary_route
+    - bio2rdf_ndc_vocabulary_amount_unit
+    - bio2rdf_ndc_vocabulary_ingredient
+    - bio2rdf_ndc_vocabulary_labeller
+    - bio2rdf_ndc_vocabulary_dosage_form
+    - bio2rdf_ndc_vocabulary_has_package
+    class_uri: http://jmillanacosta.github.io/rdfsolve/ndc/linkml/bio2rdf_ndc_vocabulary_Resource
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T12:09:28'

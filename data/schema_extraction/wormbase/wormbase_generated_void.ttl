@@ -1,0 +1,1238 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix nci: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#> .
+@prefix ns1: <http://bio2rdf.org/wormbase_resource:bio2rdf.dataset.wormbase.R3/void/> .
+@prefix ns101: <http://bio2rdf.org/irefindex_vocabulary:> .
+@prefix ns11: <http://bio2rdf.org/pubmed_vocabulary:> .
+@prefix ns12: <http://bio2rdf.org/clinicaltrials_vocabulary:> .
+@prefix ns13: <http://bio2rdf.org/wbphenotype_vocabulary:> .
+@prefix ns14: <http://bio2rdf.org/taxonomy_vocabulary:> .
+@prefix ns15: <http://www.w3.org/ns/dcat#> .
+@prefix ns2: <http://ldf.fi/void-ext#> .
+@prefix ns4: <http://bio2rdf.org/go_vocabulary:> .
+@prefix ns71: <http://bio2rdf.org/wormbase_vocabulary:> .
+@prefix ns91: <http://bio2rdf.org/eco_vocabulary:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___bio2rdf_org_eco_vocabulary_Resource void:class ns91:Resource ;
+    void:entities 16 .
+
+ns1:class_partition_http___bio2rdf_org_go_vocabulary_Resource void:class ns4:Resource ;
+    void:entities 5088 .
+
+ns1:class_partition_http___bio2rdf_org_pubmed_vocabulary_Resource void:class ns11:Resource ;
+    void:entities 4072 .
+
+ns1:class_partition_http___bio2rdf_org_taxonomy_vocabulary_Resource void:class ns14:Resource ;
+    void:entities 19 .
+
+ns1:class_partition_http___bio2rdf_org_wbphenotype_vocabulary_Resource void:class ns13:Resource ;
+    void:entities 1905 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Asynthetic_Genetic_Interaction void:class ns71:Asynthetic-Genetic-Interaction ;
+    void:entities 12 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Change_of_expression_level_Regulatory_Interaction void:class ns71:Change_of_expression_level-Regulatory-Interaction ;
+    void:entities 3886 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Change_of_localization_Regulatory_Interaction void:class ns71:Change_of_localization-Regulatory-Interaction ;
+    void:entities 525 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Complete_mutual_suppression_Genetic_Interaction void:class ns71:Complete_mutual_suppression-Genetic-Interaction ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Complete_suppression_Genetic_Interaction void:class ns71:Complete_suppression-Genetic-Interaction ;
+    void:entities 15 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Complete_unilateral_suppression_Genetic_Interaction void:class ns71:Complete_unilateral_suppression-Genetic-Interaction ;
+    void:entities 16 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Cosmid void:class ns71:Cosmid ;
+    void:entities 47082 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Enhancement_Genetic_Interaction void:class ns71:Enhancement-Genetic-Interaction ;
+    void:entities 1198 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Epistasis_Genetic_Interaction void:class ns71:Epistasis-Genetic-Interaction ;
+    void:entities 299 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Gene void:class ns71:Gene ;
+    void:entities 50894 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Gene_GO_Association void:class ns71:Gene-GO-Association ;
+    void:entities 273163 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Gene_Phenotype_Association void:class ns71:Gene-Phenotype-Association ;
+    void:entities 96075 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Gene_Variant void:class ns71:Gene-Variant ;
+    void:entities 5344 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Genetic_Interaction void:class ns71:Genetic-Interaction ;
+    void:entities 4065 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Maximal_epistasis_Genetic_Interaction void:class ns71:Maximal_epistasis-Genetic-Interaction ;
+    void:entities 12 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Minimal_epistasis_Genetic_Interaction void:class ns71:Minimal_epistasis-Genetic-Interaction ;
+    void:entities 6 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Mutual_enhancement_Genetic_Interaction void:class ns71:Mutual_enhancement-Genetic-Interaction ;
+    void:entities 276 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Mutual_suppression_Genetic_Interaction void:class ns71:Mutual_suppression-Genetic-Interaction ;
+    void:entities 75 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Negative_Gene_Phenotype_Association void:class ns71:Negative-Gene-Phenotype-Association ;
+    void:entities 324749 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Negative_genetic_Genetic_Interaction void:class ns71:Negative_genetic-Genetic-Interaction ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Opposing_epistasis_Genetic_Interaction void:class ns71:Opposing_epistasis-Genetic-Interaction ;
+    void:entities 30 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Oversuppression_Genetic_Interaction void:class ns71:Oversuppression-Genetic-Interaction ;
+    void:entities 24 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Oversuppression_enhancement_Genetic_Interaction void:class ns71:Oversuppression_enhancement-Genetic-Interaction ;
+    void:entities 12 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Partial_suppression_Genetic_Interaction void:class ns71:Partial_suppression-Genetic-Interaction ;
+    void:entities 94 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Partial_unilateral_suppression_Genetic_Interaction void:class ns71:Partial_unilateral_suppression-Genetic-Interaction ;
+    void:entities 15 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Phenotype_bias_Genetic_Interaction void:class ns71:Phenotype_bias-Genetic-Interaction ;
+    void:entities 24 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Physical_Interaction void:class ns71:Physical-Interaction ;
+    void:entities 10619 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Positive_genetic_Genetic_Interaction void:class ns71:Positive_genetic-Genetic-Interaction ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Publication void:class ns71:Publication ;
+    void:entities 4072 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_RNAi void:class ns71:RNAi ;
+    void:entities 99307 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_RNAi_Knockdown_Experiment void:class ns71:RNAi-Knockdown-Experiment ;
+    void:entities 390627 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Regulatory_Interaction void:class ns71:Regulatory-Interaction ;
+    void:entities 1757 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Resource void:class ns71:Resource ;
+    void:entities 1384974 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Suppression_Genetic_Interaction void:class ns71:Suppression-Genetic-Interaction ;
+    void:entities 2768 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Synthetic_Genetic_Interaction void:class ns71:Synthetic-Genetic-Interaction ;
+    void:entities 2044 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Unilateral_enhancement_Genetic_Interaction void:class ns71:Unilateral_enhancement-Genetic-Interaction ;
+    void:entities 30 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Unilateral_suppression_Genetic_Interaction void:class ns71:Unilateral_suppression-Genetic-Interaction ;
+    void:entities 22 .
+
+ns1:class_partition_http___purl_org_dc_terms_Dataset void:class dcterms:Dataset ;
+    void:entities 2 .
+
+ns1:class_partition_http___www_w3_org_2000_01_rdf_schema_Resource void:class rdfs:Resource ;
+    void:entities 6 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Class void:class owl:Class ;
+    void:entities 36 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DatatypeProperty void:class owl:DatatypeProperty ;
+    void:entities 9 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_ObjectProperty void:class owl:ObjectProperty ;
+    void:entities 18 .
+
+ns1:class_partition_http___www_w3_org_ns_dcat_Distribution void:class ns15:Distribution ;
+    void:entities 2 .
+
+ns1:datatype_partition_ void:triples 2638394 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_dateTime ns2:datatypePartition xsd:dateTime ;
+    void:triples 2 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_string ns2:datatypePartition xsd:string ;
+    void:triples 5866399 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_pubmed_vocabulary_Resource ns2:objectClass nci:C47902 ;
+    ns2:subjectClass ns11:Resource ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 58 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_associated_gene_variant_http___bio2rdf_org_wormbase_vocabulary_Gene_Phenotype_Association ns2:objectClass ns71:Gene-Variant,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Gene-Phenotype-Association ;
+    void:property ns71:associated-gene-variant ;
+    void:triples 14918 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_associated_gene_variant_http___bio2rdf_org_wormbase_vocabulary_Negative_Gene_Phenotype_Association ns2:objectClass ns71:Gene-Variant,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Negative-Gene-Phenotype-Association ;
+    void:property ns71:associated-gene-variant ;
+    void:triples 6938 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_associated_gene_variant_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Gene-Variant,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:associated-gene-variant ;
+    void:triples 21856 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_associated_rnai_knockdown_experiment_http___bio2rdf_org_wormbase_vocabulary_Gene_Phenotype_Association ns2:objectClass ns71:RNAi-Knockdown-Experiment,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Gene-Phenotype-Association ;
+    void:property ns71:associated-rnai-knockdown-experiment ;
+    void:triples 78681 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_associated_rnai_knockdown_experiment_http___bio2rdf_org_wormbase_vocabulary_Negative_Gene_Phenotype_Association ns2:objectClass ns71:RNAi-Knockdown-Experiment,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Negative-Gene-Phenotype-Association ;
+    void:property ns71:associated-rnai-knockdown-experiment ;
+    void:triples 311946 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_associated_rnai_knockdown_experiment_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:associated-rnai-knockdown-experiment ;
+    void:triples 390627 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_cosmid_http___bio2rdf_org_wormbase_vocabulary_Gene ns2:objectClass ns71:Cosmid,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:cosmid ;
+    void:triples 47085 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_cosmid_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Cosmid,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:cosmid ;
+    void:triples 47085 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_evidence_type_http___bio2rdf_org_wormbase_vocabulary_Gene_GO_Association ns2:objectClass ns91:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Gene-GO-Association ;
+    void:property ns71:evidence_type ;
+    void:triples 273163,
+        829775 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_evidence_type_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns91:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:evidence_type ;
+    void:triples 273163,
+        829775 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_gene_http___bio2rdf_org_wormbase_vocabulary_Gene_GO_Association ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Gene-GO-Association ;
+    void:property ns71:gene ;
+    void:triples 87000,
+        280468 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_gene_http___bio2rdf_org_wormbase_vocabulary_Gene_Phenotype_Association ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Gene-Phenotype-Association ;
+    void:property ns71:gene ;
+    void:triples 96075,
+        100475 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_gene_http___bio2rdf_org_wormbase_vocabulary_Negative_Gene_Phenotype_Association ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Negative-Gene-Phenotype-Association ;
+    void:property ns71:gene ;
+    void:triples 332176 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_gene_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Gene ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:gene ;
+    void:triples 507824 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_genetically_interacts_with_http___bio2rdf_org_wormbase_vocabulary_Gene ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:genetically-interacts-with ;
+    void:triples 7173,
+        7823 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_genetically_interacts_with_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:genetically-interacts-with ;
+    void:triples 7173,
+        7825 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Asynthetic_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Asynthetic-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 24,
+        29 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Change_of_expression_level_Regulatory_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Change_of_expression_level-Regulatory-Interaction ;
+    void:property ns71:involves ;
+    void:triples 7761,
+        8333 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Change_of_localization_Regulatory_Interaction ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Change_of_localization-Regulatory-Interaction ;
+    void:property ns71:involves ;
+    void:triples 1133 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Complete_mutual_suppression_Genetic_Interaction ns2:objectClass ns71:Gene ;
+    ns2:subjectClass ns71:Complete_mutual_suppression-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 2 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Complete_suppression_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Complete_suppression-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 30,
+        38 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Complete_unilateral_suppression_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Complete_unilateral_suppression-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 32,
+        34 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Enhancement_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Enhancement-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 2396,
+        2654 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Epistasis_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Epistasis-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 597,
+        632 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 8130,
+        9136 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Maximal_epistasis_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Maximal_epistasis-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 24,
+        26 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Minimal_epistasis_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Minimal_epistasis-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 12 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Mutual_enhancement_Genetic_Interaction ns2:objectClass ns71:Gene ;
+    ns2:subjectClass ns71:Mutual_enhancement-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 550 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Mutual_suppression_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Mutual_suppression-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 150,
+        177 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Negative_genetic_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Negative_genetic-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 2 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Opposing_epistasis_Genetic_Interaction ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Opposing_epistasis-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 64 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Oversuppression_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Oversuppression-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 48,
+        52 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Oversuppression_enhancement_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Oversuppression_enhancement-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 24,
+        26 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Partial_suppression_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Partial_suppression-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 188,
+        201 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Partial_unilateral_suppression_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Partial_unilateral_suppression-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 30,
+        32 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Phenotype_bias_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Phenotype_bias-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 48,
+        53 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Physical_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Physical-Interaction ;
+    void:property ns71:involves ;
+    void:triples 21238,
+        22668 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Positive_genetic_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Positive_genetic-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 2,
+        4 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Regulatory_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Regulatory-Interaction ;
+    void:property ns71:involves ;
+    void:triples 3514,
+        3786 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:involves ;
+    void:triples 55635,
+        60389 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Suppression_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Suppression-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 5534,
+        5947 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Synthetic_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Synthetic-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 4086,
+        4638 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Unilateral_enhancement_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Unilateral_enhancement-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 60,
+        64 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_involves_http___bio2rdf_org_wormbase_vocabulary_Unilateral_suppression_Genetic_Interaction ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Unilateral_suppression-Genetic-Interaction ;
+    void:property ns71:involves ;
+    void:triples 44,
+        50 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_phenotype_http___bio2rdf_org_wormbase_vocabulary_Gene_Phenotype_Association ns2:objectClass ns13:Resource ;
+    ns2:subjectClass ns71:Gene-Phenotype-Association ;
+    void:property ns71:phenotype ;
+    void:triples 96075 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_phenotype_http___bio2rdf_org_wormbase_vocabulary_Negative_Gene_Phenotype_Association ns2:objectClass ns13:Resource ;
+    ns2:subjectClass ns71:Negative-Gene-Phenotype-Association ;
+    void:property ns71:phenotype ;
+    void:triples 324749 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_phenotype_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns13:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:phenotype ;
+    void:triples 420824 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_physically_interacts_with_http___bio2rdf_org_wormbase_vocabulary_Gene ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:physically-interacts-with ;
+    void:triples 3693,
+        3855 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_physically_interacts_with_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:physically-interacts-with ;
+    void:triples 3693,
+        3855 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_publication_http___bio2rdf_org_wormbase_vocabulary_Gene_GO_Association ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Gene-GO-Association ;
+    void:property ns71:publication ;
+    void:triples 44595 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_publication_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Publication,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:publication ;
+    void:triples 44595 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_regulates_http___bio2rdf_org_wormbase_vocabulary_Gene ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:regulates ;
+    void:triples 5172,
+        5542 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_regulates_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:regulates ;
+    void:triples 5174,
+        5548 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_rnai_http___bio2rdf_org_wormbase_vocabulary_RNAi_Knockdown_Experiment ns2:objectClass ns71:RNAi,
+        ns71:Resource ;
+    ns2:subjectClass ns71:RNAi-Knockdown-Experiment ;
+    void:property ns71:rnai ;
+    void:triples 390627 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_rnai_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:rnai ;
+    void:triples 390627 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_target_gene_http___bio2rdf_org_wormbase_vocabulary_RNAi_Knockdown_Experiment ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:RNAi-Knockdown-Experiment ;
+    void:property ns71:target-gene ;
+    void:triples 390627,
+        400689 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_target_gene_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:target-gene ;
+    void:triples 390627,
+        400689 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_x_go_http___bio2rdf_org_wormbase_vocabulary_Gene_GO_Association ns2:objectClass ns4:Resource,
+        owl:Class,
+        owl:DeprecatedClass ;
+    ns2:subjectClass ns71:Gene-GO-Association ;
+    void:property ns71:x-go ;
+    void:triples 4,
+        273147,
+        1868336 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_x_go_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns4:Resource,
+        owl:Class,
+        owl:DeprecatedClass ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-go ;
+    void:triples 4,
+        273147,
+        1868336 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_x_pubmed_http___bio2rdf_org_wormbase_vocabulary_Gene_GO_Association ns2:objectClass ns12:Reference,
+        ns101:Pairwise-Interaction,
+        <http://bio2rdf.org/mi:0914>,
+        ns11:Resource ;
+    ns2:subjectClass ns71:Gene-GO-Association ;
+    void:property ns71:x-pubmed ;
+    void:triples 2,
+        14,
+        125661 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_x_pubmed_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns12:Reference,
+        ns101:Pairwise-Interaction,
+        <http://bio2rdf.org/mi:0914>,
+        ns11:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-pubmed ;
+    void:triples 2,
+        14,
+        125661 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_x_taxonomy_http___bio2rdf_org_wormbase_vocabulary_Gene ns2:objectClass ns14:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-taxonomy ;
+    void:triples 50894,
+        356258 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_x_taxonomy_http___bio2rdf_org_wormbase_vocabulary_Gene_GO_Association ns2:objectClass ns14:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Gene-GO-Association ;
+    void:property ns71:x-taxonomy ;
+    void:triples 273074,
+        1096873 .
+
+ns1:property_partition_http___bio2rdf_org_wormbase_vocabulary_x_taxonomy_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns14:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-taxonomy ;
+    void:triples 323968,
+        1453131 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_eco_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns91:Resource ;
+    void:property void:inDataset ;
+    void:triples 16 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_go_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Resource ;
+    void:property void:inDataset ;
+    void:triples 5088 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_pubmed_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns11:Resource ;
+    void:property void:inDataset ;
+    void:triples 4072 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_taxonomy_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns14:Resource ;
+    void:property void:inDataset ;
+    void:triples 19 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wbphenotype_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns13:Resource ;
+    void:property void:inDataset ;
+    void:triples 1905 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Change_of_expression_level_Regulatory_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Change_of_expression_level-Regulatory-Interaction ;
+    void:property void:inDataset ;
+    void:triples 3886 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Change_of_localization_Regulatory_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Change_of_localization-Regulatory-Interaction ;
+    void:property void:inDataset ;
+    void:triples 525 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Complete_mutual_suppression_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Complete_mutual_suppression-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 1 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Complete_suppression_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Complete_suppression-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 15 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Complete_unilateral_suppression_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Complete_unilateral_suppression-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 16 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Cosmid ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Cosmid ;
+    void:property void:inDataset ;
+    void:triples 47082 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Enhancement_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Enhancement-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 1198 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Epistasis_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Epistasis-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 299 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Gene ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Gene ;
+    void:property void:inDataset ;
+    void:triples 50894 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Gene_GO_Association ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Gene-GO-Association ;
+    void:property void:inDataset ;
+    void:triples 273163 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Gene_Phenotype_Association ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Gene-Phenotype-Association ;
+    void:property void:inDataset ;
+    void:triples 96075 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Gene_Variant ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Gene-Variant ;
+    void:property void:inDataset ;
+    void:triples 5344 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 4065 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Maximal_epistasis_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Maximal_epistasis-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 12 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Minimal_epistasis_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Minimal_epistasis-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 6 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Mutual_enhancement_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Mutual_enhancement-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 276 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Mutual_suppression_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Mutual_suppression-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 75 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Negative_Gene_Phenotype_Association ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Negative-Gene-Phenotype-Association ;
+    void:property void:inDataset ;
+    void:triples 324749 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Negative_genetic_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Negative_genetic-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 1 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Opposing_epistasis_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Opposing_epistasis-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 30 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Oversuppression_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Oversuppression-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 24 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Oversuppression_enhancement_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Oversuppression_enhancement-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 12 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Partial_suppression_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Partial_suppression-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 94 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Partial_unilateral_suppression_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Partial_unilateral_suppression-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 15 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Phenotype_bias_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Phenotype_bias-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 24 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Physical_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Physical-Interaction ;
+    void:property void:inDataset ;
+    void:triples 10619 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Positive_genetic_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Positive_genetic-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 1 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Publication ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Publication ;
+    void:property void:inDataset ;
+    void:triples 4072 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_RNAi ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:RNAi ;
+    void:property void:inDataset ;
+    void:triples 99307 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Resource ;
+    void:property void:inDataset ;
+    void:triples 1384974 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Suppression_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Suppression-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 2768 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Synthetic_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Synthetic-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 2044 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Unilateral_enhancement_Genetic_Interaction ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Unilateral_enhancement-Genetic-Interaction ;
+    void:property void:inDataset ;
+    void:triples 30 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_Class ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:Class ;
+    void:property void:inDataset ;
+    void:triples 35 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property void:inDataset ;
+    void:triples 6 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_ObjectProperty ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:ObjectProperty ;
+    void:property void:inDataset ;
+    void:triples 16 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_eco_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns91:Resource ;
+    void:property rdf:type ;
+    void:triples 16,
+        80 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_go_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Resource ;
+    void:property rdf:type ;
+    void:triples 5088,
+        45792 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_pubmed_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns11:Resource ;
+    void:property rdf:type ;
+    void:triples 4072,
+        65152 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_taxonomy_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns14:Resource ;
+    void:property rdf:type ;
+    void:triples 19,
+        171 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wbphenotype_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns13:Resource ;
+    void:property rdf:type ;
+    void:triples 1905 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Asynthetic_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Asynthetic-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 12,
+        24,
+        36 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Change_of_expression_level_Regulatory_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Change_of_expression_level-Regulatory-Interaction ;
+    void:property rdf:type ;
+    void:triples 3886,
+        7772,
+        11658 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Change_of_localization_Regulatory_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Change_of_localization-Regulatory-Interaction ;
+    void:property rdf:type ;
+    void:triples 525,
+        1050,
+        1575 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Complete_mutual_suppression_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Complete_mutual_suppression-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 1,
+        2,
+        3 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Complete_suppression_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Complete_suppression-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 15,
+        30,
+        45 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Complete_unilateral_suppression_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Complete_unilateral_suppression-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 16,
+        32,
+        48 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Cosmid ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Cosmid ;
+    void:property rdf:type ;
+    void:triples 47082,
+        94164,
+        141246 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Enhancement_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Enhancement-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 1198,
+        2396,
+        3594 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Epistasis_Genetic_Interaction ns2:objectClass ns71:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Epistasis-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 299,
+        598 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Gene ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Gene ;
+    void:property rdf:type ;
+    void:triples 50894,
+        101788,
+        152682 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Gene_GO_Association ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Gene-GO-Association ;
+    void:property rdf:type ;
+    void:triples 273163,
+        546326,
+        819489 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Gene_Phenotype_Association ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Gene-Phenotype-Association ;
+    void:property rdf:type ;
+    void:triples 96075,
+        192150,
+        288225 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Gene_Variant ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Gene-Variant ;
+    void:property rdf:type ;
+    void:triples 10688,
+        16032 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 4065,
+        8130,
+        12195 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Maximal_epistasis_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Maximal_epistasis-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 12,
+        24,
+        36 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Minimal_epistasis_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Minimal_epistasis-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 6,
+        12,
+        18 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Mutual_enhancement_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Mutual_enhancement-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 276,
+        552,
+        828 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Mutual_suppression_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Mutual_suppression-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 75,
+        150,
+        225 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Negative_Gene_Phenotype_Association ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Negative-Gene-Phenotype-Association ;
+    void:property rdf:type ;
+    void:triples 324749,
+        649498,
+        974247 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Negative_genetic_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Negative_genetic-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 1,
+        2,
+        3 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Opposing_epistasis_Genetic_Interaction ns2:objectClass ns71:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Opposing_epistasis-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 30,
+        60 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Oversuppression_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Oversuppression-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 24,
+        48,
+        72 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Oversuppression_enhancement_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Oversuppression_enhancement-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 12,
+        24,
+        36 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Partial_suppression_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Partial_suppression-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 94,
+        188,
+        282 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Partial_unilateral_suppression_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Partial_unilateral_suppression-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 15,
+        30,
+        45 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Phenotype_bias_Genetic_Interaction ns2:objectClass rdfs:Resource ;
+    ns2:subjectClass ns71:Phenotype_bias-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 72 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Physical_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Physical-Interaction ;
+    void:property rdf:type ;
+    void:triples 10619,
+        21238,
+        31857 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Positive_genetic_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Positive_genetic-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 1,
+        2,
+        3 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Publication ns2:objectClass owl:Class ;
+    ns2:subjectClass ns71:Publication ;
+    void:property rdf:type ;
+    void:triples 8144 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_RNAi ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:RNAi ;
+    void:property rdf:type ;
+    void:triples 99307,
+        198614,
+        297921 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_RNAi_Knockdown_Experiment ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:RNAi-Knockdown-Experiment ;
+    void:property rdf:type ;
+    void:triples 390627,
+        781254,
+        1171881 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Regulatory_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Regulatory-Interaction ;
+    void:property rdf:type ;
+    void:triples 1757,
+        3514,
+        5271 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Resource,
+        rdfs:Class,
+        rdfs:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property rdf:type ;
+    void:triples 57,
+        1315068,
+        4154922 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Suppression_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Suppression-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 2768,
+        5536,
+        8304 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Synthetic_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Synthetic-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 2044,
+        4088,
+        6132 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Unilateral_enhancement_Genetic_Interaction ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Unilateral_enhancement-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 60,
+        90 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Unilateral_suppression_Genetic_Interaction ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Unilateral_suppression-Genetic-Interaction ;
+    void:property rdf:type ;
+    void:triples 22,
+        44,
+        66 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_Class ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:Class ;
+    void:property rdf:type ;
+    void:triples 36,
+        105,
+        179 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property rdf:type ;
+    void:triples 6,
+        9,
+        18 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_ObjectProperty ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:ObjectProperty ;
+    void:property rdf:type ;
+    void:triples 16,
+        18,
+        48 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_ns_dcat_Distribution ns2:objectClass rdfs:Class ;
+    ns2:subjectClass ns15:Distribution ;
+    void:property rdf:type ;
+    void:triples 2 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_subClassOf_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Resource ;
+    void:property rdfs:subClassOf ;
+    void:triples 25 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_subClassOf_http___www_w3_org_2002_07_owl_Class ns2:objectClass ns71:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:Class ;
+    void:property rdfs:subClassOf ;
+    void:triples 25 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_assertionProperty_http___bio2rdf_org_wormbase_vocabulary_Negative_Gene_Phenotype_Association ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Negative-Gene-Phenotype-Association ;
+    void:property owl:assertionProperty ;
+    void:triples 324749 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_assertionProperty_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property owl:assertionProperty ;
+    void:triples 324749 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_sourceIndividual_http___bio2rdf_org_wormbase_vocabulary_Negative_Gene_Phenotype_Association ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Negative-Gene-Phenotype-Association ;
+    void:property owl:sourceIndividual ;
+    void:triples 324749,
+        332176 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_sourceIndividual_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns71:Gene,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property owl:sourceIndividual ;
+    void:triples 324749,
+        332176 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_targetIndividual_http___bio2rdf_org_wormbase_vocabulary_Negative_Gene_Phenotype_Association ns2:objectClass ns13:Resource ;
+    ns2:subjectClass ns71:Negative-Gene-Phenotype-Association ;
+    void:property owl:targetIndividual ;
+    void:triples 324749 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_targetIndividual_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass ns13:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property owl:targetIndividual ;
+    void:triples 324749 .
+
+ns1:property_partition_http___www_w3_org_ns_dcat_distribution_http___purl_org_dc_terms_Dataset ns2:objectClass ns15:Distribution ;
+    ns2:subjectClass dcterms:Dataset ;
+    void:property ns15:distribution ;
+    void:triples 2 .
+

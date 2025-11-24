@@ -1,0 +1,113 @@
+name: pubchem.conserveddomain_schema
+description: LinkML schema for pubchem.conserveddomain generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+prefixes:
+  pubchem.conserveddomain_schema:
+    prefix_prefix: pubchem.conserveddomain_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  so:
+    prefix_prefix: so
+    prefix_reference: http://purl.obolibrary.org/obo/
+  cito:
+    prefix_prefix: cito
+    prefix_reference: http://purl.org/spar/cito/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+default_prefix: pubchem.conserveddomain_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/rdf_type
+    owner: so_0000417
+    domain_of:
+    - so_0000417
+    - vocabulary_Conserved_Domain
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  cito_is_Discussed_By:
+    name: cito_is_Discussed_By
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/cito_is_Discussed_By
+    description: Property cito:isDiscussedBy
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/cito_is_Discussed_By
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/cito_is_Discussed_By
+    owner: so_0000417
+    domain_of:
+    - so_0000417
+    - vocabulary_Conserved_Domain
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+classes:
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/owl_Class
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/owl_Class
+  vocabulary_Conserved_Domain:
+    name: vocabulary_Conserved_Domain
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/VocabularyConservedDomain
+    description: Class representing vocabulary_Conserved_Domain
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/vocabulary_Conserved_Domain
+    slots:
+    - cito_is_Discussed_By
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/vocabulary_Conserved_Domain
+  so_0000417:
+    name: so_0000417
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/So0000417
+    description: Class representing so_0000417
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/so_0000417
+    slots:
+    - cito_is_Discussed_By
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/so_0000417
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T10:54:04'

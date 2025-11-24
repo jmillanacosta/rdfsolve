@@ -1,0 +1,354 @@
+name: taxonomy_schema
+description: LinkML schema for taxonomy generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+prefixes:
+  taxonomy_schema:
+    prefix_prefix: taxonomy_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  bio2rdf:
+    prefix_prefix: bio2rdf
+    prefix_reference: http://bio2rdf.org/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  dcat:
+    prefix_prefix: dcat
+    prefix_reference: http://www.w3.org/ns/dcat#
+  void:
+    prefix_prefix: void
+    prefix_reference: http://rdfs.org/ns/void#
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+default_prefix: taxonomy_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  dcat_distribution:
+    name: dcat_distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/dcat_distribution
+    description: Property dcat:distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/dcat_distribution
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/dcat_distribution
+    owner: dcterms_Dataset
+    domain_of:
+    - dcterms_Dataset
+    range: dcat_Distribution
+    inlined: true
+    inlined_as_list: true
+  dcterms_source:
+    name: dcterms_source
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/dcterms_source
+    description: Property dcterms:source
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/dcterms_source
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/dcterms_source
+    owner: dcat_Distribution
+    domain_of:
+    - dcat_Distribution
+    range: dcat_Distribution
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_taxonomy_vocabulary_embl_code:
+    name: bio2rdf_taxonomy_vocabulary_embl_code
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_embl_code
+    description: Property bio2rdf:taxonomy_vocabulary:embl-code
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_embl_code
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_embl_code
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    - bio2rdf_taxonomy_vocabulary_Resource
+    range: bio2rdf_taxonomy_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_taxonomy_vocabulary_genetic_code_id:
+    name: bio2rdf_taxonomy_vocabulary_genetic_code_id
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_genetic_code_id
+    description: Property bio2rdf:taxonomy_vocabulary:genetic-code-id
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_genetic_code_id
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_genetic_code_id
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    - bio2rdf_taxonomy_vocabulary_Resource
+    range: bio2rdf_taxonomy_vocabulary_Genetic_Code
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_taxonomy_vocabulary_mitochondrial_genetic_code_id:
+    name: bio2rdf_taxonomy_vocabulary_mitochondrial_genetic_code_id
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_mitochondrial_genetic_code_id
+    description: Property bio2rdf:taxonomy_vocabulary:mitochondrial-genetic-code-id
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_mitochondrial_genetic_code_id
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_mitochondrial_genetic_code_id
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    - bio2rdf_taxonomy_vocabulary_Resource
+    range: bio2rdf_taxonomy_vocabulary_Genetic_Code
+    inlined: true
+    inlined_as_list: true
+  void_in_Dataset:
+    name: void_in_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/void_in_Dataset
+    description: Property void:inDataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/void_in_Dataset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/void_in_Dataset
+    owner: bio2rdf_taxonomy_vocabulary_Division
+    domain_of:
+    - bio2rdf_taxonomy_vocabulary_Rank
+    - owl_Datatype_Property
+    - bio2rdf_taxonomy_vocabulary_Division
+    - bio2rdf_taxonomy_vocabulary_Genetic_Code
+    - owl_Class
+    - owl_Object_Property
+    - bio2rdf_taxonomy_vocabulary_Embl_code
+    - bio2rdf_taxonomy_vocabulary_Resource
+    range: dcterms_Dataset
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_taxonomy_vocabulary_rank:
+    name: bio2rdf_taxonomy_vocabulary_rank
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_rank
+    description: Property bio2rdf:taxonomy_vocabulary:rank
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_rank
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_rank
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    - bio2rdf_taxonomy_vocabulary_Resource
+    range: bio2rdf_taxonomy_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  rdfs_sub_Class_Of:
+    name: rdfs_sub_Class_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/rdfs_sub_Class_Of
+    description: Property rdfs:subClassOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/rdfs_sub_Class_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/rdfs_sub_Class_Of
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    - bio2rdf_taxonomy_vocabulary_Resource
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_taxonomy_vocabulary_division_id:
+    name: bio2rdf_taxonomy_vocabulary_division_id
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_division_id
+    description: Property bio2rdf:taxonomy_vocabulary:division-id
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_division_id
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_division_id
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    - bio2rdf_taxonomy_vocabulary_Resource
+    range: bio2rdf_taxonomy_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/rdf_type
+    owner: bio2rdf_taxonomy_vocabulary_Division
+    domain_of:
+    - bio2rdf_taxonomy_vocabulary_Rank
+    - owl_Datatype_Property
+    - bio2rdf_taxonomy_vocabulary_Division
+    - bio2rdf_taxonomy_vocabulary_Genetic_Code
+    - owl_Class
+    - owl_Object_Property
+    - bio2rdf_taxonomy_vocabulary_Embl_code
+    - dcat_Distribution
+    - bio2rdf_taxonomy_vocabulary_Resource
+    range: bio2rdf_taxonomy_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+classes:
+  bio2rdf_taxonomy_vocabulary_Resource:
+    name: bio2rdf_taxonomy_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/Bio2rdfTaxonomyVocabularyResource
+    description: Class representing bio2rdf_taxonomy_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_Resource
+    slots:
+    - rdf_type
+    - rdfs_sub_Class_Of
+    - bio2rdf_taxonomy_vocabulary_embl_code
+    - bio2rdf_taxonomy_vocabulary_rank
+    - void_in_Dataset
+    - bio2rdf_taxonomy_vocabulary_division_id
+    - bio2rdf_taxonomy_vocabulary_genetic_code_id
+    - bio2rdf_taxonomy_vocabulary_mitochondrial_genetic_code_id
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_Resource
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/owl_Class
+    slots:
+    - rdf_type
+    - rdfs_sub_Class_Of
+    - bio2rdf_taxonomy_vocabulary_embl_code
+    - bio2rdf_taxonomy_vocabulary_rank
+    - void_in_Dataset
+    - bio2rdf_taxonomy_vocabulary_division_id
+    - bio2rdf_taxonomy_vocabulary_genetic_code_id
+    - bio2rdf_taxonomy_vocabulary_mitochondrial_genetic_code_id
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/owl_Class
+  bio2rdf_taxonomy_vocabulary_Genetic_Code:
+    name: bio2rdf_taxonomy_vocabulary_Genetic_Code
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/Bio2rdfTaxonomyVocabularyGeneticCode
+    description: Class representing bio2rdf_taxonomy_vocabulary_Genetic_Code
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_Genetic_Code
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_Genetic_Code
+  dcat_Distribution:
+    name: dcat_Distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/DcatDistribution
+    description: Class representing dcat_Distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/dcat_Distribution
+    slots:
+    - rdf_type
+    - dcterms_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/dcat_Distribution
+  bio2rdf_taxonomy_vocabulary_Rank:
+    name: bio2rdf_taxonomy_vocabulary_Rank
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/Bio2rdfTaxonomyVocabularyRank
+    description: Class representing bio2rdf_taxonomy_vocabulary_Rank
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_Rank
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_Rank
+  rdfs_Class:
+    name: rdfs_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/RdfsClass
+    description: Class representing rdfs_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/rdfs_Class
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/rdfs_Class
+  rdfs_Resource:
+    name: rdfs_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/RdfsResource
+    description: Class representing rdfs_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/rdfs_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/rdfs_Resource
+  owl_Object_Property:
+    name: owl_Object_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/OwlObjectProperty
+    description: Class representing owl_Object_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/owl_Object_Property
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/owl_Object_Property
+  bio2rdf_taxonomy_vocabulary_Embl_code:
+    name: bio2rdf_taxonomy_vocabulary_Embl_code
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/Bio2rdfTaxonomyVocabularyEmblCode
+    description: Class representing bio2rdf_taxonomy_vocabulary_Embl_code
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_Embl_code
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_Embl_code
+  owl_Datatype_Property:
+    name: owl_Datatype_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/OwlDatatypeProperty
+    description: Class representing owl_Datatype_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/owl_Datatype_Property
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/owl_Datatype_Property
+  bio2rdf_taxonomy_vocabulary_Division:
+    name: bio2rdf_taxonomy_vocabulary_Division
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/Bio2rdfTaxonomyVocabularyDivision
+    description: Class representing bio2rdf_taxonomy_vocabulary_Division
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_Division
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/bio2rdf_taxonomy_vocabulary_Division
+  dcterms_Dataset:
+    name: dcterms_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/DctermsDataset
+    description: Class representing dcterms_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/dcterms_Dataset
+    slots:
+    - dcat_distribution
+    class_uri: http://jmillanacosta.github.io/rdfsolve/taxonomy/linkml/dcterms_Dataset
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T12:17:31'

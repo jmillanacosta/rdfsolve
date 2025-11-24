@@ -1,0 +1,2161 @@
+name: drugbank_schema
+description: LinkML schema for drugbank generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+prefixes:
+  drugbank_schema:
+    prefix_prefix: drugbank_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  bio2rdf:
+    prefix_prefix: bio2rdf
+    prefix_reference: http://bio2rdf.org/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  void:
+    prefix_prefix: void
+    prefix_reference: http://rdfs.org/ns/void#
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  ncit:
+    prefix_prefix: ncit
+    prefix_reference: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#
+default_prefix: drugbank_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  bio2rdf_drugbank_vocabulary_target:
+    name: bio2rdf_drugbank_vocabulary_target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_target
+    description: Property bio2rdf:drugbank_vocabulary:target
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_target
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    - bio2rdf_drugbank_vocabulary_Target_Relation
+    range: bio2rdf_drugbank_vocabulary_Enzyme
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_kegg:
+    name: bio2rdf_drugbank_vocabulary_x_kegg
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_kegg
+    description: Property bio2rdf:drugbank_vocabulary:x-kegg
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_kegg
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_kegg
+    owner: bio2rdf_drugbank_vocabulary_Biotech
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_kegg_vocabulary_Compound
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_product:
+    name: bio2rdf_drugbank_vocabulary_product
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_product
+    description: Property bio2rdf:drugbank_vocabulary:product
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_product
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_product
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Pharmaceutical
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_group:
+    name: bio2rdf_drugbank_vocabulary_group
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_group
+    description: Property bio2rdf:drugbank_vocabulary:group
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_group
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_group
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Group
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_source:
+    name: bio2rdf_drugbank_vocabulary_source
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_source
+    description: Property bio2rdf:drugbank_vocabulary:source
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_source
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_source
+    owner: bio2rdf_drugbank_vocabulary_Ghose_Filter
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Physiological_Charge
+    - bio2rdf_drugbank_vocabulary_SMILES
+    - bio2rdf_drugbank_vocabulary_MDDR_Like_Rule
+    - bio2rdf_drugbank_vocabulary_Melting_Point
+    - bio2rdf_drugbank_vocabulary_PKa_strongest_acidic
+    - bio2rdf_drugbank_vocabulary_Isoelectric_Point
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Ghose_Filter
+    - bio2rdf_drugbank_vocabulary_IUPAC_Name
+    - bio2rdf_drugbank_vocabulary_Monoisotopic_Weight
+    - bio2rdf_drugbank_vocabulary_In_Ch_IKey
+    - bio2rdf_drugbank_vocabulary_PKa_strongest_basic
+    - bio2rdf_drugbank_vocabulary_Molecular_Weight
+    - bio2rdf_drugbank_vocabulary_Water_Solubility
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_pubchemsubstance:
+    name: bio2rdf_drugbank_vocabulary_x_pubchemsubstance
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pubchemsubstance
+    description: Property bio2rdf:drugbank_vocabulary:x-pubchemsubstance
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pubchemsubstance
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pubchemsubstance
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_pubchem_substance_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_uniprot:
+    name: bio2rdf_drugbank_vocabulary_x_uniprot
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_uniprot
+    description: Property bio2rdf:drugbank_vocabulary:x-uniprot
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_uniprot
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_uniprot
+    owner: bio2rdf_drugbank_vocabulary_Carrier
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Carrier
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Target
+    - bio2rdf_drugbank_vocabulary_Transporter
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Enzyme
+    range: bio2rdf_uniprot_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_drug:
+    name: bio2rdf_drugbank_vocabulary_drug
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_drug
+    description: Property bio2rdf:drugbank_vocabulary:drug
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_drug
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_drug
+    owner: bio2rdf_drugbank_vocabulary_Enzyme_Relation
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Transporter_Relation
+    - bio2rdf_drugbank_vocabulary_Enzyme_Relation
+    range: bio2rdf_drugbank_vocabulary_Drug
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_reference:
+    name: bio2rdf_drugbank_vocabulary_reference
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_reference
+    description: Property bio2rdf:drugbank_vocabulary:reference
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_reference
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_reference
+    owner: bio2rdf_drugbank_vocabulary_Resource
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Target_Relation
+    range: bio2rdf_pubmed_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_packager:
+    name: bio2rdf_drugbank_vocabulary_packager
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_packager
+    description: Property bio2rdf:drugbank_vocabulary:packager
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_packager
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_packager
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_genecards:
+    name: bio2rdf_drugbank_vocabulary_x_genecards
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_genecards
+    description: Property bio2rdf:drugbank_vocabulary:x-genecards
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_genecards
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_genecards
+    owner: bio2rdf_drugbank_vocabulary_Carrier
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Carrier
+    - bio2rdf_drugbank_vocabulary_Target
+    - bio2rdf_drugbank_vocabulary_Enzyme
+    range: bio2rdf_genecards_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_brand:
+    name: bio2rdf_drugbank_vocabulary_brand
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_brand
+    description: Property bio2rdf:drugbank_vocabulary:brand
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_brand
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_brand
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_route_of_elimination:
+    name: bio2rdf_drugbank_vocabulary_route_of_elimination
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_route_of_elimination
+    description: Property bio2rdf:drugbank_vocabulary:route-of-elimination
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_route_of_elimination
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_route_of_elimination
+    owner: bio2rdf_drugbank_vocabulary_Resource
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_pubchemcompound:
+    name: bio2rdf_drugbank_vocabulary_x_pubchemcompound
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pubchemcompound
+    description: Property bio2rdf:drugbank_vocabulary:x-pubchemcompound
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pubchemcompound
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pubchemcompound
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_pubchem_compound_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_mixture:
+    name: bio2rdf_drugbank_vocabulary_mixture
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_mixture
+    description: Property bio2rdf:drugbank_vocabulary:mixture
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_mixture
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_mixture
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_manufacturer:
+    name: bio2rdf_drugbank_vocabulary_manufacturer
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_manufacturer
+    description: Property bio2rdf:drugbank_vocabulary:manufacturer
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_manufacturer
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_manufacturer
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_drugbank_vocabulary_Manufacturer
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_calculated_properties:
+    name: bio2rdf_drugbank_vocabulary_calculated_properties
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_calculated_properties
+    description: Property bio2rdf:drugbank_vocabulary:calculated-properties
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_calculated_properties
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_calculated_properties
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_H_Bond_Donor_Count
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_drug_classification_category:
+    name: bio2rdf_drugbank_vocabulary_drug_classification_category
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_drug_classification_category
+    description: Property bio2rdf:drugbank_vocabulary:drug-classification-category
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_drug_classification_category
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_drug_classification_category
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_cas:
+    name: bio2rdf_drugbank_vocabulary_x_cas
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_cas
+    description: Property bio2rdf:drugbank_vocabulary:x-cas
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_cas
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_cas
+    owner: bio2rdf_drugbank_vocabulary_Biotech
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Biotech
+    range: bio2rdf_cas_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_salt:
+    name: bio2rdf_drugbank_vocabulary_salt
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_salt
+    description: Property bio2rdf:drugbank_vocabulary:salt
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_salt
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_salt
+    owner: bio2rdf_drugbank_vocabulary_Biotech
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_clearance:
+    name: bio2rdf_drugbank_vocabulary_clearance
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_clearance
+    description: Property bio2rdf:drugbank_vocabulary:clearance
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_clearance
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_clearance
+    owner: bio2rdf_drugbank_vocabulary_Biotech
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_gtp:
+    name: bio2rdf_drugbank_vocabulary_x_gtp
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_gtp
+    description: Property bio2rdf:drugbank_vocabulary:x-gtp
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_gtp
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_gtp
+    owner: bio2rdf_drugbank_vocabulary_Target
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Target
+    range: bio2rdf_gtp_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/rdf_type
+    owner: bio2rdf_drugbank_vocabulary_Hydrophobicity
+    domain_of:
+    - bio2rdf_atc_vocabulary_Resource
+    - bio2rdf_chebi_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Absorption
+    - bio2rdf_drugbank_vocabulary_Food_interaction
+    - bio2rdf_drugbank_vocabulary_Mechanism_of_action
+    - bio2rdf_drugbank_vocabulary_Manufacturer
+    - bio2rdf_drugbank_vocabulary_Physiological_Charge
+    - bio2rdf_drugbank_vocabulary_Salt
+    - bio2rdf_drugbank_vocabulary_Transporter_Relation
+    - bio2rdf_drugbank_vocabulary_SMILES
+    - bio2rdf_drugbank_vocabulary_Unit
+    - bio2rdf_drugbank_vocabulary_International_brand
+    - bio2rdf_drugbank_vocabulary_Rule_of_Five
+    - bio2rdf_inchi_vocabulary_Resource
+    - bio2rdf_wikipedia_vocabulary_Resource
+    - bio2rdf_pubchem_substance_vocabulary_Resource
+    - bio2rdf_ahfs_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Bioavailability
+    - bio2rdf_drugbank_vocabulary_Carrier
+    - bio2rdf_drugbank_vocabulary_Category
+    - bio2rdf_drugbank_vocabulary_Drug_Drug_Interaction
+    - bio2rdf_drugbank_vocabulary_H_Bond_Acceptor_Count
+    - bio2rdf_drugbank_vocabulary_Group
+    - bio2rdf_drugbank_vocabulary_Half_life
+    - bio2rdf_drugbank_vocabulary_MDDR_Like_Rule
+    - bio2rdf_drugbank_vocabulary_Melting_Point
+    - bio2rdf_drugbank_vocabulary_Number_of_Rings
+    - bio2rdf_drugbank_vocabulary_PKa_strongest_acidic
+    - bio2rdf_drugbank_vocabulary_Drug_Classification_Category
+    - bio2rdf_drugbank_vocabulary_Protein_binding
+    - bio2rdf_drugbank_vocabulary_Toxicity
+    - bio2rdf_drugbank_vocabulary_Clearance
+    - bio2rdf_drugbank_vocabulary_Enzyme_Relation
+    - bio2rdf_drugbank_vocabulary_Rotatable_Bond_Count
+    - bio2rdf_drugbank_vocabulary_Log_P
+    - bio2rdf_drugbank_vocabulary_Isoelectric_Point
+    - owl_Datatype_Property
+    - bio2rdf_genecards_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Ghose_Filter
+    - bio2rdf_drugbank_vocabulary_H_Bond_Donor_Count
+    - bio2rdf_drugbank_vocabulary_IUPAC_Name
+    - bio2rdf_drugbank_vocabulary_Hydrophobicity
+    - bio2rdf_drugbank_vocabulary_Name
+    - bio2rdf_drugbank_vocabulary_Pharmaceutical
+    - owl_Class
+    - bio2rdf_drugbank_vocabulary_Dosage
+    - bio2rdf_drugbank_vocabulary_Source
+    - bio2rdf_drugbank_vocabulary_Carrier_Relation
+    - bio2rdf_drugbank_vocabulary_Monoisotopic_Weight
+    - bio2rdf_drugbank_vocabulary_Molecular_Formula
+    - bio2rdf_drugbank_vocabulary_In_Ch_I
+    - owl_Object_Property
+    - bio2rdf_drugbank_vocabulary_Synonym
+    - bio2rdf_drugbank_vocabulary_Traditional_IUPAC_Name
+    - bio2rdf_drugbank_vocabulary_Volume_of_distribution
+    - bio2rdf_gtp_vocabulary_Resource
+    - bio2rdf_iuphar_vocabulary_Resource
+    - bio2rdf_ndc_vocabulary_Resource
+    - bio2rdf_genbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_In_Ch_IKey
+    - bio2rdf_drugbank_vocabulary_PKa_strongest_basic
+    - bio2rdf_pfam_vocabulary_Resource
+    - bio2rdf_skos_vocabulary_Resource
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_enzyme:
+    name: bio2rdf_drugbank_vocabulary_enzyme
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_enzyme
+    description: Property bio2rdf:drugbank_vocabulary:enzyme
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_enzyme
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_enzyme
+    owner: bio2rdf_drugbank_vocabulary_Enzyme_Relation
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Enzyme_Relation
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    - bio2rdf_drugbank_vocabulary_Target_Relation
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_hgnc:
+    name: bio2rdf_drugbank_vocabulary_x_hgnc
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_hgnc
+    description: Property bio2rdf:drugbank_vocabulary:x-hgnc
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_hgnc
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_hgnc
+    owner: bio2rdf_drugbank_vocabulary_Carrier
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Carrier
+    - bio2rdf_drugbank_vocabulary_Transporter
+    - bio2rdf_drugbank_vocabulary_Enzyme
+    range: bio2rdf_hgnc_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_food_interaction:
+    name: bio2rdf_drugbank_vocabulary_food_interaction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_food_interaction
+    description: Property bio2rdf:drugbank_vocabulary:food-interaction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_food_interaction
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_food_interaction
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_genbank:
+    name: bio2rdf_drugbank_vocabulary_x_genbank
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_genbank
+    description: Property bio2rdf:drugbank_vocabulary:x-genbank
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_genbank
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_genbank
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Transporter
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_genbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_absorption:
+    name: bio2rdf_drugbank_vocabulary_absorption
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_absorption
+    description: Property bio2rdf:drugbank_vocabulary:absorption
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_absorption
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_absorption
+    owner: bio2rdf_drugbank_vocabulary_Biotech
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_transporter:
+    name: bio2rdf_drugbank_vocabulary_transporter
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_transporter
+    description: Property bio2rdf:drugbank_vocabulary:transporter
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_transporter
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_transporter
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Transporter_Relation
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    - bio2rdf_drugbank_vocabulary_Target_Relation
+    range: bio2rdf_drugbank_vocabulary_Target
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_iuphar:
+    name: bio2rdf_drugbank_vocabulary_x_iuphar
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_iuphar
+    description: Property bio2rdf:drugbank_vocabulary:x-iuphar
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_iuphar
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_iuphar
+    owner: bio2rdf_drugbank_vocabulary_Resource
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_iuphar_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_carrier:
+    name: bio2rdf_drugbank_vocabulary_carrier
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_carrier
+    description: Property bio2rdf:drugbank_vocabulary:carrier
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_carrier
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_carrier
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Carrier
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_ndc:
+    name: bio2rdf_drugbank_vocabulary_x_ndc
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_ndc
+    description: Property bio2rdf:drugbank_vocabulary:x-ndc
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_ndc
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_ndc
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_ndc_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_chemspider:
+    name: bio2rdf_drugbank_vocabulary_x_chemspider
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_chemspider
+    description: Property bio2rdf:drugbank_vocabulary:x-chemspider
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_chemspider
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_chemspider
+    owner: bio2rdf_drugbank_vocabulary_Small_molecule
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_chemspider_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  void_in_Dataset:
+    name: void_in_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/void_in_Dataset
+    description: Property void:inDataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/void_in_Dataset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/void_in_Dataset
+    owner: bio2rdf_drugbank_vocabulary_Carrier
+    domain_of:
+    - bio2rdf_chebi_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Physiological_Charge
+    - bio2rdf_drugbank_vocabulary_Salt
+    - bio2rdf_drugbank_vocabulary_Rule_of_Five
+    - bio2rdf_pubchem_substance_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Bioavailability
+    - bio2rdf_drugbank_vocabulary_Carrier
+    - bio2rdf_drugbank_vocabulary_Category
+    - bio2rdf_drugbank_vocabulary_Melting_Point
+    - bio2rdf_drugbank_vocabulary_Toxicity
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Dosage
+    - bio2rdf_drugbank_vocabulary_Traditional_IUPAC_Name
+    - bio2rdf_drugbank_vocabulary_Mixture
+    - bio2rdf_drugbank_vocabulary_Affected_organism
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_pubchem_compound_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Target
+    - bio2rdf_drugbank_vocabulary_Transporter
+    - bio2rdf_pubmed_vocabulary_Resource
+    - bio2rdf_chemspider_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Polar_Surface_Area_PSA
+    - bio2rdf_kegg_vocabulary_Resource
+    - bio2rdf_pdb_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Indication
+    range: dcterms_Dataset
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_pharmacodynamics:
+    name: bio2rdf_drugbank_vocabulary_pharmacodynamics
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_pharmacodynamics
+    description: Property bio2rdf:drugbank_vocabulary:pharmacodynamics
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_pharmacodynamics
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_pharmacodynamics
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_drugbank_vocabulary_Pharmacodynamics
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_bio_2rdf_vocabulary_x_identifiers_org:
+    name: bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    description: Property bio2rdf:bio2rdf_vocabulary:x-identifiers.org
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    owner: bio2rdf_genecards_vocabulary_Resource
+    domain_of:
+    - bio2rdf_genecards_vocabulary_Resource
+    range: ncit_C_16612
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_synonym:
+    name: bio2rdf_drugbank_vocabulary_synonym
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_synonym
+    description: Property bio2rdf:drugbank_vocabulary:synonym
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_synonym
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_synonym
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Synonym
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_ddi_interactor_in:
+    name: bio2rdf_drugbank_vocabulary_ddi_interactor_in
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_ddi_interactor_in
+    description: Property bio2rdf:drugbank_vocabulary:ddi-interactor-in
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_ddi_interactor_in
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_ddi_interactor_in
+    owner: bio2rdf_drugbank_vocabulary_Small_molecule
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_category:
+    name: bio2rdf_drugbank_vocabulary_category
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_category
+    description: Property bio2rdf:drugbank_vocabulary:category
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_category
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_category
+    owner: bio2rdf_drugbank_vocabulary_Resource
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    range: bio2rdf_drugbank_vocabulary_Category
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_toxicity:
+    name: bio2rdf_drugbank_vocabulary_toxicity
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_toxicity
+    description: Property bio2rdf:drugbank_vocabulary:toxicity
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_toxicity
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_toxicity
+    owner: bio2rdf_drugbank_vocabulary_Biotech
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    range: bio2rdf_drugbank_vocabulary_Toxicity
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_protein_binding:
+    name: bio2rdf_drugbank_vocabulary_protein_binding
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_protein_binding
+    description: Property bio2rdf:drugbank_vocabulary:protein-binding
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_protein_binding
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_protein_binding
+    owner: bio2rdf_drugbank_vocabulary_Biotech
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Biotech
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_pfam:
+    name: bio2rdf_drugbank_vocabulary_x_pfam
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pfam
+    description: Property bio2rdf:drugbank_vocabulary:x-pfam
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pfam
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pfam
+    owner: bio2rdf_drugbank_vocabulary_Resource
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    range: bio2rdf_pfam_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_experimental_properties:
+    name: bio2rdf_drugbank_vocabulary_experimental_properties
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_experimental_properties
+    description: Property bio2rdf:drugbank_vocabulary:experimental-properties
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_experimental_properties
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_experimental_properties
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Water_Solubility
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_gi:
+    name: bio2rdf_drugbank_vocabulary_x_gi
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_gi
+    description: Property bio2rdf:drugbank_vocabulary:x-gi
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_gi
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_gi
+    owner: bio2rdf_drugbank_vocabulary_Enzyme
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Enzyme
+    range: bio2rdf_gi_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_chebi:
+    name: bio2rdf_drugbank_vocabulary_x_chebi
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_chebi
+    description: Property bio2rdf:drugbank_vocabulary:x-chebi
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_chebi
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_chebi
+    owner: bio2rdf_drugbank_vocabulary_Biotech
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    range: bio2rdf_chebi_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_wikipedia:
+    name: bio2rdf_drugbank_vocabulary_x_wikipedia
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_wikipedia
+    description: Property bio2rdf:drugbank_vocabulary:x-wikipedia
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_wikipedia
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_wikipedia
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_wikipedia_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_bindingdb:
+    name: bio2rdf_drugbank_vocabulary_x_bindingdb
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_bindingdb
+    description: Property bio2rdf:drugbank_vocabulary:x-bindingdb
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_bindingdb
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_bindingdb
+    owner: bio2rdf_drugbank_vocabulary_Resource
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    range: bio2rdf_bindingdb_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  rdfs_sub_Class_Of:
+    name: rdfs_sub_Class_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/rdfs_sub_Class_Of
+    description: Property rdfs:subClassOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/rdfs_sub_Class_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/rdfs_sub_Class_Of
+    owner: owl_Class
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - owl_Class
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_patent:
+    name: bio2rdf_drugbank_vocabulary_patent
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_patent
+    description: Property bio2rdf:drugbank_vocabulary:patent
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_patent
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_patent
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_drugbank_vocabulary_Patent
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_half_life:
+    name: bio2rdf_drugbank_vocabulary_half_life
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_half_life
+    description: Property bio2rdf:drugbank_vocabulary:half-life
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_half_life
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_half_life
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_pharmgkb:
+    name: bio2rdf_drugbank_vocabulary_x_pharmgkb
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pharmgkb
+    description: Property bio2rdf:drugbank_vocabulary:x-pharmgkb
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pharmgkb
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_pharmgkb
+    owner: bio2rdf_drugbank_vocabulary_Biotech
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Biotech
+    range: bio2rdf_pharmgkb_vocabulary_Drug
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_genatlas:
+    name: bio2rdf_drugbank_vocabulary_x_genatlas
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_genatlas
+    description: Property bio2rdf:drugbank_vocabulary:x-genatlas
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_genatlas
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_genatlas
+    owner: bio2rdf_drugbank_vocabulary_Carrier
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Carrier
+    - bio2rdf_drugbank_vocabulary_Enzyme
+    range: bio2rdf_genatlas_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_ahfs:
+    name: bio2rdf_drugbank_vocabulary_x_ahfs
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_ahfs
+    description: Property bio2rdf:drugbank_vocabulary:x-ahfs
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_ahfs
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_ahfs
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Drug
+    range: bio2rdf_ahfs_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_affected_organism:
+    name: bio2rdf_drugbank_vocabulary_affected_organism
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_affected_organism
+    description: Property bio2rdf:drugbank_vocabulary:affected-organism
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_affected_organism
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_affected_organism
+    owner: bio2rdf_drugbank_vocabulary_Drug
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Biotech
+    - bio2rdf_drugbank_vocabulary_Drug
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Affected_organism
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_ingredient:
+    name: bio2rdf_drugbank_vocabulary_ingredient
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_ingredient
+    description: Property bio2rdf:drugbank_vocabulary:ingredient
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_ingredient
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_ingredient
+    owner: bio2rdf_drugbank_vocabulary_Resource
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_x_taxonomy:
+    name: bio2rdf_drugbank_vocabulary_x_taxonomy
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_taxonomy
+    description: Property bio2rdf:drugbank_vocabulary:x-taxonomy
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_taxonomy
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_x_taxonomy
+    owner: bio2rdf_drugbank_vocabulary_Transporter
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Transporter
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_dosage:
+    name: bio2rdf_drugbank_vocabulary_dosage
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_dosage
+    description: Property bio2rdf:drugbank_vocabulary:dosage
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_dosage
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_dosage
+    owner: bio2rdf_drugbank_vocabulary_Resource
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Small_molecule
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_drugbank_vocabulary_mechanism_of_action:
+    name: bio2rdf_drugbank_vocabulary_mechanism_of_action
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_mechanism_of_action
+    description: Property bio2rdf:drugbank_vocabulary:mechanism-of-action
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_mechanism_of_action
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_mechanism_of_action
+    owner: bio2rdf_drugbank_vocabulary_Biotech
+    domain_of:
+    - bio2rdf_drugbank_vocabulary_Resource
+    - bio2rdf_drugbank_vocabulary_Biotech
+    range: bio2rdf_drugbank_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+classes:
+  bio2rdf_hgnc_vocabulary_Gene_Symbol:
+    name: bio2rdf_hgnc_vocabulary_Gene_Symbol
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfHgncVocabularyGeneSymbol
+    description: Class representing bio2rdf_hgnc_vocabulary_Gene_Symbol
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_hgnc_vocabulary_Gene_Symbol
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_hgnc_vocabulary_Gene_Symbol
+  bio2rdf_cas_vocabulary_Resource:
+    name: bio2rdf_cas_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfCasVocabularyResource
+    description: Class representing bio2rdf_cas_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_cas_vocabulary_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_cas_vocabulary_Resource
+  bio2rdf_gi_vocabulary_Resource:
+    name: bio2rdf_gi_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfGiVocabularyResource
+    description: Class representing bio2rdf_gi_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_gi_vocabulary_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_gi_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_Isoelectric_Point:
+    name: bio2rdf_drugbank_vocabulary_Isoelectric_Point
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyIsoelectricPoint
+    description: Class representing bio2rdf_drugbank_vocabulary_Isoelectric_Point
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Isoelectric_Point
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Isoelectric_Point
+  bio2rdf_pubmed_vocabulary_Resource:
+    name: bio2rdf_pubmed_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfPubmedVocabularyResource
+    description: Class representing bio2rdf_pubmed_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pubmed_vocabulary_Resource
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pubmed_vocabulary_Resource
+  bio2rdf_atc_vocabulary_Resource:
+    name: bio2rdf_atc_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfAtcVocabularyResource
+    description: Class representing bio2rdf_atc_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_atc_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_atc_vocabulary_Resource
+  ncit_C_16612:
+    name: ncit_C_16612
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/NcitC16612
+    description: Class representing ncit_C_16612
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/ncit_C_16612
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/ncit_C_16612
+  bio2rdf_ndc_vocabulary_Resource:
+    name: bio2rdf_ndc_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfNdcVocabularyResource
+    description: Class representing bio2rdf_ndc_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_ndc_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_ndc_vocabulary_Resource
+  bio2rdf_iuphar_vocabulary_Resource:
+    name: bio2rdf_iuphar_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfIupharVocabularyResource
+    description: Class representing bio2rdf_iuphar_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_iuphar_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_iuphar_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_Dosage:
+    name: bio2rdf_drugbank_vocabulary_Dosage
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyDosage
+    description: Class representing bio2rdf_drugbank_vocabulary_Dosage
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Dosage
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Dosage
+  bio2rdf_genatlas_vocabulary_Resource:
+    name: bio2rdf_genatlas_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfGenatlasVocabularyResource
+    description: Class representing bio2rdf_genatlas_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_genatlas_vocabulary_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_genatlas_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_Rule_of_Five:
+    name: bio2rdf_drugbank_vocabulary_Rule_of_Five
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyRuleOfFive
+    description: Class representing bio2rdf_drugbank_vocabulary_Rule_of_Five
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Rule_of_Five
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Rule_of_Five
+  bio2rdf_drugbank_vocabulary_Name:
+    name: bio2rdf_drugbank_vocabulary_Name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyName
+    description: Class representing bio2rdf_drugbank_vocabulary_Name
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Name
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Name
+  bio2rdf_drugbank_vocabulary_IUPAC_Name:
+    name: bio2rdf_drugbank_vocabulary_IUPAC_Name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyIUPACName
+    description: Class representing bio2rdf_drugbank_vocabulary_IUPAC_Name
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_IUPAC_Name
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_IUPAC_Name
+  bio2rdf_inchi_vocabulary_Resource:
+    name: bio2rdf_inchi_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfInchiVocabularyResource
+    description: Class representing bio2rdf_inchi_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_inchi_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_inchi_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_MDDR_Like_Rule:
+    name: bio2rdf_drugbank_vocabulary_MDDR_Like_Rule
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyMDDRLikeRule
+    description: Class representing bio2rdf_drugbank_vocabulary_MDDR_Like_Rule
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_MDDR_Like_Rule
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_MDDR_Like_Rule
+  bio2rdf_drugbank_vocabulary_Unit:
+    name: bio2rdf_drugbank_vocabulary_Unit
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyUnit
+    description: Class representing bio2rdf_drugbank_vocabulary_Unit
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Unit
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Unit
+  bio2rdf_drugbank_vocabulary_Polar_Surface_Area_PSA:
+    name: bio2rdf_drugbank_vocabulary_Polar_Surface_Area_PSA
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyPolarSurfaceAreaPSA
+    description: Class representing bio2rdf_drugbank_vocabulary_Polar_Surface_Area_PSA
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Polar_Surface_Area_PSA
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Polar_Surface_Area_PSA
+  bio2rdf_drugbank_vocabulary_Protein_binding:
+    name: bio2rdf_drugbank_vocabulary_Protein_binding
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyProteinBinding
+    description: Class representing bio2rdf_drugbank_vocabulary_Protein_binding
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Protein_binding
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Protein_binding
+  bio2rdf_drugbank_vocabulary_Patent:
+    name: bio2rdf_drugbank_vocabulary_Patent
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyPatent
+    description: Class representing bio2rdf_drugbank_vocabulary_Patent
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Patent
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Patent
+  bio2rdf_drugbank_vocabulary_Water_Solubility:
+    name: bio2rdf_drugbank_vocabulary_Water_Solubility
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyWaterSolubility
+    description: Class representing bio2rdf_drugbank_vocabulary_Water_Solubility
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Water_Solubility
+    slots:
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Water_Solubility
+  bio2rdf_drugbank_vocabulary_Affected_organism:
+    name: bio2rdf_drugbank_vocabulary_Affected_organism
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyAffectedOrganism
+    description: Class representing bio2rdf_drugbank_vocabulary_Affected_organism
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Affected_organism
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Affected_organism
+  bio2rdf_skos_vocabulary_Resource:
+    name: bio2rdf_skos_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfSkosVocabularyResource
+    description: Class representing bio2rdf_skos_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_skos_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_skos_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_Toxicity:
+    name: bio2rdf_drugbank_vocabulary_Toxicity
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyToxicity
+    description: Class representing bio2rdf_drugbank_vocabulary_Toxicity
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Toxicity
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Toxicity
+  bio2rdf_drugbank_vocabulary_Drug_Drug_Interaction:
+    name: bio2rdf_drugbank_vocabulary_Drug_Drug_Interaction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyDrugDrugInteraction
+    description: Class representing bio2rdf_drugbank_vocabulary_Drug_Drug_Interaction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Drug_Drug_Interaction
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Drug_Drug_Interaction
+  bio2rdf_drugbank_vocabulary_Pharmacodynamics:
+    name: bio2rdf_drugbank_vocabulary_Pharmacodynamics
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyPharmacodynamics
+    description: Class representing bio2rdf_drugbank_vocabulary_Pharmacodynamics
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Pharmacodynamics
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Pharmacodynamics
+  bio2rdf_genbank_vocabulary_Resource:
+    name: bio2rdf_genbank_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfGenbankVocabularyResource
+    description: Class representing bio2rdf_genbank_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_genbank_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_genbank_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_SMILES:
+    name: bio2rdf_drugbank_vocabulary_SMILES
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularySMILES
+    description: Class representing bio2rdf_drugbank_vocabulary_SMILES
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_SMILES
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_SMILES
+  bio2rdf_goa_vocabulary_GO_Annotation:
+    name: bio2rdf_goa_vocabulary_GO_Annotation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfGoaVocabularyGOAnnotation
+    description: Class representing bio2rdf_goa_vocabulary_GO_Annotation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_goa_vocabulary_GO_Annotation
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_goa_vocabulary_GO_Annotation
+  bio2rdf_drugbank_vocabulary_Small_molecule:
+    name: bio2rdf_drugbank_vocabulary_Small_molecule
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularySmallMolecule
+    description: Class representing bio2rdf_drugbank_vocabulary_Small_molecule
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Small_molecule
+    slots:
+    - bio2rdf_drugbank_vocabulary_x_pubchemcompound
+    - bio2rdf_drugbank_vocabulary_absorption
+    - bio2rdf_drugbank_vocabulary_calculated_properties
+    - bio2rdf_drugbank_vocabulary_dosage
+    - bio2rdf_drugbank_vocabulary_experimental_properties
+    - bio2rdf_drugbank_vocabulary_synonym
+    - bio2rdf_drugbank_vocabulary_target
+    - bio2rdf_drugbank_vocabulary_transporter
+    - bio2rdf_drugbank_vocabulary_x_iuphar
+    - bio2rdf_drugbank_vocabulary_x_kegg
+    - bio2rdf_drugbank_vocabulary_x_ndc
+    - bio2rdf_drugbank_vocabulary_x_chemspider
+    - bio2rdf_drugbank_vocabulary_affected_organism
+    - bio2rdf_drugbank_vocabulary_clearance
+    - bio2rdf_drugbank_vocabulary_enzyme
+    - bio2rdf_drugbank_vocabulary_product
+    - bio2rdf_drugbank_vocabulary_route_of_elimination
+    - bio2rdf_drugbank_vocabulary_carrier
+    - bio2rdf_drugbank_vocabulary_ddi_interactor_in
+    - bio2rdf_drugbank_vocabulary_group
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Small_molecule
+  bio2rdf_uspto_vocabulary_Resource:
+    name: bio2rdf_uspto_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfUsptoVocabularyResource
+    description: Class representing bio2rdf_uspto_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_uspto_vocabulary_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_uspto_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_In_Ch_IKey:
+    name: bio2rdf_drugbank_vocabulary_In_Ch_IKey
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyInChIKey
+    description: Class representing bio2rdf_drugbank_vocabulary_In_Ch_IKey
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_In_Ch_IKey
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_In_Ch_IKey
+  bio2rdf_drugbank_vocabulary_Bioavailability:
+    name: bio2rdf_drugbank_vocabulary_Bioavailability
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyBioavailability
+    description: Class representing bio2rdf_drugbank_vocabulary_Bioavailability
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Bioavailability
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Bioavailability
+  bio2rdf_drugbank_vocabulary_Rotatable_Bond_Count:
+    name: bio2rdf_drugbank_vocabulary_Rotatable_Bond_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyRotatableBondCount
+    description: Class representing bio2rdf_drugbank_vocabulary_Rotatable_Bond_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Rotatable_Bond_Count
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Rotatable_Bond_Count
+  bio2rdf_drugbank_vocabulary_Absorption:
+    name: bio2rdf_drugbank_vocabulary_Absorption
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyAbsorption
+    description: Class representing bio2rdf_drugbank_vocabulary_Absorption
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Absorption
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Absorption
+  bio2rdf_drugbank_vocabulary_Half_life:
+    name: bio2rdf_drugbank_vocabulary_Half_life
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyHalfLife
+    description: Class representing bio2rdf_drugbank_vocabulary_Half_life
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Half_life
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Half_life
+  bio2rdf_drugbank_vocabulary_PKa_strongest_acidic:
+    name: bio2rdf_drugbank_vocabulary_PKa_strongest_acidic
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyPKaStrongestAcidic
+    description: Class representing bio2rdf_drugbank_vocabulary_PKa_strongest_acidic
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_PKa_strongest_acidic
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_PKa_strongest_acidic
+  bio2rdf_drugbank_vocabulary_Synonym:
+    name: bio2rdf_drugbank_vocabulary_Synonym
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularySynonym
+    description: Class representing bio2rdf_drugbank_vocabulary_Synonym
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Synonym
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Synonym
+  bio2rdf_drugbank_vocabulary_Molecular_Formula:
+    name: bio2rdf_drugbank_vocabulary_Molecular_Formula
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyMolecularFormula
+    description: Class representing bio2rdf_drugbank_vocabulary_Molecular_Formula
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Molecular_Formula
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Molecular_Formula
+  bio2rdf_drugbank_vocabulary_Indication:
+    name: bio2rdf_drugbank_vocabulary_Indication
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyIndication
+    description: Class representing bio2rdf_drugbank_vocabulary_Indication
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Indication
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Indication
+  bio2rdf_drugbank_vocabulary_Pharmaceutical:
+    name: bio2rdf_drugbank_vocabulary_Pharmaceutical
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyPharmaceutical
+    description: Class representing bio2rdf_drugbank_vocabulary_Pharmaceutical
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Pharmaceutical
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Pharmaceutical
+  bio2rdf_drugbank_vocabulary_Target_Relation:
+    name: bio2rdf_drugbank_vocabulary_Target_Relation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyTargetRelation
+    description: Class representing bio2rdf_drugbank_vocabulary_Target_Relation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Target_Relation
+    slots:
+    - bio2rdf_drugbank_vocabulary_reference
+    - bio2rdf_drugbank_vocabulary_target
+    - bio2rdf_drugbank_vocabulary_transporter
+    - bio2rdf_drugbank_vocabulary_enzyme
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Target_Relation
+  bio2rdf_genecards_vocabulary_Resource:
+    name: bio2rdf_genecards_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfGenecardsVocabularyResource
+    description: Class representing bio2rdf_genecards_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_genecards_vocabulary_Resource
+    slots:
+    - rdf_type
+    - bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_genecards_vocabulary_Resource
+  bio2rdf_ndc_vocabulary_Package:
+    name: bio2rdf_ndc_vocabulary_Package
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfNdcVocabularyPackage
+    description: Class representing bio2rdf_ndc_vocabulary_Package
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_ndc_vocabulary_Package
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_ndc_vocabulary_Package
+  bio2rdf_drugbank_vocabulary_Salt:
+    name: bio2rdf_drugbank_vocabulary_Salt
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularySalt
+    description: Class representing bio2rdf_drugbank_vocabulary_Salt
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Salt
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Salt
+  bio2rdf_drugbank_vocabulary_Log_P:
+    name: bio2rdf_drugbank_vocabulary_Log_P
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyLogP
+    description: Class representing bio2rdf_drugbank_vocabulary_Log_P
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Log_P
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Log_P
+  bio2rdf_drugbank_vocabulary_Number_of_Rings:
+    name: bio2rdf_drugbank_vocabulary_Number_of_Rings
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyNumberOfRings
+    description: Class representing bio2rdf_drugbank_vocabulary_Number_of_Rings
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Number_of_Rings
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Number_of_Rings
+  bio2rdf_drugbank_vocabulary_Physiological_Charge:
+    name: bio2rdf_drugbank_vocabulary_Physiological_Charge
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyPhysiologicalCharge
+    description: Class representing bio2rdf_drugbank_vocabulary_Physiological_Charge
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Physiological_Charge
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Physiological_Charge
+  bio2rdf_drugbank_vocabulary_Resource:
+    name: bio2rdf_drugbank_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyResource
+    description: Class representing bio2rdf_drugbank_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_drugbank_vocabulary_x_pubchemcompound
+    - bio2rdf_drugbank_vocabulary_brand
+    - bio2rdf_drugbank_vocabulary_calculated_properties
+    - bio2rdf_drugbank_vocabulary_category
+    - bio2rdf_drugbank_vocabulary_dosage
+    - bio2rdf_drugbank_vocabulary_experimental_properties
+    - bio2rdf_drugbank_vocabulary_food_interaction
+    - bio2rdf_drugbank_vocabulary_half_life
+    - bio2rdf_drugbank_vocabulary_ingredient
+    - bio2rdf_drugbank_vocabulary_mixture
+    - bio2rdf_drugbank_vocabulary_patent
+    - bio2rdf_drugbank_vocabulary_reference
+    - bio2rdf_drugbank_vocabulary_source
+    - bio2rdf_drugbank_vocabulary_target
+    - bio2rdf_drugbank_vocabulary_transporter
+    - bio2rdf_drugbank_vocabulary_x_chebi
+    - bio2rdf_drugbank_vocabulary_x_iuphar
+    - bio2rdf_drugbank_vocabulary_x_ndc
+    - bio2rdf_drugbank_vocabulary_x_uniprot
+    - bio2rdf_drugbank_vocabulary_drug_classification_category
+    - bio2rdf_drugbank_vocabulary_enzyme
+    - bio2rdf_drugbank_vocabulary_mechanism_of_action
+    - bio2rdf_drugbank_vocabulary_packager
+    - bio2rdf_drugbank_vocabulary_pharmacodynamics
+    - bio2rdf_drugbank_vocabulary_route_of_elimination
+    - bio2rdf_drugbank_vocabulary_salt
+    - bio2rdf_drugbank_vocabulary_toxicity
+    - bio2rdf_drugbank_vocabulary_x_taxonomy
+    - rdfs_sub_Class_Of
+    - bio2rdf_drugbank_vocabulary_x_bindingdb
+    - bio2rdf_drugbank_vocabulary_carrier
+    - bio2rdf_drugbank_vocabulary_x_pfam
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_Source:
+    name: bio2rdf_drugbank_vocabulary_Source
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularySource
+    description: Class representing bio2rdf_drugbank_vocabulary_Source
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Source
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Source
+  bio2rdf_drugbank_vocabulary_Clearance:
+    name: bio2rdf_drugbank_vocabulary_Clearance
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyClearance
+    description: Class representing bio2rdf_drugbank_vocabulary_Clearance
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Clearance
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Clearance
+  bio2rdf_bindingdb_vocabulary_Resource:
+    name: bio2rdf_bindingdb_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfBindingdbVocabularyResource
+    description: Class representing bio2rdf_bindingdb_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_bindingdb_vocabulary_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_bindingdb_vocabulary_Resource
+  bio2rdf_pubchem_compound_vocabulary_Resource:
+    name: bio2rdf_pubchem_compound_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfPubchemCompoundVocabularyResource
+    description: Class representing bio2rdf_pubchem_compound_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pubchem_compound_vocabulary_Resource
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pubchem_compound_vocabulary_Resource
+  bio2rdf_wikipedia_vocabulary_Resource:
+    name: bio2rdf_wikipedia_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfWikipediaVocabularyResource
+    description: Class representing bio2rdf_wikipedia_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_wikipedia_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_wikipedia_vocabulary_Resource
+  bio2rdf_gtp_vocabulary_Resource:
+    name: bio2rdf_gtp_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfGtpVocabularyResource
+    description: Class representing bio2rdf_gtp_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_gtp_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_gtp_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_Monoisotopic_Weight:
+    name: bio2rdf_drugbank_vocabulary_Monoisotopic_Weight
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyMonoisotopicWeight
+    description: Class representing bio2rdf_drugbank_vocabulary_Monoisotopic_Weight
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Monoisotopic_Weight
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Monoisotopic_Weight
+  bio2rdf_drugbank_vocabulary_Transporter:
+    name: bio2rdf_drugbank_vocabulary_Transporter
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyTransporter
+    description: Class representing bio2rdf_drugbank_vocabulary_Transporter
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Transporter
+    slots:
+    - void_in_Dataset
+    - bio2rdf_drugbank_vocabulary_x_genbank
+    - bio2rdf_drugbank_vocabulary_x_uniprot
+    - bio2rdf_drugbank_vocabulary_x_hgnc
+    - bio2rdf_drugbank_vocabulary_x_taxonomy
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Transporter
+  bio2rdf_drugbank_vocabulary_Volume_of_distribution:
+    name: bio2rdf_drugbank_vocabulary_Volume_of_distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyVolumeOfDistribution
+    description: Class representing bio2rdf_drugbank_vocabulary_Volume_of_distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Volume_of_distribution
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Volume_of_distribution
+  bio2rdf_drugbank_vocabulary_H_Bond_Donor_Count:
+    name: bio2rdf_drugbank_vocabulary_H_Bond_Donor_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyHBondDonorCount
+    description: Class representing bio2rdf_drugbank_vocabulary_H_Bond_Donor_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_H_Bond_Donor_Count
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_H_Bond_Donor_Count
+  bio2rdf_drugbank_vocabulary_Food_interaction:
+    name: bio2rdf_drugbank_vocabulary_Food_interaction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyFoodInteraction
+    description: Class representing bio2rdf_drugbank_vocabulary_Food_interaction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Food_interaction
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Food_interaction
+  bio2rdf_taxonomy_vocabulary_Resource:
+    name: bio2rdf_taxonomy_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfTaxonomyVocabularyResource
+    description: Class representing bio2rdf_taxonomy_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_taxonomy_vocabulary_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_taxonomy_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_Biotech:
+    name: bio2rdf_drugbank_vocabulary_Biotech
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyBiotech
+    description: Class representing bio2rdf_drugbank_vocabulary_Biotech
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Biotech
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_x_pubchemsubstance
+    - bio2rdf_drugbank_vocabulary_absorption
+    - bio2rdf_drugbank_vocabulary_brand
+    - bio2rdf_drugbank_vocabulary_experimental_properties
+    - bio2rdf_drugbank_vocabulary_food_interaction
+    - bio2rdf_drugbank_vocabulary_half_life
+    - bio2rdf_drugbank_vocabulary_mixture
+    - bio2rdf_drugbank_vocabulary_protein_binding
+    - bio2rdf_drugbank_vocabulary_target
+    - bio2rdf_drugbank_vocabulary_x_chebi
+    - bio2rdf_drugbank_vocabulary_x_kegg
+    - bio2rdf_drugbank_vocabulary_x_uniprot
+    - bio2rdf_drugbank_vocabulary_affected_organism
+    - bio2rdf_drugbank_vocabulary_clearance
+    - bio2rdf_drugbank_vocabulary_mechanism_of_action
+    - bio2rdf_drugbank_vocabulary_pharmacodynamics
+    - bio2rdf_drugbank_vocabulary_salt
+    - bio2rdf_drugbank_vocabulary_toxicity
+    - bio2rdf_drugbank_vocabulary_x_cas
+    - bio2rdf_drugbank_vocabulary_x_pharmgkb
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Biotech
+  bio2rdf_drugbank_vocabulary_Melting_Point:
+    name: bio2rdf_drugbank_vocabulary_Melting_Point
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyMeltingPoint
+    description: Class representing bio2rdf_drugbank_vocabulary_Melting_Point
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Melting_Point
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Melting_Point
+  bio2rdf_kegg_vocabulary_Compound:
+    name: bio2rdf_kegg_vocabulary_Compound
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfKeggVocabularyCompound
+    description: Class representing bio2rdf_kegg_vocabulary_Compound
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_kegg_vocabulary_Compound
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_kegg_vocabulary_Compound
+  bio2rdf_pharmgkb_vocabulary_Drug:
+    name: bio2rdf_pharmgkb_vocabulary_Drug
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfPharmgkbVocabularyDrug
+    description: Class representing bio2rdf_pharmgkb_vocabulary_Drug
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pharmgkb_vocabulary_Drug
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pharmgkb_vocabulary_Drug
+  bio2rdf_mi_0326:
+    name: bio2rdf_mi_0326
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfMi0326
+    description: Class representing bio2rdf_mi_0326
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_mi_0326
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_mi_0326
+  dcterms_Dataset:
+    name: dcterms_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/DctermsDataset
+    description: Class representing dcterms_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/dcterms_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/dcterms_Dataset
+  bio2rdf_pdb_vocabulary_Resource:
+    name: bio2rdf_pdb_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfPdbVocabularyResource
+    description: Class representing bio2rdf_pdb_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pdb_vocabulary_Resource
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pdb_vocabulary_Resource
+  bio2rdf_pfam_vocabulary_Resource:
+    name: bio2rdf_pfam_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfPfamVocabularyResource
+    description: Class representing bio2rdf_pfam_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pfam_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pfam_vocabulary_Resource
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/owl_Class
+    slots:
+    - rdf_type
+    - rdfs_sub_Class_Of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/owl_Class
+  bio2rdf_kegg_vocabulary_Resource:
+    name: bio2rdf_kegg_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfKeggVocabularyResource
+    description: Class representing bio2rdf_kegg_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_kegg_vocabulary_Resource
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_kegg_vocabulary_Resource
+  bio2rdf_hgnc_vocabulary_Resource:
+    name: bio2rdf_hgnc_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfHgncVocabularyResource
+    description: Class representing bio2rdf_hgnc_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_hgnc_vocabulary_Resource
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_hgnc_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_H_Bond_Acceptor_Count:
+    name: bio2rdf_drugbank_vocabulary_H_Bond_Acceptor_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyHBondAcceptorCount
+    description: Class representing bio2rdf_drugbank_vocabulary_H_Bond_Acceptor_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_H_Bond_Acceptor_Count
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_H_Bond_Acceptor_Count
+  bio2rdf_pubchem_substance_vocabulary_Resource:
+    name: bio2rdf_pubchem_substance_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfPubchemSubstanceVocabularyResource
+    description: Class representing bio2rdf_pubchem_substance_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pubchem_substance_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_pubchem_substance_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_In_Ch_I:
+    name: bio2rdf_drugbank_vocabulary_In_Ch_I
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyInChI
+    description: Class representing bio2rdf_drugbank_vocabulary_In_Ch_I
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_In_Ch_I
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_In_Ch_I
+  bio2rdf_drugbank_vocabulary_Transporter_Relation:
+    name: bio2rdf_drugbank_vocabulary_Transporter_Relation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyTransporterRelation
+    description: Class representing bio2rdf_drugbank_vocabulary_Transporter_Relation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Transporter_Relation
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_transporter
+    - bio2rdf_drugbank_vocabulary_drug
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Transporter_Relation
+  owl_Datatype_Property:
+    name: owl_Datatype_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/OwlDatatypeProperty
+    description: Class representing owl_Datatype_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/owl_Datatype_Property
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/owl_Datatype_Property
+  bio2rdf_drugbank_vocabulary_Enzyme_Relation:
+    name: bio2rdf_drugbank_vocabulary_Enzyme_Relation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyEnzymeRelation
+    description: Class representing bio2rdf_drugbank_vocabulary_Enzyme_Relation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Enzyme_Relation
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_drug
+    - bio2rdf_drugbank_vocabulary_enzyme
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Enzyme_Relation
+  bio2rdf_ahfs_vocabulary_Resource:
+    name: bio2rdf_ahfs_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfAhfsVocabularyResource
+    description: Class representing bio2rdf_ahfs_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_ahfs_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_ahfs_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_Mechanism_of_action:
+    name: bio2rdf_drugbank_vocabulary_Mechanism_of_action
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyMechanismOfAction
+    description: Class representing bio2rdf_drugbank_vocabulary_Mechanism_of_action
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Mechanism_of_action
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Mechanism_of_action
+  bio2rdf_drugbank_vocabulary_Group:
+    name: bio2rdf_drugbank_vocabulary_Group
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyGroup
+    description: Class representing bio2rdf_drugbank_vocabulary_Group
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Group
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Group
+  bio2rdf_drugbank_vocabulary_Route_of_elimination:
+    name: bio2rdf_drugbank_vocabulary_Route_of_elimination
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyRouteOfElimination
+    description: Class representing bio2rdf_drugbank_vocabulary_Route_of_elimination
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Route_of_elimination
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Route_of_elimination
+  bio2rdf_drugbank_vocabulary_International_brand:
+    name: bio2rdf_drugbank_vocabulary_International_brand
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyInternationalBrand
+    description: Class representing bio2rdf_drugbank_vocabulary_International_brand
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_International_brand
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_International_brand
+  bio2rdf_chemspider_vocabulary_Resource:
+    name: bio2rdf_chemspider_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfChemspiderVocabularyResource
+    description: Class representing bio2rdf_chemspider_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_chemspider_vocabulary_Resource
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_chemspider_vocabulary_Resource
+  bio2rdf_chebi_vocabulary_Resource:
+    name: bio2rdf_chebi_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfChebiVocabularyResource
+    description: Class representing bio2rdf_chebi_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_chebi_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_chebi_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_Mixture:
+    name: bio2rdf_drugbank_vocabulary_Mixture
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyMixture
+    description: Class representing bio2rdf_drugbank_vocabulary_Mixture
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Mixture
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Mixture
+  owl_Object_Property:
+    name: owl_Object_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/OwlObjectProperty
+    description: Class representing owl_Object_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/owl_Object_Property
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/owl_Object_Property
+  bio2rdf_drugbank_vocabulary_Molecular_Weight:
+    name: bio2rdf_drugbank_vocabulary_Molecular_Weight
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyMolecularWeight
+    description: Class representing bio2rdf_drugbank_vocabulary_Molecular_Weight
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Molecular_Weight
+    slots:
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Molecular_Weight
+  bio2rdf_drugbank_vocabulary_Manufacturer:
+    name: bio2rdf_drugbank_vocabulary_Manufacturer
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyManufacturer
+    description: Class representing bio2rdf_drugbank_vocabulary_Manufacturer
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Manufacturer
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Manufacturer
+  bio2rdf_drugbank_vocabulary_Traditional_IUPAC_Name:
+    name: bio2rdf_drugbank_vocabulary_Traditional_IUPAC_Name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyTraditionalIUPACName
+    description: Class representing bio2rdf_drugbank_vocabulary_Traditional_IUPAC_Name
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Traditional_IUPAC_Name
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Traditional_IUPAC_Name
+  bio2rdf_drugbank_vocabulary_PKa_strongest_basic:
+    name: bio2rdf_drugbank_vocabulary_PKa_strongest_basic
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyPKaStrongestBasic
+    description: Class representing bio2rdf_drugbank_vocabulary_PKa_strongest_basic
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_PKa_strongest_basic
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_PKa_strongest_basic
+  bio2rdf_drugbank_vocabulary_Target:
+    name: bio2rdf_drugbank_vocabulary_Target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyTarget
+    description: Class representing bio2rdf_drugbank_vocabulary_Target
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Target
+    slots:
+    - void_in_Dataset
+    - bio2rdf_drugbank_vocabulary_x_genecards
+    - bio2rdf_drugbank_vocabulary_x_uniprot
+    - bio2rdf_drugbank_vocabulary_x_gtp
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Target
+  bio2rdf_drugbank_vocabulary_Ghose_Filter:
+    name: bio2rdf_drugbank_vocabulary_Ghose_Filter
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyGhoseFilter
+    description: Class representing bio2rdf_drugbank_vocabulary_Ghose_Filter
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Ghose_Filter
+    slots:
+    - rdf_type
+    - bio2rdf_drugbank_vocabulary_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Ghose_Filter
+  bio2rdf_drugbank_vocabulary_Drug_Classification_Category:
+    name: bio2rdf_drugbank_vocabulary_Drug_Classification_Category
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyDrugClassificationCategory
+    description: Class representing bio2rdf_drugbank_vocabulary_Drug_Classification_Category
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Drug_Classification_Category
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Drug_Classification_Category
+  bio2rdf_drugbank_vocabulary_Carrier_Relation:
+    name: bio2rdf_drugbank_vocabulary_Carrier_Relation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyCarrierRelation
+    description: Class representing bio2rdf_drugbank_vocabulary_Carrier_Relation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Carrier_Relation
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Carrier_Relation
+  bio2rdf_drugbank_vocabulary_Enzyme:
+    name: bio2rdf_drugbank_vocabulary_Enzyme
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyEnzyme
+    description: Class representing bio2rdf_drugbank_vocabulary_Enzyme
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Enzyme
+    slots:
+    - bio2rdf_drugbank_vocabulary_x_genatlas
+    - bio2rdf_drugbank_vocabulary_x_genecards
+    - bio2rdf_drugbank_vocabulary_x_uniprot
+    - bio2rdf_drugbank_vocabulary_x_gi
+    - bio2rdf_drugbank_vocabulary_x_hgnc
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Enzyme
+  bio2rdf_drugbank_vocabulary_Category:
+    name: bio2rdf_drugbank_vocabulary_Category
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyCategory
+    description: Class representing bio2rdf_drugbank_vocabulary_Category
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Category
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Category
+  rdfs_Resource:
+    name: rdfs_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/RdfsResource
+    description: Class representing rdfs_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/rdfs_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/rdfs_Resource
+  bio2rdf_drugbank_vocabulary_Drug:
+    name: bio2rdf_drugbank_vocabulary_Drug
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyDrug
+    description: Class representing bio2rdf_drugbank_vocabulary_Drug
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Drug
+    slots:
+    - bio2rdf_drugbank_vocabulary_x_pubchemcompound
+    - bio2rdf_drugbank_vocabulary_x_pubchemsubstance
+    - bio2rdf_drugbank_vocabulary_brand
+    - bio2rdf_drugbank_vocabulary_calculated_properties
+    - bio2rdf_drugbank_vocabulary_experimental_properties
+    - bio2rdf_drugbank_vocabulary_food_interaction
+    - bio2rdf_drugbank_vocabulary_half_life
+    - bio2rdf_drugbank_vocabulary_manufacturer
+    - bio2rdf_drugbank_vocabulary_mixture
+    - bio2rdf_drugbank_vocabulary_patent
+    - bio2rdf_drugbank_vocabulary_synonym
+    - bio2rdf_drugbank_vocabulary_target
+    - bio2rdf_drugbank_vocabulary_transporter
+    - bio2rdf_drugbank_vocabulary_x_genbank
+    - bio2rdf_drugbank_vocabulary_x_ndc
+    - bio2rdf_drugbank_vocabulary_x_uniprot
+    - bio2rdf_drugbank_vocabulary_affected_organism
+    - bio2rdf_drugbank_vocabulary_drug_classification_category
+    - bio2rdf_drugbank_vocabulary_packager
+    - bio2rdf_drugbank_vocabulary_pharmacodynamics
+    - bio2rdf_drugbank_vocabulary_product
+    - bio2rdf_drugbank_vocabulary_x_ahfs
+    - bio2rdf_drugbank_vocabulary_carrier
+    - bio2rdf_drugbank_vocabulary_group
+    - bio2rdf_drugbank_vocabulary_x_wikipedia
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Drug
+  bio2rdf_uniprot_vocabulary_Resource:
+    name: bio2rdf_uniprot_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfUniprotVocabularyResource
+    description: Class representing bio2rdf_uniprot_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_uniprot_vocabulary_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_uniprot_vocabulary_Resource
+  bio2rdf_drugbank_vocabulary_Carrier:
+    name: bio2rdf_drugbank_vocabulary_Carrier
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyCarrier
+    description: Class representing bio2rdf_drugbank_vocabulary_Carrier
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Carrier
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_drugbank_vocabulary_x_genatlas
+    - bio2rdf_drugbank_vocabulary_x_genecards
+    - bio2rdf_drugbank_vocabulary_x_uniprot
+    - bio2rdf_drugbank_vocabulary_x_hgnc
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Carrier
+  bio2rdf_drugbank_vocabulary_Hydrophobicity:
+    name: bio2rdf_drugbank_vocabulary_Hydrophobicity
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/Bio2rdfDrugbankVocabularyHydrophobicity
+    description: Class representing bio2rdf_drugbank_vocabulary_Hydrophobicity
+    from_schema: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Hydrophobicity
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/drugbank/linkml/bio2rdf_drugbank_vocabulary_Hydrophobicity
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T11:58:41'

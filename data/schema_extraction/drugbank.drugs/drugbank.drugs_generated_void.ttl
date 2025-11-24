@@ -1,0 +1,17 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/class_partition_> void:class <http://semanticscience.org/resource/SIO_011120> ;
+    void:entities 12316 .
+
+<http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/datatype_partition_> ns1:datatypePartition xsd:string ;
+    void:triples 24632 .
+
+<http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/property_partition_> ns1:objectClass owl:Class ;
+    ns1:subjectClass <http://semanticscience.org/resource/SIO_011120> ;
+    void:property rdf:type ;
+    void:triples 12316 .
+

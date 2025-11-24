@@ -1,0 +1,39 @@
+@prefix ns1: <http://sparql.uniprot.org//void/> .
+@prefix ns2: <http://ldf.fi/void-ext#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___www_w3_org_ns_sparql_service_description_Dataset void:class sd:Dataset ;
+    void:entities 1 .
+
+ns1:class_partition_http___www_w3_org_ns_sparql_service_description_Graph void:class sd:Graph ;
+    void:entities 18 .
+
+ns1:class_partition_http___www_w3_org_ns_sparql_service_description_Service void:class sd:Service ;
+    void:entities 1 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_date ns2:datatypePartition xsd:date ;
+    void:triples 1 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_long ns2:datatypePartition xsd:long ;
+    void:triples 69 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_string ns2:datatypePartition xsd:string ;
+    void:triples 19 .
+
+ns1:property_partition_http___www_w3_org_ns_sparql_service_description_defaultDataset_http___www_w3_org_ns_sparql_service_description_Service ns2:objectClass sd:Dataset ;
+    ns2:subjectClass sd:Service ;
+    void:property sd:defaultDataset ;
+    void:triples 2 .
+
+ns1:property_partition_http___www_w3_org_ns_sparql_service_description_defaultGraph_http___www_w3_org_ns_sparql_service_description_Dataset ns2:objectClass sd:Graph ;
+    ns2:subjectClass sd:Dataset ;
+    void:property sd:defaultGraph ;
+    void:triples 2 .
+
+ns1:property_partition_http___www_w3_org_ns_sparql_service_description_endpoint_http___www_w3_org_ns_sparql_service_description_Service ns2:objectClass sd:Service ;
+    ns2:subjectClass sd:Service ;
+    void:property sd:endpoint ;
+    void:triples 2 .
+

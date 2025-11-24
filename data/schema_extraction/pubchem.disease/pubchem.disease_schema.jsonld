@@ -1,0 +1,84 @@
+{
+  "@context": {
+    "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "mesh.vocab": "http://id.nlm.nih.gov/mesh/vocab#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "sio": "http://semanticscience.org/resource/",
+    "skos": "http://www.w3.org/2004/02/skos/core#"
+  },
+  "@graph": [
+    {
+      "@id": "vocabulary:Disease",
+      "rdf:type": [
+        {
+          "@id": "mesh.vocab:SCR_Disease"
+        },
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "skos:closeMatch": [
+        {
+          "@id": "mesh.vocab:SCR_Disease"
+        },
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "skos:relatedMatch": [
+        {
+          "@id": "mesh.vocab:SCR_Disease"
+        },
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "sio:010299",
+      "rdf:type": [
+        {
+          "@id": "mesh.vocab:SCR_Disease"
+        },
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "skos:closeMatch": [
+        {
+          "@id": "mesh.vocab:SCR_Disease"
+        },
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "skos:relatedMatch": [
+        {
+          "@id": "mesh.vocab:SCR_Disease"
+        },
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    }
+  ]
+}

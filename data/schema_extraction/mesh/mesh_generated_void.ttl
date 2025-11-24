@@ -1,0 +1,308 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://bio2rdf.org/mesh_resource:bio2rdf.dataset.mesh.R3/void/> .
+@prefix ns2: <http://ldf.fi/void-ext#> .
+@prefix ns4: <http://bio2rdf.org/mesh_vocabulary:> .
+@prefix ns8: <http://www.w3.org/ns/dcat#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___bio2rdf_org_mesh_vocabulary_Descriptor void:class ns4:Descriptor ;
+    void:entities 27149 .
+
+ns1:class_partition_http___bio2rdf_org_mesh_vocabulary_Pharmacological_Action void:class ns4:Pharmacological-Action ;
+    void:entities 406 .
+
+ns1:class_partition_http___bio2rdf_org_mesh_vocabulary_Qualifier_Descriptor void:class ns4:Qualifier-Descriptor ;
+    void:entities 83 .
+
+ns1:class_partition_http___bio2rdf_org_mesh_vocabulary_Resource void:class ns4:Resource ;
+    void:entities 308993 .
+
+ns1:class_partition_http___bio2rdf_org_mesh_vocabulary_Semantic_Type void:class ns4:Semantic-Type ;
+    void:entities 130 .
+
+ns1:class_partition_http___bio2rdf_org_mesh_vocabulary_Supplementary_Descriptor void:class ns4:Supplementary-Descriptor ;
+    void:entities 225477 .
+
+ns1:class_partition_http___bio2rdf_org_mesh_vocabulary_Tree_Entry void:class ns4:Tree-Entry ;
+    void:entities 55611 .
+
+ns1:class_partition_http___bio2rdf_org_mesh_vocabulary_allowable_topical_qualifier void:class ns4:allowable-topical-qualifier ;
+    void:entities 83 .
+
+ns1:class_partition_http___purl_org_dc_terms_Dataset void:class dcterms:Dataset ;
+    void:entities 2 .
+
+ns1:class_partition_http___www_w3_org_2000_01_rdf_schema_Resource void:class rdfs:Resource ;
+    void:entities 1 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Class void:class owl:Class ;
+    void:entities 7 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DatatypeProperty void:class owl:DatatypeProperty ;
+    void:entities 50 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_ObjectProperty void:class owl:ObjectProperty ;
+    void:entities 5 .
+
+ns1:class_partition_http___www_w3_org_ns_dcat_Distribution void:class ns8:Distribution ;
+    void:entities 6 .
+
+ns1:datatype_partition_ void:triples 673425 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_date ns2:datatypePartition xsd:date ;
+    void:triples 441510 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_dateTime ns2:datatypePartition xsd:dateTime ;
+    void:triples 6 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_decimal ns2:datatypePartition xsd:decimal ;
+    void:triples 7 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_float ns2:datatypePartition xsd:float ;
+    void:triples 1 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_integer ns2:datatypePartition xsd:integer ;
+    void:triples 537811 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_string ns2:datatypePartition xsd:string ;
+    void:triples 4006500 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_mesh_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Resource ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 1 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_mesh_vocabulary_Supplementary_Descriptor ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Supplementary-Descriptor ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 1 .
+
+ns1:property_partition_http___bio2rdf_org_mesh_vocabulary_allowable_topical_qualifiers_http___bio2rdf_org_mesh_vocabulary_Descriptor ns2:objectClass ns4:Resource,
+        ns4:allowable-topical-qualifier ;
+    ns2:subjectClass ns4:Descriptor ;
+    void:property ns4:allowable-topical-qualifiers ;
+    void:triples 604148 .
+
+ns1:property_partition_http___bio2rdf_org_mesh_vocabulary_allowable_topical_qualifiers_http___bio2rdf_org_mesh_vocabulary_Resource ns2:objectClass ns4:Resource,
+        ns4:allowable-topical-qualifier ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:allowable-topical-qualifiers ;
+    void:triples 604148 .
+
+ns1:property_partition_http___bio2rdf_org_mesh_vocabulary_mesh_tree_number_http___bio2rdf_org_mesh_vocabulary_Descriptor ns2:objectClass ns4:Resource,
+        ns4:Tree-Entry ;
+    ns2:subjectClass ns4:Descriptor ;
+    void:property ns4:mesh-tree-number ;
+    void:triples 55611 .
+
+ns1:property_partition_http___bio2rdf_org_mesh_vocabulary_mesh_tree_number_http___bio2rdf_org_mesh_vocabulary_Resource ns2:objectClass ns4:Resource,
+        ns4:Tree-Entry ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:mesh-tree-number ;
+    void:triples 55611 .
+
+ns1:property_partition_http___bio2rdf_org_mesh_vocabulary_pharmacological_action_http___bio2rdf_org_mesh_vocabulary_Resource ns2:objectClass ns4:Pharmacological-Action,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:pharmacological-action ;
+    void:triples 7118 .
+
+ns1:property_partition_http___bio2rdf_org_mesh_vocabulary_pharmacological_action_http___bio2rdf_org_mesh_vocabulary_Supplementary_Descriptor ns2:objectClass ns4:Pharmacological-Action,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Supplementary-Descriptor ;
+    void:property ns4:pharmacological-action ;
+    void:triples 7118 .
+
+ns1:property_partition_http___bio2rdf_org_mesh_vocabulary_semantic_type_http___bio2rdf_org_mesh_vocabulary_Descriptor ns2:objectClass ns4:Resource,
+        ns4:Semantic-Type ;
+    ns2:subjectClass ns4:Descriptor ;
+    void:property ns4:semantic-type ;
+    void:triples 36615 .
+
+ns1:property_partition_http___bio2rdf_org_mesh_vocabulary_semantic_type_http___bio2rdf_org_mesh_vocabulary_Resource ns2:objectClass ns4:Resource,
+        ns4:Semantic-Type ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:semantic-type ;
+    void:triples 36615 .
+
+ns1:property_partition_http___purl_org_dc_terms_source_http___www_w3_org_ns_dcat_Distribution ns2:objectClass ns8:Distribution ;
+    ns2:subjectClass ns8:Distribution ;
+    void:property dcterms:source ;
+    void:triples 3 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_mesh_vocabulary_Descriptor ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Descriptor ;
+    void:property void:inDataset ;
+    void:triples 27149 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_mesh_vocabulary_Pharmacological_Action ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Pharmacological-Action ;
+    void:property void:inDataset ;
+    void:triples 406 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_mesh_vocabulary_Qualifier_Descriptor ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Qualifier-Descriptor ;
+    void:property void:inDataset ;
+    void:triples 83 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_mesh_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Resource ;
+    void:property void:inDataset ;
+    void:triples 308993 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_mesh_vocabulary_Semantic_Type ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Semantic-Type ;
+    void:property void:inDataset ;
+    void:triples 130 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_mesh_vocabulary_Supplementary_Descriptor ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Supplementary-Descriptor ;
+    void:property void:inDataset ;
+    void:triples 225477 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_mesh_vocabulary_Tree_Entry ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Tree-Entry ;
+    void:property void:inDataset ;
+    void:triples 55611 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_mesh_vocabulary_allowable_topical_qualifier ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:allowable-topical-qualifier ;
+    void:property void:inDataset ;
+    void:triples 83 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_Class ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:Class ;
+    void:property void:inDataset ;
+    void:triples 4 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property void:inDataset ;
+    void:triples 47 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_ObjectProperty ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:ObjectProperty ;
+    void:property void:inDataset ;
+    void:triples 3 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_mesh_vocabulary_Descriptor ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Descriptor ;
+    void:property rdf:type ;
+    void:triples 27149,
+        54298,
+        135745 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_mesh_vocabulary_Pharmacological_Action ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Pharmacological-Action ;
+    void:property rdf:type ;
+    void:triples 812,
+        2030 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_mesh_vocabulary_Qualifier_Descriptor ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Qualifier-Descriptor ;
+    void:property rdf:type ;
+    void:triples 83,
+        166,
+        415 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_mesh_vocabulary_Resource ns2:objectClass ns4:Resource,
+        rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Resource ;
+    void:property rdf:type ;
+    void:triples 54,
+        252792,
+        617948,
+        1544965 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_mesh_vocabulary_Semantic_Type ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Semantic-Type ;
+    void:property rdf:type ;
+    void:triples 260,
+        650 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_mesh_vocabulary_Supplementary_Descriptor ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Supplementary-Descriptor ;
+    void:property rdf:type ;
+    void:triples 225477,
+        450954,
+        1127385 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_mesh_vocabulary_Tree_Entry ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Tree-Entry ;
+    void:property rdf:type ;
+    void:triples 111222,
+        278055 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_mesh_vocabulary_allowable_topical_qualifier ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:allowable-topical-qualifier ;
+    void:property rdf:type ;
+    void:triples 83,
+        166,
+        415 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_Class ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:Class ;
+    void:property rdf:type ;
+    void:triples 7,
+        20,
+        32 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property rdf:type ;
+    void:triples 47,
+        50,
+        235 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_ObjectProperty ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:ObjectProperty ;
+    void:property rdf:type ;
+    void:triples 3,
+        5,
+        15 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_ns_dcat_Distribution ns2:objectClass rdfs:Class ;
+    ns2:subjectClass ns8:Distribution ;
+    void:property rdf:type ;
+    void:triples 6 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_subClassOf_http___bio2rdf_org_mesh_vocabulary_Resource ns2:objectClass ns4:Resource,
+        ns4:Tree-Entry ;
+    ns2:subjectClass ns4:Resource ;
+    void:property rdfs:subClassOf ;
+    void:triples 55494 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_subClassOf_http___bio2rdf_org_mesh_vocabulary_Tree_Entry ns2:objectClass ns4:Resource,
+        ns4:Tree-Entry ;
+    ns2:subjectClass ns4:Tree-Entry ;
+    void:property rdfs:subClassOf ;
+    void:triples 55494 .
+
+ns1:property_partition_http___www_w3_org_ns_dcat_distribution_http___purl_org_dc_terms_Dataset ns2:objectClass ns8:Distribution ;
+    ns2:subjectClass dcterms:Dataset ;
+    void:property ns8:distribution ;
+    void:triples 6 .
+

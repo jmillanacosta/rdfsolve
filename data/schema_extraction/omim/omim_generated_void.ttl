@@ -1,0 +1,1283 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix nci: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#> .
+@prefix ns1: <http://bio2rdf.org/omim_resource:bio2rdf.dataset.omim.R3/void/> .
+@prefix ns10: <http://bio2rdf.org/icd10_vocabulary:> .
+@prefix ns121: <http://bio2rdf.org/icd9_vocabulary:> .
+@prefix ns131: <http://bio2rdf.org/snomedct_vocabulary:> .
+@prefix ns14: <http://bio2rdf.org/irefindex_vocabulary:> .
+@prefix ns151: <http://bio2rdf.org/clinicaltrials_vocabulary:> .
+@prefix ns161: <http://bio2rdf.org/pubmed_vocabulary:> .
+@prefix ns171: <http://bio2rdf.org/hgnc_vocabulary:> .
+@prefix ns18: <http://bio2rdf.org/hgnc.symbol_vocabulary:> .
+@prefix ns191: <http://bio2rdf.org/ctd_vocabulary:> .
+@prefix ns2: <http://ldf.fi/void-ext#> .
+@prefix ns20: <http://bio2rdf.org/ensembl_vocabulary:> .
+@prefix ns21: <http://bio2rdf.org/hp_vocabulary:> .
+@prefix ns221: <http://bio2rdf.org/mgi_vocabulary:> .
+@prefix ns23: <http://bio2rdf.org/ncbigene_vocabulary:> .
+@prefix ns24: <http://bio2rdf.org/goa_vocabulary:> .
+@prefix ns251: <http://bio2rdf.org/uniprot_vocabulary:> .
+@prefix ns26: <http://bio2rdf.org/wormbase_vocabulary:> .
+@prefix ns27: <http://bio2rdf.org/unigene_vocabulary:> .
+@prefix ns28: <http://bio2rdf.org/ordr_vocabulary:> .
+@prefix ns291: <http://bio2rdf.org/refseq_vocabulary:> .
+@prefix ns30: <http://bio2rdf.org/umls_vocabulary:> .
+@prefix ns311: <http://bio2rdf.org/orphanet_vocabulary:> .
+@prefix ns32: <http://bio2rdf.org/zfin_vocabulary:> .
+@prefix ns34: <http://bio2rdf.org/eom_vocabulary:> .
+@prefix ns35: <http://bio2rdf.org/gi_vocabulary:> .
+@prefix ns36: <http://bio2rdf.org/img_vocabulary:> .
+@prefix ns37: <http://www.w3.org/ns/dcat#> .
+@prefix ns38: <http://bio2rdf.org/pharmgkb_vocabulary:> .
+@prefix ns39: <http://bio2rdf.org/dbsnp_vocabulary:> .
+@prefix ns4: <http://bio2rdf.org/flybase_vocabulary:> .
+@prefix ns71: <http://bio2rdf.org/omim_vocabulary:> .
+@prefix ns81: <http://bio2rdf.org/do_vocabulary:> .
+@prefix ns91: <http://bio2rdf.org/hprd_vocabulary:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___bio2rdf_org_dbsnp_vocabulary_Resource void:class ns39:Resource ;
+    void:entities 18495 .
+
+ns1:class_partition_http___bio2rdf_org_do_vocabulary_Resource void:class ns81:Resource ;
+    void:entities 1133 .
+
+ns1:class_partition_http___bio2rdf_org_ensembl_vocabulary_Resource void:class ns20:Resource ;
+    void:entities 29006 .
+
+ns1:class_partition_http___bio2rdf_org_eom_vocabulary_Resource void:class ns34:Resource ;
+    void:entities 48 .
+
+ns1:class_partition_http___bio2rdf_org_flybase_vocabulary_Resource void:class ns4:Resource ;
+    void:entities 3561 .
+
+ns1:class_partition_http___bio2rdf_org_gi_vocabulary_Resource void:class ns35:Resource ;
+    void:entities 637314 .
+
+ns1:class_partition_http___bio2rdf_org_hgnc_symbol_vocabulary_Resource void:class ns18:Resource ;
+    void:entities 33416 .
+
+ns1:class_partition_http___bio2rdf_org_hp_vocabulary_Resource void:class ns21:Resource ;
+    void:entities 5046 .
+
+ns1:class_partition_http___bio2rdf_org_hprd_vocabulary_Resource void:class ns91:Resource ;
+    void:entities 12908 .
+
+ns1:class_partition_http___bio2rdf_org_icd10_vocabulary_Resource void:class ns10:Resource ;
+    void:entities 1415 .
+
+ns1:class_partition_http___bio2rdf_org_icd9_vocabulary_Resource void:class ns121:Resource ;
+    void:entities 822 .
+
+ns1:class_partition_http___bio2rdf_org_img_vocabulary_Resource void:class ns36:Resource ;
+    void:entities 48 .
+
+ns1:class_partition_http___bio2rdf_org_mgi_vocabulary_Resource void:class ns221:Resource ;
+    void:entities 13210 .
+
+ns1:class_partition_http___bio2rdf_org_ncbigene_vocabulary_Resource void:class ns23:Resource ;
+    void:entities 16080 .
+
+ns1:class_partition_http___bio2rdf_org_omim_vocabulary_Allelic_Variant void:class ns71:Allelic-Variant ;
+    void:entities 24452 .
+
+ns1:class_partition_http___bio2rdf_org_omim_vocabulary_Characteristic void:class ns71:Characteristic ;
+    void:entities 48318 .
+
+ns1:class_partition_http___bio2rdf_org_omim_vocabulary_Clinical_Synopsis void:class ns71:Clinical-Synopsis ;
+    void:entities 6072 .
+
+ns1:class_partition_http___bio2rdf_org_omim_vocabulary_Entity void:class ns71:Entity ;
+    void:entities 145 .
+
+ns1:class_partition_http___bio2rdf_org_omim_vocabulary_Gene void:class ns71:Gene ;
+    void:entities 14984 .
+
+ns1:class_partition_http___bio2rdf_org_omim_vocabulary_Gene_phenotype void:class ns71:Gene-phenotype ;
+    void:entities 86 .
+
+ns1:class_partition_http___bio2rdf_org_omim_vocabulary_Phenotype void:class ns71:Phenotype ;
+    void:entities 6173 .
+
+ns1:class_partition_http___bio2rdf_org_omim_vocabulary_Phenotype_Map void:class ns71:Phenotype-Map ;
+    void:entities 5405 .
+
+ns1:class_partition_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes void:class ns71:Predominantly-phenotypes ;
+    void:entities 1821 .
+
+ns1:class_partition_http___bio2rdf_org_omim_vocabulary_Resource void:class ns71:Resource ;
+    void:entities 107767 .
+
+ns1:class_partition_http___bio2rdf_org_ordr_vocabulary_Resource void:class ns28:Resource ;
+    void:entities 2947 .
+
+ns1:class_partition_http___bio2rdf_org_orphanet_vocabulary_Resource void:class ns311:Resource ;
+    void:entities 8118 .
+
+ns1:class_partition_http___bio2rdf_org_pubmed_vocabulary_Resource void:class ns161:Resource ;
+    void:entities 124853 .
+
+ns1:class_partition_http___bio2rdf_org_refseq_vocabulary_Resource void:class ns291:Resource ;
+    void:entities 4971 .
+
+ns1:class_partition_http___bio2rdf_org_snomedct_vocabulary_Resource void:class ns131:Resource ;
+    void:entities 5024 .
+
+ns1:class_partition_http___bio2rdf_org_umls_vocabulary_Resource void:class ns30:Resource ;
+    void:entities 55780 .
+
+ns1:class_partition_http___bio2rdf_org_unigene_vocabulary_Resource void:class ns27:Resource ;
+    void:entities 16495 .
+
+ns1:class_partition_http___bio2rdf_org_uniprot_vocabulary_Resource void:class ns251:Resource ;
+    void:entities 14259 .
+
+ns1:class_partition_http___bio2rdf_org_wormbase_vocabulary_Resource void:class ns26:Resource ;
+    void:entities 1469 .
+
+ns1:class_partition_http___bio2rdf_org_zfin_vocabulary_Resource void:class ns32:Resource ;
+    void:entities 13179 .
+
+ns1:class_partition_http___purl_org_dc_terms_Dataset void:class dcterms:Dataset ;
+    void:entities 2 .
+
+ns1:class_partition_http___www_w3_org_2000_01_rdf_schema_Resource void:class rdfs:Resource ;
+    void:entities 25 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Class void:class owl:Class ;
+    void:entities 9 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DatatypeProperty void:class owl:DatatypeProperty ;
+    void:entities 48 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_ObjectProperty void:class owl:ObjectProperty ;
+    void:entities 38 .
+
+ns1:class_partition_http___www_w3_org_ns_dcat_Distribution void:class ns37:Distribution ;
+    void:entities 2 .
+
+ns1:datatype_partition_ void:triples 464856 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_dateTime ns2:datatypePartition xsd:dateTime ;
+    void:triples 2 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_integer ns2:datatypePartition xsd:integer ;
+    void:triples 48324 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_string ns2:datatypePartition xsd:string ;
+    void:triples 4776593 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_ncbigene_vocabulary_Resource ns2:objectClass nci:C16612 ;
+    ns2:subjectClass ns23:Resource ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 13842 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass nci:C7057 ;
+    ns2:subjectClass ns71:Gene ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 86 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass nci:C7057 ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 4756 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass nci:C7057 ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 255 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_orphanet_vocabulary_Resource ns2:objectClass nci:C7057 ;
+    ns2:subjectClass ns311:Resource ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 1393 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_pubmed_vocabulary_Resource ns2:objectClass nci:C47902 ;
+    ns2:subjectClass ns161:Resource ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 23682 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_uniprot_vocabulary_Resource ns2:objectClass nci:C17021 ;
+    ns2:subjectClass ns251:Resource ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 12459 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_article_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns151:Reference,
+        ns14:Homopolymeric-Complex,
+        ns14:Pairwise-Interaction,
+        ns161:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:article ;
+    void:triples 14,
+        246,
+        1535,
+        248401 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_article_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns14:Multimeric-Complex,
+        ns14:Pairwise-Interaction,
+        <http://bio2rdf.org/mi:0914>,
+        ns161:Resource ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:article ;
+    void:triples 1,
+        3,
+        4,
+        8933 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_article_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns151:Reference,
+        ns14:Multimeric-Complex,
+        ns14:Pairwise-Interaction ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:article ;
+    void:triples 4,
+        20,
+        1548 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_article_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns151:Reference,
+        ns161:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:article ;
+    void:triples 38,
+        4392 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_article_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns14:Homopolymeric-Complex,
+        ns14:Pairwise-Interaction,
+        <http://bio2rdf.org/mi:0914>,
+        ns161:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:article ;
+    void:triples 14,
+        251,
+        1299,
+        355904 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_characteristic_of_http___bio2rdf_org_omim_vocabulary_Characteristic ns2:objectClass ns71:Entity,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Characteristic ;
+    void:property ns71:characteristic-of ;
+    void:triples 52741 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_characteristic_of_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:characteristic-of ;
+    void:triples 52741 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_clinical_synopsis_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns71:Clinical-Synopsis,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:clinical-synopsis ;
+    void:triples 4583 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_clinical_synopsis_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:clinical-synopsis ;
+    void:triples 1467 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_feature_http___bio2rdf_org_omim_vocabulary_Clinical_Synopsis ns2:objectClass ns71:Characteristic,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Clinical-Synopsis ;
+    void:property ns71:feature ;
+    void:triples 102194 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_feature_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:feature ;
+    void:triples 102194 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_gene_symbol_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns18:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:gene-symbol ;
+    void:triples 76499 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_gene_symbol_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns18:Resource,
+        ns171:Previous-Symbol ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:gene-symbol ;
+    void:triples 39,
+        503 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_gene_symbol_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns171:Previous-Symbol ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:gene-symbol ;
+    void:triples 38 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_gene_symbol_http___bio2rdf_org_omim_vocabulary_Phenotype_Map ns2:objectClass ns18:Resource,
+        ns171:Approved-Gene-Symbol,
+        ns171:Previous-Symbol ;
+    ns2:subjectClass ns71:Phenotype-Map ;
+    void:property ns71:gene-symbol ;
+    void:triples 2961,
+        5480,
+        38274 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_gene_symbol_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns18:Resource,
+        ns171:Previous-Symbol ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:gene-symbol ;
+    void:triples 7,
+        170 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_gene_symbol_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns18:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:gene-symbol ;
+    void:triples 117843 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_mimNumber_http___bio2rdf_org_omim_vocabulary_Phenotype_Map ns2:objectClass ns191:Disease,
+        ns71:Gene,
+        ns71:Gene-phenotype,
+        ns71:Phenotype,
+        ns71:Predominantly-phenotypes ;
+    ns2:subjectClass ns71:Phenotype-Map ;
+    void:property ns71:mimNumber ;
+    void:triples 1,
+        12,
+        61,
+        152,
+        5180 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_mimNumber_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns191:Disease,
+        ns71:Gene-phenotype,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:mimNumber ;
+    void:triples 1,
+        152,
+        21439 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_mouse_gene_symbol_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns18:Resource,
+        ns171:Previous-Symbol ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:mouse-gene-symbol ;
+    void:triples 89,
+        47592 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_mouse_gene_symbol_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns18:Resource,
+        ns171:Approved-Gene-Symbol ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:mouse-gene-symbol ;
+    void:triples 69,
+        288 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_mouse_gene_symbol_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns171:Previous-Symbol ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:mouse-gene-symbol ;
+    void:triples 89 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_phenotypeMimNumber_http___bio2rdf_org_omim_vocabulary_Phenotype_Map ns2:objectClass ns191:Disease,
+        ns71:Phenotype,
+        ns71:Predominantly-phenotypes ;
+    ns2:subjectClass ns71:Phenotype-Map ;
+    void:property ns71:phenotypeMimNumber ;
+    void:triples 30,
+        465,
+        5375 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_phenotypeMimNumber_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns191:Disease,
+        ns71:Phenotype,
+        ns71:Predominantly-phenotypes,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:phenotypeMimNumber ;
+    void:triples 30,
+        465,
+        5375,
+        19092 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_phenotype_map_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns71:Phenotype-Map,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:phenotype-map ;
+    void:triples 5375 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_phenotype_map_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns71:Phenotype-Map,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:phenotype-map ;
+    void:triples 30 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_phenotype_map_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns71:Phenotype-Map,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:phenotype-map ;
+    void:triples 5405 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_refers_to_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns191:Disease,
+        ns71:Gene-phenotype,
+        ns71:Phenotype,
+        ns71:Predominantly-phenotypes,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:refers-to ;
+    void:triples 221,
+        943,
+        2175,
+        11844,
+        395191 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_refers_to_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns191:Disease,
+        ns71:Gene ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:refers-to ;
+    void:triples 25,
+        1252 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_refers_to_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns71:Gene,
+        ns71:Gene-phenotype,
+        ns71:Phenotype,
+        ns71:Predominantly-phenotypes,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:refers-to ;
+    void:triples 482,
+        723,
+        14653,
+        19665,
+        136944 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_refers_to_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns191:Disease,
+        ns71:Gene-phenotype,
+        ns71:Predominantly-phenotypes,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:refers-to ;
+    void:triples 32,
+        81,
+        222,
+        6908 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_refers_to_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns191:Disease,
+        ns71:Gene,
+        ns71:Gene-phenotype,
+        ns71:Phenotype,
+        ns71:Predominantly-phenotypes,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:refers-to ;
+    void:triples 932,
+        2420,
+        3003,
+        27994,
+        107495,
+        545597 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_variant_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns71:Allelic-Variant,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:variant ;
+    void:triples 22877 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_variant_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:variant ;
+    void:triples 1 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_variant_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns71:Allelic-Variant,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:variant ;
+    void:triples 24452 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_dbsnp_http___bio2rdf_org_omim_vocabulary_Allelic_Variant ns2:objectClass ns39:Resource ;
+    ns2:subjectClass ns71:Allelic-Variant ;
+    void:property ns71:x-dbsnp ;
+    void:triples 33018 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_dbsnp_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns39:Resource,
+        ns38:Variation ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-dbsnp ;
+    void:triples 13834,
+        33018 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_do_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns81:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-do ;
+    void:triples 18 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_do_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns81:Resource ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-do ;
+    void:triples 1 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_do_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns81:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-do ;
+    void:triples 157 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_do_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns81:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-do ;
+    void:triples 3386 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_ensembl_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns20:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-ensembl ;
+    void:triples 119199 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_ensembl_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns20:Resource ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-ensembl ;
+    void:triples 720 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_ensembl_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns20:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-ensembl ;
+    void:triples 119999 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_gi_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns35:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-gi ;
+    void:triples 1326914 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_gi_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns35:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-gi ;
+    void:triples 440 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_gi_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns35:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-gi ;
+    void:triples 1350108 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_hp_http___bio2rdf_org_omim_vocabulary_Characteristic ns2:objectClass ns21:Resource,
+        owl:Class,
+        owl:DeprecatedClass ;
+    ns2:subjectClass ns71:Characteristic ;
+    void:property ns71:x-hp ;
+    void:triples 9,
+        11273,
+        22546 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_hp_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns21:Resource,
+        owl:Class,
+        owl:DeprecatedClass ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-hp ;
+    void:triples 9,
+        11273,
+        22546 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_hprd_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns91:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-hprd ;
+    void:triples 25332 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_icd10_http___bio2rdf_org_omim_vocabulary_Characteristic ns2:objectClass ns10:Resource ;
+    ns2:subjectClass ns71:Characteristic ;
+    void:property ns71:x-icd10 ;
+    void:triples 2086 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_icd10_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns10:Resource ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-icd10 ;
+    void:triples 3 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_icd10_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns10:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-icd10 ;
+    void:triples 786 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_icd10_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns10:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-icd10 ;
+    void:triples 3034 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_icd9_http___bio2rdf_org_omim_vocabulary_Characteristic ns2:objectClass ns121:Resource ;
+    ns2:subjectClass ns71:Characteristic ;
+    void:property ns71:x-icd9 ;
+    void:triples 945 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_icd9_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns121:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-icd9 ;
+    void:triples 1 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_icd9_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns121:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-icd9 ;
+    void:triples 215 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_icd9_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns121:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-icd9 ;
+    void:triples 78 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_icd9_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns121:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-icd9 ;
+    void:triples 1240 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_mgi_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns221:Gene,
+        ns221:Pseudogene ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-mgi ;
+    void:triples 45,
+        13104 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_mgi_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns221:Gene,
+        ns221:Marker,
+        ns221:Resource ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-mgi ;
+    void:triples 70,
+        82,
+        286 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_mgi_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns221:Gene,
+        ns221:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-mgi ;
+    void:triples 7,
+        25 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_mgi_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns221:Gene,
+        ns221:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-mgi ;
+    void:triples 3,
+        12 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_mgi_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns221:Pseudogene ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-mgi ;
+    void:triples 46 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_ncbigene_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns23:Gene,
+        ns23:Protein-coding-Gene,
+        ns23:Pseudo-Gene,
+        ns23:SnRNA-Gene,
+        ns23:TRNA-Gene,
+        ns23:Unknown-Gene ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-ncbigene ;
+    void:triples 7,
+        29,
+        57,
+        113,
+        14143,
+        14871 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_ncbigene_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns191:Gene,
+        ns23:Gene ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-ncbigene ;
+    void:triples 86 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_ncbigene_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns23:Gene,
+        ns23:Other-Gene,
+        ns23:Resource,
+        ns23:Unknown-Gene ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-ncbigene ;
+    void:triples 3,
+        1054,
+        1058,
+        3844 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_ncbigene_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns191:Gene,
+        ns23:Gene,
+        ns23:Other-Gene,
+        ns23:Pseudo-Gene,
+        ns23:Resource,
+        ns23:Unknown-Gene ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-ncbigene ;
+    void:triples 10,
+        16,
+        52,
+        85,
+        387 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_ncbigene_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns191:Gene,
+        ns23:Gene,
+        ns23:NcRNA-Gene,
+        ns23:SnRNA-Gene,
+        ns23:TRNA-Gene,
+        ns23:Unknown-Gene ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-ncbigene ;
+    void:triples 7,
+        57,
+        428,
+        1135,
+        16086,
+        16100 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_omim_http___bio2rdf_org_omim_vocabulary_Characteristic ns2:objectClass ns71:Gene,
+        ns71:Gene-phenotype,
+        ns71:Predominantly-phenotypes,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Characteristic ;
+    void:property ns71:x-omim ;
+    void:triples 20,
+        98,
+        3129,
+        16885 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_omim_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns191:Disease,
+        ns71:Gene-phenotype,
+        ns71:Phenotype,
+        ns71:Predominantly-phenotypes,
+        ns71:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-omim ;
+    void:triples 20,
+        98,
+        101,
+        955,
+        16885 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_ordr_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns28:Resource ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-ordr ;
+    void:triples 5 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_ordr_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns28:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-ordr ;
+    void:triples 711 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_orphanet_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns311:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-orphanet ;
+    void:triples 12453 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_orphanet_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns311:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-orphanet ;
+    void:triples 1655 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_refseq_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns291:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-refseq ;
+    void:triples 2 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_refseq_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns291:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-refseq ;
+    void:triples 2 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_refseq_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns291:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-refseq ;
+    void:triples 10651 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_snomed_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns131:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-snomed ;
+    void:triples 34 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_snomed_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns131:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-snomed ;
+    void:triples 2501 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_snomed_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns131:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-snomed ;
+    void:triples 504 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_snomed_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns131:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-snomed ;
+    void:triples 8323 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_symbol_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns18:Resource,
+        ns171:Approved-Gene-Symbol,
+        ns171:Previous-Symbol ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-symbol ;
+    void:triples 31,
+        14792,
+        58506 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_symbol_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns18:Resource,
+        ns171:Approved-Gene-Symbol ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-symbol ;
+    void:triples 86,
+        341 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_symbol_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns171:Previous-Symbol ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-symbol ;
+    void:triples 2 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_symbol_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns18:Resource,
+        ns171:Approved-Gene-Symbol ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-symbol ;
+    void:triples 45,
+        150 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_symbol_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns171:Approved-Gene-Symbol,
+        ns171:Previous-Symbol ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-symbol ;
+    void:triples 33,
+        15285 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_umls_http___bio2rdf_org_omim_vocabulary_Characteristic ns2:objectClass owl:Class ;
+    ns2:subjectClass ns71:Characteristic ;
+    void:property ns71:x-umls ;
+    void:triples 4017 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_umls_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass owl:Class ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-umls ;
+    void:triples 1 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_umls_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass owl:Class ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-umls ;
+    void:triples 2 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_umls_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns30:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-umls ;
+    void:triples 7755 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_umls_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns30:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-umls ;
+    void:triples 54,
+        2067 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_unigene_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns27:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-unigene ;
+    void:triples 49624 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_unigene_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns27:Resource ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-unigene ;
+    void:triples 305 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_unigene_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns27:Resource ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-unigene ;
+    void:triples 62 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_unigene_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns27:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-unigene ;
+    void:triples 49996 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_uniprot_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass <http://bio2rdf.org/mi:0326>,
+        ns251:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-uniprot ;
+    void:triples 10533,
+        97064 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_uniprot_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns24:GO-Annotation,
+        ns251:Resource ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-uniprot ;
+    void:triples 121,
+        743 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_uniprot_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns24:GO-Annotation,
+        ns251:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-uniprot ;
+    void:triples 4962,
+        34900 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_uniprot_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns24:GO-Annotation,
+        <http://bio2rdf.org/mi:0326> ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-uniprot ;
+    void:triples 17,
+        30 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_uniprot_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns24:GO-Annotation,
+        <http://bio2rdf.org/mi:0326>,
+        ns251:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-uniprot ;
+    void:triples 14435,
+        19189,
+        132906 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_wormbase_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass ns26:Gene,
+        ns26:Resource ;
+    ns2:subjectClass ns71:Gene ;
+    void:property ns71:x-wormbase ;
+    void:triples 369,
+        2462 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_wormbase_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns26:Gene ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property ns71:x-wormbase ;
+    void:triples 50 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_wormbase_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns26:Gene,
+        ns26:Resource ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property ns71:x-wormbase ;
+    void:triples 26,
+        210 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_wormbase_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns26:Gene ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property ns71:x-wormbase ;
+    void:triples 3 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_wormbase_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns26:Gene,
+        ns26:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-wormbase ;
+    void:triples 448,
+        3089 .
+
+ns1:property_partition_http___bio2rdf_org_omim_vocabulary_x_zfin_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass ns32:Resource ;
+    ns2:subjectClass ns71:Resource ;
+    void:property ns71:x-zfin ;
+    void:triples 13179 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_eom_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns34:Resource ;
+    void:property void:inDataset ;
+    void:triples 48 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_hp_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns21:Resource ;
+    void:property void:inDataset ;
+    void:triples 5046 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_icd9_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns121:Resource ;
+    void:property void:inDataset ;
+    void:triples 822 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_omim_vocabulary_Clinical_Synopsis ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Clinical-Synopsis ;
+    void:property void:inDataset ;
+    void:triples 6072 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Gene ;
+    void:property void:inDataset ;
+    void:triples 14984 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property void:inDataset ;
+    void:triples 86 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property void:inDataset ;
+    void:triples 6173 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property void:inDataset ;
+    void:triples 1821 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns71:Resource ;
+    void:property void:inDataset ;
+    void:triples 107767 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ordr_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns28:Resource ;
+    void:property void:inDataset ;
+    void:triples 2947 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_pubmed_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns161:Resource ;
+    void:property void:inDataset ;
+    void:triples 124853 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_refseq_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns291:Resource ;
+    void:property void:inDataset ;
+    void:triples 4971 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_snomedct_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns131:Resource ;
+    void:property void:inDataset ;
+    void:triples 5024 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_umls_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns30:Resource ;
+    void:property void:inDataset ;
+    void:triples 55780 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_unigene_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns27:Resource ;
+    void:property void:inDataset ;
+    void:triples 16495 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns26:Resource ;
+    void:property void:inDataset ;
+    void:triples 1469 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_zfin_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns32:Resource ;
+    void:property void:inDataset ;
+    void:triples 13179 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_Class ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:Class ;
+    void:property void:inDataset ;
+    void:triples 9 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property void:inDataset ;
+    void:triples 45 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_do_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns81:Resource ;
+    void:property rdf:type ;
+    void:triples 1133,
+        2266 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ensembl_vocabulary_Resource ns2:objectClass owl:Class ;
+    ns2:subjectClass ns20:Resource ;
+    void:property rdf:type ;
+    void:triples 29006 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_eom_vocabulary_Resource ns2:objectClass rdfs:Resource ;
+    ns2:subjectClass ns34:Resource ;
+    void:property rdf:type ;
+    void:triples 48 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_flybase_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Resource ;
+    void:property rdf:type ;
+    void:triples 3561,
+        10683 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_gi_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns35:Resource ;
+    void:property rdf:type ;
+    void:triples 637314,
+        4461198 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_hgnc_symbol_vocabulary_Resource ns2:objectClass owl:Class ;
+    ns2:subjectClass ns18:Resource ;
+    void:property rdf:type ;
+    void:triples 33416 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_hp_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns21:Resource ;
+    void:property rdf:type ;
+    void:triples 5046,
+        10092 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_hprd_vocabulary_Resource ns2:objectClass owl:Class ;
+    ns2:subjectClass ns91:Resource ;
+    void:property rdf:type ;
+    void:triples 12908 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_icd10_vocabulary_Resource ns2:objectClass rdfs:Resource ;
+    ns2:subjectClass ns10:Resource ;
+    void:property rdf:type ;
+    void:triples 4245 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_icd9_vocabulary_Resource ns2:objectClass rdfs:Resource ;
+    ns2:subjectClass ns121:Resource ;
+    void:property rdf:type ;
+    void:triples 2466 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_img_vocabulary_Resource ns2:objectClass rdfs:Resource ;
+    ns2:subjectClass ns36:Resource ;
+    void:property rdf:type ;
+    void:triples 96 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ncbigene_vocabulary_Resource ns2:objectClass owl:Class ;
+    ns2:subjectClass ns23:Resource ;
+    void:property rdf:type ;
+    void:triples 16080 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_omim_vocabulary_Allelic_Variant ns2:objectClass ns71:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Allelic-Variant ;
+    void:property rdf:type ;
+    void:triples 24452,
+        48904 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_omim_vocabulary_Characteristic ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Characteristic ;
+    void:property rdf:type ;
+    void:triples 96636,
+        338226 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_omim_vocabulary_Clinical_Synopsis ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Clinical-Synopsis ;
+    void:property rdf:type ;
+    void:triples 6072,
+        12144,
+        42504 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_omim_vocabulary_Entity ns2:objectClass ns71:Resource ;
+    ns2:subjectClass ns71:Entity ;
+    void:property rdf:type ;
+    void:triples 145 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Gene ;
+    void:property rdf:type ;
+    void:triples 29968,
+        104888 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass ns71:Resource,
+        rdfs:Resource ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property rdf:type ;
+    void:triples 86,
+        602 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass ns71:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property rdf:type ;
+    void:triples 6173,
+        12346,
+        43211 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_omim_vocabulary_Phenotype_Map ns2:objectClass rdfs:Resource ;
+    ns2:subjectClass ns71:Phenotype-Map ;
+    void:property rdf:type ;
+    void:triples 37835 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass ns71:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property rdf:type ;
+    void:triples 1821,
+        3642 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns71:Resource ;
+    void:property rdf:type ;
+    void:triples 90,
+        215259,
+        754369 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ordr_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns28:Resource ;
+    void:property rdf:type ;
+    void:triples 2947 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_orphanet_vocabulary_Resource ns2:objectClass rdfs:Resource ;
+    ns2:subjectClass ns311:Resource ;
+    void:property rdf:type ;
+    void:triples 8118 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_pubmed_vocabulary_Resource ns2:objectClass owl:Class ;
+    ns2:subjectClass ns161:Resource ;
+    void:property rdf:type ;
+    void:triples 124853 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_refseq_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns291:Resource ;
+    void:property rdf:type ;
+    void:triples 4971,
+        44739 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_snomedct_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns131:Resource ;
+    void:property rdf:type ;
+    void:triples 5024,
+        15072 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_unigene_vocabulary_Resource ns2:objectClass owl:Class ;
+    ns2:subjectClass ns27:Resource ;
+    void:property rdf:type ;
+    void:triples 16495 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_uniprot_vocabulary_Resource ns2:objectClass owl:Class ;
+    ns2:subjectClass ns251:Resource ;
+    void:property rdf:type ;
+    void:triples 14259 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_wormbase_vocabulary_Resource ns2:objectClass rdfs:Resource ;
+    ns2:subjectClass ns26:Resource ;
+    void:property rdf:type ;
+    void:triples 4407 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_zfin_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns32:Resource ;
+    void:property rdf:type ;
+    void:triples 13179 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_Class ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:Class ;
+    void:property rdf:type ;
+    void:triples 45,
+        63 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass rdfs:Class,
+        owl:Class ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property rdf:type ;
+    void:triples 45,
+        48 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_ObjectProperty ns2:objectClass rdfs:Resource ;
+    ns2:subjectClass owl:ObjectProperty ;
+    void:property rdf:type ;
+    void:triples 252 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_ns_dcat_Distribution ns2:objectClass rdfs:Class ;
+    ns2:subjectClass ns37:Distribution ;
+    void:property rdf:type ;
+    void:triples 2 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_sameAs_http___bio2rdf_org_omim_vocabulary_Gene ns2:objectClass nci:C7057 ;
+    ns2:subjectClass ns71:Gene ;
+    void:property owl:sameAs ;
+    void:triples 86 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_sameAs_http___bio2rdf_org_omim_vocabulary_Gene_phenotype ns2:objectClass nci:C7057 ;
+    ns2:subjectClass ns71:Gene-phenotype ;
+    void:property owl:sameAs ;
+    void:triples 46 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_sameAs_http___bio2rdf_org_omim_vocabulary_Phenotype ns2:objectClass nci:C7057 ;
+    ns2:subjectClass ns71:Phenotype ;
+    void:property owl:sameAs ;
+    void:triples 4756 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_sameAs_http___bio2rdf_org_omim_vocabulary_Predominantly_phenotypes ns2:objectClass nci:C7057 ;
+    ns2:subjectClass ns71:Predominantly-phenotypes ;
+    void:property owl:sameAs ;
+    void:triples 255 .
+
+ns1:property_partition_http___www_w3_org_2002_07_owl_sameAs_http___bio2rdf_org_omim_vocabulary_Resource ns2:objectClass nci:C7057 ;
+    ns2:subjectClass ns71:Resource ;
+    void:property owl:sameAs ;
+    void:triples 5143 .
+
+ns1:property_partition_http___www_w3_org_ns_dcat_distribution_http___purl_org_dc_terms_Dataset ns2:objectClass ns37:Distribution ;
+    ns2:subjectClass dcterms:Dataset ;
+    void:property ns37:distribution ;
+    void:triples 2 .
+

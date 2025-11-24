@@ -1,0 +1,1692 @@
+name: sgd_schema
+description: LinkML schema for sgd generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+prefixes:
+  sgd_schema:
+    prefix_prefix: sgd_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  bio2rdf:
+    prefix_prefix: bio2rdf
+    prefix_reference: http://bio2rdf.org/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  so:
+    prefix_prefix: so
+    prefix_reference: http://bio2rdf.org/
+  dcat:
+    prefix_prefix: dcat
+    prefix_reference: http://www.w3.org/ns/dcat#
+  void:
+    prefix_prefix: void
+    prefix_reference: http://rdfs.org/ns/void#
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+default_prefix: sgd_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  bio2rdf_sgd_vocabulary_hit:
+    name: bio2rdf_sgd_vocabulary_hit
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_hit
+    description: Property bio2rdf:sgd_vocabulary:hit
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_hit
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_hit
+    owner: bio2rdf_apo_0000186
+    domain_of:
+    - bio2rdf_apo_0000187
+    - bio2rdf_apo_0000186
+    range: bio2rdf_sgd_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_location:
+    name: bio2rdf_sgd_vocabulary_location
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_location
+    description: Property bio2rdf:sgd_vocabulary:location
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_location
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_location
+    owner: so_0000180
+    domain_of:
+    - so_0000188
+    - so_0000236
+    - so_0000624
+    - so_0001496
+    - so_0000286
+    - so_0000445
+    - so_0000577
+    - so_0000639
+    - so_0000180
+    range: bio2rdf_sgd_vocabulary_Location
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_has_proper_part:
+    name: bio2rdf_sgd_vocabulary_has_proper_part
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_has_proper_part
+    description: Property bio2rdf:sgd_vocabulary:has-proper-part
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_has_proper_part
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_has_proper_part
+    owner: bio2rdf_sgd_vocabulary_Complex
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Protein
+    - bio2rdf_sgd_vocabulary_Complex
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Super_Pathway
+    range: bio2rdf_sgd_vocabulary_Pathway
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_experiment_type:
+    name: bio2rdf_sgd_vocabulary_experiment_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_experiment_type
+    description: Property bio2rdf:sgd_vocabulary:experiment-type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_experiment_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_experiment_type
+    owner: bio2rdf_sgd_vocabulary_Resource
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Phenotype_Experiment
+    - bio2rdf_sgd_vocabulary_Resource
+    range: bio2rdf_apo_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  void_in_Dataset:
+    name: void_in_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/void_in_Dataset
+    description: Property void:inDataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/void_in_Dataset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/void_in_Dataset
+    owner: bio2rdf_sgd_vocabulary_Aromaticity_Score
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Protein
+    - bio2rdf_goa_vocabulary_GO_Annotation
+    - bio2rdf_sgd_vocabulary_Aromaticity_Score
+    - bio2rdf_sgd_vocabulary_Aspartate_Count
+    - bio2rdf_sgd_vocabulary_Glycine_Count
+    - bio2rdf_sgd_vocabulary_Reaction
+    - bio2rdf_chebi_vocabulary_Resource
+    - bio2rdf_panther_vocabulary_Resource
+    - bio2rdf_prodom_vocabulary_Resource
+    - bio2rdf_smart_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Methionine_Count
+    - so_0000624
+    - so_0001496
+    - bio2rdf_sgd_vocabulary_Alanine_Count
+    - bio2rdf_sgd_vocabulary_Codon_Adaptation_Index
+    - bio2rdf_sgd_vocabulary_Histine_Count
+    - bio2rdf_sgd_vocabulary_Tyrosine_Count
+    - bio2rdf_coil_vocabulary_Resource
+    - bio2rdf_eco_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Glutamate_Count
+    - bio2rdf_sgd_vocabulary_Enzyme
+    - bio2rdf_sgd_vocabulary_RNA
+    - so_0000640
+    - bio2rdf_sgd_vocabulary_Super_Pathway
+    - bio2rdf_refseq_vocabulary_Resource
+    - bio2rdf_hamap_vocabulary_Resource
+    - bio2rdf_pirsf_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Sequence_Length
+    - bio2rdf_sgd_vocabulary_Crick_Strand
+    - bio2rdf_sgd_vocabulary_Glutamine_Count
+    - bio2rdf_sgd_vocabulary_GRAVYScore
+    - bio2rdf_sgd_vocabulary_Phenylalanine_Count
+    - bio2rdf_pfam_vocabulary_Resource
+    - so_0000286
+    - so_0000445
+    - bio2rdf_sgd_vocabulary_Threonine_Count
+    - bio2rdf_sgd_vocabulary_Lysine_Count
+    - so_0000577
+    - bio2rdf_sgd_vocabulary_Serine_Count
+    - so_0000183
+    - bio2rdf_pubmed_vocabulary_Resource
+    - bio2rdf_apo_0000186
+    - so_0000639
+    - bio2rdf_gene_3d_vocabulary_Resource
+    - bio2rdf_tmhmm_vocabulary_Resource
+    range: dcterms_Dataset
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_encodes:
+    name: bio2rdf_sgd_vocabulary_encodes
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_encodes
+    description: Property bio2rdf:sgd_vocabulary:encodes
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_encodes
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_encodes
+    owner: so_0000639
+    domain_of:
+    - so_0000830
+    - bio2rdf_sgd_vocabulary_Resource
+    - so_0000639
+    range: bio2rdf_sgd_vocabulary_RNA
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_is_proper_part_of:
+    name: bio2rdf_sgd_vocabulary_is_proper_part_of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_proper_part_of
+    description: Property bio2rdf:sgd_vocabulary:is-proper-part-of
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_proper_part_of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_proper_part_of
+    owner: so_0000180
+    domain_of:
+    - so_0000830
+    - so_0000188
+    - so_0000236
+    - so_0000336
+    - so_0000624
+    - so_0001496
+    - bio2rdf_sgd_vocabulary_Resource
+    - so_0000316
+    - so_0000286
+    - so_0000445
+    - so_0000577
+    - so_0000183
+    - so_0000639
+    - so_0000180
+    - so_0001211
+    range: bio2rdf_sgd_vocabulary_Chromosome
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_x_ec:
+    name: bio2rdf_sgd_vocabulary_x_ec
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_x_ec
+    description: Property bio2rdf:sgd_vocabulary:x-ec
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_x_ec
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_x_ec
+    owner: so_0000336
+    domain_of:
+    - so_0000336
+    range: bio2rdf_sgd_vocabulary_Reaction
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_has_participant:
+    name: bio2rdf_sgd_vocabulary_has_participant
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_has_participant
+    description: Property bio2rdf:sgd_vocabulary:has-participant
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_has_participant
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_has_participant
+    owner: bio2rdf_sgd_vocabulary_Enzyme
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Phenotype_Experiment
+    - bio2rdf_sgd_vocabulary_Enzyme
+    range: bio2rdf_sgd_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_x_ncbigene:
+    name: bio2rdf_sgd_vocabulary_x_ncbigene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_x_ncbigene
+    description: Property bio2rdf:sgd_vocabulary:x-ncbigene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_x_ncbigene
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_x_ncbigene
+    owner: so_0000180
+    domain_of:
+    - so_0000236
+    - so_0000180
+    range: bio2rdf_ncbigene_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_target:
+    name: bio2rdf_sgd_vocabulary_target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_target
+    description: Property bio2rdf:sgd_vocabulary:target
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_target
+    owner: bio2rdf_sgd_vocabulary_Domain_Alignment
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Domain_Alignment
+    range: bio2rdf_hamap_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_is_about:
+    name: bio2rdf_sgd_vocabulary_is_about
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_about
+    description: Property bio2rdf:sgd_vocabulary:is-about
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_about
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_about
+    owner: bio2rdf_sgd_vocabulary_Resource
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Record
+    - bio2rdf_sgd_vocabulary_Resource
+    range: so_0000180
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_component:
+    name: bio2rdf_sgd_vocabulary_component
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_component
+    description: Property bio2rdf:sgd_vocabulary:component
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_component
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_component
+    owner: bio2rdf_sgd_vocabulary_Resource
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Protein
+    - bio2rdf_sgd_vocabulary_Resource
+    range: bio2rdf_go_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_query:
+    name: bio2rdf_sgd_vocabulary_query
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_query
+    description: Property bio2rdf:sgd_vocabulary:query
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_query
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_query
+    owner: bio2rdf_sgd_vocabulary_Domain_Alignment
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Domain_Alignment
+    range: bio2rdf_sgd_vocabulary_Protein
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_goa_vocabulary_evidence:
+    name: bio2rdf_goa_vocabulary_evidence
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_goa_vocabulary_evidence
+    description: Property bio2rdf:goa_vocabulary:evidence
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_goa_vocabulary_evidence
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_goa_vocabulary_evidence
+    owner: bio2rdf_sgd_vocabulary_Resource
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Resource
+    range: bio2rdf_eco_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_is_located_in:
+    name: bio2rdf_sgd_vocabulary_is_located_in
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_located_in
+    description: Property bio2rdf:sgd_vocabulary:is-located-in
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_located_in
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_located_in
+    owner: bio2rdf_sgd_vocabulary_RNA
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_RNA
+    range: bio2rdf_go_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_goa_vocabulary_target:
+    name: bio2rdf_goa_vocabulary_target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_goa_vocabulary_target
+    description: Property bio2rdf:goa_vocabulary:target
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_goa_vocabulary_target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_goa_vocabulary_target
+    owner: bio2rdf_sgd_vocabulary_Resource
+    domain_of:
+    - bio2rdf_goa_vocabulary_GO_Annotation
+    - bio2rdf_sgd_vocabulary_Resource
+    range: bio2rdf_sgd_vocabulary_RNA
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_is_participant_in:
+    name: bio2rdf_sgd_vocabulary_is_participant_in
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_participant_in
+    description: Property bio2rdf:sgd_vocabulary:is-participant-in
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_participant_in
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_participant_in
+    owner: bio2rdf_sgd_vocabulary_RNA
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Protein
+    - bio2rdf_sgd_vocabulary_RNA
+    range: bio2rdf_go_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/rdf_type
+    owner: bio2rdf_sgd_vocabulary_Aromaticity_Score
+    domain_of:
+    - bio2rdf_goa_vocabulary_Resource
+    - so_0000830
+    - bio2rdf_sgd_vocabulary_Protein
+    - so_0000188
+    - bio2rdf_goa_vocabulary_GO_Annotation
+    - bio2rdf_sgd_vocabulary_Aromaticity_Score
+    - bio2rdf_sgd_vocabulary_Aspartate_Count
+    - bio2rdf_sgd_vocabulary_Glycine_Count
+    - bio2rdf_sgd_vocabulary_Leucine_Count
+    - bio2rdf_sgd_vocabulary_Reaction
+    - bio2rdf_go_vocabulary_Resource
+    - bio2rdf_chebi_vocabulary_Resource
+    - bio2rdf_panther_vocabulary_Resource
+    - bio2rdf_prodom_vocabulary_Resource
+    - bio2rdf_smart_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Arginine_Count
+    - bio2rdf_sgd_vocabulary_Isolectric_Point
+    - bio2rdf_sgd_vocabulary_Methionine_Count
+    - bio2rdf_ec_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Pathway
+    - so_0000236
+    - so_0000336
+    - so_0000624
+    - so_0001496
+    - bio2rdf_sgd_vocabulary_Record
+    - bio2rdf_apo_0000187
+    - bio2rdf_sgd_vocabulary_Phenotype_Experiment
+    - rdf_Property
+    - owl_Datatype_Property
+    - bio2rdf_sgd_vocabulary_Alanine_Count
+    - bio2rdf_sgd_vocabulary_Asparagine_Count
+    - bio2rdf_sgd_vocabulary_Codon_Adaptation_Index
+    - bio2rdf_sgd_vocabulary_Cystein_Count
+    - bio2rdf_sgd_vocabulary_Histine_Count
+    - bio2rdf_sgd_vocabulary_Tryptophan_Count
+    - bio2rdf_sgd_vocabulary_Tyrosine_Count
+    - bio2rdf_sgd_vocabulary_Valine_Count
+    - bio2rdf_sgd_vocabulary_Complex
+    - bio2rdf_coil_vocabulary_Resource
+    - bio2rdf_eco_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Glutamate_Count
+    - bio2rdf_sgd_vocabulary_Enzyme
+    - so_0000316
+    - bio2rdf_sgd_vocabulary_RNA
+    - owl_Object_Property
+    - owl_Class
+    - so_0000640
+    - bio2rdf_sgd_vocabulary_Super_Pathway
+    - bio2rdf_refseq_vocabulary_Resource
+    - bio2rdf_hamap_vocabulary_Resource
+    - bio2rdf_pirsf_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Domain_Alignment
+    - bio2rdf_signalp_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Sequence_Length
+    - bio2rdf_sgd_vocabulary_Crick_Strand
+    - bio2rdf_sgd_vocabulary_Frequency_Of_Optimal_Codons
+    - bio2rdf_sgd_vocabulary_Glutamine_Count
+    - bio2rdf_sgd_vocabulary_GRAVYScore
+    - bio2rdf_sgd_vocabulary_Phenylalanine_Count
+    - bio2rdf_ncbigene_vocabulary_Resource
+    - bio2rdf_pfam_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Chromosome
+    - so_0000286
+    - so_0000445
+    - bio2rdf_sgd_vocabulary_Isoleucine_Count
+    - bio2rdf_sgd_vocabulary_Threonine_Count
+    - dcat_Distribution
+    - bio2rdf_sgd_vocabulary_Lysine_Count
+    - bio2rdf_sgd_vocabulary_Molecular_Weight
+    range: bio2rdf_sgd_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_bait:
+    name: bio2rdf_sgd_vocabulary_bait
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_bait
+    description: Property bio2rdf:sgd_vocabulary:bait
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_bait
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_bait
+    owner: bio2rdf_apo_0000186
+    domain_of:
+    - bio2rdf_apo_0000187
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_apo_0000186
+    range: bio2rdf_sgd_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_function:
+    name: bio2rdf_sgd_vocabulary_function
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_function
+    description: Property bio2rdf:sgd_vocabulary:function
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_function
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_function
+    owner: bio2rdf_sgd_vocabulary_RNA
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_RNA
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_method:
+    name: bio2rdf_sgd_vocabulary_method
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_method
+    description: Property bio2rdf:sgd_vocabulary:method
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_method
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_method
+    owner: bio2rdf_apo_0000186
+    domain_of:
+    - bio2rdf_apo_0000187
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_apo_0000186
+    range: bio2rdf_apo_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_article:
+    name: bio2rdf_sgd_vocabulary_article
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_article
+    description: Property bio2rdf:sgd_vocabulary:article
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_article
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_article
+    owner: bio2rdf_apo_0000186
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Pathway
+    - bio2rdf_sgd_vocabulary_Phenotype_Experiment
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_Enzyme
+    - bio2rdf_apo_0000186
+    range: bio2rdf_irefindex_vocabulary_Pairwise_Interaction
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_phenotype:
+    name: bio2rdf_sgd_vocabulary_phenotype
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_phenotype
+    description: Property bio2rdf:sgd_vocabulary:phenotype
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_phenotype
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_phenotype
+    owner: bio2rdf_apo_0000186
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_apo_0000186
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  owl_equivalent_Class:
+    name: owl_equivalent_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_equivalent_Class
+    description: Property owl:equivalentClass
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_equivalent_Class
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_equivalent_Class
+    owner: bio2rdf_sgd_vocabulary_Resource
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Resource
+    range: bio2rdf_chebi_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_process:
+    name: bio2rdf_sgd_vocabulary_process
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_process
+    description: Property bio2rdf:sgd_vocabulary:process
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_process
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_process
+    owner: bio2rdf_sgd_vocabulary_RNA
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_RNA
+    range: bio2rdf_go_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  owl_same_As:
+    name: owl_same_As
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_same_As
+    description: Property owl:sameAs
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_same_As
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_same_As
+    owner: so_0000336
+    domain_of:
+    - so_0000336
+    - so_0000577
+    range: bio2rdf_sgd_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_chromosome:
+    name: bio2rdf_sgd_vocabulary_chromosome
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_chromosome
+    description: Property bio2rdf:sgd_vocabulary:chromosome
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_chromosome
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_chromosome
+    owner: bio2rdf_sgd_vocabulary_Location
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Location
+    range: bio2rdf_sgd_vocabulary_Chromosome
+    inlined: true
+    inlined_as_list: true
+  dcat_distribution:
+    name: dcat_distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/dcat_distribution
+    description: Property dcat:distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/dcat_distribution
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/dcat_distribution
+    owner: dcterms_Dataset
+    domain_of:
+    - dcterms_Dataset
+    range: dcat_Distribution
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_mutant_type:
+    name: bio2rdf_sgd_vocabulary_mutant_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_mutant_type
+    description: Property bio2rdf:sgd_vocabulary:mutant-type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_mutant_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_mutant_type
+    owner: bio2rdf_sgd_vocabulary_Phenotype_Experiment
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Phenotype_Experiment
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_has_function:
+    name: bio2rdf_sgd_vocabulary_has_function
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_has_function
+    description: Property bio2rdf:sgd_vocabulary:has-function
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_has_function
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_has_function
+    owner: bio2rdf_sgd_vocabulary_RNA
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Resource
+    - bio2rdf_sgd_vocabulary_RNA
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_observable:
+    name: bio2rdf_sgd_vocabulary_observable
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_observable
+    description: Property bio2rdf:sgd_vocabulary:observable
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_observable
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_observable
+    owner: bio2rdf_sgd_vocabulary_Resource
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Phenotype_Experiment
+    - bio2rdf_sgd_vocabulary_Resource
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_qualifier:
+    name: bio2rdf_sgd_vocabulary_qualifier
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_qualifier
+    description: Property bio2rdf:sgd_vocabulary:qualifier
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_qualifier
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_qualifier
+    owner: bio2rdf_sgd_vocabulary_Resource
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Resource
+    range: bio2rdf_apo_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_x_refseq:
+    name: bio2rdf_sgd_vocabulary_x_refseq
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_x_refseq
+    description: Property bio2rdf:sgd_vocabulary:x-refseq
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_x_refseq
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_x_refseq
+    owner: bio2rdf_sgd_vocabulary_Resource
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Protein
+    - bio2rdf_sgd_vocabulary_Resource
+    range: bio2rdf_refseq_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_sgd_vocabulary_is_described_by:
+    name: bio2rdf_sgd_vocabulary_is_described_by
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_described_by
+    description: Property bio2rdf:sgd_vocabulary:is-described-by
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_described_by
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_is_described_by
+    owner: bio2rdf_sgd_vocabulary_Resource
+    domain_of:
+    - bio2rdf_sgd_vocabulary_Resource
+    range: bio2rdf_sgd_vocabulary_Leucine_Count
+    inlined: true
+    inlined_as_list: true
+classes:
+  bio2rdf_sgd_vocabulary_Tryptophan_Count:
+    name: bio2rdf_sgd_vocabulary_Tryptophan_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyTryptophanCount
+    description: Class representing bio2rdf_sgd_vocabulary_Tryptophan_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Tryptophan_Count
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Tryptophan_Count
+  bio2rdf_goa_vocabulary_GO_Annotation:
+    name: bio2rdf_goa_vocabulary_GO_Annotation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfGoaVocabularyGOAnnotation
+    description: Class representing bio2rdf_goa_vocabulary_GO_Annotation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_goa_vocabulary_GO_Annotation
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_goa_vocabulary_target
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_goa_vocabulary_GO_Annotation
+  bio2rdf_sgd_vocabulary_Asparagine_Count:
+    name: bio2rdf_sgd_vocabulary_Asparagine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyAsparagineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Asparagine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Asparagine_Count
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Asparagine_Count
+  bio2rdf_sgd_vocabulary_Phenotype_Experiment:
+    name: bio2rdf_sgd_vocabulary_Phenotype_Experiment
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyPhenotypeExperiment
+    description: Class representing bio2rdf_sgd_vocabulary_Phenotype_Experiment
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Phenotype_Experiment
+    slots:
+    - rdf_type
+    - bio2rdf_sgd_vocabulary_experiment_type
+    - bio2rdf_sgd_vocabulary_observable
+    - bio2rdf_sgd_vocabulary_article
+    - bio2rdf_sgd_vocabulary_mutant_type
+    - bio2rdf_sgd_vocabulary_has_participant
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Phenotype_Experiment
+  so_0000183:
+    name: so_0000183
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000183
+    description: Class representing so_0000183
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000183
+    slots:
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000183
+  bio2rdf_sgd_vocabulary_Protein:
+    name: bio2rdf_sgd_vocabulary_Protein
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyProtein
+    description: Class representing bio2rdf_sgd_vocabulary_Protein
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Protein
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_x_refseq
+    - bio2rdf_sgd_vocabulary_has_proper_part
+    - bio2rdf_sgd_vocabulary_component
+    - bio2rdf_sgd_vocabulary_is_participant_in
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Protein
+  rdf_Property:
+    name: rdf_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/RdfProperty
+    description: Class representing rdf_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/rdf_Property
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/rdf_Property
+  so_0001496:
+    name: so_0001496
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0001496
+    description: Class representing so_0001496
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0001496
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_location
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0001496
+  bio2rdf_sgd_vocabulary_Aspartate_Count:
+    name: bio2rdf_sgd_vocabulary_Aspartate_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyAspartateCount
+    description: Class representing bio2rdf_sgd_vocabulary_Aspartate_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Aspartate_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Aspartate_Count
+  bio2rdf_pirsf_vocabulary_Resource:
+    name: bio2rdf_pirsf_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfPirsfVocabularyResource
+    description: Class representing bio2rdf_pirsf_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_pirsf_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_pirsf_vocabulary_Resource
+  bio2rdf_pfam_vocabulary_Resource:
+    name: bio2rdf_pfam_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfPfamVocabularyResource
+    description: Class representing bio2rdf_pfam_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_pfam_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_pfam_vocabulary_Resource
+  bio2rdf_go_vocabulary_Resource:
+    name: bio2rdf_go_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfGoVocabularyResource
+    description: Class representing bio2rdf_go_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_go_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_go_vocabulary_Resource
+  bio2rdf_sgd_vocabulary_Glycine_Count:
+    name: bio2rdf_sgd_vocabulary_Glycine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyGlycineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Glycine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Glycine_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Glycine_Count
+  bio2rdf_apo_vocabulary_Resource:
+    name: bio2rdf_apo_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfApoVocabularyResource
+    description: Class representing bio2rdf_apo_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_apo_vocabulary_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_apo_vocabulary_Resource
+  bio2rdf_mi_0914:
+    name: bio2rdf_mi_0914
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfMi0914
+    description: Class representing bio2rdf_mi_0914
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_mi_0914
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_mi_0914
+  dcterms_Dataset:
+    name: dcterms_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/DctermsDataset
+    description: Class representing dcterms_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/dcterms_Dataset
+    slots:
+    - dcat_distribution
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/dcterms_Dataset
+  bio2rdf_ec_vocabulary_Resource:
+    name: bio2rdf_ec_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfEcVocabularyResource
+    description: Class representing bio2rdf_ec_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_ec_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_ec_vocabulary_Resource
+  bio2rdf_sgd_vocabulary_Record:
+    name: bio2rdf_sgd_vocabulary_Record
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyRecord
+    description: Class representing bio2rdf_sgd_vocabulary_Record
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Record
+    slots:
+    - rdf_type
+    - bio2rdf_sgd_vocabulary_is_about
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Record
+  so_0000236:
+    name: so_0000236
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000236
+    description: Class representing so_0000236
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000236
+    slots:
+    - rdf_type
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_location
+    - bio2rdf_sgd_vocabulary_x_ncbigene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000236
+  bio2rdf_sgd_vocabulary_Frequency_Of_Optimal_Codons:
+    name: bio2rdf_sgd_vocabulary_Frequency_Of_Optimal_Codons
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyFrequencyOfOptimalCodons
+    description: Class representing bio2rdf_sgd_vocabulary_Frequency_Of_Optimal_Codons
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Frequency_Of_Optimal_Codons
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Frequency_Of_Optimal_Codons
+  owl_Object_Property:
+    name: owl_Object_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/OwlObjectProperty
+    description: Class representing owl_Object_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_Object_Property
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_Object_Property
+  bio2rdf_tmhmm_vocabulary_Resource:
+    name: bio2rdf_tmhmm_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfTmhmmVocabularyResource
+    description: Class representing bio2rdf_tmhmm_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_tmhmm_vocabulary_Resource
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_tmhmm_vocabulary_Resource
+  bio2rdf_sgd_vocabulary_Leucine_Count:
+    name: bio2rdf_sgd_vocabulary_Leucine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyLeucineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Leucine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Leucine_Count
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Leucine_Count
+  bio2rdf_sgd_vocabulary_Isolectric_Point:
+    name: bio2rdf_sgd_vocabulary_Isolectric_Point
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyIsolectricPoint
+    description: Class representing bio2rdf_sgd_vocabulary_Isolectric_Point
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Isolectric_Point
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Isolectric_Point
+  bio2rdf_sgd_vocabulary_Isoleucine_Count:
+    name: bio2rdf_sgd_vocabulary_Isoleucine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyIsoleucineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Isoleucine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Isoleucine_Count
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Isoleucine_Count
+  so_0000830:
+    name: so_0000830
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000830
+    description: Class representing so_0000830
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000830
+    slots:
+    - rdf_type
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_encodes
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000830
+  bio2rdf_sgd_vocabulary_Resource:
+    name: bio2rdf_sgd_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyResource
+    description: Class representing bio2rdf_sgd_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Resource
+    slots:
+    - rdf_type
+    - owl_equivalent_Class
+    - bio2rdf_sgd_vocabulary_x_refseq
+    - bio2rdf_sgd_vocabulary_is_about
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_has_proper_part
+    - bio2rdf_sgd_vocabulary_target
+    - bio2rdf_sgd_vocabulary_is_described_by
+    - bio2rdf_sgd_vocabulary_component
+    - bio2rdf_sgd_vocabulary_function
+    - bio2rdf_sgd_vocabulary_experiment_type
+    - bio2rdf_sgd_vocabulary_observable
+    - bio2rdf_sgd_vocabulary_article
+    - bio2rdf_sgd_vocabulary_has_function
+    - bio2rdf_sgd_vocabulary_method
+    - bio2rdf_goa_vocabulary_evidence
+    - bio2rdf_goa_vocabulary_target
+    - bio2rdf_sgd_vocabulary_encodes
+    - bio2rdf_sgd_vocabulary_bait
+    - bio2rdf_sgd_vocabulary_phenotype
+    - bio2rdf_sgd_vocabulary_qualifier
+    - bio2rdf_sgd_vocabulary_process
+    - bio2rdf_sgd_vocabulary_is_located_in
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Resource
+  bio2rdf_panther_vocabulary_Resource:
+    name: bio2rdf_panther_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfPantherVocabularyResource
+    description: Class representing bio2rdf_panther_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_panther_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_panther_vocabulary_Resource
+  bio2rdf_sgd_vocabulary_Pathway:
+    name: bio2rdf_sgd_vocabulary_Pathway
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyPathway
+    description: Class representing bio2rdf_sgd_vocabulary_Pathway
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Pathway
+    slots:
+    - rdf_type
+    - bio2rdf_sgd_vocabulary_article
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Pathway
+  bio2rdf_sgd_vocabulary_Enzyme:
+    name: bio2rdf_sgd_vocabulary_Enzyme
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyEnzyme
+    description: Class representing bio2rdf_sgd_vocabulary_Enzyme
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Enzyme
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_article
+    - bio2rdf_sgd_vocabulary_has_participant
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Enzyme
+  so_0000624:
+    name: so_0000624
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000624
+    description: Class representing so_0000624
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000624
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_location
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000624
+  rdfs_Class:
+    name: rdfs_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/RdfsClass
+    description: Class representing rdfs_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/rdfs_Class
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/rdfs_Class
+  so_0000577:
+    name: so_0000577
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000577
+    description: Class representing so_0000577
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000577
+    slots:
+    - owl_same_As
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_location
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000577
+  bio2rdf_sgd_vocabulary_Codon_Adaptation_Index:
+    name: bio2rdf_sgd_vocabulary_Codon_Adaptation_Index
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyCodonAdaptationIndex
+    description: Class representing bio2rdf_sgd_vocabulary_Codon_Adaptation_Index
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Codon_Adaptation_Index
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Codon_Adaptation_Index
+  bio2rdf_sgd_vocabulary_Methionine_Count:
+    name: bio2rdf_sgd_vocabulary_Methionine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyMethionineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Methionine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Methionine_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Methionine_Count
+  bio2rdf_sgd_vocabulary_Histine_Count:
+    name: bio2rdf_sgd_vocabulary_Histine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyHistineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Histine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Histine_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Histine_Count
+  bio2rdf_irefindex_vocabulary_Pairwise_Interaction:
+    name: bio2rdf_irefindex_vocabulary_Pairwise_Interaction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfIrefindexVocabularyPairwiseInteraction
+    description: Class representing bio2rdf_irefindex_vocabulary_Pairwise_Interaction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_irefindex_vocabulary_Pairwise_Interaction
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_irefindex_vocabulary_Pairwise_Interaction
+  bio2rdf_sgd_vocabulary_RNA:
+    name: bio2rdf_sgd_vocabulary_RNA
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyRNA
+    description: Class representing bio2rdf_sgd_vocabulary_RNA
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_RNA
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_function
+    - bio2rdf_sgd_vocabulary_has_function
+    - bio2rdf_sgd_vocabulary_is_participant_in
+    - bio2rdf_sgd_vocabulary_process
+    - bio2rdf_sgd_vocabulary_is_located_in
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_RNA
+  bio2rdf_sgd_vocabulary_Sequence_Length:
+    name: bio2rdf_sgd_vocabulary_Sequence_Length
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularySequenceLength
+    description: Class representing bio2rdf_sgd_vocabulary_Sequence_Length
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Sequence_Length
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Sequence_Length
+  so_0000639:
+    name: so_0000639
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000639
+    description: Class representing so_0000639
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000639
+    slots:
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_location
+    - bio2rdf_sgd_vocabulary_encodes
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000639
+  bio2rdf_refseq_vocabulary_Resource:
+    name: bio2rdf_refseq_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfRefseqVocabularyResource
+    description: Class representing bio2rdf_refseq_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_refseq_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_refseq_vocabulary_Resource
+  dcat_Distribution:
+    name: dcat_Distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/DcatDistribution
+    description: Class representing dcat_Distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/dcat_Distribution
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/dcat_Distribution
+  bio2rdf_sgd_vocabulary_Reaction:
+    name: bio2rdf_sgd_vocabulary_Reaction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyReaction
+    description: Class representing bio2rdf_sgd_vocabulary_Reaction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Reaction
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Reaction
+  so_0000286:
+    name: so_0000286
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000286
+    description: Class representing so_0000286
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000286
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_location
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000286
+  bio2rdf_coil_vocabulary_Resource:
+    name: bio2rdf_coil_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfCoilVocabularyResource
+    description: Class representing bio2rdf_coil_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_coil_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_coil_vocabulary_Resource
+  bio2rdf_sgd_vocabulary_Crick_Strand:
+    name: bio2rdf_sgd_vocabulary_Crick_Strand
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyCrickStrand
+    description: Class representing bio2rdf_sgd_vocabulary_Crick_Strand
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Crick_Strand
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Crick_Strand
+  so_0000188:
+    name: so_0000188
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000188
+    description: Class representing so_0000188
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000188
+    slots:
+    - rdf_type
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_location
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000188
+  so_0000336:
+    name: so_0000336
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000336
+    description: Class representing so_0000336
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000336
+    slots:
+    - rdf_type
+    - owl_same_As
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_x_ec
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000336
+  so_0000640:
+    name: so_0000640
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000640
+    description: Class representing so_0000640
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000640
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000640
+  bio2rdf_sgd_vocabulary_Glutamine_Count:
+    name: bio2rdf_sgd_vocabulary_Glutamine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyGlutamineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Glutamine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Glutamine_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Glutamine_Count
+  bio2rdf_sgd_vocabulary_Cystein_Count:
+    name: bio2rdf_sgd_vocabulary_Cystein_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyCysteinCount
+    description: Class representing bio2rdf_sgd_vocabulary_Cystein_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Cystein_Count
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Cystein_Count
+  bio2rdf_sgd_vocabulary_Threonine_Count:
+    name: bio2rdf_sgd_vocabulary_Threonine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyThreonineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Threonine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Threonine_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Threonine_Count
+  bio2rdf_sgd_vocabulary_Valine_Count:
+    name: bio2rdf_sgd_vocabulary_Valine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyValineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Valine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Valine_Count
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Valine_Count
+  bio2rdf_sgd_vocabulary_Super_Pathway:
+    name: bio2rdf_sgd_vocabulary_Super_Pathway
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularySuperPathway
+    description: Class representing bio2rdf_sgd_vocabulary_Super_Pathway
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Super_Pathway
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_has_proper_part
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Super_Pathway
+  bio2rdf_goa_vocabulary_Resource:
+    name: bio2rdf_goa_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfGoaVocabularyResource
+    description: Class representing bio2rdf_goa_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_goa_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_goa_vocabulary_Resource
+  bio2rdf_smart_vocabulary_Resource:
+    name: bio2rdf_smart_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSmartVocabularyResource
+    description: Class representing bio2rdf_smart_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_smart_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_smart_vocabulary_Resource
+  bio2rdf_ncbigene_vocabulary_Resource:
+    name: bio2rdf_ncbigene_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfNcbigeneVocabularyResource
+    description: Class representing bio2rdf_ncbigene_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_ncbigene_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_ncbigene_vocabulary_Resource
+  bio2rdf_sgd_vocabulary_Alanine_Count:
+    name: bio2rdf_sgd_vocabulary_Alanine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyAlanineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Alanine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Alanine_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Alanine_Count
+  bio2rdf_apo_0000187:
+    name: bio2rdf_apo_0000187
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfApo0000187
+    description: Class representing bio2rdf_apo_0000187
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_apo_0000187
+    slots:
+    - rdf_type
+    - bio2rdf_sgd_vocabulary_hit
+    - bio2rdf_sgd_vocabulary_method
+    - bio2rdf_sgd_vocabulary_bait
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_apo_0000187
+  bio2rdf_sgd_vocabulary_Chromosome:
+    name: bio2rdf_sgd_vocabulary_Chromosome
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyChromosome
+    description: Class representing bio2rdf_sgd_vocabulary_Chromosome
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Chromosome
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Chromosome
+  bio2rdf_sgd_vocabulary_Location:
+    name: bio2rdf_sgd_vocabulary_Location
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyLocation
+    description: Class representing bio2rdf_sgd_vocabulary_Location
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Location
+    slots:
+    - bio2rdf_sgd_vocabulary_chromosome
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Location
+  so_0000445:
+    name: so_0000445
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000445
+    description: Class representing so_0000445
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000445
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_location
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000445
+  rdfs_Resource:
+    name: rdfs_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/RdfsResource
+    description: Class representing rdfs_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/rdfs_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/rdfs_Resource
+  bio2rdf_sgd_vocabulary_Arginine_Count:
+    name: bio2rdf_sgd_vocabulary_Arginine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyArginineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Arginine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Arginine_Count
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Arginine_Count
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_Class
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_Class
+  bio2rdf_sgd_vocabulary_GRAVYScore:
+    name: bio2rdf_sgd_vocabulary_GRAVYScore
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyGRAVYScore
+    description: Class representing bio2rdf_sgd_vocabulary_GRAVYScore
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_GRAVYScore
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_GRAVYScore
+  bio2rdf_signalp_vocabulary_Resource:
+    name: bio2rdf_signalp_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSignalpVocabularyResource
+    description: Class representing bio2rdf_signalp_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_signalp_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_signalp_vocabulary_Resource
+  so_0001211:
+    name: so_0001211
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0001211
+    description: Class representing so_0001211
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0001211
+    slots:
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0001211
+  bio2rdf_pubmed_vocabulary_Resource:
+    name: bio2rdf_pubmed_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfPubmedVocabularyResource
+    description: Class representing bio2rdf_pubmed_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_pubmed_vocabulary_Resource
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_pubmed_vocabulary_Resource
+  bio2rdf_chebi_vocabulary_Resource:
+    name: bio2rdf_chebi_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfChebiVocabularyResource
+    description: Class representing bio2rdf_chebi_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_chebi_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_chebi_vocabulary_Resource
+  owl_Datatype_Property:
+    name: owl_Datatype_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/OwlDatatypeProperty
+    description: Class representing owl_Datatype_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_Datatype_Property
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/owl_Datatype_Property
+  bio2rdf_sgd_vocabulary_Domain_Alignment:
+    name: bio2rdf_sgd_vocabulary_Domain_Alignment
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyDomainAlignment
+    description: Class representing bio2rdf_sgd_vocabulary_Domain_Alignment
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Domain_Alignment
+    slots:
+    - rdf_type
+    - bio2rdf_sgd_vocabulary_query
+    - bio2rdf_sgd_vocabulary_target
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Domain_Alignment
+  bio2rdf_sgd_vocabulary_Glutamate_Count:
+    name: bio2rdf_sgd_vocabulary_Glutamate_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyGlutamateCount
+    description: Class representing bio2rdf_sgd_vocabulary_Glutamate_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Glutamate_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Glutamate_Count
+  so_0000316:
+    name: so_0000316
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000316
+    description: Class representing so_0000316
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000316
+    slots:
+    - rdf_type
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000316
+  bio2rdf_sgd_vocabulary_Phenylalanine_Count:
+    name: bio2rdf_sgd_vocabulary_Phenylalanine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyPhenylalanineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Phenylalanine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Phenylalanine_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Phenylalanine_Count
+  bio2rdf_sgd_vocabulary_Tyrosine_Count:
+    name: bio2rdf_sgd_vocabulary_Tyrosine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyTyrosineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Tyrosine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Tyrosine_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Tyrosine_Count
+  bio2rdf_gene_3d_vocabulary_Resource:
+    name: bio2rdf_gene_3d_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfGene3dVocabularyResource
+    description: Class representing bio2rdf_gene_3d_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_gene_3d_vocabulary_Resource
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_gene_3d_vocabulary_Resource
+  bio2rdf_sgd_vocabulary_Molecular_Weight:
+    name: bio2rdf_sgd_vocabulary_Molecular_Weight
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyMolecularWeight
+    description: Class representing bio2rdf_sgd_vocabulary_Molecular_Weight
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Molecular_Weight
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Molecular_Weight
+  bio2rdf_sgd_vocabulary_Serine_Count:
+    name: bio2rdf_sgd_vocabulary_Serine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularySerineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Serine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Serine_Count
+    slots:
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Serine_Count
+  bio2rdf_eco_vocabulary_Resource:
+    name: bio2rdf_eco_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfEcoVocabularyResource
+    description: Class representing bio2rdf_eco_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_eco_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_eco_vocabulary_Resource
+  bio2rdf_apo_0000186:
+    name: bio2rdf_apo_0000186
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfApo0000186
+    description: Class representing bio2rdf_apo_0000186
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_apo_0000186
+    slots:
+    - void_in_Dataset
+    - bio2rdf_sgd_vocabulary_article
+    - bio2rdf_sgd_vocabulary_hit
+    - bio2rdf_sgd_vocabulary_method
+    - bio2rdf_sgd_vocabulary_bait
+    - bio2rdf_sgd_vocabulary_phenotype
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_apo_0000186
+  bio2rdf_sgd_vocabulary_Complex:
+    name: bio2rdf_sgd_vocabulary_Complex
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyComplex
+    description: Class representing bio2rdf_sgd_vocabulary_Complex
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Complex
+    slots:
+    - rdf_type
+    - bio2rdf_sgd_vocabulary_has_proper_part
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Complex
+  bio2rdf_sgd_vocabulary_Lysine_Count:
+    name: bio2rdf_sgd_vocabulary_Lysine_Count
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyLysineCount
+    description: Class representing bio2rdf_sgd_vocabulary_Lysine_Count
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Lysine_Count
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Lysine_Count
+  bio2rdf_prodom_vocabulary_Resource:
+    name: bio2rdf_prodom_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfProdomVocabularyResource
+    description: Class representing bio2rdf_prodom_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_prodom_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_prodom_vocabulary_Resource
+  so_0000180:
+    name: so_0000180
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/So0000180
+    description: Class representing so_0000180
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000180
+    slots:
+    - bio2rdf_sgd_vocabulary_is_proper_part_of
+    - bio2rdf_sgd_vocabulary_location
+    - bio2rdf_sgd_vocabulary_x_ncbigene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/so_0000180
+  bio2rdf_hamap_vocabulary_Resource:
+    name: bio2rdf_hamap_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfHamapVocabularyResource
+    description: Class representing bio2rdf_hamap_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_hamap_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_hamap_vocabulary_Resource
+  bio2rdf_sgd_vocabulary_Aromaticity_Score:
+    name: bio2rdf_sgd_vocabulary_Aromaticity_Score
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/Bio2rdfSgdVocabularyAromaticityScore
+    description: Class representing bio2rdf_sgd_vocabulary_Aromaticity_Score
+    from_schema: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Aromaticity_Score
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/sgd/linkml/bio2rdf_sgd_vocabulary_Aromaticity_Score
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T12:15:48'

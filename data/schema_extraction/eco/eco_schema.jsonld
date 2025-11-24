@@ -1,0 +1,300 @@
+{
+  "@context": {
+    "bio2rdf": "http://bio2rdf.org/",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "dctypes": "http://purl.org/dc/dcmitype/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  },
+  "@graph": [
+    {
+      "@id": "bio2rdf:eco_vocabulary:Resource",
+      "rdfs:isDefinedBy": [
+        {
+          "@id": "owl:Ontology"
+        },
+        {
+          "@id": "dctypes:Dataset"
+        },
+        {
+          "@id": "bio2rdf:lsr_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:lsr_vocabulary:Dataset"
+        }
+      ],
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "rdfs:subClassOf": [
+        {
+          "@id": "bio2rdf:eco_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "bio2rdf:obo_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "bio2rdf:obo_vocabulary:x-tair": {
+        "@id": "bio2rdf:tair_vocabulary:Resource"
+      },
+      "bio2rdf:obo_vocabulary:x-go_ref": {
+        "@id": "bio2rdf:go.ref_vocabulary:Resource"
+      },
+      "bio2rdf:obo_vocabulary:x-goeco": {
+        "@id": "bio2rdf:goeco_vocabulary:Resource"
+      },
+      "bio2rdf:obo_vocabulary:used_in": [
+        {
+          "@id": "bio2rdf:eco_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "bio2rdf:obo_vocabulary:x-psi-mi": {
+        "@id": "bio2rdf:psi.mi_vocabulary:Resource"
+      },
+      "rdfs:seeAlso": [
+        {
+          "@id": "bio2rdf:eco_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "owl:Class",
+      "rdfs:isDefinedBy": [
+        {
+          "@id": "bio2rdf:lsr_vocabulary:Dataset"
+        },
+        {
+          "@id": "bio2rdf:lsr_vocabulary:Resource"
+        },
+        {
+          "@id": "dctypes:Dataset"
+        },
+        {
+          "@id": "owl:Ontology"
+        }
+      ],
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "rdfs:subClassOf": [
+        {
+          "@id": "bio2rdf:obo_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:eco_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "bio2rdf:obo_vocabulary:x-tair": {
+        "@id": "bio2rdf:tair_vocabulary:Resource"
+      },
+      "bio2rdf:obo_vocabulary:x-go_ref": {
+        "@id": "bio2rdf:go.ref_vocabulary:Resource"
+      },
+      "bio2rdf:obo_vocabulary:x-goeco": {
+        "@id": "bio2rdf:goeco_vocabulary:Resource"
+      },
+      "bio2rdf:obo_vocabulary:used_in": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:eco_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:obo_vocabulary:x-psi-mi": {
+        "@id": "bio2rdf:psi.mi_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "owl:DeprecatedClass",
+      "rdfs:isDefinedBy": [
+        {
+          "@id": "bio2rdf:lsr_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:lsr_vocabulary:Dataset"
+        },
+        {
+          "@id": "dctypes:Dataset"
+        },
+        {
+          "@id": "owl:Ontology"
+        }
+      ],
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ],
+      "rdfs:subClassOf": {
+        "@id": "rdfs:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:id_vocabulary:Resource",
+      "rdfs:isDefinedBy": [
+        {
+          "@id": "dctypes:Dataset"
+        },
+        {
+          "@id": "bio2rdf:lsr_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:lsr_vocabulary:Dataset"
+        },
+        {
+          "@id": "owl:Ontology"
+        }
+      ],
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ],
+      "rdfs:subClassOf": [
+        {
+          "@id": "bio2rdf:eco_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:goeco_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:obo_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "owl:DatatypeProperty",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:tair_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "owl:ObjectProperty",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:go.ref_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:psi.mi_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "owl:Ontology",
+      "rdf:type": {
+        "@id": "rdfs:Class"
+      }
+    }
+  ]
+}

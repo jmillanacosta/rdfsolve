@@ -1,0 +1,93 @@
+name: pubchem.journal_schema
+description: LinkML schema for pubchem.journal generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/
+prefixes:
+  pubchem.journal_schema:
+    prefix_prefix: pubchem.journal_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  fabio:
+    prefix_prefix: fabio
+    prefix_reference: http://purl.org/spar/fabio/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+default_prefix: pubchem.journal_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/rdf_type
+    owner: vocabulary_Journal
+    domain_of:
+    - fabio_Journal
+    - vocabulary_Journal
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+classes:
+  fabio_Journal:
+    name: fabio_Journal
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/FabioJournal
+    description: Class representing fabio_Journal
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/fabio_Journal
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/fabio_Journal
+  vocabulary_Journal:
+    name: vocabulary_Journal
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/VocabularyJournal
+    description: Class representing vocabulary_Journal
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/vocabulary_Journal
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/vocabulary_Journal
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/owl_Class
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.journal/linkml/owl_Class
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T10:53:55'

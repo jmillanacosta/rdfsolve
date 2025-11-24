@@ -1,0 +1,256 @@
+name: apo_schema
+description: LinkML schema for apo generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+prefixes:
+  apo_schema:
+    prefix_prefix: apo_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  bio2rdf:
+    prefix_prefix: bio2rdf
+    prefix_reference: http://bio2rdf.org/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  dctypes:
+    prefix_prefix: dctypes
+    prefix_reference: http://purl.org/dc/dcmitype/
+default_prefix: apo_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  bio2rdf_obo_vocabulary_x_biogrid:
+    name: bio2rdf_obo_vocabulary_x_biogrid
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_obo_vocabulary_x_biogrid
+    description: Property bio2rdf:obo_vocabulary:x-biogrid
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_obo_vocabulary_x_biogrid
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_obo_vocabulary_x_biogrid
+    owner: owl_Class
+    domain_of:
+    - bio2rdf_apo_vocabulary_Resource
+    - owl_Class
+    range: bio2rdf_biogrid_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  rdfs_is_Defined_By:
+    name: rdfs_is_Defined_By
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_is_Defined_By
+    description: Property rdfs:isDefinedBy
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_is_Defined_By
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_is_Defined_By
+    owner: owl_Deprecated_Class
+    domain_of:
+    - bio2rdf_apo_vocabulary_Resource
+    - owl_Deprecated_Class
+    - owl_Class
+    range: bio2rdf_lsr_vocabulary_Dataset
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdf_type
+    owner: bio2rdf_obo_vocabulary_Resource
+    domain_of:
+    - bio2rdf_apo_vocabulary_Resource
+    - bio2rdf_obo_vocabulary_Resource
+    - owl_Deprecated_Class
+    - bio2rdf_biogrid_vocabulary_Resource
+    - owl_Datatype_Property
+    - bio2rdf_ypo_vocabulary_Resource
+    - owl_Class
+    - owl_Object_Property
+    - owl_Ontology
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdfs_see_Also:
+    name: rdfs_see_Also
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_see_Also
+    description: Property rdfs:seeAlso
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_see_Also
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_see_Also
+    owner: bio2rdf_ypo_vocabulary_Resource
+    domain_of:
+    - bio2rdf_ypo_vocabulary_Resource
+    range: owl_Deprecated_Class
+    inlined: true
+    inlined_as_list: true
+  rdfs_sub_Class_Of:
+    name: rdfs_sub_Class_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_sub_Class_Of
+    description: Property rdfs:subClassOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_sub_Class_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_sub_Class_Of
+    owner: owl_Deprecated_Class
+    domain_of:
+    - bio2rdf_apo_vocabulary_Resource
+    - owl_Deprecated_Class
+    - owl_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+classes:
+  bio2rdf_lsr_vocabulary_Dataset:
+    name: bio2rdf_lsr_vocabulary_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/Bio2rdfLsrVocabularyDataset
+    description: Class representing bio2rdf_lsr_vocabulary_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_lsr_vocabulary_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_lsr_vocabulary_Dataset
+  owl_Ontology:
+    name: owl_Ontology
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/OwlOntology
+    description: Class representing owl_Ontology
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/owl_Ontology
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/owl_Ontology
+  owl_Datatype_Property:
+    name: owl_Datatype_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/OwlDatatypeProperty
+    description: Class representing owl_Datatype_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/owl_Datatype_Property
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/owl_Datatype_Property
+  rdfs_Class:
+    name: rdfs_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/RdfsClass
+    description: Class representing rdfs_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_Class
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_Class
+  bio2rdf_apo_vocabulary_Resource:
+    name: bio2rdf_apo_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/Bio2rdfApoVocabularyResource
+    description: Class representing bio2rdf_apo_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_apo_vocabulary_Resource
+    slots:
+    - rdf_type
+    - rdfs_is_Defined_By
+    - rdfs_sub_Class_Of
+    - bio2rdf_obo_vocabulary_x_biogrid
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_apo_vocabulary_Resource
+  bio2rdf_biogrid_vocabulary_Resource:
+    name: bio2rdf_biogrid_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/Bio2rdfBiogridVocabularyResource
+    description: Class representing bio2rdf_biogrid_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_biogrid_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_biogrid_vocabulary_Resource
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/owl_Class
+    slots:
+    - rdf_type
+    - rdfs_is_Defined_By
+    - rdfs_sub_Class_Of
+    - bio2rdf_obo_vocabulary_x_biogrid
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/owl_Class
+  owl_Object_Property:
+    name: owl_Object_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/OwlObjectProperty
+    description: Class representing owl_Object_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/owl_Object_Property
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/owl_Object_Property
+  rdfs_Resource:
+    name: rdfs_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/RdfsResource
+    description: Class representing rdfs_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/rdfs_Resource
+  bio2rdf_ypo_vocabulary_Resource:
+    name: bio2rdf_ypo_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/Bio2rdfYpoVocabularyResource
+    description: Class representing bio2rdf_ypo_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_ypo_vocabulary_Resource
+    slots:
+    - rdf_type
+    - rdfs_see_Also
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_ypo_vocabulary_Resource
+  owl_Deprecated_Class:
+    name: owl_Deprecated_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/OwlDeprecatedClass
+    description: Class representing owl_Deprecated_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/owl_Deprecated_Class
+    slots:
+    - rdf_type
+    - rdfs_is_Defined_By
+    - rdfs_sub_Class_Of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/owl_Deprecated_Class
+  bio2rdf_obo_vocabulary_Resource:
+    name: bio2rdf_obo_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/Bio2rdfOboVocabularyResource
+    description: Class representing bio2rdf_obo_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/apo/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_obo_vocabulary_Resource
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/apo/linkml/bio2rdf_obo_vocabulary_Resource
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T12:06:23'

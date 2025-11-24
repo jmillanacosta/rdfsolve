@@ -1,0 +1,459 @@
+{
+  "@context": {
+    "bio2rdf": "http://bio2rdf.org/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "void": "http://rdfs.org/ns/void#",
+    "dcterms": "http://purl.org/dc/terms/"
+  },
+  "@graph": [
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Labeller",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Unit",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Package",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:ndc_vocabulary:has-part": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Package-Component"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Dosage-Form",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Pharmacological-Class",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "owl:DatatypeProperty",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:ndc_vocabulary:has-part": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Substance"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Package-Component"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:pharmacological-class": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Pharmacological-Class"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:product-type": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Dosage-Form"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Route"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Product-Type"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:route": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Route"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:amount_unit": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Unit"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:ingredient": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Ingredient"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:labeller": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Labeller"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Ingredient"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:dosage-form": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Dosage-Form"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:has-package": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Package"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Substance",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:ndc_vocabulary:amount_unit": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Unit"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "owl:Class",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "owl:ObjectProperty",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Ingredient",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Product-Type",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "dcat:Distribution",
+      "rdf:type": {
+        "@id": "rdfs:Class"
+      },
+      "dcterms:source": {
+        "@id": "dcat:Distribution"
+      }
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Package-Component",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Route",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ndc_vocabulary:Product",
+      "rdf:type": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:ndc_vocabulary:has-part": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Substance"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:pharmacological-class": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Pharmacological-Class"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:product-type": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Product-Type"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Dosage-Form"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Route"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:route": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Route"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:ingredient": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Ingredient"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:labeller": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Labeller"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Ingredient"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:dosage-form": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Dosage-Form"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:ndc_vocabulary:has-package": [
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:ndc_vocabulary:Package"
+        }
+      ]
+    },
+    {
+      "@id": "dcterms:Dataset",
+      "dcat:distribution": {
+        "@id": "dcat:Distribution"
+      }
+    }
+  ]
+}

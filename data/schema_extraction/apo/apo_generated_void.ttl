@@ -1,0 +1,196 @@
+@prefix ns1: <http://bio2rdf.org/apo_resource:bio2rdf.dataset.apo.R3/void/> .
+@prefix ns10: <http://bio2rdf.org/biogrid_vocabulary:> .
+@prefix ns11: <http://bio2rdf.org/ypo_vocabulary:> .
+@prefix ns2: <http://ldf.fi/void-ext#> .
+@prefix ns4: <http://bio2rdf.org/apo_vocabulary:> .
+@prefix ns7: <http://bio2rdf.org/lsr_vocabulary:> .
+@prefix ns8: <http://purl.org/dc/dcmitype/> .
+@prefix ns9: <http://bio2rdf.org/obo_vocabulary:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___bio2rdf_org_apo_vocabulary_Resource void:class ns4:Resource ;
+    void:entities 340 .
+
+ns1:class_partition_http___bio2rdf_org_biogrid_vocabulary_Resource void:class ns10:Resource ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_obo_vocabulary_Resource void:class ns9:Resource ;
+    void:entities 19 .
+
+ns1:class_partition_http___bio2rdf_org_ypo_vocabulary_Resource void:class ns11:Resource ;
+    void:entities 276 .
+
+ns1:class_partition_http___www_w3_org_2000_01_rdf_schema_Resource void:class rdfs:Resource ;
+    void:entities 4 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Class void:class owl:Class ;
+    void:entities 341 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DatatypeProperty void:class owl:DatatypeProperty ;
+    void:entities 20 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DeprecatedClass void:class owl:DeprecatedClass ;
+    void:entities 33 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_ObjectProperty void:class owl:ObjectProperty ;
+    void:entities 3 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Ontology void:class owl:Ontology ;
+    void:entities 1 .
+
+ns1:datatype_partition_ void:triples 716 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_dateTime ns2:datatypePartition xsd:dateTime ;
+    void:triples 17 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_float ns2:datatypePartition xsd:float ;
+    void:triples 1 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_string ns2:datatypePartition xsd:string ;
+    void:triples 4425 .
+
+ns1:property_partition_http___bio2rdf_org_obo_vocabulary_x_biogrid_http___bio2rdf_org_apo_vocabulary_Resource ns2:objectClass ns10:Resource ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns9:x-biogrid ;
+    void:triples 2 .
+
+ns1:property_partition_http___bio2rdf_org_obo_vocabulary_x_biogrid_http___www_w3_org_2002_07_owl_Class ns2:objectClass ns10:Resource ;
+    ns2:subjectClass owl:Class ;
+    void:property ns9:x-biogrid ;
+    void:triples 2 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_apo_vocabulary_Resource ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Resource ;
+    void:property rdf:type ;
+    void:triples 373,
+        680,
+        1700 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_biogrid_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns10:Resource ;
+    void:property rdf:type ;
+    void:triples 1,
+        3 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_obo_vocabulary_Resource ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns9:Resource ;
+    void:property rdf:type ;
+    void:triples 18,
+        19,
+        76 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ypo_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns11:Resource ;
+    void:property rdf:type ;
+    void:triples 276 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_Class ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:Class ;
+    void:property rdf:type ;
+    void:triples 374,
+        680,
+        1704 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property rdf:type ;
+    void:triples 17,
+        20,
+        68 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_DeprecatedClass ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:DeprecatedClass ;
+    void:property rdf:type ;
+    void:triples 66,
+        165 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_ObjectProperty ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:ObjectProperty ;
+    void:property rdf:type ;
+    void:triples 1,
+        3,
+        4 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_Ontology ns2:objectClass rdfs:Class ;
+    ns2:subjectClass owl:Ontology ;
+    void:property rdf:type ;
+    void:triples 1 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_isDefinedBy_http___bio2rdf_org_apo_vocabulary_Resource ns2:objectClass ns7:Dataset,
+        ns7:Resource,
+        ns8:Dataset,
+        owl:Ontology ;
+    ns2:subjectClass ns4:Resource ;
+    void:property rdfs:isDefinedBy ;
+    void:triples 340 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_isDefinedBy_http___www_w3_org_2002_07_owl_Class ns2:objectClass ns7:Dataset,
+        ns7:Resource,
+        ns8:Dataset,
+        owl:Ontology ;
+    ns2:subjectClass owl:Class ;
+    void:property rdfs:isDefinedBy ;
+    void:triples 340 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_isDefinedBy_http___www_w3_org_2002_07_owl_DeprecatedClass ns2:objectClass ns7:Dataset,
+        ns7:Resource,
+        ns8:Dataset,
+        owl:Ontology ;
+    ns2:subjectClass owl:DeprecatedClass ;
+    void:property rdfs:isDefinedBy ;
+    void:triples 33 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_seeAlso_http___bio2rdf_org_ypo_vocabulary_Resource ns2:objectClass ns4:Resource,
+        owl:Class,
+        owl:DeprecatedClass ;
+    ns2:subjectClass ns11:Resource ;
+    void:property rdfs:seeAlso ;
+    void:triples 32,
+        278,
+        491 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_subClassOf_http___bio2rdf_org_apo_vocabulary_Resource ns2:objectClass ns4:Resource,
+        ns9:Resource,
+        rdfs:Class,
+        owl:Class ;
+    ns2:subjectClass ns4:Resource ;
+    void:property rdfs:subClassOf ;
+    void:triples 16,
+        33,
+        336,
+        489 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_subClassOf_http___www_w3_org_2002_07_owl_Class ns2:objectClass ns4:Resource,
+        ns9:Resource,
+        rdfs:Class,
+        owl:Class ;
+    ns2:subjectClass owl:Class ;
+    void:property rdfs:subClassOf ;
+    void:triples 16,
+        33,
+        336,
+        489 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_subClassOf_http___www_w3_org_2002_07_owl_DeprecatedClass ns2:objectClass rdfs:Class ;
+    ns2:subjectClass owl:DeprecatedClass ;
+    void:property rdfs:subClassOf ;
+    void:triples 33 .
+

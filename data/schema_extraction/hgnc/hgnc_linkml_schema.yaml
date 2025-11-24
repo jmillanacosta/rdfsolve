@@ -1,0 +1,792 @@
+name: hgnc_schema
+description: LinkML schema for hgnc generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+prefixes:
+  hgnc_schema:
+    prefix_prefix: hgnc_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  bio2rdf:
+    prefix_prefix: bio2rdf
+    prefix_reference: http://bio2rdf.org/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  dcat:
+    prefix_prefix: dcat
+    prefix_reference: http://www.w3.org/ns/dcat#
+  void:
+    prefix_prefix: void
+    prefix_reference: http://rdfs.org/ns/void#
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  ncit:
+    prefix_prefix: ncit
+    prefix_reference: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#
+default_prefix: hgnc_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  bio2rdf_hgnc_vocabulary_x_uniprot:
+    name: bio2rdf_hgnc_vocabulary_x_uniprot
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_uniprot
+    description: Property bio2rdf:hgnc_vocabulary:x-uniprot
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_uniprot
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_uniprot
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_uniprot_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_x_ncbigene:
+    name: bio2rdf_hgnc_vocabulary_x_ncbigene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ncbigene
+    description: Property bio2rdf:hgnc_vocabulary:x-ncbigene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ncbigene
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ncbigene
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_ncbigene_vocabulary_Unknown_Gene
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_x_ensembl:
+    name: bio2rdf_hgnc_vocabulary_x_ensembl
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ensembl
+    description: Property bio2rdf:hgnc_vocabulary:x-ensembl
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ensembl
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ensembl
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_ensembl_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  dcat_distribution:
+    name: dcat_distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/dcat_distribution
+    description: Property dcat:distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/dcat_distribution
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/dcat_distribution
+    owner: dcterms_Dataset
+    domain_of:
+    - dcterms_Dataset
+    range: dcat_Distribution
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_x_ccds:
+    name: bio2rdf_hgnc_vocabulary_x_ccds
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ccds
+    description: Property bio2rdf:hgnc_vocabulary:x-ccds
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ccds
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ccds
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_ccds_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_x_ucsc:
+    name: bio2rdf_hgnc_vocabulary_x_ucsc
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ucsc
+    description: Property bio2rdf:hgnc_vocabulary:x-ucsc
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ucsc
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_ucsc
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_ucsc_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_x_pubmed:
+    name: bio2rdf_hgnc_vocabulary_x_pubmed
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_pubmed
+    description: Property bio2rdf:hgnc_vocabulary:x-pubmed
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_pubmed
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_pubmed
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_pubmed_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_x_omim:
+    name: bio2rdf_hgnc_vocabulary_x_omim
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_omim
+    description: Property bio2rdf:hgnc_vocabulary:x-omim
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_omim
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_omim
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_omim_vocabulary_Gene
+    inlined: true
+    inlined_as_list: true
+  void_in_Dataset:
+    name: void_in_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/void_in_Dataset
+    description: Property void:inDataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/void_in_Dataset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/void_in_Dataset
+    owner: bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    domain_of:
+    - bio2rdf_omim_vocabulary_Resource
+    - owl_Datatype_Property
+    - rdf_Property
+    - bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_symbol_vocabulary_Resource
+    - bio2rdf_refseq_vocabulary_Resource
+    - bio2rdf_vega_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    - owl_Class
+    - owl_Object_Property
+    - bio2rdf_hgnc_vocabulary_Previous_Symbol
+    - bio2rdf_ensembl_vocabulary_Resource
+    - bio2rdf_ncbigene_vocabulary_Resource
+    - bio2rdf_rgd_vocabulary_Resource
+    - bio2rdf_pubmed_vocabulary_Resource
+    - bio2rdf_ccds_vocabulary_Resource
+    - bio2rdf_uniprot_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_ucsc_vocabulary_Resource
+    range: dcterms_Dataset
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_x_rgd:
+    name: bio2rdf_hgnc_vocabulary_x_rgd
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_rgd
+    description: Property bio2rdf:hgnc_vocabulary:x-rgd
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_rgd
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_rgd
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_rgd_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_x_vega:
+    name: bio2rdf_hgnc_vocabulary_x_vega
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_vega
+    description: Property bio2rdf:hgnc_vocabulary:x-vega
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_vega
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_vega
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_vega_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_bio_2rdf_vocabulary_x_identifiers_org:
+    name: bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    description: Property bio2rdf:bio2rdf_vocabulary:x-identifiers.org
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    owner: bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    domain_of:
+    - bio2rdf_omim_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    - bio2rdf_hgnc_symbol_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Previous_Symbol
+    - bio2rdf_ncbigene_vocabulary_Resource
+    - bio2rdf_pubmed_vocabulary_Resource
+    - bio2rdf_uniprot_vocabulary_Resource
+    range: ncit_C_17021
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_status:
+    name: bio2rdf_hgnc_vocabulary_status
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_status
+    description: Property bio2rdf:hgnc_vocabulary:status
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_status
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_status
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_previous_symbol:
+    name: bio2rdf_hgnc_vocabulary_previous_symbol
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_previous_symbol
+    description: Property bio2rdf:hgnc_vocabulary:previous-symbol
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_previous_symbol
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_previous_symbol
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_is_approved_symbol_of:
+    name: bio2rdf_hgnc_vocabulary_is_approved_symbol_of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_is_approved_symbol_of
+    description: Property bio2rdf:hgnc_vocabulary:is-approved-symbol-of
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_is_approved_symbol_of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_is_approved_symbol_of
+    owner: bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    - bio2rdf_hgnc_symbol_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Previous_Symbol
+    range: bio2rdf_hgnc_vocabulary_Gene_Symbol
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_x_refseq:
+    name: bio2rdf_hgnc_vocabulary_x_refseq
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_refseq
+    description: Property bio2rdf:hgnc_vocabulary:x-refseq
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_refseq
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_refseq
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_mi_0326
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_x_mgi:
+    name: bio2rdf_hgnc_vocabulary_x_mgi
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_mgi
+    description: Property bio2rdf:hgnc_vocabulary:x-mgi
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_mgi
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_x_mgi
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_mgi_vocabulary_Gene
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdf_type
+    owner: bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    domain_of:
+    - bio2rdf_omim_vocabulary_Resource
+    - owl_Datatype_Property
+    - rdf_Property
+    - bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_symbol_vocabulary_Resource
+    - bio2rdf_refseq_vocabulary_Resource
+    - bio2rdf_vega_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    - owl_Class
+    - owl_Object_Property
+    - bio2rdf_hgnc_vocabulary_Previous_Symbol
+    - bio2rdf_ensembl_vocabulary_Resource
+    - bio2rdf_ncbigene_vocabulary_Resource
+    - bio2rdf_rgd_vocabulary_Resource
+    - dcat_Distribution
+    - bio2rdf_pubmed_vocabulary_Resource
+    - bio2rdf_ccds_vocabulary_Resource
+    - bio2rdf_uniprot_vocabulary_Resource
+    - bio2rdf_mgi_vocabulary_Resource
+    - bio2rdf_ucsc_vocabulary_Resource
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  dcterms_source:
+    name: dcterms_source
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/dcterms_source
+    description: Property dcterms:source
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/dcterms_source
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/dcterms_source
+    owner: dcat_Distribution
+    domain_of:
+    - dcat_Distribution
+    range: dcat_Distribution
+    inlined: true
+    inlined_as_list: true
+  rdfs_sub_Class_Of:
+    name: rdfs_sub_Class_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdfs_sub_Class_Of
+    description: Property rdfs:subClassOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdfs_sub_Class_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdfs_sub_Class_Of
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - owl_Class
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  bio2rdf_hgnc_vocabulary_has_approved_symbol:
+    name: bio2rdf_hgnc_vocabulary_has_approved_symbol
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_has_approved_symbol
+    description: Property bio2rdf:hgnc_vocabulary:has-approved-symbol
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_has_approved_symbol
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_has_approved_symbol
+    owner: bio2rdf_hgnc_vocabulary_Resource
+    domain_of:
+    - bio2rdf_hgnc_vocabulary_Resource
+    - bio2rdf_hgnc_vocabulary_Gene_Symbol
+    range: bio2rdf_hgnc_symbol_vocabulary_Resource
+    inlined: true
+    inlined_as_list: true
+classes:
+  bio2rdf_ncbigene_vocabulary_Unknown_Gene:
+    name: bio2rdf_ncbigene_vocabulary_Unknown_Gene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfNcbigeneVocabularyUnknownGene
+    description: Class representing bio2rdf_ncbigene_vocabulary_Unknown_Gene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_ncbigene_vocabulary_Unknown_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_ncbigene_vocabulary_Unknown_Gene
+  rdfs_Resource:
+    name: rdfs_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/RdfsResource
+    description: Class representing rdfs_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdfs_Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdfs_Resource
+  owl_Object_Property:
+    name: owl_Object_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/OwlObjectProperty
+    description: Class representing owl_Object_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/owl_Object_Property
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/owl_Object_Property
+  ncit_C_47902:
+    name: ncit_C_47902
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/NcitC47902
+    description: Class representing ncit_C_47902
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/ncit_C_47902
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/ncit_C_47902
+  ncit_C_17021:
+    name: ncit_C_17021
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/NcitC17021
+    description: Class representing ncit_C_17021
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/ncit_C_17021
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/ncit_C_17021
+  bio2rdf_pubmed_vocabulary_Resource:
+    name: bio2rdf_pubmed_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfPubmedVocabularyResource
+    description: Class representing bio2rdf_pubmed_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_pubmed_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_pubmed_vocabulary_Resource
+  bio2rdf_hgnc_vocabulary_Gene_Symbol:
+    name: bio2rdf_hgnc_vocabulary_Gene_Symbol
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfHgncVocabularyGeneSymbol
+    description: Class representing bio2rdf_hgnc_vocabulary_Gene_Symbol
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_Gene_Symbol
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_hgnc_vocabulary_x_mgi
+    - bio2rdf_hgnc_vocabulary_x_ncbigene
+    - bio2rdf_hgnc_vocabulary_x_omim
+    - bio2rdf_hgnc_vocabulary_x_pubmed
+    - bio2rdf_hgnc_vocabulary_previous_symbol
+    - bio2rdf_hgnc_vocabulary_x_ccds
+    - bio2rdf_hgnc_vocabulary_x_ensembl
+    - bio2rdf_hgnc_vocabulary_x_refseq
+    - bio2rdf_hgnc_vocabulary_x_ucsc
+    - bio2rdf_hgnc_vocabulary_x_uniprot
+    - bio2rdf_hgnc_vocabulary_x_vega
+    - bio2rdf_hgnc_vocabulary_has_approved_symbol
+    - bio2rdf_hgnc_vocabulary_status
+    - bio2rdf_hgnc_vocabulary_x_rgd
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_Gene_Symbol
+  bio2rdf_refseq_vocabulary_Resource:
+    name: bio2rdf_refseq_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfRefseqVocabularyResource
+    description: Class representing bio2rdf_refseq_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_refseq_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_refseq_vocabulary_Resource
+  rdf_Property:
+    name: rdf_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/RdfProperty
+    description: Class representing rdf_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdf_Property
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdf_Property
+  ncit_C_16612:
+    name: ncit_C_16612
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/NcitC16612
+    description: Class representing ncit_C_16612
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/ncit_C_16612
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/ncit_C_16612
+  ncit_C_43568:
+    name: ncit_C_43568
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/NcitC43568
+    description: Class representing ncit_C_43568
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/ncit_C_43568
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/ncit_C_43568
+  bio2rdf_irefindex_vocabulary_Multimeric_Complex:
+    name: bio2rdf_irefindex_vocabulary_Multimeric_Complex
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfIrefindexVocabularyMultimericComplex
+    description: Class representing bio2rdf_irefindex_vocabulary_Multimeric_Complex
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_irefindex_vocabulary_Multimeric_Complex
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_irefindex_vocabulary_Multimeric_Complex
+  dcterms_Dataset:
+    name: dcterms_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/DctermsDataset
+    description: Class representing dcterms_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/dcterms_Dataset
+    slots:
+    - dcat_distribution
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/dcterms_Dataset
+  bio2rdf_ccds_vocabulary_Resource:
+    name: bio2rdf_ccds_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfCcdsVocabularyResource
+    description: Class representing bio2rdf_ccds_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_ccds_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_ccds_vocabulary_Resource
+  bio2rdf_rgd_vocabulary_Resource:
+    name: bio2rdf_rgd_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfRgdVocabularyResource
+    description: Class representing bio2rdf_rgd_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_rgd_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_rgd_vocabulary_Resource
+  bio2rdf_mgi_vocabulary_Gene:
+    name: bio2rdf_mgi_vocabulary_Gene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfMgiVocabularyGene
+    description: Class representing bio2rdf_mgi_vocabulary_Gene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_mgi_vocabulary_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_mgi_vocabulary_Gene
+  rdfs_Class:
+    name: rdfs_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/RdfsClass
+    description: Class representing rdfs_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdfs_Class
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/rdfs_Class
+  bio2rdf_hgnc_symbol_vocabulary_Resource:
+    name: bio2rdf_hgnc_symbol_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfHgncSymbolVocabularyResource
+    description: Class representing bio2rdf_hgnc_symbol_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_symbol_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_hgnc_vocabulary_is_approved_symbol_of
+    - bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_symbol_vocabulary_Resource
+  bio2rdf_mgi_vocabulary_Resource:
+    name: bio2rdf_mgi_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfMgiVocabularyResource
+    description: Class representing bio2rdf_mgi_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_mgi_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_mgi_vocabulary_Resource
+  dcat_Distribution:
+    name: dcat_Distribution
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/DcatDistribution
+    description: Class representing dcat_Distribution
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/dcat_Distribution
+    slots:
+    - rdf_type
+    - dcterms_source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/dcat_Distribution
+  bio2rdf_omim_vocabulary_Gene:
+    name: bio2rdf_omim_vocabulary_Gene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfOmimVocabularyGene
+    description: Class representing bio2rdf_omim_vocabulary_Gene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_omim_vocabulary_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_omim_vocabulary_Gene
+  bio2rdf_hgnc_vocabulary_Previous_Symbol:
+    name: bio2rdf_hgnc_vocabulary_Previous_Symbol
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfHgncVocabularyPreviousSymbol
+    description: Class representing bio2rdf_hgnc_vocabulary_Previous_Symbol
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_Previous_Symbol
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_hgnc_vocabulary_is_approved_symbol_of
+    - bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_Previous_Symbol
+  bio2rdf_mi_0326:
+    name: bio2rdf_mi_0326
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfMi0326
+    description: Class representing bio2rdf_mi_0326
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_mi_0326
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_mi_0326
+  bio2rdf_ncbigene_vocabulary_Resource:
+    name: bio2rdf_ncbigene_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfNcbigeneVocabularyResource
+    description: Class representing bio2rdf_ncbigene_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_ncbigene_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_ncbigene_vocabulary_Resource
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/owl_Class
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - rdfs_sub_Class_Of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/owl_Class
+  owl_Datatype_Property:
+    name: owl_Datatype_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/OwlDatatypeProperty
+    description: Class representing owl_Datatype_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/owl_Datatype_Property
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/owl_Datatype_Property
+  bio2rdf_ucsc_vocabulary_Resource:
+    name: bio2rdf_ucsc_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfUcscVocabularyResource
+    description: Class representing bio2rdf_ucsc_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_ucsc_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_ucsc_vocabulary_Resource
+  bio2rdf_hgnc_vocabulary_Resource:
+    name: bio2rdf_hgnc_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfHgncVocabularyResource
+    description: Class representing bio2rdf_hgnc_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_hgnc_vocabulary_x_mgi
+    - bio2rdf_hgnc_vocabulary_x_ncbigene
+    - bio2rdf_hgnc_vocabulary_x_omim
+    - bio2rdf_hgnc_vocabulary_x_pubmed
+    - bio2rdf_hgnc_vocabulary_previous_symbol
+    - bio2rdf_hgnc_vocabulary_x_ccds
+    - bio2rdf_hgnc_vocabulary_x_ensembl
+    - bio2rdf_hgnc_vocabulary_x_refseq
+    - bio2rdf_hgnc_vocabulary_x_ucsc
+    - bio2rdf_hgnc_vocabulary_x_uniprot
+    - rdfs_sub_Class_Of
+    - bio2rdf_hgnc_vocabulary_x_vega
+    - bio2rdf_hgnc_vocabulary_has_approved_symbol
+    - bio2rdf_hgnc_vocabulary_status
+    - bio2rdf_hgnc_vocabulary_x_rgd
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_Resource
+  bio2rdf_omim_vocabulary_Resource:
+    name: bio2rdf_omim_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfOmimVocabularyResource
+    description: Class representing bio2rdf_omim_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_omim_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_omim_vocabulary_Resource
+  bio2rdf_ensembl_vocabulary_Resource:
+    name: bio2rdf_ensembl_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfEnsemblVocabularyResource
+    description: Class representing bio2rdf_ensembl_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_ensembl_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_ensembl_vocabulary_Resource
+  bio2rdf_uniprot_vocabulary_Resource:
+    name: bio2rdf_uniprot_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfUniprotVocabularyResource
+    description: Class representing bio2rdf_uniprot_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_uniprot_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_uniprot_vocabulary_Resource
+  ncit_C_7057:
+    name: ncit_C_7057
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/NcitC7057
+    description: Class representing ncit_C_7057
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/ncit_C_7057
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/ncit_C_7057
+  bio2rdf_vega_vocabulary_Resource:
+    name: bio2rdf_vega_vocabulary_Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfVegaVocabularyResource
+    description: Class representing bio2rdf_vega_vocabulary_Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_vega_vocabulary_Resource
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_vega_vocabulary_Resource
+  bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol:
+    name: bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/Bio2rdfHgncVocabularyApprovedGeneSymbol
+    description: Class representing bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    from_schema: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+    slots:
+    - rdf_type
+    - void_in_Dataset
+    - bio2rdf_hgnc_vocabulary_is_approved_symbol_of
+    - bio2rdf_bio_2rdf_vocabulary_x_identifiers_org
+    class_uri: http://jmillanacosta.github.io/rdfsolve/hgnc/linkml/bio2rdf_hgnc_vocabulary_Approved_Gene_Symbol
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T11:59:57'

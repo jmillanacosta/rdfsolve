@@ -1,0 +1,25 @@
+{
+  "@context": {
+    "dcterms": "http://purl.org/dc/terms/",
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+  },
+  "@graph": [
+    {
+      "@id": "dcterms:Dataset",
+      "dcat:distribution": {
+        "@id": "dcat:Distribution"
+      }
+    },
+    {
+      "@id": "dcat:Distribution",
+      "rdf:type": {
+        "@id": "rdfs:Class"
+      },
+      "dcterms:source": {
+        "@id": "dcat:Distribution"
+      }
+    }
+  ]
+}

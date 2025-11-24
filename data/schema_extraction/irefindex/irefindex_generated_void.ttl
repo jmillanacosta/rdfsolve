@@ -1,0 +1,290 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://bio2rdf.org/irefindex_resource:bio2rdf.dataset.irefindex.R3/void/> .
+@prefix ns11: <http://www.w3.org/ns/dcat#> .
+@prefix ns12: <http://bio2rdf.org/irefindex.irigid_vocabulary:> .
+@prefix ns13: <http://bio2rdf.org/ipi_vocabulary:> .
+@prefix ns14: <http://bio2rdf.org/flybase_vocabulary:> .
+@prefix ns15: <http://bio2rdf.org/bind_vocabulary:> .
+@prefix ns16: <http://bio2rdf.org/irefindex.icrigid_vocabulary:> .
+@prefix ns17: <http://bio2rdf.org/irefindex.crogid_vocabulary:> .
+@prefix ns18: <http://bio2rdf.org/irefindex.rogid_vocabulary:> .
+@prefix ns19: <http://bio2rdf.org/uniprot_vocabulary:> .
+@prefix ns2: <http://bio2rdf.org/irefindex_vocabulary:> .
+@prefix ns20: <http://bio2rdf.org/biogrid_vocabulary:> .
+@prefix ns21: <http://bio2rdf.org/sgd_vocabulary:> .
+@prefix ns22: <http://bio2rdf.org/pubmed_vocabulary:> .
+@prefix ns23: <http://bio2rdf.org/irefindex.icrogid_vocabulary:> .
+@prefix ns24: <http://bio2rdf.org/irefindex.rigid_vocabulary:> .
+@prefix ns25: <http://bio2rdf.org/intact_vocabulary:> .
+@prefix ns26: <http://bio2rdf.org/psi.mi_vocabulary:> .
+@prefix ns27: <http://bio2rdf.org/genbank_vocabulary:> .
+@prefix ns28: <http://bio2rdf.org/pdb_vocabulary:> .
+@prefix ns29: <http://bio2rdf.org/cygd_vocabulary:> .
+@prefix ns3: <http://bio2rdf.org/matrixdb_vocabulary:> .
+@prefix ns30: <http://bio2rdf.org/hprd_vocabulary:> .
+@prefix ns31: <http://bio2rdf.org/dip_vocabulary:> .
+@prefix ns33: <http://bio2rdf.org/ncbigene_vocabulary:> .
+@prefix ns34: <http://bio2rdf.org/irefindex.crigid_vocabulary:> .
+@prefix ns35: <http://bio2rdf.org/irefindex.irogid_vocabulary:> .
+@prefix ns4: <http://bio2rdf.org/mips_vocabulary:> .
+@prefix ns6: <http://bio2rdf.org/refseq_vocabulary:> .
+@prefix ns7: <http://bio2rdf.org/taxonomy_vocabulary:> .
+@prefix ns8: <http://bio2rdf.org/mi_vocabulary:> .
+@prefix ns9: <http://bio2rdf.org/mpi_vocabulary:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___bio2rdf_org_bind_vocabulary_Resource void:class ns15:Resource ;
+    void:entities 81201 .
+
+ns1:class_partition_http___bio2rdf_org_biogrid_vocabulary_Resource void:class ns20:Resource ;
+    void:entities 491294 .
+
+ns1:class_partition_http___bio2rdf_org_cygd_vocabulary_Resource void:class ns29:Resource ;
+    void:entities 4863 .
+
+ns1:class_partition_http___bio2rdf_org_dip_vocabulary_Resource void:class ns31:Resource ;
+    void:entities 77052 .
+
+ns1:class_partition_http___bio2rdf_org_flybase_vocabulary_Resource void:class ns14:Resource ;
+    void:entities 220 .
+
+ns1:class_partition_http___bio2rdf_org_genbank_vocabulary_Resource void:class ns27:Resource ;
+    void:entities 35852 .
+
+ns1:class_partition_http___bio2rdf_org_hprd_vocabulary_Resource void:class ns30:Resource ;
+    void:entities 41177 .
+
+ns1:class_partition_http___bio2rdf_org_intact_vocabulary_Resource void:class ns25:Resource ;
+    void:entities 327524 .
+
+ns1:class_partition_http___bio2rdf_org_ipi_vocabulary_Resource void:class ns13:Resource ;
+    void:entities 8 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_crigid_vocabulary_Resource void:class ns34:Resource ;
+    void:entities 533295 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_crogid_vocabulary_Resource void:class ns17:Resource ;
+    void:entities 119571 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_icrigid_vocabulary_Resource void:class ns16:Resource ;
+    void:entities 533439 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_icrogid_vocabulary_Resource void:class ns23:Resource ;
+    void:entities 119575 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_irigid_vocabulary_Resource void:class ns12:Resource ;
+    void:entities 588557 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_irogid_vocabulary_Resource void:class ns35:Resource ;
+    void:entities 132740 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_rigid_vocabulary_Resource void:class ns24:Resource ;
+    void:entities 588398 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_rogid_vocabulary_Resource void:class ns18:Resource ;
+    void:entities 132740 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_vocabulary_Expansion_Method void:class ns2:Expansion-Method ;
+    void:entities 2 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_vocabulary_Homopolymeric_Complex void:class ns2:Homopolymeric-Complex ;
+    void:entities 5359 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_vocabulary_Multimeric_Complex void:class ns2:Multimeric-Complex ;
+    void:entities 26815 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_vocabulary_Pairwise_Interaction void:class ns2:Pairwise-Interaction ;
+    void:entities 1005971 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_vocabulary_Resource void:class ns2:Resource ;
+    void:entities 37 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_vocabulary_Taxon_Sequence_Canonical_Interaction void:class ns2:Taxon-Sequence-Canonical-Interaction ;
+    void:entities 533439 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_vocabulary_Taxon_Sequence_Identical_Group void:class ns2:Taxon-Sequence-Identical-Group ;
+    void:entities 132767 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_vocabulary_Taxon_Sequence_Identical_Interaction void:class ns2:Taxon-Sequence-Identical-Interaction ;
+    void:entities 588557 .
+
+ns1:class_partition_http___bio2rdf_org_irefindex_vocabulary_Taxon_Sequence_Similar_Group void:class ns2:Taxon-Sequence-Similar-Group ;
+    void:entities 119599 .
+
+ns1:class_partition_http___bio2rdf_org_matrixdb_vocabulary_Resource void:class ns3:Resource ;
+    void:entities 575 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0000 void:class <http://bio2rdf.org/mi:0000> ;
+    void:entities 1806 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0192 void:class <http://bio2rdf.org/mi:0192> ;
+    void:entities 57 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0193 void:class <http://bio2rdf.org/mi:0193> ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0194 void:class <http://bio2rdf.org/mi:0194> ;
+    void:entities 177 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0195 void:class <http://bio2rdf.org/mi:0195> ;
+    void:entities 224 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0197 void:class <http://bio2rdf.org/mi:0197> ;
+    void:entities 37 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0199 void:class <http://bio2rdf.org/mi:0199> ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0203 void:class <http://bio2rdf.org/mi:0203> ;
+    void:entities 472 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0204 void:class <http://bio2rdf.org/mi:0204> ;
+    void:entities 17 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0208 void:class <http://bio2rdf.org/mi:0208> ;
+    void:entities 124 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0210 void:class <http://bio2rdf.org/mi:0210> ;
+    void:entities 10 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0213 void:class <http://bio2rdf.org/mi:0213> ;
+    void:entities 97 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0216 void:class <http://bio2rdf.org/mi:0216> ;
+    void:entities 7 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0217 void:class <http://bio2rdf.org/mi:0217> ;
+    void:entities 2366 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0220 void:class <http://bio2rdf.org/mi:0220> ;
+    void:entities 209 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0315 void:class <http://bio2rdf.org/mi:0315> ;
+    void:entities 23040 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0326 void:class <http://bio2rdf.org/mi:0326> ;
+    void:entities 109632 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0403 void:class <http://bio2rdf.org/mi:0403> ;
+    void:entities 31106 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0407 void:class <http://bio2rdf.org/mi:0407> ;
+    void:entities 198769 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0408 void:class <http://bio2rdf.org/mi:0408> ;
+    void:entities 43 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0414 void:class <http://bio2rdf.org/mi:0414> ;
+    void:entities 101 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0556 void:class <http://bio2rdf.org/mi:0556> ;
+    void:entities 3 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0557 void:class <http://bio2rdf.org/mi:0557> ;
+    void:entities 66 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0559 void:class <http://bio2rdf.org/mi:0559> ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0566 void:class <http://bio2rdf.org/mi:0566> ;
+    void:entities 8 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0567 void:class <http://bio2rdf.org/mi:0567> ;
+    void:entities 6 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0569 void:class <http://bio2rdf.org/mi:0569> ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0570 void:class <http://bio2rdf.org/mi:0570> ;
+    void:entities 128 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0701 void:class <http://bio2rdf.org/mi:0701> ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0844 void:class <http://bio2rdf.org/mi:0844> ;
+    void:entities 20 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0871 void:class <http://bio2rdf.org/mi:0871> ;
+    void:entities 11 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0883 void:class <http://bio2rdf.org/mi:0883> ;
+    void:entities 2 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0902 void:class <http://bio2rdf.org/mi:0902> ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0914 void:class <http://bio2rdf.org/mi:0914> ;
+    void:entities 48725 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0915 void:class <http://bio2rdf.org/mi:0915> ;
+    void:entities 611119 .
+
+ns1:class_partition_http___bio2rdf_org_mi_0945 void:class <http://bio2rdf.org/mi:0945> ;
+    void:entities 33 .
+
+ns1:class_partition_http___bio2rdf_org_mi_1126 void:class <http://bio2rdf.org/mi:1126> ;
+    void:entities 9 .
+
+ns1:class_partition_http___bio2rdf_org_mi_1127 void:class <http://bio2rdf.org/mi:1127> ;
+    void:entities 4 .
+
+ns1:class_partition_http___bio2rdf_org_mi_1237 void:class <http://bio2rdf.org/mi:1237> ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_mi_1250 void:class <http://bio2rdf.org/mi:1250> ;
+    void:entities 1 .
+
+ns1:class_partition_http___bio2rdf_org_mi_vocabulary_Resource void:class ns8:Resource ;
+    void:entities 274 .
+
+ns1:class_partition_http___bio2rdf_org_mips_vocabulary_Resource void:class ns4:Resource ;
+    void:entities 16373 .
+
+ns1:class_partition_http___bio2rdf_org_mpi_vocabulary_Resource void:class ns9:Resource ;
+    void:entities 1147 .
+
+ns1:class_partition_http___bio2rdf_org_ncbigene_vocabulary_Resource void:class ns33:Resource ;
+    void:entities 66004 .
+
+ns1:class_partition_http___bio2rdf_org_pdb_vocabulary_Resource void:class ns28:Resource ;
+    void:entities 4139 .
+
+ns1:class_partition_http___bio2rdf_org_psi_mi_vocabulary_Resource void:class ns26:Resource ;
+    void:entities 65 .
+
+ns1:class_partition_http___bio2rdf_org_pubmed_vocabulary_Resource void:class ns22:Resource ;
+    void:entities 67758 .
+
+ns1:class_partition_http___bio2rdf_org_refseq_vocabulary_Resource void:class ns6:Resource ;
+    void:entities 59309 .
+
+ns1:class_partition_http___bio2rdf_org_sgd_vocabulary_Resource void:class ns21:Resource ;
+    void:entities 840 .
+
+ns1:class_partition_http___bio2rdf_org_taxonomy_vocabulary_Resource void:class ns7:Resource ;
+    void:entities 2101 .
+
+ns1:class_partition_http___bio2rdf_org_uniprot_vocabulary_Resource void:class ns19:Resource ;
+    void:entities 91005 .
+
+ns1:class_partition_http___purl_org_dc_terms_Dataset void:class dcterms:Dataset ;
+    void:entities 2 .
+
+ns1:class_partition_http___www_w3_org_2000_01_rdf_schema_Resource void:class rdfs:Resource ;
+    void:entities 30 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Class void:class owl:Class ;
+    void:entities 303 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DatatypeProperty void:class owl:DatatypeProperty ;
+    void:entities 6 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_ObjectProperty void:class owl:ObjectProperty ;
+    void:entities 26 .
+
+ns1:class_partition_http___www_w3_org_ns_dcat_Distribution void:class ns11:Distribution ;
+    void:entities 2 .
+

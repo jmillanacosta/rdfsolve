@@ -1,0 +1,145 @@
+name: pubchem.pathway_schema
+description: LinkML schema for pubchem.pathway generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/
+prefixes:
+  pubchem.pathway_schema:
+    prefix_prefix: pubchem.pathway_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  snomedct:
+    prefix_prefix: snomedct
+    prefix_reference: http://purl.bioontology.org/ontology/SNOMEDCT/
+  pr:
+    prefix_prefix: pr
+    prefix_reference: http://purl.obolibrary.org/obo/
+  chebi:
+    prefix_prefix: chebi
+    prefix_reference: http://purl.obolibrary.org/obo/
+  ncit:
+    prefix_prefix: ncit
+    prefix_reference: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#
+  ndfrt:
+    prefix_prefix: ndfrt
+    prefix_reference: http://purl.bioontology.org/ontology/NDFRT/
+  biopaxleve:
+    prefix_prefix: biopaxleve
+    prefix_reference: http://www.biopax.org/release/biopax-level3.owl#
+  ro:
+    prefix_prefix: ro
+    prefix_reference: http://purl.obolibrary.org/obo/
+default_prefix: pubchem.pathway_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  biopaxleve_pathway_Component:
+    name: biopaxleve_pathway_Component
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/biopaxleve_pathway_Component
+    description: Property biopaxleve:pathwayComponent
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/biopaxleve_pathway_Component
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/biopaxleve_pathway_Component
+    owner: vocabulary_Pathway
+    domain_of:
+    - vocabulary_Pathway
+    - biopaxleve_Pathway
+    range: snomedct_13784005
+    inlined: true
+    inlined_as_list: true
+  dcterms_source:
+    name: dcterms_source
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/dcterms_source
+    description: Property dcterms:source
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/dcterms_source
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/dcterms_source
+    owner: vocabulary_Pathway
+    domain_of:
+    - vocabulary_Pathway
+    - biopaxleve_Pathway
+    range: snomedct_13784005
+    inlined: true
+    inlined_as_list: true
+  ro_0000057:
+    name: ro_0000057
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/ro_0000057
+    description: Property ro:0000057
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/ro_0000057
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/ro_0000057
+    owner: vocabulary_Pathway
+    domain_of:
+    - vocabulary_Pathway
+    - biopaxleve_Pathway
+    range: snomedct_13784005
+    inlined: true
+    inlined_as_list: true
+classes:
+  biopaxleve_Pathway:
+    name: biopaxleve_Pathway
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/BiopaxlevePathway
+    description: Class representing biopaxleve_Pathway
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/biopaxleve_Pathway
+    slots:
+    - dcterms_source
+    - biopaxleve_pathway_Component
+    - ro_0000057
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/biopaxleve_Pathway
+  vocabulary_Pathway:
+    name: vocabulary_Pathway
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/VocabularyPathway
+    description: Class representing vocabulary_Pathway
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/vocabulary_Pathway
+    slots:
+    - dcterms_source
+    - biopaxleve_pathway_Component
+    - ro_0000057
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/vocabulary_Pathway
+  snomedct_13784005:
+    name: snomedct_13784005
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/Snomedct13784005
+    description: Class representing snomedct_13784005
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/snomedct_13784005
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.pathway/linkml/snomedct_13784005
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T11:27:08'

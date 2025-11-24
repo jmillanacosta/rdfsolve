@@ -1,0 +1,441 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://bio2rdf.org/ndc_resource:bio2rdf.dataset.ndc.R3/void/> .
+@prefix ns2: <http://ldf.fi/void-ext#> .
+@prefix ns4: <http://bio2rdf.org/ndc_vocabulary:> .
+@prefix ns8: <http://www.w3.org/ns/dcat#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Dosage_Form void:class ns4:Dosage-Form ;
+    void:entities 105 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Ingredient void:class ns4:Ingredient ;
+    void:entities 6631 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Labeller void:class ns4:Labeller ;
+    void:entities 6552 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Package void:class ns4:Package ;
+    void:entities 176931 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Package_Component void:class ns4:Package-Component ;
+    void:entities 188900 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Pharmacological_Class void:class ns4:Pharmacological-Class ;
+    void:entities 1069 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Product void:class ns4:Product ;
+    void:entities 95115 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Product_Type void:class ns4:Product-Type ;
+    void:entities 33978 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Resource void:class ns4:Resource ;
+    void:entities 555293 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Route void:class ns4:Route ;
+    void:entities 68 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Substance void:class ns4:Substance ;
+    void:entities 44086 .
+
+ns1:class_partition_http___bio2rdf_org_ndc_vocabulary_Unit void:class ns4:Unit ;
+    void:entities 1801 .
+
+ns1:class_partition_http___purl_org_dc_terms_Dataset void:class dcterms:Dataset ;
+    void:entities 2 .
+
+ns1:class_partition_http___www_w3_org_2000_01_rdf_schema_Resource void:class rdfs:Resource ;
+    void:entities 1 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Class void:class owl:Class ;
+    void:entities 11 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DatatypeProperty void:class owl:DatatypeProperty ;
+    void:entities 13 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_ObjectProperty void:class owl:ObjectProperty ;
+    void:entities 11 .
+
+ns1:class_partition_http___www_w3_org_ns_dcat_Distribution void:class ns8:Distribution ;
+    void:entities 2 .
+
+ns1:datatype_partition_ void:triples 1110524 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_dateTime ns2:datatypePartition xsd:dateTime ;
+    void:triples 2 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_float ns2:datatypePartition xsd:float ;
+    void:triples 5472 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_integer ns2:datatypePartition xsd:integer ;
+    void:triples 32251 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_string ns2:datatypePartition xsd:string ;
+    void:triples 2896923 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_amount_unit_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass ns4:Resource,
+        ns4:Unit ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:amount_unit ;
+    void:triples 44086 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_amount_unit_http___bio2rdf_org_ndc_vocabulary_Substance ns2:objectClass ns4:Resource,
+        ns4:Unit ;
+    ns2:subjectClass ns4:Substance ;
+    void:property ns4:amount_unit ;
+    void:triples 44086 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_dosage_form_http___bio2rdf_org_ndc_vocabulary_Product ns2:objectClass ns4:Dosage-Form,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Product ;
+    void:property ns4:dosage-form ;
+    void:triples 127257 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_dosage_form_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass ns4:Dosage-Form,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:dosage-form ;
+    void:triples 127257 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_has_package_http___bio2rdf_org_ndc_vocabulary_Product ns2:objectClass ns4:Package,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Product ;
+    void:property ns4:has-package ;
+    void:triples 176893,
+        178205 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_has_package_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass ns4:Package,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:has-package ;
+    void:triples 176944,
+        178256 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_has_part_http___bio2rdf_org_ndc_vocabulary_Package ns2:objectClass ns4:Package-Component,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Package ;
+    void:property ns4:has-part ;
+    void:triples 225689 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_has_part_http___bio2rdf_org_ndc_vocabulary_Product ns2:objectClass ns4:Resource,
+        ns4:Substance ;
+    ns2:subjectClass ns4:Product ;
+    void:property ns4:has-part ;
+    void:triples 187851 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_has_part_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass ns4:Package-Component,
+        ns4:Resource,
+        ns4:Substance ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:has-part ;
+    void:triples 187851,
+        225689,
+        413540 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_ingredient_http___bio2rdf_org_ndc_vocabulary_Product ns2:objectClass ns4:Ingredient,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Product ;
+    void:property ns4:ingredient ;
+    void:triples 187752 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_ingredient_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass ns4:Ingredient,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:ingredient ;
+    void:triples 187752 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_labeller_http___bio2rdf_org_ndc_vocabulary_Product ns2:objectClass ns4:Ingredient,
+        ns4:Labeller,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Product ;
+    void:property ns4:labeller ;
+    void:triples 1,
+        95114,
+        95115 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_labeller_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass ns4:Ingredient,
+        ns4:Labeller,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:labeller ;
+    void:triples 1,
+        95114,
+        95115 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_pharmacological_class_http___bio2rdf_org_ndc_vocabulary_Product ns2:objectClass ns4:Pharmacological-Class,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Product ;
+    void:property ns4:pharmacological-class ;
+    void:triples 137578 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_pharmacological_class_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass ns4:Pharmacological-Class,
+        ns4:Resource ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:pharmacological-class ;
+    void:triples 137578 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_product_type_http___bio2rdf_org_ndc_vocabulary_Product ns2:objectClass ns4:Dosage-Form,
+        ns4:Product-Type,
+        ns4:Resource,
+        ns4:Route ;
+    ns2:subjectClass ns4:Product ;
+    void:property ns4:product-type ;
+    void:triples 10,
+        13,
+        95092,
+        95115 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_product_type_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass ns4:Dosage-Form,
+        ns4:Product-Type,
+        ns4:Resource,
+        ns4:Route ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:product-type ;
+    void:triples 10,
+        13,
+        95092,
+        95115 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_route_http___bio2rdf_org_ndc_vocabulary_Product ns2:objectClass ns4:Resource,
+        ns4:Route ;
+    ns2:subjectClass ns4:Product ;
+    void:property ns4:route ;
+    void:triples 100742 .
+
+ns1:property_partition_http___bio2rdf_org_ndc_vocabulary_route_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass ns4:Resource,
+        ns4:Route ;
+    ns2:subjectClass ns4:Resource ;
+    void:property ns4:route ;
+    void:triples 100742 .
+
+ns1:property_partition_http___purl_org_dc_terms_source_http___www_w3_org_ns_dcat_Distribution ns2:objectClass ns8:Distribution ;
+    ns2:subjectClass ns8:Distribution ;
+    void:property dcterms:source ;
+    void:triples 1 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Dosage_Form ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Dosage-Form ;
+    void:property void:inDataset ;
+    void:triples 105 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Ingredient ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Ingredient ;
+    void:property void:inDataset ;
+    void:triples 6631 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Labeller ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Labeller ;
+    void:property void:inDataset ;
+    void:triples 6552 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Package ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Package ;
+    void:property void:inDataset ;
+    void:triples 176931 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Package_Component ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Package-Component ;
+    void:property void:inDataset ;
+    void:triples 188900 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Pharmacological_Class ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Pharmacological-Class ;
+    void:property void:inDataset ;
+    void:triples 1069 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Product ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Product ;
+    void:property void:inDataset ;
+    void:triples 95115 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Product_Type ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Product-Type ;
+    void:property void:inDataset ;
+    void:triples 33978 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Resource ;
+    void:property void:inDataset ;
+    void:triples 555293 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Route ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Route ;
+    void:property void:inDataset ;
+    void:triples 68 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Substance ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Substance ;
+    void:property void:inDataset ;
+    void:triples 44086 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ndc_vocabulary_Unit ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns4:Unit ;
+    void:property void:inDataset ;
+    void:triples 1801 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_Class ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:Class ;
+    void:property void:inDataset ;
+    void:triples 11 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property void:inDataset ;
+    void:triples 10 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_ObjectProperty ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:ObjectProperty ;
+    void:property void:inDataset ;
+    void:triples 9 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Dosage_Form ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Dosage-Form ;
+    void:property rdf:type ;
+    void:triples 105,
+        210,
+        315 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Ingredient ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Ingredient ;
+    void:property rdf:type ;
+    void:triples 6631,
+        13262,
+        19893 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Labeller ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Labeller ;
+    void:property rdf:type ;
+    void:triples 6552,
+        13104,
+        19656 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Package ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Package ;
+    void:property rdf:type ;
+    void:triples 176931,
+        353862,
+        530793 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Package_Component ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Package-Component ;
+    void:property rdf:type ;
+    void:triples 188900,
+        377800,
+        566700 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Pharmacological_Class ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Pharmacological-Class ;
+    void:property rdf:type ;
+    void:triples 1069,
+        2138,
+        3207 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Product ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Product ;
+    void:property rdf:type ;
+    void:triples 95115,
+        190230,
+        285345 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Product_Type ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Product-Type ;
+    void:property rdf:type ;
+    void:triples 33978,
+        67956,
+        101934 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Resource ns2:objectClass ns4:Resource,
+        rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Resource ;
+    void:property rdf:type ;
+    void:triples 30,
+        555236,
+        1110573,
+        1665879 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Route ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Route ;
+    void:property rdf:type ;
+    void:triples 68,
+        136,
+        204 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Substance ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Substance ;
+    void:property rdf:type ;
+    void:triples 44086,
+        88172,
+        132258 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ndc_vocabulary_Unit ns2:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns4:Unit ;
+    void:property rdf:type ;
+    void:triples 1801,
+        3602,
+        5403 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_Class ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:Class ;
+    void:property rdf:type ;
+    void:triples 11,
+        33,
+        55 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property rdf:type ;
+    void:triples 10,
+        13,
+        30 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_ObjectProperty ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:ObjectProperty ;
+    void:property rdf:type ;
+    void:triples 9,
+        11,
+        27 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_ns_dcat_Distribution ns2:objectClass rdfs:Class ;
+    ns2:subjectClass ns8:Distribution ;
+    void:property rdf:type ;
+    void:triples 2 .
+
+ns1:property_partition_http___www_w3_org_ns_dcat_distribution_http___purl_org_dc_terms_Dataset ns2:objectClass ns8:Distribution ;
+    ns2:subjectClass dcterms:Dataset ;
+    void:property ns8:distribution ;
+    void:triples 2 .
+

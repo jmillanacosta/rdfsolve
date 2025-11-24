@@ -1,0 +1,167 @@
+name: pubchem.concept_schema
+description: LinkML schema for pubchem.concept generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+prefixes:
+  pubchem.concept_schema:
+    prefix_prefix: pubchem.concept_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  skos:
+    prefix_prefix: skos
+    prefix_reference: http://www.w3.org/2004/02/skos/core#
+  pav:
+    prefix_prefix: pav
+    prefix_reference: http://purl.org/pav/
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+default_prefix: pubchem.concept_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  skos_broader:
+    name: skos_broader
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/skos_broader
+    description: Property skos:broader
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/skos_broader
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/skos_broader
+    owner: skos_Concept
+    domain_of:
+    - skos_Concept
+    - skos_Concept_Scheme
+    - vocabulary_Concept
+    range: dcterms_Dataset
+    inlined: true
+    inlined_as_list: true
+  skos_in_Scheme:
+    name: skos_in_Scheme
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/skos_in_Scheme
+    description: Property skos:inScheme
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/skos_in_Scheme
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/skos_in_Scheme
+    owner: skos_Concept
+    domain_of:
+    - skos_Concept
+    - skos_Concept_Scheme
+    - vocabulary_Concept
+    range: dcterms_Dataset
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/rdf_type
+    owner: skos_Concept
+    domain_of:
+    - skos_Concept
+    - skos_Concept_Scheme
+    - vocabulary_Concept
+    range: dcterms_Dataset
+    inlined: true
+    inlined_as_list: true
+  pav_imported_From:
+    name: pav_imported_From
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/pav_imported_From
+    description: Property pav:importedFrom
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/pav_imported_From
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/pav_imported_From
+    owner: skos_Concept
+    domain_of:
+    - skos_Concept
+    - skos_Concept_Scheme
+    - vocabulary_Concept
+    range: dcterms_Dataset
+    inlined: true
+    inlined_as_list: true
+classes:
+  dcterms_Dataset:
+    name: dcterms_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/DctermsDataset
+    description: Class representing dcterms_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/dcterms_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/dcterms_Dataset
+  vocabulary_Concept:
+    name: vocabulary_Concept
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/VocabularyConcept
+    description: Class representing vocabulary_Concept
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/vocabulary_Concept
+    slots:
+    - pav_imported_From
+    - rdf_type
+    - skos_broader
+    - skos_in_Scheme
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/vocabulary_Concept
+  skos_Concept_Scheme:
+    name: skos_Concept_Scheme
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/SkosConceptScheme
+    description: Class representing skos_Concept_Scheme
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/skos_Concept_Scheme
+    slots:
+    - pav_imported_From
+    - rdf_type
+    - skos_broader
+    - skos_in_Scheme
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/skos_Concept_Scheme
+  skos_Concept:
+    name: skos_Concept
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/SkosConcept
+    description: Class representing skos_Concept
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/skos_Concept
+    slots:
+    - pav_imported_From
+    - rdf_type
+    - skos_broader
+    - skos_in_Scheme
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.concept/linkml/skos_Concept
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T10:55:09'

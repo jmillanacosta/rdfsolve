@@ -1,0 +1,247 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3/void/> .
+@prefix ns31: <http://ldf.fi/void-ext#> .
+@prefix ns4: <http://bio2rdf.org/taxonomy_vocabulary:> .
+@prefix ns8: <http://www.w3.org/ns/dcat#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___bio2rdf_org_taxonomy_vocabulary_Division void:class ns4:Division ;
+    void:entities 12 .
+
+ns1:class_partition_http___bio2rdf_org_taxonomy_vocabulary_Embl_code void:class ns4:Embl-code ;
+    void:entities 677 .
+
+ns1:class_partition_http___bio2rdf_org_taxonomy_vocabulary_Genetic_Code void:class ns4:Genetic-Code ;
+    void:entities 20 .
+
+ns1:class_partition_http___bio2rdf_org_taxonomy_vocabulary_Rank void:class ns4:Rank ;
+    void:entities 29 .
+
+ns1:class_partition_http___bio2rdf_org_taxonomy_vocabulary_Resource void:class ns4:Resource ;
+    void:entities 1324681 .
+
+ns1:class_partition_http___purl_org_dc_terms_Dataset void:class dcterms:Dataset ;
+    void:entities 1 .
+
+ns1:class_partition_http___www_w3_org_2000_01_rdf_schema_Resource void:class rdfs:Resource ;
+    void:entities 1 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Class void:class owl:Class ;
+    void:entities 1323912 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DatatypeProperty void:class owl:DatatypeProperty ;
+    void:entities 29 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_ObjectProperty void:class owl:ObjectProperty ;
+    void:entities 7 .
+
+ns1:class_partition_http___www_w3_org_ns_dcat_Distribution void:class ns8:Distribution ;
+    void:entities 2 .
+
+ns1:property_partition_http___bio2rdf_org_taxonomy_vocabulary_division_id_http___bio2rdf_org_taxonomy_vocabulary_Resource ns31:objectClass ns4:Division,
+        ns4:Resource ;
+    ns31:subjectClass ns4:Resource ;
+    void:property ns4:division-id ;
+    void:triples 1323908 .
+
+ns1:property_partition_http___bio2rdf_org_taxonomy_vocabulary_division_id_http___www_w3_org_2002_07_owl_Class ns31:objectClass ns4:Division,
+        ns4:Resource ;
+    ns31:subjectClass owl:Class ;
+    void:property ns4:division-id ;
+    void:triples 1323908 .
+
+ns1:property_partition_http___bio2rdf_org_taxonomy_vocabulary_embl_code_http___bio2rdf_org_taxonomy_vocabulary_Resource ns31:objectClass ns4:Embl-code,
+        ns4:Resource ;
+    ns31:subjectClass ns4:Resource ;
+    void:property ns4:embl-code ;
+    void:triples 1323908 .
+
+ns1:property_partition_http___bio2rdf_org_taxonomy_vocabulary_embl_code_http___www_w3_org_2002_07_owl_Class ns31:objectClass ns4:Embl-code,
+        ns4:Resource ;
+    ns31:subjectClass owl:Class ;
+    void:property ns4:embl-code ;
+    void:triples 1323908 .
+
+ns1:property_partition_http___bio2rdf_org_taxonomy_vocabulary_genetic_code_id_http___bio2rdf_org_taxonomy_vocabulary_Resource ns31:objectClass ns4:Genetic-Code,
+        ns4:Resource ;
+    ns31:subjectClass ns4:Resource ;
+    void:property ns4:genetic-code-id ;
+    void:triples 1323908 .
+
+ns1:property_partition_http___bio2rdf_org_taxonomy_vocabulary_genetic_code_id_http___www_w3_org_2002_07_owl_Class ns31:objectClass ns4:Genetic-Code,
+        ns4:Resource ;
+    ns31:subjectClass owl:Class ;
+    void:property ns4:genetic-code-id ;
+    void:triples 1323908 .
+
+ns1:property_partition_http___bio2rdf_org_taxonomy_vocabulary_mitochondrial_genetic_code_id_http___bio2rdf_org_taxonomy_vocabulary_Resource ns31:objectClass ns4:Genetic-Code,
+        ns4:Resource ;
+    ns31:subjectClass ns4:Resource ;
+    void:property ns4:mitochondrial-genetic-code-id ;
+    void:triples 1323908 .
+
+ns1:property_partition_http___bio2rdf_org_taxonomy_vocabulary_mitochondrial_genetic_code_id_http___www_w3_org_2002_07_owl_Class ns31:objectClass ns4:Genetic-Code,
+        ns4:Resource ;
+    ns31:subjectClass owl:Class ;
+    void:property ns4:mitochondrial-genetic-code-id ;
+    void:triples 1323908 .
+
+ns1:property_partition_http___bio2rdf_org_taxonomy_vocabulary_rank_http___bio2rdf_org_taxonomy_vocabulary_Resource ns31:objectClass ns4:Rank,
+        ns4:Resource ;
+    ns31:subjectClass ns4:Resource ;
+    void:property ns4:rank ;
+    void:triples 1323908 .
+
+ns1:property_partition_http___bio2rdf_org_taxonomy_vocabulary_rank_http___www_w3_org_2002_07_owl_Class ns31:objectClass ns4:Rank,
+        ns4:Resource ;
+    ns31:subjectClass owl:Class ;
+    void:property ns4:rank ;
+    void:triples 1323908 .
+
+ns1:property_partition_http___purl_org_dc_terms_source_http___www_w3_org_ns_dcat_Distribution ns31:objectClass ns8:Distribution ;
+    ns31:subjectClass ns8:Distribution ;
+    void:property dcterms:source ;
+    void:triples 1 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_taxonomy_vocabulary_Division ns31:objectClass dcterms:Dataset ;
+    ns31:subjectClass ns4:Division ;
+    void:property void:inDataset ;
+    void:triples 12 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_taxonomy_vocabulary_Embl_code ns31:objectClass dcterms:Dataset ;
+    ns31:subjectClass ns4:Embl-code ;
+    void:property void:inDataset ;
+    void:triples 677 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_taxonomy_vocabulary_Genetic_Code ns31:objectClass dcterms:Dataset ;
+    ns31:subjectClass ns4:Genetic-Code ;
+    void:property void:inDataset ;
+    void:triples 20 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_taxonomy_vocabulary_Rank ns31:objectClass dcterms:Dataset ;
+    ns31:subjectClass ns4:Rank ;
+    void:property void:inDataset ;
+    void:triples 29 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_taxonomy_vocabulary_Resource ns31:objectClass dcterms:Dataset ;
+    ns31:subjectClass ns4:Resource ;
+    void:property void:inDataset ;
+    void:triples 1324681 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_Class ns31:objectClass dcterms:Dataset ;
+    ns31:subjectClass owl:Class ;
+    void:property void:inDataset ;
+    void:triples 1323912 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_DatatypeProperty ns31:objectClass dcterms:Dataset ;
+    ns31:subjectClass owl:DatatypeProperty ;
+    void:property void:inDataset ;
+    void:triples 26 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_ObjectProperty ns31:objectClass dcterms:Dataset ;
+    ns31:subjectClass owl:ObjectProperty ;
+    void:property void:inDataset ;
+    void:triples 5 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_taxonomy_vocabulary_Division ns31:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns31:subjectClass ns4:Division ;
+    void:property rdf:type ;
+    void:triples 12,
+        24,
+        108 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_taxonomy_vocabulary_Embl_code ns31:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns31:subjectClass ns4:Embl-code ;
+    void:property rdf:type ;
+    void:triples 677,
+        1354,
+        6093 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_taxonomy_vocabulary_Genetic_Code ns31:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns31:subjectClass ns4:Genetic-Code ;
+    void:property rdf:type ;
+    void:triples 20,
+        40,
+        180 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_taxonomy_vocabulary_Rank ns31:objectClass ns4:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns31:subjectClass ns4:Rank ;
+    void:property rdf:type ;
+    void:triples 29,
+        58,
+        261 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_taxonomy_vocabulary_Resource ns31:objectClass ns4:Resource,
+        rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns31:subjectClass ns4:Resource ;
+    void:property rdf:type ;
+    void:triples 738,
+        1323943,
+        6621067,
+        11922129 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_Class ns31:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns31:subjectClass owl:Class ;
+    void:property rdf:type ;
+    void:triples 1323912,
+        6619560,
+        11915208 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_DatatypeProperty ns31:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns31:subjectClass owl:DatatypeProperty ;
+    void:property rdf:type ;
+    void:triples 26,
+        29,
+        234 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_ObjectProperty ns31:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns31:subjectClass owl:ObjectProperty ;
+    void:property rdf:type ;
+    void:triples 5,
+        7,
+        45 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_ns_dcat_Distribution ns31:objectClass rdfs:Class ;
+    ns31:subjectClass ns8:Distribution ;
+    void:property rdf:type ;
+    void:triples 2 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_subClassOf_http___bio2rdf_org_taxonomy_vocabulary_Resource ns31:objectClass ns4:Resource,
+        owl:Class ;
+    ns31:subjectClass ns4:Resource ;
+    void:property rdfs:subClassOf ;
+    void:triples 1323908,
+        1442765 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_subClassOf_http___www_w3_org_2002_07_owl_Class ns31:objectClass ns4:Resource,
+        owl:Class ;
+    ns31:subjectClass owl:Class ;
+    void:property rdfs:subClassOf ;
+    void:triples 1323908,
+        1442765 .
+
+ns1:property_partition_http___www_w3_org_ns_dcat_distribution_http___purl_org_dc_terms_Dataset ns31:objectClass ns8:Distribution ;
+    ns31:subjectClass dcterms:Dataset ;
+    void:property ns8:distribution ;
+    void:triples 2 .
+

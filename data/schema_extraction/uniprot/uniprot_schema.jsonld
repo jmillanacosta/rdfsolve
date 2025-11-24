@@ -1,0 +1,22 @@
+{
+  "@context": {
+    "sparqlserv": "http://www.w3.org/ns/sparql-service-description#"
+  },
+  "@graph": [
+    {
+      "@id": "sparqlserv:Service",
+      "sparqlserv:endpoint": {
+        "@id": "sparqlserv:Service"
+      },
+      "sparqlserv:defaultDataset": {
+        "@id": "sparqlserv:Dataset"
+      }
+    },
+    {
+      "@id": "sparqlserv:Dataset",
+      "sparqlserv:defaultGraph": {
+        "@id": "sparqlserv:Graph"
+      }
+    }
+  ]
+}

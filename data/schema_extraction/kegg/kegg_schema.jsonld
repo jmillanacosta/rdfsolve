@@ -1,0 +1,1234 @@
+{
+  "@context": {
+    "bio2rdf": "http://bio2rdf.org/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "void": "http://rdfs.org/ns/void#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#"
+  },
+  "@graph": [
+    {
+      "@id": "bio2rdf:go_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:omim_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Reaction",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:kegg_vocabulary:enzyme": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:product": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Compound"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:orthology": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:substrate": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Compound"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg.glycan_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:rpair-role": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:same-as": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Ko",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:module": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:pathway": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:reference": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-tc": {
+        "@id": "bio2rdf:tcdb_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-cog": {
+        "@id": "bio2rdf:cog_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-go": {
+        "@id": "bio2rdf:go_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-uniprot": {
+        "@id": "bio2rdf:uniprot_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Reference",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:x-pubmed": [
+        {
+          "@id": "bio2rdf:irefindex_vocabulary:Multimeric-Complex"
+        },
+        {
+          "@id": "bio2rdf:mi:0914"
+        },
+        {
+          "@id": "bio2rdf:pubmed_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Genome",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:reference": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:disease": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:taxonomy": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:RPair-Role",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:reaction-center": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Rclass"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:mesh_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:3dmet_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:nikkaji_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Target",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:link": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Ko"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Gene"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:atc_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:chebi_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:hprd_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:icd10_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:medlineplus_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Enzyme",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:pathway": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-cas": {
+        "@id": "bio2rdf:cas_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:product": {
+        "@id": "bio2rdf:kegg_vocabulary:Compound"
+      },
+      "bio2rdf:kegg_vocabulary:substrate": {
+        "@id": "bio2rdf:kegg_vocabulary:Compound"
+      },
+      "bio2rdf:kegg_vocabulary:x-ec": [
+        {
+          "@id": "bio2rdf:ec_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:sgd_vocabulary:Reaction"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Module",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:pathway": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Pathway"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:reaction": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Reaction"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:reference": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Reference"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:compound": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-bsid": {
+        "@id": "bio2rdf:biosystems_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "owl:DatatypeProperty",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Metabolism",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Rclass",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:pathway": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:orthology": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Ko"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Rpair",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:reaction": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:relatedpair": {
+        "@id": "bio2rdf:kegg_vocabulary:Rpair"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Reversible-Reaction",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:product": {
+        "@id": "bio2rdf:kegg_vocabulary:Compound"
+      },
+      "bio2rdf:kegg_vocabulary:substrate": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Compound"
+        },
+        {
+          "@id": "bio2rdf:kegg.glycan_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:ccd_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:lipidmaps_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:icd9_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Glycan",
+      "rdf:type": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:enzyme": {
+        "@id": "bio2rdf:kegg_vocabulary:Enzyme"
+      },
+      "bio2rdf:kegg_vocabulary:orthology": {
+        "@id": "bio2rdf:kegg_vocabulary:Ko"
+      },
+      "bio2rdf:kegg_vocabulary:x-ccsd": {
+        "@id": "bio2rdf:ccsd_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:same-as": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:cazy_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Pathway",
+      "rdf:type": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:module": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Module"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:compound": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Compound"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Drug"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:ec_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:vega_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "owl:Class",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "owl:ObjectProperty",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:dailymed_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ccsd_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ensembl_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:ncbigene_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:bio2rdf_vocabulary:x-identifiers.org": {
+        "@id": "ncit:C16612"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Compound",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:reaction": {
+        "@id": "bio2rdf:kegg_vocabulary:Reaction"
+      },
+      "bio2rdf:kegg_vocabulary:same-as": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-pubchem.compound": {
+        "@id": "bio2rdf:pubchem.compound_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-lipidbank": {
+        "@id": "bio2rdf:lipidbank_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:organism": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:drug-group": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Drug",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:component": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Drug"
+        },
+        {
+          "@id": "bio2rdf:ed_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:target": {
+        "@id": "bio2rdf:kegg_vocabulary:Target"
+      },
+      "bio2rdf:kegg_vocabulary:x-drugbank": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Small-molecule"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:same-as": {
+        "@id": "bio2rdf:kegg_vocabulary:Compound"
+      },
+      "bio2rdf:kegg_vocabulary:interaction": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:metabolism": {
+        "@id": "bio2rdf:kegg_vocabulary:Metabolism"
+      },
+      "bio2rdf:kegg_vocabulary:str_map": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-dailymed": {
+        "@id": "bio2rdf:dailymed_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Interaction",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:link": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Pathway-Relation",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:target": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Ortholog-Group"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:source": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Ortholog-Group"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Ortholog-Group",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:kegg_vocabulary:member": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Drug"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Pathway"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Irreversible-Reaction",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:product": {
+        "@id": "bio2rdf:kegg.glycan_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:substrate": [
+        {
+          "@id": "bio2rdf:kegg.glycan_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      },
+      "bio2rdf:kegg_vocabulary:enzyme": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:reaction": {
+        "@id": "bio2rdf:kegg_vocabulary:Reaction"
+      },
+      "bio2rdf:kegg_vocabulary:component": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Drug"
+        },
+        {
+          "@id": "bio2rdf:ed_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:link": {
+        "@id": "bio2rdf:kegg_vocabulary:Gene"
+      },
+      "bio2rdf:kegg_vocabulary:product": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Compound"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg.glycan_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg.drug_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:target": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-drugbank": [
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Biotech"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:drugbank_vocabulary:Small-molecule"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:ko-marker": {
+        "@id": "bio2rdf:kegg_vocabulary:Ko"
+      },
+      "bio2rdf:kegg_vocabulary:reference": {
+        "@id": "bio2rdf:kegg_vocabulary:Reference"
+      },
+      "bio2rdf:kegg_vocabulary:x-mesh": {
+        "@id": "bio2rdf:ctd_vocabulary:Disease"
+      },
+      "bio2rdf:kegg_vocabulary:x-omim": [
+        {
+          "@id": "bio2rdf:omim_vocabulary:Predominantly-phenotypes"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Phenotype"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:orthology": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Ko"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:substrate": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-ec": {
+        "@id": "bio2rdf:sgd_vocabulary:Reaction"
+      },
+      "bio2rdf:kegg_vocabulary:x-jcggdb": {
+        "@id": "bio2rdf:jcggdb_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:disease": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Disease"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:drug-target": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-ncbigene": [
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:SnRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:TRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:NcRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Unknown-Gene"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:compound": {
+        "@id": "bio2rdf:kegg_vocabulary:Compound"
+      },
+      "bio2rdf:kegg_vocabulary:member": {
+        "@id": "bio2rdf:kegg_vocabulary:Drug"
+      },
+      "bio2rdf:kegg_vocabulary:reaction-center": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:rpair-role": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:RPair-Role"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:rpair": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:same-as": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Drug"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Environ"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:x-3dmet": {
+        "@id": "bio2rdf:3dmet_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-pubchem.compound": {
+        "@id": "bio2rdf:pubchem.compound_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:interaction": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Target"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:metabolism": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:source": [
+        {
+          "@id": "bio2rdf:taxonomy_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:ko-gene": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-vega": {
+        "@id": "bio2rdf:vega_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:relatedpair": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Rpair"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "owl:sameAs": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-lipidbank": {
+        "@id": "bio2rdf:lipidbank_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-lipidmaps": {
+        "@id": "bio2rdf:lipidmaps_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:str_map": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Pathway"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:x-dailymed": {
+        "@id": "bio2rdf:dailymed_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-ligandbox": {
+        "@id": "bio2rdf:ligandbox_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:organism": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-kegg": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-ensembl": {
+        "@id": "bio2rdf:ensembl_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-uniprot": {
+        "@id": "bio2rdf:goa_vocabulary:GO-Annotation"
+      },
+      "bio2rdf:kegg_vocabulary:x-bsid": {
+        "@id": "bio2rdf:biosystems_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:ko_pathway": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-medlineplus": {
+        "@id": "bio2rdf:medlineplus_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-mirbase": {
+        "@id": "bio2rdf:mirbase_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-cazy": {
+        "@id": "bio2rdf:cazy_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:lipidbank_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:pfam_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:glycomedb_vocabulary:Resource",
+      "rdf:type": [
+        {
+          "@id": "rdfs:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:kegg.glycan_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "dcat:Distribution",
+      "rdf:type": {
+        "@id": "rdfs:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Disease",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:kegg_vocabulary:drug": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Drug"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:x-mesh": [
+        {
+          "@id": "bio2rdf:ctd_vocabulary:Disease"
+        },
+        {
+          "@id": "bio2rdf:ctd_vocabulary:Chemical"
+        },
+        {
+          "@id": "bio2rdf:mesh_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:x-omim": [
+        {
+          "@id": "bio2rdf:omim_vocabulary:Gene"
+        },
+        {
+          "@id": "bio2rdf:ctd_vocabulary:Disease"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:x-mwsh": {
+        "@id": "bio2rdf:mwsh_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:gene": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:ko-gene": [
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Ko"
+        },
+        {
+          "@id": "bio2rdf:kegg_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:marker": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-icd10": {
+        "@id": "bio2rdf:icd10_vocabulary:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Gene",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:kegg_vocabulary:module": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-omim": [
+        {
+          "@id": "bio2rdf:omim_vocabulary:Resource"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Predominantly-phenotypes"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Phenotype"
+        },
+        {
+          "@id": "bio2rdf:omim_vocabulary:Gene"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:orthology": {
+        "@id": "bio2rdf:kegg_vocabulary:Ko"
+      },
+      "bio2rdf:kegg_vocabulary:disease": {
+        "@id": "bio2rdf:kegg_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:drug-target": {
+        "@id": "bio2rdf:kegg_vocabulary:Drug"
+      },
+      "bio2rdf:kegg_vocabulary:x-ncbigene": [
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:RRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:TRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Unknown-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:SnoRNA-Gene"
+        },
+        {
+          "@id": "bio2rdf:ncbigene_vocabulary:Resource"
+        }
+      ],
+      "bio2rdf:kegg_vocabulary:x-hgnc": {
+        "@id": "bio2rdf:hgnc_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-imgt": {
+        "@id": "bio2rdf:imgt_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-pdb": {
+        "@id": "bio2rdf:pdb_vocabulary:Resource"
+      },
+      "bio2rdf:kegg_vocabulary:x-uniprot": {
+        "@id": "bio2rdf:goa_vocabulary:GO-Annotation"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg_vocabulary:Environ",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "bio2rdf:kegg_vocabulary:component": {
+        "@id": "bio2rdf:kegg_vocabulary:Compound"
+      },
+      "bio2rdf:kegg_vocabulary:source": [
+        {
+          "@id": "bio2rdf:taxonomy_vocabulary:Resource"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ]
+    },
+    {
+      "@id": "bio2rdf:taxonomy_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:pdb_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:knapsack_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:icdo_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "bio2rdf:jcggdb_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:tcdb_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:kegg.drug_vocabulary:Resource",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bio2rdf:drugbank_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:hgnc_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:pubchem.compound_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:cog_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:biosystems_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:umbbd_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:ncbi-proteinid_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "bio2rdf:pubmed_vocabulary:Resource",
+      "void:inDataset": {
+        "@id": "dcterms:Dataset"
+      }
+    },
+    {
+      "@id": "dcterms:Dataset",
+      "dcat:distribution": {
+        "@id": "dcat:Distribution"
+      }
+    }
+  ]
+}

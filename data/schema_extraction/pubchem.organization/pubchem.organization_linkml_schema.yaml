@@ -1,0 +1,107 @@
+name: pubchem.organization_schema
+description: LinkML schema for pubchem.organization generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/
+prefixes:
+  pubchem.organization_schema:
+    prefix_prefix: pubchem.organization_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  frapo:
+    prefix_prefix: frapo
+    prefix_reference: http://purl.org/cerif/frapo/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  vcard:
+    prefix_prefix: vcard
+    prefix_reference: http://www.w3.org/2006/vcard/ns#
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+default_prefix: pubchem.organization_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/rdf_type
+    owner: vcard_Organization
+    domain_of:
+    - frapo_Funding_Agency
+    - vcard_Organization
+    - vocabulary_Organization
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+classes:
+  frapo_Funding_Agency:
+    name: frapo_Funding_Agency
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/FrapoFundingAgency
+    description: Class representing frapo_Funding_Agency
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/frapo_Funding_Agency
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/frapo_Funding_Agency
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/owl_Class
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/owl_Class
+  vocabulary_Organization:
+    name: vocabulary_Organization
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/VocabularyOrganization
+    description: Class representing vocabulary_Organization
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/vocabulary_Organization
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/vocabulary_Organization
+  vcard_Organization:
+    name: vcard_Organization
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/VcardOrganization
+    description: Class representing vcard_Organization
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/vcard_Organization
+    slots:
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.organization/linkml/vcard_Organization
+metamodel_version: 1.7.0
+generation_date: '2025-11-24T10:54:11'

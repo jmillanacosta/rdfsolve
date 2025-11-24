@@ -1,0 +1,205 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://bio2rdf.org/clinicaltrials_resource:bio2rdf.dataset.clinicaltrials.R3/void/> .
+@prefix ns2: <http://bio2rdf.org/clinicaltrials_vocabulary:> .
+@prefix ns5: <http://www.w3.org/ns/dcat#> .
+@prefix ns6: <http://bio2rdf.org/pubmed_vocabulary:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Active_Comparator void:class ns2:Active_Comparator ;
+    void:entities 68499 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Address void:class ns2:Address ;
+    void:entities 32540 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Analysis void:class ns2:Analysis ;
+    void:entities 75409 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Baseline void:class ns2:Baseline ;
+    void:entities 18089 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Behavioral void:class ns2:Behavioral ;
+    void:entities 23871 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Biological void:class ns2:Biological ;
+    void:entities 17447 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Case void:class ns2:Case ;
+    void:entities 32 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Category void:class ns2:Category ;
+    void:entities 591226 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_City void:class ns2:City ;
+    void:entities 9552 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Clinical_Arm void:class ns2:Clinical-Arm ;
+    void:entities 38407 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Clinical_Result void:class ns2:Clinical-Result ;
+    void:entities 18089 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Clinical_Study void:class ns2:Clinical-Study ;
+    void:entities 196129 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Contact void:class ns2:Contact ;
+    void:entities 279896 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Control void:class ns2:Control ;
+    void:entities 18 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Country void:class ns2:Country ;
+    void:entities 172 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Device void:class ns2:Device ;
+    void:entities 25296 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Dietary_Supplement void:class ns2:Dietary_Supplement ;
+    void:entities 9313 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Drug void:class ns2:Drug ;
+    void:entities 163894 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Eligibility void:class ns2:Eligibility ;
+    void:entities 193603 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Event void:class ns2:Event ;
+    void:entities 756057 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Event_Count void:class ns2:Event-Count ;
+    void:entities 2179001 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Experimental void:class ns2:Experimental ;
+    void:entities 151619 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Genetic void:class ns2:Genetic ;
+    void:entities 1279 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Group void:class ns2:Group ;
+    void:entities 165740 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Inclusion_Criteria void:class ns2:Inclusion-Criteria ;
+    void:entities 647041 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Link void:class ns2:Link ;
+    void:entities 26168 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Location void:class ns2:Location ;
+    void:entities 115595 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Measure void:class ns2:Measure ;
+    void:entities 267961 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Measurement void:class ns2:Measurement ;
+    void:entities 1089005 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Milestone void:class ns2:Milestone ;
+    void:entities 73410 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_No_Intervention void:class ns2:No_Intervention ;
+    void:entities 13050 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Organization void:class ns2:Organization ;
+    void:entities 83664 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Other void:class ns2:Other ;
+    void:entities 46702 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Other_Event void:class ns2:Other-Event ;
+    void:entities 429659 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Outcome void:class ns2:Outcome ;
+    void:entities 18089 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Participant_Count void:class ns2:Participant-Count ;
+    void:entities 180248 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Participant_Flow void:class ns2:Participant-Flow ;
+    void:entities 18086 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Period void:class ns2:Period ;
+    void:entities 23023 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Phase void:class ns2:Phase ;
+    void:entities 7 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Placebo_Comparator void:class ns2:Placebo_Comparator ;
+    void:entities 31342 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Procedure void:class ns2:Procedure ;
+    void:entities 26374 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Radiation void:class ns2:Radiation ;
+    void:entities 4466 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Reference void:class ns2:Reference ;
+    void:entities 132335 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Reported_Events void:class ns2:Reported-Events ;
+    void:entities 14111 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Resource void:class ns2:Resource ;
+    void:entities 9732678 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Responsible_Party void:class ns2:Responsible-Party ;
+    void:entities 63731 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Serious_Event void:class ns2:Serious-Event ;
+    void:entities 384207 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Sham_Comparator void:class ns2:Sham_Comparator ;
+    void:entities 2494 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_State void:class ns2:State ;
+    void:entities 3564 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Status void:class ns2:Status ;
+    void:entities 13 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Study_Design void:class ns2:Study-Design ;
+    void:entities 196129 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Term void:class ns2:Term ;
+    void:entities 5692 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Treatment_Comparison void:class ns2:Treatment_Comparison ;
+    void:entities 2 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_Withdraw_Reason void:class ns2:Withdraw-Reason ;
+    void:entities 54389 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_ZipCode void:class ns2:ZipCode ;
+    void:entities 17643 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_other_outcome void:class ns2:other-outcome ;
+    void:entities 28907 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_primary_outcome void:class ns2:primary-outcome ;
+    void:entities 264688 .
+
+ns1:class_partition_http___bio2rdf_org_clinicaltrials_vocabulary_secondary_outcome void:class ns2:secondary-outcome ;
+    void:entities 533763 .
+
+ns1:class_partition_http___bio2rdf_org_pubmed_vocabulary_Resource void:class ns6:Resource ;
+    void:entities 132335 .
+
+ns1:class_partition_http___purl_org_dc_terms_Dataset void:class dcterms:Dataset ;
+    void:entities 2 .
+
+ns1:class_partition_http___www_w3_org_2000_01_rdf_schema_Resource void:class rdfs:Resource ;
+    void:entities 2 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Class void:class owl:Class ;
+    void:entities 51813 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DatatypeProperty void:class owl:DatatypeProperty ;
+    void:entities 98 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_ObjectProperty void:class owl:ObjectProperty ;
+    void:entities 53 .
+
+ns1:class_partition_http___www_w3_org_ns_dcat_Distribution void:class ns5:Distribution ;
+    void:entities 2 .
+

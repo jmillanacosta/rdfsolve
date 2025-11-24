@@ -1,0 +1,265 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix nci: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#> .
+@prefix ns1: <http://bio2rdf.org/homologene_resource:bio2rdf.dataset.homologene.R3/void/> .
+@prefix ns10: <http://bio2rdf.org/ncbigene_vocabulary:> .
+@prefix ns11: <http://bio2rdf.org/refseq_vocabulary:> .
+@prefix ns13: <http://bio2rdf.org/taxonomy_vocabulary:> .
+@prefix ns14: <http://www.w3.org/ns/dcat#> .
+@prefix ns2: <http://ldf.fi/void-ext#> .
+@prefix ns41: <http://bio2rdf.org/homologene_vocabulary:> .
+@prefix ns8: <http://bio2rdf.org/gi_vocabulary:> .
+@prefix ns9: <http://bio2rdf.org/ctd_vocabulary:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___bio2rdf_org_gi_vocabulary_Resource void:class ns8:Resource ;
+    void:entities 275237 .
+
+ns1:class_partition_http___bio2rdf_org_homologene_vocabulary_Homologene_Group void:class ns41:Homologene-Group ;
+    void:entities 44233 .
+
+ns1:class_partition_http___bio2rdf_org_homologene_vocabulary_Resource void:class ns41:Resource ;
+    void:entities 44239 .
+
+ns1:class_partition_http___bio2rdf_org_ncbigene_vocabulary_Resource void:class ns10:Resource ;
+    void:entities 275237 .
+
+ns1:class_partition_http___bio2rdf_org_refseq_vocabulary_Resource void:class ns11:Resource ;
+    void:entities 275237 .
+
+ns1:class_partition_http___bio2rdf_org_taxonomy_vocabulary_Resource void:class ns13:Resource ;
+    void:entities 21 .
+
+ns1:class_partition_http___purl_org_dc_terms_Dataset void:class dcterms:Dataset ;
+    void:entities 2 .
+
+ns1:class_partition_http___www_w3_org_2000_01_rdf_schema_Resource void:class rdfs:Resource ;
+    void:entities 5 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_Class void:class owl:Class ;
+    void:entities 1 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_DatatypeProperty void:class owl:DatatypeProperty ;
+    void:entities 4 .
+
+ns1:class_partition_http___www_w3_org_2002_07_owl_ObjectProperty void:class owl:ObjectProperty ;
+    void:entities 6 .
+
+ns1:class_partition_http___www_w3_org_ns_dcat_Distribution void:class ns14:Distribution ;
+    void:entities 2 .
+
+ns1:datatype_partition_ void:triples 88478 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_dateTime ns2:datatypePartition xsd:dateTime ;
+    void:triples 2 .
+
+ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_string ns2:datatypePartition xsd:string ;
+    void:triples 3662710 .
+
+ns1:property_partition_http___bio2rdf_org_bio2rdf_vocabulary_x_identifiers_org_http___bio2rdf_org_ncbigene_vocabulary_Resource ns2:objectClass nci:C16612 ;
+    ns2:subjectClass ns10:Resource ;
+    void:property <http://bio2rdf.org/bio2rdf_vocabulary:x-identifiers.org> ;
+    void:triples 14470 .
+
+ns1:property_partition_http___bio2rdf_org_homologene_vocabulary_x_gi_http___bio2rdf_org_homologene_vocabulary_Homologene_Group ns2:objectClass ns8:Resource ;
+    ns2:subjectClass ns41:Homologene-Group ;
+    void:property ns41:x-gi ;
+    void:triples 431690 .
+
+ns1:property_partition_http___bio2rdf_org_homologene_vocabulary_x_gi_http___bio2rdf_org_homologene_vocabulary_Resource ns2:objectClass ns8:Resource ;
+    ns2:subjectClass ns41:Resource ;
+    void:property ns41:x-gi ;
+    void:triples 431690 .
+
+ns1:property_partition_http___bio2rdf_org_homologene_vocabulary_x_ncbigene_http___bio2rdf_org_homologene_vocabulary_Homologene_Group ns2:objectClass ns9:Gene,
+        ns10:Gene,
+        ns10:NcRNA-Gene,
+        ns10:Other-Gene,
+        ns10:Protein-coding-Gene,
+        ns10:Pseudo-Gene,
+        ns10:Resource ;
+    ns2:subjectClass ns41:Homologene-Group ;
+    void:property ns41:x-ncbigene ;
+    void:triples 19,
+        123,
+        325,
+        43220,
+        133630,
+        134097,
+        964735 .
+
+ns1:property_partition_http___bio2rdf_org_homologene_vocabulary_x_ncbigene_http___bio2rdf_org_homologene_vocabulary_Resource ns2:objectClass ns9:Gene,
+        ns10:Gene,
+        ns10:NcRNA-Gene,
+        ns10:Other-Gene,
+        ns10:Protein-coding-Gene,
+        ns10:Pseudo-Gene,
+        ns10:Resource ;
+    ns2:subjectClass ns41:Resource ;
+    void:property ns41:x-ncbigene ;
+    void:triples 19,
+        123,
+        325,
+        43220,
+        133630,
+        134097,
+        964735 .
+
+ns1:property_partition_http___bio2rdf_org_homologene_vocabulary_x_refseq_http___bio2rdf_org_homologene_vocabulary_Homologene_Group ns2:objectClass ns11:Resource ;
+    ns2:subjectClass ns41:Homologene-Group ;
+    void:property ns41:x-refseq ;
+    void:triples 404790 .
+
+ns1:property_partition_http___bio2rdf_org_homologene_vocabulary_x_refseq_http___bio2rdf_org_homologene_vocabulary_Resource ns2:objectClass ns11:Resource ;
+    ns2:subjectClass ns41:Resource ;
+    void:property ns41:x-refseq ;
+    void:triples 404790 .
+
+ns1:property_partition_http___bio2rdf_org_homologene_vocabulary_x_taxid_http___bio2rdf_org_homologene_vocabulary_Homologene_Group ns2:objectClass ns13:Resource,
+        owl:Class ;
+    ns2:subjectClass ns41:Homologene-Group ;
+    void:property ns41:x-taxid ;
+    void:triples 233935,
+        1275257 .
+
+ns1:property_partition_http___bio2rdf_org_homologene_vocabulary_x_taxid_http___bio2rdf_org_homologene_vocabulary_Resource ns2:objectClass ns13:Resource,
+        owl:Class ;
+    ns2:subjectClass ns41:Resource ;
+    void:property ns41:x-taxid ;
+    void:triples 233935,
+        1275257 .
+
+ns1:property_partition_http___purl_org_dc_terms_source_http___www_w3_org_ns_dcat_Distribution ns2:objectClass ns14:Distribution ;
+    ns2:subjectClass ns14:Distribution ;
+    void:property dcterms:source ;
+    void:triples 1 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_gi_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns8:Resource ;
+    void:property void:inDataset ;
+    void:triples 275237 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_homologene_vocabulary_Homologene_Group ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns41:Homologene-Group ;
+    void:property void:inDataset ;
+    void:triples 44233 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_homologene_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns41:Resource ;
+    void:property void:inDataset ;
+    void:triples 44239 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_ncbigene_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns10:Resource ;
+    void:property void:inDataset ;
+    void:triples 275237 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_refseq_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns11:Resource ;
+    void:property void:inDataset ;
+    void:triples 275237 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___bio2rdf_org_taxonomy_vocabulary_Resource ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass ns13:Resource ;
+    void:property void:inDataset ;
+    void:triples 21 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_Class ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:Class ;
+    void:property void:inDataset ;
+    void:triples 1 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property void:inDataset ;
+    void:triples 1 .
+
+ns1:property_partition_http___rdfs_org_ns_void_inDataset_http___www_w3_org_2002_07_owl_ObjectProperty ns2:objectClass dcterms:Dataset ;
+    ns2:subjectClass owl:ObjectProperty ;
+    void:property void:inDataset ;
+    void:triples 4 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_gi_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns8:Resource ;
+    void:property rdf:type ;
+    void:triples 275237,
+        1926659 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_homologene_vocabulary_Homologene_Group ns2:objectClass ns41:Resource,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns41:Homologene-Group ;
+    void:property rdf:type ;
+    void:triples 44233,
+        88466 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_homologene_vocabulary_Resource ns2:objectClass ns41:Resource,
+        rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns41:Resource ;
+    void:property rdf:type ;
+    void:triples 6,
+        44233,
+        44239,
+        88476 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_ncbigene_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns10:Resource ;
+    void:property rdf:type ;
+    void:triples 275237,
+        2752370 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_refseq_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns11:Resource ;
+    void:property rdf:type ;
+    void:triples 275237,
+        2477133 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___bio2rdf_org_taxonomy_vocabulary_Resource ns2:objectClass rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass ns13:Resource ;
+    void:property rdf:type ;
+    void:triples 21,
+        189 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_Class ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:Class ;
+    void:property rdf:type ;
+    void:triples 1,
+        5 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_DatatypeProperty ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:DatatypeProperty ;
+    void:property rdf:type ;
+    void:triples 1,
+        4 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_2002_07_owl_ObjectProperty ns2:objectClass rdfs:Class,
+        rdfs:Resource,
+        owl:Class ;
+    ns2:subjectClass owl:ObjectProperty ;
+    void:property rdf:type ;
+    void:triples 4,
+        6 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___www_w3_org_ns_dcat_Distribution ns2:objectClass rdfs:Class ;
+    ns2:subjectClass ns14:Distribution ;
+    void:property rdf:type ;
+    void:triples 2 .
+
+ns1:property_partition_http___www_w3_org_ns_dcat_distribution_http___purl_org_dc_terms_Dataset ns2:objectClass ns14:Distribution ;
+    ns2:subjectClass dcterms:Dataset ;
+    void:property ns14:distribution ;
+    void:triples 2 .
+
