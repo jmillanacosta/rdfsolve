@@ -28,6 +28,7 @@ concurrency:
 permissions:
   contents: write
   actions: read
+  pull-requests: write
 
 jobs:
   prepare-matrix:
@@ -53,7 +54,7 @@ jobs:
         echo "Generated matrix with $dataset_count datasets"
         echo "Notebook type requested: ${{ github.event.inputs.notebook_type || 'all' }}"
 
-  generate-schema-notebooks:
+  schema-nb:
     needs: prepare-matrix
     if: ${{ github.event.inputs.notebook_type == 'all' || github.event.inputs.notebook_type == 'schema' || github.event.inputs.notebook_type == '' }}
     runs-on: ubuntu-latest
@@ -161,8 +162,8 @@ jobs:
         # Add timing information
         echo "**Duration**: Job completed at $(date)" >> $GITHUB_STEP_SUMMARY
 
-  generate-pydantic-notebooks:
-    needs: [prepare-matrix, generate-schema-notebooks]
+  pydantic-nb:
+    needs: [prepare-matrix, schema-nb]
     if: ${{ !failure() && (github.event.inputs.notebook_type == 'all' || github.event.inputs.notebook_type == 'pydantic') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -271,7 +272,7 @@ jobs:
         echo "**Duration**: Job completed at $(date)" >> $GITHUB_STEP_SUMMARY
 
   collect-results:
-    needs: [generate-schema-notebooks, generate-pydantic-notebooks]
+    needs: [schema-nb, pydantic-nb]
     runs-on: ubuntu-latest
     if: always()
     permissions:
@@ -541,11 +542,11 @@ jobs:
         echo "Generated results.json with $total_schema_files schema results and $total_pydantic_files pydantic results"
 
 
-    - name: Commit and push all results
+    - name: Create pull request with results
       run: |
         # Configure git with proper identity
         git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action Matrix"
+        git config --local user.name "GitHub Action"
         
         # Add all generated files including data outputs and web assets
         git add docs/results.json docs/index.html docs/style.css docs/app.js 2>/dev/null || true
@@ -559,25 +560,58 @@ jobs:
           exit 0
         fi
         
-        # Count results for commit message
+        # Count results for summary
         schema_files=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
         pydantic_files=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
         data_files=$(find data/schema_extraction/ -name "*.json*" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" 2>/dev/null | wc -l)
         
-        # Create commit message with details
-        commit_msg="Matrix workflow: Generate schema notebooks, reports, and data files
-
-        Parallel processing results:
-        - Schema notebooks processed: $schema_files
-        - Pydantic notebooks processed: $pydantic_files  
-        - Data files generated: $data_files
-        - Updated web dashboard with results.json
-        - Generated on: $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)
-        - Workflow run: $GITHUB_RUN_ID"
+        schema_success=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" -exec grep -L "Schema Analysis Failed" {} \; 2>/dev/null | wc -l)
+        pydantic_success=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" -exec grep -L "Pydantic Generation Failed" {} \; 2>/dev/null | wc -l)
         
-        # Commit and push
-        git commit -m "$commit_msg"
-        git push origin main
+        schema_failed=$((schema_files - schema_success))
+        pydantic_failed=$((pydantic_files - pydantic_success))
+        
+        # Create branch name
+        branch_name="notebooks/$(date +%Y%m%d-%H%M%S)"
+        
+        # Create and switch to new branch
+        git checkout -b "$branch_name"
+        
+        # Commit changes
+        commit_title="Generate notebooks and data files"
+        commit_body="Schema notebooks: $schema_success successful, $schema_failed failed
+        Pydantic notebooks: $pydantic_success successful, $pydantic_failed failed
+        Data files: $data_files generated
+        Generated: $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)
+        Workflow: $GITHUB_RUN_ID"
+        
+        git commit -m "$commit_title" -m "$commit_body"
+        
+        # Push branch
+        git push origin "$branch_name"
+        
+        # Create pull request
+        pr_title="Automated notebook generation $(date +%Y-%m-%d)"
+        
+        # Write PR body to temporary file
+        cat > /tmp/pr_body.txt << 'EOF'
+        ## Notebook Generation Results
+        
+        Summary: Schema notebooks processed with results. Results dashboard updated.
+        
+        Files Changed:
+        - Notebook files in notebooks/01_schema_extraction/ and notebooks/02_pydantic_models/
+        - HTML reports in docs/notebooks/  
+        - Data outputs in data/schema_extraction/
+        - Updated docs/results.json for web dashboard
+        
+        This pull request contains the automated generation of schema extraction notebooks and associated data files from the matrix workflow.
+        EOF
+        
+        # Create pull request using GitHub CLI
+        gh pr create --title "$pr_title" --body-file /tmp/pr_body.txt --head "$branch_name" --base main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload final results
       uses: actions/upload-artifact@v4
