@@ -147,7 +147,7 @@ jobs:
         path: |
           notebooks/01_schema_extraction/${{ matrix.dataset }}_schema.ipynb
           docs/notebooks/01_schema_extraction/${{ matrix.dataset }}_schema.html
-          data/schema_extraction/${{ matrix.dataset }}/**
+          docs/data/schema_extraction/${{ matrix.dataset }}/**
         retention-days: 7
         if-no-files-found: warn
 
@@ -256,7 +256,7 @@ jobs:
         path: |
           notebooks/02_pydantic_models/${{ matrix.dataset }}_pydantic.ipynb
           docs/notebooks/02_pydantic_models/${{ matrix.dataset }}_pydantic.html
-          data/schema_extraction/${{ matrix.dataset }}/**
+          docs/data/schema_extraction/${{ matrix.dataset }}/**
         retention-days: 7
         if-no-files-found: warn
 
@@ -300,7 +300,7 @@ jobs:
         mkdir -p docs/notebooks/02_pydantic_models
         mkdir -p notebooks/01_schema_extraction/
         mkdir -p notebooks/02_pydantic_models/
-        mkdir -p data/schema_extraction/
+        mkdir -p docs/data/schema_extraction/
         
         # Check if artifacts directory exists and has content
         if [ ! -d "artifacts" ] || [ -z "$(ls -A artifacts/ 2>/dev/null)" ]; then
@@ -367,7 +367,7 @@ jobs:
               filename=$(basename "$relative_path")
               mkdir -p "data/schema_extraction/$dataset_name"
               cp "$file" "data/schema_extraction/$dataset_name/$filename"
-              echo "Copied: $filename to data/schema_extraction/$dataset_name/"
+              echo "Copied: $filename to docs/data/schema_extraction/$dataset_name/"
             ' _ {} \; 2>/dev/null || echo "Some data file copies failed"
           fi
         fi
@@ -377,7 +377,7 @@ jobs:
         final_schema_html=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
         final_pydantic_notebooks=$(find notebooks/02_pydantic_models/ -name "*_pydantic.ipynb" 2>/dev/null | wc -l)
         final_pydantic_html=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
-        final_data_files=$(find data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) 2>/dev/null | wc -l)
+        final_data_files=$(find docs/data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) 2>/dev/null | wc -l)
         
         echo "Final collection results:"
         echo "  Schema notebooks: $final_schema_notebooks"
@@ -399,7 +399,7 @@ jobs:
         pydantic_failed_count=$((total_pydantic_files - pydantic_success_count))
         
         # Count generated data files
-        data_files_count=$(find data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) 2>/dev/null | wc -l)
+        data_files_count=$(find docs/data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) 2>/dev/null | wc -l)
         
         # Generate JSON data for JavaScript consumption
         cat > docs/results.json << EOF
@@ -552,7 +552,7 @@ jobs:
         git add docs/results.json docs/index.html docs/style.css docs/app.js 2>/dev/null || true
         git add notebooks/01_schema_extraction/*.ipynb docs/notebooks/01_schema_extraction/ 2>/dev/null || true
         git add notebooks/02_pydantic_models/*.ipynb docs/notebooks/02_pydantic_models/ 2>/dev/null || true
-        git add data/ 2>/dev/null || true
+        git add docs/data/ 2>/dev/null || true
         
         # Check if there are changes to commit
         if git diff --cached --quiet; then
@@ -563,7 +563,7 @@ jobs:
         # Count results for summary
         schema_files=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
         pydantic_files=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
-        data_files=$(find data/schema_extraction/ -name "*.json*" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" 2>/dev/null | wc -l)
+        data_files=$(find docs/data/schema_extraction/ -name "*.json*" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" 2>/dev/null | wc -l)
         
         schema_success=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" -exec grep -L "Schema Analysis Failed" {} \; 2>/dev/null | wc -l)
         pydantic_success=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" -exec grep -L "Pydantic Generation Failed" {} \; 2>/dev/null | wc -l)
@@ -602,16 +602,23 @@ jobs:
         Files Changed:
         - Notebook files in notebooks/01_schema_extraction/ and notebooks/02_pydantic_models/
         - HTML reports in docs/notebooks/  
-        - Data outputs in data/schema_extraction/
+        - Data outputs in docs/data/schema_extraction/
         - Updated docs/results.json for web dashboard
         
         This pull request contains the automated generation of schema extraction notebooks and associated data files from the matrix workflow.
         EOF
         
-        # Create pull request using GitHub CLI
-        gh pr create --title "$pr_title" --body-file /tmp/pr_body.txt --head "$branch_name" --base main
+        # Create pull request using GitHub API
+        pr_body_escaped=$(cat /tmp/pr_body.txt | python3 -c "import sys, json; print(json.dumps(sys.stdin.read()))")
+        
+        curl -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer $GITHUB_TOKEN" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "https://api.github.com/repos/${{ github.repository }}/pulls" \
+          -d "{\"title\":\"$pr_title\",\"body\":$pr_body_escaped,\"head\":\"$branch_name\",\"base\":\"main\"}"
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ github.token }}
 
     - name: Upload final results
       uses: actions/upload-artifact@v4
