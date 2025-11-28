@@ -1,6 +1,0 @@
-PREFIX sh:<http://www.w3.org/ns/shacl#>
-    SELECT ?prefix ?namespace 
-    WHERE { 
-        [] sh:namespace ?namespace ; 
-            sh:prefix ?prefix } 
-     ORDER BY ?prefix

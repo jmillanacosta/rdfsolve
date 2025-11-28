@@ -1,20 +1,22 @@
 """Utility functions for RDFSolve."""
 
+from typing import List
+
 import requests
 
 __all__ = [
-    "get_graph_uris",
     "IGNORE_graph_uris",
+    "get_graph_uris",
 ]
 
 
-def get_graph_uris(endpoint_url):
+def get_graph_uris(endpoint_url: str) -> List[str]:
     """
     Discover named graphs in a SPARQL endpoint.
-    
+
     Args:
         endpoint_url: SPARQL endpoint URL
-        
+
     Returns:
         List of graph IRIs
     """
@@ -35,14 +37,10 @@ def get_graph_uris(endpoint_url):
     response = requests.post(endpoint_url, data=data, headers=headers)
 
     if response.status_code != 200:
-        raise Exception(
-            f"SPARQL query failed: {response.status_code} {response.text}"
-        )
+        raise Exception(f"SPARQL query failed: {response.status_code} {response.text}")
 
     results = response.json()
-    graph_list = [
-        result["graph"]["value"] for result in results["results"]["bindings"]
-    ]
+    graph_list = [result["graph"]["value"] for result in results["results"]["bindings"]]
     return graph_list
 
 

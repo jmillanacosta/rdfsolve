@@ -6,21 +6,21 @@ Main modules:
 - utils: Common utility functions for RDF processing
 """
 
-# Import parser and models 
+# Import parser and models
+from . import utils
+from .models import LinkMLSchema, SchemaTriple, VoidSchema
 from .parser import VoidParser
 from .parser import parse_void_file as parse_void_simple
-from .models import VoidSchema, SchemaTriple, LinkMLSchema
-from . import utils
 
 # Import version information
 from .version import VERSION
 
 __all__ = [
-    "VoidParser",
-    "parse_void_simple",
-    "VoidSchema",
-    "SchemaTriple", 
-    "LinkMLSchema",
-    "utils",
     "VERSION",
+    "LinkMLSchema",
+    "SchemaTriple",
+    "VoidParser",
+    "VoidSchema",
+    "parse_void_simple",
+    "utils",
 ]

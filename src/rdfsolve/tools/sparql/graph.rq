@@ -1,6 +1,0 @@
-PREFIX sd:<http://www.w3.org/ns/sparql-service-description#>
-    SELECT DISTINCT ?graphIri
-    WHERE {
-        ?graphIri sd:graph ?graph .
-        ?s sd:graph ?graph .
-        }

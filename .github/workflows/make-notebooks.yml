@@ -1,6 +1,16 @@
 name: Generate Schema and Pydantic Notebooks (Matrix)
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'data/sources.csv'
+      - 'notebooks/make_notebooks.py'
+      - 'notebooks/schema_extraction/_schema_template.ipynb'
+      - 'notebooks/pydantic_models/_pydantic_template.ipynb'
+      - '.github/workflows/make-notebooks.yml'
+      - 'src/**'
   workflow_dispatch:
     inputs:
       max_parallel:
@@ -16,14 +26,11 @@ on:
           - all
           - schema
           - pydantic
-  schedule:
-    # Run weekly on Sundays at 02:00 UTC
-    - cron: '0 2 * * 0'
 
-# Prevent concurrent runs of this workflow
+# Prevent concurrent runs per PR
 concurrency:
-  group: schema-notebooks-matrix
-  cancel-in-progress: false
+  group: schema-notebooks-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -276,8 +283,9 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     permissions:
-      contents: write
+      contents: read
       actions: read
+      pull-requests: write
     
     steps:
     - uses: actions/checkout@v4
@@ -542,17 +550,27 @@ jobs:
         echo "Generated results.json with $total_schema_files schema results and $total_pydantic_files pydantic results"
 
 
-    - name: Create pull request with results
+    - name: Commit generated notebooks and data files
       run: |
-        # Configure git with proper identity
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        # Configure git
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
         
-        # Add all generated files including data outputs and web assets
-        git add docs/results.json docs/index.html docs/style.css docs/app.js 2>/dev/null || true
-        git add notebooks/01_schema_extraction/*.ipynb docs/notebooks/01_schema_extraction/ 2>/dev/null || true
-        git add notebooks/02_pydantic_models/*.ipynb docs/notebooks/02_pydantic_models/ 2>/dev/null || true
-        git add docs/data/ 2>/dev/null || true
+        # Add all generated files
+        git add notebooks/01_schema_extraction/*.ipynb 2>/dev/null || true
+        git add notebooks/02_pydantic_models/*.ipynb 2>/dev/null || true
+        git add docs/notebooks/01_schema_extraction/ 2>/dev/null || true
+        git add docs/notebooks/02_pydantic_models/ 2>/dev/null || true
+        git add docs/data/schema_extraction/ 2>/dev/null || true
+        git add docs/results.json 2>/dev/null || true
+        
+        # Count files for commit message
+        schema_files=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
+        pydantic_files=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
+        data_files=$(find docs/data/schema_extraction/ -type f 2>/dev/null | wc -l)
+        
+        schema_success=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" -exec grep -L "Schema Analysis Failed" {} \; 2>/dev/null | wc -l)
+        pydantic_success=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" -exec grep -L "Pydantic Generation Failed" {} \; 2>/dev/null | wc -l)
         
         # Check if there are changes to commit
         if git diff --cached --quiet; then
@@ -560,64 +578,152 @@ jobs:
           exit 0
         fi
         
-        # Count results for summary
-        schema_files=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
-        pydantic_files=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
-        data_files=$(find docs/data/schema_extraction/ -name "*.json*" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" 2>/dev/null | wc -l)
-        
-        schema_success=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" -exec grep -L "Schema Analysis Failed" {} \; 2>/dev/null | wc -l)
-        pydantic_success=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" -exec grep -L "Pydantic Generation Failed" {} \; 2>/dev/null | wc -l)
-        
-        schema_failed=$((schema_files - schema_success))
-        pydantic_failed=$((pydantic_files - pydantic_success))
-        
-        # Create branch name
-        branch_name="notebooks/$(date +%Y%m%d-%H%M%S)"
-        
-        # Create and switch to new branch
-        git checkout -b "$branch_name"
-        
         # Commit changes
         git commit -m "Generate notebooks and data files
 
-        Schema notebooks: $schema_success successful, $schema_failed failed
-        Pydantic notebooks: $pydantic_success successful, $pydantic_failed failed
+        Schema: $schema_success/$schema_files successful
+        Pydantic: $pydantic_success/$pydantic_files successful
         Data files: $data_files generated
-        Generated: $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)
-        Workflow: $GITHUB_RUN_ID"
         
-        # Push branch
-        git push origin "$branch_name"
+        Generated: $(date -u +%Y-%m-%d %H:%M:%S UTC)
+        Workflow: ${{ github.run_id }}"
         
-        # Create pull request
-        pr_title="Automated notebook generation $(date +%Y-%m-%d)"
-        
-        # Write PR body to temporary file
-        cat > /tmp/pr_body.txt << 'EOF'
-        ## Notebook Generation Results
-        
-        Summary: Schema notebooks processed with results. Results dashboard updated.
-        
-        Files Changed:
-        - Notebook files in notebooks/01_schema_extraction/ and notebooks/02_pydantic_models/
-        - HTML reports in docs/notebooks/  
-        - Data outputs in docs/data/schema_extraction/
-        - Updated docs/results.json for web dashboard
-        
-        This pull request contains the automated generation of schema extraction notebooks and associated data files from the matrix workflow.
-        EOF
-        
-        # Create pull request using GitHub API with PAT
-        pr_body_escaped=$(cat /tmp/pr_body.txt | python3 -c "import sys, json; print(json.dumps(sys.stdin.read()))")
-        
-        curl -X POST \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer $PAT_TOKEN" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          "https://api.github.com/repos/${{ github.repository }}/pulls" \
-          -d "{\"title\":\"$pr_title\",\"body\":$pr_body_escaped,\"head\":\"$branch_name\",\"base\":\"main\"}"
-      env:
-        PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        # Push to the PR branch
+        git push origin HEAD:${{ github.head_ref }}
+
+    - name: Post results comment to PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          // Count results
+          const schemaDir = 'docs/notebooks/01_schema_extraction/';
+          const pydanticDir = 'docs/notebooks/02_pydantic_models/';
+          
+          let schemaFiles = [];
+          let pydanticFiles = [];
+          
+          try {
+            schemaFiles = fs.readdirSync(schemaDir).filter(f => f.endsWith('_schema.html'));
+          } catch (e) {
+            console.log('No schema files found');
+          }
+          
+          try {
+            pydanticFiles = fs.readdirSync(pydanticDir).filter(f => f.endsWith('_pydantic.html'));
+          } catch (e) {
+            console.log('No pydantic files found');
+          }
+          
+          const schemaTotal = schemaFiles.length;
+          const pydanticTotal = pydanticFiles.length;
+          
+          // Count successes vs failures
+          let schemaSuccess = 0;
+          let schemaFailed = 0;
+          
+          for (const file of schemaFiles) {
+            const content = fs.readFileSync(path.join(schemaDir, file), 'utf8');
+            if (!content.includes('Schema Analysis Failed')) {
+              schemaSuccess++;
+            } else {
+              schemaFailed++;
+            }
+          }
+          
+          let pydanticSuccess = 0;
+          let pydanticFailed = 0;
+          
+          for (const file of pydanticFiles) {
+            const content = fs.readFileSync(path.join(pydanticDir, file), 'utf8');
+            if (!content.includes('Pydantic Generation Failed')) {
+              pydanticSuccess++;
+            } else {
+              pydanticFailed++;
+            }
+          }
+          
+          // Generate comment body
+          const timestamp = new Date().toUTCString();
+          const workflowUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+          const commitUrl = `https://github.com/${{ github.repository }}/commit/${{ github.sha }}`;
+          
+          const schemaRate = schemaTotal > 0 ? ((schemaSuccess / schemaTotal) * 100).toFixed(1) : 'N/A';
+          const pydanticRate = pydanticTotal > 0 ? ((pydanticSuccess / pydanticTotal) * 100).toFixed(1) : 'N/A';
+          
+          const commentBody = `## 📊 Notebook Generation Results
+          
+          **Workflow Run:** [View Details](${workflowUrl})
+          **Completed:** ${timestamp}
+          **Files Committed:** ✅ All generated notebooks and data files have been committed to this branch
+          
+          ### Schema Extraction Notebooks
+          
+          | Metric | Value |
+          |--------|-------|
+          | Total Processed | ${schemaTotal} |
+          | ✅ Successful | ${schemaSuccess} |
+          | ❌ Failed | ${schemaFailed} |
+          | Success Rate | ${schemaRate}% |
+          
+          ### Pydantic Model Notebooks
+          
+          | Metric | Value |
+          |--------|-------|
+          | Total Processed | ${pydanticTotal} |
+          | ✅ Successful | ${pydanticSuccess} |
+          | ❌ Failed | ${pydanticFailed} |
+          | Success Rate | ${pydanticRate}% |
+          
+          ### 📦 Generated Files
+          
+          - **Notebooks:** Available in \`notebooks/01_schema_extraction/\` and \`notebooks/02_pydantic_models/\`
+          - **HTML Reports:** Available in \`docs/notebooks/\`
+          - **Data Files:** Available in \`docs/data/schema_extraction/\`
+          - **Artifacts:** Download \`notebooks-matrix-complete\` for quick access
+          
+          ### 📝 Next Steps
+          
+          - Review the committed files in this PR
+          - Check individual job logs for any failures
+          - All changes have been committed and are ready for review
+          
+          ---
+          *This comment was automatically generated by the notebook generation workflow.*`;
+          
+          // Find existing comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && 
+            comment.body.includes('Notebook Generation Results')
+          );
+          
+          // Update or create comment
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: commentBody
+            });
+            console.log('Updated existing comment');
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+            console.log('Created new comment');
+          }
 
     - name: Upload final results
       uses: actions/upload-artifact@v4
