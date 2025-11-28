@@ -6,7 +6,7 @@ Provides type-safe data structures with validation for VoID schema elements.
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 
 class SchemaTriple(BaseModel):
@@ -19,8 +19,9 @@ class SchemaTriple(BaseModel):
     object_class: str = Field(..., description="Object class name")
     object_uri: str = Field(..., description="Object URI")
 
-    @validator("subject_uri", "property_uri", "object_uri")
-    def validate_uri(self, v):
+    @field_validator("subject_uri", "property_uri", "object_uri")
+    @classmethod
+    def validate_uri(cls, v: str) -> str:
         """Validate that URIs are properly formatted."""
         if not v.startswith(("http://", "https://", "urn:")):
             if v not in ["Literal", "Resource"]:
@@ -38,10 +39,7 @@ class SchemaMetadata(BaseModel):
     extraction_date: Optional[str] = Field(None, description="Date of extraction")
     source_endpoint: Optional[HttpUrl] = Field(None, description="Source SPARQL endpoint")
 
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class VoidSchema(BaseModel):
@@ -50,8 +48,9 @@ class VoidSchema(BaseModel):
     triples: List[SchemaTriple] = Field(..., description="Schema triples")
     metadata: SchemaMetadata = Field(..., description="Schema metadata")
 
-    @validator("triples")
-    def validate_triples(self, v):
+    @field_validator("triples")
+    @classmethod
+    def validate_triples(cls, v: List[SchemaTriple]) -> List[SchemaTriple]:
         """Ensure we have at least some triples for a valid schema."""
         if not v:
             raise ValueError("Schema must contain at least one triple")

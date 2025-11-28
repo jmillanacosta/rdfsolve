@@ -8,7 +8,7 @@ descriptions from SPARQL endpoints using CONSTRUCT queries.
 
 import logging
 import time
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import pandas as pd
 from bioregistry import curie_from_iri
@@ -42,17 +42,18 @@ class VoidParser:
 
         Args:
             void_source: Either a file path (str) or an RDF Graph object
-            graph_uris: Single graph URI (str) or list of graph URIs to analyze.
-                        If None, queries all graphs except Virtuoso system graphs
-            exclude_graphs: Whether to exclude Virtuoso system graphs by default
+            graph_uris: Single graph URI (str) or list of graphs to analyze.
+                        If None, queries all graphs except system graphs
+            exclude_graphs: Whether to exclude Virtuoso system graphs
         """
-        self.void_file_path = None
-        self.graph = Graph()
-        self.schema_triples = []
-        self.classes = {}
-        self.properties = {}
+        self.void_file_path: Optional[str] = None
+        self.graph: Graph = Graph()
+        self.schema_triples: List[Any] = []
+        self.classes: Dict[str, Any] = {}
+        self.properties: Dict[str, Any] = {}
         self.graph_uris = self._normalize_graph_uris(graph_uris)
         self.exclude_graphs = exclude_graphs
+        self.exclude_graph_patterns: Optional[List[str]] = None
 
         # VoID namespace URIs
         self.void_class = URIRef("http://rdfs.org/ns/void#class")
@@ -89,7 +90,7 @@ class VoidParser:
         Generate appropriate GRAPH clause for SPARQL queries.
 
         Args:
-            graph_uris: List of specific graph URIs. If None, uses instance URIs
+            graph_uris: List of specific graph URIs. If None, instance URIs
 
         Returns:
             String containing the graph clause or filter clause
@@ -162,11 +163,11 @@ class VoidParser:
 
         return result
 
-    def _load_graph(self):
+    def _load_graph(self) -> None:
         """Load the VoID file into an RDF graph."""
         self.graph.parse(self.void_file_path, format="turtle")
 
-    def discover_void_graphs(self, endpoint_url: str) -> Dict:
+    def discover_void_graphs(self, endpoint_url: str) -> Dict[str, Any]:
         """
         Discover existing VoID graphs in the endpoint using chunked queries.
 
@@ -227,8 +228,8 @@ class VoidParser:
 
             # Now check each candidate graph for actual VoID content
             logger.debug("Starting detailed VoID content analysis...")
-            found_graphs = []
-            void_content = {}
+            found_graphs: List[str] = []
+            void_content: Dict[str, Dict[str, Any]] = {}
 
             for i, graph_uri in enumerate(candidate_graphs, 1):
                 logger.debug(f"Analyzing graph {i}/{len(candidate_graphs)}: {graph_uri}")
@@ -487,19 +488,19 @@ class VoidParser:
 
         return merged_graph
 
-    def _extract_classes(self):
+    def _extract_classes(self) -> None:
         """Extract class information from VoID description."""
         self.classes = {}
         for s, _p, o in self.graph.triples((None, self.void_class, None)):
             self.classes[s] = o
 
-    def _extract_properties(self):
+    def _extract_properties(self) -> None:
         """Extract property information from VoID description."""
         self.properties = {}
         for s, _p, o in self.graph.triples((None, self.void_property, None)):
             self.properties[s] = o
 
-    def _extract_schema_triples(self):
+    def _extract_schema_triples(self) -> None:
         """Extract schema triples by analyzing property partitions."""
         self.schema_triples = []
 
@@ -509,9 +510,9 @@ class VoidParser:
             self.schema_triples = triples
             return
 
-    def _extract_schema(self):
+    def _extract_schema(self) -> List[Any]:
         """Extract schema from property partitions with type info."""
-        triples = []
+        triples: List[Any] = []
 
         # Find all property partitions with subject/object class info
         for partition, _, property_uri in self.graph.triples((None, self.void_property, None)):
@@ -554,7 +555,7 @@ class VoidParser:
         )
         return df[mask].copy()
 
-    def to_jsonld(self, filter_void_admin_nodes: bool = True) -> dict:
+    def to_jsonld(self, filter_void_admin_nodes: bool = True) -> Dict[str, Any]:
         """
         Parse VoID file and return simple JSON-LD with the schema triples.
         Just normal RDF triples in JSON-LD format - no metadata, no VoID, no SHACL.
@@ -572,8 +573,8 @@ class VoidParser:
             return {"@context": {}, "@graph": []}
 
         # Create minimal context for the namespaces we find
-        context = {}
-        triples = []
+        context: Dict[str, str] = {}
+        triples: List[Dict[str, Any]] = []
 
         for s, p, o in self.schema_triples:
             # Convert to CURIEs and collect namespaces
@@ -587,6 +588,7 @@ class VoidParser:
                 context[p_prefix] = p_namespace
 
             # Handle object
+            o_value: Union[str, Dict[str, str]]
             if isinstance(o, Literal):
                 # It's a literal value
                 if o.datatype:
@@ -608,9 +610,9 @@ class VoidParser:
             triples.append(triple)
 
         # Group triples by subject
-        grouped = {}
+        grouped: Dict[str, Dict[str, Any]] = {}
         for triple in triples:
-            subject_id = triple["@id"]
+            subject_id: str = cast(str, triple["@id"])
             if subject_id not in grouped:
                 grouped[subject_id] = {"@id": subject_id}
 
@@ -630,7 +632,7 @@ class VoidParser:
         # Return simple JSON-LD
         return {"@context": context, "@graph": list(grouped.values())}
 
-    def _create_context(self) -> dict:
+    def _create_context(self) -> Dict[str, str]:
         """Create JSON-LD @context."""
         # Start with standard W3C vocabularies
         context = {
@@ -668,11 +670,11 @@ class VoidParser:
 
         return context
 
-    def _extract_context(self) -> dict:
+    def _extract_context(self) -> Dict[str, str]:
         """Extract @context from VoID graph and common namespaces."""
         return self._create_context()
 
-    def _filter_jsonld_void_admin_nodes(self, jsonld: dict) -> dict:
+    def _filter_jsonld_void_admin_nodes(self, jsonld: Dict[str, Any]) -> Dict[str, Any]:
         """Filter out VoID administrative nodes from JSON-LD structure."""
         void_patterns = [
             "void",
@@ -687,7 +689,7 @@ class VoidParser:
             "schema",
         ]
 
-        # Handle new @graph structure
+        # Handle @graph structure
         if "@graph" in jsonld:
             filtered_graph = []
 
@@ -697,7 +699,7 @@ class VoidParser:
                     filtered_graph.append(item)
                     continue
 
-                # Keep schema pattern statements - these are our S-P-O relationships
+                # Keep schema pattern statements, S-P-O relationships
                 if "void:SchemaPattern" in item.get("@type", []):
                     filtered_graph.append(item)
                     continue
@@ -710,17 +712,6 @@ class VoidParser:
             jsonld_filtered = jsonld.copy()
             jsonld_filtered["@graph"] = filtered_graph
             return jsonld_filtered
-
-        # Handle legacy structure (backwards compatibility)
-        elif "schema_patterns" in jsonld:
-            filtered_patterns = []
-            for pattern in jsonld["schema_patterns"]:
-                subject_lower = pattern["subject_class"].lower()
-                if not any(void_pat in subject_lower for void_pat in void_patterns):
-                    filtered_patterns.append(pattern)
-
-            jsonld["schema_patterns"] = filtered_patterns
-            return jsonld
 
         # Return as-is if no recognized structure
         return jsonld
@@ -811,7 +802,7 @@ class VoidParser:
         schema_name: Optional[str] = None,
         schema_description: Optional[str] = None,
         schema_base_uri: Optional[str] = None,
-    ):
+    ) -> SchemaDefinition:
         """
         Generate LinkML schema directly from JSON-LD representation.
 
@@ -891,11 +882,11 @@ class VoidParser:
             return schema
 
         # Collect all classes and properties from the JSON-LD triples
-        all_class_names = set()
-        all_slot_names = set()
-        class_properties = {}  # class_name -> [property_names]
-        property_ranges = {}  # property_name -> range_type
-        property_descriptions = {}  # property_name -> description
+        all_class_names: set[str] = set()
+        all_slot_names: set[str] = set()
+        class_properties: Dict[str, List[str]] = {}  # class_name -> [property_names]
+        property_ranges: Dict[str, str] = {}  # property_name -> range_type
+        property_descriptions: Dict[str, str] = {}  # property_name -> description
 
         for item in schema_items:
             if "@id" not in item:
@@ -1151,14 +1142,15 @@ class VoidParser:
                         from bioregistry import get_namespace_uri
 
                         namespace_uri = get_namespace_uri(prefix)
-                    except:
+                    except Exception:
                         # Fallback: extract namespace from original URI
                         if "#" in uri:
                             namespace_uri = uri.rsplit("#", 1)[0] + "#"
                         else:
                             namespace_uri = uri.rsplit("/", 1)[0] + "/"
-            except curie is None:
-                logger.warn("Couldn't validate %s", curie)
+            except Exception:
+                if curie is None:
+                    logger.warn("Couldn't validate %s", curie)
 
         # Fallback to string manipulation if bioregistry fails
         if not curie:
@@ -1229,7 +1221,7 @@ class VoidParser:
         """Clean slot name to be valid LinkML identifier."""
         return self._clean_identifier_name(slot_name, is_class=False)
 
-    def _extract_prefixes_from_schema(self, df):
+    def _extract_prefixes_from_schema(self, df: pd.DataFrame) -> Dict[str, str]:
         """Extract prefixes from schema DataFrame by analyzing URIs."""
         prefixes = {}
 
@@ -1240,10 +1232,10 @@ class VoidParser:
                     prefixes[str(prefix)] = str(namespace)
 
         # Initialize prefix collection for discovered CURIEs
-        self._discovered_prefixes = {}
+        self._discovered_prefixes: Dict[str, str] = {}
 
         # Extract prefixes from all URIs in the DataFrame
-        all_uris = set()
+        all_uris: set[str] = set()
         for col in ["property_uri", "subject_uri", "object_uri"]:
             if col in df.columns:
                 all_uris.update(df[col].dropna().unique())
@@ -1290,9 +1282,9 @@ class VoidParser:
             schema_base_uri=schema_base_uri,
         )
 
-        return YAMLGenerator(linkml_schema).serialize()
+        return cast(str, YAMLGenerator(linkml_schema).serialize())
 
-    def to_json(self, filter_void_nodes: bool = True) -> Dict:
+    def to_json(self, filter_void_nodes: bool = True) -> Dict[str, Any]:
         """
         Parse VoID file and return schema as JSON structure.
         This method now uses the JSON-LD generation as the source of truth.
@@ -1314,7 +1306,7 @@ class VoidParser:
                 df = self._filter_void_admin_nodes(df)
                 schema_patterns = df.to_dict("records")
 
-        schema_graph = {
+        schema_graph: Dict[str, Any] = {
             "triples": [],
             "metadata": {
                 "total_triples": len(schema_patterns),
@@ -1632,7 +1624,7 @@ WHERE {{
             name: str,
             is_optional: bool = False,
             public_id: str = "http://jmillanacosta.github.io/",
-        ):
+        ) -> None:
             """Execute CONSTRUCT query and add results to graph.
 
             Args:
@@ -2012,7 +2004,7 @@ Last query: {query_type}
         offset_limit_steps: Optional[int] = None,
         delay_between_chunks: float = 20.0,
         streaming: bool = False,
-    ):
+    ) -> Union[Dict[str, int], Any]:
         """
         Count instances for each class in the dataset.
 
@@ -2036,11 +2028,12 @@ Last query: {query_type}
 
         # If offset_limit_steps is provided, use it for chunked querying
         if offset_limit_steps is not None:
+            offset_value = sample_offset if sample_offset is not None else 0
             if streaming:
                 return self._count_instances_chunked_streaming(
                     sparql,
                     sample_limit,
-                    sample_offset or 0,
+                    offset_value,
                     offset_limit_steps,
                     delay_between_chunks,
                 )
@@ -2048,19 +2041,20 @@ Last query: {query_type}
                 return self._count_instances_chunked(
                     sparql,
                     sample_limit,
-                    sample_offset or 0,
+                    offset_value,
                     offset_limit_steps,
                     delay_between_chunks,
                 )
         # If chunk_size is provided, use chunked querying
         elif chunk_size is not None:
+            offset_value = sample_offset if sample_offset is not None else 0
             if streaming:
                 return self._count_instances_chunked_streaming(
-                    sparql, sample_limit, sample_offset, chunk_size, delay_between_chunks
+                    sparql, sample_limit, offset_value, chunk_size, delay_between_chunks
                 )
             else:
                 return self._count_instances_chunked(
-                    sparql, sample_limit, sample_offset, chunk_size, delay_between_chunks
+                    sparql, sample_limit, offset_value, chunk_size, delay_between_chunks
                 )
 
         # Otherwise, use single query with limit/offset
@@ -2090,7 +2084,7 @@ Last query: {query_type}
 
             if streaming:
                 # Return generator for single query case
-                def _stream_results():
+                def _stream_results() -> Any:
                     for result in results["results"]["bindings"]:
                         class_uri = result["class"]["value"]
                         count = int(result["count"]["value"])
@@ -2114,12 +2108,12 @@ Last query: {query_type}
 
     def _count_instances_chunked(
         self,
-        sparql,
+        sparql: Any,
         total_limit: Optional[int],
         start_offset: int,
         chunk_size: int,
         delay_between_chunks: float = 1.0,
-    ) -> Dict:
+    ) -> Dict[str, int]:
         """Helper method for chunked instance counting."""
         return dict(
             self._count_instances_chunked_streaming(
@@ -2129,12 +2123,12 @@ Last query: {query_type}
 
     def _count_instances_chunked_streaming(
         self,
-        sparql,
+        sparql: Any,
         total_limit: Optional[int],
         start_offset: int,
         chunk_size: int,
         delay_between_chunks: float = 1.0,
-    ):
+    ) -> Any:
         """
         Streaming version of chunked instance counting that yields results
         as they arrive.
@@ -2205,12 +2199,12 @@ Last query: {query_type}
 
     def _execute_chunked_query(
         self,
-        sparql,
+        sparql: Any,
         query_template: str,
         chunk_size: int = 100,
         max_total_results: Optional[int] = None,
         delay_between_chunks: float = 0.5,
-    ):
+    ) -> Any:
         """
         Execute a SPARQL query in chunks using OFFSET/LIMIT pagination.
 
@@ -2304,12 +2298,12 @@ Last query: {query_type}
 
     @staticmethod
     def _safe_query(
-        sparql,
+        sparql: Any,
         query: str,
         max_retries: int = 4,
         initial_backoff: float = 1.0,
         max_backoff: float = 30.0,
-    ):
+    ) -> Any:
         """
         Execute a SPARQL query with retries and exponential backoff.
 
@@ -2349,7 +2343,7 @@ Last query: {query_type}
         sample_limit: Optional[int] = None,
         sample_offset: Optional[int] = None,
         offset_limit_steps: Optional[int] = None,
-    ):
+    ) -> tuple[Any, ...]:
         """
         Complete analysis of class partition usage and coverage.
 
@@ -2371,9 +2365,9 @@ Last query: {query_type}
 
         # For chunked queries, skip class mappings as they can be too large
         if offset_limit_steps is not None:
-            class_mappings = {}
+            class_mappings: Dict[str, Any] = {}
             # Create simplified coverage stats without detailed mappings
-            coverage_stats = {}
+            coverage_stats: Dict[str, Any] = {}
             for class_uri, count in instance_counts.items():
                 coverage_stats[class_uri] = {
                     "total_instances": count,
@@ -2397,7 +2391,9 @@ Last query: {query_type}
 
         return instance_counts, class_mappings, coverage_stats
 
-    def export_coverage_analysis(self, coverage_stats: Dict, output_file: Optional[str] = None):
+    def export_coverage_analysis(
+        self, coverage_stats: Dict[str, Any], output_file: Optional[str] = None
+    ) -> pd.DataFrame:
         """
         Export coverage analysis to CSV format.
 
@@ -2472,15 +2468,15 @@ Last query: {query_type}
         from SPARQLWrapper import JSON, SPARQLWrapper
 
         # Initialize query tracking (only if requested)
-        total_queries_sent = 0
-        total_rows_collected = 0
-        query_details = [] if track_queries else None
+        total_queries_sent: int = 0
+        total_rows_collected: int = 0
+        query_details: Optional[List[Dict[str, Any]]] = [] if track_queries else None
 
         # Get the schema triples first
         schema_df = self.to_schema(filter_void_admin_nodes=True)
 
         if schema_df.empty:
-            return pd.DataFrame()
+            return pd.DataFrame(), None
 
         # First, get total entity counts using batched VALUES queries
         class_entity_counts = {}
@@ -2562,8 +2558,8 @@ Last query: {query_type}
                     class_entity_counts[class_uri] = 0
 
         # Now calculate coverage for each schema pattern
-        coverage_results = []
-        instances_data = [] if collect_instances else None
+        coverage_results: List[Dict[str, Any]] = []
+        instances_data: Optional[List[Dict[str, Any]]] = [] if collect_instances else None
 
         for idx, row in schema_df.iterrows():
             # Generate unique shape ID for linking DataFrames
@@ -2952,7 +2948,7 @@ Last query: {query_type}
 
     def analyze_shape_distribution(
         self, frequencies_df: pd.DataFrame, instances_df: pd.DataFrame
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """
         Analyze the distribution of instances across shapes for memory optimization insights.
 
@@ -2984,7 +2980,7 @@ Last query: {query_type}
             "top_shapes_by_instances": combined.nlargest(10, "actual_instances").to_dict("index"),
         }
 
-    def diagnose_object_classes(self, endpoint_url: str) -> dict:
+    def diagnose_object_classes(self, endpoint_url: str) -> Dict[str, Any]:
         """
         Diagnostic method to analyze what object classes are found in schema vs
         what literal properties might be missing.

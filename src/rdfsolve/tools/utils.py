@@ -1,5 +1,7 @@
 """Utility functions for RDFSolve."""
 
+from typing import List
+
 import requests
 
 __all__ = [
@@ -8,7 +10,7 @@ __all__ = [
 ]
 
 
-def get_graph_uris(endpoint_url):
+def get_graph_uris(endpoint_url: str) -> List[str]:
     """
     Discover named graphs in a SPARQL endpoint.
 

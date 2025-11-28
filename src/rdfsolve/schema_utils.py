@@ -18,7 +18,7 @@ from linkml_runtime.utils.schemaview import SchemaView
 class SchemaAnalyzer:
     """Helper class for LinkML schema analysis and comparison."""
 
-    def __init__(self, vp, dataset_name: str, exports_path: str):
+    def __init__(self, vp: Any, dataset_name: str, exports_path: str) -> None:
         """Initialize the schema analyzer."""
         self.vp = vp
         self.dataset_name = dataset_name
@@ -160,7 +160,7 @@ class CoverageVisualizer:
         df["coverage_percent"] = pd.to_numeric(df["coverage_percent"], errors="coerce").fillna(0)
         df = df.sort_values("coverage_percent", ascending=False).reset_index(drop=True)
 
-        def make_label(row):
+        def make_label(row: pd.Series) -> str:
             """Create formatted HTML label for schema triple visualization."""
             return (
                 f"<b>{row['subject_class']}</b> "
@@ -261,10 +261,10 @@ class PydanticModelAnalyzer:
     """Helper class for analyzing generated Pydantic models."""
 
     @staticmethod
-    def extract_pydantic_models(namespace: dict) -> dict:
+    def extract_pydantic_models(namespace: Dict[str, Any]) -> Dict[str, Any]:
         """Extract Pydantic model classes from a namespace."""
 
-        def _is_pydantic_model(name, val):
+        def _is_pydantic_model(name: str, val: Any) -> bool:
             """Check if this is likely a generated Pydantic model class."""
             if not isinstance(val, type):
                 return False
@@ -277,7 +277,7 @@ class PydanticModelAnalyzer:
         return {k: v for k, v in namespace.items() if _is_pydantic_model(k, v)}
 
     @staticmethod
-    def show_model_fields(cls) -> str:
+    def show_model_fields(cls: type) -> str:
         """Generate a string representation of model fields."""
         if hasattr(cls, "model_fields"):
             fields = list(cls.model_fields.items())
@@ -288,7 +288,7 @@ class PydanticModelAnalyzer:
         return "  No fields found"
 
     @classmethod
-    def display_all_models(cls, pydantic_models: dict) -> None:
+    def display_all_models(cls, pydantic_models: Dict[str, Any]) -> None:
         """Display all Pydantic model classes and their fields."""
         if not pydantic_models:
             display(Markdown("**No pydantic models found**"))
@@ -304,7 +304,7 @@ class PydanticModelAnalyzer:
 
 
 def export_schema_files(
-    discovery_df: pd.DataFrame, vp, exports_path: str, dataset_name: str
+    discovery_df: pd.DataFrame, vp: Any, exports_path: str, dataset_name: str
 ) -> None:
     """Export schema files in various formats."""
     import json
