@@ -3,16 +3,16 @@
 Run with ``python -m rdfsolve.version``
 """
 
-import os
 import logging
+import os
 from subprocess import CalledProcessError, check_output
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
     "VERSION",
-    "get_version",
     "get_git_hash",
+    "get_version",
 ]
 
 VERSION = "0.0.1-dev"
@@ -22,8 +22,8 @@ def get_git_hash() -> str:
     """Get the :mod:`rdfsolve` git hash."""
     with open(os.devnull, "w") as devnull:
         try:
-            ret = check_output(  # noqa: S603
-                ["git", "rev-parse", "HEAD"],  # noqa: S603,S607
+            ret = check_output(
+                ["git", "rev-parse", "HEAD"],
                 cwd=os.path.dirname(__file__),
                 stderr=devnull,
             )
@@ -39,4 +39,4 @@ def get_version(with_git_hash: bool = False) -> str:
 
 
 if __name__ == "__main__":
-    logger.info(get_version(with_git_hash=True))  # noqa:T201
+    logger.info(get_version(with_git_hash=True))

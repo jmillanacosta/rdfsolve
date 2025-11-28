@@ -5,17 +5,17 @@ This module contains shared utility functions used across the RDFSolve
 library to avoid code duplication between different parsers and processors.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 def resolve_curie(curie: str, prefixes: Dict[str, str]) -> Optional[str]:
     """
     Convert CURIE to full IRI using given prefixes.
-    
+
     Args:
         curie: CURIE string to resolve (e.g., "foaf:name")
         prefixes: Dictionary of prefix mappings
-        
+
     Returns:
         Full IRI string wrapped in angle brackets, or None if not resolvable
     """
@@ -44,17 +44,18 @@ def resolve_curie(curie: str, prefixes: Dict[str, str]) -> Optional[str]:
     return None
 
 
-def normalize_uri(uri_string: str, prefixes: Dict[str, str], source: str,
-                  remove_qualifiers: bool = True) -> Optional[str]:
+def normalize_uri(
+    uri_string: str, prefixes: Dict[str, str], source: str, remove_qualifiers: bool = True
+) -> Optional[str]:
     """
     Normalize URI strings to full URIs.
-    
+
     Args:
         uri_string: URI string to normalize
         prefixes: Dictionary of prefix mappings
         source: Source namespace for relative URIs
         remove_qualifiers: Whether to remove qualifiers (* and ?)
-        
+
     Returns:
         Normalized URI string or None if invalid
     """
@@ -95,10 +96,10 @@ def normalize_uri(uri_string: str, prefixes: Dict[str, str], source: str,
 def clean_predicate(predicate: str) -> str:
     """
     Remove cardinality markers from predicate.
-    
+
     Args:
         predicate: Predicate string potentially with cardinality markers
-        
+
     Returns:
         Cleaned predicate string
     """
@@ -112,10 +113,10 @@ def clean_predicate(predicate: str) -> str:
 def is_blank_node(value: Any) -> bool:
     """
     Check if value represents a blank node.
-    
+
     Args:
         value: Value to check for blank node representation
-        
+
     Returns:
         True if value represents a blank node
     """
@@ -142,11 +143,11 @@ def is_blank_node(value: Any) -> bool:
 def is_example_or_metadata(key: Any, value: Any) -> bool:
     """
     Identify and filter out examples, comments, and metadata.
-    
+
     Args:
         key: Key to check
         value: Value to check
-        
+
     Returns:
         True if key/value pair should be filtered out
     """
