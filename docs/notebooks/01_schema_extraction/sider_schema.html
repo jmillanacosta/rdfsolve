@@ -7511,234 +7511,6 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2c1c8809">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<style>
-
-/* Main content area */
-.jp-RenderedHTMLCommon {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-    line-height: 1.6;
-    color: #24292f;
-}
-
-/* Headers */
-.jp-RenderedHTMLCommon h1 {
-    border-bottom: 1px solid #d1d9e0;
-    padding-bottom: 8px;
-    margin-bottom: 16px;
-    font-weight: 600;
-    color: #1f2328;
-}
-
-.jp-RenderedHTMLCommon h2 {
-    border-bottom: 1px solid #d8dee4;
-    padding-bottom: 6px;
-    margin-top: 24px;
-    margin-bottom: 16px;
-    font-weight: 600;
-    color: #1f2328;
-}
-
-.jp-RenderedHTMLCommon h3 {
-    margin-top: 20px;
-    margin-bottom: 12px;
-    font-weight: 600;
-    color: #1f2328;
-}
-
-/* Code blocks and inline code */
-.jp-RenderedHTMLCommon code {
-    background-color: #f6f8fa;
-    border-radius: 6px;
-    padding: 2px 6px;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 85%;
-    color: #1f2328;
-}
-
-.jp-RenderedHTMLCommon pre {
-    background-color: #f6f8fa;
-    border-radius: 6px;
-    padding: 16px;
-    overflow: auto;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 85%;
-    line-height: 1.45;
-}
-
-/* Lists */
-.jp-RenderedHTMLCommon ul, .jp-RenderedHTMLCommon ol {
-    margin-bottom: 16px;
-}
-
-.jp-RenderedHTMLCommon li {
-    margin-bottom: 4px;
-}
-
-/* Links */
-.jp-RenderedHTMLCommon a {
-    color: #0969da;
-    text-decoration: none;
-}
-
-.jp-RenderedHTMLCommon a:hover {
-    text-decoration: underline;
-}
-
-/* Tables */
-.jp-RenderedHTMLCommon table {
-    border-collapse: collapse;
-    border-spacing: 0;
-    width: 100%;
-    margin-bottom: 16px;
-}
-
-.jp-RenderedHTMLCommon th,
-.jp-RenderedHTMLCommon td {
-    padding: 6px 13px;
-    border: 1px solid #d1d9e0;
-    text-align: left;
-}
-
-.jp-RenderedHTMLCommon th {
-    background-color: #f6f8fa;
-    font-weight: 600;
-}
-
-.jp-RenderedHTMLCommon tr:nth-child(2n) {
-    background-color: #f6f8fa;
-}
-
-/* Blockquotes */
-.jp-RenderedHTMLCommon blockquote {
-    border-left: 4px solid #d1d9e0;
-    padding-left: 16px;
-    margin-left: 0;
-    color: #656d76;
-}
-
-/* Emphasized text */
-.jp-RenderedHTMLCommon strong {
-    font-weight: 600;
-}
-
-.jp-RenderedHTMLCommon em {
-    font-style: italic;
-}
-
-/* Output areas - DataFrames and plots */
-.jp-OutputArea-output table {
-    font-size: 12px;
-    border-collapse: collapse;
-    margin: 8px 0;
-}
-
-.jp-OutputArea-output th {
-    background-color: #f1f3f4;
-    padding: 8px;
-    text-align: left;
-    font-weight: 500;
-    border: 1px solid #dadce0;
-}
-
-.jp-OutputArea-output td {
-    padding: 6px 8px;
-    border: 1px solid #dadce0;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Status indicators */
-.status-success {
-    color: #1a7f37;
-    font-weight: 500;
-}
-
-.status-warning {
-    color: #9a6700;
-    font-weight: 500;
-}
-
-.status-error {
-    color: #d1242f;
-    font-weight: 500;
-}
-
-/* Schema pattern labels */
-.schema-pattern {
-    font-family: 'SFMono-Regular', Consolas, monospace;
-    background-color: #f6f8fa;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-size: 90%;
-}
-
-/* Export links styling */
-.exports-list a {
-    display: inline-block;
-    margin-right: 12px;
-    padding: 4px 8px;
-    background-color: #f3f4f6;
-    border-radius: 6px;
-    border: 1px solid #d1d9e0;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.exports-list a:hover {
-    background-color: #e1e4e8;
-    text-decoration: none;
-}
-
-/* Plotly chart container */
-.plotly-graph-div {
-    border: 1px solid #e1e4e8;
-    border-radius: 6px;
-    margin: 16px 0;
-}
-
-/* Cache status indicators */
-.cache-info {
-    font-family: 'SFMono-Regular', Consolas, monospace;
-    font-size: 12px;
-    color: #656d76;
-    background-color: #f6f8fa;
-    padding: 8px;
-    border-radius: 6px;
-    border-left: 3px solid #0969da;
-}
-
-/* Notebook section dividers */
-.section-divider {
-    height: 1px;
-    background: linear-gradient(to right, transparent, #d1d9e0, transparent);
-    margin: 32px 0;
-}
-
-/* Print styles */
-@media print {
-    .jp-RenderedHTMLCommon {
-        color: #000;
-    }
-    
-    .jp-RenderedHTMLCommon a {
-        color: #000;
-        text-decoration: underline;
-    }
-}
-</style>
-</div>
-</div>
-</div>
-</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d1d16b10">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -7757,12 +7529,12 @@ a.anchor-link {
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="Exports">Exports<a class="anchor-link" href="#Exports">¶</a></h2><ul>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/sider_schema/sider_schema.jsonld">JSON-LD Schema</a> (primary output)</li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/sider_schema/sider_schema.nq">N-Quads RDF</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/sider_schema/sider_generated_void.ttl">VoID Graph</a> for the dataset in its original source</li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/sider_schema/sider_pattern_coverage.csv">Coverage report</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/sider_schema/sider_linkml_schema.yaml">LinkML Schema</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/sider_schema/siderinstances.parquet">Full parquet entity dataframe</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/sider_schema/sider_schema.jsonld">JSON-LD Schema</a> (primary output)</li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/sider_schema/sider_schema.nq">N-Quads RDF</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/sider_schema/sider_generated_void.ttl">VoID Graph</a> for the dataset in its original source</li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/sider_schema/sider_pattern_coverage.csv">Coverage report</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/sider_schema/sider_linkml_schema.yaml">LinkML Schema</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/sider_schema/siderinstances.parquet">Full parquet entity dataframe</a></li>
 </ul>
 </div>
 </div>
@@ -7786,7 +7558,7 @@ a.anchor-link {
 
 <span class="c1"># Setup paths</span>
 <span class="n">working_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-<span class="n">exports_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">working_path</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="s2">"schema_extraction"</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
+<span class="n">exports_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">working_path</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">"docs"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="s2">"schema_extraction"</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
 <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -7837,7 +7609,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:32 INFO sider: Logging configured for sider
+<pre>2025-11-28 11:25:10 INFO sider: Logging configured for sider
 </pre>
 </div>
 </div>
@@ -8120,91 +7892,91 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>VoidParser not found in cache, generating...
-2025-11-24 12:04:34 DEBUG rdfsolve.parser: Starting endpoint discovery process...
+2025-11-28 11:25:12 DEBUG rdfsolve.parser: Starting endpoint discovery process...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:34 DEBUG rdfsolve.parser: Endpoint: https://bio2rdf.org/sparql
+<pre>2025-11-28 11:25:12 DEBUG rdfsolve.parser: Endpoint: https://bio2rdf.org/sparql
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:34 DEBUG rdfsolve.parser: Dataset: sider
+<pre>2025-11-28 11:25:12 DEBUG rdfsolve.parser: Dataset: sider
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:34 DEBUG rdfsolve.parser:  Provided graph URIs: ['http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3']
+<pre>2025-11-28 11:25:12 DEBUG rdfsolve.parser:  Provided graph URIs: ['http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3']
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:34 DEBUG rdfsolve.parser: Settings: prefer_existing=True, exclude_graphs=True
+<pre>2025-11-28 11:25:12 DEBUG rdfsolve.parser: Settings: prefer_existing=True, exclude_graphs=True
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:34 DEBUG rdfsolve.parser: Validating provided graph URIs...
+<pre>2025-11-28 11:25:12 DEBUG rdfsolve.parser: Validating provided graph URIs...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:35 DEBUG rdfsolve.parser: Step 1: Discovering existing VoID graphs...
+<pre>2025-11-28 11:25:13 DEBUG rdfsolve.parser: Step 1: Discovering existing VoID graphs...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:35 DEBUG rdfsolve.parser:  Starting chunked VoID graph discovery for https://bio2rdf.org/sparql
+<pre>2025-11-28 11:25:13 DEBUG rdfsolve.parser:  Starting chunked VoID graph discovery for https://bio2rdf.org/sparql
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:35 DEBUG rdfsolve.parser: Starting VoID graph discovery with pagination...
+<pre>2025-11-28 11:25:13 DEBUG rdfsolve.parser: Starting VoID graph discovery with pagination...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:35 INFO rdfsolve.parser: Discovering VoID candidate graphs with chunked approach
+<pre>2025-11-28 11:25:13 INFO rdfsolve.parser: Discovering VoID candidate graphs with chunked approach
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:04:35 DEBUG rdfsolve.parser: Executing chunked query: offset=0, limit=50
+<pre>2025-11-28 11:25:13 DEBUG rdfsolve.parser: Executing chunked query: offset=0, limit=50
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:05:35 WARNING rdfsolve.parser: Query attempt 1 failed: HTTP Error 504: Gateway Time-out
+<pre>2025-11-28 11:26:14 WARNING rdfsolve.parser: Query attempt 1 failed: HTTP Error 504: Gateway Time-out
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:05:35 DEBUG rdfsolve.parser: Query:
+<pre>2025-11-28 11:26:14 DEBUG rdfsolve.parser: Query:
 
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g {
@@ -8226,21 +7998,21 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:05:35 INFO rdfsolve.parser: Retrying after 1.1s (attempt 2/4)
+<pre>2025-11-28 11:26:14 INFO rdfsolve.parser: Retrying after 1.0s (attempt 2/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:06:37 WARNING rdfsolve.parser: Query attempt 2 failed: HTTP Error 504: Gateway Time-out
+<pre>2025-11-28 11:27:15 WARNING rdfsolve.parser: Query attempt 2 failed: HTTP Error 504: Gateway Time-out
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:06:37 DEBUG rdfsolve.parser: Query:
+<pre>2025-11-28 11:27:15 DEBUG rdfsolve.parser: Query:
 
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g {
@@ -8262,21 +8034,21 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:06:37 INFO rdfsolve.parser: Retrying after 2.0s (attempt 3/4)
+<pre>2025-11-28 11:27:15 INFO rdfsolve.parser: Retrying after 2.1s (attempt 3/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:07:40 WARNING rdfsolve.parser: Query attempt 3 failed: HTTP Error 504: Gateway Time-out
+<pre>2025-11-28 11:28:18 WARNING rdfsolve.parser: Query attempt 3 failed: HTTP Error 504: Gateway Time-out
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:07:40 DEBUG rdfsolve.parser: Query:
+<pre>2025-11-28 11:28:18 DEBUG rdfsolve.parser: Query:
 
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g {
@@ -8298,21 +8070,21 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:07:40 INFO rdfsolve.parser: Retrying after 4.3s (attempt 4/4)
+<pre>2025-11-28 11:28:18 INFO rdfsolve.parser: Retrying after 4.3s (attempt 4/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 WARNING rdfsolve.parser: Query attempt 4 failed: HTTP Error 504: Gateway Time-out
+<pre>2025-11-28 11:29:23 WARNING rdfsolve.parser: Query attempt 4 failed: HTTP Error 504: Gateway Time-out
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser: Query:
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser: Query:
 
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g {
@@ -8334,42 +8106,42 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 ERROR rdfsolve.parser: Query failed after 4 attempts
+<pre>2025-11-28 11:29:23 ERROR rdfsolve.parser: Query failed after 4 attempts
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 WARNING rdfsolve.parser: Chunk query failed at offset 0
+<pre>2025-11-28 11:29:23 WARNING rdfsolve.parser: Chunk query failed at offset 0
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser: Query error details:
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser: Query error details:
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser:    • Error type: HTTPError
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser:    • Error type: HTTPError
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser:    • Error message: HTTP Error 504: Gateway Time-out
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser:    • Error message: HTTP Error 504: Gateway Time-out
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser:    • Query: 
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser:    • Query: 
 
             SELECT DISTINCT ?g WHERE {
                 GRAPH ?g {
@@ -8391,91 +8163,91 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser: Found 0 candidate VoID graphs
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser: Found 0 candidate VoID graphs
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser: No candidate VoID graphs found
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser: No candidate VoID graphs found
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser: Discovery result: found=False
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser: Discovery result: found=False
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser: Found 0 graphs with VoID data
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser: Found 0 graphs with VoID data
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 INFO rdfsolve.parser: No suitable VoID found; generating from queries...
+<pre>2025-11-28 11:29:23 INFO rdfsolve.parser: No suitable VoID found; generating from queries...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser: Step 2: Generating new VoID from SPARQL queries...
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser: Step 2: Generating new VoID from SPARQL queries...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser: Generation settings: counts=True, offset_limit_steps=300
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser: Generation settings: counts=True, offset_limit_steps=300
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser: Output path: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/sider_generated_void.ttl
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser: Output path: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/sider_generated_void.ttl
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:08:44 DEBUG rdfsolve.parser: Starting VoID generation process...
+<pre>2025-11-28 11:29:23 DEBUG rdfsolve.parser: Starting VoID generation process...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:09:01 INFO rdfsolve.parser: Successfully extracted 189 RDF triples
+<pre>2025-11-28 11:29:43 INFO rdfsolve.parser: Successfully extracted 189 RDF triples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:09:01 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/sider_generated_void.ttl
+<pre>2025-11-28 11:29:43 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/sider_generated_void.ttl
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:09:01 DEBUG rdfsolve.parser: VoID generation completed
+<pre>2025-11-28 11:29:43 DEBUG rdfsolve.parser: VoID generation completed
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/cache/sider_voidparser.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/cache/sider_voidparser.pkl
 </pre>
 </div>
 </div>
@@ -8565,8 +8337,8 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/cache/sider_jsonld_schema.pkl
-JSON-LD Schema saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/sider_schema.jsonld
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/cache/sider_jsonld_schema.pkl
+JSON-LD Schema saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/sider_schema.jsonld
 
 Schema Summary:
    • Prefixes: 7
@@ -8733,13 +8505,13 @@ Schema Patterns Preview (43 total):
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/cache/sider_frequencies_basic.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/cache/sider_frequencies_basic.pkl
 
 Pattern Coverage Analysis:
    • Total patterns: 43
    • Average coverage: 50.0%
    • High coverage (&gt;50%): 21
-   • Exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/sider_pattern_coverage.csv
+   • Exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/sider_pattern_coverage.csv
 
 Sample Coverage Data:
 </pre>
@@ -8901,7 +8673,127 @@ Name: coverage_percent, dtype: float64</pre>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 12:11:10 INFO rdfsolve.parser: Total instances collected: 1579003
+<pre>2025-11-28 11:30:22 WARNING rdfsolve.parser: Query attempt 1 failed: &lt;urlopen error [Errno -5] No address associated with hostname&gt;
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>WARNING:rdfsolve.parser:Query attempt 1 failed: &lt;urlopen error [Errno -5] No address associated with hostname&gt;
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-11-28 11:30:22 DEBUG rdfsolve.parser: Query:
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH &lt;http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3&gt; {
+                            ?s &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#type&gt; ?o .
+                            ?s a &lt;http://bio2rdf.org/stitch_vocabulary:Resource&gt; .
+                            FILTER(isURI(?o) &amp;&amp; !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Query:
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH &lt;http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3&gt; {
+                            ?s &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#type&gt; ?o .
+                            ?s a &lt;http://bio2rdf.org/stitch_vocabulary:Resource&gt; .
+                            FILTER(isURI(?o) &amp;&amp; !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-11-28 11:30:22 INFO rdfsolve.parser: Retrying after 1.1s (attempt 2/4)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Retrying after 1.1s (attempt 2/4)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-11-28 11:30:24 WARNING rdfsolve.parser: Query attempt 2 failed: &lt;urlopen error [Errno -3] Temporary failure in name resolution&gt;
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>WARNING:rdfsolve.parser:Query attempt 2 failed: &lt;urlopen error [Errno -3] Temporary failure in name resolution&gt;
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-11-28 11:30:24 DEBUG rdfsolve.parser: Query:
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH &lt;http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3&gt; {
+                            ?s &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#type&gt; ?o .
+                            ?s a &lt;http://bio2rdf.org/stitch_vocabulary:Resource&gt; .
+                            FILTER(isURI(?o) &amp;&amp; !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Query:
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH &lt;http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3&gt; {
+                            ?s &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#type&gt; ?o .
+                            ?s a &lt;http://bio2rdf.org/stitch_vocabulary:Resource&gt; .
+                            FILTER(isURI(?o) &amp;&amp; !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-11-28 11:30:24 INFO rdfsolve.parser: Retrying after 2.1s (attempt 3/4)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Retrying after 2.1s (attempt 3/4)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-11-28 11:32:50 INFO rdfsolve.parser: Total instances collected: 1579003
 </pre>
 </div>
 </div>
@@ -8915,7 +8807,7 @@ Name: coverage_percent, dtype: float64</pre>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/cache/sider_frequencies_with_instances.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/cache/sider_frequencies_with_instances.pkl
 Frequencies DataFrame: 43 shapes
 Instances DataFrame: 1579003 subject-object pairs
 Memory usage - Frequencies: 33.1 KB
@@ -9049,9 +8941,9 @@ Memory usage - Frequencies: 33.1 KB
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <div> <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script> <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="7d80ebb2-4748-49e0-82ef-e8792db90120" style="height:1318px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("7d80ebb2-4748-49e0-82ef-e8792db90120")) {                    Plotly.newPlot(                        "7d80ebb2-4748-49e0-82ef-e8792db90120",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQB+F61G4nlZAH4XrUbieVkAfhetRuJ5WQB+F61G4nlZAAAAAAAAASUAK16NwPQojQArXo3A9CiNACtejcD0KI0AK16NwPQojQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","90.5%","90.5%","90.5%","90.5%","50.0%","9.5%","9.5%","9.5%","9.5%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQB+F61G4nlZAH4XrUbieVkAfhetRuJ5WQB+F61G4nlZAAAAAAAAASUAK16NwPQojQArXo3A9CiNACtejcD0KI0AK16NwPQojQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"y":["\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:stitch-stereo\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003edcterms:Dataset\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcat:distribution\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edcat:Distribution\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:meddra_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:umls_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:indication\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:meddra_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:stitch-flat\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:indication\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:side-effect\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:umls_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:side-effect\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:drug\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:side-effect\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:side-effect\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:umls_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:stitch-stereo\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:stitch-flat\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003edcat:Distribution\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:source\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edcat:Distribution\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:drug\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:indication\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:indication\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:meddra_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:meddra_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:meddra_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003edcat:Distribution\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:umls_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:umls_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for sider","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":1318,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "sider_schema_coverage", "height": 1318, "width": 600, "scale": 1}}                    ).then(function(){
+<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="ff6b0dd2-f629-477f-acb9-7c864e7dad3c" style="height:1318px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("ff6b0dd2-f629-477f-acb9-7c864e7dad3c")) {                    Plotly.newPlot(                        "ff6b0dd2-f629-477f-acb9-7c864e7dad3c",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQB+F61G4nlZAH4XrUbieVkAfhetRuJ5WQB+F61G4nlZAAAAAAAAASUAK16NwPQojQArXo3A9CiNACtejcD0KI0AK16NwPQojQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","90.5%","90.5%","90.5%","90.5%","50.0%","9.5%","9.5%","9.5%","9.5%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQB+F61G4nlZAH4XrUbieVkAfhetRuJ5WQB+F61G4nlZAAAAAAAAASUAK16NwPQojQArXo3A9CiNACtejcD0KI0AK16NwPQojQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"y":["\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:stitch-stereo\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003edcterms:Dataset\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcat:distribution\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edcat:Distribution\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:meddra_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:umls_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:indication\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:meddra_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:stitch-flat\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:indication\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:side-effect\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:umls_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:side-effect\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:drug\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:side-effect\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:side-effect\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:umls_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:stitch-stereo\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:stitch-flat\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003edcat:Distribution\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:source\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edcat:Distribution\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:drug\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:indication\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:sider_vocabulary:indication\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:meddra_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Drug-Indication-Association\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:stitch_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:meddra_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:meddra_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003edcat:Distribution\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:umls_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:umls_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:sider_vocabulary:Side-Effect\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for sider","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":1318,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "sider_schema_coverage", "height": 1318, "width": 600, "scale": 1}}                    ).then(function(){
                             
-var gd = document.getElementById('7d80ebb2-4748-49e0-82ef-e8792db90120');
+var gd = document.getElementById('ff6b0dd2-f629-477f-acb9-7c864e7dad3c');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
@@ -9135,7 +9027,7 @@ if (outputEl) {{
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>LinkML YAML saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/sider_linkml_schema.yaml
+<pre>LinkML YAML saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/sider_linkml_schema.yaml
 </pre>
 </div>
 </div>
@@ -9293,8 +9185,8 @@ OwlObjectProperty ||--|o RdfsClass : "rdf_type"
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/sider_schema.csv
-JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/sider/sider_schema.json
+<pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/sider_schema.csv
+JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/sider/sider_schema.json
 </pre>
 </div>
 </div>

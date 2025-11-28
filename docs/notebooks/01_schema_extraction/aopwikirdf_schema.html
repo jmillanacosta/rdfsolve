@@ -7511,234 +7511,6 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2c1c8809">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<style>
-
-/* Main content area */
-.jp-RenderedHTMLCommon {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-    line-height: 1.6;
-    color: #24292f;
-}
-
-/* Headers */
-.jp-RenderedHTMLCommon h1 {
-    border-bottom: 1px solid #d1d9e0;
-    padding-bottom: 8px;
-    margin-bottom: 16px;
-    font-weight: 600;
-    color: #1f2328;
-}
-
-.jp-RenderedHTMLCommon h2 {
-    border-bottom: 1px solid #d8dee4;
-    padding-bottom: 6px;
-    margin-top: 24px;
-    margin-bottom: 16px;
-    font-weight: 600;
-    color: #1f2328;
-}
-
-.jp-RenderedHTMLCommon h3 {
-    margin-top: 20px;
-    margin-bottom: 12px;
-    font-weight: 600;
-    color: #1f2328;
-}
-
-/* Code blocks and inline code */
-.jp-RenderedHTMLCommon code {
-    background-color: #f6f8fa;
-    border-radius: 6px;
-    padding: 2px 6px;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 85%;
-    color: #1f2328;
-}
-
-.jp-RenderedHTMLCommon pre {
-    background-color: #f6f8fa;
-    border-radius: 6px;
-    padding: 16px;
-    overflow: auto;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 85%;
-    line-height: 1.45;
-}
-
-/* Lists */
-.jp-RenderedHTMLCommon ul, .jp-RenderedHTMLCommon ol {
-    margin-bottom: 16px;
-}
-
-.jp-RenderedHTMLCommon li {
-    margin-bottom: 4px;
-}
-
-/* Links */
-.jp-RenderedHTMLCommon a {
-    color: #0969da;
-    text-decoration: none;
-}
-
-.jp-RenderedHTMLCommon a:hover {
-    text-decoration: underline;
-}
-
-/* Tables */
-.jp-RenderedHTMLCommon table {
-    border-collapse: collapse;
-    border-spacing: 0;
-    width: 100%;
-    margin-bottom: 16px;
-}
-
-.jp-RenderedHTMLCommon th,
-.jp-RenderedHTMLCommon td {
-    padding: 6px 13px;
-    border: 1px solid #d1d9e0;
-    text-align: left;
-}
-
-.jp-RenderedHTMLCommon th {
-    background-color: #f6f8fa;
-    font-weight: 600;
-}
-
-.jp-RenderedHTMLCommon tr:nth-child(2n) {
-    background-color: #f6f8fa;
-}
-
-/* Blockquotes */
-.jp-RenderedHTMLCommon blockquote {
-    border-left: 4px solid #d1d9e0;
-    padding-left: 16px;
-    margin-left: 0;
-    color: #656d76;
-}
-
-/* Emphasized text */
-.jp-RenderedHTMLCommon strong {
-    font-weight: 600;
-}
-
-.jp-RenderedHTMLCommon em {
-    font-style: italic;
-}
-
-/* Output areas - DataFrames and plots */
-.jp-OutputArea-output table {
-    font-size: 12px;
-    border-collapse: collapse;
-    margin: 8px 0;
-}
-
-.jp-OutputArea-output th {
-    background-color: #f1f3f4;
-    padding: 8px;
-    text-align: left;
-    font-weight: 500;
-    border: 1px solid #dadce0;
-}
-
-.jp-OutputArea-output td {
-    padding: 6px 8px;
-    border: 1px solid #dadce0;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Status indicators */
-.status-success {
-    color: #1a7f37;
-    font-weight: 500;
-}
-
-.status-warning {
-    color: #9a6700;
-    font-weight: 500;
-}
-
-.status-error {
-    color: #d1242f;
-    font-weight: 500;
-}
-
-/* Schema pattern labels */
-.schema-pattern {
-    font-family: 'SFMono-Regular', Consolas, monospace;
-    background-color: #f6f8fa;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-size: 90%;
-}
-
-/* Export links styling */
-.exports-list a {
-    display: inline-block;
-    margin-right: 12px;
-    padding: 4px 8px;
-    background-color: #f3f4f6;
-    border-radius: 6px;
-    border: 1px solid #d1d9e0;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.exports-list a:hover {
-    background-color: #e1e4e8;
-    text-decoration: none;
-}
-
-/* Plotly chart container */
-.plotly-graph-div {
-    border: 1px solid #e1e4e8;
-    border-radius: 6px;
-    margin: 16px 0;
-}
-
-/* Cache status indicators */
-.cache-info {
-    font-family: 'SFMono-Regular', Consolas, monospace;
-    font-size: 12px;
-    color: #656d76;
-    background-color: #f6f8fa;
-    padding: 8px;
-    border-radius: 6px;
-    border-left: 3px solid #0969da;
-}
-
-/* Notebook section dividers */
-.section-divider {
-    height: 1px;
-    background: linear-gradient(to right, transparent, #d1d9e0, transparent);
-    margin: 32px 0;
-}
-
-/* Print styles */
-@media print {
-    .jp-RenderedHTMLCommon {
-        color: #000;
-    }
-    
-    .jp-RenderedHTMLCommon a {
-        color: #000;
-        text-decoration: underline;
-    }
-}
-</style>
-</div>
-</div>
-</div>
-</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d1d16b10">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -7757,12 +7529,12 @@ a.anchor-link {
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="Exports">Exports<a class="anchor-link" href="#Exports">¶</a></h2><ul>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/aopwikirdf_schema/aopwikirdf_schema.jsonld">JSON-LD Schema</a> (primary output)</li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/aopwikirdf_schema/aopwikirdf_schema.nq">N-Quads RDF</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/aopwikirdf_schema/aopwikirdf_generated_void.ttl">VoID Graph</a> for the dataset in its original source</li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/aopwikirdf_schema/aopwikirdf_pattern_coverage.csv">Coverage report</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/aopwikirdf_schema/aopwikirdf_linkml_schema.yaml">LinkML Schema</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/aopwikirdf_schema/aopwikirdfinstances.parquet">Full parquet entity dataframe</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/aopwikirdf_schema/aopwikirdf_schema.jsonld">JSON-LD Schema</a> (primary output)</li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/aopwikirdf_schema/aopwikirdf_schema.nq">N-Quads RDF</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/aopwikirdf_schema/aopwikirdf_generated_void.ttl">VoID Graph</a> for the dataset in its original source</li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/aopwikirdf_schema/aopwikirdf_pattern_coverage.csv">Coverage report</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/aopwikirdf_schema/aopwikirdf_linkml_schema.yaml">LinkML Schema</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/aopwikirdf_schema/aopwikirdfinstances.parquet">Full parquet entity dataframe</a></li>
 </ul>
 </div>
 </div>
@@ -7786,7 +7558,7 @@ a.anchor-link {
 
 <span class="c1"># Setup paths</span>
 <span class="n">working_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-<span class="n">exports_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">working_path</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="s2">"schema_extraction"</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
+<span class="n">exports_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">working_path</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">"docs"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="s2">"schema_extraction"</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
 <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -7837,7 +7609,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:56 INFO aopwikirdf: Logging configured for aopwikirdf
+<pre>2025-11-28 10:21:16 INFO aopwikirdf: Logging configured for aopwikirdf
 </pre>
 </div>
 </div>
@@ -7996,14 +7768,21 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>No cache directory found
+<pre>Cache directory: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/cache
+  aopwikirdf_frequencies_basic.pkl (0.03 MB)
+  aopwikirdf_jsonld_schema.pkl (0.00 MB)
+  aopwikirdf_frequencies_with_instances.pkl (8.66 MB)
+  aopwikirdf_voidparser.pkl (0.06 MB)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>[]</pre>
+<pre>['aopwikirdf_frequencies_basic.pkl',
+ 'aopwikirdf_jsonld_schema.pkl',
+ 'aopwikirdf_frequencies_with_instances.pkl',
+ 'aopwikirdf_voidparser.pkl']</pre>
 </div>
 </div>
 </div>
@@ -8119,300 +7898,8 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>VoidParser not found in cache, generating...
-2025-11-24 10:53:58 DEBUG rdfsolve.parser: Starting endpoint discovery process...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:58 DEBUG rdfsolve.parser: Endpoint: https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:58 DEBUG rdfsolve.parser: Dataset: aopwikirdf
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:58 DEBUG rdfsolve.parser:  Provided graph URIs: ['http://aopwiki.org/']
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:58 DEBUG rdfsolve.parser: Settings: prefer_existing=True, exclude_graphs=True
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:58 DEBUG rdfsolve.parser: Validating provided graph URIs...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:59 DEBUG rdfsolve.parser: Step 1: Discovering existing VoID graphs...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:59 DEBUG rdfsolve.parser:  Starting chunked VoID graph discovery for https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:59 DEBUG rdfsolve.parser: Starting VoID graph discovery with pagination...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:59 INFO rdfsolve.parser: Discovering VoID candidate graphs with chunked approach
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:53:59 DEBUG rdfsolve.parser: Executing chunked query: offset=0, limit=50
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 INFO rdfsolve.parser: Candidate VoID graph at servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Fetched chunk: 1 results (total: 1)
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Partial chunk received, pagination complete
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Found 1 candidate VoID graphs
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Starting detailed VoID content analysis...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Analyzing graph 1/1: servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Discovering partitions in servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Class partition query template: 
-
-                    SELECT DISTINCT ?cp WHERE {
-                        GRAPH &lt;servicedescription&gt; {
-                            ?cp &lt;http://rdfs.org/ns/void#class&gt; ?class .
-                        }...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 WARNING rdfsolve.parser: Error analyzing VoID partitions in servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Full error details:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser:    • Error type: ValueError
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser:    • Error message: unexpected '{' in field name
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser:    • Graph URI: servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 WARNING rdfsolve.parser: Possible SPARQL syntax issue with URI: servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: VoID discovery analysis complete
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser:  Results summary:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser:    • Total candidate graphs: 1
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser:    • Graphs with VoID data: 0
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser:    • Has VoID descriptions: False
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 INFO rdfsolve.parser: No VoID data found in any candidate graphs
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Discovery result: found=False
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Found 0 graphs with VoID data
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 INFO rdfsolve.parser: No suitable VoID found; generating from queries...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Step 2: Generating new VoID from SPARQL queries...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Generation settings: counts=True, offset_limit_steps=300
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Output path: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/aopwikirdf_generated_void.ttl
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:00 DEBUG rdfsolve.parser: Starting VoID generation process...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:04 INFO rdfsolve.parser: Successfully extracted 346 RDF triples
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:04 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/aopwikirdf_generated_void.ttl
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:54:04 DEBUG rdfsolve.parser: VoID generation completed
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/cache/aopwikirdf_voidparser.pkl
+<pre>Loaded cached data from: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/cache/aopwikirdf_voidparser.pkl
+Loaded VoidParser from cache
 </pre>
 </div>
 </div>
@@ -8495,21 +7982,15 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Generating standards-compliant JSON-LD schema...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/cache/aopwikirdf_jsonld_schema.pkl
-JSON-LD Schema saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/aopwikirdf_schema.jsonld
+<pre>Loaded cached data from: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/cache/aopwikirdf_jsonld_schema.pkl
+Loaded JSON-LD schema from cache
+JSON-LD Schema saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/aopwikirdf_schema.jsonld
 
 Schema Summary:
    • Prefixes: 14
    • Resources: 16
 
-Schema Patterns Preview (96 total):
+Schema Patterns Preview (0 total):
 </pre>
 </div>
 </div>
@@ -8534,60 +8015,9 @@ Schema Patterns Preview (96 total):
 <thead>
 <tr style="text-align: right;">
 <th></th>
-<th>subject_class</th>
-<th>subject_uri</th>
-<th>property</th>
-<th>property_uri</th>
-<th>object_class</th>
-<th>object_uri</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<th>0</th>
-<td>aopo:KeyEventRelationship</td>
-<td>http://aopkb.org/aop_ontology#KeyEventRelation...</td>
-<td>foaf:page</td>
-<td>http://xmlns.com/foaf/0.1/page</td>
-<td>aopo:KeyEventRelationship</td>
-<td>http://aopkb.org/aop_ontology#KeyEventRelation...</td>
-</tr>
-<tr>
-<th>1</th>
-<td>aopo:KeyEvent</td>
-<td>http://aopkb.org/aop_ontology#KeyEvent</td>
-<td>foaf:page</td>
-<td>http://xmlns.com/foaf/0.1/page</td>
-<td>aopo:KeyEvent</td>
-<td>http://aopkb.org/aop_ontology#KeyEvent</td>
-</tr>
-<tr>
-<th>2</th>
-<td>aopo:AdverseOutcomePathway</td>
-<td>http://aopkb.org/aop_ontology#AdverseOutcomePa...</td>
-<td>foaf:page</td>
-<td>http://xmlns.com/foaf/0.1/page</td>
-<td>aopo:AdverseOutcomePathway</td>
-<td>http://aopkb.org/aop_ontology#AdverseOutcomePa...</td>
-</tr>
-<tr>
-<th>3</th>
-<td>ncit:C54571</td>
-<td>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus...</td>
-<td>foaf:page</td>
-<td>http://xmlns.com/foaf/0.1/page</td>
-<td>ncit:C54571</td>
-<td>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus...</td>
-</tr>
-<tr>
-<th>4</th>
-<td>aopo:AdverseOutcomePathway</td>
-<td>http://aopkb.org/aop_ontology#AdverseOutcomePa...</td>
-<td>ncit:C54571</td>
-<td>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus...</td>
-<td>ncit:C54571</td>
-<td>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus...</td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -8663,20 +8093,14 @@ Schema Patterns Preview (96 total):
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Calculating schema pattern frequencies...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/cache/aopwikirdf_frequencies_basic.pkl
+<pre>Loaded cached data from: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/cache/aopwikirdf_frequencies_basic.pkl
+Loaded frequencies DataFrame from cache
 
 Pattern Coverage Analysis:
    • Total patterns: 96
    • Average coverage: 58.3%
    • High coverage (&gt;50%): 56
-   • Exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/aopwikirdf_pattern_coverage.csv
+   • Exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/aopwikirdf_pattern_coverage.csv
 
 Sample Coverage Data:
 </pre>
@@ -8711,38 +8135,38 @@ Sample Coverage Data:
 </thead>
 <tbody>
 <tr>
-<th>0</th>
-<td>aopo:KeyEventRelationship</td>
-<td>foaf:page</td>
-<td>aopo:KeyEventRelationship</td>
-<td>100.0</td>
-</tr>
-<tr>
-<th>1</th>
+<th>79</th>
 <td>aopo:KeyEvent</td>
-<td>foaf:page</td>
+<td>rdfs:seeAlso</td>
 <td>aopo:KeyEvent</td>
 <td>100.0</td>
 </tr>
 <tr>
-<th>2</th>
+<th>78</th>
 <td>aopo:AdverseOutcomePathway</td>
-<td>foaf:page</td>
+<td>rdfs:seeAlso</td>
 <td>aopo:AdverseOutcomePathway</td>
 <td>100.0</td>
 </tr>
 <tr>
-<th>3</th>
-<td>ncit:C54571</td>
-<td>foaf:page</td>
-<td>ncit:C54571</td>
+<th>77</th>
+<td>aopo:KeyEventRelationship</td>
+<td>rdfs:seeAlso</td>
+<td>aopo:KeyEventRelationship</td>
 <td>100.0</td>
 </tr>
 <tr>
-<th>59</th>
-<td>ncbitaxon:131567</td>
-<td>dc:identifier</td>
-<td>ncbitaxon:131567</td>
+<th>74</th>
+<td>aopo:KeyEventRelationship</td>
+<td>aopo:has_downstream_key_event</td>
+<td>aopo:KeyEvent</td>
+<td>100.0</td>
+</tr>
+<tr>
+<th>64</th>
+<td>cheminf:000446</td>
+<td>dcterms:isPartOf</td>
+<td>ncit:C54571</td>
 <td>100.0</td>
 </tr>
 </tbody>
@@ -8831,32 +8255,12 @@ Name: coverage_percent, dtype: float64</pre>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Collecting frequency data and instances...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 10:56:52 INFO rdfsolve.parser: Total instances collected: 105304
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>INFO:rdfsolve.parser:Total instances collected: 105304
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/cache/aopwikirdf_frequencies_with_instances.pkl
+<pre>Loaded cached data from: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/cache/aopwikirdf_frequencies_with_instances.pkl
+Loaded frequencies and instances DataFrames from cache
 Frequencies DataFrame: 96 shapes
 Instances DataFrame: 105304 subject-object pairs
 Memory usage - Frequencies: 70.3 KB
-Memory usage - Instances: 19957.4 KB
+Memory usage - Instances: 19953.2 KB
 </pre>
 </div>
 </div>
@@ -8980,9 +8384,9 @@ Memory usage - Instances: 19957.4 KB
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <div> <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script> <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="e7a45a17-4722-49d9-ac30-a04762ff4283" style="height:2000px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("e7a45a17-4722-49d9-ac30-a04762ff4283")) {                    Plotly.newPlot(                        "e7a45a17-4722-49d9-ac30-a04762ff4283",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQHE9CtejwFhAcT0K16PAWECF61G4HqVXQIXrUbgepVdAhetRuB6lV0CF61G4HqVXQNejcD0KN1dA16NwPQo3V0CPwvUoXP9WQNejcD0Kt1ZA16NwPQq3VkDhehSuR2FWQK5H4XoULlZAhetRuB61VUDNzMzMzDxVQLgehetR6FRAAAAAAADQVEAAAAAAANBUQOF6FK5HgVRA4XoUrkeBVEB7FK5H4WpUQHE9Ctej0FFA9ihcj8JlUUBxPQrXoxBMQFK4HoXr8UtAUrgehevxS0B7FK5H4XpKQHsUrkfhekpAXI\u002fC9SjcSUBcj8L1KNxJQOF6FK5HIUhA7FG4HoXLRkD2KFyPwrVFQBSuR+F6lERAcT0K16NQQEC4HoXrUXg\u002fQLgehetReD9ASOF6FK4HO0AUrkfhehQ6QBSuR+F6FDpAuB6F61F4OUDsUbgehWs3QOxRuB6FazdAexSuR+F6NUBI4XoUrgc1QDMzMzMzMypApHA9CtejKEC4HoXrUbgnQLgehetRuCdAXI\u002fC9ShcJ0ApXI\u002fC9SgnQD0K16NwPSFAPQrXo3A9IUCuR+F6FK4ZQK5H4XoUrhlArkfhehSuGUDhehSuR+EVQM3MzMzMzBBA7FG4HoXrDUAzMzMzMzMHQIXrUbgehfc\u002f7FG4HoXr9T\u002fNzMzMzMzwP6RwPQrXo\u002fA\u002fH4XrUbge7T\u002fNzMzMzMzsP3sUrkfheuQ\u002f9ihcj8L12D+kcD0K16PAP7gehetRuK4\u002f"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","99.0%","99.0%","94.6%","94.6%","94.6%","94.6%","92.9%","92.9%","92.0%","90.9%","90.9%","89.5%","88.7%","86.8%","85.0%","83.6%","83.2%","83.2%","82.0%","82.0%","81.7%","71.3%","69.6%","56.1%","55.9%","55.9%","53.0%","53.0%","51.7%","51.7%","48.3%","45.6%","43.4%","41.2%","32.6%","31.5%","31.5%","27.0%","26.1%","26.1%","25.5%","23.4%","23.4%","21.5%","21.0%","13.1%","12.3%","11.9%","11.9%","11.7%","11.6%","8.6%","8.6%","6.4%","6.4%","6.4%","5.5%","4.2%","3.7%","2.9%","1.5%","1.4%","1.1%","1.0%","0.9%","0.9%","0.6%","0.4%","0.1%","0.1%"],"textposition":["inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQHE9CtejwFhAcT0K16PAWECF61G4HqVXQIXrUbgepVdAhetRuB6lV0CF61G4HqVXQNejcD0KN1dA16NwPQo3V0CPwvUoXP9WQNejcD0Kt1ZA16NwPQq3VkDhehSuR2FWQK5H4XoULlZAhetRuB61VUDNzMzMzDxVQLgehetR6FRAAAAAAADQVEAAAAAAANBUQOF6FK5HgVRA4XoUrkeBVEB7FK5H4WpUQHE9Ctej0FFA9ihcj8JlUUBxPQrXoxBMQFK4HoXr8UtAUrgehevxS0B7FK5H4XpKQHsUrkfhekpAXI\u002fC9SjcSUBcj8L1KNxJQOF6FK5HIUhA7FG4HoXLRkD2KFyPwrVFQBSuR+F6lERAcT0K16NQQEC4HoXrUXg\u002fQLgehetReD9ASOF6FK4HO0AUrkfhehQ6QBSuR+F6FDpAuB6F61F4OUDsUbgehWs3QOxRuB6FazdAexSuR+F6NUBI4XoUrgc1QDMzMzMzMypApHA9CtejKEC4HoXrUbgnQLgehetRuCdAXI\u002fC9ShcJ0ApXI\u002fC9SgnQD0K16NwPSFAPQrXo3A9IUCuR+F6FK4ZQK5H4XoUrhlArkfhehSuGUDhehSuR+EVQM3MzMzMzBBA7FG4HoXrDUAzMzMzMzMHQIXrUbgehfc\u002f7FG4HoXr9T\u002fNzMzMzMzwP6RwPQrXo\u002fA\u002fH4XrUbge7T\u002fNzMzMzMzsP3sUrkfheuQ\u002f9ihcj8L12D+kcD0K16PAP7gehetRuK4\u002f"},"y":["\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003encbitaxon:131567\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encbitaxon:131567\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_upstream_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_downstream_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003ego:0008150\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000567\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000567\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000140\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000405\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000405\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000140\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000407\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000407\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1033\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_adverse_outcome\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasProcess\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_molecular_initiating_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000412\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000412\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000409\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000409\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_key_event_relationship\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasBiologicalEvent\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_chemical_entity\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_chemical_entity\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000406\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000406\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000408\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000408\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ego:0008150\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003encit:C54571\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003encbitaxon:131567\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encbitaxon:131567\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1033\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000564\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000564\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003ego:0008150\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasProcess\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ego:0008150\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for aopwikirdf","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":2000,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "aopwikirdf_schema_coverage", "height": 2000, "width": 600, "scale": 1}}                    ).then(function(){
+<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="fbce1a3e-55a5-4a21-a50c-e4fe04c25d6a" style="height:2000px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("fbce1a3e-55a5-4a21-a50c-e4fe04c25d6a")) {                    Plotly.newPlot(                        "fbce1a3e-55a5-4a21-a50c-e4fe04c25d6a",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQHE9CtejwFhAcT0K16PAWECF61G4HqVXQIXrUbgepVdAhetRuB6lV0CF61G4HqVXQNejcD0KN1dA16NwPQo3V0CPwvUoXP9WQNejcD0Kt1ZA16NwPQq3VkDhehSuR2FWQK5H4XoULlZAhetRuB61VUDNzMzMzDxVQLgehetR6FRAAAAAAADQVEAAAAAAANBUQOF6FK5HgVRA4XoUrkeBVEB7FK5H4WpUQHE9Ctej0FFA9ihcj8JlUUBxPQrXoxBMQFK4HoXr8UtAUrgehevxS0B7FK5H4XpKQHsUrkfhekpAXI\u002fC9SjcSUBcj8L1KNxJQOF6FK5HIUhA7FG4HoXLRkD2KFyPwrVFQBSuR+F6lERAcT0K16NQQEC4HoXrUXg\u002fQLgehetReD9ASOF6FK4HO0AUrkfhehQ6QBSuR+F6FDpAuB6F61F4OUDsUbgehWs3QOxRuB6FazdAexSuR+F6NUBI4XoUrgc1QDMzMzMzMypApHA9CtejKEC4HoXrUbgnQLgehetRuCdAXI\u002fC9ShcJ0ApXI\u002fC9SgnQD0K16NwPSFAPQrXo3A9IUCuR+F6FK4ZQK5H4XoUrhlArkfhehSuGUDhehSuR+EVQM3MzMzMzBBA7FG4HoXrDUAzMzMzMzMHQIXrUbgehfc\u002f7FG4HoXr9T\u002fNzMzMzMzwP6RwPQrXo\u002fA\u002fH4XrUbge7T\u002fNzMzMzMzsP3sUrkfheuQ\u002f9ihcj8L12D+kcD0K16PAP7gehetRuK4\u002f"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","99.0%","99.0%","94.6%","94.6%","94.6%","94.6%","92.9%","92.9%","92.0%","90.9%","90.9%","89.5%","88.7%","86.8%","85.0%","83.6%","83.2%","83.2%","82.0%","82.0%","81.7%","71.3%","69.6%","56.1%","55.9%","55.9%","53.0%","53.0%","51.7%","51.7%","48.3%","45.6%","43.4%","41.2%","32.6%","31.5%","31.5%","27.0%","26.1%","26.1%","25.5%","23.4%","23.4%","21.5%","21.0%","13.1%","12.3%","11.9%","11.9%","11.7%","11.6%","8.6%","8.6%","6.4%","6.4%","6.4%","5.5%","4.2%","3.7%","2.9%","1.5%","1.4%","1.1%","1.0%","0.9%","0.9%","0.6%","0.4%","0.1%","0.1%"],"textposition":["inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQHE9CtejwFhAcT0K16PAWECF61G4HqVXQIXrUbgepVdAhetRuB6lV0CF61G4HqVXQNejcD0KN1dA16NwPQo3V0CPwvUoXP9WQNejcD0Kt1ZA16NwPQq3VkDhehSuR2FWQK5H4XoULlZAhetRuB61VUDNzMzMzDxVQLgehetR6FRAAAAAAADQVEAAAAAAANBUQOF6FK5HgVRA4XoUrkeBVEB7FK5H4WpUQHE9Ctej0FFA9ihcj8JlUUBxPQrXoxBMQFK4HoXr8UtAUrgehevxS0B7FK5H4XpKQHsUrkfhekpAXI\u002fC9SjcSUBcj8L1KNxJQOF6FK5HIUhA7FG4HoXLRkD2KFyPwrVFQBSuR+F6lERAcT0K16NQQEC4HoXrUXg\u002fQLgehetReD9ASOF6FK4HO0AUrkfhehQ6QBSuR+F6FDpAuB6F61F4OUDsUbgehWs3QOxRuB6FazdAexSuR+F6NUBI4XoUrgc1QDMzMzMzMypApHA9CtejKEC4HoXrUbgnQLgehetRuCdAXI\u002fC9ShcJ0ApXI\u002fC9SgnQD0K16NwPSFAPQrXo3A9IUCuR+F6FK4ZQK5H4XoUrhlArkfhehSuGUDhehSuR+EVQM3MzMzMzBBA7FG4HoXrDUAzMzMzMzMHQIXrUbgehfc\u002f7FG4HoXr9T\u002fNzMzMzMzwP6RwPQrXo\u002fA\u002fH4XrUbge7T\u002fNzMzMzMzsP3sUrkfheuQ\u002f9ihcj8L12D+kcD0K16PAP7gehetRuK4\u002f"},"y":["\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_downstream_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003encbitaxon:131567\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encbitaxon:131567\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_upstream_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003ego:0008150\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000567\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000567\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000405\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000140\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000405\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000140\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000407\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000407\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1033\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_adverse_outcome\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasProcess\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_molecular_initiating_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000412\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000412\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000409\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000409\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_key_event_relationship\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasBiologicalEvent\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_chemical_entity\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_chemical_entity\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000406\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000406\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000408\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000408\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ego:0008150\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003encit:C54571\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003encbitaxon:131567\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encbitaxon:131567\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1033\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000564\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000564\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003ego:0008150\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasProcess\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ego:0008150\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for aopwikirdf","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":2000,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "aopwikirdf_schema_coverage", "height": 2000, "width": 600, "scale": 1}}                    ).then(function(){
                             
-var gd = document.getElementById('e7a45a17-4722-49d9-ac30-a04762ff4283');
+var gd = document.getElementById('fbce1a3e-55a5-4a21-a50c-e4fe04c25d6a');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
@@ -9066,7 +8470,7 @@ if (outputEl) {{
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>LinkML YAML saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/aopwikirdf_linkml_schema.yaml
+<pre>LinkML YAML saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/aopwikirdf_linkml_schema.yaml
 </pre>
 </div>
 </div>
@@ -9259,8 +8663,8 @@ VoidLinkset ||--|o VoidDataset : "dcat_download_URL"
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/aopwikirdf_schema.csv
-JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/aopwikirdf/aopwikirdf_schema.json
+<pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/aopwikirdf_schema.csv
+JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/aopwikirdf_schema.json
 </pre>
 </div>
 </div>
