@@ -10,6 +10,7 @@ on:
       - 'notebooks/schema_extraction/_schema_template.ipynb'
       - 'notebooks/pydantic_models/_pydantic_template.ipynb'
       - '.github/workflows/make-notebooks.yml'
+      - 'src/**'
   workflow_dispatch:
     inputs:
       max_parallel:
