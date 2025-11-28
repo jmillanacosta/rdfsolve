@@ -34,7 +34,8 @@ def main() -> None:
 @click.option("--no-counts", is_flag=True, help="Skip COUNT aggregations for faster discovery")
 @click.option("--sample-limit", type=int, help="Limit results for faster sampling")
 @click.option(
-    "--offset-limit-steps", type=int, help="Use chunked (paginated) queries with this LIMIT/OFFSET step size"
+    "--offset-limit-steps", type=int,
+    help="Use chunked (paginated) queries with this LIMIT/OFFSET step size"
 )
 def generate(
     endpoint: str,
