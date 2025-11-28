@@ -149,6 +149,11 @@ plugins = [
     "pydantic.mypy",
 ]
 
+[[tool.mypy.overrides]]
+module = "rdfsolve.cli"
+# Click decorators don't have type stubs, so disable decorator checks
+disallow_untyped_decorators = false
+
 # Doc8, see https://doc8.readthedocs.io/en/stable/readme.html#ini-file-usage
 [tool.doc8]
 max-line-length = 120
@@ -228,7 +233,7 @@ ignore = [
 # Parser has legitimate complexity, security warnings, naming conventions for RDF namespaces, docstring formatting, long SPARQL queries, commented code
 "src/rdfsolve/parser.py" = ["C901", "S311", "E722", "B030", "N806", "D205", "E501", "ERA001", "D401", "B904"]
 # CLI needs to bind to all interfaces for server mode, exception chaining not needed for click.Abort
-#"src/rdfsolve/cli.py" = ["S104", "B904"]
+"src/rdfsolve/cli.py" = ["S104", "B904"]
 # Schema utils has intentional bare except for type checking
 "src/rdfsolve/schema_utils.py" = ["E722"]
 # Utils needs timeout parameter but many endpoints don't support it
