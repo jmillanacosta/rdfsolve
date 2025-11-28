@@ -7,14 +7,17 @@ core `VoidParser` class.
 
 from typing import Any, Dict, List, Optional, Union
 
+import pandas as pd
 from rdflib import Graph
 
 from .parser import VoidParser
 
 __all__ = [
     "count_instances",
+    "count_instances_per_class",
     "discover_void_graphs",
     "generate_void_from_endpoint",
+    "graph_to_schema",
     "load_parser_from_file",
     "load_parser_from_graph",
     "to_jsonld_from_file",
@@ -159,3 +162,46 @@ def generate_void_from_endpoint(
         offset_limit_steps=offset_limit_steps,
         exclude_graphs=exclude_graphs,
     )
+
+
+def graph_to_schema(
+    void_graph: Graph,
+    graph_uris: Optional[Union[str, List[str]]] = None,
+    filter_void_admin_nodes: bool = True,
+) -> pd.DataFrame:
+    """Convert a VoID graph to a schema DataFrame.
+
+    Args:
+        void_graph: RDFLib Graph containing VoID data
+        graph_uris: Optional graph URIs to restrict the schema extraction
+        filter_void_admin_nodes: Whether to filter out VoID administrative nodes
+
+    Returns:
+        DataFrame with schema patterns (subject_uri, property_uri, object_uri, etc.)
+    """
+    parser = VoidParser(void_source=void_graph, graph_uris=graph_uris)
+    return parser.to_schema(filter_void_admin_nodes=filter_void_admin_nodes)
+
+
+def count_instances_per_class(
+    endpoint_url: str,
+    graph_uris: Optional[Union[str, List[str]]] = None,
+    sample_limit: Optional[int] = None,
+) -> Dict[str, int]:
+    """Count instances per class in a SPARQL endpoint.
+
+    Simplified wrapper that returns a dict mapping class URI -> count.
+
+    Args:
+        endpoint_url: SPARQL endpoint URL
+        graph_uris: Optional graph URI(s) to restrict the query
+        sample_limit: Optional limit for sampling
+
+    Returns:
+        Dictionary mapping class URIs to instance counts
+    """
+    parser = VoidParser(graph_uris=graph_uris)
+    result = parser.count_instances_per_class(endpoint_url, sample_limit=sample_limit)
+    if isinstance(result, dict):
+        return result
+    return dict(result)  # Convert generator to dict if needed

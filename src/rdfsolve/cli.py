@@ -7,13 +7,14 @@ from typing import Optional
 import click
 
 from .api import (
+    count_instances_per_class,
     discover_void_graphs,
     generate_void_from_endpoint,
+    graph_to_schema,
     load_parser_from_file,
     to_jsonld_from_file,
     to_linkml_from_file,
 )
-from .parser import VoidParser
 
 __all__ = [
     "main",
@@ -51,8 +52,6 @@ def generate(
     This command queries a SPARQL endpoint, discovers schema patterns,
     and generates VoID descriptions with class/property partitions.
     """
-    from .parser import VoidParser
-
     click.echo(f"Generating VoID from endpoint: {endpoint}")
     if graph_uri:
         click.echo(f"Graph URIs: {', '.join(graph_uri)}")
@@ -79,8 +78,7 @@ def generate(
         click.echo(f"VoID description saved: {void_file}")
 
         # Parse the generated VoID to extract schema
-        parser = VoidParser(void_source=void_graph, graph_uris=graph_uris)
-        schema_df = parser.to_schema(filter_void_admin_nodes=True)
+        schema_df = graph_to_schema(void_graph, graph_uris=graph_uris)
         schema_csv = output_path / "schema.csv"
         schema_df.to_csv(schema_csv, index=False)
         click.echo(f"Schema CSV saved: {schema_csv}")
@@ -199,8 +197,9 @@ def count(
 
     try:
         graph_uris = list(graph_uri) if graph_uri else None
-        parser = VoidParser(graph_uris=graph_uris)
-        counts = parser.count_instances_per_class(endpoint, sample_limit=sample_limit)
+        counts = count_instances_per_class(
+            endpoint, graph_uris=graph_uris, sample_limit=sample_limit
+        )
 
         if isinstance(counts, dict):
             click.echo(f"\nFound {len(counts)} classes:")
