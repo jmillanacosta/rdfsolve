@@ -578,14 +578,13 @@ jobs:
         git checkout -b "$branch_name"
         
         # Commit changes
-        commit_title="Generate notebooks and data files"
-        commit_body="Schema notebooks: $schema_success successful, $schema_failed failed
+        git commit -m "Generate notebooks and data files
+
+        Schema notebooks: $schema_success successful, $schema_failed failed
         Pydantic notebooks: $pydantic_success successful, $pydantic_failed failed
         Data files: $data_files generated
         Generated: $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)
         Workflow: $GITHUB_RUN_ID"
-        
-        git commit -m "$commit_title" -m "$commit_body"
         
         # Push branch
         git push origin "$branch_name"
@@ -608,17 +607,17 @@ jobs:
         This pull request contains the automated generation of schema extraction notebooks and associated data files from the matrix workflow.
         EOF
         
-        # Create pull request using GitHub API
+        # Create pull request using GitHub API with PAT
         pr_body_escaped=$(cat /tmp/pr_body.txt | python3 -c "import sys, json; print(json.dumps(sys.stdin.read()))")
         
         curl -X POST \
           -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer $GITHUB_TOKEN" \
+          -H "Authorization: Bearer $PAT_TOKEN" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           "https://api.github.com/repos/${{ github.repository }}/pulls" \
           -d "{\"title\":\"$pr_title\",\"body\":$pr_body_escaped,\"head\":\"$branch_name\",\"base\":\"main\"}"
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
 
     - name: Upload final results
       uses: actions/upload-artifact@v4
