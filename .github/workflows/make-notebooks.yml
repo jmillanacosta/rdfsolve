@@ -585,11 +585,11 @@ jobs:
         Pydantic: $pydantic_success/$pydantic_files successful
         Data files: $data_files generated
         
-        Generated: $(date -u +%Y-%m-%d %H:%M:%S UTC)
+        Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
         Workflow: ${{ github.run_id }}"
         
-        # Push to the PR branch
-        git push origin HEAD:${{ github.head_ref }}
+        # Push to the PR branch using GITHUB_TOKEN
+        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.head_ref }}
 
     - name: Post results comment to PR
       if: github.event_name == 'pull_request'

@@ -1,9 +1,4 @@
-"""
-User-facing API helpers for rdfsolve.
-
-This module provides small, well-typed convenience wrappers around the
-core `VoidParser` class.
-"""
+"""Main RDFSolve functionalities for VoID extraction and conversion."""
 
 from typing import Any, Dict, List, Optional, Union
 
@@ -17,6 +12,8 @@ __all__ = [
     "count_instances_per_class",
     "discover_void_graphs",
     "generate_void_from_endpoint",
+    "graph_to_jsonld",
+    "graph_to_linkml",
     "graph_to_schema",
     "load_parser_from_file",
     "load_parser_from_graph",
@@ -30,15 +27,15 @@ def load_parser_from_file(
     graph_uris: Optional[Union[str, List[str]]] = None,
     exclude_graphs: bool = True,
 ) -> VoidParser:
-    """Create a ``VoidParser`` loaded from a Turtle VoID file.
+    """Load a VoID file and return a parser for schema extraction.
 
     Args:
-        void_file_path: Path to a VoID Turtle file to load.
-        graph_uris: Optional graph URIs to restrict queries to.
-        exclude_graphs: Whether to exclude system graphs when querying.
+        void_file_path: Path to VoID Turtle file
+        graph_uris: Graph URIs to filter queries
+        exclude_graphs: Exclude system graphs
 
     Returns:
-        An initialized ``VoidParser`` instance with the file parsed.
+        VoidParser instance
     """
     return VoidParser(
         void_source=void_file_path, graph_uris=graph_uris, exclude_graphs=exclude_graphs
@@ -50,15 +47,15 @@ def load_parser_from_graph(
     graph_uris: Optional[Union[str, List[str]]] = None,
     exclude_graphs: bool = True,
 ) -> VoidParser:
-    """Create a ``VoidParser`` from an existing RDFLib ``Graph``.
+    """Load a VoID graph and return a parser for schema extraction.
 
     Args:
-        graph: RDFLib Graph already populated with VoID data.
-        graph_uris: Optional graph URIs to restrict queries to.
-        exclude_graphs: Whether to exclude system graphs when querying.
+        graph: RDFLib Graph with VoID data
+        graph_uris: Graph URIs to filter queries
+        exclude_graphs: Exclude system graphs
 
     Returns:
-        An initialized ``VoidParser`` instance using the provided graph.
+        VoidParser instance
     """
     return VoidParser(void_source=graph, graph_uris=graph_uris, exclude_graphs=exclude_graphs)
 
@@ -70,10 +67,17 @@ def to_linkml_from_file(
     schema_description: Optional[str] = None,
     schema_base_uri: Optional[str] = None,
 ) -> str:
-    """Parse a VoID file and return a LinkML YAML schema string.
+    """Convert a VoID file to LinkML YAML schema.
 
-    This is a convenience wrapper used by docs to show the simplest
-    invocation path.
+    Args:
+        void_file_path: Path to VoID file
+        filter_void_nodes: Remove VoID-specific nodes
+        schema_name: Name for the schema
+        schema_description: Description for the schema
+        schema_base_uri: Base URI for the schema
+
+    Returns:
+        LinkML YAML schema string
     """
     parser = load_parser_from_file(void_file_path)
     return parser.to_linkml_yaml(
@@ -87,17 +91,79 @@ def to_linkml_from_file(
 def to_jsonld_from_file(
     void_file_path: str, filter_void_admin_nodes: bool = True
 ) -> Dict[str, Any]:
-    """Parse a VoID file and return a JSON-LD dictionary (context + @graph)."""
+    """Convert a VoID file to JSON-LD format.
+
+    Args:
+        void_file_path: Path to VoID file
+        filter_void_admin_nodes: Remove VoID administrative nodes
+
+    Returns:
+        JSON-LD with @context and @graph
+    """
     parser = load_parser_from_file(void_file_path)
     return parser.to_jsonld(filter_void_admin_nodes=filter_void_admin_nodes)
+
+
+def graph_to_jsonld(
+    graph: Graph,
+    graph_uris: Optional[Union[str, List[str]]] = None,
+    filter_void_admin_nodes: bool = True,
+) -> Dict[str, Any]:
+    """Convert a VoID graph to JSON-LD format.
+
+    Args:
+        graph: RDFLib Graph with VoID data
+        graph_uris: Graph URIs to filter extraction
+        filter_void_admin_nodes: Remove VoID administrative nodes
+
+    Returns:
+        JSON-LD with @context and @graph
+    """
+    parser = load_parser_from_graph(graph, graph_uris=graph_uris)
+    return parser.to_jsonld(filter_void_admin_nodes=filter_void_admin_nodes)
+
+
+def graph_to_linkml(
+    graph: Graph,
+    graph_uris: Optional[Union[str, List[str]]] = None,
+    filter_void_nodes: bool = True,
+    schema_name: Optional[str] = None,
+    schema_description: Optional[str] = None,
+    schema_base_uri: Optional[str] = None,
+) -> str:
+    """Convert a VoID graph to LinkML YAML schema.
+
+    Args:
+        graph: RDFLib Graph with VoID data
+        graph_uris: Graph URIs to filter extraction
+        filter_void_nodes: Remove VoID-specific nodes
+        schema_name: Name for the schema
+        schema_description: Description for the schema
+        schema_base_uri: Base URI for the schema
+
+    Returns:
+        LinkML YAML schema string
+    """
+    parser = load_parser_from_graph(graph, graph_uris=graph_uris)
+    return parser.to_linkml_yaml(
+        filter_void_nodes=filter_void_nodes,
+        schema_name=schema_name,
+        schema_description=schema_description,
+        schema_base_uri=schema_base_uri,
+    )
 
 
 def discover_void_graphs(
     endpoint_url: str, graph_uris: Optional[Union[str, List[str]]] = None
 ) -> Dict[str, Any]:
-    """Discover VoID graphs available in a SPARQL endpoint.
+    """Find VoID graphs in a SPARQL endpoint.
 
-    Returns a mapping of graph URI -> discovery metadata.
+    Args:
+        endpoint_url: SPARQL endpoint URL
+        graph_uris: Graph URIs to search
+
+    Returns:
+        Discovery metadata per graph URI
     """
     parser = VoidParser(graph_uris=graph_uris)
     return parser.discover_void_graphs(endpoint_url)
@@ -114,9 +180,17 @@ def count_instances(
 ) -> Union[Dict[str, int], Any]:
     """Count instances per class in a SPARQL endpoint.
 
-    This is a thin wrapper around ``VoidParser.count_instances_per_class``.
-    If ``streaming=True`` a generator may be returned; otherwise a
-    dictionary mapping class URI -> count is returned.
+    Args:
+        endpoint_url: SPARQL endpoint URL
+        sample_limit: Max results to return
+        sample_offset: Starting offset
+        chunk_size: Chunk size for pagination
+        offset_limit_steps: Combined LIMIT/OFFSET step
+        delay_between_chunks: Seconds between chunks
+        streaming: Return generator if True
+
+    Returns:
+        Dict mapping class URI to count, or generator
     """
     parser = VoidParser()
     return parser.count_instances_per_class(
@@ -138,21 +212,18 @@ def generate_void_from_endpoint(
     offset_limit_steps: Optional[int] = None,
     exclude_graphs: bool = True,
 ) -> Graph:
-    """Generate a VoID description by querying a SPARQL endpoint.
-
-    This executes CONSTRUCT queries to discover schema patterns and
-    returns an RDF graph containing the VoID description.
+    """Generate VoID description from a SPARQL endpoint.
 
     Args:
         endpoint_url: SPARQL endpoint URL
-        graph_uris: Optional graph URI(s) to restrict the analysis to
-        output_file: Optional file path to save the Turtle output
-        counts: Whether to include COUNT aggregations (slower but more complete)
-        offset_limit_steps: Optional chunk size for paginated queries
-        exclude_graphs: Whether to exclude system graphs
+        graph_uris: Graph URI(s) to analyze
+        output_file: Path to save Turtle output
+        counts: Include instance counts
+        offset_limit_steps: Chunk size for pagination
+        exclude_graphs: Exclude system graphs
 
     Returns:
-        RDF Graph containing the VoID description
+        RDF graph with VoID description
     """
     return VoidParser.generate_void_from_sparql(
         endpoint_url=endpoint_url,
@@ -169,15 +240,15 @@ def graph_to_schema(
     graph_uris: Optional[Union[str, List[str]]] = None,
     filter_void_admin_nodes: bool = True,
 ) -> pd.DataFrame:
-    """Convert a VoID graph to a schema DataFrame.
+    """Convert VoID graph to schema DataFrame.
 
     Args:
-        void_graph: RDFLib Graph containing VoID data
-        graph_uris: Optional graph URIs to restrict the schema extraction
-        filter_void_admin_nodes: Whether to filter out VoID administrative nodes
+        void_graph: RDFLib graph with VoID data
+        graph_uris: Graph URIs to extract
+        filter_void_admin_nodes: Filter VoID admin nodes
 
     Returns:
-        DataFrame with schema patterns (subject_uri, property_uri, object_uri, etc.)
+        DataFrame with schema patterns (subject/property/object URIs)
     """
     parser = VoidParser(void_source=void_graph, graph_uris=graph_uris)
     return parser.to_schema(filter_void_admin_nodes=filter_void_admin_nodes)
@@ -190,15 +261,13 @@ def count_instances_per_class(
 ) -> Dict[str, int]:
     """Count instances per class in a SPARQL endpoint.
 
-    Simplified wrapper that returns a dict mapping class URI -> count.
-
     Args:
         endpoint_url: SPARQL endpoint URL
-        graph_uris: Optional graph URI(s) to restrict the query
-        sample_limit: Optional limit for sampling
+        graph_uris: Graph URI(s) to query
+        sample_limit: Max results to sample
 
     Returns:
-        Dictionary mapping class URIs to instance counts
+        Class URI to instance count mapping
     """
     parser = VoidParser(graph_uris=graph_uris)
     result = parser.count_instances_per_class(endpoint_url, sample_limit=sample_limit)

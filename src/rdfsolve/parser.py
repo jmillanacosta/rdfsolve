@@ -37,14 +37,12 @@ class VoidParser:
         graph_uris: Optional[Union[str, List[str]]] = None,
         exclude_graphs: bool = True,
     ):
-        """
-        Initialize the VoID parser.
+        """Initialize the VoID parser.
 
         Args:
-            void_source: Either a file path (str) or an RDF Graph object
-            graph_uris: Single graph URI (str) or list of graphs to analyze.
-                        If None, queries all graphs except system graphs
-            exclude_graphs: Whether to exclude Virtuoso system graphs
+            void_source: File path (str) or RDF Graph object
+            graph_uris: Graph URI(s) to analyze, or None for all non-system graphs
+            exclude_graphs: Exclude Virtuoso system graphs
         """
         self.void_file_path: Optional[str] = None
         self.graph: Graph = Graph()
@@ -784,8 +782,8 @@ class VoidParser:
         datatype_partitions: bool = True,
         offset_limit_steps: int = 10000,
     ) -> pd.DataFrame:
-        """
-        Extract schema to pandas DataFrame.
+        """Extract schema to pandas DataFrame.
+
         Returns:
             DataFrame with schema analysis including coverage statistics.
         """
