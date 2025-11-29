@@ -228,6 +228,9 @@ ignore = [
 "src/rdfsolve/version.py" = ["S603", "S607"]
 # Ignore commented out code in Sphinx configuration file
 "docs/source/conf.py" = ["ERA001"]
+# Tests should use assert statements - this is pytest standard
+"tests/*.py" = ["S101"]
+"tests/**/*.py" = ["S101"]
 # Notebooks have different standards - allow prints, exec, line length, bare except, missing docstrings, naming conventions, complexity, commented code, pickle usage, ambiguous unicode
 "notebooks/**/*.ipynb" = ["T201", "S102", "E501", "E722", "D103", "D205", "N803", "N806", "N816", "C901", "B007", "ERA001", "S301", "RUF001"]
 "notebooks/**/*.py" = ["T201", "D103", "C901", "B007", "D205"]
@@ -241,6 +244,7 @@ ignore = [
 "src/rdfsolve/tools/utils.py" = ["S113"]
 # Auto-generated Pydantic models from LinkML schema - ignore all style issues
 "docs/data/**/*_pydantic_models.py" = ["D", "N", "E501"]
+"tests/test_data/*_pydantic_models.py" = ["D", "N", "E501"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"

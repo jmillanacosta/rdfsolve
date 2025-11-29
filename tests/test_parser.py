@@ -19,12 +19,8 @@ RDF = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 AOPWIKI_VOID = os.path.join(TEST_DATA_DIR, "aopwikirdf_generated_void.ttl")
 AOPWIKI_SCHEMA_CSV = os.path.join(TEST_DATA_DIR, "aopwikirdf_schema.csv")
-AOPWIKI_SCHEMA_JSONLD = os.path.join(
-    TEST_DATA_DIR, "aopwikirdf_schema.jsonld"
-)
-AOPWIKI_LINKML_YAML = os.path.join(
-    TEST_DATA_DIR, "aopwikirdf_linkml_schema.yaml"
-)
+AOPWIKI_SCHEMA_JSONLD = os.path.join(TEST_DATA_DIR, "aopwikirdf_schema.jsonld")
+AOPWIKI_LINKML_YAML = os.path.join(TEST_DATA_DIR, "aopwikirdf_linkml_schema.yaml")
 
 
 @pytest.fixture
@@ -58,21 +54,17 @@ class TestInitialization:
     def test_init_no_args(self):
         """Test initialization with no arguments."""
         parser = VoidParser()
-        if parser.graph is None:
-            pytest.fail("Expected graph initialized")
+        assert parser.graph is not None
 
     def test_init_with_graph(self, sample_void_graph):
         """Test initialization with graph."""
         parser = VoidParser(void_source=sample_void_graph)
-        if parser.graph != sample_void_graph:
-            pytest.fail("Graph not set correctly")
+        assert parser.graph == sample_void_graph
 
     def test_init_with_string_uri(self):
         """Test initialization with single URI."""
         parser = VoidParser(graph_uris="http://example.org/graph1")
-        expected = ["http://example.org/graph1"]
-        if parser.graph_uris != expected:
-            pytest.fail(f"Expected {expected}, got {parser.graph_uris}")
+        assert parser.graph_uris == ["http://example.org/graph1"]
 
 
 class TestSchemaExtraction:
@@ -81,8 +73,7 @@ class TestSchemaExtraction:
     def test_to_schema(self, parser_with_graph):
         """Test to_schema method."""
         df = parser_with_graph.to_schema()
-        if not isinstance(df, pd.DataFrame):
-            pytest.fail(f"Expected DataFrame, got {type(df)}")
+        assert isinstance(df, pd.DataFrame)
 
 
 class TestJSONLD:
@@ -91,8 +82,8 @@ class TestJSONLD:
     def test_to_jsonld(self, parser_with_graph):
         """Test JSON-LD generation."""
         jsonld = parser_with_graph.to_jsonld()
-        if "@context" not in jsonld:
-            pytest.fail("Missing '@context'")
+        assert "@context" in jsonld
+        assert "@graph" in jsonld
 
 
 class TestLinkML:
@@ -101,8 +92,8 @@ class TestLinkML:
     def test_to_linkml(self, parser_with_graph):
         """Test LinkML generation."""
         schema = parser_with_graph.to_linkml()
-        if schema is None:
-            pytest.fail("Expected LinkML schema")
+        assert schema is not None
+        assert hasattr(schema, "name")
 
 
 class TestSPARQLQueries:
@@ -111,10 +102,8 @@ class TestSPARQLQueries:
     def test_get_queries(self):
         """Test query generation."""
         queries = VoidParser.get_void_queries()
-        if not isinstance(queries, dict):
-            pytest.fail(f"Expected dict, got {type(queries)}")
-        if "class_partitions" not in queries:
-            pytest.fail("Missing 'class_partitions'")
+        assert isinstance(queries, dict)
+        assert "class_partitions" in queries
 
 
 class TestRealDataInterconversion:
@@ -139,7 +128,7 @@ class TestRealDataInterconversion:
         """Load expected JSON-LD schema."""
         if not os.path.exists(AOPWIKI_SCHEMA_JSONLD):
             pytest.skip(f"Test data not found: {AOPWIKI_SCHEMA_JSONLD}")
-        with open(AOPWIKI_SCHEMA_JSONLD) as f:
+        with open(AOPWIKI_SCHEMA_JSONLD, encoding="utf-8") as f:
             return json.load(f)
 
     @pytest.fixture
@@ -147,14 +136,14 @@ class TestRealDataInterconversion:
         """Load expected LinkML schema."""
         if not os.path.exists(AOPWIKI_LINKML_YAML):
             pytest.skip(f"Test data not found: {AOPWIKI_LINKML_YAML}")
-        with open(AOPWIKI_LINKML_YAML) as f:
+        with open(AOPWIKI_LINKML_YAML, encoding="utf-8") as f:
             return yaml.safe_load(f)
 
-    def test_void_to_csv_schema(self, aopwiki_parser, expected_csv):
+    def test_void_to_csv_schema(self, aopwiki_parser):
         """Test VoID -> CSV conversion produces consistent results."""
         # First extract schema triples to populate internal state
         aopwiki_parser._extract_schema_triples()
-        
+
         result_df = aopwiki_parser.to_schema(filter_void_admin_nodes=True)
 
         # The parser should extract schema patterns from VoID
@@ -162,16 +151,13 @@ class TestRealDataInterconversion:
         if len(result_df) == 0:
             # Check if VoID file has property partitions
             prop_partitions = list(
-                aopwiki_parser.graph.triples(
-                    (None, aopwiki_parser.void_property, None)
-                )
+                aopwiki_parser.graph.triples((None, aopwiki_parser.void_property, None))
             )
             if len(prop_partitions) == 0:
                 pytest.skip("VoID file has no property partitions")
             else:
                 pytest.fail(
-                    f"Schema extraction empty despite "
-                    f"{len(prop_partitions)} property partitions"
+                    f"Schema extraction empty despite {len(prop_partitions)} property partitions"
                 )
 
         # Check essential columns exist
@@ -183,7 +169,7 @@ class TestRealDataInterconversion:
         # Different extraction runs may produce different results
         assert len(result_df) > 10, "Should extract multiple patterns"
 
-    def test_void_to_jsonld_structure(self, aopwiki_parser, expected_jsonld):
+    def test_void_to_jsonld_structure(self, aopwiki_parser):
         """Test VoID -> JSON-LD conversion has correct structure."""
         result = aopwiki_parser.to_jsonld(filter_void_admin_nodes=True)
 
@@ -204,8 +190,7 @@ class TestRealDataInterconversion:
         expected_prefixes = ["aopo", "foaf", "dcterms", "rdfs"]
         found_prefixes = [p for p in expected_prefixes if p in context]
         assert len(found_prefixes) >= 2, (
-            f"Should have at least 2 of {expected_prefixes}, "
-            f"found: {found_prefixes}"
+            f"Should have at least 2 of {expected_prefixes}, found: {found_prefixes}"
         )
 
     def test_void_to_linkml_structure(self, aopwiki_parser):
@@ -234,9 +219,7 @@ class TestRealDataInterconversion:
         if not os.path.exists(AOPWIKI_VOID):
             pytest.skip(f"Test data not found: {AOPWIKI_VOID}")
 
-        result = api.to_jsonld_from_file(
-            AOPWIKI_VOID, filter_void_admin_nodes=True
-        )
+        result = api.to_jsonld_from_file(AOPWIKI_VOID, filter_void_admin_nodes=True)
 
         assert "@context" in result
         assert "@graph" in result
@@ -268,9 +251,7 @@ class TestRealDataInterconversion:
         g.parse(AOPWIKI_VOID, format="turtle")
 
         # Test graph -> JSON-LD
-        jsonld_result = api.graph_to_jsonld(
-            g, graph_uris=None, filter_void_admin_nodes=True
-        )
+        jsonld_result = api.graph_to_jsonld(g, graph_uris=None, filter_void_admin_nodes=True)
         assert "@context" in jsonld_result
         assert "@graph" in jsonld_result
 
@@ -295,7 +276,7 @@ class TestRealDataInterconversion:
         """Test that multiple conversions maintain consistency."""
         # Extract schema triples first
         aopwiki_parser._extract_schema_triples()
-        
+
         # Get schema as DataFrame
         df1 = aopwiki_parser.to_schema(filter_void_admin_nodes=True)
 
@@ -316,6 +297,5 @@ class TestRealDataInterconversion:
         unique_subjects = df1["subject_uri"].nunique()
         # Allow wide variance as these measure different things
         assert abs(unique_subjects - num_classes) < 200, (
-            f"Subject count ({unique_subjects}) very different from "
-            f"class count ({num_classes})"
+            f"Subject count ({unique_subjects}) very different from class count ({num_classes})"
         )
