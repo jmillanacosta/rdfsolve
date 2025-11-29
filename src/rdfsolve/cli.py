@@ -226,29 +226,5 @@ def count(
         raise click.Abort()
 
 
-@main.command()
-@click.option("--host", default="0.0.0.0", help="Host to bind to")
-@click.option("--port", default=5000, type=int, help="Port to bind to")
-@click.option("--debug/--no-debug", default=True, help="Enable debug mode")
-def web(host: str, port: int, debug: bool) -> None:
-    """Start the RDFSolve web interface."""
-    try:
-        from .web import create_app
-
-        click.echo("Starting RDFSolve web interface...")
-        click.echo(f"Server will be available at: http://localhost:{port}")
-        click.echo(f"Debug mode: {debug}")
-
-        app = create_app()
-        app.run(debug=debug, host=host, port=port)
-
-    except ImportError:
-        click.echo("Flask is not installed. Please install with: pip install flask", err=True)
-        raise click.Abort()
-    except Exception as e:
-        click.echo(f"Error starting web interface: {e}", err=True)
-        raise click.Abort()
-
-
 if __name__ == "__main__":
     main()
