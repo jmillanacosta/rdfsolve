@@ -79,3 +79,11 @@ apo,http://bio2rdf.org/apo_resource:bio2rdf.dataset.apo.R3,http://bio2rdf.org/ap
 taxonomy,http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3,http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3,https://bio2rdf.org/sparql,True
 sider,http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3,http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3,https://bio2rdf.org/sparql,True
 wormbase,http://bio2rdf.org/wormbase_resource:bio2rdf.dataset.wormbase.R3,http://bio2rdf.org/wormbase_resource:bio2rdf.dataset.wormbase.R3,https://bio2rdf.org/sparql,True
+omabrowser,https://sparql.omabrowser.org/,,https://sparql.omabrowser.org/sparql/,False
+swisslipids,,,https://beta.sparql.swisslipids.org/,False
+earthmetabolome,,,https://kg.earthmetabolome.org/metrin/api/,False
+cellosaurus,,,https://sparql.cellosaurus.org/sparql,False
+sibils,,,https://sparql.sibils.org/sparql,False
+hamap,,,,False
+metanext,,,https://rdf.metanetx.org/sparql/,False
+orthodb,,,https://sparql.orthodb.org/sparql,False

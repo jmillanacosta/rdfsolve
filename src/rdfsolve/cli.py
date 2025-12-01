@@ -9,6 +9,8 @@ import click
 from .api import (
     count_instances_per_class,
     discover_void_graphs,
+    extract_partitions_from_void,
+    generate_void_alternative_method,
     generate_void_from_endpoint,
     graph_to_schema,
     load_parser_from_file,
@@ -83,6 +85,55 @@ def generate(
         schema_df.to_csv(schema_csv, index=False)
         click.echo(f"Schema CSV saved: {schema_csv}")
         click.echo(f"Total schema patterns: {len(schema_df)}")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
+@main.command(name="generate-alt")
+@click.option("--endpoint", required=True, help="SPARQL endpoint URL")
+@click.option("--dataset-prefix", required=True, help="Dataset prefix for IRIs")
+@click.option("--graph-uri", help="Graph URI to analyze (optional)")
+@click.option("--output-dir", default=".", help="Output directory")
+def generate_alternative(
+    endpoint: str,
+    dataset_prefix: str,
+    graph_uri: Optional[str],
+    output_dir: str,
+) -> None:
+    """Generate VoID using alternative single-query method.
+
+    Uses a unified non-paginated CONSTRUCT query that extracts all VoID
+    partition data in one request. Read-only approach from void-generator.
+
+    Source: https://github.com/sib-swiss/void-generator/issues/30
+    """
+    click.echo(f"Generating VoID (alternative method) from: {endpoint}")
+    click.echo(f"Dataset prefix: {dataset_prefix}")
+
+    try:
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        void_file = output_path / "void_alternative.ttl"
+
+        import time
+
+        t0 = time.time()
+
+        void_graph = generate_void_alternative_method(
+            endpoint_url=endpoint,
+            dataset_prefix=dataset_prefix,
+            graph_uri=graph_uri,
+            output_file=str(void_file),
+        )
+
+        elapsed = time.time() - t0
+
+        click.echo(f"\nVoID description saved: {void_file}")
+        click.echo(f"Generation time: {elapsed:.2f}s")
+        click.echo(f"Total triples: {len(void_graph)}")
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
@@ -164,16 +215,53 @@ def discover(endpoint: str, graph_uri: tuple[str, ...]) -> None:
         void_content = result.get("void_content", {})
         if void_content:
             click.echo("\nGraphs with VoID partitions:")
-            for graph_uri, info in void_content.items():
+            for graph_uri_item, info in void_content.items():
                 if info.get("has_any_partitions"):
-                    click.echo(f"\n  📊 {graph_uri}")
-                    click.echo(f"     Class partitions: {info.get('class_partition_count', 0)}")
-                    click.echo(
-                        f"     Property partitions: {info.get('property_partition_count', 0)}"
-                    )
-                    click.echo(
-                        f"     Datatype partitions: {info.get('datatype_partition_count', 0)}"
-                    )
+                    click.echo(f"\n  {graph_uri_item}")
+                    click.echo(f"     Partition count: {info.get('partition_count', 0)}")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
+@main.command()
+@click.option("--endpoint", required=True, help="SPARQL endpoint URL")
+@click.option("--void-graph", multiple=True, required=True, help="VoID graph URI(s)")
+@click.option("--output", help="Output JSON file (optional)")
+def extract(endpoint: str, void_graph: tuple[str, ...], output: Optional[str]) -> None:
+    """Extract partition data from VoID graphs.
+
+    Retrieves class-property-object partition information from
+    discovered VoID graphs using a lightweight query.
+    """
+    click.echo(f"Extracting partitions from {len(void_graph)} VoID graph(s)...")
+
+    try:
+        void_graph_uris = list(void_graph)
+        partitions = extract_partitions_from_void(endpoint, void_graph_uris)
+
+        click.echo(f"\nExtracted {len(partitions)} partition records")
+        click.echo("=" * 60)
+
+        # Show sample
+        for partition in partitions[:5]:
+            subj = partition.get("subject_class", "").split("/")[-1].split("#")[-1]
+            prop = partition.get("property", "").split("/")[-1].split("#")[-1]
+            obj_class = partition.get("object_class", "")
+            obj_dtype = partition.get("object_datatype", "")
+            obj = (obj_class or obj_dtype).split("/")[-1].split("#")[-1]
+            click.echo(f"  {subj} -> {prop} -> {obj}")
+
+        if len(partitions) > 5:
+            click.echo(f"  ... and {len(partitions) - 5} more")
+
+        if output:
+            import json
+
+            with open(output, "w") as f:
+                json.dump(partitions, f, indent=2)
+            click.echo(f"\nFull results saved to: {output}")
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)

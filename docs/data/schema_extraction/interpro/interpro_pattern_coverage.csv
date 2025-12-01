@@ -1,4 +1,0 @@
-shape_id,subject_class,subject_uri,property,property_uri,object_class,object_uri,total_entities,participating_entities,occurrence_count,coverage_ratio,coverage_percent,shape_pattern
-shape_000000,dcterms:Dataset,http://purl.org/dc/terms/Dataset,dcat:distribution,http://www.w3.org/ns/dcat#distribution,dcat:Distribution,http://www.w3.org/ns/dcat#Distribution,2,2,2,1.0,100.0,dcterms:Dataset -> dcat:distribution -> dcat:Distribution
-shape_000002,dcat:Distribution,http://www.w3.org/ns/dcat#Distribution,dcterms:source,http://purl.org/dc/terms/source,dcat:Distribution,http://www.w3.org/ns/dcat#Distribution,2,1,1,0.5,50.0,dcat:Distribution -> dcterms:source -> dcat:Distribution
-shape_000001,dcat:Distribution,http://www.w3.org/ns/dcat#Distribution,rdf:type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,rdfs:Class,http://www.w3.org/2000/01/rdf-schema#Class,2,0,0,0.0,0.0,dcat:Distribution -> rdf:type -> rdfs:Class

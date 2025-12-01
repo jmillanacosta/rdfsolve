@@ -1,3 +1,0 @@
-shape_id,subject_class,subject_uri,property,property_uri,object_class,object_uri,total_entities,participating_entities,occurrence_count,coverage_ratio,coverage_percent,shape_pattern
-shape_000000,fabio:Journal,http://purl.org/spar/fabio/Journal,rdf:type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,owl:Class,http://www.w3.org/2002/07/owl#Class,39859,0,0,0.0,0.0,fabio:Journal -> rdf:type -> owl:Class
-shape_000001,vocabulary:Journal,http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Journal,rdf:type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,owl:Class,http://www.w3.org/2002/07/owl#Class,39859,0,0,0.0,0.0,vocabulary:Journal -> rdf:type -> owl:Class

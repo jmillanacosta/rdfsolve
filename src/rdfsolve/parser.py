@@ -22,6 +22,8 @@ from linkml_runtime.linkml_model import (
 from rdflib import Graph, Literal, URIRef
 from SPARQLWrapper import TURTLE, SPARQLWrapper
 
+from rdfsolve.sparql_helper import SparqlHelper
+
 # Create logger with NullHandler by default - no output unless user configures
 logger = logging.getLogger(__name__)
 if not logger.handlers:
@@ -167,217 +169,106 @@ class VoidParser:
 
     def discover_void_graphs(self, endpoint_url: str) -> Dict[str, Any]:
         """
-        Discover existing VoID graphs in the endpoint using chunked queries.
+        Discover existing VoID graphs in the endpoint by querying for VoID partitions.
+
+        Query pattern inspired by: https://github.com/sib-swiss/sparql-editor/
+
+        Uses SparqlHelper for automatic GET→POST fallback on endpoints that
+        require POST (like SwissLipids). The SELECT query returns partition data
+        directly, which is then converted to an RDF graph - no additional
+        CONSTRUCT query needed.
 
         Args:
             endpoint_url: SPARQL endpoint URL
 
         Returns:
-            Dictionary with discovery results
+            Dictionary with discovery results including found graphs and partition data
         """
-        from SPARQLWrapper import JSON, SPARQLWrapper
+        # Query directly for VoID partitions - ?g tells us which graphs have them
+        partition_discovery_query = """
+        PREFIX void: <http://rdfs.org/ns/void#>
+        PREFIX void-ext: <http://ldf.fi/void-ext#>
+        SELECT DISTINCT ?subjectClass ?prop ?objectClass ?objectDatatype ?g
+        WHERE {
+          GRAPH ?g {
+            {
+              ?cp void:class ?subjectClass ;
+                  void:propertyPartition ?pp .
+              ?pp void:property ?prop .
+              OPTIONAL {
+                  {
+                      ?pp  void:classPartition [ void:class ?objectClass ] .
+                  } UNION {
+                      ?pp void-ext:datatypePartition [ void-ext:datatype ?objectDatatype ] .
+                  }
+              }
+            } UNION {
+              ?ls void:subjectsTarget [ void:class ?subjectClass ] ;
+                  void:linkPredicate ?prop ;
+                  void:objectsTarget [ void:class ?objectClass ] .
+            }
+          }
+        }
+        """
 
         try:
-            sparql = SPARQLWrapper(endpoint_url)
-            sparql.setReturnFormat(JSON)
+            logger.debug(f"Starting VoID partition discovery for {endpoint_url}")
+            logger.info("Discovering VoID partitions across all graphs")
 
-            logger.debug(f" Starting chunked VoID graph discovery for {endpoint_url}")
+            # Use SparqlHelper - automatic GET→POST fallback
+            helper = SparqlHelper(endpoint_url)
+            results = helper.select(partition_discovery_query)
 
-            # Use chunked query to discover graphs that might contain VoID content
-            logger.debug("Starting VoID graph discovery with pagination...")
-            graph_discovery_query_template = """
-            SELECT DISTINCT ?g WHERE {{
-                GRAPH ?g {{
-                    ?s ?p ?o
-                }}
-                FILTER(
-                    REGEX(STR(?g), "void") ||
-                    REGEX(STR(?g), "well-known") ||
-                    REGEX(STR(?g), "service")
-                )
-            }}
-            ORDER BY ?g
-            OFFSET {offset}
-            LIMIT {limit}
-            """
-
-            logger.info("Discovering VoID candidate graphs with chunked approach")
-            candidate_graphs = []
-
-            # Use smaller chunks for graph discovery (typically few results)
-            for chunk_bindings in self._execute_chunked_query(
-                sparql, graph_discovery_query_template, chunk_size=50, max_total_results=500
-            ):
-                for result in chunk_bindings:
-                    candidate = result["g"]["value"]
-                    candidate_graphs.append(candidate)
-                    logger.info("Candidate VoID graph at %s", candidate)
-
-            logger.debug(f"Found {len(candidate_graphs)} candidate VoID graphs")
-
-            if not candidate_graphs:
-                logger.debug("No candidate VoID graphs found")
-                return {
-                    "has_void_descriptions": False,
-                    "found_graphs": [],
-                    "total_graphs": 0,
-                    "void_content": {},
-                }
-
-            # Now check each candidate graph for actual VoID content
-            logger.debug("Starting detailed VoID content analysis...")
+            # Group results by graph URI and collect partition data
             found_graphs: List[str] = []
             void_content: Dict[str, Dict[str, Any]] = {}
+            partitions: List[Dict[str, str]] = []  # Store partition data for graph building
 
-            for i, graph_uri in enumerate(candidate_graphs, 1):
-                logger.debug(f"Analyzing graph {i}/{len(candidate_graphs)}: {graph_uri}")
+            for result in results["results"]["bindings"]:
+                graph_uri = result.get("g", {}).get("value")
+                if not graph_uri:
+                    continue
 
-                try:
-                    # Use chunked queries to discover partitions in this graph
-                    logger.debug(f"Discovering partitions in {graph_uri}")
-
-                    # Escape the graph URI properly for SPARQL
-                    escaped_uri = graph_uri.replace("\\", "\\\\").replace('"', '\\"')
-
-                    # Check for class partitions
-                    class_query_template = f"""
-                    SELECT DISTINCT ?cp WHERE {{
-                        GRAPH <{escaped_uri}> {{
-                            ?cp <http://rdfs.org/ns/void#class> ?class .
-                        }}
-                    }}
-                    ORDER BY ?cp
-                    OFFSET {{offset}}
-                    LIMIT {{limit}}
-                    """
-
-                    logger.debug(
-                        f"Class partition query template: \n{class_query_template[:200]}..."
-                    )
-
-                    class_partitions = 0
-                    for chunk_bindings in self._execute_chunked_query(
-                        sparql, class_query_template, chunk_size=100, max_total_results=1000
-                    ):
-                        class_partitions += len(chunk_bindings)
-
-                    # Check for property partitions
-                    property_query_template = f"""
-                    SELECT DISTINCT ?pp WHERE {{
-                        GRAPH <{escaped_uri}> {{
-                            ?pp <http://rdfs.org/ns/void#property> ?property .
-                        }}
-                    }}
-                    ORDER BY ?pp
-                    OFFSET {{offset}}
-                    LIMIT {{limit}}
-                    """
-
-                    property_partitions = 0
-                    for chunk_bindings in self._execute_chunked_query(
-                        sparql, property_query_template, chunk_size=100, max_total_results=1000
-                    ):
-                        property_partitions += len(chunk_bindings)
-
-                    # Check for datatype partitions
-                    datatype_query_template = f"""
-                    SELECT DISTINCT ?dp WHERE {{
-                        GRAPH <{escaped_uri}> {{
-                            ?dp <http://ldf.fi/void-ext#datatypePartition> ?datatype .
-                        }}
-                    }}
-                    ORDER BY ?dp
-                    OFFSET {{offset}}
-                    LIMIT {{limit}}
-                    """
-
-                    datatype_partitions = 0
-                    for chunk_bindings in self._execute_chunked_query(
-                        sparql, datatype_query_template, chunk_size=100, max_total_results=1000
-                    ):
-                        datatype_partitions += len(chunk_bindings)
-
-                    logger.debug(f"Partition counts for {graph_uri}:")
-                    logger.debug(f"   • Class partitions: {class_partitions}")
-                    logger.debug(f"   • Property partitions: {property_partitions}")
-                    logger.debug(f"   • Datatype partitions: {datatype_partitions}")
-
-                    has_partitions = (
-                        class_partitions + property_partitions + datatype_partitions
-                    ) > 0
-
+                # Track unique graphs and count partitions
+                if graph_uri not in void_content:
                     void_content[graph_uri] = {
-                        "class_partition_count": class_partitions,
-                        "property_partition_count": property_partitions,
-                        "datatype_partition_count": datatype_partitions,
-                        "has_any_partitions": has_partitions,
+                        "partition_count": 0,
+                        "has_any_partitions": True,
                     }
+                    found_graphs.append(graph_uri)
+                    logger.info("Found VoID graph: %s", graph_uri)
 
-                    if has_partitions:
-                        logger.info("Graph %s has partition data", graph_uri)
-                        logger.debug(f"Adding {graph_uri} to found_graphs")
-                        found_graphs.append(graph_uri)
-                    else:
-                        logger.debug(f"No partition data found in {graph_uri}")
+                void_content[graph_uri]["partition_count"] += 1
 
-                except Exception as e:
-                    error_type = type(e).__name__
-                    error_msg = str(e)
+                # Collect partition data for graph building
+                partition: Dict[str, str] = {
+                    "graph": graph_uri,
+                    "subjectClass": result.get("subjectClass", {}).get("value", ""),
+                    "prop": result.get("prop", {}).get("value", ""),
+                }
+                if result.get("objectClass", {}).get("value"):
+                    partition["objectClass"] = result["objectClass"]["value"]
+                if result.get("objectDatatype", {}).get("value"):
+                    partition["objectDatatype"] = result["objectDatatype"]["value"]
 
-                    # Check if this looks like an endpoint that doesn't support CONSTRUCT
-                    if any(
-                        indicator in error_msg.lower()
-                        for indicator in ["html error page", "returned html", "construct"]
-                    ):
-                        logger.error("Endpoint appears to reject CONSTRUCT queries - failing fast")
-                        logger.info("Will skip remaining VoID discovery and proceed to generation")
-                        raise RuntimeError(
-                            f"Endpoint does not support CONSTRUCT queries: {error_msg}"
-                        )
+                partitions.append(partition)
 
-                    # Log detailed error information for debugging
-                    logger.warning(f"Error analyzing VoID partitions in {graph_uri}")
-                    logger.debug("Full error details:")
-                    logger.debug(f"   • Error type: {error_type}")
-                    logger.debug(f"   • Error message: {error_msg}")
-                    logger.debug(f"   • Graph URI: {graph_uri}")
-                    if hasattr(e, "__cause__") and e.__cause__:
-                        logger.debug(f"   • Root cause: {e.__cause__}")
+            logger.debug(
+                f"Discovery complete: found {len(found_graphs)} graphs with VoID partitions"
+            )
+            logger.debug(f"Collected {len(partitions)} partition records")
 
-                    # Check if this is likely a query syntax error
-                    if any(
-                        keyword in error_msg.lower()
-                        for keyword in ["syntax", "parse", "malformed", "unexpected"]
-                    ):
-                        logger.warning(f"Possible SPARQL syntax issue with URI: {graph_uri}")
-
-                    void_content[graph_uri] = {
-                        "class_partition_count": 0,
-                        "property_partition_count": 0,
-                        "datatype_partition_count": 0,
-                        "has_any_partitions": False,
-                        "error": f"{error_type}: {error_msg}",
-                        "escaped_uri": escaped_uri,  # Include for debugging
-                    }
-
-            logger.debug("VoID discovery analysis complete")
-            logger.debug(" Results summary:")
-            logger.debug(f"   • Total candidate graphs: {len(candidate_graphs)}")
-            logger.debug(f"   • Graphs with VoID data: {len(found_graphs)}")
-            logger.debug(f"   • Has VoID descriptions: {len(found_graphs) > 0}")
-
-            if found_graphs:
-                logger.info(f"Found VoID data in {len(found_graphs)} graphs")
-                for graph in found_graphs:
-                    logger.debug(f"    {graph}")
-            else:
-                logger.info("No VoID data found in any candidate graphs")
+            for graph_uri in found_graphs:
+                logger.debug(
+                    f"   • {graph_uri}: {void_content[graph_uri]['partition_count']} partitions"
+                )
 
             return {
                 "has_void_descriptions": len(found_graphs) > 0,
                 "found_graphs": found_graphs,
-                "total_graphs": len(candidate_graphs),
+                "total_graphs": len(found_graphs),
                 "void_content": void_content,
+                "partitions": partitions,  # Include partition data for direct graph building
             }
 
         except Exception as e:
@@ -388,12 +279,202 @@ class VoidParser:
                 "found_graphs": [],
                 "total_graphs": 0,
                 "void_content": {},
+                "partitions": [],
                 "error": str(e),
             }
 
+    def build_void_graph_from_partitions(
+        self, partitions: List[Dict[str, str]], base_uri: Optional[str] = None
+    ) -> Graph:
+        """
+        Build an RDF graph from partition data (from SELECT query results).
+
+        This converts the partition records directly to VoID RDF triples,
+        avoiding the need for an additional CONSTRUCT query.
+
+        Args:
+            partitions: List of partition dicts with subjectClass, prop, objectClass/objectDatatype
+            base_uri: Base URI for generating partition node IRIs
+
+        Returns:
+            RDF Graph containing VoID partition descriptions
+        """
+        from hashlib import md5
+
+        void_graph = Graph()
+
+        # Bind common prefixes
+        void_graph.bind("void", URIRef("http://rdfs.org/ns/void#"))
+        void_graph.bind("void-ext", URIRef("http://ldf.fi/void-ext#"))
+        void_graph.bind("rdf", URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
+
+        # VoID namespace URIs
+        VOID = "http://rdfs.org/ns/void#"
+        VOID_EXT = "http://ldf.fi/void-ext#"
+
+        if not base_uri:
+            base_uri = "urn:void:partition:"
+
+        logger.debug(f"Building VoID graph from {len(partitions)} partition records")
+
+        # Track class partitions we've created
+        class_partitions: Dict[str, URIRef] = {}
+
+        for partition in partitions:
+            subject_class = partition.get("subjectClass", "")
+            prop = partition.get("prop", "")
+            object_class = partition.get("objectClass", "")
+            object_datatype = partition.get("objectDatatype", "")
+
+            if not subject_class or not prop:
+                continue
+
+            # Create or get class partition node for subject class
+            if subject_class not in class_partitions:
+                cp_id = md5(subject_class.encode()).hexdigest()[:12]
+                cp_uri = URIRef(f"{base_uri}class_{cp_id}")
+                class_partitions[subject_class] = cp_uri
+
+                # Add class partition triple
+                void_graph.add((cp_uri, URIRef(f"{VOID}class"), URIRef(subject_class)))
+
+            cp_uri = class_partitions[subject_class]
+
+            # Create property partition node
+            pp_id = md5(
+                f"{subject_class}_{prop}_{object_class or object_datatype}".encode()
+            ).hexdigest()[:12]
+            pp_uri = URIRef(f"{base_uri}prop_{pp_id}")
+
+            # Link class partition to property partition
+            void_graph.add((cp_uri, URIRef(f"{VOID}propertyPartition"), pp_uri))
+
+            # Add property triple
+            void_graph.add((pp_uri, URIRef(f"{VOID}property"), URIRef(prop)))
+
+            # Add subject class info using void-ext
+            void_graph.add((pp_uri, URIRef(f"{VOID_EXT}subjectClass"), URIRef(subject_class)))
+
+            # Add object class or datatype
+            if object_class:
+                # Create class partition for object if not exists
+                if object_class not in class_partitions:
+                    oc_id = md5(object_class.encode()).hexdigest()[:12]
+                    oc_uri = URIRef(f"{base_uri}class_{oc_id}")
+                    class_partitions[object_class] = oc_uri
+                    void_graph.add((oc_uri, URIRef(f"{VOID}class"), URIRef(object_class)))
+
+                oc_uri = class_partitions[object_class]
+                void_graph.add((pp_uri, URIRef(f"{VOID}classPartition"), oc_uri))
+                void_graph.add((pp_uri, URIRef(f"{VOID_EXT}objectClass"), URIRef(object_class)))
+
+            elif object_datatype:
+                # Create datatype partition node
+                dt_id = md5(object_datatype.encode()).hexdigest()[:12]
+                dt_uri = URIRef(f"{base_uri}dtype_{dt_id}")
+                void_graph.add((pp_uri, URIRef(f"{VOID_EXT}datatypePartition"), dt_uri))
+                void_graph.add((dt_uri, URIRef(f"{VOID_EXT}datatype"), URIRef(object_datatype)))
+
+        logger.info(f"Built VoID graph with {len(void_graph)} triples from partition data")
+        return void_graph
+
+    def retrieve_partitions_from_void(
+        self, endpoint_url: str, graph_uris: List[str]
+    ) -> List[Dict[str, str]]:
+        """
+        Retrieve partition data (class-property-datatype triples) from VoID graphs.
+
+        Uses a lightweight unified query to extract partition information.
+        This is called AFTER discovering that VoID graphs exist and have partitions.
+        Uses SparqlHelper for automatic GET→POST fallback.
+
+        Args:
+            endpoint_url: SPARQL endpoint URL
+            graph_uris: List of graph URIs containing VoID partitions
+
+        Returns:
+            List of partition records with subject_class, property, object_class/object_datatype
+        """
+        logger.debug(f"Retrieving partitions from {len(graph_uris)} VoID graphs")
+        all_partitions: List[Dict[str, str]] = []
+
+        # Create one helper - it will learn POST requirement if needed
+        helper = SparqlHelper(endpoint_url)
+
+        for i, graph_uri in enumerate(graph_uris, 1):
+            logger.debug(f"Querying graph {i}/{len(graph_uris)}: {graph_uri}")
+            try:
+                # Escape the graph URI properly for SPARQL
+                escaped_uri = graph_uri.replace("\\", "\\\\").replace('"', '\\"')
+
+                # Lightweight unified query for partition data
+                partition_query = f"""
+                PREFIX void: <http://rdfs.org/ns/void#>
+                PREFIX void-ext: <http://ldf.fi/void-ext#>
+                SELECT DISTINCT ?subjectClass ?prop ?objectClass ?objectDatatype
+                WHERE {{
+                  GRAPH <{escaped_uri}> {{
+                    {{
+                      ?cp void:class ?subjectClass ;
+                          void:propertyPartition ?pp .
+                      ?pp void:property ?prop .
+                      OPTIONAL {{
+                          {{
+                              ?pp  void:classPartition [ void:class ?objectClass ] .
+                          }} UNION {{
+                              ?pp void-ext:datatypePartition [ void-ext:datatype ?objectDatatype ] .
+                          }}
+                      }}
+                    }} UNION {{
+                      ?ls void:subjectsTarget [ void:class ?subjectClass ] ;
+                          void:linkPredicate ?prop ;
+                          void:objectsTarget [ void:class ?objectClass ] .
+                    }}
+                  }}
+                }}
+                """
+
+                logger.debug("Executing partition query...")
+
+                # SparqlHelper handles GET→POST fallback automatically
+                results = helper.select(partition_query)
+
+                bindings = results.get("results", {}).get("bindings", [])
+                logger.debug(f"Retrieved {len(bindings)} partition records from {graph_uri}")
+
+                # Process each partition record
+                for binding in bindings:
+                    partition_record: Dict[str, str] = {
+                        "subject_class": binding.get("subjectClass", {}).get("value", ""),
+                        "property": binding.get("prop", {}).get("value", ""),
+                    }
+
+                    # Object is either a class or datatype
+                    if "objectClass" in binding:
+                        partition_record["object_class"] = binding["objectClass"]["value"]
+                    elif "objectDatatype" in binding:
+                        partition_record["object_datatype"] = binding["objectDatatype"]["value"]
+
+                    all_partitions.append(partition_record)
+
+            except Exception as e:
+                logger.warning(f"Failed to retrieve partitions from {graph_uri}: {e}")
+                logger.debug(f"Exception: {type(e).__name__}: {e!s}")
+                continue
+
+        logger.info(f"Retrieved {len(all_partitions)} total partition records")
+        return all_partitions
+
     def void_querier(self, endpoint_url: str, graph_uris: List[str]) -> Graph:
         """
-        Query existing VoID descriptions from specific graphs.
+        Query existing VoID descriptions from specific graphs using CONSTRUCT.
+
+        Uses SparqlHelper for automatic GET→POST fallback on endpoints that
+        require POST (like SwissLipids).
+
+        Note: For most cases, prefer using build_void_graph_from_partitions()
+        with partition data from discover_void_graphs() - it's more efficient
+        as it avoids additional queries.
 
         Args:
             endpoint_url: SPARQL endpoint URL
@@ -402,17 +483,15 @@ class VoidParser:
         Returns:
             RDF Graph containing the retrieved VoID descriptions
         """
-        from SPARQLWrapper import TURTLE, SPARQLWrapper
-
         logger.debug(f"Starting VoID querier for {len(graph_uris)} graphs")
         merged_graph = Graph()
+
+        # Create one helper - it will learn POST requirement if needed
+        helper = SparqlHelper(endpoint_url)
 
         for i, graph_uri in enumerate(graph_uris, 1):
             logger.debug(f"Processing graph {i}/{len(graph_uris)}: {graph_uri}")
             try:
-                sparql = SPARQLWrapper(endpoint_url)
-                sparql.setReturnFormat(TURTLE)
-
                 # Query to retrieve all VoID content from the graph
                 logger.debug("Building CONSTRUCT query for VoID data...")
                 void_query = f"""
@@ -450,26 +529,20 @@ class VoidParser:
                 """
 
                 logger.debug("Executing VoID CONSTRUCT query...")
-                results = self._safe_query(sparql, void_query)
+
+                # SparqlHelper handles GET→POST fallback automatically
+                graph_data = helper.construct_graph(void_query)
+
                 logger.debug("VoID CONSTRUCT query completed")
 
-                if results and isinstance(results, bytes):
-                    result_str = results.decode("utf-8")
-                    logger.debug(f"Got bytes result, size: {len(results)} bytes")
-                elif results:
-                    result_str = str(results)
-                    logger.debug(f"Got string result, size: {len(result_str)} chars")
-                else:
-                    logger.debug("No results from CONSTRUCT query")
-                    continue
-
-                if result_str.strip():
-                    logger.debug(f"Parsing VoID data (size: {len(result_str)} chars)")
-                    merged_graph.parse(data=result_str, format="turtle")
+                if len(graph_data) > 0:
+                    # Merge into combined graph
+                    for triple in graph_data:
+                        merged_graph.add(triple)
                     logger.info(f"Retrieved VoID from: {graph_uri}")
-                    logger.debug("Successfully parsed VoID data")
+                    logger.debug(f"Added {len(graph_data)} triples from this graph")
                 else:
-                    logger.debug("Empty result string, skipping")
+                    logger.debug("Empty result from CONSTRUCT query")
 
             except Exception as e:
                 logger.info(f"Failed to retrieve VoID from {graph_uri}: {e}")
@@ -756,8 +829,8 @@ class VoidParser:
         Returns:
             DataFrame with schema information including CURIEs
         """
-        # Ensure schema is extracted
-        self._extract_schema()
+        # Ensure schema is extracted (populates self.schema_triples)
+        self._extract_schema_triples()
 
         # Get schema patterns from the internal triples
         schema_patterns = self._extract_schema_patterns_from_triples()
@@ -1444,7 +1517,7 @@ WHERE {{
         {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/property_partition_',
-                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
+                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class), '_', STR(?object_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
 }}"""
 
             dtype_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
@@ -1526,7 +1599,7 @@ WHERE {{
         {limit_offset_clause}
     }}
     BIND(IRI(CONCAT('{base_graph_uri}/void/property_partition_',
-                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
+                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class), '_', STR(?object_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
 }}"""
 
             dtype_q_template = f"""PREFIX void: <http://rdfs.org/ns/void#>
@@ -1794,6 +1867,151 @@ Last query: {query_type}
 """)
 
     @classmethod
+    def generate_void_alternative_method(
+        cls,
+        endpoint_url: str,
+        dataset_prefix: str,
+        graph_uri: Optional[str] = None,
+        output_file: Optional[str] = None,
+    ) -> Graph:
+        """
+        Alternative VoID generation method using single non-paginated CONSTRUCT query.
+
+        This method uses a unified query approach to extract all VoID partition data
+        in one request, without pagination. Adapted from void-generator project but
+        using read-only CONSTRUCT instead of UPDATE operations.
+
+        Uses SparqlHelper for automatic GET→POST fallback on endpoints that
+        require POST (like SwissLipids).
+
+        Source: https://github.com/sib-swiss/void-generator/issues/30
+
+        Args:
+            endpoint_url: SPARQL endpoint URL
+            dataset_prefix: Prefix for partition node IRIs
+            graph_uri: Optional graph URI to restrict queries
+            output_file: Optional output file path for TTL
+
+        Returns:
+            RDF Graph containing the VoID description
+        """
+        logger.info("Executing alternative VoID generation method (CONSTRUCT)...")
+        logger.debug(f"Dataset prefix: {dataset_prefix}")
+        if graph_uri:
+            logger.debug(f"Restricted to graph: {graph_uri}")
+
+        # Build unified CONSTRUCT query that generates all VoID partitions
+        graph_clause_start = f"GRAPH <{graph_uri}> {{" if graph_uri else ""
+        graph_clause_end = "}" if graph_uri else ""
+
+        construct_query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+
+CONSTRUCT {{
+    # Class partitions
+    ?cp void:class ?class ;
+        void:entities ?class_count .
+
+    # Property partitions with class objects
+    ?cps void:propertyPartition ?pp .
+    ?pp void:property ?prop ;
+        void:triples ?prop_count ;
+        void:classPartition ?cpo .
+
+    # Property partitions with datatype objects
+    ?cps_dt void:propertyPartition ?pp_dt .
+    ?pp_dt void:property ?prop_dt ;
+           void:triples ?dt_count ;
+           void-ext:datatypePartition ?dtp .
+    ?dtp void-ext:datatype ?dt .
+}}
+WHERE {{
+    # Class partitions
+    {{
+        SELECT ?class (COUNT(*) AS ?class_count)
+        WHERE {{
+            {graph_clause_start}
+            [] a ?class .
+            {graph_clause_end}
+        }}
+        GROUP BY ?class
+    }}
+    BIND(IRI(CONCAT("{dataset_prefix}:class_partition_", MD5(STR(?class)))) AS ?cp)
+
+    # Property partitions with class objects
+    OPTIONAL {{
+        {{
+            SELECT ?c_s ?prop ?c_o (COUNT(*) AS ?prop_count)
+            WHERE {{
+                {graph_clause_start}
+                ?s ?prop ?o .
+                ?s a ?c_s .
+                ?o a ?c_o .
+                {graph_clause_end}
+            }}
+            GROUP BY ?prop ?c_s ?c_o
+        }}
+        BIND(IRI(CONCAT("{dataset_prefix}:class_partition_", MD5(STR(?c_s)))) AS ?cps)
+        BIND(IRI(CONCAT("{dataset_prefix}:class_partition_", MD5(STR(?c_o)))) AS ?cpo)
+        BIND(IRI(CONCAT("{dataset_prefix}:property_partition_", MD5(STR(?prop)))) AS ?pp)
+    }}
+
+    # Property partitions with datatype objects
+    OPTIONAL {{
+        {{
+            SELECT ?c_s_dt ?prop_dt ?dt (COUNT(*) AS ?dt_count)
+            WHERE {{
+                {graph_clause_start}
+                ?s ?prop_dt ?o .
+                ?s a ?c_s_dt .
+                FILTER(isLITERAL(?o))
+                BIND(DATATYPE(?o) AS ?dt)
+                {graph_clause_end}
+            }}
+            GROUP BY ?prop_dt ?c_s_dt ?dt
+        }}
+        BIND(IRI(CONCAT("{dataset_prefix}:class_partition_", MD5(STR(?c_s_dt)))) AS ?cps_dt)
+        BIND(IRI(CONCAT("{dataset_prefix}:datatype_partition_", MD5(STR(?dt)))) AS ?dtp)
+        BIND(IRI(CONCAT("{dataset_prefix}:property_partition_", MD5(STR(?prop_dt)))) AS ?pp_dt)
+    }}
+}}
+"""
+
+        try:
+            import time
+
+            t0 = time.monotonic()
+
+            logger.debug("Executing unified CONSTRUCT query...")
+
+            # Use SparqlHelper for automatic GET→POST fallback
+            helper = SparqlHelper(endpoint_url)
+            void_graph = helper.construct_graph(construct_query)
+
+            dt = time.monotonic() - t0
+            logger.info(f"Alternative method completed in {dt:.2f}s")
+
+            if len(void_graph) > 0:
+                logger.info(f"Generated {len(void_graph)} VoID triples")
+            else:
+                logger.warning("No VoID data generated")
+
+        except Exception as e:
+            logger.error(f"Alternative method failed: {e}")
+            raise RuntimeError(f"Failed to execute alternative VoID generation: {e}")
+
+        # Save to file if specified
+        if output_file:
+            try:
+                void_graph.serialize(destination=output_file, format="turtle")
+                logger.info(f"VoID description saved to {output_file}")
+            except Exception as e:
+                logger.error(f"Failed to save VoID file: {e}")
+
+        return void_graph
+
+    @classmethod
     def from_sparql(
         cls,
         endpoint_url: str,
@@ -2006,6 +2224,9 @@ Last query: {query_type}
         """
         Count instances for each class in the dataset.
 
+        Uses SparqlHelper for automatic GET→POST fallback on endpoints that
+        require POST (like SwissLipids).
+
         Args:
             endpoint_url: SPARQL endpoint URL
             sample_limit: Optional limit for total results (None = all results)
@@ -2019,17 +2240,15 @@ Last query: {query_type}
             Dictionary mapping class URIs to instance counts,
             or generator if streaming=True
         """
-        from SPARQLWrapper import JSON, SPARQLWrapper
-
-        sparql = SPARQLWrapper(endpoint_url)
-        sparql.setReturnFormat(JSON)
+        # Create SparqlHelper - handles GET→POST fallback automatically
+        helper = SparqlHelper(endpoint_url)
 
         # If offset_limit_steps is provided, use it for chunked querying
         if offset_limit_steps is not None:
             offset_value = sample_offset if sample_offset is not None else 0
             if streaming:
                 return self._count_instances_chunked_streaming(
-                    sparql,
+                    helper,
                     sample_limit,
                     offset_value,
                     offset_limit_steps,
@@ -2037,7 +2256,7 @@ Last query: {query_type}
                 )
             else:
                 return self._count_instances_chunked(
-                    sparql,
+                    helper,
                     sample_limit,
                     offset_value,
                     offset_limit_steps,
@@ -2048,11 +2267,11 @@ Last query: {query_type}
             offset_value = sample_offset if sample_offset is not None else 0
             if streaming:
                 return self._count_instances_chunked_streaming(
-                    sparql, sample_limit, offset_value, chunk_size, delay_between_chunks
+                    helper, sample_limit, offset_value, chunk_size, delay_between_chunks
                 )
             else:
                 return self._count_instances_chunked(
-                    sparql, sample_limit, offset_value, chunk_size, delay_between_chunks
+                    helper, sample_limit, offset_value, chunk_size, delay_between_chunks
                 )
 
         # Otherwise, use single query with limit/offset
@@ -2075,10 +2294,9 @@ Last query: {query_type}
         """
 
         query = self._replace_graph_clause_placeholder(query_template)
-        sparql.setQuery(query)
 
         try:
-            results = self._safe_query(sparql, query)
+            results = helper.select(query)
 
             if streaming:
                 # Return generator for single query case
@@ -2106,22 +2324,22 @@ Last query: {query_type}
 
     def _count_instances_chunked(
         self,
-        sparql: Any,
+        helper: SparqlHelper,
         total_limit: Optional[int],
         start_offset: int,
         chunk_size: int,
         delay_between_chunks: float = 1.0,
     ) -> Dict[str, int]:
-        """Helper method for chunked instance counting."""
+        """Helper method for chunked instance counting using SparqlHelper."""
         return dict(
             self._count_instances_chunked_streaming(
-                sparql, total_limit, start_offset, chunk_size, delay_between_chunks
+                helper, total_limit, start_offset, chunk_size, delay_between_chunks
             )
         )
 
     def _count_instances_chunked_streaming(
         self,
-        sparql: Any,
+        helper: SparqlHelper,
         total_limit: Optional[int],
         start_offset: int,
         chunk_size: int,
@@ -2129,7 +2347,7 @@ Last query: {query_type}
     ) -> Any:
         """
         Streaming version of chunked instance counting that yields results
-        as they arrive.
+        as they arrive. Uses SparqlHelper for automatic GET→POST fallback.
 
         Yields:
             Tuple[str, int]: (class_uri, count) pairs for immediate processing
@@ -2162,10 +2380,10 @@ Last query: {query_type}
             """
 
             query = self._replace_graph_clause_placeholder(query_template)
-            query = self._replace_graph_clause_placeholder(query_template)
 
             try:
-                results = self._safe_query(sparql, query)
+                # Use SparqlHelper - handles GET→POST fallback automatically
+                results = helper.select(query)
                 chunk_results = results["results"]["bindings"]
 
                 # If no results, we've reached the end
@@ -2197,7 +2415,7 @@ Last query: {query_type}
 
     def _execute_chunked_query(
         self,
-        sparql: Any,
+        helper: SparqlHelper,
         query_template: str,
         chunk_size: int = 100,
         max_total_results: Optional[int] = None,
@@ -2206,8 +2424,11 @@ Last query: {query_type}
         """
         Execute a SPARQL query in chunks using OFFSET/LIMIT pagination.
 
+        Uses SparqlHelper for automatic GET→POST fallback on endpoints that
+        require POST.
+
         Args:
-            sparql: Configured SPARQLWrapper instance
+            helper: SparqlHelper instance for executing queries
             query_template: SPARQL query with {offset} and {limit} placeholders
             chunk_size: Number of results per chunk
             max_total_results: Maximum total results to fetch
@@ -2244,9 +2465,8 @@ Last query: {query_type}
                     current_offset,
                     current_chunk_size,
                 )
-                # Use safe query with retries and backoff to be robust to transient
-                # network/server errors (RemoteDisconnected etc.)
-                results = self._safe_query(sparql, query)
+                # SparqlHelper handles GET→POST fallback and retries
+                results = helper.select(query)
 
                 # Extract bindings
                 bindings = results.get("results", {}).get("bindings", [])
@@ -2304,6 +2524,10 @@ Last query: {query_type}
     ) -> Any:
         """
         Execute a SPARQL query with retries and exponential backoff.
+
+        NOTE: This method is kept for backward compatibility and for methods
+        that still use SPARQLWrapper directly. For new code, prefer using
+        SparqlHelper which handles this automatically.
 
         Transient failures (connection resets, RemoteDisconnected,
         temporary endpoint failures). The function will raise the last
@@ -2441,6 +2665,7 @@ Last query: {query_type}
         collect_instances: bool = False,
         batch_size: int = 20,
         track_queries: bool = False,
+        delay_between_chunks: float = 10.0,
     ) -> tuple[pd.DataFrame, Optional[pd.DataFrame]]:
         """
         Calculate schema pattern coverage: for each subject class, how many entities
@@ -2453,18 +2678,17 @@ Last query: {query_type}
             endpoint_url: SPARQL endpoint URL
             sample_limit: Optional limit for sampling entities
             sample_offset: Optional offset for pagination
-            offset_limit_steps: Optional limit/offset combination (legacy parameter, not used)
+            offset_limit_steps: If provided, use chunked pagination with this step size
             collect_instances: If True, also collect actual subject/object IRI instances
             batch_size: Size of batches for VALUES queries (default: 20)
             track_queries: If True, collect detailed query statistics and report them
+            delay_between_chunks: Seconds to wait between chunked queries (default: 10.0)
 
         Returns:
             Tuple of (frequencies_df, instances_df):
             - frequencies_df: DataFrame with schema pattern coverage ratios and counts
             - instances_df: Optional DataFrame with actual subject/object IRIs linked by shape_id
         """
-        from SPARQLWrapper import JSON, SPARQLWrapper
-
         # Initialize query tracking (only if requested)
         total_queries_sent: int = 0
         total_rows_collected: int = 0
@@ -2477,83 +2701,44 @@ Last query: {query_type}
             return pd.DataFrame(), None
 
         # First, get total entity counts using batched VALUES queries
-        class_entity_counts = {}
-        sparql = SPARQLWrapper(endpoint_url)
-        sparql.setReturnFormat(JSON)
+        class_entity_counts: Dict[str, int] = {}
+
+        # Use SparqlHelper for automatic GET→POST fallback
+        helper = SparqlHelper(endpoint_url)
 
         # Get unique subject class URIs and batch them
         subject_class_uris = list(schema_df["subject_uri"].unique())
 
-        for i in range(0, len(subject_class_uris), batch_size):
-            batch_uris = subject_class_uris[i : i + batch_size]
-
-            # Create VALUES clause for this batch
-            values_clause = " ".join([f"<{uri}>" for uri in batch_uris])
-
-            # Build the base query
-            count_query = f"""
-            SELECT ?class (COUNT(DISTINCT ?s) AS ?total) WHERE {{
-                VALUES ?class {{ {values_clause} }}
-                #GRAPH_CLAUSE
-                    ?s a ?class .
-                #END_GRAPH_CLAUSE
-            }}
-            GROUP BY ?class
-            """
-
-            # Add LIMIT clause if sample_limit is specified
-            if sample_limit is not None:
-                count_query += f"LIMIT {sample_limit}"
-
-            query = self._replace_graph_clause_placeholder(count_query)
-
-            try:
-                sparql.setQuery(query)
-                results = self._safe_query(sparql, query)
-                if track_queries:
-                    total_queries_sent += 1
-
-                # Initialize all classes in this batch to 0 first
-                for class_uri in batch_uris:
-                    class_entity_counts[class_uri] = 0
-
-                # Update with actual counts from results and count rows
-                rows_in_batch = 0
-                if results and results.get("results", {}).get("bindings"):
-                    rows_in_batch = len(results["results"]["bindings"])
-                    if track_queries:
-                        total_rows_collected += rows_in_batch
-                    for binding in results["results"]["bindings"]:
-                        class_uri = binding["class"]["value"]
-                        total = int(binding["total"]["value"])
-                        class_entity_counts[class_uri] = total
-
-                if track_queries and query_details is not None:
-                    query_details.append(
-                        {
-                            "query_type": "entity_count_batch",
-                            "batch_number": (i // batch_size) + 1,
-                            "classes_in_batch": len(batch_uris),
-                            "rows_returned": rows_in_batch,
-                        }
-                    )
-
-            except Exception:
-                if track_queries:
-                    total_queries_sent += 1
-                    if query_details is not None:
-                        query_details.append(
-                            {
-                                "query_type": "entity_count_batch",
-                                "batch_number": (i // batch_size) + 1,
-                                "classes_in_batch": len(batch_uris),
-                                "rows_returned": 0,
-                                "error": True,
-                            }
-                        )
-                # If batch fails, initialize all classes in batch to 0
-                for class_uri in batch_uris:
-                    class_entity_counts[class_uri] = 0
+        # Use chunked pagination for entity counts if offset_limit_steps is provided
+        if offset_limit_steps is not None:
+            logger.info(
+                f"Using chunked pagination for entity counts (step size: {offset_limit_steps})"
+            )
+            class_entity_counts = self._count_entity_classes_chunked(
+                helper,
+                subject_class_uris,
+                offset_limit_steps,
+                sample_limit,
+                delay_between_chunks,
+                track_queries,
+                query_details,
+            )
+            if track_queries:
+                total_queries_sent += len(subject_class_uris)  # Approximation
+        else:
+            # Original batched VALUES approach for non-chunked queries
+            class_entity_counts = self._count_entity_classes_batched(
+                helper,
+                subject_class_uris,
+                batch_size,
+                sample_limit,
+                track_queries,
+                query_details,
+            )
+            if track_queries and query_details:
+                total_queries_sent += len(
+                    [q for q in query_details if q["query_type"] == "entity_count_batch"]
+                )
 
         # Now calculate coverage for each schema pattern
         coverage_results: List[Dict[str, Any]] = []
@@ -2672,8 +2857,7 @@ Last query: {query_type}
             query = self._replace_graph_clause_placeholder(pattern_query)
 
             try:
-                sparql.setQuery(query)
-                results = self._safe_query(sparql, query)
+                results = helper.select(query)
                 if track_queries:
                     total_queries_sent += 1
 
@@ -2871,6 +3055,195 @@ Last query: {query_type}
             logger.info("Total instances collected: %s", len(instances_data))
 
         return frequencies_df, instances_df
+
+    def _count_entity_classes_batched(
+        self,
+        helper: SparqlHelper,
+        subject_class_uris: List[str],
+        batch_size: int,
+        sample_limit: Optional[int],
+        track_queries: bool,
+        query_details: Optional[List[Dict[str, Any]]],
+    ) -> Dict[str, int]:
+        """
+        Count entities per class using batched VALUES queries.
+
+        This is efficient for most endpoints when pagination isn't needed.
+
+        Args:
+            helper: SparqlHelper instance
+            subject_class_uris: List of class URIs to count
+            batch_size: Number of classes per batch
+            sample_limit: Optional LIMIT clause
+            track_queries: Whether to track query statistics
+            query_details: List to append query details to
+
+        Returns:
+            Dictionary mapping class URIs to instance counts
+        """
+        class_entity_counts: Dict[str, int] = {}
+
+        for i in range(0, len(subject_class_uris), batch_size):
+            batch_uris = subject_class_uris[i : i + batch_size]
+
+            # Create VALUES clause for this batch
+            values_clause = " ".join([f"<{uri}>" for uri in batch_uris])
+
+            # Build the base query
+            count_query = f"""
+            SELECT ?class (COUNT(DISTINCT ?s) AS ?total) WHERE {{
+                VALUES ?class {{ {values_clause} }}
+                #GRAPH_CLAUSE
+                    ?s a ?class .
+                #END_GRAPH_CLAUSE
+            }}
+            GROUP BY ?class
+            """
+
+            # Add LIMIT clause if sample_limit is specified
+            if sample_limit is not None:
+                count_query += f"LIMIT {sample_limit}"
+
+            query = self._replace_graph_clause_placeholder(count_query)
+
+            try:
+                results = helper.select(query)
+
+                # Initialize all classes in this batch to 0 first
+                for class_uri in batch_uris:
+                    class_entity_counts[class_uri] = 0
+
+                # Update with actual counts from results
+                rows_in_batch = 0
+                if results and results.get("results", {}).get("bindings"):
+                    rows_in_batch = len(results["results"]["bindings"])
+                    for binding in results["results"]["bindings"]:
+                        class_uri = binding["class"]["value"]
+                        total = int(binding["total"]["value"])
+                        class_entity_counts[class_uri] = total
+
+                if track_queries and query_details is not None:
+                    query_details.append(
+                        {
+                            "query_type": "entity_count_batch",
+                            "batch_number": (i // batch_size) + 1,
+                            "classes_in_batch": len(batch_uris),
+                            "rows_returned": rows_in_batch,
+                        }
+                    )
+
+            except Exception as e:
+                logger.warning(f"Batch entity count failed: {e}")
+                if track_queries and query_details is not None:
+                    query_details.append(
+                        {
+                            "query_type": "entity_count_batch",
+                            "batch_number": (i // batch_size) + 1,
+                            "classes_in_batch": len(batch_uris),
+                            "rows_returned": 0,
+                            "error": True,
+                        }
+                    )
+                # If batch fails, initialize all classes in batch to 0
+                for class_uri in batch_uris:
+                    class_entity_counts[class_uri] = 0
+
+        return class_entity_counts
+
+    def _count_entity_classes_chunked(
+        self,
+        helper: SparqlHelper,
+        subject_class_uris: List[str],
+        chunk_size: int,
+        sample_limit: Optional[int],
+        delay_between_chunks: float,
+        track_queries: bool,
+        query_details: Optional[List[Dict[str, Any]]],
+    ) -> Dict[str, int]:
+        """
+        Count entities per class using chunked OFFSET/LIMIT pagination.
+
+        This is useful for endpoints that have result size limits or timeouts.
+
+        Args:
+            helper: SparqlHelper instance
+            subject_class_uris: List of class URIs to count
+            chunk_size: OFFSET/LIMIT step size for pagination
+            sample_limit: Maximum total results to fetch
+            delay_between_chunks: Seconds to wait between chunks
+            track_queries: Whether to track query statistics
+            query_details: List to append query details to
+
+        Returns:
+            Dictionary mapping class URIs to instance counts
+        """
+        class_entity_counts: Dict[str, int] = {}
+
+        # Initialize all classes to 0
+        for class_uri in subject_class_uris:
+            class_entity_counts[class_uri] = 0
+
+        # Build base query and replace graph clause markers
+        base_query = """
+        SELECT ?class (COUNT(DISTINCT ?s) AS ?total) WHERE {
+            #GRAPH_CLAUSE
+                ?s a ?class .
+            #END_GRAPH_CLAUSE
+        }
+        GROUP BY ?class
+        ORDER BY DESC(?total)
+        """
+
+        base_query = self._replace_graph_clause_placeholder(base_query)
+
+        # Use SparqlHelper's utility to prepare for pagination
+        # This escapes SPARQL braces and adds OFFSET/LIMIT placeholders
+        query_template = SparqlHelper.prepare_paginated_query(base_query)
+
+        total_fetched = 0
+        chunk_number = 0
+
+        for bindings in helper.select_chunked(
+            query_template,
+            chunk_size=chunk_size,
+            max_total_results=sample_limit,
+            delay_between_chunks=delay_between_chunks,
+        ):
+            chunk_number += 1
+            rows_in_chunk = len(bindings)
+            total_fetched += rows_in_chunk
+
+            for binding in bindings:
+                class_uri = binding["class"]["value"]
+                total = int(binding["total"]["value"])
+                # Only update if this class is in our list of interest
+                if class_uri in class_entity_counts:
+                    class_entity_counts[class_uri] = total
+                else:
+                    # Add classes we discover that weren't in the schema
+                    class_entity_counts[class_uri] = total
+
+            if track_queries and query_details is not None:
+                query_details.append(
+                    {
+                        "query_type": "entity_count_chunked",
+                        "chunk_number": chunk_number,
+                        "rows_returned": rows_in_chunk,
+                        "total_fetched": total_fetched,
+                    }
+                )
+
+            logger.debug(
+                f"Chunked entity count: chunk {chunk_number}, "
+                f"rows={rows_in_chunk}, total={total_fetched}"
+            )
+
+        logger.info(
+            f"Chunked entity counting complete: {chunk_number} chunks, "
+            f"{total_fetched} total results"
+        )
+
+        return class_entity_counts
 
     def export_schema_shape_frequencies(
         self, frequencies_df: pd.DataFrame, output_file: Optional[str] = None

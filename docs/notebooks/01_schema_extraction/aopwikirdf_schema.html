@@ -7611,7 +7611,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:15 INFO aopwikirdf: Logging configured for aopwikirdf
+<pre>2025-12-01 14:17:11 INFO aopwikirdf: Logging configured for aopwikirdf
 </pre>
 </div>
 </div>
@@ -7633,7 +7633,13 @@ a.anchor-link {
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.offline</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span><span class="p">,</span> <span class="n">display</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">rdfsolve.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">VoidParser</span>
+<span class="c1"># Import rdfsolve API functions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdfsolve.api</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">discover_void_graphs</span><span class="p">,</span>
+    <span class="n">generate_void_from_endpoint</span><span class="p">,</span>
+    <span class="n">load_parser_from_graph</span><span class="p">,</span>
+    <span class="n">retrieve_void_from_graphs</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="c1"># Set renderer to 'notebook' for Jupyter, but ensure HTML export works</span>
 <span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">"notebook+plotly_mimetype"</span>
@@ -7810,8 +7816,8 @@ a.anchor-link {
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Clear specific cache files (uncomment lines as needed for testing)</span>
 
-<span class="c1"># When testing new parser changes:</span>
-<span class="c1"># clear_cache(f"{dataset_name}_voidparser")</span>
+<span class="c1"># When testing new VoID discovery/generation:</span>
+<span class="c1"># clear_cache(f"{dataset_name}_voidgraph")</span>
 
 <span class="c1"># When testing JSON-LD generation (primary output):</span>
 <span class="c1"># clear_cache(f"{dataset_name}_jsonld_schema")</span>
@@ -7821,10 +7827,10 @@ a.anchor-link {
 <span class="c1"># clear_cache(f"{dataset_name}_frequencies_with_instances")</span>
 
 <span class="c1"># Clear everything:</span>
-<span class="c1"># clear_cache()</span>
+<span class="n">clear_cache</span><span class="p">()</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Cleared parser and JSON-LD caches to test schema pattern fix"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Note: JSON-LD cache is now the primary cache - clear it when testing schema changes."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Cache control ready"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Note: VoID graph and JSON-LD are the primary caches"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7837,8 +7843,9 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cleared parser and JSON-LD caches to test schema pattern fix
-Note: JSON-LD cache is now the primary cache - clear it when testing schema changes.
+<pre>No cache directory to clear
+Cache control ready
+Note: VoID graph and JSON-LD are the primary caches
 </pre>
 </div>
 </div>
@@ -7863,33 +7870,57 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Generate VoID schema with caching</span>
-<span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_voidparser"</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Discover or generate VoID schema with caching</span>
+<span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_voidgraph"</span>
 
 <span class="c1"># Try to load from cache first</span>
-<span class="n">vp</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
+<span class="n">void_graph</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
 
-<span class="k">if</span> <span class="n">vp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"VoidParser not found in cache, generating..."</span><span class="p">)</span>
-    <span class="n">vp</span> <span class="o">=</span> <span class="n">VoidParser</span><span class="o">.</span><span class="n">from_endpoint_with_discovery</span><span class="p">(</span>
-        <span class="n">endpoint_url</span><span class="o">=</span><span class="n">endpoint_url</span><span class="p">,</span>
-        <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
-        <span class="n">exports_path</span><span class="o">=</span><span class="n">exports_path</span><span class="p">,</span>
-        <span class="c1"># Arguments for the case when a suitable VoID is not found</span>
-        <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">exclude_graph_patterns</span><span class="o">=</span><span class="p">[</span>
-            <span class="s2">"openlinksw"</span><span class="p">,</span>
-            <span class="s2">"well-known"</span><span class="p">,</span>
-            <span class="s2">"void"</span><span class="p">,</span>
-            <span class="s2">"service"</span><span class="p">,</span>
-        <span class="p">],</span>  <span class="c1"># Filter out service description and administrative graphs</span>
-        <span class="n">counts</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>  <span class="c1"># pagination</span>
+<span class="k">if</span> <span class="n">void_graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"VoID graph not found in cache, attempting discovery..."</span><span class="p">)</span>
+
+    <span class="c1"># Step 1: Try to discover existing VoID graphs</span>
+    <span class="n">discovery_result</span> <span class="o">=</span> <span class="n">discover_void_graphs</span><span class="p">(</span>
+        <span class="n">endpoint_url</span><span class="p">,</span> <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="p">)</span>
-    <span class="c1"># Cache the VoidParser for future use</span>
-    <span class="n">save_cache</span><span class="p">(</span><span class="n">vp</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
+
+    <span class="n">found_graphs</span> <span class="o">=</span> <span class="n">discovery_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"found_graphs"</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">partitions</span> <span class="o">=</span> <span class="n">discovery_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"partitions"</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="k">if</span> <span class="n">found_graphs</span> <span class="ow">and</span> <span class="n">partitions</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">found_graphs</span><span class="p">)</span><span class="si">}</span><span class="s2"> VoID graphs with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">partitions</span><span class="p">)</span><span class="si">}</span><span class="s2"> partitions"</span><span class="p">)</span>
+        <span class="c1"># Build VoID graph directly from partition data (no CONSTRUCT query needed)</span>
+        <span class="n">void_graph</span> <span class="o">=</span> <span class="n">retrieve_void_from_graphs</span><span class="p">(</span>
+            <span class="n">endpoint_url</span><span class="p">,</span>
+            <span class="n">found_graphs</span><span class="p">,</span>
+            <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span>  <span class="c1"># Pass partition data directly</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Save to file</span>
+        <span class="n">void_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_existing_void.ttl"</span><span class="p">)</span>
+        <span class="n">void_graph</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">destination</span><span class="o">=</span><span class="n">void_path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"turtle"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Built VoID graph from: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">found_graphs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"No VoID graphs found, generating from queries..."</span><span class="p">)</span>
+        <span class="c1"># Step 2: Generate new VoID if none found</span>
+        <span class="n">void_graph</span> <span class="o">=</span> <span class="n">generate_void_from_endpoint</span><span class="p">(</span>
+            <span class="n">endpoint_url</span><span class="o">=</span><span class="n">endpoint_url</span><span class="p">,</span>
+            <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">output_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_generated_void.ttl"</span><span class="p">),</span>
+            <span class="n">counts</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+            <span class="n">exclude_graphs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Cache the VoID graph for future use</span>
+    <span class="n">save_cache</span><span class="p">(</span><span class="n">void_graph</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"VoID graph cached with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">void_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> triples"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loaded VoidParser from cache"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded VoID graph from cache (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">void_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> triples)"</span><span class="p">)</span>
+
+<span class="c1"># Load parser from the VoID graph</span>
+<span class="n">vp</span> <span class="o">=</span> <span class="n">load_parser_from_graph</span><span class="p">(</span><span class="n">void_graph</span><span class="p">,</span> <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7902,300 +7933,58 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>VoidParser not found in cache, generating...
-2025-12-01 09:31:17 DEBUG rdfsolve.parser: Starting endpoint discovery process...
+<pre>VoID graph not found in cache, attempting discovery...
+2025-12-01 14:17:13 DEBUG rdfsolve.parser: Starting VoID partition discovery for https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:17 DEBUG rdfsolve.parser: Endpoint: https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
+<pre>2025-12-01 14:17:13 INFO rdfsolve.parser: Discovering VoID partitions across all graphs
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:17 DEBUG rdfsolve.parser: Dataset: aopwikirdf
+<pre>2025-12-01 14:17:14 DEBUG rdfsolve.parser: Discovery complete: found 0 graphs with VoID partitions
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:17 DEBUG rdfsolve.parser:  Provided graph URIs: ['http://aopwiki.org/']
+<pre>2025-12-01 14:17:14 DEBUG rdfsolve.parser: Collected 0 partition records
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:17 DEBUG rdfsolve.parser: Settings: prefer_existing=True, exclude_graphs=True
+<pre>No VoID graphs found, generating from queries...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:17 DEBUG rdfsolve.parser: Validating provided graph URIs...
+<pre>2025-12-01 14:17:17 INFO rdfsolve.parser: Successfully extracted 462 RDF triples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:17 DEBUG rdfsolve.parser: Step 1: Discovering existing VoID graphs...
+<pre>2025-12-01 14:17:17 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/aopwikirdf_generated_void.ttl
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:17 DEBUG rdfsolve.parser:  Starting chunked VoID graph discovery for https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:17 DEBUG rdfsolve.parser: Starting VoID graph discovery with pagination...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:17 INFO rdfsolve.parser: Discovering VoID candidate graphs with chunked approach
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:17 DEBUG rdfsolve.parser: Executing chunked query: offset=0, limit=50
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 INFO rdfsolve.parser: Candidate VoID graph at servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Fetched chunk: 1 results (total: 1)
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Partial chunk received, pagination complete
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Found 1 candidate VoID graphs
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Starting detailed VoID content analysis...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Analyzing graph 1/1: servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Discovering partitions in servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Class partition query template: 
-
-                    SELECT DISTINCT ?cp WHERE {
-                        GRAPH &lt;servicedescription&gt; {
-                            ?cp &lt;http://rdfs.org/ns/void#class&gt; ?class .
-                        }...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 WARNING rdfsolve.parser: Error analyzing VoID partitions in servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Full error details:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser:    • Error type: ValueError
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser:    • Error message: unexpected '{' in field name
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser:    • Graph URI: servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 WARNING rdfsolve.parser: Possible SPARQL syntax issue with URI: servicedescription
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: VoID discovery analysis complete
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser:  Results summary:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser:    • Total candidate graphs: 1
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser:    • Graphs with VoID data: 0
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser:    • Has VoID descriptions: False
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 INFO rdfsolve.parser: No VoID data found in any candidate graphs
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Discovery result: found=False
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Found 0 graphs with VoID data
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 INFO rdfsolve.parser: No suitable VoID found; generating from queries...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Step 2: Generating new VoID from SPARQL queries...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Generation settings: counts=True, offset_limit_steps=300
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Output path: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/aopwikirdf_generated_void.ttl
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 DEBUG rdfsolve.parser: Starting VoID generation process...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:21 INFO rdfsolve.parser: Successfully extracted 346 RDF triples
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:21 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/aopwikirdf_generated_void.ttl
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:21 DEBUG rdfsolve.parser: VoID generation completed
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/cache/aopwikirdf_voidparser.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/cache/aopwikirdf_voidgraph.pkl
+VoID graph cached with 462 triples
 </pre>
 </div>
 </div>
@@ -8235,7 +8024,7 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <span class="n">jsonld_schema</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
 
 <span class="k">if</span> <span class="n">jsonld_schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Generating standards-compliant JSON-LD schema..."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Generating JSON-LD schema..."</span><span class="p">)</span>
     <span class="n">jsonld_schema</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">to_jsonld</span><span class="p">(</span><span class="n">filter_void_admin_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">save_cache</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
@@ -8278,7 +8067,7 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Generating standards-compliant JSON-LD schema...
+<pre>Generating JSON-LD schema...
 </pre>
 </div>
 </div>
@@ -8328,48 +8117,48 @@ Schema Patterns Preview (96 total):
 <tbody>
 <tr>
 <th>0</th>
-<td>aopo:KeyEventRelationship</td>
-<td>http://aopkb.org/aop_ontology#KeyEventRelation...</td>
-<td>foaf:page</td>
-<td>http://xmlns.com/foaf/0.1/page</td>
-<td>aopo:KeyEventRelationship</td>
-<td>http://aopkb.org/aop_ontology#KeyEventRelation...</td>
+<td>aopo:AdverseOutcomePathway</td>
+<td>http://aopkb.org/aop_ontology#AdverseOutcomePa...</td>
+<td>ncit:C54571</td>
+<td>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus...</td>
+<td>ncit:C54571</td>
+<td>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus...</td>
 </tr>
 <tr>
 <th>1</th>
-<td>aopo:KeyEvent</td>
-<td>http://aopkb.org/aop_ontology#KeyEvent</td>
-<td>foaf:page</td>
-<td>http://xmlns.com/foaf/0.1/page</td>
-<td>aopo:KeyEvent</td>
-<td>http://aopkb.org/aop_ontology#KeyEvent</td>
+<td>edam.data:1025</td>
+<td>http://edamontology.org/data_1025</td>
+<td>skos:exactMatch</td>
+<td>http://www.w3.org/2004/02/skos/core#exactMatch</td>
+<td>edam.data:2291</td>
+<td>http://edamontology.org/data_2291</td>
 </tr>
 <tr>
 <th>2</th>
-<td>aopo:AdverseOutcomePathway</td>
-<td>http://aopkb.org/aop_ontology#AdverseOutcomePa...</td>
-<td>foaf:page</td>
-<td>http://xmlns.com/foaf/0.1/page</td>
-<td>aopo:AdverseOutcomePathway</td>
-<td>http://aopkb.org/aop_ontology#AdverseOutcomePa...</td>
+<td>edam.data:1025</td>
+<td>http://edamontology.org/data_1025</td>
+<td>skos:exactMatch</td>
+<td>http://www.w3.org/2004/02/skos/core#exactMatch</td>
+<td>edam.data:1027</td>
+<td>http://edamontology.org/data_1027</td>
 </tr>
 <tr>
 <th>3</th>
-<td>ncit:C54571</td>
-<td>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus...</td>
-<td>foaf:page</td>
-<td>http://xmlns.com/foaf/0.1/page</td>
-<td>ncit:C54571</td>
-<td>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus...</td>
+<td>cheminf:000446</td>
+<td>http://semanticscience.org/resource/CHEMINF_00...</td>
+<td>skos:exactMatch</td>
+<td>http://www.w3.org/2004/02/skos/core#exactMatch</td>
+<td>cheminf:000564</td>
+<td>http://semanticscience.org/resource/CHEMINF_00...</td>
 </tr>
 <tr>
 <th>4</th>
-<td>aopo:AdverseOutcomePathway</td>
-<td>http://aopkb.org/aop_ontology#AdverseOutcomePa...</td>
-<td>ncit:C54571</td>
-<td>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus...</td>
-<td>ncit:C54571</td>
-<td>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus...</td>
+<td>edam.data:1025</td>
+<td>http://edamontology.org/data_1025</td>
+<td>skos:exactMatch</td>
+<td>http://www.w3.org/2004/02/skos/core#exactMatch</td>
+<td>edam.data:1033</td>
+<td>http://edamontology.org/data_1033</td>
 </tr>
 </tbody>
 </table>
@@ -8451,6 +8240,42 @@ Schema Patterns Preview (96 total):
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Calculating schema pattern frequencies...
+2025-12-01 14:17:19 INFO rdfsolve.parser: Using chunked pagination for entity counts (step size: 300)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Using chunked pagination for entity counts (step size: 300)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-12-01 14:17:20 DEBUG rdfsolve.parser: Chunked entity count: chunk 1, rows=28, total=28
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Chunked entity count: chunk 1, rows=28, total=28
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-12-01 14:17:20 INFO rdfsolve.parser: Chunked entity counting complete: 1 chunks, 28 total results
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Chunked entity counting complete: 1 chunks, 28 total results
 </pre>
 </div>
 </div>
@@ -8498,38 +8323,38 @@ Sample Coverage Data:
 </thead>
 <tbody>
 <tr>
-<th>0</th>
-<td>aopo:KeyEventRelationship</td>
-<td>foaf:page</td>
-<td>aopo:KeyEventRelationship</td>
-<td>100.0</td>
-</tr>
-<tr>
-<th>1</th>
+<th>31</th>
 <td>aopo:KeyEvent</td>
-<td>foaf:page</td>
+<td>dc:identifier</td>
 <td>aopo:KeyEvent</td>
 <td>100.0</td>
 </tr>
 <tr>
-<th>2</th>
-<td>aopo:AdverseOutcomePathway</td>
-<td>foaf:page</td>
-<td>aopo:AdverseOutcomePathway</td>
-<td>100.0</td>
-</tr>
-<tr>
-<th>3</th>
-<td>ncit:C54571</td>
-<td>foaf:page</td>
-<td>ncit:C54571</td>
-<td>100.0</td>
-</tr>
-<tr>
-<th>59</th>
+<th>51</th>
 <td>ncbitaxon:131567</td>
 <td>dc:identifier</td>
 <td>ncbitaxon:131567</td>
+<td>100.0</td>
+</tr>
+<tr>
+<th>53</th>
+<td>aopo:AdverseOutcomePathway</td>
+<td>foaf:page</td>
+<td>aopo:AdverseOutcomePathway</td>
+<td>100.0</td>
+</tr>
+<tr>
+<th>52</th>
+<td>aopo:KeyEventRelationship</td>
+<td>foaf:page</td>
+<td>aopo:KeyEventRelationship</td>
+<td>100.0</td>
+</tr>
+<tr>
+<th>54</th>
+<td>aopo:KeyEvent</td>
+<td>foaf:page</td>
+<td>aopo:KeyEvent</td>
 <td>100.0</td>
 </tr>
 </tbody>
@@ -8600,12 +8425,10 @@ Name: coverage_percent, dtype: float64</pre>
 
 <span class="c1"># Display basic information about the data structure</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Frequencies DataFrame: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frequencies_with_instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> shapes"</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Instances DataFrame: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> subject-object pairs"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">frequencies_with_instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"Memory usage - Frequencies: </span><span class="si">{</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span>
+        <span class="sa">f</span><span class="s2">"Memory usage - Instances: </span><span class="si">{</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span>
     <span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Memory usage - Instances: </span><span class="si">{</span><span class="n">instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"No instances collected"</span><span class="p">)</span>
 </pre></div>
@@ -8621,13 +8444,49 @@ Name: coverage_percent, dtype: float64</pre>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Collecting frequency data and instances...
+2025-12-01 14:17:36 INFO rdfsolve.parser: Using chunked pagination for entity counts (step size: 300)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Using chunked pagination for entity counts (step size: 300)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:33:27 INFO rdfsolve.parser: Total instances collected: 105332
+<pre>2025-12-01 14:17:37 DEBUG rdfsolve.parser: Chunked entity count: chunk 1, rows=28, total=28
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Chunked entity count: chunk 1, rows=28, total=28
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-12-01 14:17:37 INFO rdfsolve.parser: Chunked entity counting complete: 1 chunks, 28 total results
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Chunked entity counting complete: 1 chunks, 28 total results
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-12-01 14:18:07 INFO rdfsolve.parser: Total instances collected: 105332
 </pre>
 </div>
 </div>
@@ -8643,9 +8502,7 @@ Name: coverage_percent, dtype: float64</pre>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/aopwikirdf/cache/aopwikirdf_frequencies_with_instances.pkl
 Frequencies DataFrame: 96 shapes
-Instances DataFrame: 105332 subject-object pairs
-Memory usage - Frequencies: 70.3 KB
-Memory usage - Instances: 19962.6 KB
+Memory usage - Instances: 70.3 KB
 </pre>
 </div>
 </div>
@@ -8661,10 +8518,9 @@ Memory usage - Instances: 19962.6 KB
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.io</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pio</span>
 
-<span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"coverage_percent"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -8769,9 +8625,9 @@ Memory usage - Instances: 19962.6 KB
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <div> <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script> <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="e1c6c3c1-6647-495e-b20f-54fefa88a891" style="height:2000px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("e1c6c3c1-6647-495e-b20f-54fefa88a891")) {                    Plotly.newPlot(                        "e1c6c3c1-6647-495e-b20f-54fefa88a891",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQHE9CtejwFhAcT0K16PAWECF61G4HqVXQIXrUbgepVdAhetRuB6lV0CF61G4HqVXQNejcD0KN1dA16NwPQo3V0CPwvUoXP9WQEjhehSut1ZASOF6FK63VkDhehSuR2FWQB+F61G4LlZAhetRuB61VUDNzMzMzDxVQLgehetR6FRAAAAAAADQVEAAAAAAANBUQOF6FK5HgVRA4XoUrkeBVEB7FK5H4WpUQHE9Ctej0FFA9ihcj8JlUUBxPQrXoxBMQFK4HoXr8UtAUrgehevxS0B7FK5H4XpKQHsUrkfhekpAXI\u002fC9SjcSUBcj8L1KNxJQOF6FK5HIUhA7FG4HoXLRkD2KFyPwrVFQBSuR+F6lERAcT0K16NQQEC4HoXrUXg\u002fQLgehetReD9ASOF6FK4HO0AUrkfhehQ6QBSuR+F6FDpAuB6F61F4OUB7FK5H4Xo3QHsUrkfhejdAexSuR+F6NUBI4XoUrgc1QDMzMzMzMypApHA9CtejKEC4HoXrUbgnQLgehetRuCdA4XoUrkdhJ0ApXI\u002fC9SgnQD0K16NwPSFAPQrXo3A9IUCuR+F6FK4ZQK5H4XoUrhlArkfhehSuGUDhehSuR+EVQM3MzMzMzBBA7FG4HoXrDUAzMzMzMzMHQIXrUbgehfc\u002f7FG4HoXr9T\u002fNzMzMzMzwP6RwPQrXo\u002fA\u002fH4XrUbge7T\u002fNzMzMzMzsP3sUrkfheuQ\u002f9ihcj8L12D+kcD0K16PAP7gehetRuK4\u002f"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","99.0%","99.0%","94.6%","94.6%","94.6%","94.6%","92.9%","92.9%","92.0%","90.9%","90.9%","89.5%","88.7%","86.8%","85.0%","83.6%","83.2%","83.2%","82.0%","82.0%","81.7%","71.3%","69.6%","56.1%","55.9%","55.9%","53.0%","53.0%","51.7%","51.7%","48.3%","45.6%","43.4%","41.2%","32.6%","31.5%","31.5%","27.0%","26.1%","26.1%","25.5%","23.5%","23.5%","21.5%","21.0%","13.1%","12.3%","11.9%","11.9%","11.7%","11.6%","8.6%","8.6%","6.4%","6.4%","6.4%","5.5%","4.2%","3.7%","2.9%","1.5%","1.4%","1.1%","1.0%","0.9%","0.9%","0.6%","0.4%","0.1%","0.1%"],"textposition":["inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQHE9CtejwFhAcT0K16PAWECF61G4HqVXQIXrUbgepVdAhetRuB6lV0CF61G4HqVXQNejcD0KN1dA16NwPQo3V0CPwvUoXP9WQEjhehSut1ZASOF6FK63VkDhehSuR2FWQB+F61G4LlZAhetRuB61VUDNzMzMzDxVQLgehetR6FRAAAAAAADQVEAAAAAAANBUQOF6FK5HgVRA4XoUrkeBVEB7FK5H4WpUQHE9Ctej0FFA9ihcj8JlUUBxPQrXoxBMQFK4HoXr8UtAUrgehevxS0B7FK5H4XpKQHsUrkfhekpAXI\u002fC9SjcSUBcj8L1KNxJQOF6FK5HIUhA7FG4HoXLRkD2KFyPwrVFQBSuR+F6lERAcT0K16NQQEC4HoXrUXg\u002fQLgehetReD9ASOF6FK4HO0AUrkfhehQ6QBSuR+F6FDpAuB6F61F4OUB7FK5H4Xo3QHsUrkfhejdAexSuR+F6NUBI4XoUrgc1QDMzMzMzMypApHA9CtejKEC4HoXrUbgnQLgehetRuCdA4XoUrkdhJ0ApXI\u002fC9SgnQD0K16NwPSFAPQrXo3A9IUCuR+F6FK4ZQK5H4XoUrhlArkfhehSuGUDhehSuR+EVQM3MzMzMzBBA7FG4HoXrDUAzMzMzMzMHQIXrUbgehfc\u002f7FG4HoXr9T\u002fNzMzMzMzwP6RwPQrXo\u002fA\u002fH4XrUbge7T\u002fNzMzMzMzsP3sUrkfheuQ\u002f9ihcj8L12D+kcD0K16PAP7gehetRuK4\u002f"},"y":["\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003encbitaxon:131567\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encbitaxon:131567\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_upstream_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_downstream_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003ego:0008150\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000567\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000567\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000140\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000405\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000405\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000140\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000407\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000407\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1033\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_adverse_outcome\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasProcess\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_molecular_initiating_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000412\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000412\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000409\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000409\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_key_event_relationship\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasBiologicalEvent\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_chemical_entity\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_chemical_entity\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000406\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000406\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000408\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000408\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ego:0008150\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003encit:C54571\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003encbitaxon:131567\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encbitaxon:131567\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1033\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000564\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000564\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003ego:0008150\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasProcess\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ego:0008150\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for aopwikirdf","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":2000,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "aopwikirdf_schema_coverage", "height": 2000, "width": 600, "scale": 1}}                    ).then(function(){
+<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="d1cfcda3-14b6-400f-bfb2-7bccead531b0" style="height:2000px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("d1cfcda3-14b6-400f-bfb2-7bccead531b0")) {                    Plotly.newPlot(                        "d1cfcda3-14b6-400f-bfb2-7bccead531b0",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQHE9CtejwFhAcT0K16PAWECF61G4HqVXQIXrUbgepVdAhetRuB6lV0CF61G4HqVXQNejcD0KN1dA16NwPQo3V0CPwvUoXP9WQEjhehSut1ZA4XoUrkdhVkAfhetRuC5WQFyPwvUo3FVAhetRuB61VUDNzMzMzDxVQLgehetR6FRAAAAAAADQVEAAAAAAANBUQOF6FK5HgVRA4XoUrkeBVEB7FK5H4WpUQHE9Ctej0FFA9ihcj8JlUUBxPQrXoxBMQFK4HoXr8UtAUrgehevxS0B7FK5H4XpKQHsUrkfhekpAXI\u002fC9SjcSUBcj8L1KNxJQOF6FK5HIUhA7FG4HoXLRkD2KFyPwrVFQBSuR+F6lERAcT0K16NQQEC4HoXrUXg\u002fQLgehetReD9ASOF6FK4HO0AUrkfhehQ6QBSuR+F6FDpAuB6F61F4OUB7FK5H4Xo3QHsUrkfhejdAexSuR+F6NUBI4XoUrgc1QDMzMzMzMypApHA9CtejKEC4HoXrUbgnQOF6FK5HYSdAKVyPwvUoJ0DXo3A9CtcmQD0K16NwPSFAPQrXo3A9IUCuR+F6FK4ZQK5H4XoUrhlArkfhehSuGUDhehSuR+EVQM3MzMzMzBBA7FG4HoXrDUAzMzMzMzMHQIXrUbgehfc\u002f7FG4HoXr9T\u002fNzMzMzMzwP6RwPQrXo\u002fA\u002fH4XrUbge7T\u002fNzMzMzMzsP3sUrkfheuQ\u002f9ihcj8L12D+kcD0K16PAP7gehetRuK4\u002f"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","99.0%","99.0%","94.6%","94.6%","94.6%","94.6%","92.9%","92.9%","92.0%","90.9%","89.5%","88.7%","87.4%","86.8%","85.0%","83.6%","83.2%","83.2%","82.0%","82.0%","81.7%","71.3%","69.6%","56.1%","55.9%","55.9%","53.0%","53.0%","51.7%","51.7%","48.3%","45.6%","43.4%","41.2%","32.6%","31.5%","31.5%","27.0%","26.1%","26.1%","25.5%","23.5%","23.5%","21.5%","21.0%","13.1%","12.3%","11.9%","11.7%","11.6%","11.4%","8.6%","8.6%","6.4%","6.4%","6.4%","5.5%","4.2%","3.7%","2.9%","1.5%","1.4%","1.1%","1.0%","0.9%","0.9%","0.6%","0.4%","0.1%","0.1%"],"textposition":["inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQHE9CtejwFhAcT0K16PAWECF61G4HqVXQIXrUbgepVdAhetRuB6lV0CF61G4HqVXQNejcD0KN1dA16NwPQo3V0CPwvUoXP9WQEjhehSut1ZA4XoUrkdhVkAfhetRuC5WQFyPwvUo3FVAhetRuB61VUDNzMzMzDxVQLgehetR6FRAAAAAAADQVEAAAAAAANBUQOF6FK5HgVRA4XoUrkeBVEB7FK5H4WpUQHE9Ctej0FFA9ihcj8JlUUBxPQrXoxBMQFK4HoXr8UtAUrgehevxS0B7FK5H4XpKQHsUrkfhekpAXI\u002fC9SjcSUBcj8L1KNxJQOF6FK5HIUhA7FG4HoXLRkD2KFyPwrVFQBSuR+F6lERAcT0K16NQQEC4HoXrUXg\u002fQLgehetReD9ASOF6FK4HO0AUrkfhehQ6QBSuR+F6FDpAuB6F61F4OUB7FK5H4Xo3QHsUrkfhejdAexSuR+F6NUBI4XoUrgc1QDMzMzMzMypApHA9CtejKEC4HoXrUbgnQOF6FK5HYSdAKVyPwvUoJ0DXo3A9CtcmQD0K16NwPSFAPQrXo3A9IUCuR+F6FK4ZQK5H4XoUrhlArkfhehSuGUDhehSuR+EVQM3MzMzMzBBA7FG4HoXrDUAzMzMzMzMHQIXrUbgehfc\u002f7FG4HoXr9T\u002fNzMzMzMzwP6RwPQrXo\u002fA\u002fH4XrUbge7T\u002fNzMzMzMzsP3sUrkfheuQ\u002f9ihcj8L12D+kcD0K16PAP7gehetRuK4\u002f"},"y":["\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003encbitaxon:131567\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encbitaxon:131567\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003efoaf:page\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_upstream_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_downstream_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003ego:0008150\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000567\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000567\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000140\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000405\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000140\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000405\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000407\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000407\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_key_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1033\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003eedam.data:2298\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_adverse_outcome\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasProcess\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_molecular_initiating_event\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000412\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000412\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000409\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000409\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_key_event_relationship\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:isPartOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasBiologicalEvent\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_chemical_entity\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000446\u003c\u002fb\u003e","\u003cb\u003encit:C54571\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:has_chemical_entity\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000000\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000406\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000406\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000408\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000408\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ego:0008150\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:AdverseOutcomePathway\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003encit:C54571\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C54571\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEventRelationship\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eedam.data:1025\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2298\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003encbitaxon:131567\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encbitaxon:131567\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1033\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:2291\u003c\u002fb\u003e","\u003cb\u003eedam.data:1025\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1025\u003c\u002fb\u003e","\u003cb\u003echeminf:000446\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000564\u003c\u002fb\u003e","\u003cb\u003echeminf:000000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003echeminf:000564\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:exactMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eedam.data:1027\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasObject\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003epato:0001241\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003ego:0008150\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edc:identifier\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003epato:0001241\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ego:0008150\u003c\u002fb\u003e","\u003cb\u003eaopo:BiologicalEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:hasProcess\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ego:0008150\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epato:0001241\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:OrganContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:CellTypeContext\u003c\u002fb\u003e","\u003cb\u003eaopo:KeyEvent\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eaopo:CellTypeContext\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eaopo:OrganContext\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for aopwikirdf","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":2000,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "aopwikirdf_schema_coverage", "height": 2000, "width": 600, "scale": 1}}                    ).then(function(){
                             
-var gd = document.getElementById('e1c6c3c1-6647-495e-b20f-54fefa88a891');
+var gd = document.getElementById('d1cfcda3-14b6-400f-bfb2-7bccead531b0');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
@@ -8928,16 +8784,16 @@ AopoOrganContext {
 Cheminf000000 {
 
 }
-Cheminf000405 {
+Cheminf000412 {
 
 }
 Cheminf000446 {
 
 }
-EdamData1025 {
+Cheminf000564 {
 
 }
-EdamData1027 {
+EdamData1025 {
 
 }
 EdamData2291 {
@@ -8965,51 +8821,51 @@ VoidLinkset {
 
 }
 
-AopoAdverseOutcomePathway ||--|o AopoAdverseOutcomePathway : "rdfs_see_Also"
 AopoAdverseOutcomePathway ||--|o AopoKeyEvent : "aopo_has_adverse_outcome"
 AopoAdverseOutcomePathway ||--|o AopoKeyEvent : "aopo_has_key_event"
 AopoAdverseOutcomePathway ||--|o AopoKeyEvent : "aopo_has_molecular_initiating_event"
 AopoAdverseOutcomePathway ||--|o AopoKeyEventRelationship : "aopo_has_key_event_relationship"
+AopoAdverseOutcomePathway ||--|o AopoKeyEventRelationship : "foaf_page"
+AopoAdverseOutcomePathway ||--|o AopoKeyEventRelationship : "rdfs_see_Also"
 AopoAdverseOutcomePathway ||--|o Ncbitaxon131567 : "dc_identifier"
-AopoAdverseOutcomePathway ||--|o NcitC54571 : "foaf_page"
 AopoAdverseOutcomePathway ||--|o NcitC54571 : "has_ncit_C_54571"
-AopoBiologicalEvent ||--|o Go0008150 : "aopo_has_Object"
-AopoBiologicalEvent ||--|o Pato0001241 : "aopo_has_Process"
+AopoBiologicalEvent ||--|o AopoCellTypeContext : "aopo_has_Object"
+AopoBiologicalEvent ||--|o Go0008150 : "aopo_has_Process"
 AopoCellTypeContext ||--|o Ncbitaxon131567 : "dc_identifier"
-AopoKeyEvent ||--|o AopoAdverseOutcomePathway : "rdfs_see_Also"
+AopoKeyEvent ||--|o AopoAdverseOutcomePathway : "dcterms_is_Part_Of"
 AopoKeyEvent ||--|o AopoBiologicalEvent : "aopo_has_Biological_Event"
+AopoKeyEvent ||--|o AopoKeyEventRelationship : "foaf_page"
+AopoKeyEvent ||--|o AopoKeyEventRelationship : "rdfs_see_Also"
+AopoKeyEvent ||--|o AopoOrganContext : "has_aopo_Cell_Type_Context"
+AopoKeyEvent ||--|o AopoOrganContext : "has_aopo_Organ_Context"
 AopoKeyEvent ||--|o EdamData2298 : "has_edam_data_1025"
+AopoKeyEvent ||--|o Go0008150 : "has_go_0008150"
 AopoKeyEvent ||--|o Go0008150 : "has_pato_0001241"
 AopoKeyEvent ||--|o Ncbitaxon131567 : "dc_identifier"
 AopoKeyEvent ||--|o Ncbitaxon131567 : "has_ncbitaxon_131567"
-AopoKeyEvent ||--|o NcitC54571 : "dcterms_is_Part_Of"
-AopoKeyEvent ||--|o NcitC54571 : "foaf_page"
-AopoKeyEvent ||--|o Pato0001241 : "has_aopo_Cell_Type_Context"
-AopoKeyEvent ||--|o Pato0001241 : "has_aopo_Organ_Context"
-AopoKeyEvent ||--|o Pato0001241 : "has_go_0008150"
-AopoKeyEventRelationship ||--|o AopoAdverseOutcomePathway : "rdfs_see_Also"
+AopoKeyEventRelationship ||--|o AopoAdverseOutcomePathway : "dcterms_is_Part_Of"
 AopoKeyEventRelationship ||--|o AopoKeyEvent : "aopo_has_downstream_key_event"
 AopoKeyEventRelationship ||--|o AopoKeyEvent : "aopo_has_upstream_key_event"
+AopoKeyEventRelationship ||--|o AopoKeyEventRelationship : "foaf_page"
+AopoKeyEventRelationship ||--|o AopoKeyEventRelationship : "rdfs_see_Also"
 AopoKeyEventRelationship ||--|o EdamData2298 : "has_edam_data_1025"
 AopoKeyEventRelationship ||--|o Ncbitaxon131567 : "dc_identifier"
-AopoKeyEventRelationship ||--|o NcitC54571 : "dcterms_is_Part_Of"
-AopoKeyEventRelationship ||--|o NcitC54571 : "foaf_page"
 AopoOrganContext ||--|o Ncbitaxon131567 : "dc_identifier"
-Cheminf000000 ||--|o EdamData2291 : "skos_exact_Match"
+Cheminf000000 ||--|o AopoAdverseOutcomePathway : "dcterms_is_Part_Of"
+Cheminf000000 ||--|o EdamData1025 : "skos_exact_Match"
 Cheminf000000 ||--|o Ncbitaxon131567 : "dc_identifier"
-Cheminf000000 ||--|o NcitC54571 : "dcterms_is_Part_Of"
-Cheminf000446 ||--|o EdamData2291 : "skos_exact_Match"
+Cheminf000446 ||--|o AopoAdverseOutcomePathway : "dcterms_is_Part_Of"
+Cheminf000446 ||--|o EdamData1025 : "skos_exact_Match"
 Cheminf000446 ||--|o Ncbitaxon131567 : "dc_identifier"
-Cheminf000446 ||--|o NcitC54571 : "dcterms_is_Part_Of"
-EdamData1025 ||--|o EdamData2291 : "skos_exact_Match"
-EdamData2298 ||--|o EdamData2291 : "skos_exact_Match"
+EdamData1025 ||--|o EdamData1025 : "skos_exact_Match"
+EdamData2298 ||--|o EdamData1025 : "skos_exact_Match"
 Go0008150 ||--|o Ncbitaxon131567 : "dc_identifier"
 Ncbitaxon131567 ||--|o Ncbitaxon131567 : "dc_identifier"
+NcitC54571 ||--|o AopoAdverseOutcomePathway : "dcterms_is_Part_Of"
+NcitC54571 ||--|o AopoKeyEventRelationship : "foaf_page"
 NcitC54571 ||--|o Cheminf000446 : "aopo_has_chemical_entity"
 NcitC54571 ||--|o Ncbitaxon131567 : "dc_identifier"
-NcitC54571 ||--|o NcitC54571 : "dcterms_is_Part_Of"
-NcitC54571 ||--|o NcitC54571 : "foaf_page"
-Pato0001241 ||--|o EdamData2291 : "skos_exact_Match"
+Pato0001241 ||--|o EdamData1025 : "skos_exact_Match"
 Pato0001241 ||--|o Ncbitaxon131567 : "dc_identifier"
 VoidDataset ||--|o VoidDataset : "dcat_download_URL"
 VoidLinkset ||--|o VoidDataset : "dcat_download_URL"

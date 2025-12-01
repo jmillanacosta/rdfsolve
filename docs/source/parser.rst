@@ -1,4 +1,5 @@
-Usage
-=====
+Parser
+======
+
 .. automodule:: rdfsolve.parser
-    :members:
+   :members:
