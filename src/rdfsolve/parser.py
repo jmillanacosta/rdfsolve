@@ -1914,15 +1914,15 @@ CONSTRUCT {{
         void:entities ?class_count .
 
     # Property partitions with class objects
-    ?cps void:propertyPartition ?pp .
     ?pp void:property ?prop ;
         void:triples ?prop_count ;
-        void:classPartition ?cpo .
+        void-ext:subjectClass ?c_s ;
+        void-ext:objectClass ?c_o .
 
     # Property partitions with datatype objects
-    ?cps_dt void:propertyPartition ?pp_dt .
     ?pp_dt void:property ?prop_dt ;
            void:triples ?dt_count ;
+           void-ext:subjectClass ?c_s_dt ;
            void-ext:datatypePartition ?dtp .
     ?dtp void-ext:datatype ?dt .
 }}
@@ -1954,7 +1954,7 @@ WHERE {{
         }}
         BIND(IRI(CONCAT("{dataset_prefix}:class_partition_", MD5(STR(?c_s)))) AS ?cps)
         BIND(IRI(CONCAT("{dataset_prefix}:class_partition_", MD5(STR(?c_o)))) AS ?cpo)
-        BIND(IRI(CONCAT("{dataset_prefix}:property_partition_", MD5(STR(?prop)))) AS ?pp)
+        BIND(IRI(CONCAT("{dataset_prefix}:property_partition_", MD5(CONCAT(STR(?c_s), STR(?prop), STR(?c_o))))) AS ?pp)
     }}
 
     # Property partitions with datatype objects
@@ -1973,7 +1973,7 @@ WHERE {{
         }}
         BIND(IRI(CONCAT("{dataset_prefix}:class_partition_", MD5(STR(?c_s_dt)))) AS ?cps_dt)
         BIND(IRI(CONCAT("{dataset_prefix}:datatype_partition_", MD5(STR(?dt)))) AS ?dtp)
-        BIND(IRI(CONCAT("{dataset_prefix}:property_partition_", MD5(STR(?prop_dt)))) AS ?pp_dt)
+        BIND(IRI(CONCAT("{dataset_prefix}:property_partition_", MD5(CONCAT(STR(?c_s_dt), STR(?prop_dt), STR(?dt))))) AS ?pp_dt)
     }}
 }}
 """
