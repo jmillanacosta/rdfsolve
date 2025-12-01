@@ -1,12 +1,5 @@
-<!--
-<p align="center">
-  <img src="https://github.com/Maastricht University/rdfsolve/raw/main/docs/source/logo.png" height="150">
-</p>
--->
+# RDFSolve
 
-<h1 align="center">
-  RDF solve [WiP]
-</h1>
 <p align="center">
     <a href="https://github.com/jmillanacosta/rdfsolve/actions/workflows/tests.yml">
         <img alt="Tests" src="https://github.com/jmillanacosta/rdfsolve/actions/workflows/tests.yml/badge.svg" /></a>
@@ -14,22 +7,62 @@
         <img alt="PyPI" src="https://img.shields.io/pypi/v/rdfsolve" /></a>
     <a href="https://pypi.org/project/rdfsolve">
         <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/rdfsolve" /></a>
-    <a href="https://github.com/Maastricht University/rdfsolve/blob/main/LICENSE">
+    <a href="https://github.com/jmillanacosta/rdfsolve/blob/main/LICENSE">
         <img alt="PyPI - License" src="https://img.shields.io/pypi/l/rdfsolve" /></a>
     <a href='https://rdfsolve.readthedocs.io/en/latest/?badge=latest'>
         <img src='https://readthedocs.org/projects/rdfsolve/badge/?version=latest' alt='Documentation Status' /></a>
-    <a href="https://codecov.io/gh/Maastricht University/rdfsolve/branch/main">
-        <img src="https://codecov.io/gh/Maastricht University/rdfsolve/branch/main/graph/badge.svg" alt="Codecov status" /></a>  
-    <a href="https://github.com/cthoyt/cookiecutter-python-package">
-        <img alt="Cookiecutter template from @cthoyt" src="https://img.shields.io/badge/Cookiecutter-snekpack-blue" /></a>
-    <a href="https://github.com/astral-sh/ruff">
-        <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff" style="max-width:100%;"></a>
-    <a href="https://github.com/Maastricht University/rdfsolve/blob/main/.github/CODE_OF_CONDUCT.md">
-        <img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant"/></a>
-    <!-- uncomment if you archive on zenodo
-    <a href="https://zenodo.org/badge/latestdoi/XXXXXX">
-        <img src="https://zenodo.org/badge/XXXXXX.svg" alt="DOI"></a>
-    -->
 </p>
 
-Wraps several RDF schema standards and solvers to figure out SPARQL endpoint / triplestore database schemas. WIP
+RDF schema extraction and analysis toolkit for SPARQL endpoints.
+
+## Installation
+
+```bash
+uv pip install rdfsolve
+```
+
+## Quick Start
+
+### CLI
+
+Generate a VoID description from a SPARQL endpoint:
+
+```bash
+rdfsolve void https://sparql.example.org/ -o schema.ttl
+```
+
+Extract schema and convert to LinkML:
+
+```bash
+rdfsolve linkml https://sparql.example.org/ -o schema.yaml
+```
+
+### Python API
+
+```python
+from rdfsolve.api import generate_void_from_endpoint, load_parser_from_graph
+
+# Generate VoID from endpoint
+void_graph = generate_void_from_endpoint("https://sparql.example.org/")
+
+# Load parser and extract schema
+parser = load_parser_from_graph(void_graph)
+schema_df = parser.to_schema()
+jsonld = parser.to_jsonld()
+linkml_yaml = parser.to_linkml_yaml()
+```
+
+## Documentation
+
+- **Full documentation**: [rdfsolve.readthedocs.io](https://rdfsolve.readthedocs.io)
+- **Results dashboard**: [jmillanacosta.github.io/rdfsolve](https://jmillanacosta.github.io/rdfsolve)
+
+## Examples
+
+See the [notebooks](notebooks/) directory for detailed examples of schema extraction from various SPARQL endpoints.
+
+The [GitHub Actions workflow](.github/workflows/make-notebooks.yml) carries out for now the automated batch processing of multiple endpoints.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
