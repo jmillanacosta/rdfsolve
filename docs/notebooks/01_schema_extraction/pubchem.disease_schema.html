@@ -7611,7 +7611,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:19 INFO pubchem.disease: Logging configured for pubchem.disease
+<pre>2025-12-01 14:17:26 INFO pubchem.disease: Logging configured for pubchem.disease
 </pre>
 </div>
 </div>
@@ -7633,7 +7633,13 @@ a.anchor-link {
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.offline</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span><span class="p">,</span> <span class="n">display</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">rdfsolve.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">VoidParser</span>
+<span class="c1"># Import rdfsolve API functions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdfsolve.api</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">discover_void_graphs</span><span class="p">,</span>
+    <span class="n">generate_void_from_endpoint</span><span class="p">,</span>
+    <span class="n">load_parser_from_graph</span><span class="p">,</span>
+    <span class="n">retrieve_void_from_graphs</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="c1"># Set renderer to 'notebook' for Jupyter, but ensure HTML export works</span>
 <span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">"notebook+plotly_mimetype"</span>
@@ -7810,8 +7816,8 @@ a.anchor-link {
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Clear specific cache files (uncomment lines as needed for testing)</span>
 
-<span class="c1"># When testing new parser changes:</span>
-<span class="c1"># clear_cache(f"{dataset_name}_voidparser")</span>
+<span class="c1"># When testing new VoID discovery/generation:</span>
+<span class="c1"># clear_cache(f"{dataset_name}_voidgraph")</span>
 
 <span class="c1"># When testing JSON-LD generation (primary output):</span>
 <span class="c1"># clear_cache(f"{dataset_name}_jsonld_schema")</span>
@@ -7821,10 +7827,10 @@ a.anchor-link {
 <span class="c1"># clear_cache(f"{dataset_name}_frequencies_with_instances")</span>
 
 <span class="c1"># Clear everything:</span>
-<span class="c1"># clear_cache()</span>
+<span class="n">clear_cache</span><span class="p">()</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Cleared parser and JSON-LD caches to test schema pattern fix"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Note: JSON-LD cache is now the primary cache - clear it when testing schema changes."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Cache control ready"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Note: VoID graph and JSON-LD are the primary caches"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7837,8 +7843,9 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cleared parser and JSON-LD caches to test schema pattern fix
-Note: JSON-LD cache is now the primary cache - clear it when testing schema changes.
+<pre>No cache directory to clear
+Cache control ready
+Note: VoID graph and JSON-LD are the primary caches
 </pre>
 </div>
 </div>
@@ -7863,33 +7870,57 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Generate VoID schema with caching</span>
-<span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_voidparser"</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Discover or generate VoID schema with caching</span>
+<span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_voidgraph"</span>
 
 <span class="c1"># Try to load from cache first</span>
-<span class="n">vp</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
+<span class="n">void_graph</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
 
-<span class="k">if</span> <span class="n">vp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"VoidParser not found in cache, generating..."</span><span class="p">)</span>
-    <span class="n">vp</span> <span class="o">=</span> <span class="n">VoidParser</span><span class="o">.</span><span class="n">from_endpoint_with_discovery</span><span class="p">(</span>
-        <span class="n">endpoint_url</span><span class="o">=</span><span class="n">endpoint_url</span><span class="p">,</span>
-        <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
-        <span class="n">exports_path</span><span class="o">=</span><span class="n">exports_path</span><span class="p">,</span>
-        <span class="c1"># Arguments for the case when a suitable VoID is not found</span>
-        <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">exclude_graph_patterns</span><span class="o">=</span><span class="p">[</span>
-            <span class="s2">"openlinksw"</span><span class="p">,</span>
-            <span class="s2">"well-known"</span><span class="p">,</span>
-            <span class="s2">"void"</span><span class="p">,</span>
-            <span class="s2">"service"</span><span class="p">,</span>
-        <span class="p">],</span>  <span class="c1"># Filter out service description and administrative graphs</span>
-        <span class="n">counts</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>  <span class="c1"># pagination</span>
+<span class="k">if</span> <span class="n">void_graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"VoID graph not found in cache, attempting discovery..."</span><span class="p">)</span>
+
+    <span class="c1"># Step 1: Try to discover existing VoID graphs</span>
+    <span class="n">discovery_result</span> <span class="o">=</span> <span class="n">discover_void_graphs</span><span class="p">(</span>
+        <span class="n">endpoint_url</span><span class="p">,</span> <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="p">)</span>
-    <span class="c1"># Cache the VoidParser for future use</span>
-    <span class="n">save_cache</span><span class="p">(</span><span class="n">vp</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
+
+    <span class="n">found_graphs</span> <span class="o">=</span> <span class="n">discovery_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"found_graphs"</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">partitions</span> <span class="o">=</span> <span class="n">discovery_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"partitions"</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="k">if</span> <span class="n">found_graphs</span> <span class="ow">and</span> <span class="n">partitions</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">found_graphs</span><span class="p">)</span><span class="si">}</span><span class="s2"> VoID graphs with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">partitions</span><span class="p">)</span><span class="si">}</span><span class="s2"> partitions"</span><span class="p">)</span>
+        <span class="c1"># Build VoID graph directly from partition data (no CONSTRUCT query needed)</span>
+        <span class="n">void_graph</span> <span class="o">=</span> <span class="n">retrieve_void_from_graphs</span><span class="p">(</span>
+            <span class="n">endpoint_url</span><span class="p">,</span>
+            <span class="n">found_graphs</span><span class="p">,</span>
+            <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span>  <span class="c1"># Pass partition data directly</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Save to file</span>
+        <span class="n">void_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_existing_void.ttl"</span><span class="p">)</span>
+        <span class="n">void_graph</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">destination</span><span class="o">=</span><span class="n">void_path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"turtle"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Built VoID graph from: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">found_graphs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"No VoID graphs found, generating from queries..."</span><span class="p">)</span>
+        <span class="c1"># Step 2: Generate new VoID if none found</span>
+        <span class="n">void_graph</span> <span class="o">=</span> <span class="n">generate_void_from_endpoint</span><span class="p">(</span>
+            <span class="n">endpoint_url</span><span class="o">=</span><span class="n">endpoint_url</span><span class="p">,</span>
+            <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">output_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_generated_void.ttl"</span><span class="p">),</span>
+            <span class="n">counts</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+            <span class="n">exclude_graphs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Cache the VoID graph for future use</span>
+    <span class="n">save_cache</span><span class="p">(</span><span class="n">void_graph</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"VoID graph cached with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">void_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> triples"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loaded VoidParser from cache"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded VoID graph from cache (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">void_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> triples)"</span><span class="p">)</span>
+
+<span class="c1"># Load parser from the VoID graph</span>
+<span class="n">vp</span> <span class="o">=</span> <span class="n">load_parser_from_graph</span><span class="p">(</span><span class="n">void_graph</span><span class="p">,</span> <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7902,359 +7933,86 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>VoidParser not found in cache, generating...
-2025-12-01 09:31:21 DEBUG rdfsolve.parser: Starting endpoint discovery process...
+<pre>VoID graph not found in cache, attempting discovery...
+2025-12-01 14:17:27 DEBUG rdfsolve.parser: Starting VoID partition discovery for https://idsm.elixir-czech.cz/sparql/endpoint/idsm
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:21 DEBUG rdfsolve.parser: Endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+<pre>2025-12-01 14:17:27 INFO rdfsolve.parser: Discovering VoID partitions across all graphs
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 1/3 failed: 500 Server Error: 500 for url: https://idsm.elixir-czech.cz/sparql/endpoint/idsm?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 2/3 failed: 500 Server Error: 500 for url: https://idsm.elixir-czech.cz/sparql/endpoint/idsm?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 3/3 failed: 500 Server Error: 500 for url: https://idsm.elixir-czech.cz/sparql/endpoint/idsm?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>SELECT failed after 3 tries
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:21 DEBUG rdfsolve.parser: Dataset: pubchem.disease
+<pre>2025-12-01 14:17:32 INFO rdfsolve.parser: VoID discovery failed: Query failed after 3 attempts: 500 Server Error: 500 for url: https://idsm.elixir-czech.cz/sparql/endpoint/idsm?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:21 DEBUG rdfsolve.parser:  Provided graph URIs: ['http://rdf.ncbi.nlm.nih.gov/pubchem/disease']
+<pre>2025-12-01 14:17:32 DEBUG rdfsolve.parser: Discovery exception: EndpointError: Query failed after 3 attempts: 500 Server Error: 500 for url: https://idsm.elixir-czech.cz/sparql/endpoint/idsm?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:21 DEBUG rdfsolve.parser: Settings: prefer_existing=True, exclude_graphs=True
+<pre>No VoID graphs found, generating from queries...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:21 DEBUG rdfsolve.parser: Validating provided graph URIs...
+<pre>2025-12-01 14:17:35 INFO rdfsolve.parser: Successfully extracted 18 RDF triples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:22 DEBUG rdfsolve.parser: Step 1: Discovering existing VoID graphs...
+<pre>2025-12-01 14:17:35 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.disease/pubchem.disease_generated_void.ttl
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:22 DEBUG rdfsolve.parser:  Starting chunked VoID graph discovery for https://idsm.elixir-czech.cz/sparql/endpoint/idsm
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:22 DEBUG rdfsolve.parser: Starting VoID graph discovery with pagination...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:22 INFO rdfsolve.parser: Discovering VoID candidate graphs with chunked approach
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:22 DEBUG rdfsolve.parser: Executing chunked query: offset=0, limit=50
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 INFO rdfsolve.parser: Candidate VoID graph at https://idsm.elixir-czech.cz/.well-known/sparql-examples
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 INFO rdfsolve.parser: Candidate VoID graph at https://idsm.elixir-czech.cz/.well-known/void
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Fetched chunk: 2 results (total: 2)
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Partial chunk received, pagination complete
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Found 2 candidate VoID graphs
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Starting detailed VoID content analysis...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Analyzing graph 1/2: https://idsm.elixir-czech.cz/.well-known/sparql-examples
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Discovering partitions in https://idsm.elixir-czech.cz/.well-known/sparql-examples
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Class partition query template: 
-
-                    SELECT DISTINCT ?cp WHERE {
-                        GRAPH &lt;https://idsm.elixir-czech.cz/.well-known/sparql-examples&gt; {
-                            ?cp &lt;http://rdfs.org/ns/void#cla...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 WARNING rdfsolve.parser: Error analyzing VoID partitions in https://idsm.elixir-czech.cz/.well-known/sparql-examples
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Full error details:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser:    • Error type: KeyError
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser:    • Error message: '\n                        GRAPH &lt;https'
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser:    • Graph URI: https://idsm.elixir-czech.cz/.well-known/sparql-examples
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Analyzing graph 2/2: https://idsm.elixir-czech.cz/.well-known/void
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Discovering partitions in https://idsm.elixir-czech.cz/.well-known/void
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Class partition query template: 
-
-                    SELECT DISTINCT ?cp WHERE {
-                        GRAPH &lt;https://idsm.elixir-czech.cz/.well-known/void&gt; {
-                            ?cp &lt;http://rdfs.org/ns/void#class&gt; ?class ...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 WARNING rdfsolve.parser: Error analyzing VoID partitions in https://idsm.elixir-czech.cz/.well-known/void
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Full error details:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser:    • Error type: KeyError
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser:    • Error message: '\n                        GRAPH &lt;https'
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser:    • Graph URI: https://idsm.elixir-czech.cz/.well-known/void
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: VoID discovery analysis complete
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser:  Results summary:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser:    • Total candidate graphs: 2
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser:    • Graphs with VoID data: 0
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser:    • Has VoID descriptions: False
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 INFO rdfsolve.parser: No VoID data found in any candidate graphs
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Discovery result: found=False
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Found 0 graphs with VoID data
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 INFO rdfsolve.parser: No suitable VoID found; generating from queries...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Step 2: Generating new VoID from SPARQL queries...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Generation settings: counts=True, offset_limit_steps=300
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Output path: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.disease/pubchem.disease_generated_void.ttl
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:37 DEBUG rdfsolve.parser: Starting VoID generation process...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:40 INFO rdfsolve.parser: Successfully extracted 18 RDF triples
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:40 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.disease/pubchem.disease_generated_void.ttl
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 09:31:40 DEBUG rdfsolve.parser: VoID generation completed
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.disease/cache/pubchem.disease_voidparser.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.disease/cache/pubchem.disease_voidgraph.pkl
+VoID graph cached with 18 triples
 </pre>
 </div>
 </div>
@@ -8294,7 +8052,7 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <span class="n">jsonld_schema</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
 
 <span class="k">if</span> <span class="n">jsonld_schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Generating standards-compliant JSON-LD schema..."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Generating JSON-LD schema..."</span><span class="p">)</span>
     <span class="n">jsonld_schema</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">to_jsonld</span><span class="p">(</span><span class="n">filter_void_admin_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">save_cache</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
@@ -8337,7 +8095,7 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Generating standards-compliant JSON-LD schema...
+<pre>Generating JSON-LD schema...
 </pre>
 </div>
 </div>
@@ -8510,6 +8268,42 @@ Schema Patterns Preview (18 total):
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Calculating schema pattern frequencies...
+2025-12-01 14:17:37 INFO rdfsolve.parser: Using chunked pagination for entity counts (step size: 300)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Using chunked pagination for entity counts (step size: 300)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-12-01 14:17:37 DEBUG rdfsolve.parser: Chunked entity count: chunk 1, rows=2, total=2
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Chunked entity count: chunk 1, rows=2, total=2
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-12-01 14:17:37 INFO rdfsolve.parser: Chunked entity counting complete: 1 chunks, 2 total results
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Chunked entity counting complete: 1 chunks, 2 total results
 </pre>
 </div>
 </div>
@@ -8659,12 +8453,10 @@ Name: coverage_percent, dtype: float64</pre>
 
 <span class="c1"># Display basic information about the data structure</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Frequencies DataFrame: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frequencies_with_instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> shapes"</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Instances DataFrame: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> subject-object pairs"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">frequencies_with_instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"Memory usage - Frequencies: </span><span class="si">{</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span>
+        <span class="sa">f</span><span class="s2">"Memory usage - Instances: </span><span class="si">{</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span>
     <span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Memory usage - Instances: </span><span class="si">{</span><span class="n">instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"No instances collected"</span><span class="p">)</span>
 </pre></div>
@@ -8680,6 +8472,42 @@ Name: coverage_percent, dtype: float64</pre>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Collecting frequency data and instances...
+2025-12-01 14:17:39 INFO rdfsolve.parser: Using chunked pagination for entity counts (step size: 300)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Using chunked pagination for entity counts (step size: 300)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-12-01 14:17:39 DEBUG rdfsolve.parser: Chunked entity count: chunk 1, rows=2, total=2
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Chunked entity count: chunk 1, rows=2, total=2
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-12-01 14:17:39 INFO rdfsolve.parser: Chunked entity counting complete: 1 chunks, 2 total results
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Chunked entity counting complete: 1 chunks, 2 total results
 </pre>
 </div>
 </div>
@@ -8688,7 +8516,7 @@ Name: coverage_percent, dtype: float64</pre>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.disease/cache/pubchem.disease_frequencies_with_instances.pkl
 Frequencies DataFrame: 18 shapes
-No instances collected
+Memory usage - Instances: 13.3 KB
 </pre>
 </div>
 </div>
@@ -8704,10 +8532,9 @@ No instances collected
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.io</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pio</span>
 
-<span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"coverage_percent"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -8812,9 +8639,9 @@ No instances collected
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <div> <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script> <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="2e83ee61-3ce7-4a7e-8a05-93ba8679c89b" style="height:668px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("2e83ee61-3ce7-4a7e-8a05-93ba8679c89b")) {                    Plotly.newPlot(                        "2e83ee61-3ce7-4a7e-8a05-93ba8679c89b",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"y":["\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for pubchem.disease","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":668,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "pubchem.disease_schema_coverage", "height": 668, "width": 600, "scale": 1}}                    ).then(function(){
+<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="e3740ed6-00cc-4ce2-b850-81805df5f44c" style="height:668px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("e3740ed6-00cc-4ce2-b850-81805df5f44c")) {                    Plotly.newPlot(                        "e3740ed6-00cc-4ce2-b850-81805df5f44c",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"y":["\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:closeMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Disease\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Disease\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010299\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003eskos:relatedMatch\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for pubchem.disease","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":668,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "pubchem.disease_schema_coverage", "height": 668, "width": 600, "scale": 1}}                    ).then(function(){
                             
-var gd = document.getElementById('2e83ee61-3ce7-4a7e-8a05-93ba8679c89b');
+var gd = document.getElementById('e3740ed6-00cc-4ce2-b850-81805df5f44c');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
