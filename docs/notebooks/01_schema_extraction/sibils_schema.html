@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Schema Analysis Failed - sibils</title>
+</head>
+<body>
+    <h1>Schema Analysis Failed</h1>
+    <h2>Dataset Information</h2>
+    <p><strong>Dataset:</strong> sibils</p>
+    <p><strong>Attempted:</strong> <script>document.write(new Date().toUTCString())</script></p>
+    <p><strong>Workflow:</strong> <a href="https://github.com/jmillanacosta/rdfsolve/actions/runs/19825850384">Matrix-based parallel processing</a></p>
+    <h2>Manual Execution</h2>
+    <pre>cd notebooks/schema_extraction
+    python make_notebooks.py --dataset sibils
+    jupyter nbconvert --execute --to html sibils_schema.ipynb</pre>
+  </body>
+</html>
