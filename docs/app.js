@@ -187,8 +187,9 @@ class RDFSolveDashboard {
         if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
             return relativePath;
         }
-        // Remove leading ./ or / if present
-        const cleanPath = relativePath.replace(/^\.?\//, '');
+        // Remove leading ../, ./, or / and normalize to docs/ base
+        // Paths like ../data/... should become data/...
+        let cleanPath = relativePath.replace(/^(\.\.\/)+/, '').replace(/^\.?\//, '');
         return this.githubBaseUrl + cleanPath;
     }
 
