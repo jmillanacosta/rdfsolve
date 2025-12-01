@@ -1,49 +1,9 @@
 {
   "triples": [
     [
-      "http://aopkb.org/aop_ontology#KeyEventRelationship",
-      "http://xmlns.com/foaf/0.1/page",
-      "http://aopkb.org/aop_ontology#KeyEventRelationship"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://xmlns.com/foaf/0.1/page",
-      "http://aopkb.org/aop_ontology#KeyEvent"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
-      "http://xmlns.com/foaf/0.1/page",
-      "http://aopkb.org/aop_ontology#AdverseOutcomePathway"
-    ],
-    [
-      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
-      "http://xmlns.com/foaf/0.1/page",
-      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571"
-    ],
-    [
       "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
       "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
       "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "http://aopkb.org/aop_ontology#hasObject",
-      "http://purl.obolibrary.org/obo/GO_0008150"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "http://aopkb.org/aop_ontology#hasObject",
-      "http://aopkb.org/aop_ontology#CellTypeContext"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "http://aopkb.org/aop_ontology#hasObject",
-      "http://aopkb.org/aop_ontology#OrganContext"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "http://aopkb.org/aop_ontology#hasObject",
-      "http://purl.obolibrary.org/obo/PATO_0001241"
     ],
     [
       "http://edamontology.org/data_1025",
@@ -53,47 +13,7 @@
     [
       "http://edamontology.org/data_1025",
       "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://edamontology.org/data_1025"
-    ],
-    [
-      "http://edamontology.org/data_1025",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://edamontology.org/data_1033"
-    ],
-    [
-      "http://edamontology.org/data_1025",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
       "http://edamontology.org/data_1027"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000446",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000405"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000446",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000407"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000446",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000140"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000446",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000412"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000446",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000408"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000446",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000409"
     ],
     [
       "http://semanticscience.org/resource/CHEMINF_000446",
@@ -101,9 +21,24 @@
       "http://semanticscience.org/resource/CHEMINF_000564"
     ],
     [
+      "http://edamontology.org/data_1025",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://edamontology.org/data_1033"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000412"
+    ],
+    [
       "http://semanticscience.org/resource/CHEMINF_000446",
       "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000567"
+      "http://semanticscience.org/resource/CHEMINF_000405"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000409"
     ],
     [
       "http://semanticscience.org/resource/CHEMINF_000446",
@@ -113,72 +48,42 @@
     [
       "http://edamontology.org/data_2298",
       "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://edamontology.org/data_1027"
-    ],
-    [
-      "http://edamontology.org/data_2298",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://edamontology.org/data_2291"
-    ],
-    [
-      "http://edamontology.org/data_2298",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
       "http://edamontology.org/data_1025"
-    ],
-    [
-      "http://edamontology.org/data_2298",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://edamontology.org/data_1033"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000000",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000405"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000000",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000407"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000000",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000140"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000000",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000412"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000000",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000408"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000000",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000409"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000000",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000564"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000000",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000567"
-    ],
-    [
-      "http://semanticscience.org/resource/CHEMINF_000000",
-      "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "http://semanticscience.org/resource/CHEMINF_000406"
     ],
     [
       "http://purl.obolibrary.org/obo/PATO_0001241",
       "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://edamontology.org/data_1025"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000408"
+    ],
+    [
+      "http://edamontology.org/data_2298",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
       "http://edamontology.org/data_2291"
+    ],
+    [
+      "http://edamontology.org/data_2298",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://edamontology.org/data_1027"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000405"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000564"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000407"
     ],
     [
       "http://purl.obolibrary.org/obo/PATO_0001241",
@@ -186,14 +91,69 @@
       "http://edamontology.org/data_2298"
     ],
     [
+      "http://semanticscience.org/resource/CHEMINF_000446",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000567"
+    ],
+    [
       "http://purl.obolibrary.org/obo/PATO_0001241",
       "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://edamontology.org/data_2291"
+    ],
+    [
+      "http://edamontology.org/data_1025",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
       "http://edamontology.org/data_1025"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000446",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000407"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000446",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000412"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000446",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000409"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000446",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000408"
     ],
     [
       "http://purl.obolibrary.org/obo/PATO_0001241",
       "http://www.w3.org/2004/02/skos/core#exactMatch",
       "http://edamontology.org/data_1027"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000406"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000567"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000446",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000140"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://semanticscience.org/resource/CHEMINF_000140"
+    ],
+    [
+      "http://edamontology.org/data_2298",
+      "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "http://edamontology.org/data_1033"
     ],
     [
       "http://aopkb.org/aop_ontology#KeyEvent",
@@ -203,27 +163,7 @@
     [
       "http://purl.obolibrary.org/obo/GO_0008150",
       "http://purl.org/dc/elements/1.1/identifier",
-      "http://purl.obolibrary.org/obo/GO_0008150"
-    ],
-    [
-      "http://purl.obolibrary.org/obo/GO_0008150",
-      "http://purl.org/dc/elements/1.1/identifier",
       "http://purl.obolibrary.org/obo/PATO_0001241"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#OrganContext",
-      "http://purl.org/dc/elements/1.1/identifier",
-      "http://purl.obolibrary.org/obo/PATO_0001241"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#OrganContext",
-      "http://purl.org/dc/elements/1.1/identifier",
-      "http://aopkb.org/aop_ontology#OrganContext"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#OrganContext",
-      "http://purl.org/dc/elements/1.1/identifier",
-      "http://aopkb.org/aop_ontology#CellTypeContext"
     ],
     [
       "http://semanticscience.org/resource/CHEMINF_000000",
@@ -231,9 +171,24 @@
       "http://semanticscience.org/resource/CHEMINF_000000"
     ],
     [
-      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://aopkb.org/aop_ontology#OrganContext",
       "http://purl.org/dc/elements/1.1/identifier",
-      "http://semanticscience.org/resource/CHEMINF_000446"
+      "http://purl.obolibrary.org/obo/PATO_0001241"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#OrganContext",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://aopkb.org/aop_ontology#CellTypeContext"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#OrganContext",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://aopkb.org/aop_ontology#OrganContext"
+    ],
+    [
+      "http://purl.obolibrary.org/obo/PATO_0001241",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://aopkb.org/aop_ontology#CellTypeContext"
     ],
     [
       "http://aopkb.org/aop_ontology#CellTypeContext",
@@ -244,31 +199,6 @@
       "http://aopkb.org/aop_ontology#CellTypeContext",
       "http://purl.org/dc/elements/1.1/identifier",
       "http://aopkb.org/aop_ontology#OrganContext"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#CellTypeContext",
-      "http://purl.org/dc/elements/1.1/identifier",
-      "http://aopkb.org/aop_ontology#CellTypeContext"
-    ],
-    [
-      "http://purl.obolibrary.org/obo/PATO_0001241",
-      "http://purl.org/dc/elements/1.1/identifier",
-      "http://purl.obolibrary.org/obo/PATO_0001241"
-    ],
-    [
-      "http://purl.obolibrary.org/obo/PATO_0001241",
-      "http://purl.org/dc/elements/1.1/identifier",
-      "http://purl.obolibrary.org/obo/GO_0008150"
-    ],
-    [
-      "http://purl.obolibrary.org/obo/PATO_0001241",
-      "http://purl.org/dc/elements/1.1/identifier",
-      "http://aopkb.org/aop_ontology#OrganContext"
-    ],
-    [
-      "http://purl.obolibrary.org/obo/PATO_0001241",
-      "http://purl.org/dc/elements/1.1/identifier",
-      "http://aopkb.org/aop_ontology#CellTypeContext"
     ],
     [
       "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
@@ -283,12 +213,32 @@
     [
       "http://semanticscience.org/resource/CHEMINF_000446",
       "http://purl.org/dc/elements/1.1/identifier",
-      "http://semanticscience.org/resource/CHEMINF_000446"
+      "http://semanticscience.org/resource/CHEMINF_000000"
+    ],
+    [
+      "http://purl.obolibrary.org/obo/GO_0008150",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://purl.obolibrary.org/obo/GO_0008150"
+    ],
+    [
+      "http://purl.obolibrary.org/obo/PATO_0001241",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://purl.obolibrary.org/obo/PATO_0001241"
     ],
     [
       "http://semanticscience.org/resource/CHEMINF_000446",
       "http://purl.org/dc/elements/1.1/identifier",
-      "http://semanticscience.org/resource/CHEMINF_000000"
+      "http://semanticscience.org/resource/CHEMINF_000446"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#CellTypeContext",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://aopkb.org/aop_ontology#CellTypeContext"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000000",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://semanticscience.org/resource/CHEMINF_000446"
     ],
     [
       "http://aopkb.org/aop_ontology#KeyEventRelationship",
@@ -296,9 +246,59 @@
       "http://aopkb.org/aop_ontology#KeyEventRelationship"
     ],
     [
+      "http://purl.obolibrary.org/obo/PATO_0001241",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://aopkb.org/aop_ontology#OrganContext"
+    ],
+    [
+      "http://purl.obolibrary.org/obo/PATO_0001241",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://purl.obolibrary.org/obo/GO_0008150"
+    ],
+    [
       "http://purl.bioontology.org/ontology/NCBITAXON/131567",
       "http://purl.org/dc/elements/1.1/identifier",
       "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#KeyEventRelationship",
+      "http://xmlns.com/foaf/0.1/page",
+      "http://aopkb.org/aop_ontology#KeyEventRelationship"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
+      "http://xmlns.com/foaf/0.1/page",
+      "http://aopkb.org/aop_ontology#AdverseOutcomePathway"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#KeyEvent",
+      "http://xmlns.com/foaf/0.1/page",
+      "http://aopkb.org/aop_ontology#KeyEvent"
+    ],
+    [
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
+      "http://xmlns.com/foaf/0.1/page",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "http://aopkb.org/aop_ontology#hasObject",
+      "http://aopkb.org/aop_ontology#CellTypeContext"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "http://aopkb.org/aop_ontology#hasObject",
+      "http://aopkb.org/aop_ontology#OrganContext"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "http://aopkb.org/aop_ontology#hasObject",
+      "http://purl.obolibrary.org/obo/PATO_0001241"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "http://aopkb.org/aop_ontology#hasObject",
+      "http://purl.obolibrary.org/obo/GO_0008150"
     ],
     [
       "http://semanticscience.org/resource/CHEMINF_000000",
@@ -326,24 +326,34 @@
       "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571"
     ],
     [
-      "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://purl.obolibrary.org/obo/PATO_0001241",
-      "http://purl.obolibrary.org/obo/GO_0008150"
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
+      "http://aopkb.org/aop_ontology#has_chemical_entity",
+      "http://semanticscience.org/resource/CHEMINF_000446"
+    ],
+    [
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
+      "http://aopkb.org/aop_ontology#has_chemical_entity",
+      "http://semanticscience.org/resource/CHEMINF_000000"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#KeyEventRelationship",
+      "http://edamontology.org/data_1025",
+      "http://edamontology.org/data_2298"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#KeyEventRelationship",
+      "http://edamontology.org/data_1025",
+      "http://edamontology.org/data_1025"
     ],
     [
       "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://purl.obolibrary.org/obo/PATO_0001241",
-      "http://aopkb.org/aop_ontology#CellTypeContext"
+      "http://edamontology.org/data_1025",
+      "http://edamontology.org/data_2298"
     ],
     [
       "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://purl.obolibrary.org/obo/PATO_0001241",
-      "http://aopkb.org/aop_ontology#OrganContext"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://purl.obolibrary.org/obo/PATO_0001241",
-      "http://purl.obolibrary.org/obo/PATO_0001241"
+      "http://edamontology.org/data_1025",
+      "http://edamontology.org/data_1025"
     ],
     [
       "http://aopkb.org/aop_ontology#KeyEvent",
@@ -352,43 +362,28 @@
     ],
     [
       "http://aopkb.org/aop_ontology#KeyEventRelationship",
-      "http://edamontology.org/data_1025",
-      "http://edamontology.org/data_2298"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#KeyEventRelationship",
-      "http://edamontology.org/data_1025",
-      "http://edamontology.org/data_1025"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://edamontology.org/data_1025",
-      "http://edamontology.org/data_2298"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://edamontology.org/data_1025",
-      "http://edamontology.org/data_1025"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#KeyEventRelationship",
       "http://aopkb.org/aop_ontology#has_downstream_key_event",
       "http://aopkb.org/aop_ontology#KeyEvent"
     ],
     [
-      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
-      "http://aopkb.org/aop_ontology#has_chemical_entity",
-      "http://semanticscience.org/resource/CHEMINF_000446"
+      "http://aopkb.org/aop_ontology#KeyEvent",
+      "http://purl.obolibrary.org/obo/PATO_0001241",
+      "http://purl.obolibrary.org/obo/GO_0008150"
     ],
     [
-      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
-      "http://aopkb.org/aop_ontology#has_chemical_entity",
-      "http://semanticscience.org/resource/CHEMINF_000000"
+      "http://aopkb.org/aop_ontology#KeyEvent",
+      "http://purl.obolibrary.org/obo/PATO_0001241",
+      "http://aopkb.org/aop_ontology#OrganContext"
     ],
     [
-      "http://aopkb.org/aop_ontology#KeyEventRelationship",
-      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-      "http://aopkb.org/aop_ontology#KeyEventRelationship"
+      "http://aopkb.org/aop_ontology#KeyEvent",
+      "http://purl.obolibrary.org/obo/PATO_0001241",
+      "http://purl.obolibrary.org/obo/PATO_0001241"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#KeyEvent",
+      "http://purl.obolibrary.org/obo/PATO_0001241",
+      "http://aopkb.org/aop_ontology#CellTypeContext"
     ],
     [
       "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
@@ -396,11 +391,31 @@
       "http://aopkb.org/aop_ontology#AdverseOutcomePathway"
     ],
     [
+      "http://aopkb.org/aop_ontology#KeyEventRelationship",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://aopkb.org/aop_ontology#KeyEventRelationship"
+    ],
+    [
       "http://aopkb.org/aop_ontology#KeyEvent",
       "http://www.w3.org/2000/01/rdf-schema#seeAlso",
       "http://aopkb.org/aop_ontology#KeyEvent"
     ],
     [
+      "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "http://aopkb.org/aop_ontology#hasProcess",
+      "http://purl.obolibrary.org/obo/GO_0008150"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "http://aopkb.org/aop_ontology#hasProcess",
+      "http://purl.obolibrary.org/obo/PATO_0001241"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#KeyEvent",
+      "http://aopkb.org/aop_ontology#OrganContext",
+      "http://aopkb.org/aop_ontology#OrganContext"
+    ],
+    [
       "http://aopkb.org/aop_ontology#KeyEvent",
       "http://aopkb.org/aop_ontology#OrganContext",
       "http://purl.obolibrary.org/obo/PATO_0001241"
@@ -412,23 +427,18 @@
     ],
     [
       "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://aopkb.org/aop_ontology#OrganContext",
-      "http://aopkb.org/aop_ontology#OrganContext"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "http://aopkb.org/aop_ontology#hasProcess",
-      "http://purl.obolibrary.org/obo/PATO_0001241"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "http://aopkb.org/aop_ontology#hasProcess",
+      "http://purl.obolibrary.org/obo/GO_0008150",
       "http://purl.obolibrary.org/obo/GO_0008150"
     ],
     [
       "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://aopkb.org/aop_ontology#CellTypeContext",
+      "http://purl.obolibrary.org/obo/GO_0008150",
       "http://purl.obolibrary.org/obo/PATO_0001241"
+    ],
+    [
+      "http://aopkb.org/aop_ontology#KeyEvent",
+      "http://aopkb.org/aop_ontology#CellTypeContext",
+      "http://aopkb.org/aop_ontology#OrganContext"
     ],
     [
       "http://aopkb.org/aop_ontology#KeyEvent",
@@ -438,17 +448,7 @@
     [
       "http://aopkb.org/aop_ontology#KeyEvent",
       "http://aopkb.org/aop_ontology#CellTypeContext",
-      "http://aopkb.org/aop_ontology#OrganContext"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://purl.obolibrary.org/obo/GO_0008150",
       "http://purl.obolibrary.org/obo/PATO_0001241"
-    ],
-    [
-      "http://aopkb.org/aop_ontology#KeyEvent",
-      "http://purl.obolibrary.org/obo/GO_0008150",
-      "http://purl.obolibrary.org/obo/GO_0008150"
     ],
     [
       "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
@@ -466,13 +466,13 @@
       "http://aopkb.org/aop_ontology#KeyEventRelationship"
     ],
     [
-      "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
-      "http://aopkb.org/aop_ontology#has_molecular_initiating_event",
+      "http://aopkb.org/aop_ontology#KeyEventRelationship",
+      "http://aopkb.org/aop_ontology#has_upstream_key_event",
       "http://aopkb.org/aop_ontology#KeyEvent"
     ],
     [
-      "http://aopkb.org/aop_ontology#KeyEventRelationship",
-      "http://aopkb.org/aop_ontology#has_upstream_key_event",
+      "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
+      "http://aopkb.org/aop_ontology#has_molecular_initiating_event",
       "http://aopkb.org/aop_ontology#KeyEvent"
     ],
     [
@@ -487,15 +487,15 @@
     "properties": 0,
     "prefixes": {
       "aopo": "http://aopkb.org/aop_ontology#",
-      "foaf": "http://xmlns.com/foaf/0.1/",
       "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#",
-      "go": "http://purl.obolibrary.org/obo/",
-      "pato": "http://purl.obolibrary.org/obo/",
       "edam.data": "http://edamontology.org/",
       "skos": "http://www.w3.org/2004/02/skos/core#",
       "cheminf": "http://semanticscience.org/resource/",
+      "pato": "http://purl.obolibrary.org/obo/",
       "dc": "http://purl.org/dc/elements/1.1/",
+      "go": "http://purl.obolibrary.org/obo/",
       "ncbitaxon": "http://purl.bioontology.org/ontology/NCBITAXON/",
+      "foaf": "http://xmlns.com/foaf/0.1/",
       "void": "http://rdfs.org/ns/void#",
       "dcat": "http://www.w3.org/ns/dcat#",
       "dcterms": "http://purl.org/dc/terms/",
@@ -505,15 +505,15 @@
   "jsonld": {
     "@context": {
       "aopo": "http://aopkb.org/aop_ontology#",
-      "foaf": "http://xmlns.com/foaf/0.1/",
       "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#",
-      "go": "http://purl.obolibrary.org/obo/",
-      "pato": "http://purl.obolibrary.org/obo/",
       "edam.data": "http://edamontology.org/",
       "skos": "http://www.w3.org/2004/02/skos/core#",
       "cheminf": "http://semanticscience.org/resource/",
+      "pato": "http://purl.obolibrary.org/obo/",
       "dc": "http://purl.org/dc/elements/1.1/",
+      "go": "http://purl.obolibrary.org/obo/",
       "ncbitaxon": "http://purl.bioontology.org/ontology/NCBITAXON/",
+      "foaf": "http://xmlns.com/foaf/0.1/",
       "void": "http://rdfs.org/ns/void#",
       "dcat": "http://www.w3.org/ns/dcat#",
       "dcterms": "http://purl.org/dc/terms/",
@@ -521,11 +521,321 @@
     },
     "@graph": [
       {
-        "@id": "aopo:KeyEventRelationship",
-        "foaf:page": {
-          "@id": "aopo:KeyEventRelationship"
+        "@id": "aopo:AdverseOutcomePathway",
+        "ncit:C54571": {
+          "@id": "ncit:C54571"
         },
         "dc:identifier": {
+          "@id": "aopo:AdverseOutcomePathway"
+        },
+        "foaf:page": {
+          "@id": "aopo:AdverseOutcomePathway"
+        },
+        "rdfs:seeAlso": {
+          "@id": "aopo:AdverseOutcomePathway"
+        },
+        "aopo:has_adverse_outcome": {
+          "@id": "aopo:KeyEvent"
+        },
+        "aopo:has_key_event": {
+          "@id": "aopo:KeyEvent"
+        },
+        "aopo:has_key_event_relationship": {
+          "@id": "aopo:KeyEventRelationship"
+        },
+        "aopo:has_molecular_initiating_event": {
+          "@id": "aopo:KeyEvent"
+        }
+      },
+      {
+        "@id": "edam.data:1025",
+        "skos:exactMatch": [
+          {
+            "@id": "edam.data:2291"
+          },
+          {
+            "@id": "edam.data:1027"
+          },
+          {
+            "@id": "edam.data:1033"
+          },
+          {
+            "@id": "edam.data:1025"
+          }
+        ]
+      },
+      {
+        "@id": "cheminf:000446",
+        "skos:exactMatch": [
+          {
+            "@id": "cheminf:000564"
+          },
+          {
+            "@id": "cheminf:000405"
+          },
+          {
+            "@id": "cheminf:000406"
+          },
+          {
+            "@id": "cheminf:000567"
+          },
+          {
+            "@id": "cheminf:000407"
+          },
+          {
+            "@id": "cheminf:000412"
+          },
+          {
+            "@id": "cheminf:000409"
+          },
+          {
+            "@id": "cheminf:000408"
+          },
+          {
+            "@id": "cheminf:000140"
+          }
+        ],
+        "dc:identifier": [
+          {
+            "@id": "cheminf:000000"
+          },
+          {
+            "@id": "cheminf:000446"
+          }
+        ],
+        "dcterms:isPartOf": {
+          "@id": "ncit:C54571"
+        }
+      },
+      {
+        "@id": "cheminf:000000",
+        "skos:exactMatch": [
+          {
+            "@id": "cheminf:000412"
+          },
+          {
+            "@id": "cheminf:000409"
+          },
+          {
+            "@id": "cheminf:000408"
+          },
+          {
+            "@id": "cheminf:000405"
+          },
+          {
+            "@id": "cheminf:000564"
+          },
+          {
+            "@id": "cheminf:000407"
+          },
+          {
+            "@id": "cheminf:000406"
+          },
+          {
+            "@id": "cheminf:000567"
+          },
+          {
+            "@id": "cheminf:000140"
+          }
+        ],
+        "dc:identifier": [
+          {
+            "@id": "cheminf:000000"
+          },
+          {
+            "@id": "cheminf:000446"
+          }
+        ],
+        "dcterms:isPartOf": {
+          "@id": "ncit:C54571"
+        }
+      },
+      {
+        "@id": "edam.data:2298",
+        "skos:exactMatch": [
+          {
+            "@id": "edam.data:1025"
+          },
+          {
+            "@id": "edam.data:2291"
+          },
+          {
+            "@id": "edam.data:1027"
+          },
+          {
+            "@id": "edam.data:1033"
+          }
+        ]
+      },
+      {
+        "@id": "pato:0001241",
+        "skos:exactMatch": [
+          {
+            "@id": "edam.data:1025"
+          },
+          {
+            "@id": "edam.data:2298"
+          },
+          {
+            "@id": "edam.data:2291"
+          },
+          {
+            "@id": "edam.data:1027"
+          }
+        ],
+        "dc:identifier": [
+          {
+            "@id": "aopo:CellTypeContext"
+          },
+          {
+            "@id": "pato:0001241"
+          },
+          {
+            "@id": "aopo:OrganContext"
+          },
+          {
+            "@id": "go:0008150"
+          }
+        ]
+      },
+      {
+        "@id": "aopo:KeyEvent",
+        "dc:identifier": {
+          "@id": "aopo:KeyEvent"
+        },
+        "foaf:page": {
+          "@id": "aopo:KeyEvent"
+        },
+        "dcterms:isPartOf": {
+          "@id": "aopo:AdverseOutcomePathway"
+        },
+        "edam.data:1025": [
+          {
+            "@id": "edam.data:2298"
+          },
+          {
+            "@id": "edam.data:1025"
+          }
+        ],
+        "aopo:hasBiologicalEvent": {
+          "@id": "aopo:BiologicalEvent"
+        },
+        "pato:0001241": [
+          {
+            "@id": "go:0008150"
+          },
+          {
+            "@id": "aopo:OrganContext"
+          },
+          {
+            "@id": "pato:0001241"
+          },
+          {
+            "@id": "aopo:CellTypeContext"
+          }
+        ],
+        "rdfs:seeAlso": {
+          "@id": "aopo:KeyEvent"
+        },
+        "aopo:OrganContext": [
+          {
+            "@id": "aopo:OrganContext"
+          },
+          {
+            "@id": "pato:0001241"
+          },
+          {
+            "@id": "aopo:CellTypeContext"
+          }
+        ],
+        "go:0008150": [
+          {
+            "@id": "go:0008150"
+          },
+          {
+            "@id": "pato:0001241"
+          }
+        ],
+        "aopo:CellTypeContext": [
+          {
+            "@id": "aopo:OrganContext"
+          },
+          {
+            "@id": "aopo:CellTypeContext"
+          },
+          {
+            "@id": "pato:0001241"
+          }
+        ],
+        "ncbitaxon:131567": {
+          "@id": "ncbitaxon:131567"
+        }
+      },
+      {
+        "@id": "go:0008150",
+        "dc:identifier": [
+          {
+            "@id": "pato:0001241"
+          },
+          {
+            "@id": "go:0008150"
+          }
+        ]
+      },
+      {
+        "@id": "aopo:OrganContext",
+        "dc:identifier": [
+          {
+            "@id": "pato:0001241"
+          },
+          {
+            "@id": "aopo:CellTypeContext"
+          },
+          {
+            "@id": "aopo:OrganContext"
+          }
+        ]
+      },
+      {
+        "@id": "aopo:CellTypeContext",
+        "dc:identifier": [
+          {
+            "@id": "pato:0001241"
+          },
+          {
+            "@id": "aopo:OrganContext"
+          },
+          {
+            "@id": "aopo:CellTypeContext"
+          }
+        ]
+      },
+      {
+        "@id": "ncit:C54571",
+        "dc:identifier": {
+          "@id": "ncit:C54571"
+        },
+        "foaf:page": {
+          "@id": "ncit:C54571"
+        },
+        "dcterms:isPartOf": {
+          "@id": "aopo:AdverseOutcomePathway"
+        },
+        "aopo:has_chemical_entity": [
+          {
+            "@id": "cheminf:000446"
+          },
+          {
+            "@id": "cheminf:000000"
+          }
+        ]
+      },
+      {
+        "@id": "aopo:KeyEventRelationship",
+        "dc:identifier": {
+          "@id": "aopo:KeyEventRelationship"
+        },
+        "foaf:page": {
           "@id": "aopo:KeyEventRelationship"
         },
         "dcterms:isPartOf": {
@@ -550,354 +860,44 @@
         }
       },
       {
-        "@id": "aopo:KeyEvent",
-        "foaf:page": {
-          "@id": "aopo:KeyEvent"
-        },
-        "dc:identifier": {
-          "@id": "aopo:KeyEvent"
-        },
-        "dcterms:isPartOf": {
-          "@id": "aopo:AdverseOutcomePathway"
-        },
-        "pato:0001241": [
-          {
-            "@id": "go:0008150"
-          },
-          {
-            "@id": "aopo:CellTypeContext"
-          },
-          {
-            "@id": "aopo:OrganContext"
-          },
-          {
-            "@id": "pato:0001241"
-          }
-        ],
-        "aopo:hasBiologicalEvent": {
-          "@id": "aopo:BiologicalEvent"
-        },
-        "edam.data:1025": [
-          {
-            "@id": "edam.data:2298"
-          },
-          {
-            "@id": "edam.data:1025"
-          }
-        ],
-        "rdfs:seeAlso": {
-          "@id": "aopo:KeyEvent"
-        },
-        "aopo:OrganContext": [
-          {
-            "@id": "pato:0001241"
-          },
-          {
-            "@id": "aopo:CellTypeContext"
-          },
-          {
-            "@id": "aopo:OrganContext"
-          }
-        ],
-        "aopo:CellTypeContext": [
-          {
-            "@id": "pato:0001241"
-          },
-          {
-            "@id": "aopo:CellTypeContext"
-          },
-          {
-            "@id": "aopo:OrganContext"
-          }
-        ],
-        "go:0008150": [
-          {
-            "@id": "pato:0001241"
-          },
-          {
-            "@id": "go:0008150"
-          }
-        ],
-        "ncbitaxon:131567": {
-          "@id": "ncbitaxon:131567"
-        }
-      },
-      {
-        "@id": "aopo:AdverseOutcomePathway",
-        "foaf:page": {
-          "@id": "aopo:AdverseOutcomePathway"
-        },
-        "ncit:C54571": {
-          "@id": "ncit:C54571"
-        },
-        "dc:identifier": {
-          "@id": "aopo:AdverseOutcomePathway"
-        },
-        "rdfs:seeAlso": {
-          "@id": "aopo:AdverseOutcomePathway"
-        },
-        "aopo:has_adverse_outcome": {
-          "@id": "aopo:KeyEvent"
-        },
-        "aopo:has_key_event": {
-          "@id": "aopo:KeyEvent"
-        },
-        "aopo:has_key_event_relationship": {
-          "@id": "aopo:KeyEventRelationship"
-        },
-        "aopo:has_molecular_initiating_event": {
-          "@id": "aopo:KeyEvent"
-        }
-      },
-      {
-        "@id": "ncit:C54571",
-        "foaf:page": {
-          "@id": "ncit:C54571"
-        },
-        "dc:identifier": {
-          "@id": "ncit:C54571"
-        },
-        "dcterms:isPartOf": {
-          "@id": "aopo:AdverseOutcomePathway"
-        },
-        "aopo:has_chemical_entity": [
-          {
-            "@id": "cheminf:000446"
-          },
-          {
-            "@id": "cheminf:000000"
-          }
-        ]
-      },
-      {
-        "@id": "aopo:BiologicalEvent",
-        "aopo:hasObject": [
-          {
-            "@id": "go:0008150"
-          },
-          {
-            "@id": "aopo:CellTypeContext"
-          },
-          {
-            "@id": "aopo:OrganContext"
-          },
-          {
-            "@id": "pato:0001241"
-          }
-        ],
-        "aopo:hasProcess": [
-          {
-            "@id": "pato:0001241"
-          },
-          {
-            "@id": "go:0008150"
-          }
-        ]
-      },
-      {
-        "@id": "edam.data:1025",
-        "skos:exactMatch": [
-          {
-            "@id": "edam.data:2291"
-          },
-          {
-            "@id": "edam.data:1025"
-          },
-          {
-            "@id": "edam.data:1033"
-          },
-          {
-            "@id": "edam.data:1027"
-          }
-        ]
-      },
-      {
-        "@id": "cheminf:000446",
-        "skos:exactMatch": [
-          {
-            "@id": "cheminf:000405"
-          },
-          {
-            "@id": "cheminf:000407"
-          },
-          {
-            "@id": "cheminf:000140"
-          },
-          {
-            "@id": "cheminf:000412"
-          },
-          {
-            "@id": "cheminf:000408"
-          },
-          {
-            "@id": "cheminf:000409"
-          },
-          {
-            "@id": "cheminf:000564"
-          },
-          {
-            "@id": "cheminf:000567"
-          },
-          {
-            "@id": "cheminf:000406"
-          }
-        ],
-        "dc:identifier": [
-          {
-            "@id": "cheminf:000446"
-          },
-          {
-            "@id": "cheminf:000000"
-          }
-        ],
-        "dcterms:isPartOf": {
-          "@id": "ncit:C54571"
-        }
-      },
-      {
-        "@id": "edam.data:2298",
-        "skos:exactMatch": [
-          {
-            "@id": "edam.data:1027"
-          },
-          {
-            "@id": "edam.data:2291"
-          },
-          {
-            "@id": "edam.data:1025"
-          },
-          {
-            "@id": "edam.data:1033"
-          }
-        ]
-      },
-      {
-        "@id": "cheminf:000000",
-        "skos:exactMatch": [
-          {
-            "@id": "cheminf:000405"
-          },
-          {
-            "@id": "cheminf:000407"
-          },
-          {
-            "@id": "cheminf:000140"
-          },
-          {
-            "@id": "cheminf:000412"
-          },
-          {
-            "@id": "cheminf:000408"
-          },
-          {
-            "@id": "cheminf:000409"
-          },
-          {
-            "@id": "cheminf:000564"
-          },
-          {
-            "@id": "cheminf:000567"
-          },
-          {
-            "@id": "cheminf:000406"
-          }
-        ],
-        "dc:identifier": [
-          {
-            "@id": "cheminf:000000"
-          },
-          {
-            "@id": "cheminf:000446"
-          }
-        ],
-        "dcterms:isPartOf": {
-          "@id": "ncit:C54571"
-        }
-      },
-      {
-        "@id": "pato:0001241",
-        "skos:exactMatch": [
-          {
-            "@id": "edam.data:2291"
-          },
-          {
-            "@id": "edam.data:2298"
-          },
-          {
-            "@id": "edam.data:1025"
-          },
-          {
-            "@id": "edam.data:1027"
-          }
-        ],
-        "dc:identifier": [
-          {
-            "@id": "pato:0001241"
-          },
-          {
-            "@id": "go:0008150"
-          },
-          {
-            "@id": "aopo:OrganContext"
-          },
-          {
-            "@id": "aopo:CellTypeContext"
-          }
-        ]
-      },
-      {
-        "@id": "go:0008150",
-        "dc:identifier": [
-          {
-            "@id": "go:0008150"
-          },
-          {
-            "@id": "pato:0001241"
-          }
-        ]
-      },
-      {
-        "@id": "aopo:OrganContext",
-        "dc:identifier": [
-          {
-            "@id": "pato:0001241"
-          },
-          {
-            "@id": "aopo:OrganContext"
-          },
-          {
-            "@id": "aopo:CellTypeContext"
-          }
-        ]
-      },
-      {
-        "@id": "aopo:CellTypeContext",
-        "dc:identifier": [
-          {
-            "@id": "pato:0001241"
-          },
-          {
-            "@id": "aopo:OrganContext"
-          },
-          {
-            "@id": "aopo:CellTypeContext"
-          }
-        ]
-      },
-      {
         "@id": "ncbitaxon:131567",
         "dc:identifier": {
           "@id": "ncbitaxon:131567"
         }
       },
       {
+        "@id": "aopo:BiologicalEvent",
+        "aopo:hasObject": [
+          {
+            "@id": "aopo:CellTypeContext"
+          },
+          {
+            "@id": "aopo:OrganContext"
+          },
+          {
+            "@id": "pato:0001241"
+          },
+          {
+            "@id": "go:0008150"
+          }
+        ],
+        "aopo:hasProcess": [
+          {
+            "@id": "go:0008150"
+          },
+          {
+            "@id": "pato:0001241"
+          }
+        ]
+      },
+      {
         "@id": "void:Linkset",
         "dcat:downloadURL": [
           {
-            "@id": "void:Linkset"
+            "@id": "void:Dataset"
           },
           {
-            "@id": "void:Dataset"
+            "@id": "void:Linkset"
           }
         ]
       },
@@ -916,38 +916,6 @@
   },
   "schema_patterns": [
     {
-      "subject_class": "aopo:KeyEventRelationship",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship",
-      "property": "foaf:page",
-      "property_uri": "http://xmlns.com/foaf/0.1/page",
-      "object_class": "aopo:KeyEventRelationship",
-      "object_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship"
-    },
-    {
-      "subject_class": "aopo:KeyEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "foaf:page",
-      "property_uri": "http://xmlns.com/foaf/0.1/page",
-      "object_class": "aopo:KeyEvent",
-      "object_uri": "http://aopkb.org/aop_ontology#KeyEvent"
-    },
-    {
-      "subject_class": "aopo:AdverseOutcomePathway",
-      "subject_uri": "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
-      "property": "foaf:page",
-      "property_uri": "http://xmlns.com/foaf/0.1/page",
-      "object_class": "aopo:AdverseOutcomePathway",
-      "object_uri": "http://aopkb.org/aop_ontology#AdverseOutcomePathway"
-    },
-    {
-      "subject_class": "ncit:C54571",
-      "subject_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
-      "property": "foaf:page",
-      "property_uri": "http://xmlns.com/foaf/0.1/page",
-      "object_class": "ncit:C54571",
-      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571"
-    },
-    {
       "subject_class": "aopo:AdverseOutcomePathway",
       "subject_uri": "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
       "property": "ncit:C54571",
@@ -956,60 +924,12 @@
       "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571"
     },
     {
-      "subject_class": "aopo:BiologicalEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "property": "aopo:hasObject",
-      "property_uri": "http://aopkb.org/aop_ontology#hasObject",
-      "object_class": "go:0008150",
-      "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
-    },
-    {
-      "subject_class": "aopo:BiologicalEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "property": "aopo:hasObject",
-      "property_uri": "http://aopkb.org/aop_ontology#hasObject",
-      "object_class": "aopo:CellTypeContext",
-      "object_uri": "http://aopkb.org/aop_ontology#CellTypeContext"
-    },
-    {
-      "subject_class": "aopo:BiologicalEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "property": "aopo:hasObject",
-      "property_uri": "http://aopkb.org/aop_ontology#hasObject",
-      "object_class": "aopo:OrganContext",
-      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
-    },
-    {
-      "subject_class": "aopo:BiologicalEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "property": "aopo:hasObject",
-      "property_uri": "http://aopkb.org/aop_ontology#hasObject",
-      "object_class": "pato:0001241",
-      "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
-    },
-    {
       "subject_class": "edam.data:1025",
       "subject_uri": "http://edamontology.org/data_1025",
       "property": "skos:exactMatch",
       "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
       "object_class": "edam.data:2291",
       "object_uri": "http://edamontology.org/data_2291"
-    },
-    {
-      "subject_class": "edam.data:1025",
-      "subject_uri": "http://edamontology.org/data_1025",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "edam.data:1025",
-      "object_uri": "http://edamontology.org/data_1025"
-    },
-    {
-      "subject_class": "edam.data:1025",
-      "subject_uri": "http://edamontology.org/data_1025",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "edam.data:1033",
-      "object_uri": "http://edamontology.org/data_1033"
     },
     {
       "subject_class": "edam.data:1025",
@@ -1024,100 +944,12 @@
       "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
       "property": "skos:exactMatch",
       "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000405",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000405"
-    },
-    {
-      "subject_class": "cheminf:000446",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000407",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000407"
-    },
-    {
-      "subject_class": "cheminf:000446",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000140",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000140"
-    },
-    {
-      "subject_class": "cheminf:000446",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000412",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000412"
-    },
-    {
-      "subject_class": "cheminf:000446",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000408",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000408"
-    },
-    {
-      "subject_class": "cheminf:000446",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000409",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000409"
-    },
-    {
-      "subject_class": "cheminf:000446",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
       "object_class": "cheminf:000564",
       "object_uri": "http://semanticscience.org/resource/CHEMINF_000564"
     },
     {
-      "subject_class": "cheminf:000446",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000567",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000567"
-    },
-    {
-      "subject_class": "cheminf:000446",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000406",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000406"
-    },
-    {
-      "subject_class": "edam.data:2298",
-      "subject_uri": "http://edamontology.org/data_2298",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "edam.data:1027",
-      "object_uri": "http://edamontology.org/data_1027"
-    },
-    {
-      "subject_class": "edam.data:2298",
-      "subject_uri": "http://edamontology.org/data_2298",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "edam.data:2291",
-      "object_uri": "http://edamontology.org/data_2291"
-    },
-    {
-      "subject_class": "edam.data:2298",
-      "subject_uri": "http://edamontology.org/data_2298",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "edam.data:1025",
-      "object_uri": "http://edamontology.org/data_1025"
-    },
-    {
-      "subject_class": "edam.data:2298",
-      "subject_uri": "http://edamontology.org/data_2298",
+      "subject_class": "edam.data:1025",
+      "subject_uri": "http://edamontology.org/data_1025",
       "property": "skos:exactMatch",
       "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
       "object_class": "edam.data:1033",
@@ -1128,40 +960,16 @@
       "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
       "property": "skos:exactMatch",
       "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000405",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000405"
-    },
-    {
-      "subject_class": "cheminf:000000",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000407",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000407"
-    },
-    {
-      "subject_class": "cheminf:000000",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000140",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000140"
-    },
-    {
-      "subject_class": "cheminf:000000",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
       "object_class": "cheminf:000412",
       "object_uri": "http://semanticscience.org/resource/CHEMINF_000412"
     },
     {
-      "subject_class": "cheminf:000000",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "subject_class": "cheminf:000446",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
       "property": "skos:exactMatch",
       "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000408",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000408"
+      "object_class": "cheminf:000405",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000405"
     },
     {
       "subject_class": "cheminf:000000",
@@ -1172,36 +980,76 @@
       "object_uri": "http://semanticscience.org/resource/CHEMINF_000409"
     },
     {
-      "subject_class": "cheminf:000000",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000564",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000564"
-    },
-    {
-      "subject_class": "cheminf:000000",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
-      "property": "skos:exactMatch",
-      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
-      "object_class": "cheminf:000567",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000567"
-    },
-    {
-      "subject_class": "cheminf:000000",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "subject_class": "cheminf:000446",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
       "property": "skos:exactMatch",
       "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
       "object_class": "cheminf:000406",
       "object_uri": "http://semanticscience.org/resource/CHEMINF_000406"
+    },
+    {
+      "subject_class": "edam.data:2298",
+      "subject_uri": "http://edamontology.org/data_2298",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "edam.data:1025",
+      "object_uri": "http://edamontology.org/data_1025"
     },
     {
       "subject_class": "pato:0001241",
       "subject_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
       "property": "skos:exactMatch",
       "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "edam.data:1025",
+      "object_uri": "http://edamontology.org/data_1025"
+    },
+    {
+      "subject_class": "cheminf:000000",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000408",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000408"
+    },
+    {
+      "subject_class": "edam.data:2298",
+      "subject_uri": "http://edamontology.org/data_2298",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
       "object_class": "edam.data:2291",
       "object_uri": "http://edamontology.org/data_2291"
+    },
+    {
+      "subject_class": "edam.data:2298",
+      "subject_uri": "http://edamontology.org/data_2298",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "edam.data:1027",
+      "object_uri": "http://edamontology.org/data_1027"
+    },
+    {
+      "subject_class": "cheminf:000000",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000405",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000405"
+    },
+    {
+      "subject_class": "cheminf:000000",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000564",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000564"
+    },
+    {
+      "subject_class": "cheminf:000000",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000407",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000407"
     },
     {
       "subject_class": "pato:0001241",
@@ -1212,12 +1060,60 @@
       "object_uri": "http://edamontology.org/data_2298"
     },
     {
+      "subject_class": "cheminf:000446",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000567",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000567"
+    },
+    {
       "subject_class": "pato:0001241",
       "subject_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
       "property": "skos:exactMatch",
       "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "edam.data:2291",
+      "object_uri": "http://edamontology.org/data_2291"
+    },
+    {
+      "subject_class": "edam.data:1025",
+      "subject_uri": "http://edamontology.org/data_1025",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
       "object_class": "edam.data:1025",
       "object_uri": "http://edamontology.org/data_1025"
+    },
+    {
+      "subject_class": "cheminf:000446",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000407",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000407"
+    },
+    {
+      "subject_class": "cheminf:000446",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000412",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000412"
+    },
+    {
+      "subject_class": "cheminf:000446",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000409",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000409"
+    },
+    {
+      "subject_class": "cheminf:000446",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000408",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000408"
     },
     {
       "subject_class": "pato:0001241",
@@ -1226,6 +1122,46 @@
       "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
       "object_class": "edam.data:1027",
       "object_uri": "http://edamontology.org/data_1027"
+    },
+    {
+      "subject_class": "cheminf:000000",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000406",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000406"
+    },
+    {
+      "subject_class": "cheminf:000000",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000567",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000567"
+    },
+    {
+      "subject_class": "cheminf:000446",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000140",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000140"
+    },
+    {
+      "subject_class": "cheminf:000000",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "cheminf:000140",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000140"
+    },
+    {
+      "subject_class": "edam.data:2298",
+      "subject_uri": "http://edamontology.org/data_2298",
+      "property": "skos:exactMatch",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "object_class": "edam.data:1033",
+      "object_uri": "http://edamontology.org/data_1033"
     },
     {
       "subject_class": "aopo:KeyEvent",
@@ -1240,40 +1176,8 @@
       "subject_uri": "http://purl.obolibrary.org/obo/GO_0008150",
       "property": "dc:identifier",
       "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "go:0008150",
-      "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
-    },
-    {
-      "subject_class": "go:0008150",
-      "subject_uri": "http://purl.obolibrary.org/obo/GO_0008150",
-      "property": "dc:identifier",
-      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
       "object_class": "pato:0001241",
       "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
-    },
-    {
-      "subject_class": "aopo:OrganContext",
-      "subject_uri": "http://aopkb.org/aop_ontology#OrganContext",
-      "property": "dc:identifier",
-      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "pato:0001241",
-      "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
-    },
-    {
-      "subject_class": "aopo:OrganContext",
-      "subject_uri": "http://aopkb.org/aop_ontology#OrganContext",
-      "property": "dc:identifier",
-      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "aopo:OrganContext",
-      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
-    },
-    {
-      "subject_class": "aopo:OrganContext",
-      "subject_uri": "http://aopkb.org/aop_ontology#OrganContext",
-      "property": "dc:identifier",
-      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "aopo:CellTypeContext",
-      "object_uri": "http://aopkb.org/aop_ontology#CellTypeContext"
     },
     {
       "subject_class": "cheminf:000000",
@@ -1284,12 +1188,36 @@
       "object_uri": "http://semanticscience.org/resource/CHEMINF_000000"
     },
     {
-      "subject_class": "cheminf:000000",
-      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "subject_class": "aopo:OrganContext",
+      "subject_uri": "http://aopkb.org/aop_ontology#OrganContext",
       "property": "dc:identifier",
       "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "cheminf:000446",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000446"
+      "object_class": "pato:0001241",
+      "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
+    },
+    {
+      "subject_class": "aopo:OrganContext",
+      "subject_uri": "http://aopkb.org/aop_ontology#OrganContext",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "aopo:CellTypeContext",
+      "object_uri": "http://aopkb.org/aop_ontology#CellTypeContext"
+    },
+    {
+      "subject_class": "aopo:OrganContext",
+      "subject_uri": "http://aopkb.org/aop_ontology#OrganContext",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "aopo:OrganContext",
+      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
+    },
+    {
+      "subject_class": "pato:0001241",
+      "subject_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "aopo:CellTypeContext",
+      "object_uri": "http://aopkb.org/aop_ontology#CellTypeContext"
     },
     {
       "subject_class": "aopo:CellTypeContext",
@@ -1306,46 +1234,6 @@
       "property_uri": "http://purl.org/dc/elements/1.1/identifier",
       "object_class": "aopo:OrganContext",
       "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
-    },
-    {
-      "subject_class": "aopo:CellTypeContext",
-      "subject_uri": "http://aopkb.org/aop_ontology#CellTypeContext",
-      "property": "dc:identifier",
-      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "aopo:CellTypeContext",
-      "object_uri": "http://aopkb.org/aop_ontology#CellTypeContext"
-    },
-    {
-      "subject_class": "pato:0001241",
-      "subject_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
-      "property": "dc:identifier",
-      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "pato:0001241",
-      "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
-    },
-    {
-      "subject_class": "pato:0001241",
-      "subject_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
-      "property": "dc:identifier",
-      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "go:0008150",
-      "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
-    },
-    {
-      "subject_class": "pato:0001241",
-      "subject_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
-      "property": "dc:identifier",
-      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "aopo:OrganContext",
-      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
-    },
-    {
-      "subject_class": "pato:0001241",
-      "subject_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
-      "property": "dc:identifier",
-      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "aopo:CellTypeContext",
-      "object_uri": "http://aopkb.org/aop_ontology#CellTypeContext"
     },
     {
       "subject_class": "aopo:AdverseOutcomePathway",
@@ -1368,16 +1256,48 @@
       "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
       "property": "dc:identifier",
       "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "cheminf:000446",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000446"
+      "object_class": "cheminf:000000",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000000"
+    },
+    {
+      "subject_class": "go:0008150",
+      "subject_uri": "http://purl.obolibrary.org/obo/GO_0008150",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "go:0008150",
+      "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
+    },
+    {
+      "subject_class": "pato:0001241",
+      "subject_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "pato:0001241",
+      "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
     },
     {
       "subject_class": "cheminf:000446",
       "subject_uri": "http://semanticscience.org/resource/CHEMINF_000446",
       "property": "dc:identifier",
       "property_uri": "http://purl.org/dc/elements/1.1/identifier",
-      "object_class": "cheminf:000000",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000000"
+      "object_class": "cheminf:000446",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000446"
+    },
+    {
+      "subject_class": "aopo:CellTypeContext",
+      "subject_uri": "http://aopkb.org/aop_ontology#CellTypeContext",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "aopo:CellTypeContext",
+      "object_uri": "http://aopkb.org/aop_ontology#CellTypeContext"
+    },
+    {
+      "subject_class": "cheminf:000000",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000000",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "cheminf:000446",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000446"
     },
     {
       "subject_class": "aopo:KeyEventRelationship",
@@ -1388,12 +1308,92 @@
       "object_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship"
     },
     {
+      "subject_class": "pato:0001241",
+      "subject_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "aopo:OrganContext",
+      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
+    },
+    {
+      "subject_class": "pato:0001241",
+      "subject_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "go:0008150",
+      "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
+    },
+    {
       "subject_class": "ncbitaxon:131567",
       "subject_uri": "http://purl.bioontology.org/ontology/NCBITAXON/131567",
       "property": "dc:identifier",
       "property_uri": "http://purl.org/dc/elements/1.1/identifier",
       "object_class": "ncbitaxon:131567",
       "object_uri": "http://purl.bioontology.org/ontology/NCBITAXON/131567"
+    },
+    {
+      "subject_class": "aopo:KeyEventRelationship",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship",
+      "property": "foaf:page",
+      "property_uri": "http://xmlns.com/foaf/0.1/page",
+      "object_class": "aopo:KeyEventRelationship",
+      "object_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship"
+    },
+    {
+      "subject_class": "aopo:AdverseOutcomePathway",
+      "subject_uri": "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
+      "property": "foaf:page",
+      "property_uri": "http://xmlns.com/foaf/0.1/page",
+      "object_class": "aopo:AdverseOutcomePathway",
+      "object_uri": "http://aopkb.org/aop_ontology#AdverseOutcomePathway"
+    },
+    {
+      "subject_class": "aopo:KeyEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
+      "property": "foaf:page",
+      "property_uri": "http://xmlns.com/foaf/0.1/page",
+      "object_class": "aopo:KeyEvent",
+      "object_uri": "http://aopkb.org/aop_ontology#KeyEvent"
+    },
+    {
+      "subject_class": "ncit:C54571",
+      "subject_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
+      "property": "foaf:page",
+      "property_uri": "http://xmlns.com/foaf/0.1/page",
+      "object_class": "ncit:C54571",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571"
+    },
+    {
+      "subject_class": "aopo:BiologicalEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "property": "aopo:hasObject",
+      "property_uri": "http://aopkb.org/aop_ontology#hasObject",
+      "object_class": "aopo:CellTypeContext",
+      "object_uri": "http://aopkb.org/aop_ontology#CellTypeContext"
+    },
+    {
+      "subject_class": "aopo:BiologicalEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "property": "aopo:hasObject",
+      "property_uri": "http://aopkb.org/aop_ontology#hasObject",
+      "object_class": "aopo:OrganContext",
+      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
+    },
+    {
+      "subject_class": "aopo:BiologicalEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "property": "aopo:hasObject",
+      "property_uri": "http://aopkb.org/aop_ontology#hasObject",
+      "object_class": "pato:0001241",
+      "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
+    },
+    {
+      "subject_class": "aopo:BiologicalEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "property": "aopo:hasObject",
+      "property_uri": "http://aopkb.org/aop_ontology#hasObject",
+      "object_class": "go:0008150",
+      "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
     },
     {
       "subject_class": "cheminf:000000",
@@ -1436,36 +1436,52 @@
       "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571"
     },
     {
-      "subject_class": "aopo:KeyEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "pato:0001241",
-      "property_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
-      "object_class": "go:0008150",
-      "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
+      "subject_class": "ncit:C54571",
+      "subject_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
+      "property": "aopo:has_chemical_entity",
+      "property_uri": "http://aopkb.org/aop_ontology#has_chemical_entity",
+      "object_class": "cheminf:000446",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000446"
+    },
+    {
+      "subject_class": "ncit:C54571",
+      "subject_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
+      "property": "aopo:has_chemical_entity",
+      "property_uri": "http://aopkb.org/aop_ontology#has_chemical_entity",
+      "object_class": "cheminf:000000",
+      "object_uri": "http://semanticscience.org/resource/CHEMINF_000000"
+    },
+    {
+      "subject_class": "aopo:KeyEventRelationship",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship",
+      "property": "edam.data:1025",
+      "property_uri": "http://edamontology.org/data_1025",
+      "object_class": "edam.data:2298",
+      "object_uri": "http://edamontology.org/data_2298"
+    },
+    {
+      "subject_class": "aopo:KeyEventRelationship",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship",
+      "property": "edam.data:1025",
+      "property_uri": "http://edamontology.org/data_1025",
+      "object_class": "edam.data:1025",
+      "object_uri": "http://edamontology.org/data_1025"
     },
     {
       "subject_class": "aopo:KeyEvent",
       "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "pato:0001241",
-      "property_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
-      "object_class": "aopo:CellTypeContext",
-      "object_uri": "http://aopkb.org/aop_ontology#CellTypeContext"
+      "property": "edam.data:1025",
+      "property_uri": "http://edamontology.org/data_1025",
+      "object_class": "edam.data:2298",
+      "object_uri": "http://edamontology.org/data_2298"
     },
     {
       "subject_class": "aopo:KeyEvent",
       "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "pato:0001241",
-      "property_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
-      "object_class": "aopo:OrganContext",
-      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
-    },
-    {
-      "subject_class": "aopo:KeyEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "pato:0001241",
-      "property_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
-      "object_class": "pato:0001241",
-      "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
+      "property": "edam.data:1025",
+      "property_uri": "http://edamontology.org/data_1025",
+      "object_class": "edam.data:1025",
+      "object_uri": "http://edamontology.org/data_1025"
     },
     {
       "subject_class": "aopo:KeyEvent",
@@ -1478,66 +1494,42 @@
     {
       "subject_class": "aopo:KeyEventRelationship",
       "subject_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship",
-      "property": "edam.data:1025",
-      "property_uri": "http://edamontology.org/data_1025",
-      "object_class": "edam.data:2298",
-      "object_uri": "http://edamontology.org/data_2298"
-    },
-    {
-      "subject_class": "aopo:KeyEventRelationship",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship",
-      "property": "edam.data:1025",
-      "property_uri": "http://edamontology.org/data_1025",
-      "object_class": "edam.data:1025",
-      "object_uri": "http://edamontology.org/data_1025"
-    },
-    {
-      "subject_class": "aopo:KeyEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "edam.data:1025",
-      "property_uri": "http://edamontology.org/data_1025",
-      "object_class": "edam.data:2298",
-      "object_uri": "http://edamontology.org/data_2298"
-    },
-    {
-      "subject_class": "aopo:KeyEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "edam.data:1025",
-      "property_uri": "http://edamontology.org/data_1025",
-      "object_class": "edam.data:1025",
-      "object_uri": "http://edamontology.org/data_1025"
-    },
-    {
-      "subject_class": "aopo:KeyEventRelationship",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship",
       "property": "aopo:has_downstream_key_event",
       "property_uri": "http://aopkb.org/aop_ontology#has_downstream_key_event",
       "object_class": "aopo:KeyEvent",
       "object_uri": "http://aopkb.org/aop_ontology#KeyEvent"
     },
     {
-      "subject_class": "ncit:C54571",
-      "subject_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
-      "property": "aopo:has_chemical_entity",
-      "property_uri": "http://aopkb.org/aop_ontology#has_chemical_entity",
-      "object_class": "cheminf:000446",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000446"
+      "subject_class": "aopo:KeyEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
+      "property": "pato:0001241",
+      "property_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
+      "object_class": "go:0008150",
+      "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
     },
     {
-      "subject_class": "ncit:C54571",
-      "subject_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571",
-      "property": "aopo:has_chemical_entity",
-      "property_uri": "http://aopkb.org/aop_ontology#has_chemical_entity",
-      "object_class": "cheminf:000000",
-      "object_uri": "http://semanticscience.org/resource/CHEMINF_000000"
+      "subject_class": "aopo:KeyEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
+      "property": "pato:0001241",
+      "property_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
+      "object_class": "aopo:OrganContext",
+      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
     },
     {
-      "subject_class": "aopo:KeyEventRelationship",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship",
-      "property": "rdfs:seeAlso",
-      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-      "object_class": "aopo:KeyEventRelationship",
-      "object_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship"
+      "subject_class": "aopo:KeyEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
+      "property": "pato:0001241",
+      "property_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
+      "object_class": "pato:0001241",
+      "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
+    },
+    {
+      "subject_class": "aopo:KeyEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
+      "property": "pato:0001241",
+      "property_uri": "http://purl.obolibrary.org/obo/PATO_0001241",
+      "object_class": "aopo:CellTypeContext",
+      "object_uri": "http://aopkb.org/aop_ontology#CellTypeContext"
     },
     {
       "subject_class": "aopo:AdverseOutcomePathway",
@@ -1548,6 +1540,14 @@
       "object_uri": "http://aopkb.org/aop_ontology#AdverseOutcomePathway"
     },
     {
+      "subject_class": "aopo:KeyEventRelationship",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "aopo:KeyEventRelationship",
+      "object_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship"
+    },
+    {
       "subject_class": "aopo:KeyEvent",
       "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
       "property": "rdfs:seeAlso",
@@ -1556,6 +1556,30 @@
       "object_uri": "http://aopkb.org/aop_ontology#KeyEvent"
     },
     {
+      "subject_class": "aopo:BiologicalEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "property": "aopo:hasProcess",
+      "property_uri": "http://aopkb.org/aop_ontology#hasProcess",
+      "object_class": "go:0008150",
+      "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
+    },
+    {
+      "subject_class": "aopo:BiologicalEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
+      "property": "aopo:hasProcess",
+      "property_uri": "http://aopkb.org/aop_ontology#hasProcess",
+      "object_class": "pato:0001241",
+      "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
+    },
+    {
+      "subject_class": "aopo:KeyEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
+      "property": "aopo:OrganContext",
+      "property_uri": "http://aopkb.org/aop_ontology#OrganContext",
+      "object_class": "aopo:OrganContext",
+      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
+    },
+    {
       "subject_class": "aopo:KeyEvent",
       "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
       "property": "aopo:OrganContext",
@@ -1574,34 +1598,26 @@
     {
       "subject_class": "aopo:KeyEvent",
       "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "aopo:OrganContext",
-      "property_uri": "http://aopkb.org/aop_ontology#OrganContext",
-      "object_class": "aopo:OrganContext",
-      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
-    },
-    {
-      "subject_class": "aopo:BiologicalEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "property": "aopo:hasProcess",
-      "property_uri": "http://aopkb.org/aop_ontology#hasProcess",
-      "object_class": "pato:0001241",
-      "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
-    },
-    {
-      "subject_class": "aopo:BiologicalEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#BiologicalEvent",
-      "property": "aopo:hasProcess",
-      "property_uri": "http://aopkb.org/aop_ontology#hasProcess",
+      "property": "go:0008150",
+      "property_uri": "http://purl.obolibrary.org/obo/GO_0008150",
       "object_class": "go:0008150",
       "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
     },
     {
       "subject_class": "aopo:KeyEvent",
       "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "aopo:CellTypeContext",
-      "property_uri": "http://aopkb.org/aop_ontology#CellTypeContext",
+      "property": "go:0008150",
+      "property_uri": "http://purl.obolibrary.org/obo/GO_0008150",
       "object_class": "pato:0001241",
       "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
+    },
+    {
+      "subject_class": "aopo:KeyEvent",
+      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
+      "property": "aopo:CellTypeContext",
+      "property_uri": "http://aopkb.org/aop_ontology#CellTypeContext",
+      "object_class": "aopo:OrganContext",
+      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
     },
     {
       "subject_class": "aopo:KeyEvent",
@@ -1616,24 +1632,8 @@
       "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
       "property": "aopo:CellTypeContext",
       "property_uri": "http://aopkb.org/aop_ontology#CellTypeContext",
-      "object_class": "aopo:OrganContext",
-      "object_uri": "http://aopkb.org/aop_ontology#OrganContext"
-    },
-    {
-      "subject_class": "aopo:KeyEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "go:0008150",
-      "property_uri": "http://purl.obolibrary.org/obo/GO_0008150",
       "object_class": "pato:0001241",
       "object_uri": "http://purl.obolibrary.org/obo/PATO_0001241"
-    },
-    {
-      "subject_class": "aopo:KeyEvent",
-      "subject_uri": "http://aopkb.org/aop_ontology#KeyEvent",
-      "property": "go:0008150",
-      "property_uri": "http://purl.obolibrary.org/obo/GO_0008150",
-      "object_class": "go:0008150",
-      "object_uri": "http://purl.obolibrary.org/obo/GO_0008150"
     },
     {
       "subject_class": "aopo:AdverseOutcomePathway",
@@ -1660,18 +1660,18 @@
       "object_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship"
     },
     {
-      "subject_class": "aopo:AdverseOutcomePathway",
-      "subject_uri": "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
-      "property": "aopo:has_molecular_initiating_event",
-      "property_uri": "http://aopkb.org/aop_ontology#has_molecular_initiating_event",
-      "object_class": "aopo:KeyEvent",
-      "object_uri": "http://aopkb.org/aop_ontology#KeyEvent"
-    },
-    {
       "subject_class": "aopo:KeyEventRelationship",
       "subject_uri": "http://aopkb.org/aop_ontology#KeyEventRelationship",
       "property": "aopo:has_upstream_key_event",
       "property_uri": "http://aopkb.org/aop_ontology#has_upstream_key_event",
+      "object_class": "aopo:KeyEvent",
+      "object_uri": "http://aopkb.org/aop_ontology#KeyEvent"
+    },
+    {
+      "subject_class": "aopo:AdverseOutcomePathway",
+      "subject_uri": "http://aopkb.org/aop_ontology#AdverseOutcomePathway",
+      "property": "aopo:has_molecular_initiating_event",
+      "property_uri": "http://aopkb.org/aop_ontology#has_molecular_initiating_event",
       "object_class": "aopo:KeyEvent",
       "object_uri": "http://aopkb.org/aop_ontology#KeyEvent"
     },

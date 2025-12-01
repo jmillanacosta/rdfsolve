@@ -234,8 +234,10 @@ ignore = [
 # Notebooks have different standards - allow prints, exec, line length, bare except, missing docstrings, naming conventions, complexity, commented code, pickle usage, ambiguous unicode
 "notebooks/**/*.ipynb" = ["T201", "S102", "E501", "E722", "D103", "D205", "N803", "N806", "N816", "C901", "B007", "ERA001", "S301", "RUF001"]
 "notebooks/**/*.py" = ["T201", "D103", "C901", "B007", "D205"]
-# Parser has legitimate complexity, security warnings, naming conventions for RDF namespaces, docstring formatting, long SPARQL queries, commented code
-"src/rdfsolve/parser.py" = ["C901", "S311", "E722", "B030", "N806", "D205", "E501", "ERA001", "D401", "B904"]
+# Parser has legitimate complexity, security warnings, naming conventions for RDF namespaces, docstring formatting, long SPARQL queries, commented code, MD5 for hashing (not security)
+"src/rdfsolve/parser.py" = ["C901", "S311", "S324", "E722", "B030", "N806", "D205", "E501", "ERA001", "D401", "B904"]
+# SparqlHelper has legitimate complexity in _execute method
+"src/rdfsolve/sparql_helper.py" = ["C901"]
 # CLI needs to bind to all interfaces for server mode, exception chaining not needed for click.Abort
 "src/rdfsolve/cli.py" = ["S104", "B904"]
 # Schema utils has intentional bare except for type checking

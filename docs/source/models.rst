@@ -1,4 +1,4 @@
-Usage
-=====
+Models
+======
 .. automodule:: rdfsolve.models
     :members:

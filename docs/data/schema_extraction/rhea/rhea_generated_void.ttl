@@ -1,7 +1,0 @@
-@prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix void: <http://rdfs.org/ns/void#> .
-
-<https://sparql.rhea-db.org/dataset> a void:Dataset ;
-    dcterms:title "Dataset discovered from SPARQL endpoint" ;
-    void:sparqlEndpoint <https://sparql.rhea-db.org/sparql/> .
-

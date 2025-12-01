@@ -11,12 +11,15 @@ __all__ = [
     "count_instances",
     "count_instances_per_class",
     "discover_void_graphs",
+    "extract_partitions_from_void",
+    "generate_void_alternative_method",
     "generate_void_from_endpoint",
     "graph_to_jsonld",
     "graph_to_linkml",
     "graph_to_schema",
     "load_parser_from_file",
     "load_parser_from_graph",
+    "retrieve_void_from_graphs",
     "to_jsonld_from_file",
     "to_linkml_from_file",
 ]
@@ -204,6 +207,63 @@ def count_instances(
     )
 
 
+def extract_partitions_from_void(
+    endpoint_url: str, void_graph_uris: List[str]
+) -> List[Dict[str, str]]:
+    """Extract partition data from discovered VoID graphs.
+
+    Args:
+        endpoint_url: SPARQL endpoint URL
+        void_graph_uris: List of VoID graph URIs with partitions
+
+    Returns:
+        List of partition records (class-property-object)
+    """
+    parser = VoidParser()
+    return parser.retrieve_partitions_from_void(endpoint_url, void_graph_uris)
+
+
+def retrieve_void_from_graphs(
+    endpoint_url: str,
+    void_graph_uris: List[str],
+    graph_uris: Optional[Union[str, List[str]]] = None,
+    partitions: Optional[List[Dict[str, str]]] = None,
+) -> Graph:
+    """Retrieve VoID descriptions from specific graphs at endpoint.
+
+    If partition data is provided (from discover_void_graphs), builds the
+    graph directly from that data. Otherwise, runs a new discovery query.
+
+    Args:
+        endpoint_url: SPARQL endpoint URL
+        void_graph_uris: List of graph URIs containing VoID
+        graph_uris: Graph URIs to filter queries
+        partitions: Optional partition data from discover_void_graphs result
+
+    Returns:
+        RDF Graph with VoID descriptions built from partition data
+    """
+    parser = VoidParser(graph_uris=graph_uris)
+
+    # If partition data provided, build graph directly (no CONSTRUCT needed)
+    if partitions:
+        base_uri = void_graph_uris[0] if void_graph_uris else None
+        return parser.build_void_graph_from_partitions(partitions, base_uri=base_uri)
+
+    # Otherwise, run discovery to get partitions and build graph
+    discovery_result = parser.discover_void_graphs(endpoint_url)
+    partitions = discovery_result.get("partitions", [])
+
+    if partitions:
+        base_uri = void_graph_uris[0] if void_graph_uris else None
+        return parser.build_void_graph_from_partitions(partitions, base_uri=base_uri)
+
+    # Fallback: return empty graph if no partitions found
+    from rdflib import Graph
+
+    return Graph()
+
+
 def generate_void_from_endpoint(
     endpoint_url: str,
     graph_uris: Optional[Union[str, List[str]]] = None,
@@ -232,6 +292,37 @@ def generate_void_from_endpoint(
         counts=counts,
         offset_limit_steps=offset_limit_steps,
         exclude_graphs=exclude_graphs,
+    )
+
+
+def generate_void_alternative_method(
+    endpoint_url: str,
+    dataset_prefix: str,
+    graph_uri: Optional[str] = None,
+    output_file: Optional[str] = None,
+) -> Graph:
+    """Generate VoID using alternative single-query method.
+
+    Uses a unified non-paginated CONSTRUCT query that extracts all VoID
+    partition data in one request. Read-only approach adapted from
+    void-generator project.
+
+    Source: https://github.com/sib-swiss/void-generator/issues/30
+
+    Args:
+        endpoint_url: SPARQL endpoint URL
+        dataset_prefix: Prefix for partition node IRIs
+        graph_uri: Optional graph URI to restrict queries
+        output_file: Path to save Turtle output
+
+    Returns:
+        RDF graph with VoID description
+    """
+    return VoidParser.generate_void_alternative_method(
+        endpoint_url=endpoint_url,
+        dataset_prefix=dataset_prefix,
+        graph_uri=graph_uri,
+        output_file=output_file,
     )
 
 

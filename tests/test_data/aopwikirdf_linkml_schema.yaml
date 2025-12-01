@@ -23,18 +23,9 @@ prefixes:
   aopo:
     prefix_prefix: aopo
     prefix_reference: http://aopkb.org/aop_ontology#
-  foaf:
-    prefix_prefix: foaf
-    prefix_reference: http://xmlns.com/foaf/0.1/
   ncit:
     prefix_prefix: ncit
     prefix_reference: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#
-  go:
-    prefix_prefix: go
-    prefix_reference: http://purl.obolibrary.org/obo/
-  pato:
-    prefix_prefix: pato
-    prefix_reference: http://purl.obolibrary.org/obo/
   edam.data:
     prefix_prefix: edam.data
     prefix_reference: http://edamontology.org/
@@ -44,12 +35,21 @@ prefixes:
   cheminf:
     prefix_prefix: cheminf
     prefix_reference: http://semanticscience.org/resource/
+  pato:
+    prefix_prefix: pato
+    prefix_reference: http://purl.obolibrary.org/obo/
   dc:
     prefix_prefix: dc
     prefix_reference: http://purl.org/dc/elements/1.1/
+  go:
+    prefix_prefix: go
+    prefix_reference: http://purl.obolibrary.org/obo/
   ncbitaxon:
     prefix_prefix: ncbitaxon
     prefix_reference: http://purl.bioontology.org/ontology/NCBITAXON/
+  foaf:
+    prefix_prefix: foaf
+    prefix_reference: http://xmlns.com/foaf/0.1/
   void:
     prefix_prefix: void
     prefix_reference: http://rdfs.org/ns/void#
@@ -75,283 +75,6 @@ types:
     base: URIorCURIE
     uri: xsd:anyURI
 slots:
-  aopo_has_upstream_key_event:
-    name: aopo_has_upstream_key_event
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_upstream_key_event
-    description: Property aopo:has_upstream_key_event
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_upstream_key_event
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_upstream_key_event
-    owner: aopo_Key_Event_Relationship
-    domain_of:
-    - aopo_Key_Event_Relationship
-    range: aopo_Key_Event
-    inlined: true
-    inlined_as_list: true
-  has_ncbitaxon_131567:
-    name: has_ncbitaxon_131567
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_ncbitaxon_131567
-    description: Property ncbitaxon:131567
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_ncbitaxon_131567
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_ncbitaxon_131567
-    owner: aopo_Key_Event
-    domain_of:
-    - aopo_Key_Event
-    range: ncbitaxon_131567
-    inlined: true
-    inlined_as_list: true
-  has_go_0008150:
-    name: has_go_0008150
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_go_0008150
-    description: Property go:0008150
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_go_0008150
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_go_0008150
-    owner: aopo_Key_Event
-    domain_of:
-    - aopo_Key_Event
-    range: pato_0001241
-    inlined: true
-    inlined_as_list: true
-  aopo_has_key_event:
-    name: aopo_has_key_event
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event
-    description: Property aopo:has_key_event
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event
-    owner: aopo_Adverse_Outcome_Pathway
-    domain_of:
-    - aopo_Adverse_Outcome_Pathway
-    range: aopo_Key_Event
-    inlined: true
-    inlined_as_list: true
-  aopo_has_downstream_key_event:
-    name: aopo_has_downstream_key_event
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_downstream_key_event
-    description: Property aopo:has_downstream_key_event
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_downstream_key_event
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_downstream_key_event
-    owner: aopo_Key_Event_Relationship
-    domain_of:
-    - aopo_Key_Event_Relationship
-    range: aopo_Key_Event
-    inlined: true
-    inlined_as_list: true
-  aopo_has_Object:
-    name: aopo_has_Object
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Object
-    description: Property aopo:hasObject
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Object
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Object
-    owner: aopo_Biological_Event
-    domain_of:
-    - aopo_Biological_Event
-    range: go_0008150
-    inlined: true
-    inlined_as_list: true
-  rdfs_see_Also:
-    name: rdfs_see_Also
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/rdfs_see_Also
-    description: Property rdfs:seeAlso
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/rdfs_see_Also
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/rdfs_see_Also
-    owner: aopo_Adverse_Outcome_Pathway
-    domain_of:
-    - aopo_Key_Event_Relationship
-    - aopo_Key_Event
-    - aopo_Adverse_Outcome_Pathway
-    range: aopo_Adverse_Outcome_Pathway
-    inlined: true
-    inlined_as_list: true
-  aopo_has_Biological_Event:
-    name: aopo_has_Biological_Event
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Biological_Event
-    description: Property aopo:hasBiologicalEvent
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Biological_Event
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Biological_Event
-    owner: aopo_Key_Event
-    domain_of:
-    - aopo_Key_Event
-    range: aopo_Biological_Event
-    inlined: true
-    inlined_as_list: true
-  aopo_has_chemical_entity:
-    name: aopo_has_chemical_entity
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_chemical_entity
-    description: Property aopo:has_chemical_entity
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_chemical_entity
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_chemical_entity
-    owner: ncit_C_54571
-    domain_of:
-    - ncit_C_54571
-    range: cheminf_000446
-    inlined: true
-    inlined_as_list: true
-  has_pato_0001241:
-    name: has_pato_0001241
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_pato_0001241
-    description: Property pato:0001241
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_pato_0001241
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_pato_0001241
-    owner: aopo_Key_Event
-    domain_of:
-    - aopo_Key_Event
-    range: go_0008150
-    inlined: true
-    inlined_as_list: true
-  dcterms_is_Part_Of:
-    name: dcterms_is_Part_Of
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcterms_is_Part_Of
-    description: Property dcterms:isPartOf
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcterms_is_Part_Of
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcterms_is_Part_Of
-    owner: cheminf_000446
-    domain_of:
-    - aopo_Key_Event_Relationship
-    - aopo_Key_Event
-    - ncit_C_54571
-    - cheminf_000446
-    - cheminf_000000
-    range: ncit_C_54571
-    inlined: true
-    inlined_as_list: true
-  dcat_download_URL:
-    name: dcat_download_URL
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcat_download_URL
-    description: Property dcat:downloadURL
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcat_download_URL
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcat_download_URL
-    owner: void_Dataset
-    domain_of:
-    - void_Linkset
-    - void_Dataset
-    range: void_Dataset
-    inlined: true
-    inlined_as_list: true
-  has_edam_data_1025:
-    name: has_edam_data_1025
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_edam_data_1025
-    description: Property edam.data:1025
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_edam_data_1025
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_edam_data_1025
-    owner: aopo_Key_Event
-    domain_of:
-    - aopo_Key_Event_Relationship
-    - aopo_Key_Event
-    range: edam_data_2298
-    inlined: true
-    inlined_as_list: true
-  skos_exact_Match:
-    name: skos_exact_Match
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/skos_exact_Match
-    description: Property skos:exactMatch
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/skos_exact_Match
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/skos_exact_Match
-    owner: edam_data_2298
-    domain_of:
-    - edam_data_1025
-    - cheminf_000446
-    - edam_data_2298
-    - cheminf_000000
-    - pato_0001241
-    range: edam_data_2291
-    inlined: true
-    inlined_as_list: true
-  aopo_has_key_event_relationship:
-    name: aopo_has_key_event_relationship
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event_relationship
-    description: Property aopo:has_key_event_relationship
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event_relationship
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event_relationship
-    owner: aopo_Adverse_Outcome_Pathway
-    domain_of:
-    - aopo_Adverse_Outcome_Pathway
-    range: aopo_Key_Event_Relationship
-    inlined: true
-    inlined_as_list: true
-  aopo_has_Process:
-    name: aopo_has_Process
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Process
-    description: Property aopo:hasProcess
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Process
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Process
-    owner: aopo_Biological_Event
-    domain_of:
-    - aopo_Biological_Event
-    range: pato_0001241
-    inlined: true
-    inlined_as_list: true
-  foaf_page:
-    name: foaf_page
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/foaf_page
-    description: Property foaf:page
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/foaf_page
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/foaf_page
-    owner: ncit_C_54571
-    domain_of:
-    - aopo_Key_Event_Relationship
-    - aopo_Key_Event
-    - aopo_Adverse_Outcome_Pathway
-    - ncit_C_54571
-    range: ncit_C_54571
-    inlined: true
-    inlined_as_list: true
-  dc_identifier:
-    name: dc_identifier
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dc_identifier
-    description: Property dc:identifier
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dc_identifier
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dc_identifier
-    owner: aopo_Organ_Context
-    domain_of:
-    - aopo_Key_Event_Relationship
-    - aopo_Key_Event
-    - aopo_Adverse_Outcome_Pathway
-    - ncit_C_54571
-    - cheminf_000446
-    - cheminf_000000
-    - pato_0001241
-    - go_0008150
-    - aopo_Organ_Context
-    - aopo_Cell_Type_Context
-    - ncbitaxon_131567
-    range: ncbitaxon_131567
-    inlined: true
-    inlined_as_list: true
   has_ncit_C_54571:
     name: has_ncit_C_54571
     definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_ncit_C_54571
@@ -366,18 +89,18 @@ slots:
     range: ncit_C_54571
     inlined: true
     inlined_as_list: true
-  has_aopo_Cell_Type_Context:
-    name: has_aopo_Cell_Type_Context
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_aopo_Cell_Type_Context
-    description: Property aopo:CellTypeContext
+  aopo_has_Object:
+    name: aopo_has_Object
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Object
+    description: Property aopo:hasObject
     from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_aopo_Cell_Type_Context
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_aopo_Cell_Type_Context
-    owner: aopo_Key_Event
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Object
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Object
+    owner: aopo_Biological_Event
     domain_of:
-    - aopo_Key_Event
-    range: pato_0001241
+    - aopo_Biological_Event
+    range: aopo_Cell_Type_Context
     inlined: true
     inlined_as_list: true
   aopo_has_adverse_outcome:
@@ -408,6 +131,133 @@ slots:
     range: aopo_Key_Event
     inlined: true
     inlined_as_list: true
+  aopo_has_key_event:
+    name: aopo_has_key_event
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event
+    description: Property aopo:has_key_event
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event
+    owner: aopo_Adverse_Outcome_Pathway
+    domain_of:
+    - aopo_Adverse_Outcome_Pathway
+    range: aopo_Key_Event
+    inlined: true
+    inlined_as_list: true
+  aopo_has_upstream_key_event:
+    name: aopo_has_upstream_key_event
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_upstream_key_event
+    description: Property aopo:has_upstream_key_event
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_upstream_key_event
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_upstream_key_event
+    owner: aopo_Key_Event_Relationship
+    domain_of:
+    - aopo_Key_Event_Relationship
+    range: aopo_Key_Event
+    inlined: true
+    inlined_as_list: true
+  skos_exact_Match:
+    name: skos_exact_Match
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/skos_exact_Match
+    description: Property skos:exactMatch
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/skos_exact_Match
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/skos_exact_Match
+    owner: pato_0001241
+    domain_of:
+    - edam_data_1025
+    - cheminf_000446
+    - cheminf_000000
+    - edam_data_2298
+    - pato_0001241
+    range: edam_data_1025
+    inlined: true
+    inlined_as_list: true
+  aopo_has_Biological_Event:
+    name: aopo_has_Biological_Event
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Biological_Event
+    description: Property aopo:hasBiologicalEvent
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Biological_Event
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Biological_Event
+    owner: aopo_Key_Event
+    domain_of:
+    - aopo_Key_Event
+    range: aopo_Biological_Event
+    inlined: true
+    inlined_as_list: true
+  aopo_has_key_event_relationship:
+    name: aopo_has_key_event_relationship
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event_relationship
+    description: Property aopo:has_key_event_relationship
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event_relationship
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_key_event_relationship
+    owner: aopo_Adverse_Outcome_Pathway
+    domain_of:
+    - aopo_Adverse_Outcome_Pathway
+    range: aopo_Key_Event_Relationship
+    inlined: true
+    inlined_as_list: true
+  aopo_has_Process:
+    name: aopo_has_Process
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Process
+    description: Property aopo:hasProcess
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Process
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_Process
+    owner: aopo_Biological_Event
+    domain_of:
+    - aopo_Biological_Event
+    range: go_0008150
+    inlined: true
+    inlined_as_list: true
+  has_edam_data_1025:
+    name: has_edam_data_1025
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_edam_data_1025
+    description: Property edam.data:1025
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_edam_data_1025
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_edam_data_1025
+    owner: aopo_Key_Event
+    domain_of:
+    - aopo_Key_Event
+    - aopo_Key_Event_Relationship
+    range: edam_data_2298
+    inlined: true
+    inlined_as_list: true
+  dc_identifier:
+    name: dc_identifier
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dc_identifier
+    description: Property dc:identifier
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dc_identifier
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dc_identifier
+    owner: pato_0001241
+    domain_of:
+    - aopo_Adverse_Outcome_Pathway
+    - cheminf_000446
+    - cheminf_000000
+    - pato_0001241
+    - aopo_Key_Event
+    - go_0008150
+    - aopo_Organ_Context
+    - aopo_Cell_Type_Context
+    - ncit_C_54571
+    - aopo_Key_Event_Relationship
+    - ncbitaxon_131567
+    range: ncbitaxon_131567
+    inlined: true
+    inlined_as_list: true
   has_aopo_Organ_Context:
     name: has_aopo_Organ_Context
     definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_aopo_Organ_Context
@@ -419,22 +269,271 @@ slots:
     owner: aopo_Key_Event
     domain_of:
     - aopo_Key_Event
-    range: pato_0001241
+    range: aopo_Organ_Context
+    inlined: true
+    inlined_as_list: true
+  dcterms_is_Part_Of:
+    name: dcterms_is_Part_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcterms_is_Part_Of
+    description: Property dcterms:isPartOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcterms_is_Part_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcterms_is_Part_Of
+    owner: cheminf_000446
+    domain_of:
+    - cheminf_000446
+    - cheminf_000000
+    - aopo_Key_Event
+    - ncit_C_54571
+    - aopo_Key_Event_Relationship
+    range: aopo_Adverse_Outcome_Pathway
+    inlined: true
+    inlined_as_list: true
+  foaf_page:
+    name: foaf_page
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/foaf_page
+    description: Property foaf:page
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/foaf_page
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/foaf_page
+    owner: aopo_Key_Event
+    domain_of:
+    - aopo_Adverse_Outcome_Pathway
+    - aopo_Key_Event
+    - ncit_C_54571
+    - aopo_Key_Event_Relationship
+    range: aopo_Key_Event_Relationship
+    inlined: true
+    inlined_as_list: true
+  has_ncbitaxon_131567:
+    name: has_ncbitaxon_131567
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_ncbitaxon_131567
+    description: Property ncbitaxon:131567
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_ncbitaxon_131567
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_ncbitaxon_131567
+    owner: aopo_Key_Event
+    domain_of:
+    - aopo_Key_Event
+    range: ncbitaxon_131567
+    inlined: true
+    inlined_as_list: true
+  aopo_has_chemical_entity:
+    name: aopo_has_chemical_entity
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_chemical_entity
+    description: Property aopo:has_chemical_entity
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_chemical_entity
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_chemical_entity
+    owner: ncit_C_54571
+    domain_of:
+    - ncit_C_54571
+    range: cheminf_000446
+    inlined: true
+    inlined_as_list: true
+  has_go_0008150:
+    name: has_go_0008150
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_go_0008150
+    description: Property go:0008150
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_go_0008150
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_go_0008150
+    owner: aopo_Key_Event
+    domain_of:
+    - aopo_Key_Event
+    range: go_0008150
+    inlined: true
+    inlined_as_list: true
+  has_aopo_Cell_Type_Context:
+    name: has_aopo_Cell_Type_Context
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_aopo_Cell_Type_Context
+    description: Property aopo:CellTypeContext
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_aopo_Cell_Type_Context
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_aopo_Cell_Type_Context
+    owner: aopo_Key_Event
+    domain_of:
+    - aopo_Key_Event
+    range: aopo_Organ_Context
+    inlined: true
+    inlined_as_list: true
+  dcat_download_URL:
+    name: dcat_download_URL
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcat_download_URL
+    description: Property dcat:downloadURL
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcat_download_URL
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/dcat_download_URL
+    owner: void_Linkset
+    domain_of:
+    - void_Linkset
+    - void_Dataset
+    range: void_Dataset
+    inlined: true
+    inlined_as_list: true
+  rdfs_see_Also:
+    name: rdfs_see_Also
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/rdfs_see_Also
+    description: Property rdfs:seeAlso
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/rdfs_see_Also
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/rdfs_see_Also
+    owner: aopo_Key_Event
+    domain_of:
+    - aopo_Adverse_Outcome_Pathway
+    - aopo_Key_Event
+    - aopo_Key_Event_Relationship
+    range: aopo_Key_Event_Relationship
+    inlined: true
+    inlined_as_list: true
+  aopo_has_downstream_key_event:
+    name: aopo_has_downstream_key_event
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_downstream_key_event
+    description: Property aopo:has_downstream_key_event
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_downstream_key_event
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_has_downstream_key_event
+    owner: aopo_Key_Event_Relationship
+    domain_of:
+    - aopo_Key_Event_Relationship
+    range: aopo_Key_Event
+    inlined: true
+    inlined_as_list: true
+  has_pato_0001241:
+    name: has_pato_0001241
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_pato_0001241
+    description: Property pato:0001241
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_pato_0001241
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/has_pato_0001241
+    owner: aopo_Key_Event
+    domain_of:
+    - aopo_Key_Event
+    range: go_0008150
     inlined: true
     inlined_as_list: true
 classes:
-  cheminf_000000:
-    name: cheminf_000000
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/Cheminf000000
-    description: Class representing cheminf_000000
+  cheminf_000564:
+    name: cheminf_000564
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/Cheminf000564
+    description: Class representing cheminf_000564
     from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000000
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000564
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000564
+  void_Dataset:
+    name: void_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/VoidDataset
+    description: Class representing void_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/void_Dataset
+    slots:
+    - dcat_download_URL
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/void_Dataset
+  aopo_Adverse_Outcome_Pathway:
+    name: aopo_Adverse_Outcome_Pathway
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoAdverseOutcomePathway
+    description: Class representing aopo_Adverse_Outcome_Pathway
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Adverse_Outcome_Pathway
+    slots:
+    - has_ncit_C_54571
+    - dc_identifier
+    - foaf_page
+    - rdfs_see_Also
+    - aopo_has_adverse_outcome
+    - aopo_has_key_event
+    - aopo_has_key_event_relationship
+    - aopo_has_molecular_initiating_event
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Adverse_Outcome_Pathway
+  ncit_C_54571:
+    name: ncit_C_54571
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/NcitC54571
+    description: Class representing ncit_C_54571
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/ncit_C_54571
+    slots:
+    - dc_identifier
+    - foaf_page
+    - dcterms_is_Part_Of
+    - aopo_has_chemical_entity
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/ncit_C_54571
+  cheminf_000412:
+    name: cheminf_000412
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/Cheminf000412
+    description: Class representing cheminf_000412
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000412
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000412
+  aopo_Biological_Event:
+    name: aopo_Biological_Event
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoBiologicalEvent
+    description: Class representing aopo_Biological_Event
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Biological_Event
+    slots:
+    - aopo_has_Object
+    - aopo_has_Process
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Biological_Event
+  aopo_Key_Event_Relationship:
+    name: aopo_Key_Event_Relationship
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoKeyEventRelationship
+    description: Class representing aopo_Key_Event_Relationship
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Key_Event_Relationship
+    slots:
+    - dc_identifier
+    - foaf_page
+    - dcterms_is_Part_Of
+    - has_edam_data_1025
+    - aopo_has_downstream_key_event
+    - rdfs_see_Also
+    - aopo_has_upstream_key_event
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Key_Event_Relationship
+  edam_data_1025:
+    name: edam_data_1025
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/EdamData1025
+    description: Class representing edam_data_1025
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_1025
     slots:
     - skos_exact_Match
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_1025
+  aopo_Organ_Context:
+    name: aopo_Organ_Context
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoOrganContext
+    description: Class representing aopo_Organ_Context
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Organ_Context
+    slots:
     - dc_identifier
-    - dcterms_is_Part_Of
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000000
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Organ_Context
+  edam_data_2291:
+    name: edam_data_2291
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/EdamData2291
+    description: Class representing edam_data_2291
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_2291
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_2291
   ncbitaxon_131567:
     name: ncbitaxon_131567
     definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/Ncbitaxon131567
@@ -455,148 +554,6 @@ classes:
     slots:
     - dc_identifier
     class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/go_0008150
-  aopo_Key_Event_Relationship:
-    name: aopo_Key_Event_Relationship
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoKeyEventRelationship
-    description: Class representing aopo_Key_Event_Relationship
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Key_Event_Relationship
-    slots:
-    - foaf_page
-    - dc_identifier
-    - dcterms_is_Part_Of
-    - has_edam_data_1025
-    - aopo_has_downstream_key_event
-    - rdfs_see_Also
-    - aopo_has_upstream_key_event
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Key_Event_Relationship
-  aopo_Key_Event:
-    name: aopo_Key_Event
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoKeyEvent
-    description: Class representing aopo_Key_Event
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Key_Event
-    slots:
-    - foaf_page
-    - dc_identifier
-    - dcterms_is_Part_Of
-    - has_pato_0001241
-    - aopo_has_Biological_Event
-    - has_edam_data_1025
-    - rdfs_see_Also
-    - has_aopo_Organ_Context
-    - has_aopo_Cell_Type_Context
-    - has_go_0008150
-    - has_ncbitaxon_131567
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Key_Event
-  cheminf_000405:
-    name: cheminf_000405
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/Cheminf000405
-    description: Class representing cheminf_000405
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000405
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000405
-  pato_0001241:
-    name: pato_0001241
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/Pato0001241
-    description: Class representing pato_0001241
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/pato_0001241
-    slots:
-    - skos_exact_Match
-    - dc_identifier
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/pato_0001241
-  void_Linkset:
-    name: void_Linkset
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/VoidLinkset
-    description: Class representing void_Linkset
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/void_Linkset
-    slots:
-    - dcat_download_URL
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/void_Linkset
-  edam_data_1025:
-    name: edam_data_1025
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/EdamData1025
-    description: Class representing edam_data_1025
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_1025
-    slots:
-    - skos_exact_Match
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_1025
-  aopo_Adverse_Outcome_Pathway:
-    name: aopo_Adverse_Outcome_Pathway
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoAdverseOutcomePathway
-    description: Class representing aopo_Adverse_Outcome_Pathway
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Adverse_Outcome_Pathway
-    slots:
-    - foaf_page
-    - has_ncit_C_54571
-    - dc_identifier
-    - rdfs_see_Also
-    - aopo_has_adverse_outcome
-    - aopo_has_key_event
-    - aopo_has_key_event_relationship
-    - aopo_has_molecular_initiating_event
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Adverse_Outcome_Pathway
-  edam_data_1027:
-    name: edam_data_1027
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/EdamData1027
-    description: Class representing edam_data_1027
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_1027
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_1027
-  aopo_Biological_Event:
-    name: aopo_Biological_Event
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoBiologicalEvent
-    description: Class representing aopo_Biological_Event
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Biological_Event
-    slots:
-    - aopo_has_Object
-    - aopo_has_Process
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Biological_Event
-  edam_data_2291:
-    name: edam_data_2291
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/EdamData2291
-    description: Class representing edam_data_2291
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_2291
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_2291
-  void_Dataset:
-    name: void_Dataset
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/VoidDataset
-    description: Class representing void_Dataset
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/void_Dataset
-    slots:
-    - dcat_download_URL
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/void_Dataset
-  ncit_C_54571:
-    name: ncit_C_54571
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/NcitC54571
-    description: Class representing ncit_C_54571
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/ncit_C_54571
-    slots:
-    - foaf_page
-    - dc_identifier
-    - dcterms_is_Part_Of
-    - aopo_has_chemical_entity
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/ncit_C_54571
   aopo_Cell_Type_Context:
     name: aopo_Cell_Type_Context
     definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoCellTypeContext
@@ -607,6 +564,58 @@ classes:
     slots:
     - dc_identifier
     class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Cell_Type_Context
+  void_Linkset:
+    name: void_Linkset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/VoidLinkset
+    description: Class representing void_Linkset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/void_Linkset
+    slots:
+    - dcat_download_URL
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/void_Linkset
+  edam_data_2298:
+    name: edam_data_2298
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/EdamData2298
+    description: Class representing edam_data_2298
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_2298
+    slots:
+    - skos_exact_Match
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_2298
+  cheminf_000000:
+    name: cheminf_000000
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/Cheminf000000
+    description: Class representing cheminf_000000
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000000
+    slots:
+    - skos_exact_Match
+    - dc_identifier
+    - dcterms_is_Part_Of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000000
+  aopo_Key_Event:
+    name: aopo_Key_Event
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoKeyEvent
+    description: Class representing aopo_Key_Event
+    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Key_Event
+    slots:
+    - dc_identifier
+    - foaf_page
+    - dcterms_is_Part_Of
+    - has_edam_data_1025
+    - aopo_has_Biological_Event
+    - has_pato_0001241
+    - rdfs_see_Also
+    - has_aopo_Organ_Context
+    - has_go_0008150
+    - has_aopo_Cell_Type_Context
+    - has_ncbitaxon_131567
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Key_Event
   cheminf_000446:
     name: cheminf_000446
     definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/Cheminf000446
@@ -619,25 +628,16 @@ classes:
     - dc_identifier
     - dcterms_is_Part_Of
     class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/cheminf_000446
-  aopo_Organ_Context:
-    name: aopo_Organ_Context
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/AopoOrganContext
-    description: Class representing aopo_Organ_Context
+  pato_0001241:
+    name: pato_0001241
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/Pato0001241
+    description: Class representing pato_0001241
     from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Organ_Context
-    slots:
-    - dc_identifier
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/aopo_Organ_Context
-  edam_data_2298:
-    name: edam_data_2298
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/EdamData2298
-    description: Class representing edam_data_2298
-    from_schema: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_2298
+    - http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/pato_0001241
     slots:
     - skos_exact_Match
-    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/edam_data_2298
+    - dc_identifier
+    class_uri: http://jmillanacosta.github.io/rdfsolve/aopwikirdf/linkml/pato_0001241
 metamodel_version: 1.7.0
-generation_date: '2025-11-26T13:52:00'
+generation_date: '2025-12-01T14:05:33'
