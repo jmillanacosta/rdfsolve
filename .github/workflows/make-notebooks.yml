@@ -283,13 +283,14 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     permissions:
-      contents: read
+      contents: write
       actions: read
       pull-requests: write
     
     steps:
     - uses: actions/checkout@v4
       with:
+        ref: ${{ github.head_ref }}
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -585,11 +586,11 @@ jobs:
         Pydantic: $pydantic_success/$pydantic_files successful
         Data files: $data_files generated
         
-        Generated: $(date -u +%Y-%m-%d %H:%M:%S UTC)
+        Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
         Workflow: ${{ github.run_id }}"
         
-        # Push to the PR branch
-        git push origin HEAD:${{ github.head_ref }}
+        # Push to the current branch
+        git push origin ${{ github.head_ref }}
 
     - name: Post results comment to PR
       if: github.event_name == 'pull_request'
