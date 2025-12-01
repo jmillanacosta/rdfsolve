@@ -7511,234 +7511,6 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2c1c8809">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<style>
-
-/* Main content area */
-.jp-RenderedHTMLCommon {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-    line-height: 1.6;
-    color: #24292f;
-}
-
-/* Headers */
-.jp-RenderedHTMLCommon h1 {
-    border-bottom: 1px solid #d1d9e0;
-    padding-bottom: 8px;
-    margin-bottom: 16px;
-    font-weight: 600;
-    color: #1f2328;
-}
-
-.jp-RenderedHTMLCommon h2 {
-    border-bottom: 1px solid #d8dee4;
-    padding-bottom: 6px;
-    margin-top: 24px;
-    margin-bottom: 16px;
-    font-weight: 600;
-    color: #1f2328;
-}
-
-.jp-RenderedHTMLCommon h3 {
-    margin-top: 20px;
-    margin-bottom: 12px;
-    font-weight: 600;
-    color: #1f2328;
-}
-
-/* Code blocks and inline code */
-.jp-RenderedHTMLCommon code {
-    background-color: #f6f8fa;
-    border-radius: 6px;
-    padding: 2px 6px;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 85%;
-    color: #1f2328;
-}
-
-.jp-RenderedHTMLCommon pre {
-    background-color: #f6f8fa;
-    border-radius: 6px;
-    padding: 16px;
-    overflow: auto;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 85%;
-    line-height: 1.45;
-}
-
-/* Lists */
-.jp-RenderedHTMLCommon ul, .jp-RenderedHTMLCommon ol {
-    margin-bottom: 16px;
-}
-
-.jp-RenderedHTMLCommon li {
-    margin-bottom: 4px;
-}
-
-/* Links */
-.jp-RenderedHTMLCommon a {
-    color: #0969da;
-    text-decoration: none;
-}
-
-.jp-RenderedHTMLCommon a:hover {
-    text-decoration: underline;
-}
-
-/* Tables */
-.jp-RenderedHTMLCommon table {
-    border-collapse: collapse;
-    border-spacing: 0;
-    width: 100%;
-    margin-bottom: 16px;
-}
-
-.jp-RenderedHTMLCommon th,
-.jp-RenderedHTMLCommon td {
-    padding: 6px 13px;
-    border: 1px solid #d1d9e0;
-    text-align: left;
-}
-
-.jp-RenderedHTMLCommon th {
-    background-color: #f6f8fa;
-    font-weight: 600;
-}
-
-.jp-RenderedHTMLCommon tr:nth-child(2n) {
-    background-color: #f6f8fa;
-}
-
-/* Blockquotes */
-.jp-RenderedHTMLCommon blockquote {
-    border-left: 4px solid #d1d9e0;
-    padding-left: 16px;
-    margin-left: 0;
-    color: #656d76;
-}
-
-/* Emphasized text */
-.jp-RenderedHTMLCommon strong {
-    font-weight: 600;
-}
-
-.jp-RenderedHTMLCommon em {
-    font-style: italic;
-}
-
-/* Output areas - DataFrames and plots */
-.jp-OutputArea-output table {
-    font-size: 12px;
-    border-collapse: collapse;
-    margin: 8px 0;
-}
-
-.jp-OutputArea-output th {
-    background-color: #f1f3f4;
-    padding: 8px;
-    text-align: left;
-    font-weight: 500;
-    border: 1px solid #dadce0;
-}
-
-.jp-OutputArea-output td {
-    padding: 6px 8px;
-    border: 1px solid #dadce0;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Status indicators */
-.status-success {
-    color: #1a7f37;
-    font-weight: 500;
-}
-
-.status-warning {
-    color: #9a6700;
-    font-weight: 500;
-}
-
-.status-error {
-    color: #d1242f;
-    font-weight: 500;
-}
-
-/* Schema pattern labels */
-.schema-pattern {
-    font-family: 'SFMono-Regular', Consolas, monospace;
-    background-color: #f6f8fa;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-size: 90%;
-}
-
-/* Export links styling */
-.exports-list a {
-    display: inline-block;
-    margin-right: 12px;
-    padding: 4px 8px;
-    background-color: #f3f4f6;
-    border-radius: 6px;
-    border: 1px solid #d1d9e0;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.exports-list a:hover {
-    background-color: #e1e4e8;
-    text-decoration: none;
-}
-
-/* Plotly chart container */
-.plotly-graph-div {
-    border: 1px solid #e1e4e8;
-    border-radius: 6px;
-    margin: 16px 0;
-}
-
-/* Cache status indicators */
-.cache-info {
-    font-family: 'SFMono-Regular', Consolas, monospace;
-    font-size: 12px;
-    color: #656d76;
-    background-color: #f6f8fa;
-    padding: 8px;
-    border-radius: 6px;
-    border-left: 3px solid #0969da;
-}
-
-/* Notebook section dividers */
-.section-divider {
-    height: 1px;
-    background: linear-gradient(to right, transparent, #d1d9e0, transparent);
-    margin: 32px 0;
-}
-
-/* Print styles */
-@media print {
-    .jp-RenderedHTMLCommon {
-        color: #000;
-    }
-    
-    .jp-RenderedHTMLCommon a {
-        color: #000;
-        text-decoration: underline;
-    }
-}
-</style>
-</div>
-</div>
-</div>
-</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d1d16b10">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -7757,12 +7529,12 @@ a.anchor-link {
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="Exports">Exports<a class="anchor-link" href="#Exports">¶</a></h2><ul>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomy_schema.jsonld">JSON-LD Schema</a> (primary output)</li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomy_schema.nq">N-Quads RDF</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomy_generated_void.ttl">VoID Graph</a> for the dataset in its original source</li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomy_pattern_coverage.csv">Coverage report</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomy_linkml_schema.yaml">LinkML Schema</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomyinstances.parquet">Full parquet entity dataframe</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomy_schema.jsonld">JSON-LD Schema</a> (primary output)</li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomy_schema.nq">N-Quads RDF</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomy_generated_void.ttl">VoID Graph</a> for the dataset in its original source</li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomy_pattern_coverage.csv">Coverage report</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomy_linkml_schema.yaml">LinkML Schema</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/pubchem.taxonomy_schema/pubchem.taxonomyinstances.parquet">Full parquet entity dataframe</a></li>
 </ul>
 </div>
 </div>
@@ -7786,7 +7558,9 @@ a.anchor-link {
 
 <span class="c1"># Setup paths</span>
 <span class="n">working_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-<span class="n">exports_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">working_path</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="s2">"schema_extraction"</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
+<span class="n">exports_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+    <span class="n">working_path</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="s2">"docs"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="s2">"schema_extraction"</span><span class="p">,</span> <span class="n">dataset_name</span>
+<span class="p">)</span>
 <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -7809,7 +7583,7 @@ a.anchor-link {
 <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>  <span class="c1"># Set to DEBUG to see SPARQL queries</span>
 
 <span class="c1"># Also configure the rdfsolve.parser logger to see query details</span>
-<span class="n">parser_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'rdfsolve.parser'</span><span class="p">)</span>
+<span class="n">parser_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"rdfsolve.parser"</span><span class="p">)</span>
 <span class="n">parser_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
 
 <span class="c1"># Avoid adding duplicate handlers if the cell is re-run</span>
@@ -7820,7 +7594,7 @@ a.anchor-link {
     <span class="n">sh</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>  <span class="c1"># Set to DEBUG to see all logs</span>
     <span class="n">sh</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">sh</span><span class="p">)</span>
-    
+
     <span class="c1"># Add the same handler to the parser logger</span>
     <span class="n">parser_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">sh</span><span class="p">)</span>
 
@@ -7837,7 +7611,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:01 INFO pubchem.taxonomy: Logging configured for pubchem.taxonomy
+<pre>2025-12-01 09:33:45 INFO pubchem.taxonomy: Logging configured for pubchem.taxonomy
 </pre>
 </div>
 </div>
@@ -7853,12 +7627,13 @@ a.anchor-link {
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Import libraries</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">rdfsolve.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">VoidParser</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">display</span><span class="p">,</span> <span class="n">Markdown</span>
 
 <span class="c1"># Configure Plotly for HTML output</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.io</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.offline</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span><span class="p">,</span> <span class="n">display</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdfsolve.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">VoidParser</span>
 
 <span class="c1"># Set renderer to 'notebook' for Jupyter, but ensure HTML export works</span>
 <span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">"notebook+plotly_mimetype"</span>
@@ -7895,39 +7670,42 @@ a.anchor-link {
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Pickle caching utilities</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">save_cache</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Save data to pickle cache"""</span>
+<span class="w">    </span><span class="sd">"""Save data to pickle cache."""</span>
     <span class="k">if</span> <span class="n">cache_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="s2">"cache"</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    
+
     <span class="n">cache_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">.pkl"</span><span class="p">)</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cached data to: </span><span class="si">{</span><span class="n">cache_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">cache_path</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">load_cache</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Load data from pickle cache if it exists"""</span>
+<span class="w">    </span><span class="sd">"""Load data from pickle cache if it exists."""</span>
     <span class="k">if</span> <span class="n">cache_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="s2">"cache"</span><span class="p">)</span>
-    
+
     <span class="n">cache_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">.pkl"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cache_path</span><span class="p">):</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="s1">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded cached data from: </span><span class="si">{</span><span class="n">cache_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span>
     <span class="k">return</span> <span class="kc">None</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">cache_exists</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Check if cache file exists"""</span>
+<span class="w">    </span><span class="sd">"""Check if cache file exists."""</span>
     <span class="k">if</span> <span class="n">cache_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="s2">"cache"</span><span class="p">)</span>
-    
+
     <span class="n">cache_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">.pkl"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cache_path</span><span class="p">)</span>
 </pre></div>
@@ -7945,15 +7723,15 @@ a.anchor-link {
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Cache management utilities</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_cache_files</span><span class="p">(</span><span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""List all cache files"""</span>
+<span class="w">    </span><span class="sd">"""List all cache files."""</span>
     <span class="k">if</span> <span class="n">cache_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="s2">"cache"</span><span class="p">)</span>
-    
+
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">):</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"No cache directory found"</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[]</span>
-    
-    <span class="n">cache_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">'.pkl'</span><span class="p">)]</span>
+
+    <span class="n">cache_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".pkl"</span><span class="p">)]</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cache directory: </span><span class="si">{</span><span class="n">cache_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">cache_files</span><span class="p">:</span>
         <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
@@ -7961,11 +7739,12 @@ a.anchor-link {
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">size_mb</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB)"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">cache_files</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">clear_cache</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Clear specific cache file or all cache"""</span>
+<span class="w">    </span><span class="sd">"""Clear specific cache file or all cache."""</span>
     <span class="k">if</span> <span class="n">cache_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="s2">"cache"</span><span class="p">)</span>
-    
+
     <span class="k">if</span> <span class="n">filename</span><span class="p">:</span>
         <span class="n">cache_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">.pkl"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cache_path</span><span class="p">):</span>
@@ -7977,10 +7756,12 @@ a.anchor-link {
         <span class="c1"># Clear all cache files</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">):</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+
             <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cleared all cache files"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Cleared all cache files"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">"No cache directory to clear"</span><span class="p">)</span>
+
 
 <span class="c1"># Show current cache status</span>
 <span class="n">list_cache_files</span><span class="p">()</span>
@@ -8030,17 +7811,17 @@ a.anchor-link {
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Clear specific cache files (uncomment lines as needed for testing)</span>
 
 <span class="c1"># When testing new parser changes:</span>
-<span class="c1">#clear_cache(f"{dataset_name}_voidparser")</span>
+<span class="c1"># clear_cache(f"{dataset_name}_voidparser")</span>
 
 <span class="c1"># When testing JSON-LD generation (primary output):</span>
-<span class="c1">#clear_cache(f"{dataset_name}_jsonld_schema")</span>
+<span class="c1"># clear_cache(f"{dataset_name}_jsonld_schema")</span>
 
 <span class="c1"># When testing frequency calculations:</span>
 <span class="c1"># clear_cache(f"{dataset_name}_frequencies_basic")</span>
 <span class="c1"># clear_cache(f"{dataset_name}_frequencies_with_instances")</span>
 
 <span class="c1"># Clear everything:</span>
-<span class="c1">#clear_cache()</span>
+<span class="c1"># clear_cache()</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Cleared parser and JSON-LD caches to test schema pattern fix"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Note: JSON-LD cache is now the primary cache - clear it when testing schema changes."</span><span class="p">)</span>
@@ -8096,12 +7877,14 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
         <span class="n">exports_path</span><span class="o">=</span><span class="n">exports_path</span><span class="p">,</span>
         <span class="c1"># Arguments for the case when a suitable VoID is not found</span>
         <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">exclude_graph_patterns</span><span class="o">=</span><span class="p">[</span><span class="s2">"openlinksw"</span><span class="p">,</span>
-                                <span class="s2">"well-known"</span><span class="p">,</span>
-                                <span class="s2">"void"</span><span class="p">,</span>
-                                <span class="s2">"service"</span><span class="p">],</span> <span class="c1"># Filter out service description and administrative graphs</span>
+        <span class="n">exclude_graph_patterns</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">"openlinksw"</span><span class="p">,</span>
+            <span class="s2">"well-known"</span><span class="p">,</span>
+            <span class="s2">"void"</span><span class="p">,</span>
+            <span class="s2">"service"</span><span class="p">,</span>
+        <span class="p">],</span>  <span class="c1"># Filter out service description and administrative graphs</span>
         <span class="n">counts</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span> <span class="c1"># pagination</span>
+        <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>  <span class="c1"># pagination</span>
     <span class="p">)</span>
     <span class="c1"># Cache the VoidParser for future use</span>
     <span class="n">save_cache</span><span class="p">(</span><span class="n">vp</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
@@ -8120,140 +7903,140 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>VoidParser not found in cache, generating...
-2025-11-24 11:08:03 DEBUG rdfsolve.parser: Starting endpoint discovery process...
+2025-12-01 09:33:47 DEBUG rdfsolve.parser: Starting endpoint discovery process...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:03 DEBUG rdfsolve.parser: Endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+<pre>2025-12-01 09:33:47 DEBUG rdfsolve.parser: Endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:03 DEBUG rdfsolve.parser: Dataset: pubchem.taxonomy
+<pre>2025-12-01 09:33:47 DEBUG rdfsolve.parser: Dataset: pubchem.taxonomy
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:03 DEBUG rdfsolve.parser:  Provided graph URIs: ['http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy']
+<pre>2025-12-01 09:33:47 DEBUG rdfsolve.parser:  Provided graph URIs: ['http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy']
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:03 DEBUG rdfsolve.parser: Settings: prefer_existing=True, exclude_graphs=True
+<pre>2025-12-01 09:33:47 DEBUG rdfsolve.parser: Settings: prefer_existing=True, exclude_graphs=True
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:03 DEBUG rdfsolve.parser: Validating provided graph URIs...
+<pre>2025-12-01 09:33:47 DEBUG rdfsolve.parser: Validating provided graph URIs...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:04 DEBUG rdfsolve.parser: Step 1: Discovering existing VoID graphs...
+<pre>2025-12-01 09:33:48 DEBUG rdfsolve.parser: Step 1: Discovering existing VoID graphs...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:04 DEBUG rdfsolve.parser:  Starting chunked VoID graph discovery for https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+<pre>2025-12-01 09:33:48 DEBUG rdfsolve.parser:  Starting chunked VoID graph discovery for https://idsm.elixir-czech.cz/sparql/endpoint/idsm
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:04 DEBUG rdfsolve.parser: Starting VoID graph discovery with pagination...
+<pre>2025-12-01 09:33:48 DEBUG rdfsolve.parser: Starting VoID graph discovery with pagination...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:04 INFO rdfsolve.parser: Discovering VoID candidate graphs with chunked approach
+<pre>2025-12-01 09:33:48 INFO rdfsolve.parser: Discovering VoID candidate graphs with chunked approach
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:04 DEBUG rdfsolve.parser: Executing chunked query: offset=0, limit=50
+<pre>2025-12-01 09:33:48 DEBUG rdfsolve.parser: Executing chunked query: offset=0, limit=50
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 INFO rdfsolve.parser: Candidate VoID graph at https://idsm.elixir-czech.cz/.well-known/sparql-examples
+<pre>2025-12-01 09:34:02 INFO rdfsolve.parser: Candidate VoID graph at https://idsm.elixir-czech.cz/.well-known/sparql-examples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 INFO rdfsolve.parser: Candidate VoID graph at https://idsm.elixir-czech.cz/.well-known/void
+<pre>2025-12-01 09:34:02 INFO rdfsolve.parser: Candidate VoID graph at https://idsm.elixir-czech.cz/.well-known/void
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Fetched chunk: 2 results (total: 2)
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Fetched chunk: 2 results (total: 2)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Partial chunk received, pagination complete
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Partial chunk received, pagination complete
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Found 2 candidate VoID graphs
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Found 2 candidate VoID graphs
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Starting detailed VoID content analysis...
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Starting detailed VoID content analysis...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Analyzing graph 1/2: https://idsm.elixir-czech.cz/.well-known/sparql-examples
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Analyzing graph 1/2: https://idsm.elixir-czech.cz/.well-known/sparql-examples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Discovering partitions in https://idsm.elixir-czech.cz/.well-known/sparql-examples
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Discovering partitions in https://idsm.elixir-czech.cz/.well-known/sparql-examples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Class partition query template: 
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Class partition query template: 
 
                     SELECT DISTINCT ?cp WHERE {
                         GRAPH &lt;https://idsm.elixir-czech.cz/.well-known/sparql-examples&gt; {
@@ -8264,56 +8047,56 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 WARNING rdfsolve.parser: Error analyzing VoID partitions in https://idsm.elixir-czech.cz/.well-known/sparql-examples
+<pre>2025-12-01 09:34:02 WARNING rdfsolve.parser: Error analyzing VoID partitions in https://idsm.elixir-czech.cz/.well-known/sparql-examples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Full error details:
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Full error details:
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser:    • Error type: KeyError
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser:    • Error type: KeyError
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser:    • Error message: '\n                        GRAPH &lt;https'
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser:    • Error message: '\n                        GRAPH &lt;https'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser:    • Graph URI: https://idsm.elixir-czech.cz/.well-known/sparql-examples
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser:    • Graph URI: https://idsm.elixir-czech.cz/.well-known/sparql-examples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Analyzing graph 2/2: https://idsm.elixir-czech.cz/.well-known/void
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Analyzing graph 2/2: https://idsm.elixir-czech.cz/.well-known/void
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Discovering partitions in https://idsm.elixir-czech.cz/.well-known/void
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Discovering partitions in https://idsm.elixir-czech.cz/.well-known/void
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Class partition query template: 
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Class partition query template: 
 
                     SELECT DISTINCT ?cp WHERE {
                         GRAPH &lt;https://idsm.elixir-czech.cz/.well-known/void&gt; {
@@ -8324,154 +8107,154 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 WARNING rdfsolve.parser: Error analyzing VoID partitions in https://idsm.elixir-czech.cz/.well-known/void
+<pre>2025-12-01 09:34:02 WARNING rdfsolve.parser: Error analyzing VoID partitions in https://idsm.elixir-czech.cz/.well-known/void
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Full error details:
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Full error details:
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser:    • Error type: KeyError
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser:    • Error type: KeyError
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser:    • Error message: '\n                        GRAPH &lt;https'
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser:    • Error message: '\n                        GRAPH &lt;https'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser:    • Graph URI: https://idsm.elixir-czech.cz/.well-known/void
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser:    • Graph URI: https://idsm.elixir-czech.cz/.well-known/void
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: VoID discovery analysis complete
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: VoID discovery analysis complete
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser:  Results summary:
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser:  Results summary:
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser:    • Total candidate graphs: 2
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser:    • Total candidate graphs: 2
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser:    • Graphs with VoID data: 0
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser:    • Graphs with VoID data: 0
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser:    • Has VoID descriptions: False
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser:    • Has VoID descriptions: False
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 INFO rdfsolve.parser: No VoID data found in any candidate graphs
+<pre>2025-12-01 09:34:02 INFO rdfsolve.parser: No VoID data found in any candidate graphs
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Discovery result: found=False
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Discovery result: found=False
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Found 0 graphs with VoID data
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Found 0 graphs with VoID data
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 INFO rdfsolve.parser: No suitable VoID found; generating from queries...
+<pre>2025-12-01 09:34:02 INFO rdfsolve.parser: No suitable VoID found; generating from queries...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Step 2: Generating new VoID from SPARQL queries...
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Step 2: Generating new VoID from SPARQL queries...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Generation settings: counts=True, offset_limit_steps=300
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Generation settings: counts=True, offset_limit_steps=300
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Output path: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_generated_void.ttl
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Output path: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_generated_void.ttl
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:19 DEBUG rdfsolve.parser: Starting VoID generation process...
+<pre>2025-12-01 09:34:02 DEBUG rdfsolve.parser: Starting VoID generation process...
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:54 INFO rdfsolve.parser: Successfully extracted 24 RDF triples
+<pre>2025-12-01 09:34:19 INFO rdfsolve.parser: Successfully extracted 24 RDF triples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:54 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_generated_void.ttl
+<pre>2025-12-01 09:34:19 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_generated_void.ttl
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-11-24 11:08:54 DEBUG rdfsolve.parser: VoID generation completed
+<pre>2025-12-01 09:34:19 DEBUG rdfsolve.parser: VoID generation completed
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/cache/pubchem.taxonomy_voidparser.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/cache/pubchem.taxonomy_voidparser.pkl
 </pre>
 </div>
 </div>
@@ -8526,10 +8309,10 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 
 <span class="c1"># Display combined JSON-LD structure info and schema summary</span>
 <span class="k">if</span> <span class="s2">"@graph"</span> <span class="ow">in</span> <span class="n">jsonld_schema</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Schema Summary:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Schema Summary:"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Prefixes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">[</span><span class="s1">'@context'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Resources: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">[</span><span class="s1">'@graph'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    
+
     <span class="c1"># Show dataset metadata</span>
     <span class="n">dataset_info</span> <span class="o">=</span> <span class="n">jsonld_schema</span><span class="p">[</span><span class="s2">"@graph"</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">jsonld_schema</span><span class="p">[</span><span class="s2">"@graph"</span><span class="p">]</span> <span class="k">else</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">dataset_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"@type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"void:Dataset"</span><span class="p">:</span>
@@ -8561,8 +8344,8 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/cache/pubchem.taxonomy_jsonld_schema.pkl
-JSON-LD Schema saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_schema.jsonld
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/cache/pubchem.taxonomy_jsonld_schema.pkl
+JSON-LD Schema saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_schema.jsonld
 
 Schema Summary:
    • Prefixes: 8
@@ -8690,24 +8473,28 @@ Schema Patterns Preview (42 total):
 
 <span class="c1"># Export coverage analysis</span>
 <span class="n">frequencies_output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_pattern_coverage.csv"</span><span class="p">)</span>
-<span class="n">exported_df</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">export_schema_shape_frequencies</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="n">frequencies_output_path</span><span class="p">)</span>
+<span class="n">exported_df</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">export_schema_shape_frequencies</span><span class="p">(</span>
+    <span class="n">frequencies_df</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="n">frequencies_output_path</span>
+<span class="p">)</span>
 
 <span class="c1"># Combined summary and sample</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-    <span class="n">avg_coverage</span> <span class="o">=</span> <span class="n">frequencies_df</span><span class="p">[</span><span class="s1">'coverage_percent'</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-    <span class="n">high_coverage</span> <span class="o">=</span> <span class="p">(</span><span class="n">frequencies_df</span><span class="p">[</span><span class="s1">'coverage_percent'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-    
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Pattern Coverage Analysis:"</span><span class="p">)</span>
+    <span class="n">avg_coverage</span> <span class="o">=</span> <span class="n">frequencies_df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">high_coverage</span> <span class="o">=</span> <span class="p">(</span><span class="n">frequencies_df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Pattern Coverage Analysis:"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Total patterns: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Average coverage: </span><span class="si">{</span><span class="n">avg_coverage</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • High coverage (&gt;50%): </span><span class="si">{</span><span class="n">high_coverage</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Exported to: </span><span class="si">{</span><span class="n">frequencies_output_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sample Coverage Data:"</span><span class="p">)</span>
-    <span class="n">display</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">[[</span><span class="s1">'subject_class'</span><span class="p">,</span> <span class="s1">'property'</span><span class="p">,</span> <span class="s1">'object_class'</span><span class="p">,</span> <span class="s1">'coverage_percent'</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
-    
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Coverage Statistics:"</span><span class="p">)</span>
-    <span class="n">display</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">[</span><span class="s1">'coverage_percent'</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">())</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sample Coverage Data:"</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span>
+        <span class="n">frequencies_df</span><span class="p">[[</span><span class="s2">"subject_class"</span><span class="p">,</span> <span class="s2">"property"</span><span class="p">,</span> <span class="s2">"object_class"</span><span class="p">,</span> <span class="s2">"coverage_percent"</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Coverage Statistics:"</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">frequencies_df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">())</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"No frequency data available"</span><span class="p">)</span>
 </pre></div>
@@ -8729,13 +8516,13 @@ Schema Patterns Preview (42 total):
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/cache/pubchem.taxonomy_frequencies_basic.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/cache/pubchem.taxonomy_frequencies_basic.pkl
 
 Pattern Coverage Analysis:
    • Total patterns: 42
    • Average coverage: 0.0%
    • High coverage (&gt;50%): 0
-   • Exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_pattern_coverage.csv
+   • Exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_pattern_coverage.csv
 
 Sample Coverage Data:
 </pre>
@@ -8860,9 +8647,9 @@ Name: coverage_percent, dtype: float64</pre>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"Collecting frequency data and instances..."</span><span class="p">)</span>
     <span class="n">frequencies_with_instances_df</span><span class="p">,</span> <span class="n">instances_df</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">count_schema_shape_frequencies</span><span class="p">(</span>
         <span class="n">endpoint_url</span><span class="o">=</span><span class="n">endpoint_url</span><span class="p">,</span>
-        <span class="c1">#sample_limit=100,  # Limited sample for demonstration</span>
+        <span class="c1"># sample_limit=100,  # Limited sample for demonstration</span>
         <span class="n">collect_instances</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span>
+        <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># Cache both DataFrames as a tuple</span>
     <span class="n">save_cache</span><span class="p">((</span><span class="n">frequencies_with_instances_df</span><span class="p">,</span> <span class="n">instances_df</span><span class="p">),</span> <span class="n">cache_key</span><span class="p">)</span>
@@ -8874,7 +8661,9 @@ Name: coverage_percent, dtype: float64</pre>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Frequencies DataFrame: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frequencies_with_instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> shapes"</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Instances DataFrame: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> subject-object pairs"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Memory usage - Frequencies: </span><span class="si">{</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Memory usage - Frequencies: </span><span class="si">{</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span>
+    <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Memory usage - Instances: </span><span class="si">{</span><span class="n">instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"No instances collected"</span><span class="p">)</span>
@@ -8897,7 +8686,7 @@ Name: coverage_percent, dtype: float64</pre>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/cache/pubchem.taxonomy_frequencies_with_instances.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/cache/pubchem.taxonomy_frequencies_with_instances.pkl
 Frequencies DataFrame: 42 shapes
 No instances collected
 </pre>
@@ -8913,15 +8702,13 @@ No instances collected
 <div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.io</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pio</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
 <span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span>
-        <span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"coverage_percent"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">make_label</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
@@ -8954,13 +8741,13 @@ No instances collected
             <span class="n">orientation</span><span class="o">=</span><span class="s2">"h"</span><span class="p">,</span>
             <span class="n">text</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%"</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">]],</span>
             <span class="n">textposition</span><span class="o">=</span><span class="n">text_positions</span><span class="p">,</span>
-            <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
-                <span class="n">color</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">],</span>
-                <span class="n">colorscale</span><span class="o">=</span><span class="n">custom_colorscale</span><span class="p">,</span>
-                <span class="n">cmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                <span class="n">cmax</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-                <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">"white"</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.6</span><span class="p">),</span>
-            <span class="p">),</span>
+            <span class="n">marker</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"color"</span><span class="p">:</span> <span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">],</span>
+                <span class="s2">"colorscale"</span><span class="p">:</span> <span class="n">custom_colorscale</span><span class="p">,</span>
+                <span class="s2">"cmin"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">"cmax"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+                <span class="s2">"line"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"color"</span><span class="p">:</span> <span class="s2">"white"</span><span class="p">,</span> <span class="s2">"width"</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">},</span>
+            <span class="p">},</span>
             <span class="n">hovertemplate</span><span class="o">=</span><span class="s2">"&lt;b&gt;%</span><span class="si">{y}</span><span class="s2">&lt;/b&gt;&lt;br&gt;Coverage: %</span><span class="si">{x:.1f}</span><span class="s2">%&lt;extra&gt;&lt;/extra&gt;"</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
@@ -8971,23 +8758,23 @@ No instances collected
             <span class="s2">"x"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
             <span class="s2">"font"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"size"</span><span class="p">:</span> <span class="mi">18</span><span class="p">},</span>
         <span class="p">},</span>
-        <span class="n">xaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
-            <span class="n">title</span><span class="o">=</span><span class="s2">"Coverage (%)"</span><span class="p">,</span>
-            <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span>  <span class="c1"># fixed x-axis range</span>
-            <span class="n">ticksuffix</span><span class="o">=</span><span class="s2">"%"</span><span class="p">,</span>
-            <span class="n">showgrid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">gridcolor</span><span class="o">=</span><span class="s2">"rgba(220,220,220,0.3)"</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="n">yaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
-            <span class="n">title</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
-            <span class="n">autorange</span><span class="o">=</span><span class="s2">"reversed"</span><span class="p">,</span>
-            <span class="n">automargin</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">fixedrange</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># allow vertical zoom/pan</span>
-        <span class="p">),</span>
+        <span class="n">xaxis</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"title"</span><span class="p">:</span> <span class="s2">"Coverage (%)"</span><span class="p">,</span>
+            <span class="s2">"range"</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span>  <span class="c1"># fixed x-axis range</span>
+            <span class="s2">"ticksuffix"</span><span class="p">:</span> <span class="s2">"%"</span><span class="p">,</span>
+            <span class="s2">"showgrid"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">"gridcolor"</span><span class="p">:</span> <span class="s2">"rgba(220,220,220,0.3)"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">yaxis</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"title"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+            <span class="s2">"autorange"</span><span class="p">:</span> <span class="s2">"reversed"</span><span class="p">,</span>
+            <span class="s2">"automargin"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">"fixedrange"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># allow vertical zoom/pan</span>
+        <span class="p">},</span>
         <span class="n">template</span><span class="o">=</span><span class="s2">"plotly_white"</span><span class="p">,</span>
         <span class="n">autosize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># allow figure to scale with container</span>
         <span class="n">height</span><span class="o">=</span><span class="n">fig_height</span><span class="p">,</span>  <span class="c1"># base height (will scale)</span>
-        <span class="n">margin</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="mi">480</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">150</span><span class="p">),</span>  <span class="c1"># extra right margin for text</span>
+        <span class="n">margin</span><span class="o">=</span><span class="p">{</span><span class="s2">"t"</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s2">"l"</span><span class="p">:</span> <span class="mi">480</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">:</span> <span class="mi">150</span><span class="p">},</span>  <span class="c1"># extra right margin for text</span>
         <span class="n">plot_bgcolor</span><span class="o">=</span><span class="s2">"white"</span><span class="p">,</span>
         <span class="n">paper_bgcolor</span><span class="o">=</span><span class="s2">"white"</span><span class="p">,</span>
     <span class="p">)</span>
@@ -8996,17 +8783,19 @@ No instances collected
     <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">fixedrange</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Show figure with config for HTML export compatibility</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">"scrollZoom"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> 
-        <span class="s2">"responsive"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="s2">"toImageButtonOptions"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"png"</span><span class="p">,</span>
-            <span class="s2">"filename"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_schema_coverage"</span><span class="p">,</span>
-            <span class="s2">"height"</span><span class="p">:</span> <span class="n">fig_height</span><span class="p">,</span>
-            <span class="s2">"width"</span><span class="p">:</span> <span class="mi">600</span><span class="p">,</span>
-            <span class="s2">"scale"</span><span class="p">:</span> <span class="mi">1</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"scrollZoom"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">"responsive"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">"toImageButtonOptions"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"png"</span><span class="p">,</span>
+                <span class="s2">"filename"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_schema_coverage"</span><span class="p">,</span>
+                <span class="s2">"height"</span><span class="p">:</span> <span class="n">fig_height</span><span class="p">,</span>
+                <span class="s2">"width"</span><span class="p">:</span> <span class="mi">600</span><span class="p">,</span>
+                <span class="s2">"scale"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">},</span>
         <span class="p">}</span>
-    <span class="p">})</span>
+    <span class="p">)</span>
 
 <span class="k">else</span><span class="p">:</span>
     <span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span><span class="s2">"**No coverage data to visualize**"</span><span class="p">))</span>
@@ -9023,9 +8812,9 @@ No instances collected
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <div> <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script> <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="6dfd21f5-327d-4530-9b7b-600e58e8ba61" style="height:1292px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("6dfd21f5-327d-4530-9b7b-600e58e8ba61")) {                    Plotly.newPlot(                        "6dfd21f5-327d-4530-9b7b-600e58e8ba61",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"y":["\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for pubchem.taxonomy","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":1292,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "pubchem.taxonomy_schema_coverage", "height": 1292, "width": 600, "scale": 1}}                    ).then(function(){
+<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="2e3155b1-964f-40ac-81d5-eb2036ae5c9f" style="height:1292px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("2e3155b1-964f-40ac-81d5-eb2036ae5c9f")) {                    Plotly.newPlot(                        "2e3155b1-964f-40ac-81d5-eb2036ae5c9f",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"y":["\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ecito:isDiscussedBy\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003evocabulary:Taxonomy\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:Concept\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:SCR_Organism\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003emesh.vocab:TopicalDescriptor\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003epatent:Publication\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Patent\u003c\u002fb\u003e","\u003cb\u003esio:010000\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:seeAlso\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003evocabulary:Reference\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for pubchem.taxonomy","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":1292,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "pubchem.taxonomy_schema_coverage", "height": 1292, "width": 600, "scale": 1}}                    ).then(function(){
                             
-var gd = document.getElementById('6dfd21f5-327d-4530-9b7b-600e58e8ba61');
+var gd = document.getElementById('2e3155b1-964f-40ac-81d5-eb2036ae5c9f');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
@@ -9075,7 +8864,9 @@ if (outputEl) {{
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Regenerating LinkML schema from JSON-LD with custom schema URI..."</span><span class="p">)</span>
 
 <span class="n">schema_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_schema"</span>
-<span class="n">custom_schema_uri</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"http://jmillanacosta.github.io/rdfsolve/</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">/linkml"</span>  <span class="c1"># User-definable base URI</span>
+<span class="n">custom_schema_uri</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"http://jmillanacosta.github.io/rdfsolve/</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">/linkml"</span>  <span class="c1"># User-definable base URI</span>
+<span class="p">)</span>
 
 <span class="n">yaml_text</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">to_linkml_yaml</span><span class="p">(</span>
     <span class="n">schema_name</span><span class="o">=</span><span class="n">schema_name</span><span class="p">,</span>
@@ -9109,7 +8900,7 @@ if (outputEl) {{
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>LinkML YAML saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_linkml_schema.yaml
+<pre>LinkML YAML saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_linkml_schema.yaml
 </pre>
 </div>
 </div>
@@ -9195,7 +8986,7 @@ VocabularyTaxonomy ||--|o MeshVocabConcept : "rdfs_see_Also"
 <span class="n">frequencies_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <span class="c1"># Export JSON derived from JSON-LD (maintains consistency)</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_path</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
     <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">vp</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">filter_void_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">fh</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CSV exported to: </span><span class="si">{</span><span class="n">csv_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -9212,8 +9003,8 @@ VocabularyTaxonomy ||--|o MeshVocabConcept : "rdfs_see_Also"
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_schema.csv
-JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_schema.json
+<pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_schema.csv
+JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.taxonomy/pubchem.taxonomy_schema.json
 </pre>
 </div>
 </div>
