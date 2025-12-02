@@ -494,6 +494,12 @@ jobs:
               data_first=false
             fi
             
+            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_sparql_queries.ttl" ]; then
+              if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
+              echo "        \"queries\": \"../data/schema_extraction/$dataset_name/${dataset_name}_sparql_queries.ttl\"" >> docs/results.json
+              data_first=false
+            fi
+            
             # Close dataset object
             cat >> docs/results.json << EOF
               }

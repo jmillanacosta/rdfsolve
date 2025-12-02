@@ -162,7 +162,8 @@ class RDFSolveDashboard {
             instances: 'Instances',
             nquads: 'N-Quads',
             schema_json: 'JSON',
-            schema_csv: 'CSV'
+            schema_csv: 'CSV',
+            queries: 'SPARQL Queries'
         };
 
         const linksHTML = files.map(([type, url]) => {
