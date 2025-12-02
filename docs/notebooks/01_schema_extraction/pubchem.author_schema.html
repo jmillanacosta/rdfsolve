@@ -7611,7 +7611,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 14:17:11 INFO pubchem.author: Logging configured for pubchem.author
+<pre>2025-12-02 08:19:12 INFO pubchem.author: Logging configured for pubchem.author
 </pre>
 </div>
 </div>
@@ -7934,14 +7934,14 @@ Note: VoID graph and JSON-LD are the primary caches
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>VoID graph not found in cache, attempting discovery...
-2025-12-01 14:17:13 DEBUG rdfsolve.parser: Starting VoID partition discovery for https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+2025-12-02 08:19:14 DEBUG rdfsolve.parser: Starting VoID partition discovery for https://idsm.elixir-czech.cz/sparql/endpoint/idsm
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 14:17:13 INFO rdfsolve.parser: Discovering VoID partitions across all graphs
+<pre>2025-12-02 08:19:14 INFO rdfsolve.parser: Discovering VoID partitions across all graphs
 </pre>
 </div>
 </div>
@@ -7976,14 +7976,14 @@ Note: VoID graph and JSON-LD are the primary caches
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 14:17:18 INFO rdfsolve.parser: VoID discovery failed: Query failed after 3 attempts: 500 Server Error: 500 for url: https://idsm.elixir-czech.cz/sparql/endpoint/idsm?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
+<pre>2025-12-02 08:19:19 INFO rdfsolve.parser: VoID discovery failed: Query failed after 3 attempts: 500 Server Error: 500 for url: https://idsm.elixir-czech.cz/sparql/endpoint/idsm?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 14:17:18 DEBUG rdfsolve.parser: Discovery exception: EndpointError: Query failed after 3 attempts: 500 Server Error: 500 for url: https://idsm.elixir-czech.cz/sparql/endpoint/idsm?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
+<pre>2025-12-02 08:19:19 DEBUG rdfsolve.parser: Discovery exception: EndpointError: Query failed after 3 attempts: 500 Server Error: 500 for url: https://idsm.elixir-czech.cz/sparql/endpoint/idsm?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
 </pre>
 </div>
 </div>
@@ -7997,21 +7997,21 @@ Note: VoID graph and JSON-LD are the primary caches
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 14:17:23 WARNING rdfsolve.parser: No results for property_partitions
+<pre>2025-12-02 08:19:25 WARNING rdfsolve.parser: No results for property_partitions
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 14:17:46 INFO rdfsolve.parser: Successfully extracted 4 RDF triples
+<pre>2025-12-02 08:19:41 INFO rdfsolve.parser: Successfully extracted 4 RDF triples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 14:17:46 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.author/pubchem.author_generated_void.ttl
+<pre>2025-12-02 08:19:41 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/pubchem.author/pubchem.author_generated_void.ttl
 </pre>
 </div>
 </div>
@@ -8465,7 +8465,7 @@ Memory usage - Instances: 0.1 KB
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Regenerating LinkML schema from JSON-LD with custom schema URI...
-2025-12-01 14:17:46 WARNING rdfsolve.parser: No schema triples found in JSON-LD @graph
+2025-12-02 08:19:41 WARNING rdfsolve.parser: No schema triples found in JSON-LD @graph
 </pre>
 </div>
 </div>
