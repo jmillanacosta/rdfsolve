@@ -11,12 +11,12 @@ The most recent code and data can be installed directly from GitHub with:
 
 .. code-block:: shell
 
-    pip install git+https://github.com/Maastricht University/rdfsolve.git
+    pip install git+https://github.com/jmillanacosta/rdfsolve.git
 
 To install in development mode, use the following:
 
 .. code-block:: shell
 
-    git clone git+https://github.com/Maastricht University/rdfsolve.git
+    git clone git+https://github.com/jmillanacosta/rdfsolve.git
     cd rdfsolve
     pip install -e .

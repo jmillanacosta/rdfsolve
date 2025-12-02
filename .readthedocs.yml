@@ -12,6 +12,10 @@ build:
   tools:
     python: "3.12"
 
+# Sphinx configuration
+sphinx:
+  configuration: docs/source/conf.py
+
 python:
   install:
     - method: pip
