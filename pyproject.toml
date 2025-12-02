@@ -236,8 +236,8 @@ ignore = [
 "notebooks/**/*.py" = ["T201", "D103", "C901", "B007", "D205"]
 # Parser has legitimate complexity, security warnings, naming conventions for RDF namespaces, docstring formatting, long SPARQL queries, commented code, MD5 for hashing (not security)
 "src/rdfsolve/parser.py" = ["C901", "S311", "S324", "E722", "B030", "N806", "D205", "E501", "ERA001", "D401", "B904"]
-# SparqlHelper has legitimate complexity in _execute method
-"src/rdfsolve/sparql_helper.py" = ["C901"]
+# SparqlHelper has legitimate complexity in _execute method, MD5 for query ID hashing (not security)
+"src/rdfsolve/sparql_helper.py" = ["C901", "S324"]
 # CLI needs to bind to all interfaces for server mode, exception chaining not needed for click.Abort
 "src/rdfsolve/cli.py" = ["S104", "B904"]
 # Schema utils has intentional bare except for type checking

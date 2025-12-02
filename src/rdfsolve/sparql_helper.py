@@ -1,5 +1,5 @@
 """
-SPARQL Helper - Centralized SPARQL query execution with automatic fallback.
+SPARQL Helper, Centralized SPARQL query execution with automatic fallback.
 
 This module is a SPARQL client that handles:
 - Automatic GET → POST fallback for endpoints that require POST
@@ -34,7 +34,7 @@ import secrets
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import requests
 from rdflib import Graph
@@ -108,7 +108,7 @@ class SparqlHelper:
     - Consistent error handling and logging
     - Support for SELECT, CONSTRUCT, and ASK queries
 
-    Uses standard `requests` library - no SPARQLWrapper dependency required.
+    Uses standard `requests` library.
 
     Attributes:
         endpoint_url: The SPARQL endpoint URL
@@ -135,8 +135,8 @@ class SparqlHelper:
     RETRY_STATUS_CODES = (500, 502, 503, 504, 429)
 
     # Class-level query registry to collect all executed queries
-    _query_registry: list[QueryRecord] = []
-    _collect_queries: bool = False
+    _query_registry: ClassVar[list[QueryRecord]] = []
+    _collect_queries: ClassVar[bool] = False
 
     @classmethod
     def enable_query_collection(cls) -> None:
@@ -237,7 +237,7 @@ class SparqlHelper:
             }.get(record.query_type, "sh:select")
 
             # Escape the query for TTL (triple-quoted string)
-            escaped_query = record.query.replace('\\', '\\\\').replace('"""', '\\"\\"\\"')
+            escaped_query = record.query.replace("\\", "\\\\").replace('"""', '\\"\\"\\"')
 
             lines.append(f"ex:{query_id} a sh:SPARQLExecutable,")
             lines.append(f"        {query_type_class} ;")
@@ -257,7 +257,7 @@ class SparqlHelper:
             lines.append(f'    schema:dateCreated "{record.timestamp}"^^xsd:dateTime ;')
             lines.append("    schema:target [")
             lines.append("        a sd:Service ;")
-            lines.append(f'        sd:endpoint <{record.endpoint_url}>')
+            lines.append(f"        sd:endpoint <{record.endpoint_url}>")
             lines.append("    ] .")
             lines.append("")
 
@@ -495,7 +495,7 @@ class SparqlHelper:
                 self._handle_retry(attempt, query_type, e)
 
             except json.JSONDecodeError as e:
-                # JSON parse error - might be HTML response
+                # JSON parse error, might be HTML response
                 self._handle_retry(attempt, query_type, e)
 
             except Exception as e:
@@ -757,7 +757,7 @@ class SparqlHelper:
         """
         # Escape existing braces for .format() compatibility
         escaped = base_query.replace("{", "{{").replace("}", "}}")
-        # Add pagination placeholders (single braces - these get substituted)
+        # Add pagination placeholders (single braces, these get substituted)
         return escaped + "\nOFFSET {offset}\nLIMIT {limit}"
 
     @staticmethod
@@ -793,7 +793,7 @@ class SparqlHelper:
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Context manager exit - close session."""
+        """Context manager exit, close session."""
         self.close()
 
     def __repr__(self) -> str:
