@@ -50,8 +50,6 @@ bgee,https://bgee.org/rdf_v15_2,https://bgee.org/rdf_v15_2,https://www.bgee.org/
 rhea,https://sparql.rhea-db.org/,,https://sparql.rhea-db.org/sparql/,True
 pdb,http://rdfportal.org/dataset/pdbj,http://rdfportal.org/dataset/pdbj,http://rdfportal.org/pdb/sparql,True
 pubcasefinder,https://pubcasefinder.dbcls.jp/rdf,https://pubcasefinder.dbcls.jp/rdf,http://rdfportal.org/pdb/sparql,True
-homologene,http://rdfportal.org/dataset/homologene
-,http://rdfportal.org/dataset/homologene,http://rdfportal.org/dataset/medgen,http://rdfportal.org/pdb/sparql,True
 medgen,http://rdfportal.org/dataset/medgen,http://rdfportal.org/dataset/medgen,http://rdfportal.org/pdb/sparql,True
 jpost,http://jpost.org/graph/database,http://jpost.org/graph/database,http://rdfportal.org/pdb/sparql,True
 affymetrix,http://bio2rdf.org/affymetrix_resource:bio2rdf.dataset.affymetrix.R3,http://bio2rdf.org/affymetrix_resource:bio2rdf.dataset.affymetrix.R3,https://bio2rdf.org/sparql,True
