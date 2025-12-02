@@ -1,0 +1,2649 @@
+name: bgee_schema
+description: LinkML schema for bgee generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+prefixes:
+  bgee_schema:
+    prefix_prefix: bgee_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: https://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  cdao:
+    prefix_prefix: cdao
+    prefix_reference: http://purl.obolibrary.org/obo/
+  orth:
+    prefix_prefix: orth
+    prefix_reference: http://purl.org/net/orth#
+  ncit:
+    prefix_prefix: ncit
+    prefix_reference: http://purl.obolibrary.org/obo/
+  bfo:
+    prefix_prefix: bfo
+    prefix_reference: http://purl.obolibrary.org/obo/
+  so:
+    prefix_prefix: so
+    prefix_reference: http://purl.obolibrary.org/obo/
+  genex:
+    prefix_prefix: genex
+    prefix_reference: http://purl.org/genex#
+  caro:
+    prefix_prefix: caro
+    prefix_reference: http://purl.obolibrary.org/obo/
+  snap:
+    prefix_prefix: snap
+    prefix_reference: http://www.ifomis.org/bfo/1.1/snap#
+  efo:
+    prefix_prefix: efo
+    prefix_reference: http://www.ebi.ac.uk/efo/
+  ro:
+    prefix_prefix: ro
+    prefix_reference: http://purl.obolibrary.org/obo/
+  uniprot.core:
+    prefix_prefix: uniprot.core
+    prefix_reference: http://purl.uniprot.org/core/
+  span:
+    prefix_prefix: span
+    prefix_reference: http://www.ifomis.org/bfo/1.1/span#
+  obi:
+    prefix_prefix: obi
+    prefix_reference: http://purl.obolibrary.org/obo/
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  foaf:
+    prefix_prefix: foaf
+    prefix_reference: http://xmlns.com/foaf/0.1/
+  void:
+    prefix_prefix: void
+    prefix_reference: http://rdfs.org/ns/void#
+  sparqlserv:
+    prefix_prefix: sparqlserv
+    prefix_reference: http://www.w3.org/ns/sparql-service-description#
+  voidext:
+    prefix_prefix: voidext
+    prefix_reference: http://purl.org/query/voidext#
+  sh:
+    prefix_prefix: sh
+    prefix_reference: http://www.w3.org/ns/shacl#
+  iao:
+    prefix_prefix: iao
+    prefix_reference: http://purl.obolibrary.org/obo/
+  skos:
+    prefix_prefix: skos
+    prefix_reference: http://www.w3.org/2004/02/skos/core#
+  vann:
+    prefix_prefix: vann
+    prefix_reference: http://purl.org/vocab/vann/
+  oboinowl:
+    prefix_prefix: oboinowl
+    prefix_reference: http://www.geneontology.org/formats/oboInOwl#
+  vocab:
+    prefix_prefix: vocab
+    prefix_reference: https://w3id.org/widoco/vocab#
+  lscr:
+    prefix_prefix: lscr
+    prefix_reference: http://purl.org/lscr#
+  bibo:
+    prefix_prefix: bibo
+    prefix_reference: http://purl.org/ontology/bibo/
+  voaf:
+    prefix_prefix: voaf
+    prefix_reference: http://purl.org/vocommons/voaf#
+default_prefix: bgee_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  skos_change_Note:
+    name: skos_change_Note
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_change_Note
+    description: Property skos:changeNote
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_change_Note
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_change_Note
+    owner: owl_Functional_Property
+    domain_of:
+    - owl_Functional_Property
+    - owl_Datatype_Property
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdfs_label:
+    name: rdfs_label
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_label
+    description: Property rdfs:label
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_label
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_label
+    owner: owl_Functional_Property
+    domain_of:
+    - owl_Ontology_Property
+    - rdf_Property
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Functional_Property
+    - owl_Datatype_Property
+    - owl_Class
+    - rdfs_Class
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    - bfo_0000004
+    - caro_0030000
+    - snap_Material_Entity
+    - caro_0000000
+    - efo_0000001
+    - genex_Anatomical_Entity
+    - efo_0000635
+    - voidext_Complex_Link_Set
+    - efo_0000399
+    - efo_0005135
+    - span_Processual_Entity
+    - uniprot_core_Rank
+    - owl_Named_Individual
+    - obi_0000181
+    - dcterms_License_Document
+    - dcterms_Agent
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdfs_domain:
+    name: rdfs_domain
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_domain
+    description: Property rdfs:domain
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_domain
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_domain
+    owner: owl_Functional_Property
+    domain_of:
+    - owl_Ontology_Property
+    - rdf_Property
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Functional_Property
+    - owl_Datatype_Property
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  oboinowl_id:
+    name: oboinowl_id
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/oboinowl_id
+    description: Property oboinowl:id
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/oboinowl_id
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/oboinowl_id
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    - owl_Named_Individual
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  uniprot_core_common_Name:
+    name: uniprot_core_common_Name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_common_Name
+    description: Property uniprot.core:commonName
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_common_Name
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_common_Name
+    owner: uniprot_core_Taxon
+    domain_of:
+    - uniprot_core_Taxon
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  void_objects_Target:
+    name: void_objects_Target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_objects_Target
+    description: Property void:objectsTarget
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_objects_Target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_objects_Target
+    owner: void_Linkset
+    domain_of:
+    - void_Linkset
+    range: void_Dataset
+    inlined: true
+    inlined_as_list: true
+  owl_one_Of:
+    name: owl_one_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_one_Of
+    description: Property owl:oneOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_one_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_one_Of
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    - rdfs_Datatype
+    range: rdf_List
+    inlined: true
+    inlined_as_list: true
+  dcterms_license:
+    name: dcterms_license
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_license
+    description: Property dcterms:license
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_license
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_license
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    - void_Dataset
+    range: dcterms_License_Document
+    inlined: true
+    inlined_as_list: true
+  voaf_extends:
+    name: voaf_extends
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voaf_extends
+    description: Property voaf:extends
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voaf_extends
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voaf_extends
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdfs_range:
+    name: rdfs_range
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_range
+    description: Property rdfs:range
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_range
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_range
+    owner: owl_Functional_Property
+    domain_of:
+    - owl_Ontology_Property
+    - rdf_Property
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Functional_Property
+    - owl_Datatype_Property
+    range: rdfs_Datatype
+    inlined: true
+    inlined_as_list: true
+  efo_alternative_term:
+    name: efo_alternative_term
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_alternative_term
+    description: Property efo:alternative_term
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_alternative_term
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_alternative_term
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_url:
+    name: sparqlserv_url
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_url
+    description: Property sparqlserv:url
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_url
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_url
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: sparqlserv_Service
+    inlined: true
+    inlined_as_list: true
+  owl_equivalent_Class:
+    name: owl_equivalent_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_equivalent_Class
+    description: Property owl:equivalentClass
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_equivalent_Class
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_equivalent_Class
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_supported_Language:
+    name: sparqlserv_supported_Language
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_supported_Language
+    description: Property sparqlserv:supportedLanguage
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_supported_Language
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_supported_Language
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  bibo_status:
+    name: bibo_status
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/bibo_status
+    description: Property bibo:status
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/bibo_status
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/bibo_status
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  voidext_is_Subset_Of:
+    name: voidext_is_Subset_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_is_Subset_Of
+    description: Property voidext:isSubsetOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_is_Subset_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_is_Subset_Of
+    owner: void_Linkset
+    domain_of:
+    - void_Dataset
+    - void_Linkset
+    range: void_Dataset
+    inlined: true
+    inlined_as_list: true
+  ro_0002292:
+    name: ro_0002292
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ro_0002292
+    description: Property ro:0002292
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ro_0002292
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ro_0002292
+    owner: bfo_0000004
+    domain_of:
+    - bfo_0000002
+    - bfo_0000001
+    - bfo_0000004
+    - caro_0030000
+    - snap_Material_Entity
+    - caro_0000000
+    - efo_0000001
+    - genex_Anatomical_Entity
+    - efo_0000635
+    - genex_Expression_Condition
+    range: cdao_0000140
+    inlined: true
+    inlined_as_list: true
+  dcterms_description:
+    name: dcterms_description
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_description
+    description: Property dcterms:description
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_description
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_description
+    owner: owl_Ontology
+    domain_of:
+    - rdf_Property
+    - owl_Annotation_Property
+    - owl_Datatype_Property
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    - bfo_0000004
+    - caro_0030000
+    - snap_Material_Entity
+    - caro_0000000
+    - efo_0000001
+    - genex_Anatomical_Entity
+    - efo_0000635
+    - owl_Ontology
+    - void_Dataset
+    - efo_0000399
+    - span_Processual_Entity
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  genex_has_Sequence_Unit:
+    name: genex_has_Sequence_Unit
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Sequence_Unit
+    description: Property genex:hasSequenceUnit
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Sequence_Unit
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Sequence_Unit
+    owner: genex_Absence_Expression
+    domain_of:
+    - genex_Absence_Expression
+    - genex_Expression
+    range: cdao_0000140
+    inlined: true
+    inlined_as_list: true
+  genex_has_Confidence_Level:
+    name: genex_has_Confidence_Level
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Confidence_Level
+    description: Property genex:hasConfidenceLevel
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Confidence_Level
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Confidence_Level
+    owner: genex_Absence_Expression
+    domain_of:
+    - genex_Absence_Expression
+    - genex_Expression
+    range: owl_Named_Individual
+    inlined: true
+    inlined_as_list: true
+  owl_imports:
+    name: owl_imports
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_imports
+    description: Property owl:imports
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_imports
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_imports
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: owl_Ontology
+    inlined: true
+    inlined_as_list: true
+  voidext_intersect_At:
+    name: voidext_intersect_At
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_intersect_At
+    description: Property voidext:intersectAt
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_intersect_At
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_intersect_At
+    owner: voidext_Complex_Link_Set
+    domain_of:
+    - voidext_Complex_Link_Set
+    range: void_Linkset
+    inlined: true
+    inlined_as_list: true
+  genex_is_Absent_In:
+    name: genex_is_Absent_In
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_is_Absent_In
+    description: Property genex:isAbsentIn
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_is_Absent_In
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_is_Absent_In
+    owner: so_0000704
+    domain_of:
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    range: bfo_0000004
+    inlined: true
+    inlined_as_list: true
+  skos_alt_Label:
+    name: skos_alt_Label
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_alt_Label
+    description: Property skos:altLabel
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_alt_Label
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_alt_Label
+    owner: owl_Object_Property
+    domain_of:
+    - owl_Object_Property
+    - owl_Datatype_Property
+    - owl_Class
+    - owl_Named_Individual
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  iao_0000115:
+    name: iao_0000115
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000115
+    description: Property iao:0000115
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000115
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000115
+    owner: owl_Annotation_Property
+    domain_of:
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Class
+    - owl_Named_Individual
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  owl_intersection_Of:
+    name: owl_intersection_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_intersection_Of
+    description: Property owl:intersectionOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_intersection_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_intersection_Of
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  oboinowl_in_Subset:
+    name: oboinowl_in_Subset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/oboinowl_in_Subset
+    description: Property oboinowl:inSubset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/oboinowl_in_Subset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/oboinowl_in_Subset
+    owner: owl_Object_Property
+    domain_of:
+    - owl_Object_Property
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  voidext_link_Predicate_Domain:
+    name: voidext_link_Predicate_Domain
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_link_Predicate_Domain
+    description: Property voidext:linkPredicateDomain
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_link_Predicate_Domain
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_link_Predicate_Domain
+    owner: void_Linkset
+    domain_of:
+    - void_Linkset
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  genex_has_FDRpvalue:
+    name: genex_has_FDRpvalue
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_FDRpvalue
+    description: Property genex:hasFDRpvalue
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_FDRpvalue
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_FDRpvalue
+    owner: genex_Absence_Expression
+    domain_of:
+    - genex_Absence_Expression
+    - genex_Expression
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  owl_disjoint_With:
+    name: owl_disjoint_With
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_disjoint_With
+    description: Property owl:disjointWith
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_disjoint_With
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_disjoint_With
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  rdfs_is_Defined_By:
+    name: rdfs_is_Defined_By
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_is_Defined_By
+    description: Property rdfs:isDefinedBy
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_is_Defined_By
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_is_Defined_By
+    owner: owl_Ontology
+    domain_of:
+    - rdf_Property
+    - owl_Annotation_Property
+    - owl_Functional_Property
+    - owl_Datatype_Property
+    - owl_Class
+    - owl_Ontology
+    - owl_Named_Individual
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sh_prefixes:
+    name: sh_prefixes
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_prefixes
+    description: Property sh:prefixes
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_prefixes
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_prefixes
+    owner: sh_SPARQLExecutable
+    domain_of:
+    - sh_SPARQLExecutable
+    - sh_SPARQLSelect_Executable
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  dcterms_bibliographic_Citation:
+    name: dcterms_bibliographic_Citation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_bibliographic_Citation
+    description: Property dcterms:bibliographicCitation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_bibliographic_Citation
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_bibliographic_Citation
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  voidext_shared_Instance_Type:
+    name: voidext_shared_Instance_Type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_shared_Instance_Type
+    description: Property voidext:sharedInstanceType
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_shared_Instance_Type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_shared_Instance_Type
+    owner: voidext_Shared_Instance_Set
+    domain_of:
+    - voidext_Simple_Link_Set
+    - voidext_Shared_Instance_Set
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  dcterms_title:
+    name: dcterms_title
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_title
+    description: Property dcterms:title
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_title
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_title
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    - void_Dataset
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  owl_max_Qualified_Cardinality:
+    name: owl_max_Qualified_Cardinality
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_max_Qualified_Cardinality
+    description: Property owl:maxQualifiedCardinality
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_max_Qualified_Cardinality
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_max_Qualified_Cardinality
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  owl_union_Of:
+    name: owl_union_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_union_Of
+    description: Property owl:unionOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_union_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_union_Of
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_first:
+    name: rdf_first
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdf_first
+    description: Property rdf:first
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdf_first
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdf_first
+    owner: rdf_List
+    domain_of:
+    - rdf_List
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  schema_code_Repository:
+    name: schema_code_Repository
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/schema_code_Repository
+    description: Property schema:codeRepository
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/schema_code_Repository
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/schema_code_Repository
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdfs_sub_Property_Of:
+    name: rdfs_sub_Property_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_sub_Property_Of
+    description: Property rdfs:subPropertyOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_sub_Property_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_sub_Property_Of
+    owner: owl_Annotation_Property
+    domain_of:
+    - rdf_Property
+    - owl_Object_Property
+    - owl_Annotation_Property
+    range: owl_Annotation_Property
+    inlined: true
+    inlined_as_list: true
+  owl_inverse_Of:
+    name: owl_inverse_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_inverse_Of
+    description: Property owl:inverseOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_inverse_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_inverse_Of
+    owner: owl_Object_Property
+    domain_of:
+    - owl_Object_Property
+    range: owl_Object_Property
+    inlined: true
+    inlined_as_list: true
+  owl_complement_Of:
+    name: owl_complement_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_complement_Of
+    description: Property owl:complementOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_complement_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_complement_Of
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  foaf_homepage:
+    name: foaf_homepage
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/foaf_homepage
+    description: Property foaf:homepage
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/foaf_homepage
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/foaf_homepage
+    owner: void_Dataset
+    domain_of:
+    - void_Dataset
+    - owl_Named_Individual
+    - foaf_Organization
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  void_uri_Space:
+    name: void_uri_Space
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_uri_Space
+    description: Property void:uriSpace
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_uri_Space
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_uri_Space
+    owner: void_Dataset
+    domain_of:
+    - void_Dataset
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  dcterms_creator:
+    name: dcterms_creator
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_creator
+    description: Property dcterms:creator
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_creator
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_creator
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  iao_0000116:
+    name: iao_0000116
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000116
+    description: Property iao:0000116
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000116
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000116
+    owner: owl_Object_Property
+    domain_of:
+    - owl_Object_Property
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  dcterms_modified:
+    name: dcterms_modified
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_modified
+    description: Property dcterms:modified
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_modified
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_modified
+    owner: owl_Ontology
+    domain_of:
+    - owl_Functional_Property
+    - owl_Datatype_Property
+    - owl_Ontology
+    - void_Dataset
+    - sparqlserv_Service
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdfs_see_Also:
+    name: rdfs_see_Also
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_see_Also
+    description: Property rdfs:seeAlso
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_see_Also
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_see_Also
+    owner: owl_Ontology
+    domain_of:
+    - owl_Datatype_Property
+    - owl_Class
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  genex_has_Developmental_Stage:
+    name: genex_has_Developmental_Stage
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Developmental_Stage
+    description: Property genex:hasDevelopmentalStage
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Developmental_Stage
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Developmental_Stage
+    owner: bfo_0000004
+    domain_of:
+    - bfo_0000002
+    - bfo_0000001
+    - bfo_0000004
+    - genex_Expression_Condition
+    range: efo_0000399
+    inlined: true
+    inlined_as_list: true
+  voidext_intersection_Type:
+    name: voidext_intersection_Type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_intersection_Type
+    description: Property voidext:intersectionType
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_intersection_Type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_intersection_Type
+    owner: voidext_Complex_Link_Set
+    domain_of:
+    - voidext_Complex_Link_Set
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  void_subset:
+    name: void_subset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_subset
+    description: Property void:subset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_subset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_subset
+    owner: void_Dataset
+    domain_of:
+    - void_Dataset
+    range: void_Dataset
+    inlined: true
+    inlined_as_list: true
+  sh_declare:
+    name: sh_declare
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_declare
+    description: Property sh:declare
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_declare
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_declare
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  dcterms_identifier:
+    name: dcterms_identifier
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_identifier
+    description: Property dcterms:identifier
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_identifier
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_identifier
+    owner: so_0000704
+    domain_of:
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    - uniprot_core_Taxon
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  skos_example:
+    name: skos_example
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_example
+    description: Property skos:example
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_example
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_example
+    owner: owl_Annotation_Property
+    domain_of:
+    - owl_Annotation_Property
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  voidext_link_Predicate_Range:
+    name: voidext_link_Predicate_Range
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_link_Predicate_Range
+    description: Property voidext:linkPredicateRange
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_link_Predicate_Range
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_link_Predicate_Range
+    owner: void_Linkset
+    domain_of:
+    - void_Linkset
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_Ensembl_Gene:
+    name: lscr_xref_Ensembl_Gene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/lscr_xref_Ensembl_Gene
+    description: Property lscr:xrefEnsemblGene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/lscr_xref_Ensembl_Gene
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/lscr_xref_Ensembl_Gene
+    owner: so_0000704
+    domain_of:
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  void_sparql_Endpoint:
+    name: void_sparql_Endpoint
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_sparql_Endpoint
+    description: Property void:sparqlEndpoint
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_sparql_Endpoint
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_sparql_Endpoint
+    owner: void_Dataset
+    domain_of:
+    - void_Dataset
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdfs_sub_Class_Of:
+    name: rdfs_sub_Class_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_sub_Class_Of
+    description: Property rdfs:subClassOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_sub_Class_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_sub_Class_Of
+    owner: rdfs_Class
+    domain_of:
+    - owl_Class
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  dcterms_issued:
+    name: dcterms_issued
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_issued
+    description: Property dcterms:issued
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_issued
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_issued
+    owner: void_Linkset
+    domain_of:
+    - voidext_Complex_Link_Set
+    - void_Linkset
+    - voidext_Simple_Link_Set
+    - voidext_Shared_Instance_Set
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  void_subjects_Target:
+    name: void_subjects_Target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_subjects_Target
+    description: Property void:subjectsTarget
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_subjects_Target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_subjects_Target
+    owner: void_Linkset
+    domain_of:
+    - void_Linkset
+    range: void_Dataset
+    inlined: true
+    inlined_as_list: true
+  skos_definition:
+    name: skos_definition
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_definition
+    description: Property skos:definition
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_definition
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_definition
+    owner: owl_Annotation_Property
+    domain_of:
+    - owl_Annotation_Property
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_endpoint:
+    name: sparqlserv_endpoint
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_endpoint
+    description: Property sparqlserv:endpoint
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_endpoint
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_endpoint
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: sparqlserv_Service
+    inlined: true
+    inlined_as_list: true
+  rdf_rest:
+    name: rdf_rest
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdf_rest
+    description: Property rdf:rest
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdf_rest
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdf_rest
+    owner: rdf_List
+    domain_of:
+    - rdf_List
+    range: rdf_List
+    inlined: true
+    inlined_as_list: true
+  owl_prior_Version:
+    name: owl_prior_Version
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_prior_Version
+    description: Property owl:priorVersion
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_prior_Version
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_prior_Version
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  void_target:
+    name: void_target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_target
+    description: Property void:target
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_target
+    owner: voidext_Shared_Instance_Set
+    domain_of:
+    - voidext_Simple_Link_Set
+    - voidext_Shared_Instance_Set
+    range: void_Dataset
+    inlined: true
+    inlined_as_list: true
+  uniprot_core_scientific_Name:
+    name: uniprot_core_scientific_Name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_scientific_Name
+    description: Property uniprot.core:scientificName
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_scientific_Name
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_scientific_Name
+    owner: uniprot_core_Taxon
+    domain_of:
+    - uniprot_core_Taxon
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  genex_has_Expression_Level:
+    name: genex_has_Expression_Level
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Expression_Level
+    description: Property genex:hasExpressionLevel
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Expression_Level
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Expression_Level
+    owner: genex_Absence_Expression
+    domain_of:
+    - genex_Absence_Expression
+    - genex_Expression
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  efo_NCI_Thesaurus_definition_citation:
+    name: efo_NCI_Thesaurus_definition_citation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_NCI_Thesaurus_definition_citation
+    description: Property efo:NCI_Thesaurus_definition_citation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_NCI_Thesaurus_definition_citation
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_NCI_Thesaurus_definition_citation
+    owner: owl_Annotation_Property
+    domain_of:
+    - owl_Annotation_Property
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  void_link_Predicate:
+    name: void_link_Predicate
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_link_Predicate
+    description: Property void:linkPredicate
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_link_Predicate
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_link_Predicate
+    owner: void_Linkset
+    domain_of:
+    - void_Linkset
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_backward_Compatible_With:
+    name: owl_backward_Compatible_With
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_backward_Compatible_With
+    description: Property owl:backwardCompatibleWith
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_backward_Compatible_With
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_backward_Compatible_With
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_version_Info:
+    name: owl_version_Info
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_version_Info
+    description: Property owl:versionInfo
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_version_Info
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_version_Info
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  dcterms_created:
+    name: dcterms_created
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_created
+    description: Property dcterms:created
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_created
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_created
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  foaf_name:
+    name: foaf_name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/foaf_name
+    description: Property foaf:name
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/foaf_name
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/foaf_name
+    owner: foaf_Organization
+    domain_of:
+    - owl_Named_Individual
+    - foaf_Organization
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  voidext_recommended_Mapping:
+    name: voidext_recommended_Mapping
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_recommended_Mapping
+    description: Property voidext:recommendedMapping
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_recommended_Mapping
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_recommended_Mapping
+    owner: voidext_Complex_Link_Set
+    domain_of:
+    - voidext_Complex_Link_Set
+    range: void_Linkset
+    inlined: true
+    inlined_as_list: true
+  owl_some_Values_From:
+    name: owl_some_Values_From
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_some_Values_From
+    description: Property owl:someValuesFrom
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_some_Values_From
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_some_Values_From
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  ro_0002206:
+    name: ro_0002206
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ro_0002206
+    description: Property ro:0002206
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ro_0002206
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ro_0002206
+    owner: so_0000704
+    domain_of:
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    range: bfo_0000004
+    inlined: true
+    inlined_as_list: true
+  genex_has_Expression_Condition:
+    name: genex_has_Expression_Condition
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Expression_Condition
+    description: Property genex:hasExpressionCondition
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Expression_Condition
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Expression_Condition
+    owner: genex_Absence_Expression
+    domain_of:
+    - genex_Absence_Expression
+    - genex_Expression
+    range: bfo_0000004
+    inlined: true
+    inlined_as_list: true
+  iao_0000112:
+    name: iao_0000112
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000112
+    description: Property iao:0000112
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000112
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000112
+    owner: owl_Object_Property
+    domain_of:
+    - owl_Object_Property
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  vann_example:
+    name: vann_example
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vann_example
+    description: Property vann:example
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vann_example
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vann_example
+    owner: owl_Functional_Property
+    domain_of:
+    - owl_Object_Property
+    - owl_Functional_Property
+    - owl_Datatype_Property
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_result_Format:
+    name: sparqlserv_result_Format
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_result_Format
+    description: Property sparqlserv:resultFormat
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_result_Format
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_result_Format
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  genex_has_Anatomical_Entity:
+    name: genex_has_Anatomical_Entity
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Anatomical_Entity
+    description: Property genex:hasAnatomicalEntity
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Anatomical_Entity
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Anatomical_Entity
+    owner: bfo_0000004
+    domain_of:
+    - bfo_0000002
+    - bfo_0000001
+    - bfo_0000004
+    - genex_Expression_Condition
+    range: bfo_0000004
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_feature:
+    name: sparqlserv_feature
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_feature
+    description: Property sparqlserv:feature
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_feature
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_feature
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  dcterms_abstract:
+    name: dcterms_abstract
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_abstract
+    description: Property dcterms:abstract
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_abstract
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_abstract
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  void_class_Partition:
+    name: void_class_Partition
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_class_Partition
+    description: Property void:classPartition
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_class_Partition
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_class_Partition
+    owner: void_Dataset
+    domain_of:
+    - void_Dataset
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  vann_preferred_Namespace_Uri:
+    name: vann_preferred_Namespace_Uri
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vann_preferred_Namespace_Uri
+    description: Property vann:preferredNamespaceUri
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vann_preferred_Namespace_Uri
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vann_preferred_Namespace_Uri
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_on_Property:
+    name: owl_on_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_on_Property
+    description: Property owl:onProperty
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_on_Property
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_on_Property
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: owl_Object_Property
+    inlined: true
+    inlined_as_list: true
+  iao_0000232:
+    name: iao_0000232
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000232
+    description: Property iao:0000232
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000232
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000232
+    owner: owl_Object_Property
+    domain_of:
+    - owl_Object_Property
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  owl_version_IRI:
+    name: owl_version_IRI
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_version_IRI
+    description: Property owl:versionIRI
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_version_IRI
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_version_IRI
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  uniprot_core_rank:
+    name: uniprot_core_rank
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_rank
+    description: Property uniprot.core:rank
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_rank
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_rank
+    owner: uniprot_core_Taxon
+    domain_of:
+    - uniprot_core_Taxon
+    range: uniprot_core_Rank
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_Uniprot:
+    name: lscr_xref_Uniprot
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/lscr_xref_Uniprot
+    description: Property lscr:xrefUniprot
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/lscr_xref_Uniprot
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/lscr_xref_Uniprot
+    owner: so_0000704
+    domain_of:
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  sh_select:
+    name: sh_select
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_select
+    description: Property sh:select
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_select
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_select
+    owner: sh_SPARQLExecutable
+    domain_of:
+    - sh_SPARQLExecutable
+    - sh_SPARQLSelect_Executable
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  dcterms_contributor:
+    name: dcterms_contributor
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_contributor
+    description: Property dcterms:contributor
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_contributor
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_contributor
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  genex_has_Strain:
+    name: genex_has_Strain
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Strain
+    description: Property genex:hasStrain
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Strain
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Strain
+    owner: bfo_0000004
+    domain_of:
+    - bfo_0000002
+    - bfo_0000001
+    - bfo_0000004
+    - genex_Expression_Condition
+    range: efo_0005135
+    inlined: true
+    inlined_as_list: true
+  iao_0000600:
+    name: iao_0000600
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000600
+    description: Property iao:0000600
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000600
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/iao_0000600
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  schema_target:
+    name: schema_target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/schema_target
+    description: Property schema:target
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/schema_target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/schema_target
+    owner: sh_SPARQLExecutable
+    domain_of:
+    - sh_SPARQLExecutable
+    - sh_SPARQLSelect_Executable
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  dcterms_publisher:
+    name: dcterms_publisher
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_publisher
+    description: Property dcterms:publisher
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_publisher
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_publisher
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    - void_Dataset
+    range: dcterms_Agent
+    inlined: true
+    inlined_as_list: true
+  voidext_resource_Mapping:
+    name: voidext_resource_Mapping
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_resource_Mapping
+    description: Property voidext:resourceMapping
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_resource_Mapping
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_resource_Mapping
+    owner: void_Linkset
+    domain_of:
+    - void_Linkset
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  vocab_introduction:
+    name: vocab_introduction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vocab_introduction
+    description: Property vocab:introduction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vocab_introduction
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vocab_introduction
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  genex_is_Expressed_In:
+    name: genex_is_Expressed_In
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_is_Expressed_In
+    description: Property genex:isExpressedIn
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_is_Expressed_In
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_is_Expressed_In
+    owner: so_0000704
+    domain_of:
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    range: bfo_0000004
+    inlined: true
+    inlined_as_list: true
+  ro_0002162:
+    name: ro_0002162
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ro_0002162
+    description: Property ro:0002162
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ro_0002162
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ro_0002162
+    owner: bfo_0000004
+    domain_of:
+    - bfo_0000002
+    - bfo_0000001
+    - bfo_0000004
+    - genex_Expression_Condition
+    - ncit_C_14250
+    - orth_Organism
+    range: uniprot_core_Taxon
+    inlined: true
+    inlined_as_list: true
+  efo_source_definition:
+    name: efo_source_definition
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_source_definition
+    description: Property efo:source_definition
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_source_definition
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_source_definition
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  vann_preferred_Namespace_Prefix:
+    name: vann_preferred_Namespace_Prefix
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vann_preferred_Namespace_Prefix
+    description: Property vann:preferredNamespacePrefix
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vann_preferred_Namespace_Prefix
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/vann_preferred_Namespace_Prefix
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_NCBIGene:
+    name: lscr_xref_NCBIGene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/lscr_xref_NCBIGene
+    description: Property lscr:xrefNCBIGene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/lscr_xref_NCBIGene
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/lscr_xref_NCBIGene
+    owner: so_0000704
+    domain_of:
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  genex_has_Sex:
+    name: genex_has_Sex
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Sex
+    description: Property genex:hasSex
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Sex
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_has_Sex
+    owner: bfo_0000004
+    domain_of:
+    - bfo_0000002
+    - bfo_0000001
+    - bfo_0000004
+    - genex_Expression_Condition
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdfs_comment:
+    name: rdfs_comment
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_comment
+    description: Property rdfs:comment
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_comment
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_comment
+    owner: owl_Ontology
+    domain_of:
+    - rdf_Property
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Functional_Property
+    - owl_Datatype_Property
+    - owl_Class
+    - owl_Ontology
+    - owl_Named_Individual
+    - sh_SPARQLExecutable
+    - sh_SPARQLSelect_Executable
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  owl_all_Values_From:
+    name: owl_all_Values_From
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_all_Values_From
+    description: Property owl:allValuesFrom
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_all_Values_From
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_all_Values_From
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  orth_organism:
+    name: orth_organism
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_organism
+    description: Property orth:organism
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_organism
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_organism
+    owner: so_0000704
+    domain_of:
+    - cdao_0000140
+    - orth_Sequence_Unit
+    - bfo_0000002
+    - orth_Gene_Tree_Node
+    - orth_Gene
+    - bfo_0000001
+    - so_0000704
+    range: ncit_C_14250
+    inlined: true
+    inlined_as_list: true
+  schema_image:
+    name: schema_image
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/schema_image
+    description: Property schema:image
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/schema_image
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/schema_image
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  dcterms_issue:
+    name: dcterms_issue
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_issue
+    description: Property dcterms:issue
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_issue
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_issue
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  owl_on_Data_Range:
+    name: owl_on_Data_Range
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_on_Data_Range
+    description: Property owl:onDataRange
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_on_Data_Range
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_on_Data_Range
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  skos_scope_Note:
+    name: skos_scope_Note
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_scope_Note
+    description: Property skos:scopeNote
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_scope_Note
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/skos_scope_Note
+    owner: owl_Annotation_Property
+    domain_of:
+    - owl_Annotation_Property
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+classes:
+  efo_0000635:
+    name: efo_0000635
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Efo0000635
+    description: Class representing efo_0000635
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_0000635
+    slots:
+    - ro_0002292
+    - rdfs_label
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_0000635
+  voidext_Complex_Link_Set:
+    name: voidext_Complex_Link_Set
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/VoidextComplexLinkSet
+    description: Class representing voidext_Complex_Link_Set
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_Complex_Link_Set
+    slots:
+    - voidext_intersect_At
+    - voidext_recommended_Mapping
+    - rdfs_label
+    - dcterms_issued
+    - voidext_intersection_Type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_Complex_Link_Set
+  bfo_0000001:
+    name: bfo_0000001
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Bfo0000001
+    description: Class representing bfo_0000001
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/bfo_0000001
+    slots:
+    - orth_organism
+    - genex_is_Absent_In
+    - genex_is_Expressed_In
+    - ro_0002206
+    - ro_0002292
+    - ro_0002162
+    - genex_has_Developmental_Stage
+    - genex_has_Anatomical_Entity
+    - genex_has_Strain
+    - rdfs_label
+    - rdfs_see_Also
+    - dcterms_identifier
+    - genex_has_Sex
+    - dcterms_description
+    - lscr_xref_Uniprot
+    - lscr_xref_NCBIGene
+    - lscr_xref_Ensembl_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/bfo_0000001
+  snap_Material_Entity:
+    name: snap_Material_Entity
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/SnapMaterialEntity
+    description: Class representing snap_Material_Entity
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/snap_Material_Entity
+    slots:
+    - ro_0002292
+    - rdfs_label
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/snap_Material_Entity
+  voidext_Simple_Link_Set:
+    name: voidext_Simple_Link_Set
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/VoidextSimpleLinkSet
+    description: Class representing voidext_Simple_Link_Set
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_Simple_Link_Set
+    slots:
+    - void_target
+    - dcterms_issued
+    - voidext_shared_Instance_Type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_Simple_Link_Set
+  owl_Datatype_Property:
+    name: owl_Datatype_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OwlDatatypeProperty
+    description: Class representing owl_Datatype_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Datatype_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - rdfs_label
+    - rdfs_comment
+    - skos_alt_Label
+    - dcterms_modified
+    - rdfs_see_Also
+    - skos_change_Note
+    - vann_example
+    - rdfs_is_Defined_By
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Datatype_Property
+  uniprot_core_Taxon:
+    name: uniprot_core_Taxon
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/UniprotCoreTaxon
+    description: Class representing uniprot_core_Taxon
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_Taxon
+    slots:
+    - uniprot_core_rank
+    - uniprot_core_common_Name
+    - dcterms_identifier
+    - uniprot_core_scientific_Name
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_Taxon
+  orth_Organism:
+    name: orth_Organism
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OrthOrganism
+    description: Class representing orth_Organism
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_Organism
+    slots:
+    - ro_0002162
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_Organism
+  span_Processual_Entity:
+    name: span_Processual_Entity
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/SpanProcessualEntity
+    description: Class representing span_Processual_Entity
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/span_Processual_Entity
+    slots:
+    - rdfs_label
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/span_Processual_Entity
+  sh_SPARQLSelect_Executable:
+    name: sh_SPARQLSelect_Executable
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ShSPARQLSelectExecutable
+    description: Class representing sh_SPARQLSelect_Executable
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_SPARQLSelect_Executable
+    slots:
+    - rdfs_comment
+    - sh_select
+    - schema_target
+    - sh_prefixes
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_SPARQLSelect_Executable
+  orth_Sequence_Unit:
+    name: orth_Sequence_Unit
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OrthSequenceUnit
+    description: Class representing orth_Sequence_Unit
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_Sequence_Unit
+    slots:
+    - orth_organism
+    - genex_is_Absent_In
+    - genex_is_Expressed_In
+    - ro_0002206
+    - rdfs_label
+    - rdfs_see_Also
+    - dcterms_identifier
+    - dcterms_description
+    - lscr_xref_Uniprot
+    - lscr_xref_NCBIGene
+    - lscr_xref_Ensembl_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_Sequence_Unit
+  Resource:
+    name: Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Resource
+    description: Class representing Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Resource
+  owl_Named_Individual:
+    name: owl_Named_Individual
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OwlNamedIndividual
+    description: Class representing owl_Named_Individual
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Named_Individual
+    slots:
+    - rdfs_label
+    - rdfs_comment
+    - skos_alt_Label
+    - foaf_homepage
+    - iao_0000115
+    - foaf_name
+    - oboinowl_id
+    - rdfs_is_Defined_By
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Named_Individual
+  dcterms_Agent:
+    name: dcterms_Agent
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/DctermsAgent
+    description: Class representing dcterms_Agent
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_Agent
+    slots:
+    - rdfs_label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_Agent
+  bfo_0000002:
+    name: bfo_0000002
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Bfo0000002
+    description: Class representing bfo_0000002
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/bfo_0000002
+    slots:
+    - orth_organism
+    - genex_is_Absent_In
+    - genex_is_Expressed_In
+    - ro_0002206
+    - ro_0002292
+    - ro_0002162
+    - genex_has_Developmental_Stage
+    - genex_has_Anatomical_Entity
+    - genex_has_Strain
+    - rdfs_label
+    - rdfs_see_Also
+    - dcterms_identifier
+    - genex_has_Sex
+    - dcterms_description
+    - lscr_xref_Uniprot
+    - lscr_xref_NCBIGene
+    - lscr_xref_Ensembl_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/bfo_0000002
+  rdfs_Datatype:
+    name: rdfs_Datatype
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/RdfsDatatype
+    description: Class representing rdfs_Datatype
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_Datatype
+    slots:
+    - owl_one_Of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_Datatype
+  orth_Gene:
+    name: orth_Gene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OrthGene
+    description: Class representing orth_Gene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_Gene
+    slots:
+    - orth_organism
+    - genex_is_Absent_In
+    - genex_is_Expressed_In
+    - ro_0002206
+    - rdfs_label
+    - rdfs_see_Also
+    - dcterms_identifier
+    - dcterms_description
+    - lscr_xref_Uniprot
+    - lscr_xref_NCBIGene
+    - lscr_xref_Ensembl_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_Gene
+  owl_Restriction:
+    name: owl_Restriction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OwlRestriction
+    description: Class representing owl_Restriction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Restriction
+    slots:
+    - owl_on_Property
+    - owl_all_Values_From
+    - owl_some_Values_From
+    - owl_max_Qualified_Cardinality
+    - owl_on_Data_Range
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Restriction
+  caro_0000000:
+    name: caro_0000000
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Caro0000000
+    description: Class representing caro_0000000
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/caro_0000000
+    slots:
+    - ro_0002292
+    - rdfs_label
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/caro_0000000
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Class
+    slots:
+    - owl_complement_Of
+    - rdfs_sub_Class_Of
+    - owl_disjoint_With
+    - owl_equivalent_Class
+    - owl_one_Of
+    - rdfs_label
+    - rdfs_comment
+    - iao_0000116
+    - skos_alt_Label
+    - iao_0000115
+    - iao_0000112
+    - efo_alternative_term
+    - efo_source_definition
+    - iao_0000600
+    - rdfs_see_Also
+    - oboinowl_id
+    - vann_example
+    - rdfs_is_Defined_By
+    - efo_NCI_Thesaurus_definition_citation
+    - owl_union_Of
+    - owl_intersection_Of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Class
+  owl_Ontology_Property:
+    name: owl_Ontology_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OwlOntologyProperty
+    description: Class representing owl_Ontology_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Ontology_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - rdfs_label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Ontology_Property
+  orth_Gene_Tree_Node:
+    name: orth_Gene_Tree_Node
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OrthGeneTreeNode
+    description: Class representing orth_Gene_Tree_Node
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_Gene_Tree_Node
+    slots:
+    - orth_organism
+    - genex_is_Absent_In
+    - genex_is_Expressed_In
+    - ro_0002206
+    - rdfs_label
+    - rdfs_see_Also
+    - dcterms_identifier
+    - dcterms_description
+    - lscr_xref_Uniprot
+    - lscr_xref_NCBIGene
+    - lscr_xref_Ensembl_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/orth_Gene_Tree_Node
+  obi_0000181:
+    name: obi_0000181
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Obi0000181
+    description: Class representing obi_0000181
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/obi_0000181
+    slots:
+    - rdfs_label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/obi_0000181
+  sh_SPARQLExecutable:
+    name: sh_SPARQLExecutable
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ShSPARQLExecutable
+    description: Class representing sh_SPARQLExecutable
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_SPARQLExecutable
+    slots:
+    - rdfs_comment
+    - sh_select
+    - schema_target
+    - sh_prefixes
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sh_SPARQLExecutable
+  genex_Expression_Condition:
+    name: genex_Expression_Condition
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/GenexExpressionCondition
+    description: Class representing genex_Expression_Condition
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_Expression_Condition
+    slots:
+    - ro_0002292
+    - ro_0002162
+    - genex_has_Developmental_Stage
+    - genex_has_Anatomical_Entity
+    - genex_has_Strain
+    - genex_has_Sex
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_Expression_Condition
+  ncit_C_14250:
+    name: ncit_C_14250
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/NcitC14250
+    description: Class representing ncit_C_14250
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ncit_C_14250
+    slots:
+    - ro_0002162
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/ncit_C_14250
+  efo_0005135:
+    name: efo_0005135
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Efo0005135
+    description: Class representing efo_0005135
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_0005135
+    slots:
+    - rdfs_label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_0005135
+  caro_0030000:
+    name: caro_0030000
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Caro0030000
+    description: Class representing caro_0030000
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/caro_0030000
+    slots:
+    - ro_0002292
+    - rdfs_label
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/caro_0030000
+  genex_Expression:
+    name: genex_Expression
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/GenexExpression
+    description: Class representing genex_Expression
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_Expression
+    slots:
+    - genex_has_Confidence_Level
+    - genex_has_Sequence_Unit
+    - genex_has_Expression_Condition
+    - genex_has_FDRpvalue
+    - genex_has_Expression_Level
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_Expression
+  rdf_Property:
+    name: rdf_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/RdfProperty
+    description: Class representing rdf_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdf_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - rdfs_sub_Property_Of
+    - rdfs_label
+    - rdfs_comment
+    - rdfs_is_Defined_By
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdf_Property
+  foaf_Organization:
+    name: foaf_Organization
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/FoafOrganization
+    description: Class representing foaf_Organization
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/foaf_Organization
+    slots:
+    - foaf_homepage
+    - foaf_name
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/foaf_Organization
+  voidext_Shared_Instance_Set:
+    name: voidext_Shared_Instance_Set
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/VoidextSharedInstanceSet
+    description: Class representing voidext_Shared_Instance_Set
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_Shared_Instance_Set
+    slots:
+    - void_target
+    - dcterms_issued
+    - voidext_shared_Instance_Type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/voidext_Shared_Instance_Set
+  efo_0000399:
+    name: efo_0000399
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Efo0000399
+    description: Class representing efo_0000399
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_0000399
+    slots:
+    - rdfs_label
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_0000399
+  dcterms_License_Document:
+    name: dcterms_License_Document
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/DctermsLicenseDocument
+    description: Class representing dcterms_License_Document
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_License_Document
+    slots:
+    - rdfs_label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/dcterms_License_Document
+  void_Dataset:
+    name: void_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/VoidDataset
+    description: Class representing void_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_Dataset
+    slots:
+    - dcterms_publisher
+    - void_subset
+    - dcterms_license
+    - voidext_is_Subset_Of
+    - foaf_homepage
+    - dcterms_modified
+    - dcterms_title
+    - dcterms_description
+    - void_uri_Space
+    - void_sparql_Endpoint
+    - void_class_Partition
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_Dataset
+  genex_Anatomical_Entity:
+    name: genex_Anatomical_Entity
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/GenexAnatomicalEntity
+    description: Class representing genex_Anatomical_Entity
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_Anatomical_Entity
+    slots:
+    - ro_0002292
+    - rdfs_label
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_Anatomical_Entity
+  sparqlserv_Service:
+    name: sparqlserv_Service
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/SparqlservService
+    description: Class representing sparqlserv_Service
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_Service
+    slots:
+    - sparqlserv_url
+    - sparqlserv_endpoint
+    - dcterms_modified
+    - sparqlserv_supported_Language
+    - sparqlserv_feature
+    - sparqlserv_result_Format
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/sparqlserv_Service
+  Literal:
+    name: Literal
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Literal
+    description: Class representing Literal
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Literal
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Literal
+  cdao_0000140:
+    name: cdao_0000140
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Cdao0000140
+    description: Class representing cdao_0000140
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/cdao_0000140
+    slots:
+    - orth_organism
+    - genex_is_Absent_In
+    - genex_is_Expressed_In
+    - ro_0002206
+    - rdfs_label
+    - rdfs_see_Also
+    - dcterms_identifier
+    - dcterms_description
+    - lscr_xref_Uniprot
+    - lscr_xref_NCBIGene
+    - lscr_xref_Ensembl_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/cdao_0000140
+  genex_Absence_Expression:
+    name: genex_Absence_Expression
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/GenexAbsenceExpression
+    description: Class representing genex_Absence_Expression
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_Absence_Expression
+    slots:
+    - genex_has_Confidence_Level
+    - genex_has_Sequence_Unit
+    - genex_has_Expression_Condition
+    - genex_has_FDRpvalue
+    - genex_has_Expression_Level
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/genex_Absence_Expression
+  owl_Object_Property:
+    name: owl_Object_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OwlObjectProperty
+    description: Class representing owl_Object_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Object_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - owl_inverse_Of
+    - rdfs_sub_Property_Of
+    - rdfs_label
+    - rdfs_comment
+    - iao_0000116
+    - iao_0000232
+    - skos_alt_Label
+    - iao_0000115
+    - iao_0000112
+    - vann_example
+    - oboinowl_in_Subset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Object_Property
+  rdf_List:
+    name: rdf_List
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/RdfList
+    description: Class representing rdf_List
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdf_List
+    slots:
+    - rdf_rest
+    - rdf_first
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdf_List
+  efo_0000001:
+    name: efo_0000001
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Efo0000001
+    description: Class representing efo_0000001
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_0000001
+    slots:
+    - ro_0002292
+    - rdfs_label
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/efo_0000001
+  owl_Annotation_Property:
+    name: owl_Annotation_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OwlAnnotationProperty
+    description: Class representing owl_Annotation_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Annotation_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - rdfs_sub_Property_Of
+    - rdfs_label
+    - rdfs_comment
+    - iao_0000115
+    - skos_example
+    - skos_scope_Note
+    - skos_definition
+    - rdfs_is_Defined_By
+    - efo_NCI_Thesaurus_definition_citation
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Annotation_Property
+  so_0000704:
+    name: so_0000704
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/So0000704
+    description: Class representing so_0000704
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/so_0000704
+    slots:
+    - orth_organism
+    - genex_is_Absent_In
+    - genex_is_Expressed_In
+    - ro_0002206
+    - rdfs_label
+    - rdfs_see_Also
+    - dcterms_identifier
+    - dcterms_description
+    - lscr_xref_Uniprot
+    - lscr_xref_NCBIGene
+    - lscr_xref_Ensembl_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/so_0000704
+  uniprot_core_Rank:
+    name: uniprot_core_Rank
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/UniprotCoreRank
+    description: Class representing uniprot_core_Rank
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_Rank
+    slots:
+    - rdfs_label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/uniprot_core_Rank
+  bfo_0000004:
+    name: bfo_0000004
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/Bfo0000004
+    description: Class representing bfo_0000004
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/bfo_0000004
+    slots:
+    - ro_0002292
+    - ro_0002162
+    - genex_has_Developmental_Stage
+    - genex_has_Anatomical_Entity
+    - genex_has_Strain
+    - rdfs_label
+    - genex_has_Sex
+    - dcterms_description
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/bfo_0000004
+  rdfs_Class:
+    name: rdfs_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/RdfsClass
+    description: Class representing rdfs_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_Class
+    slots:
+    - rdfs_sub_Class_Of
+    - rdfs_label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/rdfs_Class
+  owl_Functional_Property:
+    name: owl_Functional_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OwlFunctionalProperty
+    description: Class representing owl_Functional_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Functional_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - rdfs_label
+    - rdfs_comment
+    - dcterms_modified
+    - skos_change_Note
+    - vann_example
+    - rdfs_is_Defined_By
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Functional_Property
+  owl_Ontology:
+    name: owl_Ontology
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/OwlOntology
+    description: Class representing owl_Ontology
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Ontology
+    slots:
+    - dcterms_publisher
+    - owl_imports
+    - dcterms_license
+    - owl_version_Info
+    - rdfs_comment
+    - vann_preferred_Namespace_Prefix
+    - schema_code_Repository
+    - dcterms_modified
+    - dcterms_title
+    - dcterms_bibliographic_Citation
+    - rdfs_see_Also
+    - dcterms_abstract
+    - dcterms_issue
+    - vocab_introduction
+    - rdfs_is_Defined_By
+    - dcterms_created
+    - dcterms_description
+    - owl_prior_Version
+    - dcterms_contributor
+    - schema_image
+    - owl_version_IRI
+    - vann_preferred_Namespace_Uri
+    - bibo_status
+    - dcterms_creator
+    - owl_backward_Compatible_With
+    - voaf_extends
+    - sh_declare
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/owl_Ontology
+  void_Linkset:
+    name: void_Linkset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/VoidLinkset
+    description: Class representing void_Linkset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_Linkset
+    slots:
+    - voidext_is_Subset_Of
+    - void_subjects_Target
+    - void_objects_Target
+    - voidext_link_Predicate_Domain
+    - voidext_resource_Mapping
+    - dcterms_issued
+    - voidext_link_Predicate_Range
+    - void_link_Predicate
+    class_uri: http://jmillanacosta.github.io/rdfsolve/bgee/linkml/void_Linkset
+metamodel_version: 1.7.0
+generation_date: '2025-12-02T10:08:19'

@@ -1,0 +1,1317 @@
+@prefix ex: <https://github.com/jmillanacosta/rdfsolve/sparql/lsr/lsr/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:621c66dce143 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+        PREFIX void: <http://rdfs.org/ns/void#>
+        PREFIX void-ext: <http://ldf.fi/void-ext#>
+        SELECT DISTINCT ?subjectClass ?prop ?objectClass ?objectDatatype ?g
+        WHERE {
+          GRAPH ?g {
+            {
+              ?cp void:class ?subjectClass ;
+                  void:propertyPartition ?pp .
+              ?pp void:property ?prop .
+              OPTIONAL {
+                  {
+                      ?pp  void:classPartition [ void:class ?objectClass ] .
+                  } UNION {
+                      ?pp void-ext:datatypePartition [ void-ext:datatype ?objectDatatype ] .
+                  }
+              }
+            } UNION {
+              ?ls void:subjectsTarget [ void:class ?subjectClass ] ;
+                  void:linkPredicate ?prop ;
+                  void:objectsTarget [ void:class ?objectClass ] .
+            }
+          }
+        }
+        
+""" ;
+    schema:dateCreated "2025-12-02T10:28:03.781338+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:4d269f91109a a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+        SELECT ?class (COUNT(DISTINCT ?s) AS ?total) WHERE {
+            GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                ?s a ?class .
+            }
+        }
+        GROUP BY ?class
+        ORDER BY DESC(?total)
+        
+OFFSET 0
+LIMIT 300
+""" ;
+    schema:dateCreated "2025-12-02T10:28:06.695409+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:b78005f7880e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#domain> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:06.844552+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:9cb6cd067687 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#domain> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:06.995529+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:04a00798195c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:07.139060+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:80b54e760c3e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:07.279437+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:01072b4c68e7 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:07.420270+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:a17a543b2818 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:07.564210+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:d4c28a4c70d4 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:07.706809+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:3a42b24102d6 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:07.849992+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:133950a5dcce a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#disjointWith> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:07.991659+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:203aa4ab015e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#equivalentClass> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:08.134047+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:26732e05f6ea a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#equivalentClass> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Restriction> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:08.275912+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:31992cce7779 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:08.427356+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:53f0ca20c6dd a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Restriction> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:08.570576+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:60654d65244e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#range> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            ?o a <http://www.w3.org/2000/01/rdf-schema#Datatype> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:08.715885+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:68be4190af48 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#range> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:08.865767+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:05122a1f539d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#inverseOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:09.017432+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:81dbf9ad3175 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#oneOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:09.166094+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:7f263f747f75 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.geneontology.org/formats/oboInOwl#replaces> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:09.313089+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:51f0019a6f33 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#deprecated> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:09.466972+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:990cda80c9cb a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#comment> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:09.616761+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:92bc4d868013 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#comment> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:09.756161+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:d96999178624 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#comment> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:09.896362+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:488ae404f2ed a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#label> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:10.065396+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:11e02b9b78db a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#label> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:10.206497+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:f4f320a8f94b a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#label> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:10.348260+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:887975441329 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:10.498498+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:a6d44ba7a4ee a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:10.639943+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:d924892c2099 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:10.783928+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:7df652b5ae69 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#intersectionOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:10.930052+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:ac2ef44d2b38 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#unionOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:11.071061+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:1c22f2fe3ce1 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://purl.obolibrary.org/obo/IAO_0000115> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:11.215260+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:205fef94233d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:11.356836+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:e948e81a1572 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:11.500437+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:e9ab12f78e0f a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#domain> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:12.652569+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:e76d20c0f31e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#domain> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:12.790097+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:af17fe912feb a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:12.927064+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:96fb83657870 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:13.063585+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:fabb78128735 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:13.200385+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:a735270a7601 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:13.337620+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:e1c8042a994c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:13.475301+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:22302d38b537 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:13.612866+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:90c53f55a9d3 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#disjointWith> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:13.749265+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:6a52175ccfc5 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#equivalentClass> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:13.883421+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:8c4b14451f3e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#equivalentClass> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Restriction> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:14.019525+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:727f047e9125 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:14.158560+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:8d587546eb62 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Restriction> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:14.294644+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:61c6db9dfb33 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#range> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            ?o a <http://www.w3.org/2000/01/rdf-schema#Datatype> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:14.431006+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:44a8115cc765 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#range> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:14.566356+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:60ce16b66624 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#inverseOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            ?o a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:14.702145+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:66482289a269 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#oneOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:14.840544+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:7184d3704f65 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.geneontology.org/formats/oboInOwl#replaces> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:14.977311+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:dd98b7d09af2 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#deprecated> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:15.126081+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:149fe232298a a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#comment> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:15.263100+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:e86dcdca402c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#comment> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:15.398910+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:fef54058eefb a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#comment> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:15.536176+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:071f2127c68d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#label> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:15.678962+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:46beb43d763c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#label> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            FILTER(isLiteral(?o))
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:15.816682+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:07bc33175554 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#label> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:15.952840+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:4559f980bc66 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:16.092797+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:a27e658e2c05 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:16.228997+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:92f263204dcd a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#ObjectProperty> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:16.365806+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:91ffff522f0a a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#intersectionOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:16.503024+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:3c44a193a0d1 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.w3.org/2002/07/owl#unionOf> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:16.638443+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:b25ba45075fd a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://purl.obolibrary.org/obo/IAO_0000115> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:16.775660+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:9c90941e74d2 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:16.911138+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .
+
+ex:64460cad5bd4 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3> {
+                            ?s <http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym> ?o .
+                            ?s a <http://www.w3.org/2002/07/owl#Class> .
+                            FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:17.047284+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://bio2rdf.org/sparql>
+    ] .

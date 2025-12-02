@@ -1,0 +1,153 @@
+{
+  "@context": {
+    "patent": "http://data.epo.org/linked-data/def/patent/",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+    "cito": "http://purl.org/spar/cito/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  },
+  "@graph": [
+    {
+      "@id": "patent:Publication",
+      "patent:applicantVC": [
+        {
+          "@id": "patent:Publication"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Patent"
+        },
+        {
+          "@id": "vocabulary:PatentAssignee"
+        },
+        {
+          "@id": "vocabulary:PatentInventor"
+        }
+      ],
+      "patent:inventorVC": [
+        {
+          "@id": "patent:Publication"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Patent"
+        },
+        {
+          "@id": "vocabulary:PatentAssignee"
+        },
+        {
+          "@id": "vocabulary:PatentInventor"
+        }
+      ],
+      "cito:isCitedBy": [
+        {
+          "@id": "patent:Publication"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Patent"
+        },
+        {
+          "@id": "vocabulary:PatentAssignee"
+        },
+        {
+          "@id": "vocabulary:PatentInventor"
+        }
+      ],
+      "rdf:type": [
+        {
+          "@id": "patent:Publication"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Patent"
+        },
+        {
+          "@id": "vocabulary:PatentAssignee"
+        },
+        {
+          "@id": "vocabulary:PatentInventor"
+        }
+      ]
+    },
+    {
+      "@id": "vocabulary:Patent",
+      "patent:applicantVC": [
+        {
+          "@id": "patent:Publication"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Patent"
+        },
+        {
+          "@id": "vocabulary:PatentAssignee"
+        },
+        {
+          "@id": "vocabulary:PatentInventor"
+        }
+      ],
+      "patent:inventorVC": [
+        {
+          "@id": "patent:Publication"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Patent"
+        },
+        {
+          "@id": "vocabulary:PatentAssignee"
+        },
+        {
+          "@id": "vocabulary:PatentInventor"
+        }
+      ],
+      "cito:isCitedBy": [
+        {
+          "@id": "patent:Publication"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Patent"
+        },
+        {
+          "@id": "vocabulary:PatentAssignee"
+        },
+        {
+          "@id": "vocabulary:PatentInventor"
+        }
+      ],
+      "rdf:type": [
+        {
+          "@id": "patent:Publication"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Patent"
+        },
+        {
+          "@id": "vocabulary:PatentAssignee"
+        },
+        {
+          "@id": "vocabulary:PatentInventor"
+        }
+      ]
+    }
+  ]
+}

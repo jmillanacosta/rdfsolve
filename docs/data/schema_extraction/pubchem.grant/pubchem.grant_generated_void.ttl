@@ -1,0 +1,23 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/class_partition_> void:class <http://purl.org/cerif/frapo/Grant>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant> ;
+    void:entities 1716322 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/datatype_partition_> ns1:datatypePartition xsd:string ;
+    void:triples 1716322 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/grant/void/property_partition_> ns1:objectClass <http://purl.org/cerif/frapo/FundingAgency>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization>,
+        owl:Class,
+        <http://www.w3.org/2006/vcard/ns#Organization> ;
+    ns1:subjectClass <http://purl.org/cerif/frapo/Grant>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant> ;
+    void:property <http://purl.org/cerif/frapo/hasFundingAgency>,
+        rdf:type ;
+    void:triples 1716322 .
+

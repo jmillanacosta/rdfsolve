@@ -1,0 +1,136 @@
+name: pubchem.taxonomy_schema
+description: LinkML schema for pubchem.taxonomy generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+prefixes:
+  pubchem.taxonomy_schema:
+    prefix_prefix: pubchem.taxonomy_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+  cito:
+    prefix_prefix: cito
+    prefix_reference: http://purl.org/spar/cito/
+  mesh.vocab:
+    prefix_prefix: mesh.vocab
+    prefix_reference: http://id.nlm.nih.gov/mesh/vocab#
+  patent:
+    prefix_prefix: patent
+    prefix_reference: http://data.epo.org/linked-data/def/patent/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  sio:
+    prefix_prefix: sio
+    prefix_reference: http://semanticscience.org/resource/
+default_prefix: pubchem.taxonomy_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/rdf_type
+    owner: vocabulary_Taxonomy
+    domain_of:
+    - vocabulary_Taxonomy
+    - sio_010000
+    range: mesh_vocab_Concept
+    inlined: true
+    inlined_as_list: true
+  cito_is_Discussed_By:
+    name: cito_is_Discussed_By
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/cito_is_Discussed_By
+    description: Property cito:isDiscussedBy
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/cito_is_Discussed_By
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/cito_is_Discussed_By
+    owner: vocabulary_Taxonomy
+    domain_of:
+    - vocabulary_Taxonomy
+    - sio_010000
+    range: mesh_vocab_Concept
+    inlined: true
+    inlined_as_list: true
+  rdfs_see_Also:
+    name: rdfs_see_Also
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/rdfs_see_Also
+    description: Property rdfs:seeAlso
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/rdfs_see_Also
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/rdfs_see_Also
+    owner: vocabulary_Taxonomy
+    domain_of:
+    - vocabulary_Taxonomy
+    - sio_010000
+    range: mesh_vocab_Concept
+    inlined: true
+    inlined_as_list: true
+classes:
+  mesh_vocab_Concept:
+    name: mesh_vocab_Concept
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/MeshVocabConcept
+    description: Class representing mesh_vocab_Concept
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/mesh_vocab_Concept
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/mesh_vocab_Concept
+  sio_010000:
+    name: sio_010000
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/Sio010000
+    description: Class representing sio_010000
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/sio_010000
+    slots:
+    - cito_is_Discussed_By
+    - rdf_type
+    - rdfs_see_Also
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/sio_010000
+  vocabulary_Taxonomy:
+    name: vocabulary_Taxonomy
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/VocabularyTaxonomy
+    description: Class representing vocabulary_Taxonomy
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/vocabulary_Taxonomy
+    slots:
+    - cito_is_Discussed_By
+    - rdf_type
+    - rdfs_see_Also
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/vocabulary_Taxonomy
+metamodel_version: 1.7.0
+generation_date: '2025-12-02T10:21:22'

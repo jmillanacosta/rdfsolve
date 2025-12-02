@@ -1,0 +1,916 @@
+{
+  "@context": {
+    "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "chebi": "http://purl.obolibrary.org/obo/",
+    "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#",
+    "uniprot.core": "http://purl.uniprot.org/core/"
+  },
+  "@graph": [
+    {
+      "@id": "vocabulary:Cooccurrence",
+      "rdf:object": [
+        {
+          "@id": "chebi:7"
+        },
+        {
+          "@id": "chebi:8"
+        },
+        {
+          "@id": "chebi:9"
+        },
+        {
+          "@id": "chebi:10"
+        },
+        {
+          "@id": "chebi:11"
+        },
+        {
+          "@id": "chebi:17"
+        },
+        {
+          "@id": "chebi:19"
+        },
+        {
+          "@id": "chebi:20"
+        },
+        {
+          "@id": "chebi:23"
+        },
+        {
+          "@id": "chebi:24"
+        },
+        {
+          "@id": "chebi:25"
+        },
+        {
+          "@id": "chebi:26"
+        },
+        {
+          "@id": "chebi:28"
+        },
+        {
+          "@id": "chebi:29"
+        },
+        {
+          "@id": "chebi:31"
+        },
+        {
+          "@id": "chebi:32"
+        },
+        {
+          "@id": "chebi:36"
+        },
+        {
+          "@id": "chebi:37"
+        },
+        {
+          "@id": "chebi:38"
+        },
+        {
+          "@id": "chebi:39"
+        },
+        {
+          "@id": "chebi:40"
+        },
+        {
+          "@id": "chebi:41"
+        },
+        {
+          "@id": "chebi:42"
+        },
+        {
+          "@id": "chebi:43"
+        },
+        {
+          "@id": "chebi:47"
+        },
+        {
+          "@id": "chebi:49"
+        },
+        {
+          "@id": "chebi:53"
+        },
+        {
+          "@id": "chebi:60"
+        },
+        {
+          "@id": "chebi:63"
+        },
+        {
+          "@id": "chebi:65"
+        },
+        {
+          "@id": "chebi:74"
+        },
+        {
+          "@id": "chebi:75"
+        },
+        {
+          "@id": "chebi:76"
+        },
+        {
+          "@id": "chebi:78"
+        },
+        {
+          "@id": "chebi:79"
+        },
+        {
+          "@id": "chebi:80"
+        },
+        {
+          "@id": "chebi:84"
+        },
+        {
+          "@id": "chebi:87"
+        },
+        {
+          "@id": "chebi:88"
+        },
+        {
+          "@id": "chebi:89"
+        },
+        {
+          "@id": "chebi:90"
+        },
+        {
+          "@id": "chebi:93"
+        },
+        {
+          "@id": "chebi:98"
+        },
+        {
+          "@id": "chebi:99"
+        },
+        {
+          "@id": "chebi:100"
+        },
+        {
+          "@id": "chebi:104"
+        },
+        {
+          "@id": "chebi:106"
+        },
+        {
+          "@id": "chebi:107"
+        },
+        {
+          "@id": "chebi:109"
+        },
+        {
+          "@id": "chebi:110"
+        },
+        {
+          "@id": "chebi:112"
+        },
+        {
+          "@id": "chebi:113"
+        },
+        {
+          "@id": "chebi:114"
+        },
+        {
+          "@id": "chebi:115"
+        },
+        {
+          "@id": "chebi:116"
+        },
+        {
+          "@id": "chebi:119"
+        },
+        {
+          "@id": "chebi:120"
+        },
+        {
+          "@id": "chebi:122"
+        },
+        {
+          "@id": "chebi:123"
+        },
+        {
+          "@id": "chebi:125"
+        },
+        {
+          "@id": "chebi:126"
+        },
+        {
+          "@id": "chebi:128"
+        },
+        {
+          "@id": "chebi:129"
+        },
+        {
+          "@id": "chebi:141"
+        },
+        {
+          "@id": "chebi:146"
+        },
+        {
+          "@id": "chebi:149"
+        },
+        {
+          "@id": "chebi:151"
+        },
+        {
+          "@id": "chebi:152"
+        },
+        {
+          "@id": "chebi:154"
+        },
+        {
+          "@id": "chebi:155"
+        },
+        {
+          "@id": "chebi:157"
+        },
+        {
+          "@id": "chebi:165"
+        },
+        {
+          "@id": "chebi:166"
+        },
+        {
+          "@id": "chebi:192"
+        },
+        {
+          "@id": "ncit:C192"
+        },
+        {
+          "@id": "ncit:C193"
+        },
+        {
+          "@id": "ncit:C194"
+        },
+        {
+          "@id": "ncit:C197"
+        },
+        {
+          "@id": "ncit:C198"
+        },
+        {
+          "@id": "ncit:C199"
+        },
+        {
+          "@id": "ncit:C200"
+        },
+        {
+          "@id": "ncit:C201"
+        },
+        {
+          "@id": "ncit:C202"
+        },
+        {
+          "@id": "ncit:C203"
+        },
+        {
+          "@id": "chebi:204"
+        },
+        {
+          "@id": "ncit:C205"
+        },
+        {
+          "@id": "ncit:C206"
+        },
+        {
+          "@id": "ncit:C207"
+        },
+        {
+          "@id": "ncit:C208"
+        },
+        {
+          "@id": "ncit:C209"
+        },
+        {
+          "@id": "chebi:211"
+        },
+        {
+          "@id": "ncit:C213"
+        },
+        {
+          "@id": "ncit:C215"
+        },
+        {
+          "@id": "ncit:C217"
+        },
+        {
+          "@id": "chebi:218"
+        },
+        {
+          "@id": "ncit:C219"
+        },
+        {
+          "@id": "ncit:C220"
+        },
+        {
+          "@id": "ncit:C224"
+        },
+        {
+          "@id": "chebi:227"
+        },
+        {
+          "@id": "ncit:C227"
+        },
+        {
+          "@id": "chebi:228"
+        },
+        {
+          "@id": "ncit:C228"
+        },
+        {
+          "@id": "ncit:C229"
+        },
+        {
+          "@id": "ncit:C230"
+        },
+        {
+          "@id": "chebi:232"
+        },
+        {
+          "@id": "ncit:C233"
+        },
+        {
+          "@id": "ncit:C234"
+        },
+        {
+          "@id": "ncit:C235"
+        },
+        {
+          "@id": "ncit:C236"
+        },
+        {
+          "@id": "ncit:C237"
+        },
+        {
+          "@id": "ncit:C238"
+        },
+        {
+          "@id": "ncit:C239"
+        },
+        {
+          "@id": "ncit:C240"
+        },
+        {
+          "@id": "chebi:241"
+        },
+        {
+          "@id": "ncit:C244"
+        },
+        {
+          "@id": "ncit:C246"
+        },
+        {
+          "@id": "ncit:C249"
+        },
+        {
+          "@id": "ncit:C251"
+        },
+        {
+          "@id": "ncit:C252"
+        },
+        {
+          "@id": "ncit:C253"
+        },
+        {
+          "@id": "chebi:270"
+        },
+        {
+          "@id": "chebi:272"
+        },
+        {
+          "@id": "ncit:C282"
+        },
+        {
+          "@id": "ncit:C285"
+        },
+        {
+          "@id": "ncit:C287"
+        },
+        {
+          "@id": "ncit:C289"
+        },
+        {
+          "@id": "ncit:C290"
+        },
+        {
+          "@id": "ncit:C291"
+        },
+        {
+          "@id": "ncit:C293"
+        },
+        {
+          "@id": "ncit:C294"
+        },
+        {
+          "@id": "ncit:C295"
+        },
+        {
+          "@id": "ncit:C297"
+        },
+        {
+          "@id": "chebi:299"
+        },
+        {
+          "@id": "ncit:C299"
+        },
+        {
+          "@id": "chebi:300"
+        },
+        {
+          "@id": "ncit:C300"
+        },
+        {
+          "@id": "chebi:301"
+        },
+        {
+          "@id": "ncit:C302"
+        },
+        {
+          "@id": "ncit:C303"
+        },
+        {
+          "@id": "ncit:C305"
+        },
+        {
+          "@id": "ncit:C309"
+        },
+        {
+          "@id": "ncit:C310"
+        },
+        {
+          "@id": "ncit:C311"
+        },
+        {
+          "@id": "ncit:C312"
+        },
+        {
+          "@id": "ncit:C313"
+        },
+        {
+          "@id": "ncit:C315"
+        },
+        {
+          "@id": "ncit:C317"
+        },
+        {
+          "@id": "ncit:C318"
+        },
+        {
+          "@id": "ncit:C320"
+        },
+        {
+          "@id": "ncit:C321"
+        },
+        {
+          "@id": "ncit:C322"
+        },
+        {
+          "@id": "ncit:C323"
+        },
+        {
+          "@id": "ncit:C327"
+        },
+        {
+          "@id": "ncit:C328"
+        },
+        {
+          "@id": "ncit:C329"
+        },
+        {
+          "@id": "ncit:C330"
+        },
+        {
+          "@id": "ncit:C331"
+        },
+        {
+          "@id": "ncit:C332"
+        },
+        {
+          "@id": "ncit:C334"
+        },
+        {
+          "@id": "ncit:C335"
+        },
+        {
+          "@id": "ncit:C336"
+        },
+        {
+          "@id": "ncit:C337"
+        },
+        {
+          "@id": "ncit:C338"
+        },
+        {
+          "@id": "ncit:C339"
+        },
+        {
+          "@id": "ncit:C340"
+        },
+        {
+          "@id": "ncit:C341"
+        },
+        {
+          "@id": "ncit:C342"
+        },
+        {
+          "@id": "ncit:C343"
+        },
+        {
+          "@id": "ncit:C349"
+        },
+        {
+          "@id": "ncit:C352"
+        },
+        {
+          "@id": "ncit:C353"
+        },
+        {
+          "@id": "ncit:C354"
+        },
+        {
+          "@id": "ncit:C355"
+        },
+        {
+          "@id": "ncit:C356"
+        },
+        {
+          "@id": "ncit:C357"
+        },
+        {
+          "@id": "ncit:C358"
+        },
+        {
+          "@id": "ncit:C362"
+        },
+        {
+          "@id": "ncit:C363"
+        },
+        {
+          "@id": "ncit:C364"
+        },
+        {
+          "@id": "ncit:C365"
+        },
+        {
+          "@id": "chebi:367"
+        },
+        {
+          "@id": "ncit:C367"
+        },
+        {
+          "@id": "chebi:368"
+        },
+        {
+          "@id": "ncit:C369"
+        },
+        {
+          "@id": "ncit:C370"
+        },
+        {
+          "@id": "chebi:371"
+        },
+        {
+          "@id": "ncit:C372"
+        },
+        {
+          "@id": "ncit:C373"
+        },
+        {
+          "@id": "ncit:C374"
+        },
+        {
+          "@id": "ncit:C375"
+        },
+        {
+          "@id": "ncit:C376"
+        },
+        {
+          "@id": "ncit:C377"
+        },
+        {
+          "@id": "ncit:C378"
+        },
+        {
+          "@id": "ncit:C379"
+        },
+        {
+          "@id": "ncit:C380"
+        },
+        {
+          "@id": "ncit:C381"
+        },
+        {
+          "@id": "ncit:C382"
+        },
+        {
+          "@id": "ncit:C384"
+        },
+        {
+          "@id": "ncit:C385"
+        },
+        {
+          "@id": "ncit:C386"
+        },
+        {
+          "@id": "ncit:C391"
+        },
+        {
+          "@id": "ncit:C393"
+        },
+        {
+          "@id": "ncit:C394"
+        },
+        {
+          "@id": "ncit:C395"
+        },
+        {
+          "@id": "ncit:C397"
+        },
+        {
+          "@id": "ncit:C398"
+        },
+        {
+          "@id": "ncit:C399"
+        },
+        {
+          "@id": "ncit:C401"
+        },
+        {
+          "@id": "ncit:C402"
+        },
+        {
+          "@id": "ncit:C403"
+        },
+        {
+          "@id": "ncit:C404"
+        },
+        {
+          "@id": "ncit:C405"
+        },
+        {
+          "@id": "ncit:C406"
+        },
+        {
+          "@id": "ncit:C407"
+        },
+        {
+          "@id": "ncit:C408"
+        },
+        {
+          "@id": "ncit:C409"
+        },
+        {
+          "@id": "ncit:C410"
+        },
+        {
+          "@id": "ncit:C411"
+        },
+        {
+          "@id": "ncit:C412"
+        },
+        {
+          "@id": "ncit:C414"
+        },
+        {
+          "@id": "ncit:C415"
+        },
+        {
+          "@id": "ncit:C416"
+        },
+        {
+          "@id": "ncit:C417"
+        },
+        {
+          "@id": "ncit:C418"
+        },
+        {
+          "@id": "ncit:C419"
+        },
+        {
+          "@id": "ncit:C420"
+        },
+        {
+          "@id": "ncit:C421"
+        },
+        {
+          "@id": "chebi:422"
+        },
+        {
+          "@id": "ncit:C422"
+        },
+        {
+          "@id": "ncit:C423"
+        },
+        {
+          "@id": "ncit:C424"
+        },
+        {
+          "@id": "ncit:C425"
+        },
+        {
+          "@id": "ncit:C428"
+        },
+        {
+          "@id": "ncit:C429"
+        },
+        {
+          "@id": "ncit:C430"
+        },
+        {
+          "@id": "ncit:C431"
+        },
+        {
+          "@id": "ncit:C432"
+        },
+        {
+          "@id": "ncit:C433"
+        },
+        {
+          "@id": "ncit:C435"
+        },
+        {
+          "@id": "ncit:C436"
+        },
+        {
+          "@id": "ncit:C437"
+        },
+        {
+          "@id": "ncit:C439"
+        },
+        {
+          "@id": "ncit:C440"
+        },
+        {
+          "@id": "chebi:444"
+        },
+        {
+          "@id": "ncit:C445"
+        },
+        {
+          "@id": "ncit:C447"
+        },
+        {
+          "@id": "ncit:C454"
+        },
+        {
+          "@id": "ncit:C455"
+        },
+        {
+          "@id": "ncit:C456"
+        },
+        {
+          "@id": "ncit:C457"
+        },
+        {
+          "@id": "ncit:C458"
+        },
+        {
+          "@id": "ncit:C460"
+        },
+        {
+          "@id": "ncit:C462"
+        },
+        {
+          "@id": "ncit:C466"
+        },
+        {
+          "@id": "chebi:468"
+        },
+        {
+          "@id": "ncit:C468"
+        },
+        {
+          "@id": "chebi:469"
+        },
+        {
+          "@id": "chebi:470"
+        },
+        {
+          "@id": "ncit:C472"
+        },
+        {
+          "@id": "ncit:C473"
+        },
+        {
+          "@id": "ncit:C474"
+        },
+        {
+          "@id": "ncit:C476"
+        },
+        {
+          "@id": "ncit:C478"
+        },
+        {
+          "@id": "ncit:C479"
+        },
+        {
+          "@id": "ncit:C480"
+        },
+        {
+          "@id": "ncit:C482"
+        },
+        {
+          "@id": "ncit:C484"
+        },
+        {
+          "@id": "ncit:C485"
+        },
+        {
+          "@id": "ncit:C486"
+        },
+        {
+          "@id": "chebi:488"
+        },
+        {
+          "@id": "ncit:C488"
+        },
+        {
+          "@id": "ncit:C489"
+        },
+        {
+          "@id": "ncit:C490"
+        },
+        {
+          "@id": "ncit:C491"
+        },
+        {
+          "@id": "ncit:C494"
+        },
+        {
+          "@id": "ncit:C499"
+        },
+        {
+          "@id": "ncit:C500"
+        },
+        {
+          "@id": "ncit:C501"
+        },
+        {
+          "@id": "ncit:C502"
+        },
+        {
+          "@id": "ncit:C504"
+        },
+        {
+          "@id": "ncit:C505"
+        },
+        {
+          "@id": "ncit:C506"
+        },
+        {
+          "@id": "ncit:C507"
+        },
+        {
+          "@id": "chebi:508"
+        },
+        {
+          "@id": "ncit:C508"
+        },
+        {
+          "@id": "ncit:C510"
+        },
+        {
+          "@id": "chebi:512"
+        },
+        {
+          "@id": "chebi:513"
+        },
+        {
+          "@id": "ncit:C513"
+        },
+        {
+          "@id": "chebi:514"
+        },
+        {
+          "@id": "ncit:C515"
+        },
+        {
+          "@id": "ncit:C517"
+        },
+        {
+          "@id": "uniprot.core:Enzyme"
+        },
+        {
+          "@id": "ncit:C519"
+        },
+        {
+          "@id": "chebi:520"
+        },
+        {
+          "@id": "ncit:C520"
+        },
+        {
+          "@id": "ncit:C522"
+        },
+        {
+          "@id": "ncit:C523"
+        },
+        {
+          "@id": "ncit:C524"
+        },
+        {
+          "@id": "ncit:C526"
+        }
+      ]
+    }
+  ]
+}

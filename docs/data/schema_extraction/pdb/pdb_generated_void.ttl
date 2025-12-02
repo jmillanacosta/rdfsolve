@@ -1,0 +1,2411 @@
+@prefix ns0: <http://ldf.fi/void-ext#> .
+@prefix ns1: <http://rdfportal.org/dataset/pdbj/void/> .
+@prefix ns2: <http://rdf.wwpdb.org/schema/pdbx-validation-v4.owl#> .
+@prefix ns4: <http://rdf.wwpdb.org/schema/pdbx-v50.owl#> .
+@prefix ns7: <http://ddbj.nig.ac.jp/ontologies/taxonomy/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_atom_sites void:class ns4:atom_sites ;
+    void:entities 204375 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_atom_sitesCategory void:class ns4:atom_sitesCategory ;
+    void:entities 204375 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_atom_typeCategory void:class ns4:atom_typeCategory ;
+    void:entities 204375 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_audit_conform void:class ns4:audit_conform ;
+    void:entities 204375 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_audit_conformCategory void:class ns4:audit_conformCategory ;
+    void:entities 204375 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_cellCategory void:class ns4:cellCategory ;
+    void:entities 192176 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_cell_measurementCategory void:class ns4:cell_measurementCategory ;
+    void:entities 171 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_comp void:class ns4:chem_comp ;
+    void:entities 4584786 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_compCategory void:class ns4:chem_compCategory ;
+    void:entities 244528 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_comp_atom void:class ns4:chem_comp_atom ;
+    void:entities 1890924 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_comp_atomCategory void:class ns4:chem_comp_atomCategory ;
+    void:entities 40153 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_comp_bond void:class ns4:chem_comp_bond ;
+    void:entities 1964021 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_linkCategory void:class ns4:chem_linkCategory ;
+    void:entities 2 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_citation void:class ns4:citation ;
+    void:entities 247556 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_citationCategory void:class ns4:citationCategory ;
+    void:entities 204326 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_citation_author void:class ns4:citation_author ;
+    void:entities 1938769 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_citation_authorCategory void:class ns4:citation_authorCategory ;
+    void:entities 204320 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_citation_editorCategory void:class ns4:citation_editorCategory ;
+    void:entities 333 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_2Category void:class ns4:database_2Category ;
+    void:entities 204375 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_caveat void:class ns4:database_PDB_caveat ;
+    void:entities 19181 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_caveatCategory void:class ns4:database_PDB_caveatCategory ;
+    void:entities 4823 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_matrix void:class ns4:database_PDB_matrix ;
+    void:entities 85907 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_matrixCategory void:class ns4:database_PDB_matrixCategory ;
+    void:entities 85907 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_tvectCategory void:class ns4:database_PDB_tvectCategory ;
+    void:entities 11 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock void:class ns4:datablock ;
+    void:entities 245833 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_detectorCategory void:class ns4:diffrn_detectorCategory ;
+    void:entities 170056 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_radiation void:class ns4:diffrn_radiation ;
+    void:entities 180321 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_radiationCategory void:class ns4:diffrn_radiationCategory ;
+    void:entities 177298 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_radiation_wavelength void:class ns4:diffrn_radiation_wavelength ;
+    void:entities 191328 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_reflns void:class ns4:diffrn_reflns ;
+    void:entities 2200 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_reflnsCategory void:class ns4:diffrn_reflnsCategory ;
+    void:entities 1890 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_2d_crystal_entity void:class ns4:em_2d_crystal_entity ;
+    void:entities 13 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_3d_fitting void:class ns4:em_3d_fitting ;
+    void:entities 14663 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_3d_fittingCategory void:class ns4:em_3d_fittingCategory ;
+    void:entities 14489 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_3d_fitting_listCategory void:class ns4:em_3d_fitting_listCategory ;
+    void:entities 4191 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_3d_reconstruction void:class ns4:em_3d_reconstruction ;
+    void:entities 15293 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_3d_reconstructionCategory void:class ns4:em_3d_reconstructionCategory ;
+    void:entities 15250 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_buffer void:class ns4:em_buffer ;
+    void:entities 15139 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_crystal_formation void:class ns4:em_crystal_formation ;
+    void:entities 174 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_ctf_correction void:class ns4:em_ctf_correction ;
+    void:entities 15008 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_diffraction void:class ns4:em_diffraction ;
+    void:entities 191 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_diffraction_shellCategory void:class ns4:em_diffraction_shellCategory ;
+    void:entities 174 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_diffraction_stats void:class ns4:em_diffraction_stats ;
+    void:entities 179 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_diffraction_statsCategory void:class ns4:em_diffraction_statsCategory ;
+    void:entities 179 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_embeddingCategory void:class ns4:em_embeddingCategory ;
+    void:entities 133 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assemblyCategory void:class ns4:em_entity_assemblyCategory ;
+    void:entities 15258 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assembly_molwtCategory void:class ns4:em_entity_assembly_molwtCategory ;
+    void:entities 8798 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assembly_naturalsourceCategory void:class ns4:em_entity_assembly_naturalsourceCategory ;
+    void:entities 13831 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assembly_syntheticCategory void:class ns4:em_entity_assembly_syntheticCategory ;
+    void:entities 163 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_helical_entityCategory void:class ns4:em_helical_entityCategory ;
+    void:entities 822 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_image_processing void:class ns4:em_image_processing ;
+    void:entities 15290 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_image_recording void:class ns4:em_image_recording ;
+    void:entities 15473 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_image_scans void:class ns4:em_image_scans ;
+    void:entities 3997 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_imagingCategory void:class ns4:em_imagingCategory ;
+    void:entities 15258 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_imaging_opticsCategory void:class ns4:em_imaging_opticsCategory ;
+    void:entities 3028 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_particle_selection void:class ns4:em_particle_selection ;
+    void:entities 4327 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_sample_supportCategory void:class ns4:em_sample_supportCategory ;
+    void:entities 8274 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_specimen void:class ns4:em_specimen ;
+    void:entities 15273 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_specimenCategory void:class ns4:em_specimenCategory ;
+    void:entities 15258 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_virus_entityCategory void:class ns4:em_virus_entityCategory ;
+    void:entities 1225 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_virus_natural_host void:class ns4:em_virus_natural_host ;
+    void:entities 730 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_virus_shell void:class ns4:em_virus_shell ;
+    void:entities 434 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_virus_shellCategory void:class ns4:em_virus_shellCategory ;
+    void:entities 406 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_virus_synthetic void:class ns4:em_virus_synthetic ;
+    void:entities 16 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_virus_syntheticCategory void:class ns4:em_virus_syntheticCategory ;
+    void:entities 16 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_volume_selection void:class ns4:em_volume_selection ;
+    void:entities 208 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_volume_selectionCategory void:class ns4:em_volume_selectionCategory ;
+    void:entities 208 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity void:class ns4:entity ;
+    void:entities 967087 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entityCategory void:class ns4:entityCategory ;
+    void:entities 204375 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_keywords void:class ns4:entity_keywords ;
+    void:entities 292 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_name_com void:class ns4:entity_name_com ;
+    void:entities 206212 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_name_sys void:class ns4:entity_name_sys ;
+    void:entities 1981 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_name_sysCategory void:class ns4:entity_name_sysCategory ;
+    void:entities 1748 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_polyCategory void:class ns4:entity_polyCategory ;
+    void:entities 204349 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_src_gen void:class ns4:entity_src_gen ;
+    void:entities 242092 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_src_natCategory void:class ns4:entity_src_natCategory ;
+    void:entities 20721 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_exptl void:class ns4:exptl ;
+    void:entities 204594 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_exptlCategory void:class ns4:exptlCategory ;
+    void:entities 204375 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_exptl_crystal void:class ns4:exptl_crystal ;
+    void:entities 179055 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_exptl_crystal_grow_comp void:class ns4:exptl_crystal_grow_comp ;
+    void:entities 18401 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_ndb_struct_na_base_pair void:class ns4:ndb_struct_na_base_pair ;
+    void:entities 3281612 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_ndb_struct_na_base_pair_step void:class ns4:ndb_struct_na_base_pair_step ;
+    void:entities 2907484 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_SG_projectCategory void:class ns4:pdbx_SG_projectCategory ;
+    void:entities 16028 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_category void:class ns4:pdbx_audit_revision_category ;
+    void:entities 596875 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_categoryCategory void:class ns4:pdbx_audit_revision_categoryCategory ;
+    void:entities 121173 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_itemCategory void:class ns4:pdbx_audit_revision_itemCategory ;
+    void:entities 113831 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_support void:class ns4:pdbx_audit_support ;
+    void:entities 110645 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_buffer void:class ns4:pdbx_buffer ;
+    void:entities 3 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_bufferCategory void:class ns4:pdbx_bufferCategory ;
+    void:entities 3 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_atom_related void:class ns4:pdbx_chem_comp_atom_related ;
+    void:entities 7285 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_audit void:class ns4:pdbx_chem_comp_audit ;
+    void:entities 101081 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_auditCategory void:class ns4:pdbx_chem_comp_auditCategory ;
+    void:entities 40068 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_feature void:class ns4:pdbx_chem_comp_feature ;
+    void:entities 3270 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_relatedCategory void:class ns4:pdbx_chem_comp_relatedCategory ;
+    void:entities 308 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_synonymsCategory void:class ns4:pdbx_chem_comp_synonymsCategory ;
+    void:entities 6920 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_contact_author void:class ns4:pdbx_contact_author ;
+    void:entities 17332 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_database_PDB_obs_sprCategory void:class ns4:pdbx_database_PDB_obs_sprCategory ;
+    void:entities 3369 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_database_related void:class ns4:pdbx_database_related ;
+    void:entities 533777 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_database_remark void:class ns4:pdbx_database_remark ;
+    void:entities 10460 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_deposit_group void:class ns4:pdbx_deposit_group ;
+    void:entities 4863 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_diffrn_reflns_shell void:class ns4:pdbx_diffrn_reflns_shell ;
+    void:entities 24436 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_entity_branch_descriptorCategory void:class ns4:pdbx_entity_branch_descriptorCategory ;
+    void:entities 11101 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_entity_branch_linkCategory void:class ns4:pdbx_entity_branch_linkCategory ;
+    void:entities 11103 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_entity_branch_list void:class ns4:pdbx_entity_branch_list ;
+    void:entities 63602 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_entry_details void:class ns4:pdbx_entry_details ;
+    void:entities 55168 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_entry_detailsCategory void:class ns4:pdbx_entry_detailsCategory ;
+    void:entities 55168 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_exptl_crystal_grow_sol void:class ns4:pdbx_exptl_crystal_grow_sol ;
+    void:entities 15 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_exptl_crystal_grow_solCategory void:class ns4:pdbx_exptl_crystal_grow_solCategory ;
+    void:entities 5 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_helical_symmetry void:class ns4:pdbx_helical_symmetry ;
+    void:entities 247 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_helical_symmetryCategory void:class ns4:pdbx_helical_symmetryCategory ;
+    void:entities 247 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_molecule_featuresCategory void:class ns4:pdbx_molecule_featuresCategory ;
+    void:entities 4307 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_constraintsCategory void:class ns4:pdbx_nmr_constraintsCategory ;
+    void:entities 1424 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_ensemble void:class ns4:pdbx_nmr_ensemble ;
+    void:entities 14099 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_ensembleCategory void:class ns4:pdbx_nmr_ensembleCategory ;
+    void:entities 14099 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_ensemble_rms void:class ns4:pdbx_nmr_ensemble_rms ;
+    void:entities 407 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_ensemble_rmsCategory void:class ns4:pdbx_nmr_ensemble_rmsCategory ;
+    void:entities 407 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_exptlCategory void:class ns4:pdbx_nmr_exptlCategory ;
+    void:entities 12868 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_exptl_sampleCategory void:class ns4:pdbx_nmr_exptl_sampleCategory ;
+    void:entities 7007 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_exptl_sample_conditions void:class ns4:pdbx_nmr_exptl_sample_conditions ;
+    void:entities 15631 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_representative void:class ns4:pdbx_nmr_representative ;
+    void:entities 11761 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_sample_details void:class ns4:pdbx_nmr_sample_details ;
+    void:entities 21948 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_software void:class ns4:pdbx_nmr_software ;
+    void:entities 64338 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_softwareCategory void:class ns4:pdbx_nmr_softwareCategory ;
+    void:entities 13835 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_spectrometerCategory void:class ns4:pdbx_nmr_spectrometerCategory ;
+    void:entities 13146 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nonpoly_scheme void:class ns4:pdbx_nonpoly_scheme ;
+    void:entities 54245033 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MAD_set void:class ns4:pdbx_phasing_MAD_set ;
+    void:entities 602 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MAD_setCategory void:class ns4:pdbx_phasing_MAD_setCategory ;
+    void:entities 220 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MAD_set_shellCategory void:class ns4:pdbx_phasing_MAD_set_shellCategory ;
+    void:entities 218 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MAD_shell void:class ns4:pdbx_phasing_MAD_shell ;
+    void:entities 3128 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MAD_shellCategory void:class ns4:pdbx_phasing_MAD_shellCategory ;
+    void:entities 282 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MRCategory void:class ns4:pdbx_phasing_MRCategory ;
+    void:entities 7544 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_dmCategory void:class ns4:pdbx_phasing_dmCategory ;
+    void:entities 660 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_dm_shell void:class ns4:pdbx_phasing_dm_shell ;
+    void:entities 10842 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_dm_shellCategory void:class ns4:pdbx_phasing_dm_shellCategory ;
+    void:entities 693 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_point_symmetryCategory void:class ns4:pdbx_point_symmetryCategory ;
+    void:entities 1256 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_poly_seq_scheme void:class ns4:pdbx_poly_seq_scheme ;
+    void:entities 215131646 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_poly_seq_schemeCategory void:class ns4:pdbx_poly_seq_schemeCategory ;
+    void:entities 204349 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_prd_audit void:class ns4:pdbx_prd_audit ;
+    void:entities 3594 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_link void:class ns4:pdbx_reference_entity_link ;
+    void:entities 144 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_linkCategory void:class ns4:pdbx_reference_entity_linkCategory ;
+    void:entities 51 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_list void:class ns4:pdbx_reference_entity_list ;
+    void:entities 1212 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_poly void:class ns4:pdbx_reference_entity_poly ;
+    void:entities 1110 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_polyCategory void:class ns4:pdbx_reference_entity_polyCategory ;
+    void:entities 1107 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_sequence void:class ns4:pdbx_reference_entity_sequence ;
+    void:entities 1110 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_sequenceCategory void:class ns4:pdbx_reference_entity_sequenceCategory ;
+    void:entities 1107 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_src_nat void:class ns4:pdbx_reference_entity_src_nat ;
+    void:entities 259 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_src_natCategory void:class ns4:pdbx_reference_entity_src_natCategory ;
+    void:entities 214 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule void:class ns4:pdbx_reference_molecule ;
+    void:entities 1112 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_annotation void:class ns4:pdbx_reference_molecule_annotation ;
+    void:entities 666 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_annotationCategory void:class ns4:pdbx_reference_molecule_annotationCategory ;
+    void:entities 193 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_related_structuresCategory void:class ns4:pdbx_reference_molecule_related_structuresCategory ;
+    void:entities 12 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_synonyms void:class ns4:pdbx_reference_molecule_synonyms ;
+    void:entities 1943 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_refine void:class ns4:pdbx_refine ;
+    void:entities 5084 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_refine_tlsCategory void:class ns4:pdbx_refine_tlsCategory ;
+    void:entities 58855 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_refine_tls_groupCategory void:class ns4:pdbx_refine_tls_groupCategory ;
+    void:entities 58803 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reflns_twin void:class ns4:pdbx_reflns_twin ;
+    void:entities 3307 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_related_exp_data_setCategory void:class ns4:pdbx_related_exp_data_setCategory ;
+    void:entities 972 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_sample_delivery void:class ns4:pdbx_serial_crystallography_sample_delivery ;
+    void:entities 590 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_sample_deliveryCategory void:class ns4:pdbx_serial_crystallography_sample_deliveryCategory ;
+    void:entities 579 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_sample_delivery_fixed_targetCategory void:class ns4:pdbx_serial_crystallography_sample_delivery_fixed_targetCategory ;
+    void:entities 99 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_sample_delivery_injection void:class ns4:pdbx_serial_crystallography_sample_delivery_injection ;
+    void:entities 156 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_sifts_xref_db_segments void:class ns4:pdbx_sifts_xref_db_segments ;
+    void:entities 64141936 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_soln_scatterCategory void:class ns4:pdbx_soln_scatterCategory ;
+    void:entities 55 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_soln_scatter_modelCategory void:class ns4:pdbx_soln_scatter_modelCategory ;
+    void:entities 50 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly_auth_evidence void:class ns4:pdbx_struct_assembly_auth_evidence ;
+    void:entities 74338 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly_auth_evidenceCategory void:class ns4:pdbx_struct_assembly_auth_evidenceCategory ;
+    void:entities 68404 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly_gen void:class ns4:pdbx_struct_assembly_gen ;
+    void:entities 312498 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly_prop void:class ns4:pdbx_struct_assembly_prop ;
+    void:entities 435604 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly_propCategory void:class ns4:pdbx_struct_assembly_propCategory ;
+    void:entities 110238 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_chem_comp_diagnostics void:class ns4:pdbx_struct_chem_comp_diagnostics ;
+    void:entities 145 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_conn_angleCategory void:class ns4:pdbx_struct_conn_angleCategory ;
+    void:entities 73236 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_legacy_oper_list void:class ns4:pdbx_struct_legacy_oper_list ;
+    void:entities 1650 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_legacy_oper_listCategory void:class ns4:pdbx_struct_legacy_oper_listCategory ;
+    void:entities 31 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_mod_residue void:class ns4:pdbx_struct_mod_residue ;
+    void:entities 227629 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_mod_residueCategory void:class ns4:pdbx_struct_mod_residueCategory ;
+    void:entities 28786 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_sheet_hbondCategory void:class ns4:pdbx_struct_sheet_hbondCategory ;
+    void:entities 176448 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_special_symmetry void:class ns4:pdbx_struct_special_symmetry ;
+    void:entities 65887 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_special_symmetryCategory void:class ns4:pdbx_struct_special_symmetryCategory ;
+    void:entities 30340 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_unobs_or_zero_occ_atoms void:class ns4:pdbx_unobs_or_zero_occ_atoms ;
+    void:entities 21278077 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_unobs_or_zero_occ_residues void:class ns4:pdbx_unobs_or_zero_occ_residues ;
+    void:entities 23654553 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_unobs_or_zero_occ_residuesCategory void:class ns4:pdbx_unobs_or_zero_occ_residuesCategory ;
+    void:entities 160984 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_peptide_omega void:class ns4:pdbx_validate_peptide_omega ;
+    void:entities 174220 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_planesCategory void:class ns4:pdbx_validate_planesCategory ;
+    void:entities 15267 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_rmsd_angleCategory void:class ns4:pdbx_validate_rmsd_angleCategory ;
+    void:entities 78151 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_rmsd_bond void:class ns4:pdbx_validate_rmsd_bond ;
+    void:entities 793145 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_symm_contact void:class ns4:pdbx_validate_symm_contact ;
+    void:entities 131045 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MAD_expt void:class ns4:phasing_MAD_expt ;
+    void:entities 149 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MAD_exptCategory void:class ns4:phasing_MAD_exptCategory ;
+    void:entities 147 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MAD_set void:class ns4:phasing_MAD_set ;
+    void:entities 420 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MAD_setCategory void:class ns4:phasing_MAD_setCategory ;
+    void:entities 147 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIRCategory void:class ns4:phasing_MIRCategory ;
+    void:entities 39 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_der void:class ns4:phasing_MIR_der ;
+    void:entities 249 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_der_siteCategory void:class ns4:phasing_MIR_der_siteCategory ;
+    void:entities 24 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_set void:class ns4:phasing_set ;
+    void:entities 568 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_publ void:class ns4:publ ;
+    void:entities 2 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine void:class ns4:refine ;
+    void:entities 183160 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refineCategory void:class ns4:refineCategory ;
+    void:entities 183031 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_funct_minimized void:class ns4:refine_funct_minimized ;
+    void:entities 48 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_funct_minimizedCategory void:class ns4:refine_funct_minimizedCategory ;
+    void:entities 24 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_hist void:class ns4:refine_hist ;
+    void:entities 176244 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_histCategory void:class ns4:refine_histCategory ;
+    void:entities 176243 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_ls_restr void:class ns4:refine_ls_restr ;
+    void:entities 2555084 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_ls_restrCategory void:class ns4:refine_ls_restrCategory ;
+    void:entities 167918 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_ls_restr_ncs void:class ns4:refine_ls_restr_ncs ;
+    void:entities 200684 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_occupancy void:class ns4:refine_occupancy ;
+    void:entities 572 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reflnCategory void:class ns4:reflnCategory ;
+    void:entities 4 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refln_sys_absCategory void:class ns4:refln_sys_absCategory ;
+    void:entities 9 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reflns_scaleCategory void:class ns4:reflns_scaleCategory ;
+    void:entities 39 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reflns_shellCategory void:class ns4:reflns_shellCategory ;
+    void:entities 158862 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_software void:class ns4:software ;
+    void:entities 830773 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_space_group void:class ns4:space_group ;
+    void:entities 11627 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_space_groupCategory void:class ns4:space_groupCategory ;
+    void:entities 11627 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_space_group_symopCategory void:class ns4:space_group_symopCategory ;
+    void:entities 11713 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct void:class ns4:struct ;
+    void:entities 204375 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_asym void:class ns4:struct_asym ;
+    void:entities 6285516 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_conn void:class ns4:struct_conn ;
+    void:entities 11874070 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_conn_typeCategory void:class ns4:struct_conn_typeCategory ;
+    void:entities 135308 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_mon_prot_cisCategory void:class ns4:struct_mon_prot_cisCategory ;
+    void:entities 94940 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_dom_lim void:class ns4:struct_ncs_dom_lim ;
+    void:entities 259698 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_ens void:class ns4:struct_ncs_ens ;
+    void:entities 71379 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_ensCategory void:class ns4:struct_ncs_ensCategory ;
+    void:entities 17573 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_ens_genCategory void:class ns4:struct_ncs_ens_genCategory ;
+    void:entities 620 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_oper void:class ns4:struct_ncs_oper ;
+    void:entities 33990 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_operCategory void:class ns4:struct_ncs_operCategory ;
+    void:entities 7043 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ref void:class ns4:struct_ref ;
+    void:entities 429988 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ref_seq_dif void:class ns4:struct_ref_seq_dif ;
+    void:entities 2711923 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ref_seq_difCategory void:class ns4:struct_ref_seq_difCategory ;
+    void:entities 130196 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_sheet void:class ns4:struct_sheet ;
+    void:entities 1848032 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_sheetCategory void:class ns4:struct_sheetCategory ;
+    void:entities 178414 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_sheet_order void:class ns4:struct_sheet_order ;
+    void:entities 5608895 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_sheet_rangeCategory void:class ns4:struct_sheet_rangeCategory ;
+    void:entities 178414 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_siteCategory void:class ns4:struct_siteCategory ;
+    void:entities 119738 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_site_gen void:class ns4:struct_site_gen ;
+    void:entities 7565470 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_site_keywords void:class ns4:struct_site_keywords ;
+    void:entities 441 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_site_keywordsCategory void:class ns4:struct_site_keywordsCategory ;
+    void:entities 411 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_symmetryCategory void:class ns4:symmetryCategory ;
+    void:entities 191989 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_symmetry_equiv void:class ns4:symmetry_equiv ;
+    void:entities 293 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_entry void:class ns2:entry ;
+    void:entities 204345 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_dcc_density void:class ns2:pdbx_dcc_density ;
+    void:entities 163692 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_dcc_density_corrCategory void:class ns2:pdbx_dcc_density_corrCategory ;
+    void:entities 163692 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_dcc_entity_geometryCategory void:class ns2:pdbx_dcc_entity_geometryCategory ;
+    void:entities 203635 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_dcc_geometry void:class ns2:pdbx_dcc_geometry ;
+    void:entities 204345 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_dcc_geometryCategory void:class ns2:pdbx_dcc_geometryCategory ;
+    void:entities 204345 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_dcc_map void:class ns2:pdbx_dcc_map ;
+    void:entities 168765899 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_dcc_map_overallCategory void:class ns2:pdbx_dcc_map_overallCategory ;
+    void:entities 160299 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_dcc_mon_geometry void:class ns2:pdbx_dcc_mon_geometry ;
+    void:entities 1240101 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_atom_inclusion void:class ns2:pdbx_em_atom_inclusion ;
+    void:entities 29652 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_atom_inclusionCategory void:class ns2:pdbx_em_atom_inclusionCategory ;
+    void:entities 14826 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_atom_inclusion_marker void:class ns2:pdbx_em_atom_inclusion_marker ;
+    void:entities 3825108 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_density_distribution void:class ns2:pdbx_em_density_distribution ;
+    void:entities 14828 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_density_distributionCategory void:class ns2:pdbx_em_density_distributionCategory ;
+    void:entities 14828 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_density_distribution_marker void:class ns2:pdbx_em_density_distribution_marker ;
+    void:entities 1885100 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_fsc_curveCategory void:class ns2:pdbx_em_fsc_curveCategory ;
+    void:entities 8676 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_fsc_curve_marker void:class ns2:pdbx_em_fsc_curve_marker ;
+    void:entities 2785781 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_fsc_cutoff_curveCategory void:class ns2:pdbx_em_fsc_cutoff_curveCategory ;
+    void:entities 8676 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_fsc_cutoff_curve_markerCategory void:class ns2:pdbx_em_fsc_cutoff_curve_markerCategory ;
+    void:entities 8676 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_rapsCategory void:class ns2:pdbx_em_rapsCategory ;
+    void:entities 14211 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_raw_raps_markerCategory void:class ns2:pdbx_em_raw_raps_markerCategory ;
+    void:entities 6172 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_validate_map_modelCategory void:class ns2:pdbx_em_validate_map_modelCategory ;
+    void:entities 14723 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_validate_map_model_overallCategory void:class ns2:pdbx_em_validate_map_model_overallCategory ;
+    void:entities 14725 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_volume_estimate void:class ns2:pdbx_em_volume_estimate ;
+    void:entities 14828 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_volume_estimateCategory void:class ns2:pdbx_em_volume_estimateCategory ;
+    void:entities 14828 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_volume_estimate_markerCategory void:class ns2:pdbx_em_volume_estimate_markerCategory ;
+    void:entities 14828 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_chem_shift_annotation void:class ns2:pdbx_nmr_chem_shift_annotation ;
+    void:entities 458630 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_chem_shift_re_offset void:class ns2:pdbx_nmr_chem_shift_re_offset ;
+    void:entities 24580 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_dihedral_angle_violation void:class ns2:pdbx_nmr_dihedral_angle_violation ;
+    void:entities 239 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_dihedral_angle_violationCategory void:class ns2:pdbx_nmr_dihedral_angle_violationCategory ;
+    void:entities 6 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_dihedral_angle_violation_ensemble void:class ns2:pdbx_nmr_dihedral_angle_violation_ensemble ;
+    void:entities 90 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_dihedral_angle_violation_ensembleCategory void:class ns2:pdbx_nmr_dihedral_angle_violation_ensembleCategory ;
+    void:entities 6 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_dihedral_angle_violation_pluralCategory void:class ns2:pdbx_nmr_dihedral_angle_violation_pluralCategory ;
+    void:entities 6 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_dihedral_angle_violation_summary void:class ns2:pdbx_nmr_dihedral_angle_violation_summary ;
+    void:entities 18 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_distance_violation void:class ns2:pdbx_nmr_distance_violation ;
+    void:entities 7811 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_distance_violation_ensembleCategory void:class ns2:pdbx_nmr_distance_violation_ensembleCategory ;
+    void:entities 14 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_distance_violation_model void:class ns2:pdbx_nmr_distance_violation_model ;
+    void:entities 260 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_distance_violation_plural void:class ns2:pdbx_nmr_distance_violation_plural ;
+    void:entities 1106 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_distance_violation_pluralCategory void:class ns2:pdbx_nmr_distance_violation_pluralCategory ;
+    void:entities 12 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_restraint_listCategory void:class ns2:pdbx_nmr_restraint_listCategory ;
+    void:entities 14 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_restraint_summaryCategory void:class ns2:pdbx_nmr_restraint_summaryCategory ;
+    void:entities 14 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_restraint_violation void:class ns2:pdbx_nmr_restraint_violation ;
+    void:entities 54 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_unmapped_chem_shift void:class ns2:pdbx_nmr_unmapped_chem_shift ;
+    void:entities 8768 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_unmapped_chem_shiftCategory void:class ns2:pdbx_nmr_unmapped_chem_shiftCategory ;
+    void:entities 137 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_unparsed_chem_shift void:class ns2:pdbx_nmr_unparsed_chem_shift ;
+    void:entities 12550 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_unparsed_chem_shiftCategory void:class ns2:pdbx_nmr_unparsed_chem_shiftCategory ;
+    void:entities 42 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_percentile_conditions void:class ns2:pdbx_percentile_conditions ;
+    void:entities 1844191 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_percentile_conditionsCategory void:class ns2:pdbx_percentile_conditionsCategory ;
+    void:entities 204104 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_struct_nmr_ens_clust_gen void:class ns2:pdbx_struct_nmr_ens_clust_gen ;
+    void:entities 214184 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_struct_nmr_ens_dom_lim void:class ns2:pdbx_struct_nmr_ens_dom_lim ;
+    void:entities 20319 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_nmr_chem_shift void:class ns2:pdbx_validate_nmr_chem_shift ;
+    void:entities 16499 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_angle void:class ns2:pdbx_validate_rmsd_angle ;
+    void:entities 7820315 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_ring void:class ns2:pdbx_validate_rmsd_ring ;
+    void:entities 2486 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_ringCategory void:class ns2:pdbx_validate_rmsd_ringCategory ;
+    void:entities 1186 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_rings_atom void:class ns2:pdbx_validate_rmsd_rings_atom ;
+    void:entities 15159 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_torsion void:class ns2:pdbx_validate_rmsd_torsion ;
+    void:entities 3123190 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_torsionCategory void:class ns2:pdbx_validate_rmsd_torsionCategory ;
+    void:entities 108605 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_torsions_atomCategory void:class ns2:pdbx_validate_rmsd_torsions_atomCategory ;
+    void:entities 108605 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_symm_contactCategory void:class ns2:pdbx_validate_symm_contactCategory ;
+    void:entities 37422 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validation_software void:class ns2:pdbx_validation_software ;
+    void:entities 2210680 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validation_softwareCategory void:class ns2:pdbx_validation_softwareCategory ;
+    void:entities 204345 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_struct_mon_nuclCategory void:class ns2:struct_mon_nuclCategory ;
+    void:entities 6725 .
+
+ns1:class_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_struct_mon_protCategory void:class ns2:struct_mon_protCategory ;
+    void:entities 199168 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_audit_authorCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_audit_authorCategory ns0:objectClass ns4:audit_authorCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_audit_authorCategory ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_audit_author_http___rdf_wwpdb_org_schema_pdbx_v50_owl_audit_authorCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_audit_author ns0:objectClass ns4:audit_author ;
+    ns0:subjectClass ns4:audit_authorCategory ;
+    void:property ns4:has_audit_author ;
+    void:triples 975452 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_chem_comp_atomCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_comp_atomCategory ns0:objectClass ns4:chem_comp_atomCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_chem_comp_atomCategory ;
+    void:triples 40153 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_database_2Category_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_2Category ns0:objectClass ns4:database_2Category ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_database_2Category ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_database_PDB_tvect_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_tvectCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_tvect ns0:objectClass ns4:database_PDB_tvect ;
+    ns0:subjectClass ns4:database_PDB_tvectCategory ;
+    void:property ns4:has_database_PDB_tvect ;
+    void:triples 11 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_diffrn_radiation_wavelengthCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_radiation_wavelengthCategory ns0:objectClass ns4:diffrn_radiation_wavelengthCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_diffrn_radiation_wavelengthCategory ;
+    void:triples 177322 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_em_2d_crystal_entity_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_2d_crystal_entityCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_2d_crystal_entity ns0:objectClass ns4:em_2d_crystal_entity ;
+    ns0:subjectClass ns4:em_2d_crystal_entityCategory ;
+    void:property ns4:has_em_2d_crystal_entity ;
+    void:triples 13 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_em_3d_fitting_listCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_3d_fitting_listCategory ns0:objectClass ns4:em_3d_fitting_listCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_em_3d_fitting_listCategory ;
+    void:triples 4191 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_em_3d_reconstructionCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_3d_reconstructionCategory ns0:objectClass ns4:em_3d_reconstructionCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_em_3d_reconstructionCategory ;
+    void:triples 15250 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_em_buffer_componentCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_buffer_componentCategory ns0:objectClass ns4:em_buffer_componentCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_em_buffer_componentCategory ;
+    void:triples 3866 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_em_entity_assembly_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assemblyCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assembly ns0:objectClass ns4:em_entity_assembly ;
+    ns0:subjectClass ns4:em_entity_assemblyCategory ;
+    void:property ns4:has_em_entity_assembly ;
+    void:triples 22661 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_em_entity_assembly_recombinantCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assembly_recombinantCategory ns0:objectClass ns4:em_entity_assembly_recombinantCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_em_entity_assembly_recombinantCategory ;
+    void:triples 10063 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_em_sample_supportCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_sample_supportCategory ns0:objectClass ns4:em_sample_supportCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_em_sample_supportCategory ;
+    void:triples 8274 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_em_softwareCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_softwareCategory ns0:objectClass ns4:em_softwareCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_em_softwareCategory ;
+    void:triples 15095 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_em_volume_selectionCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_volume_selectionCategory ns0:objectClass ns4:em_volume_selectionCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_em_volume_selectionCategory ;
+    void:triples 208 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_entity_polyCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_polyCategory ns0:objectClass ns4:entity_polyCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_entity_polyCategory ;
+    void:triples 204349 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_entryCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entryCategory ns0:objectClass ns4:entryCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_entryCategory ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_ndb_struct_na_base_pair_stepCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_ndb_struct_na_base_pair_stepCategory ns0:objectClass ns4:ndb_struct_na_base_pair_stepCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_ndb_struct_na_base_pair_stepCategory ;
+    void:triples 14254 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_ndb_struct_na_base_pair_step_http___rdf_wwpdb_org_schema_pdbx_v50_owl_ndb_struct_na_base_pair_stepCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_ndb_struct_na_base_pair_step ns0:objectClass ns4:ndb_struct_na_base_pair_step ;
+    ns0:subjectClass ns4:ndb_struct_na_base_pair_stepCategory ;
+    void:property ns4:has_ndb_struct_na_base_pair_step ;
+    void:triples 2907484 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_audit_revision_historyCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_historyCategory ns0:objectClass ns4:pdbx_audit_revision_historyCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_audit_revision_historyCategory ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_chem_comp_atom_relatedCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_atom_relatedCategory ns0:objectClass ns4:pdbx_chem_comp_atom_relatedCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_chem_comp_atom_relatedCategory ;
+    void:triples 308 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_chem_comp_descriptor_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_descriptorCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_descriptor ns0:objectClass ns4:pdbx_chem_comp_descriptor ;
+    ns0:subjectClass ns4:pdbx_chem_comp_descriptorCategory ;
+    void:property ns4:has_pdbx_chem_comp_descriptor ;
+    void:triples 269429 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_chem_comp_feature_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_featureCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_feature ns0:objectClass ns4:pdbx_chem_comp_feature ;
+    ns0:subjectClass ns4:pdbx_chem_comp_featureCategory ;
+    void:property ns4:has_pdbx_chem_comp_feature ;
+    void:triples 3270 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_database_related_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_database_relatedCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_database_related ns0:objectClass ns4:pdbx_database_related ;
+    ns0:subjectClass ns4:pdbx_database_relatedCategory ;
+    void:property ns4:has_pdbx_database_related ;
+    void:triples 533777 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_database_status_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_database_statusCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_database_status ns0:objectClass ns4:pdbx_database_status ;
+    ns0:subjectClass ns4:pdbx_database_statusCategory ;
+    void:property ns4:has_pdbx_database_status ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_distant_solvent_atoms_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_distant_solvent_atomsCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_distant_solvent_atoms ns0:objectClass ns4:pdbx_distant_solvent_atoms ;
+    ns0:subjectClass ns4:pdbx_distant_solvent_atomsCategory ;
+    void:property ns4:has_pdbx_distant_solvent_atoms ;
+    void:triples 152684 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_entity_instance_featureCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_entity_instance_featureCategory ns0:objectClass ns4:pdbx_entity_instance_featureCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_entity_instance_featureCategory ;
+    void:triples 28167 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_entity_instance_feature_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_entity_instance_featureCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_entity_instance_feature ns0:objectClass ns4:pdbx_entity_instance_feature ;
+    ns0:subjectClass ns4:pdbx_entity_instance_featureCategory ;
+    void:property ns4:has_pdbx_entity_instance_feature ;
+    void:triples 40840 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_nmr_exptl_sample_conditionsCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_exptl_sample_conditionsCategory ns0:objectClass ns4:pdbx_nmr_exptl_sample_conditionsCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_nmr_exptl_sample_conditionsCategory ;
+    void:triples 13235 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_nmr_exptl_sample_conditions_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_exptl_sample_conditionsCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_exptl_sample_conditions ns0:objectClass ns4:pdbx_nmr_exptl_sample_conditions ;
+    ns0:subjectClass ns4:pdbx_nmr_exptl_sample_conditionsCategory ;
+    void:property ns4:has_pdbx_nmr_exptl_sample_conditions ;
+    void:triples 15631 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_nmr_representativeCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_representativeCategory ns0:objectClass ns4:pdbx_nmr_representativeCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_nmr_representativeCategory ;
+    void:triples 11761 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_nmr_sample_details_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_sample_detailsCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_sample_details ns0:objectClass ns4:pdbx_nmr_sample_details ;
+    ns0:subjectClass ns4:pdbx_nmr_sample_detailsCategory ;
+    void:property ns4:has_pdbx_nmr_sample_details ;
+    void:triples 21948 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_phasing_MAD_set_shell_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MAD_set_shellCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MAD_set_shell ns0:objectClass ns4:pdbx_phasing_MAD_set_shell ;
+    ns0:subjectClass ns4:pdbx_phasing_MAD_set_shellCategory ;
+    void:property ns4:has_pdbx_phasing_MAD_set_shell ;
+    void:triples 9244 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_reference_entity_listCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_listCategory ns0:objectClass ns4:pdbx_reference_entity_listCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_reference_entity_listCategory ;
+    void:triples 1112 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_reference_molecule_familyCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_familyCategory ns0:objectClass ns4:pdbx_reference_molecule_familyCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_reference_molecule_familyCategory ;
+    void:triples 193 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_reference_molecule_listCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_listCategory ns0:objectClass ns4:pdbx_reference_molecule_listCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_reference_molecule_listCategory ;
+    void:triples 193 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_reference_molecule_list_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_listCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_list ns0:objectClass ns4:pdbx_reference_molecule_list ;
+    ns0:subjectClass ns4:pdbx_reference_molecule_listCategory ;
+    void:property ns4:has_pdbx_reference_molecule_list ;
+    void:triples 498 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_soln_scatterCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_soln_scatterCategory ns0:objectClass ns4:pdbx_soln_scatterCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_soln_scatterCategory ;
+    void:triples 55 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_struct_assemblyCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assemblyCategory ns0:objectClass ns4:pdbx_struct_assemblyCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_struct_assemblyCategory ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_struct_assembly_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assemblyCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly ns0:objectClass ns4:pdbx_struct_assembly ;
+    ns0:subjectClass ns4:pdbx_struct_assemblyCategory ;
+    void:property ns4:has_pdbx_struct_assembly ;
+    void:triples 304008 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_struct_assembly_prop_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly_propCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly_prop ns0:objectClass ns4:pdbx_struct_assembly_prop ;
+    ns0:subjectClass ns4:pdbx_struct_assembly_propCategory ;
+    void:property ns4:has_pdbx_struct_assembly_prop ;
+    void:triples 435604 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_pdbx_struct_mod_residueCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_mod_residueCategory ns0:objectClass ns4:pdbx_struct_mod_residueCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_pdbx_struct_mod_residueCategory ;
+    void:triples 28786 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_phasing_MAD_setCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MAD_setCategory ns0:objectClass ns4:phasing_MAD_setCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_phasing_MAD_setCategory ;
+    void:triples 147 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_phasing_MIR_der_siteCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_der_siteCategory ns0:objectClass ns4:phasing_MIR_der_siteCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_phasing_MIR_der_siteCategory ;
+    void:triples 24 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_refine_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refineCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine ns0:objectClass ns4:refine ;
+    ns0:subjectClass ns4:refineCategory ;
+    void:property ns4:has_refine ;
+    void:triples 183160 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_refine_ls_restr_ncs_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_ls_restr_ncsCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_ls_restr_ncs ns0:objectClass ns4:refine_ls_restr_ncs ;
+    ns0:subjectClass ns4:refine_ls_restr_ncsCategory ;
+    void:property ns4:has_refine_ls_restr_ncs ;
+    void:triples 200684 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_space_group_http___rdf_wwpdb_org_schema_pdbx_v50_owl_space_groupCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_space_group ns0:objectClass ns4:space_group ;
+    ns0:subjectClass ns4:space_groupCategory ;
+    void:property ns4:has_space_group ;
+    void:triples 11627 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_struct_asymCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_asymCategory ns0:objectClass ns4:struct_asymCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_struct_asymCategory ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_struct_confCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_confCategory ns0:objectClass ns4:struct_confCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_struct_confCategory ;
+    void:triples 194779 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_struct_http___rdf_wwpdb_org_schema_pdbx_v50_owl_structCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct ns0:objectClass ns4:struct ;
+    ns0:subjectClass ns4:structCategory ;
+    void:property ns4:has_struct ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_struct_ncs_dom_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_domCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_dom ns0:objectClass ns4:struct_ncs_dom ;
+    ns0:subjectClass ns4:struct_ncs_domCategory ;
+    void:property ns4:has_struct_ncs_dom ;
+    void:triples 180913 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_struct_refCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_refCategory ns0:objectClass ns4:struct_refCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_struct_refCategory ;
+    void:triples 204349 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_struct_ref_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_refCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ref ns0:objectClass ns4:struct_ref ;
+    ns0:subjectClass ns4:struct_refCategory ;
+    void:property ns4:has_struct_ref ;
+    void:triples 429988 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_has_struct_siteCategory_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_siteCategory ns0:objectClass ns4:struct_siteCategory ;
+    ns0:subjectClass ns4:datablock ;
+    void:property ns4:has_struct_siteCategory ;
+    void:triples 119738 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_link_to_prd_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_list_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_reference_molecule_list ;
+    void:property ns4:link_to_prd ;
+    void:triples 498 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_atom_sites_footnote_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:atom_sites_footnote ;
+    void:property ns4:of_datablock ;
+    void:triples 7547 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_audit_author_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:audit_author ;
+    void:property ns4:of_datablock ;
+    void:triples 975452 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_cell_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:cell ;
+    void:property ns4:of_datablock ;
+    void:triples 192176 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_comp_bond_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:chem_comp_bond ;
+    void:property ns4:of_datablock ;
+    void:triples 1964021 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_citation_author_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:citation_author ;
+    void:property ns4:of_datablock ;
+    void:triples 1938769 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_2_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:database_2 ;
+    void:property ns4:of_datablock ;
+    void:triples 533654 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_matrix_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:database_PDB_matrix ;
+    void:property ns4:of_datablock ;
+    void:triples 85907 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_tvect_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:database_PDB_tvect ;
+    void:property ns4:of_datablock ;
+    void:triples 11 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_source_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:diffrn_source ;
+    void:property ns4:of_datablock ;
+    void:triples 175465 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assembly_molwt_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:em_entity_assembly_molwt ;
+    void:property ns4:of_datablock ;
+    void:triples 9935 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_image_scans_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:em_image_scans ;
+    void:property ns4:of_datablock ;
+    void:triples 3997 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_imaging_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:em_imaging ;
+    void:property ns4:of_datablock ;
+    void:triples 15314 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_sample_support_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:em_sample_support ;
+    void:property ns4:of_datablock ;
+    void:triples 8291 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_software_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:em_software ;
+    void:property ns4:of_datablock ;
+    void:triples 200552 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_virus_entity_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:em_virus_entity ;
+    void:property ns4:of_datablock ;
+    void:triples 1274 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_virus_natural_host_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:em_virus_natural_host ;
+    void:property ns4:of_datablock ;
+    void:triples 730 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_keywords_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:entity_keywords ;
+    void:property ns4:of_datablock ;
+    void:triples 292 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_name_sys_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:entity_name_sys ;
+    void:property ns4:of_datablock ;
+    void:triples 1981 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_poly_seq_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:entity_poly_seq ;
+    void:property ns4:of_datablock ;
+    void:triples 110242495 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:entry ;
+    void:property ns4:of_datablock ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_exptl_crystal_grow_comp_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:exptl_crystal_grow_comp ;
+    void:property ns4:of_datablock ;
+    void:triples 18401 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_exptl_crystal_grow_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:exptl_crystal_grow ;
+    void:property ns4:of_datablock ;
+    void:triples 168114 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_ndb_struct_na_base_pair_step_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:ndb_struct_na_base_pair_step ;
+    void:property ns4:of_datablock ;
+    void:triples 2907484 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_category_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_audit_revision_category ;
+    void:property ns4:of_datablock ;
+    void:triples 596875 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_history_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_audit_revision_history ;
+    void:property ns4:of_datablock ;
+    void:triples 567207 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_buffer_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_buffer ;
+    void:property ns4:of_datablock ;
+    void:triples 3 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_database_remark_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_database_remark ;
+    void:property ns4:of_datablock ;
+    void:triples 10460 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_initial_refinement_model_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_initial_refinement_model ;
+    void:property ns4:of_datablock ;
+    void:triples 1374 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_molecule_features_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_molecule_features ;
+    void:property ns4:of_datablock ;
+    void:triples 4533 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_molecule_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_molecule ;
+    void:property ns4:of_datablock ;
+    void:triples 8932 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_ensemble_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_nmr_ensemble ;
+    void:property ns4:of_datablock ;
+    void:triples 14099 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_refine_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_nmr_refine ;
+    void:property ns4:of_datablock ;
+    void:triples 13275 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MAD_set_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_phasing_MAD_set ;
+    void:property ns4:of_datablock ;
+    void:triples 602 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MAD_set_shell_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_phasing_MAD_set_shell ;
+    void:property ns4:of_datablock ;
+    void:triples 9244 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_sequence_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_reference_entity_sequence ;
+    void:property ns4:of_datablock ;
+    void:triples 1110 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_refine_tls_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_refine_tls ;
+    void:property ns4:of_datablock ;
+    void:triples 543696 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_data_reduction_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_serial_crystallography_data_reduction ;
+    void:property ns4:of_datablock ;
+    void:triples 183 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_chem_comp_diagnostics_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_struct_chem_comp_diagnostics ;
+    void:property ns4:of_datablock ;
+    void:triples 145 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_mod_residue_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_struct_mod_residue ;
+    void:property ns4:of_datablock ;
+    void:triples 227629 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_unobs_or_zero_occ_residues_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_unobs_or_zero_occ_residues ;
+    void:property ns4:of_datablock ;
+    void:triples 23654553 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_main_chain_plane_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:pdbx_validate_main_chain_plane ;
+    void:property ns4:of_datablock ;
+    void:triples 60217 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MAD_expt_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:phasing_MAD_expt ;
+    void:property ns4:of_datablock ;
+    void:triples 149 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_ls_shell_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:refine_ls_shell ;
+    void:property ns4:of_datablock ;
+    void:triples 1090866 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refln_sys_abs_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:refln_sys_abs ;
+    void:property ns4:of_datablock ;
+    void:triples 471 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_asym_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:struct_asym ;
+    void:property ns4:of_datablock ;
+    void:triples 3142758 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_conf_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:struct_conf ;
+    void:property ns4:of_datablock ;
+    void:triples 6824815 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_conf_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:struct_conf_type ;
+    void:property ns4:of_datablock ;
+    void:triples 194784 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_sheet_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:struct_sheet ;
+    void:property ns4:of_datablock ;
+    void:triples 1848032 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_sheet_range_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock ns0:objectClass ns4:datablock ;
+    ns0:subjectClass ns4:struct_sheet_range ;
+    void:property ns4:of_datablock ;
+    void:triples 7470479 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_chem_comp_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_distant_solvent_atoms_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_comp ns0:objectClass ns4:chem_comp ;
+    ns0:subjectClass ns4:pdbx_distant_solvent_atoms ;
+    void:property ns4:reference_to_chem_comp ;
+    void:triples 152684 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_diffrn_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_detector_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn ns0:objectClass ns4:diffrn ;
+    ns0:subjectClass ns4:diffrn_detector ;
+    void:property ns4:reference_to_diffrn ;
+    void:triples 173279 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_diffrn_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_measurement_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn ns0:objectClass ns4:diffrn ;
+    ns0:subjectClass ns4:diffrn_measurement ;
+    void:property ns4:reference_to_diffrn ;
+    void:triples 149 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_diffrn_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_data_reduction_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn ns0:objectClass ns4:diffrn ;
+    ns0:subjectClass ns4:pdbx_serial_crystallography_data_reduction ;
+    void:property ns4:reference_to_diffrn ;
+    void:triples 183 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_diffrn_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_sample_delivery_fixed_target_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn ns0:objectClass ns4:diffrn ;
+    ns0:subjectClass ns4:pdbx_serial_crystallography_sample_delivery_fixed_target ;
+    void:property ns4:reference_to_diffrn ;
+    void:triples 99 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entity_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_asym_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity ns0:objectClass ns4:entity ;
+    ns0:subjectClass ns4:struct_asym ;
+    void:property ns4:reference_to_entity ;
+    void:triples 3142758 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_cell_measurement_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:cell_measurement ;
+    void:property ns4:reference_to_entry ;
+    void:triples 171 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_experiment_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:em_experiment ;
+    void:property ns4:reference_to_entry ;
+    void:triples 15258 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_image_scans_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:em_image_scans ;
+    void:property ns4:reference_to_entry ;
+    void:triples 3997 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_ndb_struct_conf_na_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:ndb_struct_conf_na ;
+    void:property ns4:reference_to_entry ;
+    void:triples 48845 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_entry_details_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:pdbx_entry_details ;
+    void:property ns4:reference_to_entry ;
+    void:triples 55168 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_soln_scatter_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:pdbx_soln_scatter ;
+    void:property ns4:reference_to_entry ;
+    void:triples 89 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_publ_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:publ ;
+    void:property ns4:reference_to_entry ;
+    void:triples 2 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_analyze_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:refine_analyze ;
+    void:property ns4:reference_to_entry ;
+    void:triples 30279 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reflns_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:reflns ;
+    void:property ns4:reference_to_entry ;
+    void:triples 172514 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:struct ;
+    void:property ns4:reference_to_entry ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_keywords_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry ns0:objectClass ns4:entry ;
+    ns0:subjectClass ns4:struct_keywords ;
+    void:property ns4:reference_to_entry ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_exptl_crystal_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_exptl_crystal_cryo_treatment_http___rdf_wwpdb_org_schema_pdbx_v50_owl_exptl_crystal ns0:objectClass ns4:exptl_crystal ;
+    ns0:subjectClass ns4:pdbx_exptl_crystal_cryo_treatment ;
+    void:property ns4:reference_to_exptl_crystal ;
+    void:triples 7 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_exptl_crystal_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_exptl_crystal_grow_comp_http___rdf_wwpdb_org_schema_pdbx_v50_owl_exptl_crystal ns0:objectClass ns4:exptl_crystal ;
+    ns0:subjectClass ns4:pdbx_exptl_crystal_grow_comp ;
+    void:property ns4:reference_to_exptl_crystal ;
+    void:triples 44 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_pdbx_audit_revision_history_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_details_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_history ns0:objectClass ns4:pdbx_audit_revision_history ;
+    ns0:subjectClass ns4:pdbx_audit_revision_details ;
+    void:property ns4:reference_to_pdbx_audit_revision_history ;
+    void:triples 219080 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_pdbx_reference_entity_list_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_poly_link_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_list ns0:objectClass ns4:pdbx_reference_entity_list ;
+    ns0:subjectClass ns4:pdbx_reference_entity_poly_link ;
+    void:property ns4:reference_to_pdbx_reference_entity_list ;
+    void:triples 6777 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_pdbx_struct_assembly_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly_auth_evidence_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly ns0:objectClass ns4:pdbx_struct_assembly ;
+    ns0:subjectClass ns4:pdbx_struct_assembly_auth_evidence ;
+    void:property ns4:reference_to_pdbx_struct_assembly ;
+    void:triples 74338 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_phasing_MIR_der_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_der_shell_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_der ns0:objectClass ns4:phasing_MIR_der ;
+    ns0:subjectClass ns4:phasing_MIR_der_shell ;
+    void:property ns4:reference_to_phasing_MIR_der ;
+    void:triples 2781 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_struct_asym_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_molecule_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_asym ns0:objectClass ns4:struct_asym ;
+    ns0:subjectClass ns4:pdbx_molecule ;
+    void:property ns4:reference_to_struct_asym ;
+    void:triples 8932 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_struct_site_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_site_gen_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_site ns0:objectClass ns4:struct_site ;
+    ns0:subjectClass ns4:struct_site_gen ;
+    void:property ns4:reference_to_struct_site ;
+    void:triples 7565470 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reference_to_struct_site_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_site_keywords_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_site ns0:objectClass ns4:struct_site ;
+    ns0:subjectClass ns4:struct_site_keywords ;
+    void:property ns4:reference_to_struct_site ;
+    void:triples 441 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_atom_sites_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_atom_sites ns0:objectClass ns4:atom_sites ;
+    ns0:subjectClass ns4:entry ;
+    void:property ns4:referenced_by_atom_sites ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_database_PDB_matrix_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_matrix ns0:objectClass ns4:database_PDB_matrix ;
+    ns0:subjectClass ns4:entry ;
+    void:property ns4:referenced_by_database_PDB_matrix ;
+    void:triples 85907 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_entity_poly_seq_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_comp_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_poly_seq ns0:objectClass ns4:entity_poly_seq ;
+    ns0:subjectClass ns4:chem_comp ;
+    void:property ns4:referenced_by_entity_poly_seq ;
+    void:triples 110242495 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_pdbx_audit_revision_details_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_history_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_details ns0:objectClass ns4:pdbx_audit_revision_details ;
+    ns0:subjectClass ns4:pdbx_audit_revision_history ;
+    void:property ns4:referenced_by_pdbx_audit_revision_details ;
+    void:triples 219080 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_pdbx_buffer_components_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_buffer_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_buffer_components ns0:objectClass ns4:pdbx_buffer_components ;
+    ns0:subjectClass ns4:pdbx_buffer ;
+    void:property ns4:referenced_by_pdbx_buffer_components ;
+    void:triples 3 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_pdbx_nmr_ensemble_rms_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_ensemble_rms ns0:objectClass ns4:pdbx_nmr_ensemble_rms ;
+    ns0:subjectClass ns4:entry ;
+    void:property ns4:referenced_by_pdbx_nmr_ensemble_rms ;
+    void:triples 407 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_pdbx_poly_seq_scheme_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_poly_seq_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_poly_seq_scheme ns0:objectClass ns4:pdbx_poly_seq_scheme ;
+    ns0:subjectClass ns4:entity_poly_seq ;
+    void:property ns4:referenced_by_pdbx_poly_seq_scheme ;
+    void:triples 215131646 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_pdbx_refine_tls_group_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_refine_tls_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_refine_tls_group ns0:objectClass ns4:pdbx_refine_tls_group ;
+    ns0:subjectClass ns4:pdbx_refine_tls ;
+    void:property ns4:referenced_by_pdbx_refine_tls_group ;
+    void:triples 586439 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_struct_asym_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_asym ns0:objectClass ns4:struct_asym ;
+    ns0:subjectClass ns4:entity ;
+    void:property ns4:referenced_by_struct_asym ;
+    void:triples 3142758 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_struct_conn_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_conn_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_conn ns0:objectClass ns4:struct_conn ;
+    ns0:subjectClass ns4:struct_conn_type ;
+    void:property ns4:referenced_by_struct_conn ;
+    void:triples 11874070 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_struct_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct ns0:objectClass ns4:struct ;
+    ns0:subjectClass ns4:entry ;
+    void:property ns4:referenced_by_struct ;
+    void:triples 204375 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_v50_owl_referenced_by_struct_site_gen_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_site_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_site_gen ns0:objectClass ns4:struct_site_gen ;
+    ns0:subjectClass ns4:struct_site ;
+    void:property ns4:referenced_by_struct_site_gen ;
+    void:triples 7565470 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_dcc_mon_geometryCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_dcc_mon_geometryCategory ns0:objectClass ns2:pdbx_dcc_mon_geometryCategory ;
+    ns0:subjectClass ns2:datablock ;
+    void:property ns2:has_pdbx_dcc_mon_geometryCategory ;
+    void:triples 142557 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_em_density_distribution_markerCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_density_distribution_markerCategory ns0:objectClass ns2:pdbx_em_density_distribution_markerCategory ;
+    ns0:subjectClass ns2:datablock ;
+    void:property ns2:has_pdbx_em_density_distribution_markerCategory ;
+    void:triples 14828 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_em_raps_marker_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_raps_markerCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_raps_marker ns0:objectClass ns2:pdbx_em_raps_marker ;
+    ns0:subjectClass ns2:pdbx_em_raps_markerCategory ;
+    void:property ns2:has_pdbx_em_raps_marker ;
+    void:triples 2343199 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_nmr_dihedral_angle_violation_modelCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_dihedral_angle_violation_modelCategory ns0:objectClass ns2:pdbx_nmr_dihedral_angle_violation_modelCategory ;
+    ns0:subjectClass ns2:datablock ;
+    void:property ns2:has_pdbx_nmr_dihedral_angle_violation_modelCategory ;
+    void:triples 6 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_nmr_dihedral_angle_violation_pluralCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_dihedral_angle_violation_pluralCategory ns0:objectClass ns2:pdbx_nmr_dihedral_angle_violation_pluralCategory ;
+    ns0:subjectClass ns2:datablock ;
+    void:property ns2:has_pdbx_nmr_dihedral_angle_violation_pluralCategory ;
+    void:triples 6 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_nmr_dihedral_angle_violation_plural_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_dihedral_angle_violation_pluralCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_dihedral_angle_violation_plural ns0:objectClass ns2:pdbx_nmr_dihedral_angle_violation_plural ;
+    ns0:subjectClass ns2:pdbx_nmr_dihedral_angle_violation_pluralCategory ;
+    void:property ns2:has_pdbx_nmr_dihedral_angle_violation_plural ;
+    void:triples 49 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_nmr_distance_violation_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_distance_violationCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_distance_violation ns0:objectClass ns2:pdbx_nmr_distance_violation ;
+    ns0:subjectClass ns2:pdbx_nmr_distance_violationCategory ;
+    void:property ns2:has_pdbx_nmr_distance_violation ;
+    void:triples 7811 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_nmr_distance_violation_plural_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_distance_violation_pluralCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_distance_violation_plural ns0:objectClass ns2:pdbx_nmr_distance_violation_plural ;
+    ns0:subjectClass ns2:pdbx_nmr_distance_violation_pluralCategory ;
+    void:property ns2:has_pdbx_nmr_distance_violation_plural ;
+    void:triples 1106 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_nmr_restraint_summaryCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_restraint_summaryCategory ns0:objectClass ns2:pdbx_nmr_restraint_summaryCategory ;
+    ns0:subjectClass ns2:datablock ;
+    void:property ns2:has_pdbx_nmr_restraint_summaryCategory ;
+    void:triples 14 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_nmr_unparsed_chem_shiftCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_unparsed_chem_shiftCategory ns0:objectClass ns2:pdbx_nmr_unparsed_chem_shiftCategory ;
+    ns0:subjectClass ns2:datablock ;
+    void:property ns2:has_pdbx_nmr_unparsed_chem_shiftCategory ;
+    void:triples 42 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_percentile_list_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_percentile_listCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_percentile_list ns0:objectClass ns2:pdbx_percentile_list ;
+    ns0:subjectClass ns2:pdbx_percentile_listCategory ;
+    void:property ns2:has_pdbx_percentile_list ;
+    void:triples 204345 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_validate_nmr_chem_shiftCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_datablock_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_nmr_chem_shiftCategory ns0:objectClass ns2:pdbx_validate_nmr_chem_shiftCategory ;
+    ns0:subjectClass ns2:datablock ;
+    void:property ns2:has_pdbx_validate_nmr_chem_shiftCategory ;
+    void:triples 2730 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_validate_nmr_chem_shift_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_nmr_chem_shiftCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_nmr_chem_shift ns0:objectClass ns2:pdbx_validate_nmr_chem_shift ;
+    ns0:subjectClass ns2:pdbx_validate_nmr_chem_shiftCategory ;
+    void:property ns2:has_pdbx_validate_nmr_chem_shift ;
+    void:triples 16499 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_has_pdbx_validate_rmsd_torsions_atom_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_torsions_atomCategory_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_torsions_atom ns0:objectClass ns2:pdbx_validate_rmsd_torsions_atom ;
+    ns0:subjectClass ns2:pdbx_validate_rmsd_torsions_atomCategory ;
+    void:property ns2:has_pdbx_validate_rmsd_torsions_atom ;
+    void:triples 12492760 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_fsc_cutoff_curve_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_datablock ns0:objectClass ns2:datablock ;
+    ns0:subjectClass ns2:pdbx_em_fsc_cutoff_curve ;
+    void:property ns2:of_datablock ;
+    void:triples 78456 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_em_validate_map_model_entity_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_datablock ns0:objectClass ns2:datablock ;
+    ns0:subjectClass ns2:pdbx_em_validate_map_model_entity ;
+    void:property ns2:of_datablock ;
+    void:triples 520696 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_of_datablock_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_unparsed_chem_shift_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_datablock ns0:objectClass ns2:datablock ;
+    ns0:subjectClass ns2:pdbx_nmr_unparsed_chem_shift ;
+    void:property ns2:of_datablock ;
+    void:triples 12550 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_restraint_summary_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_entry ns0:objectClass ns2:entry ;
+    ns0:subjectClass ns2:pdbx_nmr_restraint_summary ;
+    void:property ns2:reference_to_entry ;
+    void:triples 14 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_reference_to_entry_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_percentile_list_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_entry ns0:objectClass ns2:entry ;
+    ns0:subjectClass ns2:pdbx_percentile_list ;
+    void:property ns2:reference_to_entry ;
+    void:triples 204345 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_reference_to_pdbx_validate_rmsd_ring_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_rings_atom_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_ring ns0:objectClass ns2:pdbx_validate_rmsd_ring ;
+    ns0:subjectClass ns2:pdbx_validate_rmsd_rings_atom ;
+    void:property ns2:reference_to_pdbx_validate_rmsd_ring ;
+    void:triples 15159 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_referenced_by_pdbx_nmr_chem_shift_completeness_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_assigned_chem_shift_list_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_nmr_chem_shift_completeness ns0:objectClass ns2:pdbx_nmr_chem_shift_completeness ;
+    ns0:subjectClass ns2:pdbx_nmr_assigned_chem_shift_list ;
+    void:property ns2:referenced_by_pdbx_nmr_chem_shift_completeness ;
+    void:triples 99509 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_referenced_by_pdbx_struct_nmr_ens_dom_lim_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_struct_nmr_ens_dom_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_struct_nmr_ens_dom_lim ns0:objectClass ns2:pdbx_struct_nmr_ens_dom_lim ;
+    ns0:subjectClass ns2:pdbx_struct_nmr_ens_dom ;
+    void:property ns2:referenced_by_pdbx_struct_nmr_ens_dom_lim ;
+    void:triples 20319 .
+
+ns1:property_partition_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_referenced_by_pdbx_validate_rmsd_rings_atom_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_ring_http___rdf_wwpdb_org_schema_pdbx_validation_v4_owl_pdbx_validate_rmsd_rings_atom ns0:objectClass ns2:pdbx_validate_rmsd_rings_atom ;
+    ns0:subjectClass ns2:pdbx_validate_rmsd_ring ;
+    void:property ns2:referenced_by_pdbx_validate_rmsd_rings_atom ;
+    void:triples 15159 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_atom_sites_footnoteCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:atom_sites_footnoteCategory ;
+    void:property rdf:type ;
+    void:triples 2229 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_atom_sites_footnote_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:atom_sites_footnote ;
+    void:property rdf:type ;
+    void:triples 7547 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_atom_type_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:atom_type ;
+    void:property rdf:type ;
+    void:triples 1051946 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_auditCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:auditCategory ;
+    void:property rdf:type ;
+    void:triples 56 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_audit_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:audit ;
+    void:property rdf:type ;
+    void:triples 56 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_cell_measurement_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:cell_measurement ;
+    void:property rdf:type ;
+    void:triples 171 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_comp_atomCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:chem_comp_atomCategory ;
+    void:property rdf:type ;
+    void:triples 40153 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_chem_comp_atom_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:chem_comp_atom ;
+    void:property rdf:type ;
+    void:triples 1890924 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_citationCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:citationCategory ;
+    void:property rdf:type ;
+    void:triples 204326 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_citation_editor_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:citation_editor ;
+    void:property rdf:type ;
+    void:triples 862 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_matrixCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:database_PDB_matrixCategory ;
+    void:property rdf:type ;
+    void:triples 85907 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_database_PDB_tvect_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:database_PDB_tvect ;
+    void:property rdf:type ;
+    void:triples 11 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_datablock_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:datablock ;
+    void:property rdf:type ;
+    void:triples 245833 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_measurement_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:diffrn_measurement ;
+    void:property rdf:type ;
+    void:triples 149 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_diffrn_sourceCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:diffrn_sourceCategory ;
+    void:property rdf:type ;
+    void:triples 171886 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_3d_crystal_entity_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_3d_crystal_entity ;
+    void:property rdf:type ;
+    void:triples 185 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_3d_reconstructionCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_3d_reconstructionCategory ;
+    void:property rdf:type ;
+    void:triples 15250 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_3d_reconstruction_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_3d_reconstruction ;
+    void:property rdf:type ;
+    void:triples 15293 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_buffer_componentCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_buffer_componentCategory ;
+    void:property rdf:type ;
+    void:triples 3866 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_diffractionCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_diffractionCategory ;
+    void:property rdf:type ;
+    void:triples 191 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assembly_molwtCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_entity_assembly_molwtCategory ;
+    void:property rdf:type ;
+    void:triples 8798 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assembly_naturalsource_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_entity_assembly_naturalsource ;
+    void:property rdf:type ;
+    void:triples 18526 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_entity_assembly_recombinant_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_entity_assembly_recombinant ;
+    void:property rdf:type ;
+    void:triples 13101 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_helical_entityCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_helical_entityCategory ;
+    void:property rdf:type ;
+    void:triples 822 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_image_processingCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_image_processingCategory ;
+    void:property rdf:type ;
+    void:triples 15251 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_image_processing_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_image_processing ;
+    void:property rdf:type ;
+    void:triples 15290 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_image_scansCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_image_scansCategory ;
+    void:property rdf:type ;
+    void:triples 3995 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_image_scans_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_image_scans ;
+    void:property rdf:type ;
+    void:triples 3997 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_imagingCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_imagingCategory ;
+    void:property rdf:type ;
+    void:triples 15258 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_imaging_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_imaging ;
+    void:property rdf:type ;
+    void:triples 15314 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_imaging_optics_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_imaging_optics ;
+    void:property rdf:type ;
+    void:triples 3035 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_sample_supportCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_sample_supportCategory ;
+    void:property rdf:type ;
+    void:triples 8274 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_sample_support_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_sample_support ;
+    void:property rdf:type ;
+    void:triples 8291 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_virus_syntheticCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_virus_syntheticCategory ;
+    void:property rdf:type ;
+    void:triples 16 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_virus_synthetic_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_virus_synthetic ;
+    void:property rdf:type ;
+    void:triples 16 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_em_volume_selectionCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:em_volume_selectionCategory ;
+    void:property rdf:type ;
+    void:triples 208 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entityCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:entityCategory ;
+    void:property rdf:type ;
+    void:triples 204375 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_keywordsCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:entity_keywordsCategory ;
+    void:property rdf:type ;
+    void:triples 228 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_name_com_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:entity_name_com ;
+    void:property rdf:type ;
+    void:triples 206212 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entryCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:entryCategory ;
+    void:property rdf:type ;
+    void:triples 204375 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entry_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:entry ;
+    void:property rdf:type ;
+    void:triples 204375 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_ndb_struct_na_base_pair_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:ndb_struct_na_base_pair ;
+    void:property rdf:type ;
+    void:triples 3281612 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_SG_projectCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_SG_projectCategory ;
+    void:property rdf:type ;
+    void:triples 16028 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_detailsCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_audit_revision_detailsCategory ;
+    void:property rdf:type ;
+    void:triples 204375 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_audit_revision_itemCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_audit_revision_itemCategory ;
+    void:property rdf:type ;
+    void:triples 113831 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_buffer_components_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_buffer_components ;
+    void:property rdf:type ;
+    void:triples 3 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_auditCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_chem_comp_auditCategory ;
+    void:property rdf:type ;
+    void:triples 40068 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_identifierCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_chem_comp_identifierCategory ;
+    void:property rdf:type ;
+    void:triples 57357 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_identifier_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_chem_comp_identifier ;
+    void:property rdf:type ;
+    void:triples 188179 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_relatedCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_chem_comp_relatedCategory ;
+    void:property rdf:type ;
+    void:triples 308 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_related_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_chem_comp_related ;
+    void:property rdf:type ;
+    void:triples 308 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_synonymsCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_chem_comp_synonymsCategory ;
+    void:property rdf:type ;
+    void:triples 6920 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_chem_comp_synonyms_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_chem_comp_synonyms ;
+    void:property rdf:type ;
+    void:triples 9299 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_contact_author_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_contact_author ;
+    void:property rdf:type ;
+    void:triples 17332 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_database_related_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_database_related ;
+    void:property rdf:type ;
+    void:triples 533777 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_diffrn_reflns_shell_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_diffrn_reflns_shell ;
+    void:property rdf:type ;
+    void:triples 24436 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_entity_branch_descriptor_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_entity_branch_descriptor ;
+    void:property rdf:type ;
+    void:triples 53792 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_exptl_crystal_grow_compCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_exptl_crystal_grow_compCategory ;
+    void:property rdf:type ;
+    void:triples 5 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_helical_symmetry_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_helical_symmetry ;
+    void:property rdf:type ;
+    void:triples 247 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_exptlCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_nmr_exptlCategory ;
+    void:property rdf:type ;
+    void:triples 12868 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_exptl_sample_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_nmr_exptl_sample ;
+    void:property rdf:type ;
+    void:triples 44655 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_representative_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_nmr_representative ;
+    void:property rdf:type ;
+    void:triples 11761 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_spectrometerCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_nmr_spectrometerCategory ;
+    void:property rdf:type ;
+    void:triples 13146 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nmr_spectrometer_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_nmr_spectrometer ;
+    void:property rdf:type ;
+    void:triples 21907 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_nonpoly_schemeCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_nonpoly_schemeCategory ;
+    void:property rdf:type ;
+    void:triples 181513 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_MAD_set_site_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_phasing_MAD_set_site ;
+    void:property rdf:type ;
+    void:triples 9852 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_dmCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_phasing_dmCategory ;
+    void:property rdf:type ;
+    void:triples 660 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_dm_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_phasing_dm ;
+    void:property rdf:type ;
+    void:triples 660 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_phasing_dm_shellCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_phasing_dm_shellCategory ;
+    void:property rdf:type ;
+    void:triples 693 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_point_symmetry_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_point_symmetry ;
+    void:property rdf:type ;
+    void:triples 1256 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_poly_seq_scheme_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_poly_seq_scheme ;
+    void:property rdf:type ;
+    void:triples 215131646 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_prd_audit_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_prd_audit ;
+    void:property rdf:type ;
+    void:triples 3594 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_linkCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_reference_entity_linkCategory ;
+    void:property rdf:type ;
+    void:triples 51 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_list_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_reference_entity_list ;
+    void:property rdf:type ;
+    void:triples 1212 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_poly_linkCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_reference_entity_poly_linkCategory ;
+    void:property rdf:type ;
+    void:triples 1107 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_sequenceCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_reference_entity_sequenceCategory ;
+    void:property rdf:type ;
+    void:triples 1107 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_moleculeCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_reference_moleculeCategory ;
+    void:property rdf:type ;
+    void:triples 1112 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_annotationCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_reference_molecule_annotationCategory ;
+    void:property rdf:type ;
+    void:triples 193 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_family_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_reference_molecule_family ;
+    void:property rdf:type ;
+    void:triples 193 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_reference_molecule ;
+    void:property rdf:type ;
+    void:triples 1112 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_molecule_related_structures_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_reference_molecule_related_structures ;
+    void:property rdf:type ;
+    void:triples 86 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_refine_tlsCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_refine_tlsCategory ;
+    void:property rdf:type ;
+    void:triples 58855 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_refine_tls_groupCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_refine_tls_groupCategory ;
+    void:property rdf:type ;
+    void:triples 58803 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_refine_tls_group_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_refine_tls_group ;
+    void:property rdf:type ;
+    void:triples 586439 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_refine_tls_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_refine_tls ;
+    void:property rdf:type ;
+    void:triples 543696 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_related_exp_data_set_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_related_exp_data_set ;
+    void:property rdf:type ;
+    void:triples 1003 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_measurementCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_serial_crystallography_measurementCategory ;
+    void:property rdf:type ;
+    void:triples 197 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_sample_delivery_fixed_targetCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_serial_crystallography_sample_delivery_fixed_targetCategory ;
+    void:property rdf:type ;
+    void:triples 99 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_sample_delivery_fixed_target_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_serial_crystallography_sample_delivery_fixed_target ;
+    void:property rdf:type ;
+    void:triples 99 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_serial_crystallography_sample_delivery_injection_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_serial_crystallography_sample_delivery_injection ;
+    void:property rdf:type ;
+    void:triples 156 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_sifts_unp_segmentsCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_sifts_unp_segmentsCategory ;
+    void:property rdf:type ;
+    void:triples 180662 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_struct_assembly ;
+    void:property rdf:type ;
+    void:triples 304008 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_assembly_propCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_struct_assembly_propCategory ;
+    void:property rdf:type ;
+    void:triples 110238 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_legacy_oper_list_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_struct_legacy_oper_list ;
+    void:property rdf:type ;
+    void:triples 1650 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_msym_gen_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_struct_msym_gen ;
+    void:property rdf:type ;
+    void:triples 2 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_struct_oper_list_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_struct_oper_list ;
+    void:property rdf:type ;
+    void:triples 359844 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_chiral_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_validate_chiral ;
+    void:property rdf:type ;
+    void:triples 116781 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_peptide_omegaCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_validate_peptide_omegaCategory ;
+    void:property rdf:type ;
+    void:triples 24361 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_planesCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_validate_planesCategory ;
+    void:property rdf:type ;
+    void:triples 15267 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_polymer_linkageCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_validate_polymer_linkageCategory ;
+    void:property rdf:type ;
+    void:triples 4900 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_validate_torsionCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_validate_torsionCategory ;
+    void:property rdf:type ;
+    void:triples 189083 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_xplor_file_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:pdbx_xplor_file ;
+    void:property rdf:type ;
+    void:triples 57340 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MAD_clust_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:phasing_MAD_clust ;
+    void:property rdf:type ;
+    void:triples 149 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_derCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:phasing_MIR_derCategory ;
+    void:property rdf:type ;
+    void:triples 48 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_der_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:phasing_MIR_der ;
+    void:property rdf:type ;
+    void:triples 249 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_der_shellCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:phasing_MIR_der_shellCategory ;
+    void:property rdf:type ;
+    void:triples 30 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_der_site_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:phasing_MIR_der_site ;
+    void:property rdf:type ;
+    void:triples 302 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:phasing_MIR ;
+    void:property rdf:type ;
+    void:triples 39 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_MIR_shellCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:phasing_MIR_shellCategory ;
+    void:property rdf:type ;
+    void:triples 38 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_phasing_setCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:phasing_setCategory ;
+    void:property rdf:type ;
+    void:triples 195 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refineCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:refineCategory ;
+    void:property rdf:type ;
+    void:triples 183031 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_analyzeCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:refine_analyzeCategory ;
+    void:property rdf:type ;
+    void:triples 30254 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_histCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:refine_histCategory ;
+    void:property rdf:type ;
+    void:triples 176243 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_ls_restr_ncsCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:refine_ls_restr_ncsCategory ;
+    void:property rdf:type ;
+    void:triples 16273 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_ls_restr_ncs_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:refine_ls_restr_ncs ;
+    void:property rdf:type ;
+    void:triples 200684 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_occupancyCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:refine_occupancyCategory ;
+    void:property rdf:type ;
+    void:triples 283 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refine_occupancy_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:refine_occupancy ;
+    void:property rdf:type ;
+    void:triples 572 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_reflnCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:reflnCategory ;
+    void:property rdf:type ;
+    void:triples 4 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_refln_sys_abs_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:refln_sys_abs ;
+    void:property rdf:type ;
+    void:triples 471 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_space_group_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:space_group ;
+    void:property rdf:type ;
+    void:triples 11627 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_structCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:structCategory ;
+    void:property rdf:type ;
+    void:triples 204375 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_biol_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_biol ;
+    void:property rdf:type ;
+    void:triples 106167 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_biol_keywords_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_biol_keywords ;
+    void:property rdf:type ;
+    void:triples 7 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_conf_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_conf ;
+    void:property rdf:type ;
+    void:triples 6824815 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_connCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_connCategory ;
+    void:property rdf:type ;
+    void:triples 135308 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_mon_prot_cisCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_mon_prot_cisCategory ;
+    void:property rdf:type ;
+    void:triples 94940 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_dom_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_ncs_dom ;
+    void:property rdf:type ;
+    void:triples 180913 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_dom_lim_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_ncs_dom_lim ;
+    void:property rdf:type ;
+    void:triples 259698 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_ncs_ens_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_ncs_ens ;
+    void:property rdf:type ;
+    void:triples 71379 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_sheetCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_sheetCategory ;
+    void:property rdf:type ;
+    void:triples 178414 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_sheet_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_sheet ;
+    void:property rdf:type ;
+    void:triples 1848032 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_struct_site_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:struct_site ;
+    void:property rdf:type ;
+    void:triples 1207925 .
+
+ns1:property_partition_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_http___rdf_wwpdb_org_schema_pdbx_v50_owl_symmetry_equivCategory_http___www_w3_org_2002_07_owl_Class ns0:objectClass owl:Class ;
+    ns0:subjectClass ns4:symmetry_equivCategory ;
+    void:property rdf:type ;
+    void:triples 63 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_seeAlso_http___rdf_wwpdb_org_schema_pdbx_v50_owl_entity_src_gen_http___ddbj_nig_ac_jp_ontologies_taxonomy_Taxon ns0:objectClass ns7:Taxon ;
+    ns0:subjectClass ns4:entity_src_gen ;
+    void:property rdfs:seeAlso ;
+    void:triples 449494 .
+
+ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_seeAlso_http___rdf_wwpdb_org_schema_pdbx_v50_owl_pdbx_reference_entity_src_nat_http___ddbj_nig_ac_jp_ontologies_taxonomy_Taxon ns0:objectClass ns7:Taxon ;
+    ns0:subjectClass ns4:pdbx_reference_entity_src_nat ;
+    void:property rdfs:seeAlso ;
+    void:triples 238 .
+

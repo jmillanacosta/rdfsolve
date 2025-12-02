@@ -1,0 +1,332 @@
+@prefix ex: <https://github.com/jmillanacosta/rdfsolve/sparql/pubchem.book/pubchem.book/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:1ac21e2261ef a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+        SELECT ?class (COUNT(DISTINCT ?s) AS ?total) WHERE {
+            GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                ?s a ?class .
+            }
+        }
+        GROUP BY ?class
+        ORDER BY DESC(?total)
+        
+OFFSET 0
+LIMIT 300
+""" ;
+    schema:dateCreated "2025-12-02T10:08:29.987236+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:71597dd2ea40 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://purl.org/dc/terms/creator> ?o .
+                            ?s a <http://purl.org/spar/fabio/Book> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:30.114611+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:cb3230fe9d2d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://purl.org/dc/terms/creator> ?o .
+                            ?s a <http://purl.org/spar/fabio/Book> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:30.238359+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7ff286fcf1aa a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://purl.org/dc/terms/creator> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:30.362184+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:25d2d008e940 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://purl.org/dc/terms/creator> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:30.486150+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7ccdf2c77dfd a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://purl.org/spar/fabio/Book> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:30.610106+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:17d47cd47fba a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://purl.org/spar/fabio/Book> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:30.734412+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:580748d98c2f a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:30.858253+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:76302a946dd7 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:30.982027+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:312943e38190 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://purl.org/dc/terms/creator> ?o .
+                            ?s a <http://purl.org/spar/fabio/Book> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:31.738218+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:1000b15e2a47 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://purl.org/dc/terms/creator> ?o .
+                            ?s a <http://purl.org/spar/fabio/Book> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:31.861335+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:055b507a1b8d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://purl.org/dc/terms/creator> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:31.984536+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:9f81cba1a548 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://purl.org/dc/terms/creator> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:32.107797+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:22a3abf6bf06 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://purl.org/spar/fabio/Book> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:32.230621+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:41dbea5622b6 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://purl.org/spar/fabio/Book> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:32.353403+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:f69cb2046ae1 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:32.476527+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:f610b05c6f82 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/book> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:08:32.600566+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .

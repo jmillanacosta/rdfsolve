@@ -7611,7 +7611,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:49 INFO hamap: Logging configured for hamap
+<pre>2025-12-02 10:34:04 INFO hamap: Logging configured for hamap
 </pre>
 </div>
 </div>
@@ -7640,6 +7640,10 @@ a.anchor-link {
     <span class="n">load_parser_from_graph</span><span class="p">,</span>
     <span class="n">retrieve_void_from_graphs</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdfsolve.sparql_helper</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparqlHelper</span>
+
+<span class="c1"># Enable query collection to track all SPARQL queries executed</span>
+<span class="n">SparqlHelper</span><span class="o">.</span><span class="n">enable_query_collection</span><span class="p">()</span>
 
 <span class="c1"># Set renderer to 'notebook' for Jupyter, but ensure HTML export works</span>
 <span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">"notebook+plotly_mimetype"</span>
@@ -7934,14 +7938,14 @@ Note: VoID graph and JSON-LD are the primary caches
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>VoID graph not found in cache, attempting discovery...
-2025-12-02 08:46:51 DEBUG rdfsolve.parser: Starting VoID partition discovery for 
+2025-12-02 10:34:06 DEBUG rdfsolve.parser: Starting VoID partition discovery for 
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:51 INFO rdfsolve.parser: Discovering VoID partitions across all graphs
+<pre>2025-12-02 10:34:06 INFO rdfsolve.parser: Discovering VoID partitions across all graphs
 </pre>
 </div>
 </div>
@@ -7976,14 +7980,14 @@ Note: VoID graph and JSON-LD are the primary caches
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:54 INFO rdfsolve.parser: VoID discovery failed: Query failed after 3 attempts: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+<pre>2025-12-02 10:34:09 INFO rdfsolve.parser: VoID discovery failed: Query failed after 3 attempts: Invalid URL '': No scheme supplied. Perhaps you meant https://?
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:54 DEBUG rdfsolve.parser: Discovery exception: EndpointError: Query failed after 3 attempts: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+<pre>2025-12-02 10:34:09 DEBUG rdfsolve.parser: Discovery exception: EndpointError: Query failed after 3 attempts: Invalid URL '': No scheme supplied. Perhaps you meant https://?
 </pre>
 </div>
 </div>
@@ -7991,14 +7995,14 @@ Note: VoID graph and JSON-LD are the primary caches
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>No VoID graphs found, generating from queries...
-2025-12-02 08:46:54 WARNING rdfsolve.parser: Query attempt 1 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fcp+void%3Aclass+%3Fclass+%3B%0A++++++++void%3Aentities+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fclass+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+a+%3Fclass%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fclass%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/class_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fclass%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fcp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+2025-12-02 10:34:09 WARNING rdfsolve.parser: Query attempt 1 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fcp+void%3Aclass+%3Fclass+%3B%0A++++++++void%3Aentities+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fclass+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+a+%3Fclass%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fclass%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/class_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fclass%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fcp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:54 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:09 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 CONSTRUCT {
@@ -8023,21 +8027,21 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:54 INFO rdfsolve.parser: Retrying after 1.1s (attempt 2/4)
+<pre>2025-12-02 10:34:09 INFO rdfsolve.parser: Retrying after 1.1s (attempt 2/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:55 WARNING rdfsolve.parser: Query attempt 2 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fcp+void%3Aclass+%3Fclass+%3B%0A++++++++void%3Aentities+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fclass+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+a+%3Fclass%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fclass%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/class_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fclass%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fcp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:10 WARNING rdfsolve.parser: Query attempt 2 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fcp+void%3Aclass+%3Fclass+%3B%0A++++++++void%3Aentities+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fclass+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+a+%3Fclass%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fclass%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/class_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fclass%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fcp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:55 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:10 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 CONSTRUCT {
@@ -8062,21 +8066,21 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:55 INFO rdfsolve.parser: Retrying after 2.0s (attempt 3/4)
+<pre>2025-12-02 10:34:10 INFO rdfsolve.parser: Retrying after 2.0s (attempt 3/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:57 WARNING rdfsolve.parser: Query attempt 3 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fcp+void%3Aclass+%3Fclass+%3B%0A++++++++void%3Aentities+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fclass+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+a+%3Fclass%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fclass%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/class_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fclass%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fcp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:12 WARNING rdfsolve.parser: Query attempt 3 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fcp+void%3Aclass+%3Fclass+%3B%0A++++++++void%3Aentities+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fclass+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+a+%3Fclass%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fclass%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/class_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fclass%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fcp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:57 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:12 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 CONSTRUCT {
@@ -8101,21 +8105,21 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:46:57 INFO rdfsolve.parser: Retrying after 4.2s (attempt 4/4)
+<pre>2025-12-02 10:34:12 INFO rdfsolve.parser: Retrying after 4.2s (attempt 4/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:01 WARNING rdfsolve.parser: Query attempt 4 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fcp+void%3Aclass+%3Fclass+%3B%0A++++++++void%3Aentities+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fclass+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+a+%3Fclass%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fclass%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/class_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fclass%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fcp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:16 WARNING rdfsolve.parser: Query attempt 4 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fcp+void%3Aclass+%3Fclass+%3B%0A++++++++void%3Aentities+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fclass+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+a+%3Fclass%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fclass%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/class_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fclass%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fcp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:01 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:16 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 CONSTRUCT {
@@ -8140,28 +8144,28 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:01 ERROR rdfsolve.parser: Query failed after 4 attempts
+<pre>2025-12-02 10:34:16 ERROR rdfsolve.parser: Query failed after 4 attempts
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:01 WARNING rdfsolve.parser: Query class_partitions failed after 7.36s: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fcp+void%3Aclass+%3Fclass+%3B%0A++++++++void%3Aentities+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fclass+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+a+%3Fclass%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fclass%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/class_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fclass%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fcp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:16 WARNING rdfsolve.parser: Query class_partitions failed after 7.33s: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fcp+void%3Aclass+%3Fclass+%3B%0A++++++++void%3Aentities+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fclass+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+a+%3Fclass%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fclass%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/class_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fclass%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fcp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:01 WARNING rdfsolve.parser: Query attempt 1 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0APREFIX+rdf%3A+%3Chttp%3A//www.w3.org/1999/02/22-rdf-syntax-ns%23%3E%0APREFIX+rdfs%3A+%3Chttp%3A//www.w3.org/2000/01/rdf-schema%23%3E%0ACONSTRUCT+%7B%0A++++%3Fpp+void%3Aproperty+%3Fproperty+%3B%0A++++++++void%3Atriples+%3Fcount+%3B%0A++++++++void-ext%3AsubjectClass+%3Fsubject_class+%3B%0A++++++++void-ext%3AobjectClass+%3Fobject_class+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fproperty+%3Fsubject_class+%3Fobject_class+%28COUNT%28%2A%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fsubject+%3Fproperty+%3Fobject+.%0A++++++++++++++++%3Fsubject+rdf%3Atype+%3Fsubject_class+.%0A++++++++++++%0A++++++++++++%23+Determine+object+class+based+on+object+type%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3ALiteral+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isLiteral%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++%3Fobject+rdf%3Atype+%3Fobject_class+.%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3AResource+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++++++FILTER+NOT+EXISTS+%7B+%3Fobject+rdf%3Atype+%3Fany_type+%7D%0A++++++++++++%7D%0A++++++++%7D%0A++++++++GROUP+BY+%3Fproperty+%3Fsubject_class+%3Fobject_class%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/property_partition_%27%2C%0A+++++++++++++++++++REPLACE%28CONCAT%28STR%28%3Fproperty%29%2C+%27_%27%2C+STR%28%3Fsubject_class%29%2C+%27_%27%2C+STR%28%3Fobject_class%29%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fpp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:16 WARNING rdfsolve.parser: Query attempt 1 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0APREFIX+rdf%3A+%3Chttp%3A//www.w3.org/1999/02/22-rdf-syntax-ns%23%3E%0APREFIX+rdfs%3A+%3Chttp%3A//www.w3.org/2000/01/rdf-schema%23%3E%0ACONSTRUCT+%7B%0A++++%3Fpp+void%3Aproperty+%3Fproperty+%3B%0A++++++++void%3Atriples+%3Fcount+%3B%0A++++++++void-ext%3AsubjectClass+%3Fsubject_class+%3B%0A++++++++void-ext%3AobjectClass+%3Fobject_class+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fproperty+%3Fsubject_class+%3Fobject_class+%28COUNT%28%2A%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fsubject+%3Fproperty+%3Fobject+.%0A++++++++++++++++%3Fsubject+rdf%3Atype+%3Fsubject_class+.%0A++++++++++++%0A++++++++++++%23+Determine+object+class+based+on+object+type%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3ALiteral+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isLiteral%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++%3Fobject+rdf%3Atype+%3Fobject_class+.%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3AResource+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++++++FILTER+NOT+EXISTS+%7B+%3Fobject+rdf%3Atype+%3Fany_type+%7D%0A++++++++++++%7D%0A++++++++%7D%0A++++++++GROUP+BY+%3Fproperty+%3Fsubject_class+%3Fobject_class%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/property_partition_%27%2C%0A+++++++++++++++++++REPLACE%28CONCAT%28STR%28%3Fproperty%29%2C+%27_%27%2C+STR%28%3Fsubject_class%29%2C+%27_%27%2C+STR%28%3Fobject_class%29%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fpp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:01 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:16 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
@@ -8208,21 +8212,21 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:01 INFO rdfsolve.parser: Retrying after 1.1s (attempt 2/4)
+<pre>2025-12-02 10:34:16 INFO rdfsolve.parser: Retrying after 1.0s (attempt 2/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:02 WARNING rdfsolve.parser: Query attempt 2 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0APREFIX+rdf%3A+%3Chttp%3A//www.w3.org/1999/02/22-rdf-syntax-ns%23%3E%0APREFIX+rdfs%3A+%3Chttp%3A//www.w3.org/2000/01/rdf-schema%23%3E%0ACONSTRUCT+%7B%0A++++%3Fpp+void%3Aproperty+%3Fproperty+%3B%0A++++++++void%3Atriples+%3Fcount+%3B%0A++++++++void-ext%3AsubjectClass+%3Fsubject_class+%3B%0A++++++++void-ext%3AobjectClass+%3Fobject_class+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fproperty+%3Fsubject_class+%3Fobject_class+%28COUNT%28%2A%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fsubject+%3Fproperty+%3Fobject+.%0A++++++++++++++++%3Fsubject+rdf%3Atype+%3Fsubject_class+.%0A++++++++++++%0A++++++++++++%23+Determine+object+class+based+on+object+type%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3ALiteral+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isLiteral%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++%3Fobject+rdf%3Atype+%3Fobject_class+.%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3AResource+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++++++FILTER+NOT+EXISTS+%7B+%3Fobject+rdf%3Atype+%3Fany_type+%7D%0A++++++++++++%7D%0A++++++++%7D%0A++++++++GROUP+BY+%3Fproperty+%3Fsubject_class+%3Fobject_class%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/property_partition_%27%2C%0A+++++++++++++++++++REPLACE%28CONCAT%28STR%28%3Fproperty%29%2C+%27_%27%2C+STR%28%3Fsubject_class%29%2C+%27_%27%2C+STR%28%3Fobject_class%29%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fpp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:17 WARNING rdfsolve.parser: Query attempt 2 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0APREFIX+rdf%3A+%3Chttp%3A//www.w3.org/1999/02/22-rdf-syntax-ns%23%3E%0APREFIX+rdfs%3A+%3Chttp%3A//www.w3.org/2000/01/rdf-schema%23%3E%0ACONSTRUCT+%7B%0A++++%3Fpp+void%3Aproperty+%3Fproperty+%3B%0A++++++++void%3Atriples+%3Fcount+%3B%0A++++++++void-ext%3AsubjectClass+%3Fsubject_class+%3B%0A++++++++void-ext%3AobjectClass+%3Fobject_class+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fproperty+%3Fsubject_class+%3Fobject_class+%28COUNT%28%2A%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fsubject+%3Fproperty+%3Fobject+.%0A++++++++++++++++%3Fsubject+rdf%3Atype+%3Fsubject_class+.%0A++++++++++++%0A++++++++++++%23+Determine+object+class+based+on+object+type%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3ALiteral+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isLiteral%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++%3Fobject+rdf%3Atype+%3Fobject_class+.%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3AResource+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++++++FILTER+NOT+EXISTS+%7B+%3Fobject+rdf%3Atype+%3Fany_type+%7D%0A++++++++++++%7D%0A++++++++%7D%0A++++++++GROUP+BY+%3Fproperty+%3Fsubject_class+%3Fobject_class%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/property_partition_%27%2C%0A+++++++++++++++++++REPLACE%28CONCAT%28STR%28%3Fproperty%29%2C+%27_%27%2C+STR%28%3Fsubject_class%29%2C+%27_%27%2C+STR%28%3Fobject_class%29%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fpp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:02 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:17 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
@@ -8269,21 +8273,21 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:02 INFO rdfsolve.parser: Retrying after 2.2s (attempt 3/4)
+<pre>2025-12-02 10:34:17 INFO rdfsolve.parser: Retrying after 2.0s (attempt 3/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:04 WARNING rdfsolve.parser: Query attempt 3 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0APREFIX+rdf%3A+%3Chttp%3A//www.w3.org/1999/02/22-rdf-syntax-ns%23%3E%0APREFIX+rdfs%3A+%3Chttp%3A//www.w3.org/2000/01/rdf-schema%23%3E%0ACONSTRUCT+%7B%0A++++%3Fpp+void%3Aproperty+%3Fproperty+%3B%0A++++++++void%3Atriples+%3Fcount+%3B%0A++++++++void-ext%3AsubjectClass+%3Fsubject_class+%3B%0A++++++++void-ext%3AobjectClass+%3Fobject_class+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fproperty+%3Fsubject_class+%3Fobject_class+%28COUNT%28%2A%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fsubject+%3Fproperty+%3Fobject+.%0A++++++++++++++++%3Fsubject+rdf%3Atype+%3Fsubject_class+.%0A++++++++++++%0A++++++++++++%23+Determine+object+class+based+on+object+type%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3ALiteral+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isLiteral%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++%3Fobject+rdf%3Atype+%3Fobject_class+.%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3AResource+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++++++FILTER+NOT+EXISTS+%7B+%3Fobject+rdf%3Atype+%3Fany_type+%7D%0A++++++++++++%7D%0A++++++++%7D%0A++++++++GROUP+BY+%3Fproperty+%3Fsubject_class+%3Fobject_class%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/property_partition_%27%2C%0A+++++++++++++++++++REPLACE%28CONCAT%28STR%28%3Fproperty%29%2C+%27_%27%2C+STR%28%3Fsubject_class%29%2C+%27_%27%2C+STR%28%3Fobject_class%29%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fpp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:19 WARNING rdfsolve.parser: Query attempt 3 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0APREFIX+rdf%3A+%3Chttp%3A//www.w3.org/1999/02/22-rdf-syntax-ns%23%3E%0APREFIX+rdfs%3A+%3Chttp%3A//www.w3.org/2000/01/rdf-schema%23%3E%0ACONSTRUCT+%7B%0A++++%3Fpp+void%3Aproperty+%3Fproperty+%3B%0A++++++++void%3Atriples+%3Fcount+%3B%0A++++++++void-ext%3AsubjectClass+%3Fsubject_class+%3B%0A++++++++void-ext%3AobjectClass+%3Fobject_class+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fproperty+%3Fsubject_class+%3Fobject_class+%28COUNT%28%2A%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fsubject+%3Fproperty+%3Fobject+.%0A++++++++++++++++%3Fsubject+rdf%3Atype+%3Fsubject_class+.%0A++++++++++++%0A++++++++++++%23+Determine+object+class+based+on+object+type%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3ALiteral+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isLiteral%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++%3Fobject+rdf%3Atype+%3Fobject_class+.%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3AResource+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++++++FILTER+NOT+EXISTS+%7B+%3Fobject+rdf%3Atype+%3Fany_type+%7D%0A++++++++++++%7D%0A++++++++%7D%0A++++++++GROUP+BY+%3Fproperty+%3Fsubject_class+%3Fobject_class%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/property_partition_%27%2C%0A+++++++++++++++++++REPLACE%28CONCAT%28STR%28%3Fproperty%29%2C+%27_%27%2C+STR%28%3Fsubject_class%29%2C+%27_%27%2C+STR%28%3Fobject_class%29%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fpp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:04 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:19 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
@@ -8330,21 +8334,21 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:04 INFO rdfsolve.parser: Retrying after 4.2s (attempt 4/4)
+<pre>2025-12-02 10:34:19 INFO rdfsolve.parser: Retrying after 4.2s (attempt 4/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:09 WARNING rdfsolve.parser: Query attempt 4 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0APREFIX+rdf%3A+%3Chttp%3A//www.w3.org/1999/02/22-rdf-syntax-ns%23%3E%0APREFIX+rdfs%3A+%3Chttp%3A//www.w3.org/2000/01/rdf-schema%23%3E%0ACONSTRUCT+%7B%0A++++%3Fpp+void%3Aproperty+%3Fproperty+%3B%0A++++++++void%3Atriples+%3Fcount+%3B%0A++++++++void-ext%3AsubjectClass+%3Fsubject_class+%3B%0A++++++++void-ext%3AobjectClass+%3Fobject_class+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fproperty+%3Fsubject_class+%3Fobject_class+%28COUNT%28%2A%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fsubject+%3Fproperty+%3Fobject+.%0A++++++++++++++++%3Fsubject+rdf%3Atype+%3Fsubject_class+.%0A++++++++++++%0A++++++++++++%23+Determine+object+class+based+on+object+type%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3ALiteral+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isLiteral%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++%3Fobject+rdf%3Atype+%3Fobject_class+.%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3AResource+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++++++FILTER+NOT+EXISTS+%7B+%3Fobject+rdf%3Atype+%3Fany_type+%7D%0A++++++++++++%7D%0A++++++++%7D%0A++++++++GROUP+BY+%3Fproperty+%3Fsubject_class+%3Fobject_class%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/property_partition_%27%2C%0A+++++++++++++++++++REPLACE%28CONCAT%28STR%28%3Fproperty%29%2C+%27_%27%2C+STR%28%3Fsubject_class%29%2C+%27_%27%2C+STR%28%3Fobject_class%29%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fpp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:23 WARNING rdfsolve.parser: Query attempt 4 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0APREFIX+rdf%3A+%3Chttp%3A//www.w3.org/1999/02/22-rdf-syntax-ns%23%3E%0APREFIX+rdfs%3A+%3Chttp%3A//www.w3.org/2000/01/rdf-schema%23%3E%0ACONSTRUCT+%7B%0A++++%3Fpp+void%3Aproperty+%3Fproperty+%3B%0A++++++++void%3Atriples+%3Fcount+%3B%0A++++++++void-ext%3AsubjectClass+%3Fsubject_class+%3B%0A++++++++void-ext%3AobjectClass+%3Fobject_class+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fproperty+%3Fsubject_class+%3Fobject_class+%28COUNT%28%2A%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fsubject+%3Fproperty+%3Fobject+.%0A++++++++++++++++%3Fsubject+rdf%3Atype+%3Fsubject_class+.%0A++++++++++++%0A++++++++++++%23+Determine+object+class+based+on+object+type%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3ALiteral+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isLiteral%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++%3Fobject+rdf%3Atype+%3Fobject_class+.%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3AResource+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++++++FILTER+NOT+EXISTS+%7B+%3Fobject+rdf%3Atype+%3Fany_type+%7D%0A++++++++++++%7D%0A++++++++%7D%0A++++++++GROUP+BY+%3Fproperty+%3Fsubject_class+%3Fobject_class%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/property_partition_%27%2C%0A+++++++++++++++++++REPLACE%28CONCAT%28STR%28%3Fproperty%29%2C+%27_%27%2C+STR%28%3Fsubject_class%29%2C+%27_%27%2C+STR%28%3Fobject_class%29%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fpp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:09 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:23 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
@@ -8391,28 +8395,28 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:09 ERROR rdfsolve.parser: Query failed after 4 attempts
+<pre>2025-12-02 10:34:23 ERROR rdfsolve.parser: Query failed after 4 attempts
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:09 WARNING rdfsolve.parser: Query property_partitions failed after 7.47s: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0APREFIX+rdf%3A+%3Chttp%3A//www.w3.org/1999/02/22-rdf-syntax-ns%23%3E%0APREFIX+rdfs%3A+%3Chttp%3A//www.w3.org/2000/01/rdf-schema%23%3E%0ACONSTRUCT+%7B%0A++++%3Fpp+void%3Aproperty+%3Fproperty+%3B%0A++++++++void%3Atriples+%3Fcount+%3B%0A++++++++void-ext%3AsubjectClass+%3Fsubject_class+%3B%0A++++++++void-ext%3AobjectClass+%3Fobject_class+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fproperty+%3Fsubject_class+%3Fobject_class+%28COUNT%28%2A%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fsubject+%3Fproperty+%3Fobject+.%0A++++++++++++++++%3Fsubject+rdf%3Atype+%3Fsubject_class+.%0A++++++++++++%0A++++++++++++%23+Determine+object+class+based+on+object+type%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3ALiteral+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isLiteral%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++%3Fobject+rdf%3Atype+%3Fobject_class+.%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3AResource+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++++++FILTER+NOT+EXISTS+%7B+%3Fobject+rdf%3Atype+%3Fany_type+%7D%0A++++++++++++%7D%0A++++++++%7D%0A++++++++GROUP+BY+%3Fproperty+%3Fsubject_class+%3Fobject_class%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/property_partition_%27%2C%0A+++++++++++++++++++REPLACE%28CONCAT%28STR%28%3Fproperty%29%2C+%27_%27%2C+STR%28%3Fsubject_class%29%2C+%27_%27%2C+STR%28%3Fobject_class%29%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fpp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:23 WARNING rdfsolve.parser: Query property_partitions failed after 7.27s: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0APREFIX+rdf%3A+%3Chttp%3A//www.w3.org/1999/02/22-rdf-syntax-ns%23%3E%0APREFIX+rdfs%3A+%3Chttp%3A//www.w3.org/2000/01/rdf-schema%23%3E%0ACONSTRUCT+%7B%0A++++%3Fpp+void%3Aproperty+%3Fproperty+%3B%0A++++++++void%3Atriples+%3Fcount+%3B%0A++++++++void-ext%3AsubjectClass+%3Fsubject_class+%3B%0A++++++++void-ext%3AobjectClass+%3Fobject_class+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fproperty+%3Fsubject_class+%3Fobject_class+%28COUNT%28%2A%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fsubject+%3Fproperty+%3Fobject+.%0A++++++++++++++++%3Fsubject+rdf%3Atype+%3Fsubject_class+.%0A++++++++++++%0A++++++++++++%23+Determine+object+class+based+on+object+type%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3ALiteral+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isLiteral%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++%3Fobject+rdf%3Atype+%3Fobject_class+.%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++%7D%0A++++++++++++UNION%0A++++++++++++%7B%0A++++++++++++++++BIND%28rdfs%3AResource+AS+%3Fobject_class%29%0A++++++++++++++++FILTER%28isURI%28%3Fobject%29%29%0A++++++++++++++++FILTER+NOT+EXISTS+%7B+%3Fobject+rdf%3Atype+%3Fany_type+%7D%0A++++++++++++%7D%0A++++++++%7D%0A++++++++GROUP+BY+%3Fproperty+%3Fsubject_class+%3Fobject_class%0A++++++++LIMIT+300%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/property_partition_%27%2C%0A+++++++++++++++++++REPLACE%28CONCAT%28STR%28%3Fproperty%29%2C+%27_%27%2C+STR%28%3Fsubject_class%29%2C+%27_%27%2C+STR%28%3Fobject_class%29%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fpp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:09 WARNING rdfsolve.parser: Query attempt 1 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fdp+void-ext%3AdatatypePartition+%3Fdatatype+%3B%0A++++++++void%3Atriples+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fdatatype+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+%3Fp+%3Fo+.%0A++++++++++++++++FILTER%28isLiteral%28%3Fo%29%29%0A++++++++++++++++BIND%28datatype%28%3Fo%29+AS+%3Fdatatype%29%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fdatatype%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/datatype_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fdatatype%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fdp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:23 WARNING rdfsolve.parser: Query attempt 1 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fdp+void-ext%3AdatatypePartition+%3Fdatatype+%3B%0A++++++++void%3Atriples+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fdatatype+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+%3Fp+%3Fo+.%0A++++++++++++++++FILTER%28isLiteral%28%3Fo%29%29%0A++++++++++++++++BIND%28datatype%28%3Fo%29+AS+%3Fdatatype%29%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fdatatype%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/datatype_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fdatatype%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fdp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:09 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:23 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 CONSTRUCT {
@@ -8438,21 +8442,21 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:09 INFO rdfsolve.parser: Retrying after 1.1s (attempt 2/4)
+<pre>2025-12-02 10:34:23 INFO rdfsolve.parser: Retrying after 1.1s (attempt 2/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:10 WARNING rdfsolve.parser: Query attempt 2 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fdp+void-ext%3AdatatypePartition+%3Fdatatype+%3B%0A++++++++void%3Atriples+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fdatatype+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+%3Fp+%3Fo+.%0A++++++++++++++++FILTER%28isLiteral%28%3Fo%29%29%0A++++++++++++++++BIND%28datatype%28%3Fo%29+AS+%3Fdatatype%29%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fdatatype%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/datatype_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fdatatype%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fdp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:25 WARNING rdfsolve.parser: Query attempt 2 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fdp+void-ext%3AdatatypePartition+%3Fdatatype+%3B%0A++++++++void%3Atriples+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fdatatype+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+%3Fp+%3Fo+.%0A++++++++++++++++FILTER%28isLiteral%28%3Fo%29%29%0A++++++++++++++++BIND%28datatype%28%3Fo%29+AS+%3Fdatatype%29%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fdatatype%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/datatype_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fdatatype%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fdp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:10 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:25 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 CONSTRUCT {
@@ -8478,21 +8482,21 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:10 INFO rdfsolve.parser: Retrying after 2.0s (attempt 3/4)
+<pre>2025-12-02 10:34:25 INFO rdfsolve.parser: Retrying after 2.2s (attempt 3/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:12 WARNING rdfsolve.parser: Query attempt 3 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fdp+void-ext%3AdatatypePartition+%3Fdatatype+%3B%0A++++++++void%3Atriples+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fdatatype+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+%3Fp+%3Fo+.%0A++++++++++++++++FILTER%28isLiteral%28%3Fo%29%29%0A++++++++++++++++BIND%28datatype%28%3Fo%29+AS+%3Fdatatype%29%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fdatatype%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/datatype_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fdatatype%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fdp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:27 WARNING rdfsolve.parser: Query attempt 3 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fdp+void-ext%3AdatatypePartition+%3Fdatatype+%3B%0A++++++++void%3Atriples+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fdatatype+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+%3Fp+%3Fo+.%0A++++++++++++++++FILTER%28isLiteral%28%3Fo%29%29%0A++++++++++++++++BIND%28datatype%28%3Fo%29+AS+%3Fdatatype%29%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fdatatype%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/datatype_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fdatatype%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fdp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:12 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:27 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 CONSTRUCT {
@@ -8518,21 +8522,21 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:12 INFO rdfsolve.parser: Retrying after 4.1s (attempt 4/4)
+<pre>2025-12-02 10:34:27 INFO rdfsolve.parser: Retrying after 4.1s (attempt 4/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:16 WARNING rdfsolve.parser: Query attempt 4 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fdp+void-ext%3AdatatypePartition+%3Fdatatype+%3B%0A++++++++void%3Atriples+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fdatatype+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+%3Fp+%3Fo+.%0A++++++++++++++++FILTER%28isLiteral%28%3Fo%29%29%0A++++++++++++++++BIND%28datatype%28%3Fo%29+AS+%3Fdatatype%29%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fdatatype%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/datatype_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fdatatype%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fdp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:31 WARNING rdfsolve.parser: Query attempt 4 failed: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fdp+void-ext%3AdatatypePartition+%3Fdatatype+%3B%0A++++++++void%3Atriples+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fdatatype+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+%3Fp+%3Fo+.%0A++++++++++++++++FILTER%28isLiteral%28%3Fo%29%29%0A++++++++++++++++BIND%28datatype%28%3Fo%29+AS+%3Fdatatype%29%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fdatatype%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/datatype_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fdatatype%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fdp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:16 DEBUG rdfsolve.parser: Query:
+<pre>2025-12-02 10:34:31 DEBUG rdfsolve.parser: Query:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 CONSTRUCT {
@@ -8558,35 +8562,35 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:16 ERROR rdfsolve.parser: Query failed after 4 attempts
+<pre>2025-12-02 10:34:31 ERROR rdfsolve.parser: Query failed after 4 attempts
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:16 WARNING rdfsolve.parser: Query datatype_partitions failed after 7.22s: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fdp+void-ext%3AdatatypePartition+%3Fdatatype+%3B%0A++++++++void%3Atriples+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fdatatype+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+%3Fp+%3Fo+.%0A++++++++++++++++FILTER%28isLiteral%28%3Fo%29%29%0A++++++++++++++++BIND%28datatype%28%3Fo%29+AS+%3Fdatatype%29%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fdatatype%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/datatype_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fdatatype%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fdp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
+<pre>2025-12-02 10:34:31 WARNING rdfsolve.parser: Query datatype_partitions failed after 7.40s: unknown url type: '?query=PREFIX+void%3A+%3Chttp%3A//rdfs.org/ns/void%23%3E%0APREFIX+void-ext%3A+%3Chttp%3A//ldf.fi/void-ext%23%3E%0ACONSTRUCT+%7B%0A++++%3Fdp+void-ext%3AdatatypePartition+%3Fdatatype+%3B%0A++++++++void%3Atriples+%3Fcount+.%0A%7D%0AWHERE+%7B%0A++++%7B%0A++++++++SELECT+%3Fdatatype+%28COUNT%28%3Fs%29+AS+%3Fcount%29%0A++++++++WHERE+%7B%0A++++++++++++++++++++++++++++%3Fs+%3Fp+%3Fo+.%0A++++++++++++++++FILTER%28isLiteral%28%3Fo%29%29%0A++++++++++++++++BIND%28datatype%28%3Fo%29+AS+%3Fdatatype%29%0A++++++++++++++++++++%7D%0A++++++++GROUP+BY+%3Fdatatype%0A++++%7D%0A++++BIND%28IRI%28CONCAT%28%27urn%3Asparql%3Adefault%3Agraph/void/datatype_partition_%27%2C%0A+++++++++++++++++++REPLACE%28STR%28%3Fdatatype%29%2C+%27%5B%5Ea-zA-Z0-9_%5D%27%2C+%27_%27%2C+%27g%27%29%29%29+AS+%3Fdp%29%0A%7D&amp;format=turtle&amp;output=turtle&amp;results=turtle'
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:16 WARNING rdfsolve.parser: No RDF data was successfully extracted from endpoint
+<pre>2025-12-02 10:34:31 WARNING rdfsolve.parser: No RDF data was successfully extracted from endpoint
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:16 INFO rdfsolve.parser: This could indicate endpoint compatibility issues - creating minimal VoID
+<pre>2025-12-02 10:34:31 INFO rdfsolve.parser: This could indicate endpoint compatibility issues - creating minimal VoID
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 08:47:16 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hamap/hamap_generated_void.ttl
+<pre>2025-12-02 10:34:31 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hamap/hamap_generated_void.ttl
 </pre>
 </div>
 </div>
@@ -9040,7 +9044,7 @@ Memory usage - Instances: 0.1 KB
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Regenerating LinkML schema from JSON-LD with custom schema URI...
-2025-12-02 08:47:16 WARNING rdfsolve.parser: No schema triples found in JSON-LD @graph
+2025-12-02 10:34:31 WARNING rdfsolve.parser: No schema triples found in JSON-LD @graph
 </pre>
 </div>
 </div>
@@ -9136,6 +9140,45 @@ erDiagram
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hamap/hamap_schema.csv
 JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hamap/hamap_schema.json
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0fb4e6d9">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Export collected SPARQL queries as TTL</span>
+<span class="n">queries_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_sparql_queries.ttl"</span><span class="p">)</span>
+<span class="n">queries</span> <span class="o">=</span> <span class="n">SparqlHelper</span><span class="o">.</span><span class="n">get_collected_queries</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">queries</span><span class="p">:</span>
+    <span class="n">ttl_content</span> <span class="o">=</span> <span class="n">SparqlHelper</span><span class="o">.</span><span class="n">export_queries_as_ttl</span><span class="p">(</span>
+        <span class="n">output_file</span><span class="o">=</span><span class="n">queries_path</span><span class="p">,</span>
+        <span class="n">base_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://github.com/jmillanacosta/rdfsolve/sparql/</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
+        <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">queries</span><span class="p">)</span><span class="si">}</span><span class="s2"> SPARQL queries to: </span><span class="si">{</span><span class="n">queries_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"No SPARQL queries were collected"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>No SPARQL queries were collected
 </pre>
 </div>
 </div>
