@@ -65,7 +65,7 @@ jobs:
     needs: prepare-matrix
     if: ${{ github.event.inputs.notebook_type == 'all' || github.event.inputs.notebook_type == 'schema' || github.event.inputs.notebook_type == '' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 300
     continue-on-error: true
     strategy:
       matrix: ${{fromJson(needs.prepare-matrix.outputs.schema-matrix)}}
@@ -173,7 +173,7 @@ jobs:
     needs: [prepare-matrix, schema-nb]
     if: ${{ !failure() && (github.event.inputs.notebook_type == 'all' || github.event.inputs.notebook_type == 'pydantic') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 300
     continue-on-error: true
     strategy:
       matrix: ${{fromJson(needs.prepare-matrix.outputs.pydantic-matrix)}}
