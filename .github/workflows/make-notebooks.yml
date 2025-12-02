@@ -374,8 +374,8 @@ jobs:
               relative_path="${file#*/data/schema_extraction/}"
               dataset_name=$(echo "$relative_path" | cut -d/ -f1)
               filename=$(basename "$relative_path")
-              mkdir -p "data/schema_extraction/$dataset_name"
-              cp "$file" "data/schema_extraction/$dataset_name/$filename"
+              mkdir -p "docs/data/schema_extraction/$dataset_name"
+              cp "$file" "docs/data/schema_extraction/$dataset_name/$filename"
               echo "Copied: $filename to docs/data/schema_extraction/$dataset_name/"
             ' _ {} \; 2>/dev/null || echo "Some data file copies failed"
           fi
@@ -458,43 +458,43 @@ jobs:
             
             # Check for data files
             data_first=true
-            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_schema.jsonld" ]; then
+            if [ -f "docs/data/schema_extraction/$dataset_name/${dataset_name}_schema.jsonld" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
               echo "        \"jsonld\": \"../data/schema_extraction/$dataset_name/${dataset_name}_schema.jsonld\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_linkml_schema.yaml" ]; then
+            if [ -f "docs/data/schema_extraction/$dataset_name/${dataset_name}_linkml_schema.yaml" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
               echo "        \"linkml\": \"../data/schema_extraction/$dataset_name/${dataset_name}_linkml_schema.yaml\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_pattern_coverage.csv" ]; then
+            if [ -f "docs/data/schema_extraction/$dataset_name/${dataset_name}_pattern_coverage.csv" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
               echo "        \"coverage\": \"../data/schema_extraction/$dataset_name/${dataset_name}_pattern_coverage.csv\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_generated_void.ttl" ]; then
+            if [ -f "docs/data/schema_extraction/$dataset_name/${dataset_name}_generated_void.ttl" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
               echo "        \"void\": \"../data/schema_extraction/$dataset_name/${dataset_name}_generated_void.ttl\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_instances.parquet" ]; then
+            if [ -f "docs/data/schema_extraction/$dataset_name/${dataset_name}_instances.parquet" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
               echo "        \"instances\": \"../data/schema_extraction/$dataset_name/${dataset_name}_instances.parquet\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_schema.nq" ]; then
+            if [ -f "docs/data/schema_extraction/$dataset_name/${dataset_name}_schema.nq" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
               echo "        \"nquads\": \"../data/schema_extraction/$dataset_name/${dataset_name}_schema.nq\"" >> docs/results.json
               data_first=false
             fi
             
-            if [ -f "data/schema_extraction/$dataset_name/${dataset_name}_sparql_queries.ttl" ]; then
+            if [ -f "docs/data/schema_extraction/$dataset_name/${dataset_name}_sparql_queries.ttl" ]; then
               if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
               echo "        \"queries\": \"../data/schema_extraction/$dataset_name/${dataset_name}_sparql_queries.ttl\"" >> docs/results.json
               data_first=false
