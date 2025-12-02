@@ -1,0 +1,1384 @@
+{
+  "@context": {
+    "purl": "http://purl.orthodb.org/",
+    "uniprot.core": "http://purl.uniprot.org/core/",
+    "ncbitaxon": "http://purl.uniprot.org/taxonomy/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "ro": "http://purl.obolibrary.org/obo/"
+  },
+  "@graph": [
+    {
+      "@id": "purl:Gene",
+      "uniprot.core:organism": [
+        {
+          "@id": "ncbitaxon:626939"
+        },
+        {
+          "@id": "ncbitaxon:2017485"
+        },
+        {
+          "@id": "ncbitaxon:215580"
+        },
+        {
+          "@id": "ncbitaxon:29483"
+        },
+        {
+          "@id": "ncbitaxon:1761904"
+        },
+        {
+          "@id": "ncbitaxon:1936995"
+        },
+        {
+          "@id": "ncbitaxon:1464038"
+        },
+        {
+          "@id": "ncbitaxon:1408287"
+        },
+        {
+          "@id": "ncbitaxon:1922712"
+        },
+        {
+          "@id": "ncbitaxon:1936269"
+        },
+        {
+          "@id": "ncbitaxon:2033517"
+        },
+        {
+          "@id": "ncbitaxon:2829415"
+        },
+        {
+          "@id": "ncbitaxon:48563"
+        },
+        {
+          "@id": "ncbitaxon:319629"
+        },
+        {
+          "@id": "ncbitaxon:11809"
+        },
+        {
+          "@id": "ncbitaxon:189382"
+        },
+        {
+          "@id": "ncbitaxon:1854588"
+        },
+        {
+          "@id": "ncbitaxon:1917143"
+        },
+        {
+          "@id": "ncbitaxon:68223"
+        },
+        {
+          "@id": "ncbitaxon:1121382"
+        },
+        {
+          "@id": "ncbitaxon:203122"
+        },
+        {
+          "@id": "ncbitaxon:13642"
+        },
+        {
+          "@id": "ncbitaxon:1670756"
+        },
+        {
+          "@id": "ncbitaxon:1120978"
+        },
+        {
+          "@id": "ncbitaxon:1230097"
+        },
+        {
+          "@id": "ncbitaxon:507476"
+        },
+        {
+          "@id": "ncbitaxon:388399"
+        },
+        {
+          "@id": "ncbitaxon:765909"
+        },
+        {
+          "@id": "ncbitaxon:706635"
+        },
+        {
+          "@id": "ncbitaxon:1284355"
+        },
+        {
+          "@id": "ncbitaxon:1822365"
+        },
+        {
+          "@id": "ncbitaxon:320122"
+        },
+        {
+          "@id": "ncbitaxon:82346"
+        },
+        {
+          "@id": "ncbitaxon:2663907"
+        },
+        {
+          "@id": "ncbitaxon:327387"
+        },
+        {
+          "@id": "ncbitaxon:823"
+        },
+        {
+          "@id": "ncbitaxon:130825"
+        },
+        {
+          "@id": "ncbitaxon:1352511"
+        },
+        {
+          "@id": "ncbitaxon:2017083"
+        },
+        {
+          "@id": "ncbitaxon:1853311"
+        },
+        {
+          "@id": "ncbitaxon:987980"
+        },
+        {
+          "@id": "ncbitaxon:1026882"
+        },
+        {
+          "@id": "ncbitaxon:1043493"
+        },
+        {
+          "@id": "ncbitaxon:1048380"
+        },
+        {
+          "@id": "ncbitaxon:1088767"
+        },
+        {
+          "@id": "ncbitaxon:2878388"
+        },
+        {
+          "@id": "ncbitaxon:392009"
+        },
+        {
+          "@id": "ncbitaxon:1085774"
+        },
+        {
+          "@id": "ncbitaxon:1034101"
+        },
+        {
+          "@id": "ncbitaxon:1227485"
+        },
+        {
+          "@id": "ncbitaxon:1348657"
+        },
+        {
+          "@id": "ncbitaxon:2072972"
+        },
+        {
+          "@id": "ncbitaxon:12222"
+        },
+        {
+          "@id": "ncbitaxon:138278"
+        },
+        {
+          "@id": "ncbitaxon:197183"
+        },
+        {
+          "@id": "ncbitaxon:1826170"
+        },
+        {
+          "@id": "ncbitaxon:1392247"
+        },
+        {
+          "@id": "ncbitaxon:42192"
+        },
+        {
+          "@id": "ncbitaxon:61495"
+        },
+        {
+          "@id": "ncbitaxon:1844"
+        },
+        {
+          "@id": "ncbitaxon:579483"
+        },
+        {
+          "@id": "ncbitaxon:1122148"
+        },
+        {
+          "@id": "ncbitaxon:1380393"
+        },
+        {
+          "@id": "ncbitaxon:1500296"
+        },
+        {
+          "@id": "ncbitaxon:1122191"
+        },
+        {
+          "@id": "ncbitaxon:670883"
+        },
+        {
+          "@id": "ncbitaxon:1267533"
+        },
+        {
+          "@id": "ncbitaxon:1307436"
+        },
+        {
+          "@id": "ncbitaxon:329726"
+        },
+        {
+          "@id": "ncbitaxon:870484"
+        },
+        {
+          "@id": "ncbitaxon:402596"
+        },
+        {
+          "@id": "ncbitaxon:371720"
+        },
+        {
+          "@id": "ncbitaxon:39493"
+        },
+        {
+          "@id": "ncbitaxon:388278"
+        },
+        {
+          "@id": "ncbitaxon:262921"
+        },
+        {
+          "@id": "ncbitaxon:1618234"
+        },
+        {
+          "@id": "ncbitaxon:2078013"
+        },
+        {
+          "@id": "ncbitaxon:1504288"
+        },
+        {
+          "@id": "ncbitaxon:312309"
+        },
+        {
+          "@id": "ncbitaxon:325343"
+        },
+        {
+          "@id": "ncbitaxon:1434829"
+        },
+        {
+          "@id": "ncbitaxon:10345"
+        },
+        {
+          "@id": "ncbitaxon:1923422"
+        },
+        {
+          "@id": "ncbitaxon:1121117"
+        },
+        {
+          "@id": "ncbitaxon:1094994"
+        },
+        {
+          "@id": "ncbitaxon:2056888"
+        },
+        {
+          "@id": "ncbitaxon:1923551"
+        },
+        {
+          "@id": "ncbitaxon:1227493"
+        },
+        {
+          "@id": "ncbitaxon:1848150"
+        },
+        {
+          "@id": "ncbitaxon:1567026"
+        },
+        {
+          "@id": "ncbitaxon:661399"
+        },
+        {
+          "@id": "ncbitaxon:29536"
+        },
+        {
+          "@id": "ncbitaxon:540065"
+        },
+        {
+          "@id": "ncbitaxon:499056"
+        },
+        {
+          "@id": "ncbitaxon:66423"
+        },
+        {
+          "@id": "ncbitaxon:1410668"
+        },
+        {
+          "@id": "ncbitaxon:2029858"
+        },
+        {
+          "@id": "ncbitaxon:1408305"
+        },
+        {
+          "@id": "ncbitaxon:1843237"
+        },
+        {
+          "@id": "ncbitaxon:1392489"
+        },
+        {
+          "@id": "ncbitaxon:2107584"
+        },
+        {
+          "@id": "ncbitaxon:1187925"
+        },
+        {
+          "@id": "ncbitaxon:1218565"
+        },
+        {
+          "@id": "ncbitaxon:1922631"
+        },
+        {
+          "@id": "ncbitaxon:172296"
+        },
+        {
+          "@id": "ncbitaxon:1428644"
+        },
+        {
+          "@id": "ncbitaxon:291688"
+        },
+        {
+          "@id": "ncbitaxon:327109"
+        },
+        {
+          "@id": "ncbitaxon:3068"
+        },
+        {
+          "@id": "ncbitaxon:122368"
+        },
+        {
+          "@id": "ncbitaxon:7108"
+        },
+        {
+          "@id": "ncbitaxon:520767"
+        },
+        {
+          "@id": "ncbitaxon:642259"
+        },
+        {
+          "@id": "ncbitaxon:35761"
+        },
+        {
+          "@id": "ncbitaxon:1604356"
+        },
+        {
+          "@id": "ncbitaxon:1195071"
+        },
+        {
+          "@id": "ncbitaxon:1121947"
+        },
+        {
+          "@id": "ncbitaxon:1359"
+        },
+        {
+          "@id": "ncbitaxon:521045"
+        },
+        {
+          "@id": "ncbitaxon:1094551"
+        },
+        {
+          "@id": "ncbitaxon:1121370"
+        },
+        {
+          "@id": "ncbitaxon:1273712"
+        },
+        {
+          "@id": "ncbitaxon:1223494"
+        },
+        {
+          "@id": "ncbitaxon:2164067"
+        },
+        {
+          "@id": "ncbitaxon:413066"
+        },
+        {
+          "@id": "ncbitaxon:1420914"
+        },
+        {
+          "@id": "ncbitaxon:1121462"
+        },
+        {
+          "@id": "ncbitaxon:198312"
+        },
+        {
+          "@id": "ncbitaxon:169402"
+        },
+        {
+          "@id": "ncbitaxon:43137"
+        },
+        {
+          "@id": "ncbitaxon:106549"
+        },
+        {
+          "@id": "ncbitaxon:2340"
+        },
+        {
+          "@id": "ncbitaxon:2250573"
+        },
+        {
+          "@id": "ncbitaxon:1490227"
+        },
+        {
+          "@id": "ncbitaxon:79236"
+        },
+        {
+          "@id": "ncbitaxon:1206103"
+        },
+        {
+          "@id": "ncbitaxon:4533"
+        },
+        {
+          "@id": "ncbitaxon:1548208"
+        },
+        {
+          "@id": "ncbitaxon:938167"
+        },
+        {
+          "@id": "ncbitaxon:181461"
+        },
+        {
+          "@id": "ncbitaxon:987458"
+        },
+        {
+          "@id": "ncbitaxon:1922784"
+        },
+        {
+          "@id": "ncbitaxon:1129194"
+        },
+        {
+          "@id": "ncbitaxon:941970"
+        }
+      ]
+    },
+    {
+      "@id": "ncbitaxon:167546",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:2098",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:228959",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:266748",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:28254",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:283736",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:29361",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:29529",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:29557",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:42858",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:45072",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:466109",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:467085",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:70346",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:485914",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:147047",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:46360",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:566460",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:100217",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:104782",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:10621",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:114155",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:230812",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:35722",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:613196",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:82742",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:318479",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:33443",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:510951",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:84751",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:366454",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:67767",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:321614",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:441894",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:237631",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:595503",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:566293",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:64284",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:191289",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:368735",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:142102",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:1943",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:200451",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:214473",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:246264",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:307486",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:227507",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:420255",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:515444",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:52131",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:907",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:12162",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:47864",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:354355",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:373891",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:537601",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:408719",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:5025",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:98795",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:69395",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:295428",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:457421",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:134599",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:399795",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:50990",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:295700",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:7959",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:133385",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:435880",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:479060",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:327277",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:366602",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:11840",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:509191",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:487155",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:28182",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:146020",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:499207",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:161920",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:59818",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:540251",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:221915",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:216432",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:176176",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:494023",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:42680",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:51642",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:12407",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:150146",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:58117",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:154654",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:484088",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:3988",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:1354",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:315392",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:10991",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:219649",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:170617",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:445217",
+      "rdf:type": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:64317",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:103954",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:35312",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:617001",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:597362",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:266779",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:29833",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:97195",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:173990",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:370324",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:393305",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:290109",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:297249",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:29553",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:518637",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:50712",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:555217",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:463014",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:97359",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:4522",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:290318",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:370354",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:226910",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:375760",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:205918",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:36035",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:273119",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:131111",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:28037",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:501328",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:111874",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:5098",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:65058",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:63155",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:46619",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:421010",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:51663",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:487706",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:573172",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:226178",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:57482",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:1528",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:150284",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:116130",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:2754",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:57119",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:12204",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:482537",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:23",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:543913",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:29494",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:337",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:317",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:263531",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:3555",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:195056",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    },
+    {
+      "@id": "ncbitaxon:363265",
+      "ro:0002162": {
+        "@id": "purl:Species"
+      }
+    }
+  ]
+}

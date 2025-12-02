@@ -1,0 +1,67 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://bioinfo.iocb.cz/dataset/ontology/void/class_partition_> void:class rdf:Property,
+        owl:Class,
+        owl:NamedIndividual,
+        owl:Restriction ;
+    void:entities 1189,
+        20571,
+        1885349,
+        6123721 .
+
+<http://bioinfo.iocb.cz/dataset/ontology/void/datatype_partition_> ns1:datatypePartition rdf:langString,
+        xsd:int ;
+    void:triples 22873,
+        3858115 .
+
+<http://bioinfo.iocb.cz/dataset/ontology/void/property_partition_> ns1:objectClass rdf:Property,
+        owl:Class,
+        owl:NamedIndividual,
+        owl:Restriction ;
+    ns1:subjectClass rdf:Property,
+        owl:Class,
+        owl:NamedIndividual,
+        owl:Restriction ;
+    void:property rdf:type,
+        rdfs:domain,
+        rdfs:range,
+        rdfs:subClassOf,
+        rdfs:subPropertyOf,
+        owl:allValuesFrom,
+        owl:onProperty,
+        owl:someValuesFrom ;
+    void:triples 1,
+        2,
+        4,
+        5,
+        7,
+        9,
+        15,
+        24,
+        28,
+        60,
+        122,
+        124,
+        146,
+        147,
+        228,
+        1000,
+        1561,
+        1808,
+        4922,
+        7823,
+        15187,
+        17955,
+        20581,
+        1014230,
+        1884291,
+        1885349,
+        3770698,
+        5230970,
+        8009697 .
+

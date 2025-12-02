@@ -1,0 +1,282 @@
+{
+  "@context": {
+    "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+    "cito": "http://purl.org/spar/cito/",
+    "mesh.vocab": "http://id.nlm.nih.gov/mesh/vocab#",
+    "chembl": "http://rdf.ebi.ac.uk/terms/chembl#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "sio": "http://semanticscience.org/resource/",
+    "uniprot.core": "http://purl.uniprot.org/core/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "ro": "http://purl.obolibrary.org/obo/"
+  },
+  "@graph": [
+    {
+      "@id": "vocabulary:Cell",
+      "cito:isDiscussedBy": [
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "chembl:CellLine"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Anatomy"
+        },
+        {
+          "@id": "vocabulary:Reference"
+        },
+        {
+          "@id": "vocabulary:Taxonomy"
+        },
+        {
+          "@id": "sio:001262"
+        },
+        {
+          "@id": "sio:010000"
+        }
+      ],
+      "uniprot.core:organism": [
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "chembl:CellLine"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Anatomy"
+        },
+        {
+          "@id": "vocabulary:Reference"
+        },
+        {
+          "@id": "vocabulary:Taxonomy"
+        },
+        {
+          "@id": "sio:001262"
+        },
+        {
+          "@id": "sio:010000"
+        }
+      ],
+      "rdf:type": [
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "chembl:CellLine"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Anatomy"
+        },
+        {
+          "@id": "vocabulary:Reference"
+        },
+        {
+          "@id": "vocabulary:Taxonomy"
+        },
+        {
+          "@id": "sio:001262"
+        },
+        {
+          "@id": "sio:010000"
+        }
+      ],
+      "rdfs:seeAlso": [
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "chembl:CellLine"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Anatomy"
+        },
+        {
+          "@id": "vocabulary:Reference"
+        },
+        {
+          "@id": "vocabulary:Taxonomy"
+        },
+        {
+          "@id": "sio:001262"
+        },
+        {
+          "@id": "sio:010000"
+        }
+      ],
+      "ro:0001000": [
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "chembl:CellLine"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Anatomy"
+        },
+        {
+          "@id": "vocabulary:Reference"
+        },
+        {
+          "@id": "vocabulary:Taxonomy"
+        },
+        {
+          "@id": "sio:001262"
+        },
+        {
+          "@id": "sio:010000"
+        }
+      ]
+    },
+    {
+      "@id": "sio:010054",
+      "cito:isDiscussedBy": [
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "chembl:CellLine"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Anatomy"
+        },
+        {
+          "@id": "vocabulary:Reference"
+        },
+        {
+          "@id": "vocabulary:Taxonomy"
+        },
+        {
+          "@id": "sio:001262"
+        },
+        {
+          "@id": "sio:010000"
+        }
+      ],
+      "uniprot.core:organism": [
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "chembl:CellLine"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Anatomy"
+        },
+        {
+          "@id": "vocabulary:Reference"
+        },
+        {
+          "@id": "vocabulary:Taxonomy"
+        },
+        {
+          "@id": "sio:001262"
+        },
+        {
+          "@id": "sio:010000"
+        }
+      ],
+      "rdf:type": [
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "chembl:CellLine"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Anatomy"
+        },
+        {
+          "@id": "vocabulary:Reference"
+        },
+        {
+          "@id": "vocabulary:Taxonomy"
+        },
+        {
+          "@id": "sio:001262"
+        },
+        {
+          "@id": "sio:010000"
+        }
+      ],
+      "rdfs:seeAlso": [
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "chembl:CellLine"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Anatomy"
+        },
+        {
+          "@id": "vocabulary:Reference"
+        },
+        {
+          "@id": "vocabulary:Taxonomy"
+        },
+        {
+          "@id": "sio:001262"
+        },
+        {
+          "@id": "sio:010000"
+        }
+      ],
+      "ro:0001000": [
+        {
+          "@id": "mesh.vocab:TopicalDescriptor"
+        },
+        {
+          "@id": "chembl:CellLine"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "vocabulary:Anatomy"
+        },
+        {
+          "@id": "vocabulary:Reference"
+        },
+        {
+          "@id": "vocabulary:Taxonomy"
+        },
+        {
+          "@id": "sio:001262"
+        },
+        {
+          "@id": "sio:010000"
+        }
+      ]
+    }
+  ]
+}

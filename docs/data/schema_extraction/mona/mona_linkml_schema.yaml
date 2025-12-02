@@ -1,0 +1,3371 @@
+name: mona_schema
+description: LinkML schema for mona generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+prefixes:
+  mona_schema:
+    prefix_prefix: mona_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  chebi:
+    prefix_prefix: chebi
+    prefix_reference: http://purl.obolibrary.org/obo/
+  sio:
+    prefix_prefix: sio
+    prefix_reference: http://semanticscience.org/resource/
+  cheminf:
+    prefix_prefix: cheminf
+    prefix_reference: http://semanticscience.org/resource/
+default_prefix: mona_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  sio_000008:
+    name: sio_000008
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/sio_000008
+    description: Property sio:000008
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/sio_000008
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/sio_000008
+    owner: chebi_25483
+    domain_of:
+    - chebi_598
+    - chebi_2571
+    - chebi_3098
+    - chebi_3992
+    - chebi_4986
+    - chebi_5457
+    - chebi_5653
+    - chebi_5686
+    - chebi_6497
+    - chebi_10036
+    - chebi_13643
+    - chebi_13759
+    - chebi_13790
+    - chebi_15489
+    - chebi_15705
+    - chebi_15841
+    - chebi_15904
+    - chebi_16158
+    - chebi_16180
+    - chebi_16219
+    - chebi_16385
+    - chebi_16389
+    - chebi_16412
+    - chebi_16492
+    - chebi_16617
+    - chebi_16648
+    - chebi_16670
+    - chebi_16728
+    - chebi_16733
+    - chebi_16749
+    - chebi_16799
+    - chebi_16916
+    - chebi_16961
+    - chebi_17002
+    - chebi_17062
+    - chebi_17087
+    - chebi_17102
+    - chebi_17135
+    - chebi_17354
+    - chebi_17387
+    - chebi_17408
+    - chebi_17476
+    - chebi_17478
+    - chebi_17517
+    - chebi_17522
+    - chebi_17761
+    - chebi_17855
+    - chebi_17984
+    - chebi_18000
+    - chebi_18035
+    - chebi_18059
+    - chebi_18133
+    - chebi_18303
+    - chebi_18379
+    - chebi_18946
+    - chebi_19129
+    - chebi_19168
+    - chebi_19217
+    - chebi_19218
+    - chebi_19254
+    - chebi_19573
+    - chebi_19834
+    - chebi_20012
+    - chebi_20060
+    - chebi_20156
+    - chebi_20432
+    - chebi_20706
+    - chebi_20857
+    - chebi_20858
+    - chebi_20859
+    - chebi_21656
+    - chebi_21689
+    - chebi_21731
+    - chebi_22160
+    - chebi_22177
+    - chebi_22213
+    - chebi_22307
+    - chebi_22315
+    - chebi_22324
+    - chebi_22326
+    - chebi_22327
+    - chebi_22475
+    - chebi_22478
+    - chebi_22495
+    - chebi_22512
+    - chebi_22531
+    - chebi_22562
+    - chebi_22580
+    - chebi_22680
+    - chebi_22681
+    - chebi_22682
+    - chebi_22693
+    - chebi_22698
+    - chebi_22702
+    - chebi_22707
+    - chebi_22712
+    - chebi_22715
+    - chebi_22720
+    - chebi_22723
+    - chebi_22727
+    - chebi_22729
+    - chebi_22860
+    - chebi_22861
+    - chebi_22881
+    - chebi_22888
+    - chebi_22901
+    - chebi_22950
+    - chebi_22951
+    - chebi_23000
+    - chebi_23003
+    - chebi_23044
+    - chebi_23053
+    - chebi_23079
+    - chebi_23134
+    - chebi_23147
+    - chebi_23150
+    - chebi_23217
+    - chebi_23219
+    - chebi_23232
+    - chebi_23238
+    - chebi_23247
+    - chebi_23403
+    - chebi_23420
+    - chebi_23424
+    - chebi_23436
+    - chebi_23437
+    - chebi_23449
+    - chebi_23453
+    - chebi_23480
+    - chebi_23495
+    - chebi_23528
+    - chebi_23643
+    - chebi_23665
+    - chebi_23684
+    - chebi_23697
+    - chebi_23763
+    - chebi_23765
+    - chebi_23822
+    - chebi_23825
+    - chebi_23843
+    - chebi_23847
+    - chebi_23849
+    - chebi_23899
+    - chebi_24043
+    - chebi_24059
+    - chebi_24060
+    - chebi_24079
+    - chebi_24128
+    - chebi_24129
+    - chebi_24250
+    - chebi_24267
+    - chebi_24279
+    - chebi_24302
+    - chebi_24353
+    - chebi_24356
+    - chebi_24358
+    - chebi_24360
+    - chebi_24385
+    - chebi_24396
+    - chebi_24397
+    - chebi_24400
+    - chebi_24402
+    - chebi_24406
+    - chebi_24436
+    - chebi_24469
+    - chebi_24532
+    - chebi_24589
+    - chebi_24613
+    - chebi_24628
+    - chebi_24632
+    - chebi_24646
+    - chebi_24650
+    - chebi_24654
+    - chebi_24669
+    - chebi_24673
+    - chebi_24676
+    - chebi_24681
+    - chebi_24689
+    - chebi_24745
+    - chebi_24751
+    - chebi_24780
+    - chebi_24789
+    - chebi_24803
+    - chebi_24828
+    - chebi_24829
+    - chebi_24836
+    - chebi_24839
+    - chebi_24840
+    - chebi_24846
+    - chebi_24863
+    - chebi_24868
+    - chebi_24897
+    - chebi_24913
+    - chebi_24921
+    - chebi_24922
+    - chebi_24983
+    - chebi_24995
+    - chebi_25000
+    - chebi_25029
+    - chebi_25036
+    - chebi_25099
+    - chebi_25106
+    - chebi_25185
+    - chebi_25186
+    - chebi_25196
+    - chebi_25216
+    - chebi_25223
+    - chebi_25235
+    - chebi_25238
+    - chebi_25340
+    - chebi_25357
+    - chebi_25381
+    - chebi_25384
+    - chebi_25389
+    - chebi_25392
+    - chebi_25409
+    - chebi_25477
+    - chebi_25479
+    - chebi_25481
+    - chebi_25483
+    - chebi_25508
+    - chebi_25527
+    - chebi_25529
+    - chebi_25543
+    - chebi_25553
+    - chebi_25566
+    - chebi_25622
+    - chebi_25656
+    - chebi_25676
+    - chebi_25696
+    - chebi_25697
+    - chebi_25698
+    - chebi_25701
+    - chebi_25702
+    - chebi_25704
+    - chebi_25707
+    - chebi_25710
+    - chebi_25712
+    - chebi_25713
+    - chebi_25716
+    - chebi_25717
+    - chebi_25750
+    - chebi_25754
+    - chebi_25801
+    - chebi_25810
+    - chebi_25830
+    - chebi_25901
+    - chebi_25904
+    - chebi_25961
+    - chebi_25962
+    - chebi_25970
+    - chebi_25973
+    - chebi_26004
+    - chebi_26043
+    - chebi_26069
+    - chebi_26079
+    - chebi_26094
+    - chebi_26144
+    - chebi_26151
+    - chebi_26191
+    - chebi_26199
+    - chebi_26214
+    - chebi_26255
+    - chebi_26273
+    - chebi_26347
+    - chebi_26369
+    - chebi_26373
+    - chebi_26375
+    - chebi_26377
+    - chebi_26387
+    - chebi_26388
+    - chebi_26389
+    - chebi_26391
+    - chebi_26392
+    - chebi_26394
+    - chebi_26395
+    - chebi_26396
+    - chebi_26397
+    - chebi_26398
+    - chebi_26400
+    - chebi_26401
+    - chebi_26407
+    - chebi_26410
+    - chebi_26414
+    - chebi_26421
+    - chebi_26433
+    - chebi_26434
+    - chebi_26435
+    - chebi_26437
+    - chebi_26438
+    - chebi_26440
+    - chebi_26441
+    - chebi_26442
+    - chebi_26443
+    - chebi_26444
+    - chebi_26446
+    - chebi_26455
+    - chebi_26493
+    - chebi_26508
+    - chebi_26513
+    range: cheminf_000018
+    inlined: true
+    inlined_as_list: true
+classes:
+  chebi_25810:
+    name: chebi_25810
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25810
+    description: Class representing chebi_25810
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25810
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25810
+  chebi_26094:
+    name: chebi_26094
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26094
+    description: Class representing chebi_26094
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26094
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26094
+  chebi_26369:
+    name: chebi_26369
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26369
+    description: Class representing chebi_26369
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26369
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26369
+  chebi_26438:
+    name: chebi_26438
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26438
+    description: Class representing chebi_26438
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26438
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26438
+  chebi_24589:
+    name: chebi_24589
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24589
+    description: Class representing chebi_24589
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24589
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24589
+  chebi_24983:
+    name: chebi_24983
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24983
+    description: Class representing chebi_24983
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24983
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24983
+  chebi_26004:
+    name: chebi_26004
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26004
+    description: Class representing chebi_26004
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26004
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26004
+  chebi_24267:
+    name: chebi_24267
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24267
+    description: Class representing chebi_24267
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24267
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24267
+  chebi_17062:
+    name: chebi_17062
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17062
+    description: Class representing chebi_17062
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17062
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17062
+  chebi_22901:
+    name: chebi_22901
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22901
+    description: Class representing chebi_22901
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22901
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22901
+  chebi_24356:
+    name: chebi_24356
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24356
+    description: Class representing chebi_24356
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24356
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24356
+  chebi_25696:
+    name: chebi_25696
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25696
+    description: Class representing chebi_25696
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25696
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25696
+  chebi_23480:
+    name: chebi_23480
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23480
+    description: Class representing chebi_23480
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23480
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23480
+  chebi_24829:
+    name: chebi_24829
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24829
+    description: Class representing chebi_24829
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24829
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24829
+  chebi_26508:
+    name: chebi_26508
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26508
+    description: Class representing chebi_26508
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26508
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26508
+  chebi_22562:
+    name: chebi_22562
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22562
+    description: Class representing chebi_22562
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22562
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22562
+  chebi_26410:
+    name: chebi_26410
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26410
+    description: Class representing chebi_26410
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26410
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26410
+  chebi_20859:
+    name: chebi_20859
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi20859
+    description: Class representing chebi_20859
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20859
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20859
+  chebi_25801:
+    name: chebi_25801
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25801
+    description: Class representing chebi_25801
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25801
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25801
+  chebi_26397:
+    name: chebi_26397
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26397
+    description: Class representing chebi_26397
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26397
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26397
+  chebi_26387:
+    name: chebi_26387
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26387
+    description: Class representing chebi_26387
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26387
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26387
+  chebi_26373:
+    name: chebi_26373
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26373
+    description: Class representing chebi_26373
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26373
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26373
+  chebi_25508:
+    name: chebi_25508
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25508
+    description: Class representing chebi_25508
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25508
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25508
+  chebi_26401:
+    name: chebi_26401
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26401
+    description: Class representing chebi_26401
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26401
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26401
+  chebi_23528:
+    name: chebi_23528
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23528
+    description: Class representing chebi_23528
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23528
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23528
+  chebi_16219:
+    name: chebi_16219
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16219
+    description: Class representing chebi_16219
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16219
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16219
+  chebi_22888:
+    name: chebi_22888
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22888
+    description: Class representing chebi_22888
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22888
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22888
+  chebi_23044:
+    name: chebi_23044
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23044
+    description: Class representing chebi_23044
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23044
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23044
+  chebi_25235:
+    name: chebi_25235
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25235
+    description: Class representing chebi_25235
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25235
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25235
+  chebi_25676:
+    name: chebi_25676
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25676
+    description: Class representing chebi_25676
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25676
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25676
+  chebi_23697:
+    name: chebi_23697
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23697
+    description: Class representing chebi_23697
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23697
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23697
+  chebi_4986:
+    name: chebi_4986
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi4986
+    description: Class representing chebi_4986
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_4986
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_4986
+  chebi_26079:
+    name: chebi_26079
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26079
+    description: Class representing chebi_26079
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26079
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26079
+  chebi_21731:
+    name: chebi_21731
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi21731
+    description: Class representing chebi_21731
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_21731
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_21731
+  chebi_18000:
+    name: chebi_18000
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi18000
+    description: Class representing chebi_18000
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18000
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18000
+  chebi_19573:
+    name: chebi_19573
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi19573
+    description: Class representing chebi_19573
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19573
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19573
+  chebi_24360:
+    name: chebi_24360
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24360
+    description: Class representing chebi_24360
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24360
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24360
+  chebi_25713:
+    name: chebi_25713
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25713
+    description: Class representing chebi_25713
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25713
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25713
+  chebi_24129:
+    name: chebi_24129
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24129
+    description: Class representing chebi_24129
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24129
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24129
+  chebi_13790:
+    name: chebi_13790
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi13790
+    description: Class representing chebi_13790
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_13790
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_13790
+  chebi_17135:
+    name: chebi_17135
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17135
+    description: Class representing chebi_17135
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17135
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17135
+  chebi_26440:
+    name: chebi_26440
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26440
+    description: Class representing chebi_26440
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26440
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26440
+  chebi_20012:
+    name: chebi_20012
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi20012
+    description: Class representing chebi_20012
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20012
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20012
+  chebi_13759:
+    name: chebi_13759
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi13759
+    description: Class representing chebi_13759
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_13759
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_13759
+  chebi_15904:
+    name: chebi_15904
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi15904
+    description: Class representing chebi_15904
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_15904
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_15904
+  chebi_26069:
+    name: chebi_26069
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26069
+    description: Class representing chebi_26069
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26069
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26069
+  chebi_22495:
+    name: chebi_22495
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22495
+    description: Class representing chebi_22495
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22495
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22495
+  chebi_25479:
+    name: chebi_25479
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25479
+    description: Class representing chebi_25479
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25479
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25479
+  chebi_22707:
+    name: chebi_22707
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22707
+    description: Class representing chebi_22707
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22707
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22707
+  chebi_24396:
+    name: chebi_24396
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24396
+    description: Class representing chebi_24396
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24396
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24396
+  chebi_17102:
+    name: chebi_17102
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17102
+    description: Class representing chebi_17102
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17102
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17102
+  chebi_23849:
+    name: chebi_23849
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23849
+    description: Class representing chebi_23849
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23849
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23849
+  chebi_22213:
+    name: chebi_22213
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22213
+    description: Class representing chebi_22213
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22213
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22213
+  chebi_24654:
+    name: chebi_24654
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24654
+    description: Class representing chebi_24654
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24654
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24654
+  chebi_25481:
+    name: chebi_25481
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25481
+    description: Class representing chebi_25481
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25481
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25481
+  chebi_24681:
+    name: chebi_24681
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24681
+    description: Class representing chebi_24681
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24681
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24681
+  chebi_16916:
+    name: chebi_16916
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16916
+    description: Class representing chebi_16916
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16916
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16916
+  chebi_24402:
+    name: chebi_24402
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24402
+    description: Class representing chebi_24402
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24402
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24402
+  chebi_24803:
+    name: chebi_24803
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24803
+    description: Class representing chebi_24803
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24803
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24803
+  chebi_25656:
+    name: chebi_25656
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25656
+    description: Class representing chebi_25656
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25656
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25656
+  chebi_24043:
+    name: chebi_24043
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24043
+    description: Class representing chebi_24043
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24043
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24043
+  chebi_24628:
+    name: chebi_24628
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24628
+    description: Class representing chebi_24628
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24628
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24628
+  chebi_25357:
+    name: chebi_25357
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25357
+    description: Class representing chebi_25357
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25357
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25357
+  chebi_24673:
+    name: chebi_24673
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24673
+    description: Class representing chebi_24673
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24673
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24673
+  chebi_17476:
+    name: chebi_17476
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17476
+    description: Class representing chebi_17476
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17476
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17476
+  chebi_23232:
+    name: chebi_23232
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23232
+    description: Class representing chebi_23232
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23232
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23232
+  chebi_23825:
+    name: chebi_23825
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23825
+    description: Class representing chebi_23825
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23825
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23825
+  chebi_24532:
+    name: chebi_24532
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24532
+    description: Class representing chebi_24532
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24532
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24532
+  chebi_24613:
+    name: chebi_24613
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24613
+    description: Class representing chebi_24613
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24613
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24613
+  chebi_5653:
+    name: chebi_5653
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi5653
+    description: Class representing chebi_5653
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_5653
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_5653
+  chebi_25750:
+    name: chebi_25750
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25750
+    description: Class representing chebi_25750
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25750
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25750
+  chebi_16961:
+    name: chebi_16961
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16961
+    description: Class representing chebi_16961
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16961
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16961
+  chebi_19834:
+    name: chebi_19834
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi19834
+    description: Class representing chebi_19834
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19834
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19834
+  chebi_24897:
+    name: chebi_24897
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24897
+    description: Class representing chebi_24897
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24897
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24897
+  chebi_24385:
+    name: chebi_24385
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24385
+    description: Class representing chebi_24385
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24385
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24385
+  chebi_24751:
+    name: chebi_24751
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24751
+    description: Class representing chebi_24751
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24751
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24751
+  chebi_24839:
+    name: chebi_24839
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24839
+    description: Class representing chebi_24839
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24839
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24839
+  chebi_23147:
+    name: chebi_23147
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23147
+    description: Class representing chebi_23147
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23147
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23147
+  chebi_24689:
+    name: chebi_24689
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24689
+    description: Class representing chebi_24689
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24689
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24689
+  chebi_23843:
+    name: chebi_23843
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23843
+    description: Class representing chebi_23843
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23843
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23843
+  chebi_25389:
+    name: chebi_25389
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25389
+    description: Class representing chebi_25389
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25389
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25389
+  chebi_25830:
+    name: chebi_25830
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25830
+    description: Class representing chebi_25830
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25830
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25830
+  chebi_26392:
+    name: chebi_26392
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26392
+    description: Class representing chebi_26392
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26392
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26392
+  chebi_20858:
+    name: chebi_20858
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi20858
+    description: Class representing chebi_20858
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20858
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20858
+  chebi_23437:
+    name: chebi_23437
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23437
+    description: Class representing chebi_23437
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23437
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23437
+  chebi_16670:
+    name: chebi_16670
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16670
+    description: Class representing chebi_16670
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16670
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16670
+  chebi_19217:
+    name: chebi_19217
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi19217
+    description: Class representing chebi_19217
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19217
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19217
+  chebi_23003:
+    name: chebi_23003
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23003
+    description: Class representing chebi_23003
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23003
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23003
+  chebi_6497:
+    name: chebi_6497
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi6497
+    description: Class representing chebi_6497
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_6497
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_6497
+  chebi_24469:
+    name: chebi_24469
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24469
+    description: Class representing chebi_24469
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24469
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24469
+  chebi_3992:
+    name: chebi_3992
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi3992
+    description: Class representing chebi_3992
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_3992
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_3992
+  chebi_24846:
+    name: chebi_24846
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24846
+    description: Class representing chebi_24846
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24846
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24846
+  chebi_25106:
+    name: chebi_25106
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25106
+    description: Class representing chebi_25106
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25106
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25106
+  chebi_25196:
+    name: chebi_25196
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25196
+    description: Class representing chebi_25196
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25196
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25196
+  chebi_26414:
+    name: chebi_26414
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26414
+    description: Class representing chebi_26414
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26414
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26414
+  chebi_26441:
+    name: chebi_26441
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26441
+    description: Class representing chebi_26441
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26441
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26441
+  chebi_20706:
+    name: chebi_20706
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi20706
+    description: Class representing chebi_20706
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20706
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20706
+  chebi_24632:
+    name: chebi_24632
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24632
+    description: Class representing chebi_24632
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24632
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24632
+  chebi_23424:
+    name: chebi_23424
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23424
+    description: Class representing chebi_23424
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23424
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23424
+  chebi_23420:
+    name: chebi_23420
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23420
+    description: Class representing chebi_23420
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23420
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23420
+  chebi_17387:
+    name: chebi_17387
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17387
+    description: Class representing chebi_17387
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17387
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17387
+  chebi_20857:
+    name: chebi_20857
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi20857
+    description: Class representing chebi_20857
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20857
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20857
+  chebi_24780:
+    name: chebi_24780
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24780
+    description: Class representing chebi_24780
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24780
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24780
+  chebi_16180:
+    name: chebi_16180
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16180
+    description: Class representing chebi_16180
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16180
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16180
+  chebi_19218:
+    name: chebi_19218
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi19218
+    description: Class representing chebi_19218
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19218
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19218
+  chebi_21689:
+    name: chebi_21689
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi21689
+    description: Class representing chebi_21689
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_21689
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_21689
+  chebi_25238:
+    name: chebi_25238
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25238
+    description: Class representing chebi_25238
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25238
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25238
+  chebi_25566:
+    name: chebi_25566
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25566
+    description: Class representing chebi_25566
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25566
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25566
+  chebi_15489:
+    name: chebi_15489
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi15489
+    description: Class representing chebi_15489
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_15489
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_15489
+  chebi_26347:
+    name: chebi_26347
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26347
+    description: Class representing chebi_26347
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26347
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26347
+  chebi_25704:
+    name: chebi_25704
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25704
+    description: Class representing chebi_25704
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25704
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25704
+  chebi_24840:
+    name: chebi_24840
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24840
+    description: Class representing chebi_24840
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24840
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24840
+  chebi_26407:
+    name: chebi_26407
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26407
+    description: Class representing chebi_26407
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26407
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26407
+  chebi_22324:
+    name: chebi_22324
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22324
+    description: Class representing chebi_22324
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22324
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22324
+  chebi_24745:
+    name: chebi_24745
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24745
+    description: Class representing chebi_24745
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24745
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24745
+  chebi_25477:
+    name: chebi_25477
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25477
+    description: Class representing chebi_25477
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25477
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25477
+  chebi_25384:
+    name: chebi_25384
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25384
+    description: Class representing chebi_25384
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25384
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25384
+  chebi_23403:
+    name: chebi_23403
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23403
+    description: Class representing chebi_23403
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23403
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23403
+  chebi_23684:
+    name: chebi_23684
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23684
+    description: Class representing chebi_23684
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23684
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23684
+  chebi_26144:
+    name: chebi_26144
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26144
+    description: Class representing chebi_26144
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26144
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26144
+  chebi_22177:
+    name: chebi_22177
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22177
+    description: Class representing chebi_22177
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22177
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22177
+  chebi_22720:
+    name: chebi_22720
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22720
+    description: Class representing chebi_22720
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22720
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22720
+  chebi_22861:
+    name: chebi_22861
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22861
+    description: Class representing chebi_22861
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22861
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22861
+  chebi_25527:
+    name: chebi_25527
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25527
+    description: Class representing chebi_25527
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25527
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25527
+  chebi_25701:
+    name: chebi_25701
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25701
+    description: Class representing chebi_25701
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25701
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25701
+  chebi_25901:
+    name: chebi_25901
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25901
+    description: Class representing chebi_25901
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25901
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25901
+  chebi_16728:
+    name: chebi_16728
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16728
+    description: Class representing chebi_16728
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16728
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16728
+  chebi_25962:
+    name: chebi_25962
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25962
+    description: Class representing chebi_25962
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25962
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25962
+  chebi_25529:
+    name: chebi_25529
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25529
+    description: Class representing chebi_25529
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25529
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25529
+  chebi_23079:
+    name: chebi_23079
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23079
+    description: Class representing chebi_23079
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23079
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23079
+  chebi_17761:
+    name: chebi_17761
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17761
+    description: Class representing chebi_17761
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17761
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17761
+  chebi_17522:
+    name: chebi_17522
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17522
+    description: Class representing chebi_17522
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17522
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17522
+  chebi_15841:
+    name: chebi_15841
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi15841
+    description: Class representing chebi_15841
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_15841
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_15841
+  chebi_23150:
+    name: chebi_23150
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23150
+    description: Class representing chebi_23150
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23150
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23150
+  chebi_22326:
+    name: chebi_22326
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22326
+    description: Class representing chebi_22326
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22326
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22326
+  chebi_26433:
+    name: chebi_26433
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26433
+    description: Class representing chebi_26433
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26433
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26433
+  chebi_26446:
+    name: chebi_26446
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26446
+    description: Class representing chebi_26446
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26446
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26446
+  chebi_22950:
+    name: chebi_22950
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22950
+    description: Class representing chebi_22950
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22950
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22950
+  chebi_18379:
+    name: chebi_18379
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi18379
+    description: Class representing chebi_18379
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18379
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18379
+  chebi_22860:
+    name: chebi_22860
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22860
+    description: Class representing chebi_22860
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22860
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22860
+  chebi_17354:
+    name: chebi_17354
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17354
+    description: Class representing chebi_17354
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17354
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17354
+  chebi_23217:
+    name: chebi_23217
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23217
+    description: Class representing chebi_23217
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23217
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23217
+  chebi_25186:
+    name: chebi_25186
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25186
+    description: Class representing chebi_25186
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25186
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25186
+  chebi_24436:
+    name: chebi_24436
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24436
+    description: Class representing chebi_24436
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24436
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24436
+  chebi_23134:
+    name: chebi_23134
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23134
+    description: Class representing chebi_23134
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23134
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23134
+  chebi_25185:
+    name: chebi_25185
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25185
+    description: Class representing chebi_25185
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25185
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25185
+  chebi_25707:
+    name: chebi_25707
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25707
+    description: Class representing chebi_25707
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25707
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25707
+  chebi_24828:
+    name: chebi_24828
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24828
+    description: Class representing chebi_24828
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24828
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24828
+  chebi_25099:
+    name: chebi_25099
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25099
+    description: Class representing chebi_25099
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25099
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25099
+  chebi_25392:
+    name: chebi_25392
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25392
+    description: Class representing chebi_25392
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25392
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25392
+  chebi_22315:
+    name: chebi_22315
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22315
+    description: Class representing chebi_22315
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22315
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22315
+  chebi_22702:
+    name: chebi_22702
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22702
+    description: Class representing chebi_22702
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22702
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22702
+  chebi_25904:
+    name: chebi_25904
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25904
+    description: Class representing chebi_25904
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25904
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25904
+  chebi_26398:
+    name: chebi_26398
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26398
+    description: Class representing chebi_26398
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26398
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26398
+  chebi_5686:
+    name: chebi_5686
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi5686
+    description: Class representing chebi_5686
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_5686
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_5686
+  chebi_26421:
+    name: chebi_26421
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26421
+    description: Class representing chebi_26421
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26421
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26421
+  cheminf_000018:
+    name: cheminf_000018
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Cheminf000018
+    description: Class representing cheminf_000018
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/cheminf_000018
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/cheminf_000018
+  chebi_24676:
+    name: chebi_24676
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24676
+    description: Class representing chebi_24676
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24676
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24676
+  chebi_26435:
+    name: chebi_26435
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26435
+    description: Class representing chebi_26435
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26435
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26435
+  chebi_26437:
+    name: chebi_26437
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26437
+    description: Class representing chebi_26437
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26437
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26437
+  chebi_26389:
+    name: chebi_26389
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26389
+    description: Class representing chebi_26389
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26389
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26389
+  chebi_25553:
+    name: chebi_25553
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25553
+    description: Class representing chebi_25553
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25553
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25553
+  chebi_26375:
+    name: chebi_26375
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26375
+    description: Class representing chebi_26375
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26375
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26375
+  chebi_26388:
+    name: chebi_26388
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26388
+    description: Class representing chebi_26388
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26388
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26388
+  chebi_24353:
+    name: chebi_24353
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24353
+    description: Class representing chebi_24353
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24353
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24353
+  chebi_16385:
+    name: chebi_16385
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16385
+    description: Class representing chebi_16385
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16385
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16385
+  chebi_26434:
+    name: chebi_26434
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26434
+    description: Class representing chebi_26434
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26434
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26434
+  chebi_16648:
+    name: chebi_16648
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16648
+    description: Class representing chebi_16648
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16648
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16648
+  chebi_22698:
+    name: chebi_22698
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22698
+    description: Class representing chebi_22698
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22698
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22698
+  chebi_25340:
+    name: chebi_25340
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25340
+    description: Class representing chebi_25340
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25340
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25340
+  chebi_26377:
+    name: chebi_26377
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26377
+    description: Class representing chebi_26377
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26377
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26377
+  chebi_26442:
+    name: chebi_26442
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26442
+    description: Class representing chebi_26442
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26442
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26442
+  chebi_22715:
+    name: chebi_22715
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22715
+    description: Class representing chebi_22715
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22715
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22715
+  chebi_2571:
+    name: chebi_2571
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi2571
+    description: Class representing chebi_2571
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_2571
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_2571
+  chebi_17087:
+    name: chebi_17087
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17087
+    description: Class representing chebi_17087
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17087
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17087
+  chebi_22881:
+    name: chebi_22881
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22881
+    description: Class representing chebi_22881
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22881
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22881
+  chebi_22682:
+    name: chebi_22682
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22682
+    description: Class representing chebi_22682
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22682
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22682
+  chebi_25697:
+    name: chebi_25697
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25697
+    description: Class representing chebi_25697
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25697
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25697
+  chebi_23238:
+    name: chebi_23238
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23238
+    description: Class representing chebi_23238
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23238
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23238
+  chebi_24650:
+    name: chebi_24650
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24650
+    description: Class representing chebi_24650
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24650
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24650
+  chebi_16412:
+    name: chebi_16412
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16412
+    description: Class representing chebi_16412
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16412
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16412
+  chebi_20156:
+    name: chebi_20156
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi20156
+    description: Class representing chebi_20156
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20156
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20156
+  chebi_25381:
+    name: chebi_25381
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25381
+    description: Class representing chebi_25381
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25381
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25381
+  chebi_23822:
+    name: chebi_23822
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23822
+    description: Class representing chebi_23822
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23822
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23822
+  chebi_23000:
+    name: chebi_23000
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23000
+    description: Class representing chebi_23000
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23000
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23000
+  chebi_20432:
+    name: chebi_20432
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi20432
+    description: Class representing chebi_20432
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20432
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20432
+  chebi_22680:
+    name: chebi_22680
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22680
+    description: Class representing chebi_22680
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22680
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22680
+  chebi_17478:
+    name: chebi_17478
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17478
+    description: Class representing chebi_17478
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17478
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17478
+  chebi_25409:
+    name: chebi_25409
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25409
+    description: Class representing chebi_25409
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25409
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25409
+  chebi_22580:
+    name: chebi_22580
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22580
+    description: Class representing chebi_22580
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22580
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22580
+  chebi_18035:
+    name: chebi_18035
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi18035
+    description: Class representing chebi_18035
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18035
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18035
+  chebi_24060:
+    name: chebi_24060
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24060
+    description: Class representing chebi_24060
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24060
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24060
+  chebi_16749:
+    name: chebi_16749
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16749
+    description: Class representing chebi_16749
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16749
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16749
+  chebi_23436:
+    name: chebi_23436
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23436
+    description: Class representing chebi_23436
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23436
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23436
+  chebi_24789:
+    name: chebi_24789
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24789
+    description: Class representing chebi_24789
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24789
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24789
+  chebi_24128:
+    name: chebi_24128
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24128
+    description: Class representing chebi_24128
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24128
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24128
+  chebi_19129:
+    name: chebi_19129
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi19129
+    description: Class representing chebi_19129
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19129
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19129
+  chebi_24302:
+    name: chebi_24302
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24302
+    description: Class representing chebi_24302
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24302
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24302
+  chebi_23247:
+    name: chebi_23247
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23247
+    description: Class representing chebi_23247
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23247
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23247
+  chebi_24913:
+    name: chebi_24913
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24913
+    description: Class representing chebi_24913
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24913
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24913
+  chebi_25712:
+    name: chebi_25712
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25712
+    description: Class representing chebi_25712
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25712
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25712
+  chebi_24059:
+    name: chebi_24059
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24059
+    description: Class representing chebi_24059
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24059
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24059
+  chebi_22712:
+    name: chebi_22712
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22712
+    description: Class representing chebi_22712
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22712
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22712
+  chebi_25702:
+    name: chebi_25702
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25702
+    description: Class representing chebi_25702
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25702
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25702
+  chebi_26444:
+    name: chebi_26444
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26444
+    description: Class representing chebi_26444
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26444
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26444
+  chebi_16158:
+    name: chebi_16158
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16158
+    description: Class representing chebi_16158
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16158
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16158
+  chebi_24921:
+    name: chebi_24921
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24921
+    description: Class representing chebi_24921
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24921
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24921
+  chebi_24836:
+    name: chebi_24836
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24836
+    description: Class representing chebi_24836
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24836
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24836
+  chebi_22475:
+    name: chebi_22475
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22475
+    description: Class representing chebi_22475
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22475
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22475
+  chebi_23643:
+    name: chebi_23643
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23643
+    description: Class representing chebi_23643
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23643
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23643
+  chebi_26273:
+    name: chebi_26273
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26273
+    description: Class representing chebi_26273
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26273
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26273
+  chebi_24079:
+    name: chebi_24079
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24079
+    description: Class representing chebi_24079
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24079
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24079
+  chebi_23763:
+    name: chebi_23763
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23763
+    description: Class representing chebi_23763
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23763
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23763
+  chebi_26394:
+    name: chebi_26394
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26394
+    description: Class representing chebi_26394
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26394
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26394
+  chebi_17002:
+    name: chebi_17002
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17002
+    description: Class representing chebi_17002
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17002
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17002
+  chebi_22327:
+    name: chebi_22327
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22327
+    description: Class representing chebi_22327
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22327
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22327
+  chebi_26043:
+    name: chebi_26043
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26043
+    description: Class representing chebi_26043
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26043
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26043
+  chebi_18946:
+    name: chebi_18946
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi18946
+    description: Class representing chebi_18946
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18946
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18946
+  chebi_17984:
+    name: chebi_17984
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17984
+    description: Class representing chebi_17984
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17984
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17984
+  chebi_22729:
+    name: chebi_22729
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22729
+    description: Class representing chebi_22729
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22729
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22729
+  chebi_26214:
+    name: chebi_26214
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26214
+    description: Class representing chebi_26214
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26214
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26214
+  chebi_26396:
+    name: chebi_26396
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26396
+    description: Class representing chebi_26396
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26396
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26396
+  chebi_26255:
+    name: chebi_26255
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26255
+    description: Class representing chebi_26255
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26255
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26255
+  chebi_26493:
+    name: chebi_26493
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26493
+    description: Class representing chebi_26493
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26493
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26493
+  chebi_24669:
+    name: chebi_24669
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24669
+    description: Class representing chebi_24669
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24669
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24669
+  chebi_22531:
+    name: chebi_22531
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22531
+    description: Class representing chebi_22531
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22531
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22531
+  chebi_22951:
+    name: chebi_22951
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22951
+    description: Class representing chebi_22951
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22951
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22951
+  chebi_22478:
+    name: chebi_22478
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22478
+    description: Class representing chebi_22478
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22478
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22478
+  chebi_25216:
+    name: chebi_25216
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25216
+    description: Class representing chebi_25216
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25216
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25216
+  chebi_22681:
+    name: chebi_22681
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22681
+    description: Class representing chebi_22681
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22681
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22681
+  chebi_24358:
+    name: chebi_24358
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24358
+    description: Class representing chebi_24358
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24358
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24358
+  chebi_16617:
+    name: chebi_16617
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16617
+    description: Class representing chebi_16617
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16617
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16617
+  chebi_25710:
+    name: chebi_25710
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25710
+    description: Class representing chebi_25710
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25710
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25710
+  chebi_19168:
+    name: chebi_19168
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi19168
+    description: Class representing chebi_19168
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19168
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19168
+  chebi_22160:
+    name: chebi_22160
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22160
+    description: Class representing chebi_22160
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22160
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22160
+  chebi_26443:
+    name: chebi_26443
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26443
+    description: Class representing chebi_26443
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26443
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26443
+  chebi_24406:
+    name: chebi_24406
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24406
+    description: Class representing chebi_24406
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24406
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24406
+  chebi_18059:
+    name: chebi_18059
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi18059
+    description: Class representing chebi_18059
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18059
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18059
+  chebi_24868:
+    name: chebi_24868
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24868
+    description: Class representing chebi_24868
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24868
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24868
+  chebi_25973:
+    name: chebi_25973
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25973
+    description: Class representing chebi_25973
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25973
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25973
+  chebi_26199:
+    name: chebi_26199
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26199
+    description: Class representing chebi_26199
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26199
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26199
+  chebi_24397:
+    name: chebi_24397
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24397
+    description: Class representing chebi_24397
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24397
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24397
+  chebi_26191:
+    name: chebi_26191
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26191
+    description: Class representing chebi_26191
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26191
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26191
+  chebi_23449:
+    name: chebi_23449
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23449
+    description: Class representing chebi_23449
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23449
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23449
+  chebi_24279:
+    name: chebi_24279
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24279
+    description: Class representing chebi_24279
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24279
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24279
+  chebi_20060:
+    name: chebi_20060
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi20060
+    description: Class representing chebi_20060
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20060
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_20060
+  chebi_16389:
+    name: chebi_16389
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16389
+    description: Class representing chebi_16389
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16389
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16389
+  chebi_23665:
+    name: chebi_23665
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23665
+    description: Class representing chebi_23665
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23665
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23665
+  chebi_26400:
+    name: chebi_26400
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26400
+    description: Class representing chebi_26400
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26400
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26400
+  chebi_23053:
+    name: chebi_23053
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23053
+    description: Class representing chebi_23053
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23053
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23053
+  chebi_23847:
+    name: chebi_23847
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23847
+    description: Class representing chebi_23847
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23847
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23847
+  chebi_18303:
+    name: chebi_18303
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi18303
+    description: Class representing chebi_18303
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18303
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18303
+  chebi_24646:
+    name: chebi_24646
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24646
+    description: Class representing chebi_24646
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24646
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24646
+  chebi_25961:
+    name: chebi_25961
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25961
+    description: Class representing chebi_25961
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25961
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25961
+  chebi_26513:
+    name: chebi_26513
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26513
+    description: Class representing chebi_26513
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26513
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26513
+  chebi_26391:
+    name: chebi_26391
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26391
+    description: Class representing chebi_26391
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26391
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26391
+  chebi_25754:
+    name: chebi_25754
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25754
+    description: Class representing chebi_25754
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25754
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25754
+  chebi_13643:
+    name: chebi_13643
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi13643
+    description: Class representing chebi_13643
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_13643
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_13643
+  chebi_17408:
+    name: chebi_17408
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17408
+    description: Class representing chebi_17408
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17408
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17408
+  chebi_22693:
+    name: chebi_22693
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22693
+    description: Class representing chebi_22693
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22693
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22693
+  chebi_22723:
+    name: chebi_22723
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22723
+    description: Class representing chebi_22723
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22723
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22723
+  chebi_10036:
+    name: chebi_10036
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi10036
+    description: Class representing chebi_10036
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_10036
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_10036
+  chebi_17517:
+    name: chebi_17517
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17517
+    description: Class representing chebi_17517
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17517
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17517
+  chebi_25036:
+    name: chebi_25036
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25036
+    description: Class representing chebi_25036
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25036
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25036
+  chebi_17855:
+    name: chebi_17855
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi17855
+    description: Class representing chebi_17855
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17855
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_17855
+  chebi_25717:
+    name: chebi_25717
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25717
+    description: Class representing chebi_25717
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25717
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25717
+  chebi_23495:
+    name: chebi_23495
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23495
+    description: Class representing chebi_23495
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23495
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23495
+  chebi_15705:
+    name: chebi_15705
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi15705
+    description: Class representing chebi_15705
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_15705
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_15705
+  chebi_23219:
+    name: chebi_23219
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23219
+    description: Class representing chebi_23219
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23219
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23219
+  chebi_22307:
+    name: chebi_22307
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22307
+    description: Class representing chebi_22307
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22307
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22307
+  chebi_26151:
+    name: chebi_26151
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26151
+    description: Class representing chebi_26151
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26151
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26151
+  chebi_598:
+    name: chebi_598
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi598
+    description: Class representing chebi_598
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_598
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_598
+  chebi_24863:
+    name: chebi_24863
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24863
+    description: Class representing chebi_24863
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24863
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24863
+  chebi_3098:
+    name: chebi_3098
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi3098
+    description: Class representing chebi_3098
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_3098
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_3098
+  chebi_16492:
+    name: chebi_16492
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16492
+    description: Class representing chebi_16492
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16492
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16492
+  chebi_18133:
+    name: chebi_18133
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi18133
+    description: Class representing chebi_18133
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18133
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_18133
+  chebi_22512:
+    name: chebi_22512
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22512
+    description: Class representing chebi_22512
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22512
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22512
+  chebi_24400:
+    name: chebi_24400
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24400
+    description: Class representing chebi_24400
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24400
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24400
+  chebi_25000:
+    name: chebi_25000
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25000
+    description: Class representing chebi_25000
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25000
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25000
+  chebi_25223:
+    name: chebi_25223
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25223
+    description: Class representing chebi_25223
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25223
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25223
+  chebi_26395:
+    name: chebi_26395
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26395
+    description: Class representing chebi_26395
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26395
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26395
+  chebi_23453:
+    name: chebi_23453
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23453
+    description: Class representing chebi_23453
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23453
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23453
+  chebi_16733:
+    name: chebi_16733
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16733
+    description: Class representing chebi_16733
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16733
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16733
+  chebi_25029:
+    name: chebi_25029
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25029
+    description: Class representing chebi_25029
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25029
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25029
+  chebi_19254:
+    name: chebi_19254
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi19254
+    description: Class representing chebi_19254
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19254
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_19254
+  chebi_25970:
+    name: chebi_25970
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25970
+    description: Class representing chebi_25970
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25970
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25970
+  chebi_16799:
+    name: chebi_16799
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi16799
+    description: Class representing chebi_16799
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16799
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_16799
+  chebi_21656:
+    name: chebi_21656
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi21656
+    description: Class representing chebi_21656
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_21656
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_21656
+  chebi_5457:
+    name: chebi_5457
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi5457
+    description: Class representing chebi_5457
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_5457
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_5457
+  chebi_22727:
+    name: chebi_22727
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi22727
+    description: Class representing chebi_22727
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22727
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_22727
+  chebi_24922:
+    name: chebi_24922
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24922
+    description: Class representing chebi_24922
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24922
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24922
+  chebi_25543:
+    name: chebi_25543
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25543
+    description: Class representing chebi_25543
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25543
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25543
+  chebi_25622:
+    name: chebi_25622
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25622
+    description: Class representing chebi_25622
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25622
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25622
+  chebi_23765:
+    name: chebi_23765
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23765
+    description: Class representing chebi_23765
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23765
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23765
+  chebi_24995:
+    name: chebi_24995
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24995
+    description: Class representing chebi_24995
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24995
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24995
+  chebi_25698:
+    name: chebi_25698
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25698
+    description: Class representing chebi_25698
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25698
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25698
+  chebi_25716:
+    name: chebi_25716
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25716
+    description: Class representing chebi_25716
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25716
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25716
+  chebi_26455:
+    name: chebi_26455
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi26455
+    description: Class representing chebi_26455
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26455
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_26455
+  chebi_23899:
+    name: chebi_23899
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi23899
+    description: Class representing chebi_23899
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23899
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_23899
+  chebi_24250:
+    name: chebi_24250
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi24250
+    description: Class representing chebi_24250
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24250
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_24250
+  chebi_25483:
+    name: chebi_25483
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/Chebi25483
+    description: Class representing chebi_25483
+    from_schema: http://jmillanacosta.github.io/rdfsolve/mona/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25483
+    slots:
+    - sio_000008
+    class_uri: http://jmillanacosta.github.io/rdfsolve/mona/linkml/chebi_25483
+metamodel_version: 1.7.0
+generation_date: '2025-12-02T10:18:24'

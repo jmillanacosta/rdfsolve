@@ -11,7 +11,7 @@
       "author_email": "javier.millanacosta@maastrichtuniversity.nl",
       "github_organization_name": "jmillanacosta",
       "github_repository_name": "rdfsolve",
-      "command_line_interface": true,
+      "command_line_interface": false,
       "gitlab": false,
       "runner": "tox",
       "__runner": "tox -e",

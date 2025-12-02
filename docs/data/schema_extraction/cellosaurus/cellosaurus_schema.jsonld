@@ -1,0 +1,5747 @@
+{
+  "@context": {
+    "ontology": "https://purl.expasy.org/sparql-examples/ontology#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "schema": "https://schema.org/",
+    "fabio": "http://purl.org/spar/fabio/",
+    "fbcv": "http://purl.obolibrary.org/obo/",
+    "obi": "http://purl.obolibrary.org/obo/",
+    "ncit": "http://purl.obolibrary.org/obo/",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "sh": "http://www.w3.org/ns/shacl#",
+    "vann": "http://purl.org/vocab/vann/",
+    "dcterms": "http://purl.org/dc/terms/",
+    "vocab": "https://w3id.org/widoco/vocab#",
+    "bibo": "http://purl.org/ontology/bibo/"
+  },
+  "@graph": [
+    {
+      "@id": "ontology:SpontaneouslyImmortalizedCellLine",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:HybridCellLine"
+        },
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:UndefinedCellLineType"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasVirologyComment": {
+        "@id": "ontology:VirologyComment"
+      },
+      "ontology:hasProblematicCellLineComment": {
+        "@id": "ontology:ProblematicCellLineComment"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:EmbryonicStemCell"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:hasMoAbIsotype": {
+        "@id": "ontology:MoAbIsotype"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:Book"
+        },
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:ConferencePaper"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "ontology:TechnicalDocument"
+        },
+        {
+          "@id": "ontology:MiscellaneousDocument"
+        },
+        {
+          "@id": "ontology:MedicalDegreeThesis"
+        },
+        {
+          "@id": "fabio:BachelorsThesis"
+        },
+        {
+          "@id": "fabio:MastersThesis"
+        }
+      ],
+      "ontology:hasKaryotypicInfoComment": {
+        "@id": "ontology:KaryotypicInfoComment"
+      },
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:hasDonorInfoComment": {
+        "@id": "ontology:DonorInfoComment"
+      },
+      "ontology:hasBiotechnologyComment": {
+        "@id": "ontology:BiotechnologyComment"
+      },
+      "ontology:hasMicrosatelliteInstability": {
+        "@id": "ontology:MicrosatelliteInstability"
+      },
+      "ontology:hasHLAtyping": {
+        "@id": "ontology:HLAtyping"
+      },
+      "ontology:derivedFromSameIndividualAs": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:hasSenescenceComment": {
+        "@id": "ontology:SenescenceComment"
+      },
+      "ontology:derivedFromIndividualBelongingToPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:HybridCellLine",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:HybridCellLine"
+        },
+        {
+          "@id": "ontology:Hybridoma"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasVirologyComment": {
+        "@id": "ontology:VirologyComment"
+      },
+      "ontology:hasProblematicCellLineComment": {
+        "@id": "ontology:ProblematicCellLineComment"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:HybridCellLine"
+        },
+        {
+          "@id": "ontology:Hybridoma"
+        },
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:FactorDependentCellLine"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:hasMoAbIsotype": {
+        "@id": "ontology:MoAbIsotype"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:Book"
+        },
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "ontology:MiscellaneousDocument"
+        }
+      ],
+      "ontology:hasKaryotypicInfoComment": {
+        "@id": "ontology:KaryotypicInfoComment"
+      },
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasMoAbTarget": {
+        "@id": "ontology:Protein"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:StromalCellLine",
+      "ontology:hasChildCellLine": {
+        "@id": "ontology:StromalCellLine"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasParentCellLine": {
+        "@id": "ontology:StromalCellLine"
+      },
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        }
+      ],
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:Hybridoma",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:HybridCellLine"
+        },
+        {
+          "@id": "ontology:Hybridoma"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:HybridCellLine"
+        },
+        {
+          "@id": "ontology:Hybridoma"
+        },
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        }
+      ],
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:hasMoAbIsotype": {
+        "@id": "ontology:MoAbIsotype"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:ConferencePaper"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "ontology:MiscellaneousDocument"
+        }
+      ],
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasMoAbTarget": [
+        {
+          "@id": "ontology:Protein"
+        },
+        {
+          "@id": "ontology:ChemicalEntity"
+        }
+      ],
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:hasDonorInfoComment": {
+        "@id": "ontology:DonorInfoComment"
+      },
+      "ontology:hasBiotechnologyComment": {
+        "@id": "ontology:BiotechnologyComment"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:TransformedCellLine",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:HybridCellLine"
+        },
+        {
+          "@id": "ontology:Hybridoma"
+        },
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasVirologyComment": {
+        "@id": "ontology:VirologyComment"
+      },
+      "ontology:hasProblematicCellLineComment": {
+        "@id": "ontology:ProblematicCellLineComment"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:ConditionallyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:EmbryonicStemCell"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        },
+        {
+          "@id": "ontology:UndefinedCellLineType"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:FactorDependentCellLine"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:hasMoAbIsotype": {
+        "@id": "ontology:MoAbIsotype"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:Book"
+        },
+        {
+          "@id": "ontology:MedicalDegreeMasterThesis"
+        },
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "ontology:PrivaDocentThesis"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:ConferencePaper"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "ontology:TechnicalDocument"
+        },
+        {
+          "@id": "ontology:MiscellaneousDocument"
+        },
+        {
+          "@id": "ontology:MedicalDegreeThesis"
+        },
+        {
+          "@id": "fabio:MastersThesis"
+        }
+      ],
+      "ontology:hasKaryotypicInfoComment": {
+        "@id": "ontology:KaryotypicInfoComment"
+      },
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasMoAbTarget": [
+        {
+          "@id": "ontology:Protein"
+        },
+        {
+          "@id": "ontology:ChemicalEntity"
+        }
+      ],
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:hasDonorInfoComment": {
+        "@id": "ontology:DonorInfoComment"
+      },
+      "ontology:hasBiotechnologyComment": {
+        "@id": "ontology:BiotechnologyComment"
+      },
+      "ontology:hasMicrosatelliteInstability": {
+        "@id": "ontology:MicrosatelliteInstability"
+      },
+      "ontology:hasHLAtyping": {
+        "@id": "ontology:HLAtyping"
+      },
+      "ontology:derivedFromSameIndividualAs": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:ConditionallyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:hasGenomeAncestry": {
+        "@id": "ontology:GenomeAncestry"
+      },
+      "ontology:hasSenescenceComment": {
+        "@id": "ontology:SenescenceComment"
+      },
+      "ontology:derivedFromIndividualBelongingToPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:ConditionallyImmortalizedCellLine",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:ConditionallyImmortalizedCellLine"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasVirologyComment": {
+        "@id": "ontology:VirologyComment"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:ConditionallyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:ConferencePaper"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        }
+      ],
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:hasDonorInfoComment": {
+        "@id": "ontology:DonorInfoComment"
+      },
+      "ontology:derivedFromSameIndividualAs": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:ConditionallyImmortalizedCellLine"
+        }
+      ],
+      "ontology:derivedFromIndividualBelongingToPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:CancerCellLine",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:HybridCellLine"
+        },
+        {
+          "@id": "ontology:Hybridoma"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasVirologyComment": {
+        "@id": "ontology:VirologyComment"
+      },
+      "ontology:hasProblematicCellLineComment": {
+        "@id": "ontology:ProblematicCellLineComment"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:hasMoAbIsotype": {
+        "@id": "ontology:MoAbIsotype"
+      },
+      "ontology:references": [
+        {
+          "@id": "ontology:VeterinaryMedicalDegreeThesis"
+        },
+        {
+          "@id": "fabio:Book"
+        },
+        {
+          "@id": "ontology:MedicalDegreeMasterThesis"
+        },
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:ConferencePaper"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "ontology:TechnicalDocument"
+        },
+        {
+          "@id": "ontology:MiscellaneousDocument"
+        },
+        {
+          "@id": "ontology:MedicalDegreeThesis"
+        },
+        {
+          "@id": "fabio:BachelorsThesis"
+        },
+        {
+          "@id": "fabio:MastersThesis"
+        }
+      ],
+      "ontology:hasKaryotypicInfoComment": {
+        "@id": "ontology:KaryotypicInfoComment"
+      },
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasMoAbTarget": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:hasDonorInfoComment": {
+        "@id": "ontology:DonorInfoComment"
+      },
+      "ontology:hasBiotechnologyComment": {
+        "@id": "ontology:BiotechnologyComment"
+      },
+      "ontology:hasMicrosatelliteInstability": {
+        "@id": "ontology:MicrosatelliteInstability"
+      },
+      "ontology:hasHLAtyping": {
+        "@id": "ontology:HLAtyping"
+      },
+      "ontology:derivedFromSameIndividualAs": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:UndefinedCellLineType"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:hasGenomeAncestry": {
+        "@id": "ontology:GenomeAncestry"
+      },
+      "ontology:hasSenescenceComment": {
+        "@id": "ontology:SenescenceComment"
+      },
+      "ontology:derivedFromIndividualBelongingToPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:InducedPluripotentStemCell",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasProblematicCellLineComment": {
+        "@id": "ontology:ProblematicCellLineComment"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:EmbryonicStemCell"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "ontology:TechnicalDocument"
+        }
+      ],
+      "ontology:hasKaryotypicInfoComment": {
+        "@id": "ontology:KaryotypicInfoComment"
+      },
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:hasDonorInfoComment": {
+        "@id": "ontology:DonorInfoComment"
+      },
+      "ontology:hasBiotechnologyComment": {
+        "@id": "ontology:BiotechnologyComment"
+      },
+      "ontology:hasHLAtyping": {
+        "@id": "ontology:HLAtyping"
+      },
+      "ontology:derivedFromSameIndividualAs": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        }
+      ],
+      "ontology:derivedFromIndividualBelongingToPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:FiniteCellLine",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:HybridCellLine"
+        },
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:ConditionallyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        },
+        {
+          "@id": "ontology:UndefinedCellLineType"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasVirologyComment": {
+        "@id": "ontology:VirologyComment"
+      },
+      "ontology:hasProblematicCellLineComment": {
+        "@id": "ontology:ProblematicCellLineComment"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:EmbryonicStemCell"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:Book"
+        },
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "ontology:TechnicalDocument"
+        },
+        {
+          "@id": "ontology:MiscellaneousDocument"
+        },
+        {
+          "@id": "ontology:MedicalDegreeThesis"
+        },
+        {
+          "@id": "fabio:MastersThesis"
+        }
+      ],
+      "ontology:hasKaryotypicInfoComment": {
+        "@id": "ontology:KaryotypicInfoComment"
+      },
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:hasDonorInfoComment": {
+        "@id": "ontology:DonorInfoComment"
+      },
+      "ontology:hasBiotechnologyComment": {
+        "@id": "ontology:BiotechnologyComment"
+      },
+      "ontology:hasHLAtyping": {
+        "@id": "ontology:HLAtyping"
+      },
+      "ontology:derivedFromSameIndividualAs": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        },
+        {
+          "@id": "ontology:UndefinedCellLineType"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:hasSenescenceComment": {
+        "@id": "ontology:SenescenceComment"
+      },
+      "ontology:derivedFromIndividualBelongingToPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:EmbryonicStemCell",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:EmbryonicStemCell"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        },
+        {
+          "@id": "ontology:FactorDependentCellLine"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasVirologyComment": {
+        "@id": "ontology:VirologyComment"
+      },
+      "ontology:hasProblematicCellLineComment": {
+        "@id": "ontology:ProblematicCellLineComment"
+      },
+      "ontology:hasParentCellLine": {
+        "@id": "ontology:EmbryonicStemCell"
+      },
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:ConferencePaper"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        }
+      ],
+      "ontology:hasKaryotypicInfoComment": {
+        "@id": "ontology:KaryotypicInfoComment"
+      },
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:hasDonorInfoComment": {
+        "@id": "ontology:DonorInfoComment"
+      },
+      "ontology:hasHLAtyping": {
+        "@id": "ontology:HLAtyping"
+      },
+      "ontology:derivedFromSameIndividualAs": {
+        "@id": "ontology:EmbryonicStemCell"
+      },
+      "ontology:derivedFromIndividualBelongingToPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:SomaticStemCell",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:EmbryonicStemCell"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "ontology:TechnicalDocument"
+        }
+      ],
+      "ontology:hasKaryotypicInfoComment": {
+        "@id": "ontology:KaryotypicInfoComment"
+      },
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:hasDonorInfoComment": {
+        "@id": "ontology:DonorInfoComment"
+      },
+      "ontology:derivedFromSameIndividualAs": [
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SomaticStemCell"
+        }
+      ],
+      "ontology:hasSenescenceComment": {
+        "@id": "ontology:SenescenceComment"
+      },
+      "ontology:derivedFromIndividualBelongingToPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:UndefinedCellLineType",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:UndefinedCellLineType"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasVirologyComment": {
+        "@id": "ontology:VirologyComment"
+      },
+      "ontology:hasProblematicCellLineComment": {
+        "@id": "ontology:ProblematicCellLineComment"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:UndefinedCellLineType"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:ConferencePaper"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "fabio:MastersThesis"
+        }
+      ],
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:hasMicrosatelliteInstability": {
+        "@id": "ontology:MicrosatelliteInstability"
+      },
+      "ontology:hasHLAtyping": {
+        "@id": "ontology:HLAtyping"
+      },
+      "ontology:derivedFromSameIndividualAs": [
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:UndefinedCellLineType"
+        }
+      ],
+      "ontology:hasGenomeAncestry": {
+        "@id": "ontology:GenomeAncestry"
+      },
+      "ontology:derivedFromIndividualBelongingToPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:TelomeraseImmortalizedCellLine",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasSequenceVariationInfo": {
+        "@id": "ontology:SequenceVariationInfo"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:transformedBy": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasVirologyComment": {
+        "@id": "ontology:VirologyComment"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:InducedPluripotentStemCell"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "ontology:TechnicalDocument"
+        }
+      ],
+      "ontology:hasKaryotypicInfoComment": {
+        "@id": "ontology:KaryotypicInfoComment"
+      },
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:establishedBy": {
+        "@id": "schema:Organization"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:hasDonorInfoComment": {
+        "@id": "ontology:DonorInfoComment"
+      },
+      "ontology:hasHLAtyping": {
+        "@id": "ontology:HLAtyping"
+      },
+      "ontology:derivedFromSameIndividualAs": [
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:CancerCellLine"
+        },
+        {
+          "@id": "ontology:FiniteCellLine"
+        },
+        {
+          "@id": "ontology:SpontaneouslyImmortalizedCellLine"
+        },
+        {
+          "@id": "ontology:TelomeraseImmortalizedCellLine"
+        }
+      ],
+      "ontology:hasGenomeAncestry": {
+        "@id": "ontology:GenomeAncestry"
+      },
+      "ontology:hasSenescenceComment": {
+        "@id": "ontology:SenescenceComment"
+      },
+      "ontology:derivedFromIndividualBelongingToPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:FactorDependentCellLine",
+      "ontology:hasChildCellLine": [
+        {
+          "@id": "ontology:HybridCellLine"
+        },
+        {
+          "@id": "ontology:TransformedCellLine"
+        },
+        {
+          "@id": "ontology:FactorDependentCellLine"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasCautionComment": {
+        "@id": "ontology:CautionComment"
+      },
+      "ontology:hasDoublingTime": {
+        "@id": "ontology:DoublingTime"
+      },
+      "ontology:hasAnecdotalComment": {
+        "@id": "ontology:AnecdotalComment"
+      },
+      "ontology:hasRegistationRecord": {
+        "@id": "ontology:RegistrationRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToBreed": {
+        "@id": "ontology:Breed"
+      },
+      "ontology:hasDiscontinuationRecord": {
+        "@id": "ontology:DiscontinuationRecord"
+      },
+      "ontology:hasDoublingTimeRange": {
+        "@id": "ontology:DoublingTimeRange"
+      },
+      "ontology:hasGeneKnockout": {
+        "@id": "ontology:GeneKnockout"
+      },
+      "ontology:derivedFromSite": {
+        "@id": "ontology:AnatomicalEntity"
+      },
+      "ontology:hasVirologyComment": {
+        "@id": "ontology:VirologyComment"
+      },
+      "ontology:hasProblematicCellLineComment": {
+        "@id": "ontology:ProblematicCellLineComment"
+      },
+      "ontology:hasParentCellLine": [
+        {
+          "@id": "ontology:EmbryonicStemCell"
+        },
+        {
+          "@id": "ontology:FactorDependentCellLine"
+        }
+      ],
+      "ontology:derivedFromCellType": {
+        "@id": "ontology:CellType"
+      },
+      "ontology:hasMiscellaneousInfoComment": {
+        "@id": "ontology:MiscellaneousInfoComment"
+      },
+      "ontology:hasShortTandemRepeatProfile": {
+        "@id": "ontology:ShortTandemRepeatProfile"
+      },
+      "ontology:references": [
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        }
+      ],
+      "ontology:hasCharacteristicsComment": {
+        "@id": "ontology:CharacteristicsComment"
+      },
+      "ontology:hasMisspellingRecord": {
+        "@id": "ontology:MisspellingRecord"
+      },
+      "ontology:derivedFromIndividualBelongingToSpecies": {
+        "@id": "ontology:Species"
+      },
+      "ontology:hasResistance": {
+        "@id": "ontology:ChemicalEntity"
+      },
+      "ontology:derivedFromIndividualWithDisease": {
+        "@id": "ontology:Disease"
+      },
+      "ontology:hasGeneticIntegration": {
+        "@id": "ontology:GeneticIntegration"
+      },
+      "ontology:hasOmicsInfo": {
+        "@id": "ontology:OmicsInfo"
+      },
+      "ontology:derivedFromIndividualWithSex": [
+        {
+          "@id": "ontology:Sex"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "ontology:derivedFromSameIndividualAs": {
+        "@id": "ontology:FactorDependentCellLine"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:inGroup": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "ontology:primaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:secondaryAccession": {
+        "@id": "Literal"
+      },
+      "ontology:modified": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:inCollection": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      },
+      "ontology:created": {
+        "@id": "Literal"
+      },
+      "ontology:derivedFromIndividualAtAge": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:OntologyProperty",
+      "rdfs:range": {
+        "@id": "rdfs:Class"
+      },
+      "rdfs:domain": {
+        "@id": "rdfs:Class"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "rdf:Property",
+      "rdfs:range": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ],
+      "rdfs:domain": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "owl:inverseOf": [
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "owl:equivalentProperty": [
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "rdf:Property"
+        },
+        {
+          "@id": "owl:DatatypeProperty"
+        }
+      ],
+      "skos:closeMatch": [
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "rdfs:subPropertyOf": [
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "owl:AnnotationProperty"
+        },
+        {
+          "@id": "rdf:Property"
+        },
+        {
+          "@id": "owl:DatatypeProperty"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:ObjectProperty",
+      "rdfs:range": {
+        "@id": "owl:Class"
+      },
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "owl:inverseOf": [
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "owl:equivalentProperty": [
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "skos:closeMatch": [
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "rdfs:subPropertyOf": [
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:AnnotationProperty",
+      "rdfs:range": {
+        "@id": "owl:Class"
+      },
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:subPropertyOf": [
+        {
+          "@id": "owl:AnnotationProperty"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:DatatypeProperty",
+      "rdfs:range": {
+        "@id": "Resource"
+      },
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "owl:equivalentProperty": [
+        {
+          "@id": "rdf:Property"
+        },
+        {
+          "@id": "owl:DatatypeProperty"
+        }
+      ],
+      "rdfs:subPropertyOf": [
+        {
+          "@id": "rdf:Property"
+        },
+        {
+          "@id": "owl:DatatypeProperty"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:Class",
+      "owl:complementOf": {
+        "@id": "owl:Class"
+      },
+      "rdfs:subClassOf": {
+        "@id": "owl:Class"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "skos:closeMatch": {
+        "@id": "owl:Class"
+      },
+      "skos:broadMatch": {
+        "@id": "owl:Class"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "owl:unionOf": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:equivalentClass": {
+        "@id": "Resource"
+      },
+      "owl:oneOf": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "rdfs:Class",
+      "rdfs:subClassOf": {
+        "@id": "rdfs:Class"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:VeterinaryMedicalDegreeThesis",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:doi": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "fabio:Book",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:startingPage": {
+        "@id": "Literal"
+      },
+      "ontology:doi": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:issn13": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "ontology:endingPage": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:MedicalDegreeMasterThesis",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "fabio:JournalArticle",
+      "ontology:creator": [
+        {
+          "@id": "schema:Organization"
+        },
+        {
+          "@id": "schema:Person"
+        }
+      ],
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:startingPage": {
+        "@id": "Literal"
+      },
+      "ontology:doi": {
+        "@id": "Literal"
+      },
+      "ontology:pmid": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:volume": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "ontology:endingPage": {
+        "@id": "Literal"
+      },
+      "ontology:iso4JournalTitleAbbreviation": {
+        "@id": "Literal"
+      },
+      "ontology:pmcId": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:PrivaDocentThesis",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "fabio:BookChapter",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:startingPage": {
+        "@id": "Literal"
+      },
+      "ontology:doi": {
+        "@id": "Literal"
+      },
+      "ontology:pmid": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "ontology:endingPage": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "ontology:editor": {
+        "@id": "schema:Person"
+      },
+      "ontology:bookTitle": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "fabio:ConferencePaper",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:startingPage": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "ontology:endingPage": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "ontology:conferenceTitle": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "fabio:PatentDocument",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "ontology:publicationDate": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "fabio:DoctoralThesis",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:doi": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:TechnicalDocument",
+      "ontology:creator": [
+        {
+          "@id": "schema:Organization"
+        },
+        {
+          "@id": "schema:Person"
+        }
+      ],
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:startingPage": {
+        "@id": "Literal"
+      },
+      "ontology:doi": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "ontology:endingPage": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "ontology:documentSerieTitle": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:MiscellaneousDocument",
+      "ontology:creator": [
+        {
+          "@id": "schema:Organization"
+        },
+        {
+          "@id": "schema:Person"
+        }
+      ],
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:startingPage": {
+        "@id": "Literal"
+      },
+      "ontology:doi": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "ontology:endingPage": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "ontology:documentTitle": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:MedicalDegreeThesis",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:doi": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "fabio:BachelorsThesis",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "fabio:MastersThesis",
+      "ontology:creator": {
+        "@id": "schema:Person"
+      },
+      "ontology:publisher": {
+        "@id": "schema:Organization"
+      },
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:doi": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:publicationYear": {
+        "@id": "Literal"
+      },
+      "ontology:title": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:DiscontinuationRecord",
+      "ontology:seeAlsoXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:hasProvider": {
+        "@id": "schema:Organization"
+      },
+      "ontology:productId": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:ReferenceResources",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "fbcv:0003008",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:EncyclopedicResources",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:PolymorphismAndMutationDatabases",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "skos:exactMatch": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:SequenceDatabases",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:ChemistryResources",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "skos:exactMatch": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:Taxonomy",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:GenomeModificationMethod",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:Sex",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "obi:0001152",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:CelloConceptScheme",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "obi:0003135",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:MedicalResources",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:ExperimentalVariablesResources",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:CrispScreensRepositories",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:CellLineCollectionsProviders",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:GeneExpressionDatabases",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:MetabolomicDatabases",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:Ontology",
+      "rdfs:isDefinedBy": {
+        "@id": "Resource"
+      },
+      "owl:versionInfo": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "vann:preferredNamespacePrefix": {
+        "@id": "Literal"
+      },
+      "dcterms:modified": {
+        "@id": "Literal"
+      },
+      "dcterms:title": {
+        "@id": "Literal"
+      },
+      "dcterms:bibliographicCitation": {
+        "@id": "Literal"
+      },
+      "dcterms:abstract": {
+        "@id": "Literal"
+      },
+      "vocab:introduction": {
+        "@id": "Literal"
+      },
+      "dcterms:created": {
+        "@id": "Literal"
+      },
+      "dcterms:hasVersion": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      },
+      "owl:priorVersion": {
+        "@id": "Resource"
+      },
+      "owl:imports": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "dcterms:contributor": {
+        "@id": "Resource"
+      },
+      "vocab:rdfxmlSerialization": {
+        "@id": "Resource"
+      },
+      "dcterms:license": {
+        "@id": "Resource"
+      },
+      "sh:declare": {
+        "@id": "Resource"
+      },
+      "vocab:jsonldSerialization": {
+        "@id": "Resource"
+      },
+      "vocab:turtleSerialization": {
+        "@id": "Resource"
+      },
+      "bibo:status": {
+        "@id": "Resource"
+      },
+      "dcterms:publisher": {
+        "@id": "Resource"
+      },
+      "vocab:ntSerialization": {
+        "@id": "Resource"
+      },
+      "dcterms:creator": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "obi:0600059",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ncit:C44386",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "obi:0001154",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:MicrosatelliteInstabilityStatus",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:CellLineDatabasesResources",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:NamedIndividual",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "skos:exactMatch": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "fbcv:0005070",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:OrganismSpecificDatabases",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "skos:exactMatch": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "obi:0002626",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "obi:0003137",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "obi:0003134",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:AnatomyCellTypeResources",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "ontology:version": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ncit:C17262",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:BiologicalSampleResources",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "skos:exactMatch": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:ProteomicDatabases",
+      "rdfs:isDefinedBy": {
+        "@id": "owl:Ontology"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "skos:exactMatch": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:CharacteristicsComment",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:CautionComment",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:SenescenceComment",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:DonorInfoComment",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:DoublingTime",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:duration": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:MoAbIsotype",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "ontology:hasAntibodyLightChain": {
+        "@id": "ontology:ImmunoglobulinLightChain"
+      },
+      "ontology:hasAntibodyHeavyChain": {
+        "@id": "ontology:ImmunoglobulinHeavyChain"
+      }
+    },
+    {
+      "@id": "ontology:VirologyComment",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:MiscellaneousInfoComment",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:KaryotypicInfoComment",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:SequenceVariationInfo",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "ontology:hasTarget": [
+        {
+          "@id": "ontology:GeneExtensiveAmplification"
+        },
+        {
+          "@id": "ontology:RepeatExpansion"
+        },
+        {
+          "@id": "ontology:GeneTriplication"
+        },
+        {
+          "@id": "ontology:GeneQuadruplication"
+        },
+        {
+          "@id": "ontology:GeneDuplication"
+        },
+        {
+          "@id": "ontology:GeneDeletion"
+        },
+        {
+          "@id": "ontology:GeneFusion"
+        },
+        {
+          "@id": "ontology:GeneMutation"
+        }
+      ],
+      "ontology:variationStatus": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:MicrosatelliteInstability",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:hasMicrosatelliteInstabilityStatus": [
+        {
+          "@id": "ontology:MicrosatelliteInstabilityStatus"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ]
+    },
+    {
+      "@id": "ontology:BiotechnologyComment",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:HLAtyping",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "ontology:includesObservation": {
+        "@id": "schema:Observation"
+      }
+    },
+    {
+      "@id": "ontology:GenomeAncestry",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "ontology:hasComponent": {
+        "@id": "ontology:PopulationPercentage"
+      }
+    },
+    {
+      "@id": "ontology:AnecdotalComment",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:ShortTandemRepeatProfile",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "ontology:includesObservation": {
+        "@id": "schema:Observation"
+      }
+    },
+    {
+      "@id": "schema:Observation",
+      "ontology:hasSource": {
+        "@id": "ontology:Source"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:hasTarget": [
+        {
+          "@id": "ontology:Gene"
+        },
+        {
+          "@id": "ontology:Marker"
+        },
+        {
+          "@id": "ontology:HLAGene"
+        }
+      ],
+      "ontology:detectedAllele": [
+        {
+          "@id": "ontology:STRAllele"
+        },
+        {
+          "@id": "ontology:HLAAllele"
+        }
+      ],
+      "ontology:detectedTarget": {
+        "@id": "Literal"
+      },
+      "ontology:conflicting": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:GeneExtensiveAmplification",
+      "ontology:ofGene": {
+        "@id": "ontology:Gene"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:noneReported": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:zygosity": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:RepeatExpansion",
+      "ontology:ofGene": {
+        "@id": "ontology:Gene"
+      },
+      "ontology:isIdentifiedByXref": {
+        "@id": "ontology:Xref"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:noneReported": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:zygosity": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:GeneTriplication",
+      "ontology:ofGene": {
+        "@id": "ontology:Gene"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:noneReported": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:zygosity": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:GeneticIntegration",
+      "ontology:ofGene": {
+        "@id": "ontology:Gene"
+      },
+      "ontology:hasGenomeModificationMethod": [
+        {
+          "@id": "fbcv:0003008"
+        },
+        {
+          "@id": "ontology:GenomeModificationMethod"
+        },
+        {
+          "@id": "obi:0001152"
+        },
+        {
+          "@id": "obi:0003135"
+        },
+        {
+          "@id": "obi:0600059"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "fbcv:0005070"
+        },
+        {
+          "@id": "obi:0003134"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:GeneQuadruplication",
+      "ontology:ofGene": {
+        "@id": "ontology:Gene"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:noneReported": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:zygosity": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:GeneKnockout",
+      "ontology:ofGene": {
+        "@id": "ontology:Gene"
+      },
+      "ontology:hasGenomeModificationMethod": [
+        {
+          "@id": "fbcv:0003008"
+        },
+        {
+          "@id": "ontology:GenomeModificationMethod"
+        },
+        {
+          "@id": "obi:0003135"
+        },
+        {
+          "@id": "ncit:C44386"
+        },
+        {
+          "@id": "obi:0001154"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "obi:0002626"
+        },
+        {
+          "@id": "obi:0003137"
+        },
+        {
+          "@id": "obi:0003134"
+        },
+        {
+          "@id": "ncit:C17262"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:GeneDuplication",
+      "ontology:ofGene": {
+        "@id": "ontology:Gene"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:noneReported": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:zygosity": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:GeneDeletion",
+      "ontology:ofGene": {
+        "@id": "ontology:Gene"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:noneReported": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:zygosity": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:GeneFusion",
+      "ontology:ofGene": {
+        "@id": "ontology:Gene"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:noneReported": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:GeneMutation",
+      "ontology:ofGene": {
+        "@id": "ontology:Gene"
+      },
+      "ontology:isIdentifiedByXref": {
+        "@id": "ontology:Xref"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:noneReported": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:zygosity": {
+        "@id": "Literal"
+      },
+      "skos:notation": {
+        "@id": "Literal"
+      },
+      "ontology:hgvs": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:AnatomicalEntity",
+      "ontology:isIdentifiedByXref": [
+        {
+          "@id": "ontology:Xref"
+        },
+        {
+          "@id": "skos:Concept"
+        }
+      ],
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:siteType": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:Gene",
+      "ontology:isIdentifiedByXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:Breed",
+      "ontology:isIdentifiedByXref": [
+        {
+          "@id": "ontology:Xref"
+        },
+        {
+          "@id": "skos:Concept"
+        }
+      ],
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:Protein",
+      "ontology:isIdentifiedByXref": {
+        "@id": "ontology:Xref"
+      },
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:Disease",
+      "ontology:isIdentifiedByXref": [
+        {
+          "@id": "ontology:Xref"
+        },
+        {
+          "@id": "skos:Concept"
+        }
+      ],
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:Species",
+      "ontology:isIdentifiedByXref": [
+        {
+          "@id": "ontology:Xref"
+        },
+        {
+          "@id": "skos:Concept"
+        }
+      ],
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:ChemicalEntity",
+      "ontology:isIdentifiedByXref": [
+        {
+          "@id": "ontology:Xref"
+        },
+        {
+          "@id": "skos:Concept"
+        }
+      ],
+      "ontology:isIdentifiedByIRI": {
+        "@id": "owl:Class"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:HLAGene",
+      "ontology:isIdentifiedByXref": {
+        "@id": "ontology:Xref"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:CellType",
+      "ontology:isIdentifiedByXref": [
+        {
+          "@id": "ontology:Xref"
+        },
+        {
+          "@id": "skos:Concept"
+        }
+      ],
+      "ontology:isIdentifiedByIRI": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:PopulationPercentage",
+      "ontology:hasPopulation": {
+        "@id": "ontology:Population"
+      },
+      "ontology:percentage": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:Xref",
+      "ontology:database": [
+        {
+          "@id": "ontology:ReferenceResources"
+        },
+        {
+          "@id": "ontology:EncyclopedicResources"
+        },
+        {
+          "@id": "ontology:PolymorphismAndMutationDatabases"
+        },
+        {
+          "@id": "ontology:SequenceDatabases"
+        },
+        {
+          "@id": "ontology:ChemistryResources"
+        },
+        {
+          "@id": "ontology:Taxonomy"
+        },
+        {
+          "@id": "ontology:CelloConceptScheme"
+        },
+        {
+          "@id": "ontology:MedicalResources"
+        },
+        {
+          "@id": "ontology:ExperimentalVariablesResources"
+        },
+        {
+          "@id": "ontology:CrispScreensRepositories"
+        },
+        {
+          "@id": "ontology:CellLineCollectionsProviders"
+        },
+        {
+          "@id": "ontology:GeneExpressionDatabases"
+        },
+        {
+          "@id": "ontology:MetabolomicDatabases"
+        },
+        {
+          "@id": "ontology:CellLineDatabasesResources"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "ontology:OrganismSpecificDatabases"
+        },
+        {
+          "@id": "ontology:AnatomyCellTypeResources"
+        },
+        {
+          "@id": "ontology:BiologicalSampleResources"
+        },
+        {
+          "@id": "ontology:ProteomicDatabases"
+        }
+      ],
+      "skos:inScheme": [
+        {
+          "@id": "ontology:ChemistryResources"
+        },
+        {
+          "@id": "ontology:Taxonomy"
+        },
+        {
+          "@id": "ontology:CelloConceptScheme"
+        },
+        {
+          "@id": "ontology:MedicalResources"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "ontology:OrganismSpecificDatabases"
+        },
+        {
+          "@id": "ontology:AnatomyCellTypeResources"
+        }
+      ],
+      "ontology:more_specific_than": [
+        {
+          "@id": "ontology:Xref"
+        },
+        {
+          "@id": "skos:Concept"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:discontinued": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "skos:notation": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "skos:Concept",
+      "ontology:database": [
+        {
+          "@id": "ontology:ChemistryResources"
+        },
+        {
+          "@id": "ontology:Taxonomy"
+        },
+        {
+          "@id": "ontology:CelloConceptScheme"
+        },
+        {
+          "@id": "ontology:MedicalResources"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "ontology:OrganismSpecificDatabases"
+        },
+        {
+          "@id": "ontology:AnatomyCellTypeResources"
+        }
+      ],
+      "skos:inScheme": [
+        {
+          "@id": "ontology:ChemistryResources"
+        },
+        {
+          "@id": "ontology:Taxonomy"
+        },
+        {
+          "@id": "ontology:CelloConceptScheme"
+        },
+        {
+          "@id": "ontology:MedicalResources"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "ontology:OrganismSpecificDatabases"
+        },
+        {
+          "@id": "ontology:AnatomyCellTypeResources"
+        }
+      ],
+      "ontology:more_specific_than": [
+        {
+          "@id": "ontology:Xref"
+        },
+        {
+          "@id": "skos:Concept"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:internalId": {
+        "@id": "Literal"
+      },
+      "ontology:accession": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "skos:notation": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:RegistrationRecord",
+      "ontology:inRegister": {
+        "@id": "schema:Organization"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:registeredName": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "schema:Person",
+      "ontology:isMemberOf": {
+        "@id": "schema:Organization"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "schema:familyName": {
+        "@id": "Literal"
+      },
+      "schema:givenName": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:nameSuffix": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:Restriction",
+      "owl:onProperty": [
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "owl:hasValue": [
+        {
+          "@id": "ncit:C205365"
+        },
+        {
+          "@id": "ncit:C94346"
+        },
+        {
+          "@id": "ontology:GeneralTopic"
+        },
+        {
+          "@id": "ncit:C16351"
+        },
+        {
+          "@id": "ncit:C17467"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "ncit:C17256"
+        }
+      ]
+    },
+    {
+      "@id": "ontology:Population",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:ImmunoglobulinLightChain",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ncit:C205365",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ncit:C94346",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:GeneralTopic",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ncit:C16351",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "schema:Organization",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:alternativeName": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "ontology:city": {
+        "@id": "Literal"
+      },
+      "ontology:recommendedName": {
+        "@id": "Literal"
+      },
+      "ontology:country": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ncit:C17467",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ncit:C17256",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:MisspellingRecord",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:misspellingName": {
+        "@id": "Literal"
+      },
+      "skos:hiddenLabel": {
+        "@id": "Literal"
+      },
+      "ontology:appearsIn": [
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "ontology:Xref"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:ConferencePaper"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        }
+      ]
+    },
+    {
+      "@id": "ontology:Source",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      },
+      "ontology:originatesFrom": [
+        {
+          "@id": "fabio:Book"
+        },
+        {
+          "@id": "ontology:MedicalDegreeMasterThesis"
+        },
+        {
+          "@id": "fabio:JournalArticle"
+        },
+        {
+          "@id": "ontology:Xref"
+        },
+        {
+          "@id": "schema:Organization"
+        },
+        {
+          "@id": "fabio:BookChapter"
+        },
+        {
+          "@id": "fabio:ConferencePaper"
+        },
+        {
+          "@id": "fabio:PatentDocument"
+        },
+        {
+          "@id": "fabio:DoctoralThesis"
+        },
+        {
+          "@id": "ontology:TechnicalDocument"
+        },
+        {
+          "@id": "ontology:MiscellaneousDocument"
+        },
+        {
+          "@id": "ontology:MedicalDegreeThesis"
+        },
+        {
+          "@id": "fabio:MastersThesis"
+        }
+      ]
+    },
+    {
+      "@id": "ontology:ImmunoglobulinHeavyChain",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "ontology:name": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "sh:SPARQLExecutable",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "sh:select": {
+        "@id": "Literal"
+      },
+      "schema:keywords": {
+        "@id": "Literal"
+      },
+      "ontology:federatesWith": {
+        "@id": "Resource"
+      },
+      "schema:target": {
+        "@id": "Resource"
+      },
+      "sh:prefixes": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "sh:SPARQLSelectExecutable",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "sh:select": {
+        "@id": "Literal"
+      },
+      "schema:keywords": {
+        "@id": "Literal"
+      },
+      "ontology:federatesWith": {
+        "@id": "Resource"
+      },
+      "schema:target": {
+        "@id": "Resource"
+      },
+      "sh:prefixes": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "ontology:OmicsInfo",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "schema:category": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:ProblematicCellLineComment",
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:HLAAllele",
+      "ontology:alleleIdentifier": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:STRAllele",
+      "ontology:repeatNumber": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:Marker",
+      "ontology:markerId": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ontology:DoublingTimeRange",
+      "schema:unitCode": {
+        "@id": "Literal"
+      },
+      "schema:maxValue": {
+        "@id": "Literal"
+      },
+      "schema:minValue": {
+        "@id": "Literal"
+      }
+    }
+  ]
+}

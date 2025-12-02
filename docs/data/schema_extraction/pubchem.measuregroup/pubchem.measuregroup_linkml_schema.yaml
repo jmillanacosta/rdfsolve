@@ -1,0 +1,116 @@
+name: pubchem.measuregroup_schema
+description: LinkML schema for pubchem.measuregroup generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
+prefixes:
+  pubchem.measuregroup_schema:
+    prefix_prefix: pubchem.measuregroup_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  bao:
+    prefix_prefix: bao
+    prefix_reference: http://www.bioassayontology.org/bao#
+  ro:
+    prefix_prefix: ro
+    prefix_reference: http://purl.obolibrary.org/obo/
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+  pr:
+    prefix_prefix: pr
+    prefix_reference: http://purl.obolibrary.org/obo/
+  obi:
+    prefix_prefix: obi
+    prefix_reference: http://purl.obolibrary.org/obo/
+default_prefix: pubchem.measuregroup_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  obi_0000299:
+    name: obi_0000299
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/obi_0000299
+    description: Property obi:0000299
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/obi_0000299
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/obi_0000299
+    owner: vocabulary_Measure_Group
+    domain_of:
+    - bao_0000040
+    - vocabulary_Measure_Group
+    range: bao_0000034
+    inlined: true
+    inlined_as_list: true
+  ro_0000057:
+    name: ro_0000057
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/ro_0000057
+    description: Property ro:0000057
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/ro_0000057
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/ro_0000057
+    owner: vocabulary_Measure_Group
+    domain_of:
+    - bao_0000040
+    - vocabulary_Measure_Group
+    range: bao_0000034
+    inlined: true
+    inlined_as_list: true
+classes:
+  bao_0000040:
+    name: bao_0000040
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/Bao0000040
+    description: Class representing bao_0000040
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/bao_0000040
+    slots:
+    - ro_0000057
+    - obi_0000299
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/bao_0000040
+  bao_0000034:
+    name: bao_0000034
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/Bao0000034
+    description: Class representing bao_0000034
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/bao_0000034
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/bao_0000034
+  vocabulary_Measure_Group:
+    name: vocabulary_Measure_Group
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/VocabularyMeasureGroup
+    description: Class representing vocabulary_Measure_Group
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/vocabulary_Measure_Group
+    slots:
+    - ro_0000057
+    - obi_0000299
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/vocabulary_Measure_Group
+metamodel_version: 1.7.0
+generation_date: '2025-12-02T10:07:59'

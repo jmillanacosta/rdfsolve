@@ -1,0 +1,59 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay/void/class_partition_> void:class <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#BioAssay>,
+        <http://semanticscience.org/resource/SIO_000136>,
+        <http://semanticscience.org/resource/SIO_001041>,
+        <http://semanticscience.org/resource/SIO_001167>,
+        <http://www.bioassayontology.org/bao#BAO_0000015> ;
+    void:entities 10524,
+        1767348,
+        1768608,
+        1768874 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay/void/datatype_partition_> ns1:datatypePartition xsd:string ;
+    void:triples 10630708 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay/void/property_partition_> ns1:objectClass dcterms:Dataset,
+        <http://rdf.ebi.ac.uk/terms/chembl#Assay>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#BioAssay>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source>,
+        <http://semanticscience.org/resource/SIO_000136>,
+        <http://semanticscience.org/resource/SIO_001041>,
+        <http://semanticscience.org/resource/SIO_001167>,
+        <http://www.bioassayontology.org/bao#BAO_0000015>,
+        <http://www.bioassayontology.org/bao#BAO_0000040>,
+        owl:Class ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#BioAssay>,
+        <http://semanticscience.org/resource/SIO_000136>,
+        <http://semanticscience.org/resource/SIO_001041>,
+        <http://semanticscience.org/resource/SIO_001167>,
+        <http://www.bioassayontology.org/bao#BAO_0000015> ;
+    void:property dcterms:source,
+        <http://semanticscience.org/resource/SIO_000008>,
+        <http://semanticscience.org/resource/SIO_000011>,
+        <http://semanticscience.org/resource/is-attribute-of>,
+        <http://www.bioassayontology.org/bao#BAO_0000209>,
+        <http://www.bioassayontology.org/bao#BAO_0000210>,
+        <http://www.bioassayontology.org/bao#BAO_0000540>,
+        <http://www.bioassayontology.org/bao#BAO_0001067>,
+        <http://www.bioassayontology.org/bao#BAO_0001094>,
+        rdf:type,
+        rdfs:seeAlso ;
+    void:triples 6470,
+        9103,
+        10524,
+        22419,
+        23217,
+        1733233,
+        1767348,
+        1768608,
+        1768874,
+        1798097 .
+

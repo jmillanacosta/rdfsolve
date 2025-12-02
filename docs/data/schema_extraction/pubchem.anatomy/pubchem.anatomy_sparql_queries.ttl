@@ -1,0 +1,940 @@
+@prefix ex: <https://github.com/jmillanacosta/rdfsolve/sparql/pubchem.anatomy/pubchem.anatomy/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:d7d382d138ff a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+        SELECT ?class (COUNT(DISTINCT ?s) AS ?total) WHERE {
+            GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                ?s a ?class .
+            }
+        }
+        GROUP BY ?class
+        ORDER BY DESC(?total)
+        
+OFFSET 0
+LIMIT 300
+""" ;
+    schema:dateCreated "2025-12-02T10:01:02.410413+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:07569ca7c1bf a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:02.530837+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d6daea0aa03a a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:02.648401+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:2d75229592c3 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:02.766074+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:1945e1719375 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:02.883570+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:118d0c9bb625 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:03.002014+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e14128f56ef3 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:03.120510+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:f0a2e64240fa a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:03.238166+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:ff3d6b106a8e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:03.356455+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:4940ab4db376 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:03.473969+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:0717cc1c343c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:03.591811+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:8adb8412f279 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:03.710851+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7c01498561a7 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:03.829200+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:8c8374db5a85 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:03.947318+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:629736ccbe5d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:04.065735+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:08295ade3558 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:04.184038+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:1ac4a6e88413 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:04.302789+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:c4947a8d6274 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:04.421353+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:f17ddf8f4c5f a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:04.539207+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:8248607ea737 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:04.656813+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:171d3aa1b685 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:04.775169+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:194a6685eb7c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:04.893543+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d713baa3ac2b a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:05.012241+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:8c6a573c2d23 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:05.130274+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:45c76e2e1ca6 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:05.248081+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:4c77851090b6 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:05.898891+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:8f51307073f0 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:06.017066+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:68239ecab5e7 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:06.135210+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:75ac118687d9 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:06.252835+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:6f1aca817d7a a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:06.370290+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:5e76c378c6c7 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:06.487527+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:4a26e31d073b a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:06.604178+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:4d5ab9004937 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://purl.org/spar/cito/isDiscussedBy> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:06.721782+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:ff023527f11d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:06.838813+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a7e00b095672 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:06.955266+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e3a0cfa469b8 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:07.071924+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:2d91ef010655 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:07.189141+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:b64bbf80fa83 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:07.305844+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:6a9b662f5260 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:07.422352+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:de624b726b2f a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:07.539228+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:5b98204c6f8e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:07.655802+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:0d02f100fcd7 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:07.772399+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:b5138f794cd9 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:07.888820+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:530bd2285cb9 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:08.005503+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a08a050319a4 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:08.121878+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e05f8bda4aaf a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:08.238158+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:dcee72eef5ee a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:08.354370+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7fcf75dff606 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:08.470818+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:166b4fbc5dd0 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy> {
+                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                            ?s a <http://semanticscience.org/resource/SIO_001262> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:01:08.587230+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .

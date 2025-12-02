@@ -1,0 +1,139 @@
+name: pubchem.patent_schema
+description: LinkML schema for pubchem.patent generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/
+prefixes:
+  pubchem.patent_schema:
+    prefix_prefix: pubchem.patent_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  patent:
+    prefix_prefix: patent
+    prefix_reference: http://data.epo.org/linked-data/def/patent/
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+  cito:
+    prefix_prefix: cito
+    prefix_reference: http://purl.org/spar/cito/
+default_prefix: pubchem.patent_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  patent_inventor_VC:
+    name: patent_inventor_VC
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/patent_inventor_VC
+    description: Property patent:inventorVC
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/patent_inventor_VC
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/patent_inventor_VC
+    owner: patent_Publication
+    domain_of:
+    - patent_Publication
+    - vocabulary_Patent
+    range: patent_Publication
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/rdf_type
+    owner: patent_Publication
+    domain_of:
+    - patent_Publication
+    - vocabulary_Patent
+    range: patent_Publication
+    inlined: true
+    inlined_as_list: true
+  cito_is_Cited_By:
+    name: cito_is_Cited_By
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/cito_is_Cited_By
+    description: Property cito:isCitedBy
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/cito_is_Cited_By
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/cito_is_Cited_By
+    owner: patent_Publication
+    domain_of:
+    - patent_Publication
+    - vocabulary_Patent
+    range: patent_Publication
+    inlined: true
+    inlined_as_list: true
+  patent_applicant_VC:
+    name: patent_applicant_VC
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/patent_applicant_VC
+    description: Property patent:applicantVC
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/patent_applicant_VC
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/patent_applicant_VC
+    owner: patent_Publication
+    domain_of:
+    - patent_Publication
+    - vocabulary_Patent
+    range: patent_Publication
+    inlined: true
+    inlined_as_list: true
+classes:
+  vocabulary_Patent:
+    name: vocabulary_Patent
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/VocabularyPatent
+    description: Class representing vocabulary_Patent
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/vocabulary_Patent
+    slots:
+    - patent_applicant_VC
+    - patent_inventor_VC
+    - cito_is_Cited_By
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/vocabulary_Patent
+  patent_Publication:
+    name: patent_Publication
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/PatentPublication
+    description: Class representing patent_Publication
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/patent_Publication
+    slots:
+    - patent_applicant_VC
+    - patent_inventor_VC
+    - cito_is_Cited_By
+    - rdf_type
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.patent/linkml/patent_Publication
+metamodel_version: 1.7.0
+generation_date: '2025-12-02T10:49:10'

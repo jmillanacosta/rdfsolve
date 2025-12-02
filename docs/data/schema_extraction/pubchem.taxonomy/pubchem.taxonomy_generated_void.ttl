@@ -1,0 +1,34 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/class_partition_> void:class <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy>,
+        <http://semanticscience.org/resource/SIO_010000> ;
+    void:entities 329726 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/datatype_partition_> ns1:datatypePartition xsd:string ;
+    void:triples 1441153 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy/void/property_partition_> ns1:objectClass <http://data.epo.org/linked-data/def/patent/Publication>,
+        <http://id.nlm.nih.gov/mesh/vocab#Concept>,
+        <http://id.nlm.nih.gov/mesh/vocab#SCR_Organism>,
+        <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference>,
+        owl:Class ;
+    ns1:subjectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy>,
+        <http://semanticscience.org/resource/SIO_010000> ;
+    void:property <http://purl.org/spar/cito/isDiscussedBy>,
+        rdf:type,
+        rdfs:seeAlso ;
+    void:triples 6327,
+        35926,
+        38334,
+        44152,
+        329726,
+        331560,
+        52939021 .
+

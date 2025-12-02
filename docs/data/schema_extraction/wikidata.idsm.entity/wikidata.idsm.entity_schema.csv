@@ -1,0 +1,2 @@
+shape_id,subject_class,subject_uri,property,property_uri,object_class,object_uri,total_entities,participating_entities,occurrence_count,coverage_ratio,coverage_percent,shape_pattern
+shape_000000,cheminf:000018,http://semanticscience.org/resource/CHEMINF_000018,rdf:type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,owl:Class,http://www.w3.org/2002/07/owl#Class,1365537,0,0,0.0,0.0,cheminf:000018 -> rdf:type -> owl:Class

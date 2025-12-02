@@ -1,0 +1,389 @@
+@prefix ex: <https://github.com/jmillanacosta/rdfsolve/sparql/pubchem.patent/pubchem.patent/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:5d468b556e94 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+        SELECT ?class (COUNT(DISTINCT ?s) AS ?total) WHERE {
+            GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                ?s a ?class .
+            }
+        }
+        GROUP BY ?class
+        ORDER BY DESC(?total)
+        
+OFFSET 0
+LIMIT 300
+""" ;
+    schema:dateCreated "2025-12-02T10:25:47.737981+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:4bf09989c71b a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/applicantVC> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:25:47.865592+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a1f53cc94623 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/applicantVC> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:25:47.988691+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:4d82ca2af0fa a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/applicantVC> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:25:48.113171+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:247c861ce183 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/applicantVC> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#PatentInventor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:52.891413+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:b591e4c233ab a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/applicantVC> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:53.014404+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:475d868a4243 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/applicantVC> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:53.137979+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:31a4ed3cf54e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/applicantVC> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:28:53.261064+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e1f0d149e095 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/applicantVC> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#PatentInventor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:31:58.039729+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:194d183924b1 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/inventorVC> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:31:58.163131+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e2cccf034f0a a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/inventorVC> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:31:58.286364+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:ac0bcf7ad69e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/inventorVC> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:31:58.409606+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:9498eb571401 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/inventorVC> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#PatentAssignee> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:31:58.532709+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:0099a32c28ac a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/inventorVC> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                            ?o a <http://data.epo.org/linked-data/def/patent/Publication> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:35:03.295878+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:2d08638fb0de a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/inventorVC> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:35:03.417760+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:4a08c8a25d82 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/inventorVC> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:35:03.539721+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7fefb59b2584 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://data.epo.org/linked-data/def/patent/inventorVC> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#PatentAssignee> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:35:03.661629+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:2e2aa12c01b1 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://purl.org/spar/cito/isCitedBy> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:41:12.614289+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:3438c5b51795 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://purl.org/spar/cito/isCitedBy> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#PatentAssignee> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:44:17.120496+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:51c42c6bdce0 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/patent> {
+                            ?s <http://purl.org/spar/cito/isCitedBy> ?o .
+                            ?s a <http://data.epo.org/linked-data/def/patent/Publication> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#PatentInventor> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:44:17.244617+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .

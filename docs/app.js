@@ -2,6 +2,7 @@
 class RDFSolveDashboard {
     constructor() {
         this.data = null;
+        this.githubBaseUrl = 'https://github.com/jmillanacosta/rdfsolve/blob/main/docs/';
         this.init();
     }
 
@@ -161,12 +162,15 @@ class RDFSolveDashboard {
             instances: 'Instances',
             nquads: 'N-Quads',
             schema_json: 'JSON',
-            schema_csv: 'CSV'
+            schema_csv: 'CSV',
+            queries: 'SPARQL Queries'
         };
 
         const linksHTML = files.map(([type, url]) => {
             const name = fileTypeNames[type] || type.toUpperCase();
-            return `<a href="${url}" class="data-link">${name}</a>`;
+            // Convert relative path to GitHub blob URL
+            const githubUrl = this.toGithubUrl(url);
+            return `<a href="${githubUrl}" class="data-link" target="_blank">${name}</a>`;
         }).join('');
 
         return `
@@ -177,6 +181,17 @@ class RDFSolveDashboard {
                 </div>
             </div>
         `;
+    }
+
+    toGithubUrl(relativePath) {
+        // If already a full URL, return as-is
+        if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+            return relativePath;
+        }
+        // Remove leading ../, ./, or / and normalize to docs/ base
+        // Paths like ../data/... should become data/...
+        let cleanPath = relativePath.replace(/^(\.\.\/)+/, '').replace(/^\.?\//, '');
+        return this.githubBaseUrl + cleanPath;
     }
 
     formatDate(dateString) {

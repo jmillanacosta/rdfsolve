@@ -1,0 +1,2233 @@
+{
+  "@context": {
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "cdao": "http://purl.obolibrary.org/obo/",
+    "orth": "http://purl.org/net/orth#",
+    "ncit": "http://purl.obolibrary.org/obo/",
+    "bfo": "http://purl.obolibrary.org/obo/",
+    "so": "http://purl.obolibrary.org/obo/",
+    "genex": "http://purl.org/genex#",
+    "caro": "http://purl.obolibrary.org/obo/",
+    "snap": "http://www.ifomis.org/bfo/1.1/snap#",
+    "efo": "http://www.ebi.ac.uk/efo/",
+    "ro": "http://purl.obolibrary.org/obo/",
+    "uniprot.core": "http://purl.uniprot.org/core/",
+    "span": "http://www.ifomis.org/bfo/1.1/span#",
+    "obi": "http://purl.obolibrary.org/obo/",
+    "dcterms": "http://purl.org/dc/terms/",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "void": "http://rdfs.org/ns/void#",
+    "sparqlserv": "http://www.w3.org/ns/sparql-service-description#",
+    "voidext": "http://purl.org/query/voidext#",
+    "sh": "http://www.w3.org/ns/shacl#",
+    "iao": "http://purl.obolibrary.org/obo/",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "vann": "http://purl.org/vocab/vann/",
+    "schema": "https://schema.org/",
+    "oboinowl": "http://www.geneontology.org/formats/oboInOwl#",
+    "vocab": "https://w3id.org/widoco/vocab#",
+    "lscr": "http://purl.org/lscr#",
+    "bibo": "http://purl.org/ontology/bibo/",
+    "voaf": "http://purl.org/vocommons/voaf#"
+  },
+  "@graph": [
+    {
+      "@id": "owl:OntologyProperty",
+      "rdfs:range": {
+        "@id": "rdfs:Class"
+      },
+      "rdfs:domain": {
+        "@id": "rdfs:Class"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "rdf:Property",
+      "rdfs:range": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "rdfs:domain": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Class"
+        }
+      ],
+      "rdfs:subPropertyOf": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "Resource"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:ObjectProperty",
+      "rdfs:range": {
+        "@id": "owl:Class"
+      },
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "owl:inverseOf": {
+        "@id": "owl:ObjectProperty"
+      },
+      "rdfs:subPropertyOf": {
+        "@id": "owl:ObjectProperty"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "iao:0000116": {
+        "@id": "Literal"
+      },
+      "iao:0000232": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "iao:0000115": {
+        "@id": "Literal"
+      },
+      "iao:0000112": {
+        "@id": "Literal"
+      },
+      "vann:example": {
+        "@id": "Literal"
+      },
+      "oboinowl:inSubset": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:AnnotationProperty",
+      "rdfs:range": {
+        "@id": "owl:Class"
+      },
+      "rdfs:domain": {
+        "@id": "Resource"
+      },
+      "rdfs:subPropertyOf": {
+        "@id": "owl:AnnotationProperty"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "iao:0000115": {
+        "@id": "Literal"
+      },
+      "skos:example": {
+        "@id": "Literal"
+      },
+      "skos:scopeNote": {
+        "@id": "Literal"
+      },
+      "skos:definition": {
+        "@id": "Literal"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "Resource"
+      },
+      "efo:NCI_Thesaurus_definition_citation": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:FunctionalProperty",
+      "rdfs:range": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Datatype"
+        }
+      ],
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "dcterms:modified": {
+        "@id": "Literal"
+      },
+      "skos:changeNote": {
+        "@id": "Literal"
+      },
+      "vann:example": {
+        "@id": "Literal"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:DatatypeProperty",
+      "rdfs:range": {
+        "@id": "rdfs:Datatype"
+      },
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "dcterms:modified": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Literal"
+      },
+      "skos:changeNote": {
+        "@id": "Literal"
+      },
+      "vann:example": {
+        "@id": "Literal"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:Class",
+      "owl:complementOf": {
+        "@id": "owl:Class"
+      },
+      "rdfs:subClassOf": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "owl:Restriction"
+        }
+      ],
+      "owl:disjointWith": {
+        "@id": "owl:Class"
+      },
+      "owl:equivalentClass": {
+        "@id": "owl:Class"
+      },
+      "owl:oneOf": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "iao:0000116": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "iao:0000115": {
+        "@id": "Literal"
+      },
+      "iao:0000112": {
+        "@id": "Literal"
+      },
+      "efo:alternative_term": {
+        "@id": "Literal"
+      },
+      "efo:source_definition": {
+        "@id": "Literal"
+      },
+      "iao:0000600": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Literal"
+      },
+      "oboinowl:id": {
+        "@id": "Literal"
+      },
+      "vann:example": {
+        "@id": "Literal"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "Literal"
+      },
+      "efo:NCI_Thesaurus_definition_citation": {
+        "@id": "Literal"
+      },
+      "owl:unionOf": {
+        "@id": "Resource"
+      },
+      "owl:intersectionOf": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "rdfs:Class",
+      "rdfs:subClassOf": {
+        "@id": "rdfs:Class"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "cdao:0000140",
+      "orth:organism": [
+        {
+          "@id": "ncit:C14250"
+        },
+        {
+          "@id": "orth:Organism"
+        }
+      ],
+      "genex:isAbsentIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "genex:isExpressedIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "ro:0002206": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "dcterms:identifier": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      },
+      "lscr:xrefUniprot": {
+        "@id": "Resource"
+      },
+      "lscr:xrefNCBIGene": {
+        "@id": "Resource"
+      },
+      "lscr:xrefEnsemblGene": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "orth:SequenceUnit",
+      "orth:organism": [
+        {
+          "@id": "ncit:C14250"
+        },
+        {
+          "@id": "orth:Organism"
+        }
+      ],
+      "genex:isAbsentIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "genex:isExpressedIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "ro:0002206": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "dcterms:identifier": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      },
+      "lscr:xrefUniprot": {
+        "@id": "Resource"
+      },
+      "lscr:xrefNCBIGene": {
+        "@id": "Resource"
+      },
+      "lscr:xrefEnsemblGene": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "bfo:0000002",
+      "orth:organism": [
+        {
+          "@id": "ncit:C14250"
+        },
+        {
+          "@id": "orth:Organism"
+        }
+      ],
+      "genex:isAbsentIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "genex:isExpressedIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "ro:0002206": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "ro:0002292": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "ro:0002162": {
+        "@id": "uniprot.core:Taxon"
+      },
+      "genex:hasDevelopmentalStage": [
+        {
+          "@id": "efo:0000399"
+        },
+        {
+          "@id": "span:ProcessualEntity"
+        },
+        {
+          "@id": "efo:0000001"
+        }
+      ],
+      "genex:hasAnatomicalEntity": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        }
+      ],
+      "genex:hasStrain": [
+        {
+          "@id": "efo:0005135"
+        },
+        {
+          "@id": "obi:0000181"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "dcterms:identifier": {
+        "@id": "Literal"
+      },
+      "genex:hasSex": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      },
+      "lscr:xrefUniprot": {
+        "@id": "Resource"
+      },
+      "lscr:xrefNCBIGene": {
+        "@id": "Resource"
+      },
+      "lscr:xrefEnsemblGene": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "orth:GeneTreeNode",
+      "orth:organism": [
+        {
+          "@id": "ncit:C14250"
+        },
+        {
+          "@id": "orth:Organism"
+        }
+      ],
+      "genex:isAbsentIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "genex:isExpressedIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "ro:0002206": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "dcterms:identifier": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      },
+      "lscr:xrefUniprot": {
+        "@id": "Resource"
+      },
+      "lscr:xrefNCBIGene": {
+        "@id": "Resource"
+      },
+      "lscr:xrefEnsemblGene": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "orth:Gene",
+      "orth:organism": [
+        {
+          "@id": "ncit:C14250"
+        },
+        {
+          "@id": "orth:Organism"
+        }
+      ],
+      "genex:isAbsentIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "genex:isExpressedIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "ro:0002206": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "dcterms:identifier": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      },
+      "lscr:xrefUniprot": {
+        "@id": "Resource"
+      },
+      "lscr:xrefNCBIGene": {
+        "@id": "Resource"
+      },
+      "lscr:xrefEnsemblGene": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "bfo:0000001",
+      "orth:organism": [
+        {
+          "@id": "ncit:C14250"
+        },
+        {
+          "@id": "orth:Organism"
+        }
+      ],
+      "genex:isAbsentIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "genex:isExpressedIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "ro:0002206": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "ro:0002292": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "ro:0002162": {
+        "@id": "uniprot.core:Taxon"
+      },
+      "genex:hasDevelopmentalStage": [
+        {
+          "@id": "efo:0000399"
+        },
+        {
+          "@id": "span:ProcessualEntity"
+        },
+        {
+          "@id": "efo:0000001"
+        }
+      ],
+      "genex:hasAnatomicalEntity": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        }
+      ],
+      "genex:hasStrain": [
+        {
+          "@id": "efo:0005135"
+        },
+        {
+          "@id": "obi:0000181"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "dcterms:identifier": {
+        "@id": "Literal"
+      },
+      "genex:hasSex": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      },
+      "lscr:xrefUniprot": {
+        "@id": "Resource"
+      },
+      "lscr:xrefNCBIGene": {
+        "@id": "Resource"
+      },
+      "lscr:xrefEnsemblGene": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "so:0000704",
+      "orth:organism": [
+        {
+          "@id": "ncit:C14250"
+        },
+        {
+          "@id": "orth:Organism"
+        }
+      ],
+      "genex:isAbsentIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "genex:isExpressedIn": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "ro:0002206": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "dcterms:identifier": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      },
+      "lscr:xrefUniprot": {
+        "@id": "Resource"
+      },
+      "lscr:xrefNCBIGene": {
+        "@id": "Resource"
+      },
+      "lscr:xrefEnsemblGene": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "rdf:List",
+      "rdf:rest": {
+        "@id": "rdf:List"
+      },
+      "rdf:first": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "bfo:0000004",
+      "ro:0002292": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "ro:0002162": {
+        "@id": "uniprot.core:Taxon"
+      },
+      "genex:hasDevelopmentalStage": [
+        {
+          "@id": "efo:0000399"
+        },
+        {
+          "@id": "span:ProcessualEntity"
+        },
+        {
+          "@id": "efo:0000001"
+        }
+      ],
+      "genex:hasAnatomicalEntity": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        }
+      ],
+      "genex:hasStrain": [
+        {
+          "@id": "efo:0005135"
+        },
+        {
+          "@id": "obi:0000181"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "genex:hasSex": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "caro:0030000",
+      "ro:0002292": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "snap:MaterialEntity",
+      "ro:0002292": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "caro:0000000",
+      "ro:0002292": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "efo:0000001",
+      "ro:0002292": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "genex:AnatomicalEntity",
+      "ro:0002292": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "efo:0000635",
+      "ro:0002292": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "genex:ExpressionCondition",
+      "ro:0002292": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "ro:0002162": {
+        "@id": "uniprot.core:Taxon"
+      },
+      "genex:hasDevelopmentalStage": [
+        {
+          "@id": "efo:0000399"
+        },
+        {
+          "@id": "span:ProcessualEntity"
+        },
+        {
+          "@id": "efo:0000001"
+        }
+      ],
+      "genex:hasAnatomicalEntity": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "caro:0030000"
+        },
+        {
+          "@id": "snap:MaterialEntity"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "caro:0000000"
+        },
+        {
+          "@id": "efo:0000001"
+        },
+        {
+          "@id": "genex:AnatomicalEntity"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "efo:0000635"
+        }
+      ],
+      "genex:hasStrain": [
+        {
+          "@id": "efo:0005135"
+        },
+        {
+          "@id": "obi:0000181"
+        }
+      ],
+      "genex:hasSex": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "ncit:C14250",
+      "ro:0002162": {
+        "@id": "uniprot.core:Taxon"
+      }
+    },
+    {
+      "@id": "orth:Organism",
+      "ro:0002162": {
+        "@id": "uniprot.core:Taxon"
+      }
+    },
+    {
+      "@id": "uniprot.core:Taxon",
+      "uniprot.core:rank": [
+        {
+          "@id": "uniprot.core:Rank"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "uniprot.core:commonName": {
+        "@id": "Literal"
+      },
+      "dcterms:identifier": {
+        "@id": "Literal"
+      },
+      "uniprot.core:scientificName": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "genex:AbsenceExpression",
+      "genex:hasConfidenceLevel": {
+        "@id": "owl:NamedIndividual"
+      },
+      "genex:hasSequenceUnit": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "genex:hasExpressionCondition": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "genex:hasFDRpvalue": {
+        "@id": "Literal"
+      },
+      "genex:hasExpressionLevel": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "genex:Expression",
+      "genex:hasConfidenceLevel": {
+        "@id": "owl:NamedIndividual"
+      },
+      "genex:hasSequenceUnit": [
+        {
+          "@id": "cdao:0000140"
+        },
+        {
+          "@id": "orth:SequenceUnit"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "orth:GeneTreeNode"
+        },
+        {
+          "@id": "orth:Gene"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "so:0000704"
+        }
+      ],
+      "genex:hasExpressionCondition": [
+        {
+          "@id": "bfo:0000004"
+        },
+        {
+          "@id": "bfo:0000002"
+        },
+        {
+          "@id": "bfo:0000001"
+        },
+        {
+          "@id": "genex:ExpressionCondition"
+        }
+      ],
+      "genex:hasFDRpvalue": {
+        "@id": "Literal"
+      },
+      "genex:hasExpressionLevel": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:Ontology",
+      "dcterms:publisher": [
+        {
+          "@id": "foaf:Organization"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "owl:imports": [
+        {
+          "@id": "owl:Ontology"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "dcterms:license": {
+        "@id": "Resource"
+      },
+      "owl:versionInfo": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "vann:preferredNamespacePrefix": {
+        "@id": "Literal"
+      },
+      "schema:codeRepository": {
+        "@id": "Literal"
+      },
+      "dcterms:modified": {
+        "@id": "Literal"
+      },
+      "dcterms:title": {
+        "@id": "Literal"
+      },
+      "dcterms:bibliographicCitation": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "dcterms:abstract": {
+        "@id": "Literal"
+      },
+      "dcterms:issue": {
+        "@id": "Literal"
+      },
+      "vocab:introduction": {
+        "@id": "Literal"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "Resource"
+      },
+      "dcterms:created": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      },
+      "owl:priorVersion": {
+        "@id": "Resource"
+      },
+      "dcterms:contributor": {
+        "@id": "Resource"
+      },
+      "schema:image": {
+        "@id": "Resource"
+      },
+      "owl:versionIRI": {
+        "@id": "Resource"
+      },
+      "vann:preferredNamespaceUri": {
+        "@id": "Resource"
+      },
+      "bibo:status": {
+        "@id": "Resource"
+      },
+      "dcterms:creator": {
+        "@id": "Resource"
+      },
+      "owl:backwardCompatibleWith": {
+        "@id": "Resource"
+      },
+      "voaf:extends": {
+        "@id": "Resource"
+      },
+      "sh:declare": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "void:Dataset",
+      "dcterms:publisher": {
+        "@id": "dcterms:Agent"
+      },
+      "void:subset": {
+        "@id": "void:Dataset"
+      },
+      "dcterms:license": {
+        "@id": "dcterms:LicenseDocument"
+      },
+      "voidext:isSubsetOf": {
+        "@id": "void:Dataset"
+      },
+      "foaf:homepage": {
+        "@id": "Resource"
+      },
+      "dcterms:modified": {
+        "@id": "Literal"
+      },
+      "dcterms:title": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      },
+      "void:uriSpace": {
+        "@id": "Literal"
+      },
+      "void:sparqlEndpoint": {
+        "@id": "Resource"
+      },
+      "void:classPartition": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:Restriction",
+      "owl:onProperty": [
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "owl:FunctionalProperty"
+        },
+        {
+          "@id": "owl:DatatypeProperty"
+        }
+      ],
+      "owl:allValuesFrom": {
+        "@id": "owl:Class"
+      },
+      "owl:someValuesFrom": {
+        "@id": "owl:Class"
+      },
+      "owl:maxQualifiedCardinality": {
+        "@id": "Literal"
+      },
+      "owl:onDataRange": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "rdfs:Datatype",
+      "owl:oneOf": {
+        "@id": "rdf:List"
+      }
+    },
+    {
+      "@id": "sparqlserv:Service",
+      "sparqlserv:url": {
+        "@id": "sparqlserv:Service"
+      },
+      "sparqlserv:endpoint": {
+        "@id": "sparqlserv:Service"
+      },
+      "dcterms:modified": {
+        "@id": "Literal"
+      },
+      "sparqlserv:supportedLanguage": {
+        "@id": "Resource"
+      },
+      "sparqlserv:feature": {
+        "@id": "Resource"
+      },
+      "sparqlserv:resultFormat": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "voidext:ComplexLinkSet",
+      "voidext:intersectAt": {
+        "@id": "void:Linkset"
+      },
+      "voidext:recommendedMapping": {
+        "@id": "void:Linkset"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "dcterms:issued": {
+        "@id": "Literal"
+      },
+      "voidext:intersectionType": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "void:Linkset",
+      "voidext:isSubsetOf": {
+        "@id": "void:Dataset"
+      },
+      "void:subjectsTarget": {
+        "@id": "void:Dataset"
+      },
+      "void:objectsTarget": [
+        {
+          "@id": "void:Dataset"
+        },
+        {
+          "@id": "void:Linkset"
+        }
+      ],
+      "voidext:linkPredicateDomain": {
+        "@id": "owl:Class"
+      },
+      "voidext:resourceMapping": {
+        "@id": "Literal"
+      },
+      "dcterms:issued": {
+        "@id": "Literal"
+      },
+      "voidext:linkPredicateRange": {
+        "@id": "Resource"
+      },
+      "void:linkPredicate": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "voidext:SimpleLinkSet",
+      "void:target": {
+        "@id": "void:Dataset"
+      },
+      "dcterms:issued": {
+        "@id": "Literal"
+      },
+      "voidext:sharedInstanceType": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "voidext:SharedInstanceSet",
+      "void:target": {
+        "@id": "void:Dataset"
+      },
+      "dcterms:issued": {
+        "@id": "Literal"
+      },
+      "voidext:sharedInstanceType": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "efo:0000399",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "efo:0005135",
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "span:ProcessualEntity",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "dcterms:description": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "uniprot.core:Rank",
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "owl:NamedIndividual",
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "foaf:homepage": {
+        "@id": "Literal"
+      },
+      "iao:0000115": {
+        "@id": "Literal"
+      },
+      "foaf:name": {
+        "@id": "Literal"
+      },
+      "oboinowl:id": {
+        "@id": "Literal"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "obi:0000181",
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "dcterms:LicenseDocument",
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "dcterms:Agent",
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "sh:SPARQLExecutable",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "sh:select": {
+        "@id": "Literal"
+      },
+      "schema:target": {
+        "@id": "Resource"
+      },
+      "sh:prefixes": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "sh:SPARQLSelectExecutable",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "sh:select": {
+        "@id": "Literal"
+      },
+      "schema:target": {
+        "@id": "Resource"
+      },
+      "sh:prefixes": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "foaf:Organization",
+      "foaf:homepage": {
+        "@id": "Literal"
+      },
+      "foaf:name": {
+        "@id": "Literal"
+      }
+    }
+  ]
+}

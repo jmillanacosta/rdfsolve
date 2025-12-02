@@ -1,0 +1,176 @@
+name: pubchem.cell_schema
+description: LinkML schema for pubchem.cell generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+prefixes:
+  pubchem.cell_schema:
+    prefix_prefix: pubchem.cell_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+  cito:
+    prefix_prefix: cito
+    prefix_reference: http://purl.org/spar/cito/
+  mesh.vocab:
+    prefix_prefix: mesh.vocab
+    prefix_reference: http://id.nlm.nih.gov/mesh/vocab#
+  chembl:
+    prefix_prefix: chembl
+    prefix_reference: http://rdf.ebi.ac.uk/terms/chembl#
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  sio:
+    prefix_prefix: sio
+    prefix_reference: http://semanticscience.org/resource/
+  uniprot.core:
+    prefix_prefix: uniprot.core
+    prefix_reference: http://purl.uniprot.org/core/
+  ro:
+    prefix_prefix: ro
+    prefix_reference: http://purl.obolibrary.org/obo/
+default_prefix: pubchem.cell_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  rdfs_see_Also:
+    name: rdfs_see_Also
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/rdfs_see_Also
+    description: Property rdfs:seeAlso
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/rdfs_see_Also
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/rdfs_see_Also
+    owner: sio_010054
+    domain_of:
+    - vocabulary_Cell
+    - sio_010054
+    range: mesh_vocab_Topical_Descriptor
+    inlined: true
+    inlined_as_list: true
+  uniprot_core_organism:
+    name: uniprot_core_organism
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/uniprot_core_organism
+    description: Property uniprot.core:organism
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/uniprot_core_organism
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/uniprot_core_organism
+    owner: sio_010054
+    domain_of:
+    - vocabulary_Cell
+    - sio_010054
+    range: mesh_vocab_Topical_Descriptor
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/rdf_type
+    owner: sio_010054
+    domain_of:
+    - vocabulary_Cell
+    - sio_010054
+    range: mesh_vocab_Topical_Descriptor
+    inlined: true
+    inlined_as_list: true
+  cito_is_Discussed_By:
+    name: cito_is_Discussed_By
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/cito_is_Discussed_By
+    description: Property cito:isDiscussedBy
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/cito_is_Discussed_By
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/cito_is_Discussed_By
+    owner: sio_010054
+    domain_of:
+    - vocabulary_Cell
+    - sio_010054
+    range: mesh_vocab_Topical_Descriptor
+    inlined: true
+    inlined_as_list: true
+  ro_0001000:
+    name: ro_0001000
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/ro_0001000
+    description: Property ro:0001000
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/ro_0001000
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/ro_0001000
+    owner: sio_010054
+    domain_of:
+    - vocabulary_Cell
+    - sio_010054
+    range: mesh_vocab_Topical_Descriptor
+    inlined: true
+    inlined_as_list: true
+classes:
+  vocabulary_Cell:
+    name: vocabulary_Cell
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/VocabularyCell
+    description: Class representing vocabulary_Cell
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/vocabulary_Cell
+    slots:
+    - cito_is_Discussed_By
+    - uniprot_core_organism
+    - rdf_type
+    - rdfs_see_Also
+    - ro_0001000
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/vocabulary_Cell
+  mesh_vocab_Topical_Descriptor:
+    name: mesh_vocab_Topical_Descriptor
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/MeshVocabTopicalDescriptor
+    description: Class representing mesh_vocab_Topical_Descriptor
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/mesh_vocab_Topical_Descriptor
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/mesh_vocab_Topical_Descriptor
+  sio_010054:
+    name: sio_010054
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/Sio010054
+    description: Class representing sio_010054
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/sio_010054
+    slots:
+    - cito_is_Discussed_By
+    - uniprot_core_organism
+    - rdf_type
+    - rdfs_see_Also
+    - ro_0001000
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.cell/linkml/sio_010054
+metamodel_version: 1.7.0
+generation_date: '2025-12-02T10:01:34'

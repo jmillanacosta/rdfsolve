@@ -1,0 +1,30 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/patent/void/class_partition_> void:class <http://data.epo.org/linked-data/def/patent/Publication>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#PatentAssignee>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#PatentInventor> ;
+    void:entities 7016766,
+        49546056,
+        90600027 .
+
+<http://rdf.ncbi.nlm.nih.gov/pubchem/patent/void/property_partition_> ns1:objectClass <http://data.epo.org/linked-data/def/patent/Publication>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#PatentAssignee>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#PatentInventor>,
+        owl:Class ;
+    ns1:subjectClass <http://data.epo.org/linked-data/def/patent/Publication>,
+        <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent> ;
+    void:property <http://data.epo.org/linked-data/def/patent/applicantVC>,
+        <http://data.epo.org/linked-data/def/patent/inventorVC>,
+        <http://purl.org/spar/cito/isCitedBy>,
+        rdf:type ;
+    void:triples 74657321,
+        90600027,
+        175392313,
+        297802693 .
+
