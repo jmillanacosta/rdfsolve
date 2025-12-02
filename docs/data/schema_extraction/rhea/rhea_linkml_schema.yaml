@@ -1,0 +1,2074 @@
+name: rhea_schema
+description: LinkML schema for rhea generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+prefixes:
+  rhea_schema:
+    prefix_prefix: rhea_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: https://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  sh:
+    prefix_prefix: sh
+    prefix_reference: http://www.w3.org/ns/shacl#
+  oboinowl:
+    prefix_prefix: oboinowl
+    prefix_reference: http://www.geneontology.org/formats/oboInOwl#
+  obo:
+    prefix_prefix: obo
+    prefix_reference: http://purl.obolibrary.org/obo/chebi/
+  iao:
+    prefix_prefix: iao
+    prefix_reference: http://purl.obolibrary.org/obo/
+  uniprot.core:
+    prefix_prefix: uniprot.core
+    prefix_reference: http://purl.uniprot.org/core/
+  ontology:
+    prefix_prefix: ontology
+    prefix_reference: https://purl.expasy.org/sparql-examples/ontology#
+  void:
+    prefix_prefix: void
+    prefix_reference: http://rdfs.org/ns/void#
+  voidext:
+    prefix_prefix: voidext
+    prefix_reference: http://ldf.fi/void-ext#
+  sparqlserv:
+    prefix_prefix: sparqlserv
+    prefix_reference: http://www.w3.org/ns/sparql-service-description#
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  pav:
+    prefix_prefix: pav
+    prefix_reference: http://purl.org/pav/
+default_prefix: rhea_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  rdf_contains_7:
+    name: rdf_contains_7
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_7
+    description: Property rdf:contains7
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_7
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_7
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_underlying_Chebi:
+    name: rdf_underlying_Chebi
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_underlying_Chebi
+    description: Property rdf:underlyingChebi
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_underlying_Chebi
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_underlying_Chebi
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_default_Dataset:
+    name: sparqlserv_default_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_default_Dataset
+    description: Property sparqlserv:defaultDataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_default_Dataset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_default_Dataset
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: sparqlserv_Dataset
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_1:
+    name: rdf_contains_1
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_1
+    description: Property rdf:contains1
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_1
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_1
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  void_subjects_Target:
+    name: void_subjects_Target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_subjects_Target
+    description: Property void:subjectsTarget
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_subjects_Target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_subjects_Target
+    owner: void_Linkset
+    domain_of:
+    - void_Linkset
+    range: void_Dataset
+    inlined: true
+    inlined_as_list: true
+  rdf_html_Name:
+    name: rdf_html_Name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_html_Name
+    description: Property rdf:htmlName
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_html_Name
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_html_Name
+    owner: owl_Class
+    domain_of:
+    - rdfs_Class
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_feature:
+    name: sparqlserv_feature
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_feature
+    description: Property sparqlserv:feature
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_feature
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_feature
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  void_entities:
+    name: void_entities
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_entities
+    description: Property void:entities
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_entities
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_entities
+    owner: void_Dataset
+    domain_of:
+    - void_Dataset
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_10:
+    name: rdf_contains_10
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_10
+    description: Property rdf:contains10
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_10
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_10
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_26:
+    name: rdf_contains_26
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_26
+    description: Property rdf:contains26
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_26
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_26
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_8:
+    name: rdf_contains_8
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_8
+    description: Property rdf:contains8
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_8
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_8
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_5:
+    name: rdf_contains_5
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_5
+    description: Property rdf:contains5
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_5
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_5
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_position:
+    name: rdf_position
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_position
+    description: Property rdf:position
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_position
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_position
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sh_select:
+    name: sh_select
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_select
+    description: Property sh:select
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_select
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_select
+    owner: sh_SPARQLExecutable
+    domain_of:
+    - sh_SPARQLSelect_Executable
+    - sh_SPARQLExecutable
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_22:
+    name: rdf_contains_22
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_22
+    description: Property rdf:contains22
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_22
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_22
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_4:
+    name: rdf_contains_4
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_4
+    description: Property rdf:contains4
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_4
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_4
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  void_property_Partition:
+    name: void_property_Partition
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_property_Partition
+    description: Property void:propertyPartition
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_property_Partition
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_property_Partition
+    owner: sparqlserv_Graph
+    domain_of:
+    - void_Dataset
+    - sparqlserv_Graph
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  voidext_distinct_IRIReference_Objects:
+    name: voidext_distinct_IRIReference_Objects
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_IRIReference_Objects
+    description: Property voidext:distinctIRIReferenceObjects
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_IRIReference_Objects
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_IRIReference_Objects
+    owner: sparqlserv_Graph
+    domain_of:
+    - sparqlserv_Graph
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  voidext_distinct_Blank_Node_Subjects:
+    name: voidext_distinct_Blank_Node_Subjects
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_Blank_Node_Subjects
+    description: Property voidext:distinctBlankNodeSubjects
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_Blank_Node_Subjects
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_Blank_Node_Subjects
+    owner: sparqlserv_Graph
+    domain_of:
+    - sparqlserv_Graph
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_html_Equation:
+    name: rdf_html_Equation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_html_Equation
+    description: Property rdf:htmlEquation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_html_Equation
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_html_Equation
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_curated_Order:
+    name: rdf_curated_Order
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_curated_Order
+    description: Property rdf:curatedOrder
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_curated_Order
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_curated_Order
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_products:
+    name: rdf_products
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_products
+    description: Property rdf:products
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_products
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_products
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_Nplus_1:
+    name: rdf_contains_Nplus_1
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_Nplus_1
+    description: Property rdf:containsNplus1
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_Nplus_1
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_Nplus_1
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdfs_comment:
+    name: rdfs_comment
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_comment
+    description: Property rdfs:comment
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_comment
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_comment
+    owner: sh_SPARQLExecutable
+    domain_of:
+    - rdfs_Class
+    - sh_SPARQLSelect_Executable
+    - sh_SPARQLExecutable
+    - owl_Ontology
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_citation:
+    name: rdf_citation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_citation
+    description: Property rdf:citation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_citation
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_citation
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_annotated_Target:
+    name: owl_annotated_Target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_annotated_Target
+    description: Property owl:annotatedTarget
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_annotated_Target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_annotated_Target
+    owner: owl_Axiom
+    domain_of:
+    - owl_Axiom
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_accession:
+    name: rdf_accession
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_accession
+    description: Property rdf:accession
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_accession
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_accession
+    owner: owl_Class
+    domain_of:
+    - rdfs_Class
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  dcterms_issued:
+    name: dcterms_issued
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/dcterms_issued
+    description: Property dcterms:issued
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/dcterms_issued
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/dcterms_issued
+    owner: sparqlserv_Graph
+    domain_of:
+    - sparqlserv_Graph
+    - sparqlserv_Dataset
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sh_prefixes:
+    name: sh_prefixes
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_prefixes
+    description: Property sh:prefixes
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_prefixes
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_prefixes
+    owner: sh_SPARQLExecutable
+    domain_of:
+    - sh_SPARQLSelect_Executable
+    - sh_SPARQLExecutable
+    range: owl_Ontology
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_named_Graph:
+    name: sparqlserv_named_Graph
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_named_Graph
+    description: Property sparqlserv:namedGraph
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_named_Graph
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_named_Graph
+    owner: sparqlserv_Dataset
+    domain_of:
+    - sparqlserv_Dataset
+    range: sparqlserv_Named_Graph
+    inlined: true
+    inlined_as_list: true
+  rdf_directional_Reaction:
+    name: rdf_directional_Reaction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_directional_Reaction
+    description: Property rdf:directionalReaction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_directional_Reaction
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_directional_Reaction
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  void_link_Predicate:
+    name: void_link_Predicate
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_link_Predicate
+    description: Property void:linkPredicate
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_link_Predicate
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_link_Predicate
+    owner: void_Linkset
+    domain_of:
+    - void_Linkset
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  obo_chebi_formula:
+    name: obo_chebi_formula
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_formula
+    description: Property obo:chebi/formula
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_formula
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_formula
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_available_Graphs:
+    name: sparqlserv_available_Graphs
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_available_Graphs
+    description: Property sparqlserv:availableGraphs
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_available_Graphs
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_available_Graphs
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  void_subset:
+    name: void_subset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_subset
+    description: Property void:subset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_subset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_subset
+    owner: sparqlserv_Graph
+    domain_of:
+    - sparqlserv_Graph
+    range: void_Linkset
+    inlined: true
+    inlined_as_list: true
+  rdfs_see_Also:
+    name: rdfs_see_Also
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_see_Also
+    description: Property rdfs:seeAlso
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_see_Also
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_see_Also
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_inverse_Of:
+    name: owl_inverse_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_inverse_Of
+    description: Property owl:inverseOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_inverse_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_inverse_Of
+    owner: owl_Object_Property
+    domain_of:
+    - owl_Object_Property
+    - owl_Transitive_Property
+    range: owl_Object_Property
+    inlined: true
+    inlined_as_list: true
+  sh_declare:
+    name: sh_declare
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_declare
+    description: Property sh:declare
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_declare
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_declare
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_32:
+    name: rdf_contains_32
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_32
+    description: Property rdf:contains32
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_32
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_32
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  obo_chebi_smiles:
+    name: obo_chebi_smiles
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_smiles
+    description: Property obo:chebi/smiles
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_smiles
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_smiles
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_9:
+    name: rdf_contains_9
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_9
+    description: Property rdf:contains9
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_9
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_9
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  oboinowl_has_Synonym:
+    name: oboinowl_has_Synonym
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Synonym
+    description: Property oboinowl:hasSynonym
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Synonym
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Synonym
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_chebi:
+    name: rdf_chebi
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_chebi
+    description: Property rdf:chebi
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_chebi
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_chebi
+    owner: owl_Class
+    domain_of:
+    - rdfs_Class
+    - owl_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  oboinowl_has_Alternative_Id:
+    name: oboinowl_has_Alternative_Id
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Alternative_Id
+    description: Property oboinowl:hasAlternativeId
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Alternative_Id
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Alternative_Id
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_11:
+    name: rdf_contains_11
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_11
+    description: Property rdf:contains11
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_11
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_11
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_id:
+    name: rdf_id
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_id
+    description: Property rdf:id
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_id
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_id
+    owner: owl_Class
+    domain_of:
+    - rdfs_Class
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_location:
+    name: rdf_location
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_location
+    description: Property rdf:location
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_location
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_location
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_18:
+    name: rdf_contains_18
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_18
+    description: Property rdf:contains18
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_18
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_18
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_transformable_To:
+    name: rdf_transformable_To
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_transformable_To
+    description: Property rdf:transformableTo
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_transformable_To
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_transformable_To
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_27:
+    name: rdf_contains_27
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_27
+    description: Property rdf:contains27
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_27
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_27
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_bidirectional_Reaction:
+    name: rdf_bidirectional_Reaction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_bidirectional_Reaction
+    description: Property rdf:bidirectionalReaction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_bidirectional_Reaction
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_bidirectional_Reaction
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  voidext_distinct_IRIReference_Subjects:
+    name: voidext_distinct_IRIReference_Subjects
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_IRIReference_Subjects
+    description: Property voidext:distinctIRIReferenceSubjects
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_IRIReference_Subjects
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_IRIReference_Subjects
+    owner: sparqlserv_Graph
+    domain_of:
+    - sparqlserv_Graph
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_compound:
+    name: rdf_compound
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_compound
+    description: Property rdf:compound
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_compound
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_compound
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_ec:
+    name: rdf_ec
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_ec
+    description: Property rdf:ec
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_ec
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_ec
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  pav_version:
+    name: pav_version
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/pav_version
+    description: Property pav:version
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/pav_version
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/pav_version
+    owner: sparqlserv_Dataset
+    domain_of:
+    - sparqlserv_Dataset
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains:
+    name: rdf_contains
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains
+    description: Property rdf:contains
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_17:
+    name: rdf_contains_17
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_17
+    description: Property rdf:contains17
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_17
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_17
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_formula:
+    name: rdf_formula
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_formula
+    description: Property rdf:formula
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_formula
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_formula
+    owner: owl_Class
+    domain_of:
+    - rdfs_Class
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_21:
+    name: rdf_contains_21
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_21
+    description: Property rdf:contains21
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_21
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_21
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  voidext_distinct_Literals:
+    name: voidext_distinct_Literals
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_Literals
+    description: Property voidext:distinctLiterals
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_Literals
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_Literals
+    owner: sparqlserv_Graph
+    domain_of:
+    - sparqlserv_Graph
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_13:
+    name: rdf_contains_13
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_13
+    description: Property rdf:contains13
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_13
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_13
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_2:
+    name: rdf_contains_2
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_2
+    description: Property rdf:contains2
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_2
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_2
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_side:
+    name: rdf_side
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_side
+    description: Property rdf:side
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_side
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_side
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_reactive_Part:
+    name: rdf_reactive_Part
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_reactive_Part
+    description: Property rdf:reactivePart
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_reactive_Part
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_reactive_Part
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  obo_chebi_inchi:
+    name: obo_chebi_inchi
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_inchi
+    description: Property obo:chebi/inchi
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_inchi
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_inchi
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_status:
+    name: rdf_status
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_status
+    description: Property rdf:status
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_status
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_status
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  obo_chebi_inchikey:
+    name: obo_chebi_inchikey
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_inchikey
+    description: Property obo:chebi/inchikey
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_inchikey
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_inchikey
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  oboinowl_has_Id:
+    name: oboinowl_has_Id
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Id
+    description: Property oboinowl:hasId
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Id
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Id
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_24:
+    name: rdf_contains_24
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_24
+    description: Property rdf:contains24
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_24
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_24
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_default_Graph:
+    name: sparqlserv_default_Graph
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_default_Graph
+    description: Property sparqlserv:defaultGraph
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_default_Graph
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_default_Graph
+    owner: sparqlserv_Dataset
+    domain_of:
+    - sparqlserv_Dataset
+    range: sparqlserv_Graph
+    inlined: true
+    inlined_as_list: true
+  obo_chebi_charge:
+    name: obo_chebi_charge
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_charge
+    description: Property obo:chebi/charge
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_charge
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/obo_chebi_charge
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_supported_Language:
+    name: sparqlserv_supported_Language
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_supported_Language
+    description: Property sparqlserv:supportedLanguage
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_supported_Language
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_supported_Language
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_19:
+    name: rdf_contains_19
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_19
+    description: Property rdf:contains19
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_19
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_19
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  oboinowl_has_Db_Xref:
+    name: oboinowl_has_Db_Xref
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Db_Xref
+    description: Property oboinowl:hasDbXref
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Db_Xref
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_has_Db_Xref
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    - owl_Axiom
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_2n:
+    name: rdf_contains_2n
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_2n
+    description: Property rdf:contains2n
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_2n
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_2n
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdfs_sub_Class_Of:
+    name: rdfs_sub_Class_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_sub_Class_Of
+    description: Property rdfs:subClassOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_sub_Class_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_sub_Class_Of
+    owner: owl_Class
+    domain_of:
+    - rdfs_Class
+    - owl_Class
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  uniprot_core_name:
+    name: uniprot_core_name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/uniprot_core_name
+    description: Property uniprot.core:name
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/uniprot_core_name
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/uniprot_core_name
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_12:
+    name: rdf_contains_12
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_12
+    description: Property rdf:contains12
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_12
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_12
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_3:
+    name: rdf_contains_3
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_3
+    description: Property rdf:contains3
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_3
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_3
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_16:
+    name: rdf_contains_16
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_16
+    description: Property rdf:contains16
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_16
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_16
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_name:
+    name: sparqlserv_name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_name
+    description: Property sparqlserv:name
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_name
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_name
+    owner: sparqlserv_Named_Graph
+    domain_of:
+    - sparqlserv_Named_Graph
+    range: sparqlserv_Named_Graph
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_14:
+    name: rdf_contains_14
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_14
+    description: Property rdf:contains14
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_14
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_14
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  void_class:
+    name: void_class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_class
+    description: Property void:class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_class
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_class
+    owner: void_Dataset
+    domain_of:
+    - void_Dataset
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  voidext_datatype:
+    name: voidext_datatype
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_datatype
+    description: Property voidext:datatype
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_datatype
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_datatype
+    owner: void_Dataset
+    domain_of:
+    - void_Dataset
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_is_Transport:
+    name: rdf_is_Transport
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_is_Transport
+    description: Property rdf:isTransport
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_is_Transport
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_is_Transport
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_28:
+    name: rdf_contains_28
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_28
+    description: Property rdf:contains28
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_28
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_28
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  voidext_datatype_Partition:
+    name: voidext_datatype_Partition
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_datatype_Partition
+    description: Property voidext:datatypePartition
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_datatype_Partition
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_datatype_Partition
+    owner: void_Dataset
+    domain_of:
+    - void_Dataset
+    range: void_Dataset
+    inlined: true
+    inlined_as_list: true
+  void_property:
+    name: void_property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_property
+    description: Property void:property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_property
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_property
+    owner: void_Dataset
+    domain_of:
+    - void_Dataset
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_40:
+    name: rdf_contains_40
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_40
+    description: Property rdf:contains40
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_40
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_40
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_polymerization_Index:
+    name: rdf_polymerization_Index
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_polymerization_Index
+    description: Property rdf:polymerizationIndex
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_polymerization_Index
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_polymerization_Index
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_20:
+    name: rdf_contains_20
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_20
+    description: Property rdf:contains20
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_20
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_20
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  void_objects_Target:
+    name: void_objects_Target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_objects_Target
+    description: Property void:objectsTarget
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_objects_Target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_objects_Target
+    owner: void_Linkset
+    domain_of:
+    - void_Linkset
+    range: void_Dataset
+    inlined: true
+    inlined_as_list: true
+  schema_target:
+    name: schema_target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/schema_target
+    description: Property schema:target
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/schema_target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/schema_target
+    owner: sh_SPARQLExecutable
+    domain_of:
+    - sh_SPARQLSelect_Executable
+    - sh_SPARQLExecutable
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdfs_label:
+    name: rdfs_label
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_label
+    description: Property rdfs:label
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_label
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_label
+    owner: owl_Class
+    domain_of:
+    - rdfs_Class
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  owl_annotated_Property:
+    name: owl_annotated_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_annotated_Property
+    description: Property owl:annotatedProperty
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_annotated_Property
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_annotated_Property
+    owner: owl_Axiom
+    domain_of:
+    - owl_Axiom
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  void_triples:
+    name: void_triples
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_triples
+    description: Property void:triples
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_triples
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_triples
+    owner: sparqlserv_Graph
+    domain_of:
+    - void_Dataset
+    - sparqlserv_Graph
+    - void_Linkset
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_6:
+    name: rdf_contains_6
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_6
+    description: Property rdf:contains6
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_6
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_6
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  void_distinct_Subjects:
+    name: void_distinct_Subjects
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_distinct_Subjects
+    description: Property void:distinctSubjects
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_distinct_Subjects
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_distinct_Subjects
+    owner: sparqlserv_Graph
+    domain_of:
+    - sparqlserv_Graph
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_Nminus_1:
+    name: rdf_contains_Nminus_1
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_Nminus_1
+    description: Property rdf:containsNminus1
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_Nminus_1
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_Nminus_1
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  voidext_distinct_Blank_Node_Objects:
+    name: voidext_distinct_Blank_Node_Objects
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_Blank_Node_Objects
+    description: Property voidext:distinctBlankNodeObjects
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_Blank_Node_Objects
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/voidext_distinct_Blank_Node_Objects
+    owner: sparqlserv_Graph
+    domain_of:
+    - sparqlserv_Graph
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_result_Format:
+    name: sparqlserv_result_Format
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_result_Format
+    description: Property sparqlserv:resultFormat
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_result_Format
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_result_Format
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_is_Chemically_Balanced:
+    name: rdf_is_Chemically_Balanced
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_is_Chemically_Balanced
+    description: Property rdf:isChemicallyBalanced
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_is_Chemically_Balanced
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_is_Chemically_Balanced
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_contains_N:
+    name: rdf_contains_N
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_N
+    description: Property rdf:containsN
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_N
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_contains_N
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  owl_some_Values_From:
+    name: owl_some_Values_From
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_some_Values_From
+    description: Property owl:someValuesFrom
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_some_Values_From
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_some_Values_From
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_graph:
+    name: sparqlserv_graph
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_graph
+    description: Property sparqlserv:graph
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_graph
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_graph
+    owner: sparqlserv_Named_Graph
+    domain_of:
+    - sparqlserv_Named_Graph
+    range: sparqlserv_Graph
+    inlined: true
+    inlined_as_list: true
+  rdf_substrates:
+    name: rdf_substrates
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_substrates
+    description: Property rdf:substrates
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_substrates
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_substrates
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  owl_annotated_Source:
+    name: owl_annotated_Source
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_annotated_Source
+    description: Property owl:annotatedSource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_annotated_Source
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_annotated_Source
+    owner: owl_Axiom
+    domain_of:
+    - owl_Axiom
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  void_class_Partition:
+    name: void_class_Partition
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_class_Partition
+    description: Property void:classPartition
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_class_Partition
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_class_Partition
+    owner: sparqlserv_Graph
+    domain_of:
+    - void_Dataset
+    - sparqlserv_Graph
+    range: void_Dataset
+    inlined: true
+    inlined_as_list: true
+  iao_0000115:
+    name: iao_0000115
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/iao_0000115
+    description: Property iao:0000115
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/iao_0000115
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/iao_0000115
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  owl_on_Property:
+    name: owl_on_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_on_Property
+    description: Property owl:onProperty
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_on_Property
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_on_Property
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: owl_Object_Property
+    inlined: true
+    inlined_as_list: true
+  owl_imports:
+    name: owl_imports
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_imports
+    description: Property owl:imports
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_imports
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_imports
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  void_classes:
+    name: void_classes
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_classes
+    description: Property void:classes
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_classes
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_classes
+    owner: sparqlserv_Graph
+    domain_of:
+    - sparqlserv_Graph
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  void_distinct_Objects:
+    name: void_distinct_Objects
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_distinct_Objects
+    description: Property void:distinctObjects
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_distinct_Objects
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_distinct_Objects
+    owner: sparqlserv_Graph
+    domain_of:
+    - sparqlserv_Graph
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  sparqlserv_endpoint:
+    name: sparqlserv_endpoint
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_endpoint
+    description: Property sparqlserv:endpoint
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_endpoint
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_endpoint
+    owner: sparqlserv_Service
+    domain_of:
+    - sparqlserv_Service
+    range: sparqlserv_Service
+    inlined: true
+    inlined_as_list: true
+  rdf_charge:
+    name: rdf_charge
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_charge
+    description: Property rdf:charge
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_charge
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_charge
+    owner: owl_Class
+    domain_of:
+    - rdfs_Class
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  ontology_federates_With:
+    name: ontology_federates_With
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/ontology_federates_With
+    description: Property ontology:federatesWith
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/ontology_federates_With
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/ontology_federates_With
+    owner: sh_SPARQLExecutable
+    domain_of:
+    - sh_SPARQLSelect_Executable
+    - sh_SPARQLExecutable
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdf_substrates_Or_Products:
+    name: rdf_substrates_Or_Products
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_substrates_Or_Products
+    description: Property rdf:substratesOrProducts
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_substrates_Or_Products
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_substrates_Or_Products
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  rdf_equation:
+    name: rdf_equation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_equation
+    description: Property rdf:equation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_equation
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_equation
+    owner: rdfs_Class
+    domain_of:
+    - rdfs_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdf_name:
+    name: rdf_name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_name
+    description: Property rdf:name
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_name
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdf_name
+    owner: owl_Class
+    domain_of:
+    - rdfs_Class
+    - owl_Class
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  oboinowl_in_Subset:
+    name: oboinowl_in_Subset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_in_Subset
+    description: Property oboinowl:inSubset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_in_Subset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/oboinowl_in_Subset
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+classes:
+  owl_Ontology:
+    name: owl_Ontology
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/OwlOntology
+    description: Class representing owl_Ontology
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Ontology
+    slots:
+    - rdfs_comment
+    - owl_imports
+    - sh_declare
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Ontology
+  owl_Transitive_Property:
+    name: owl_Transitive_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/OwlTransitiveProperty
+    description: Class representing owl_Transitive_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Transitive_Property
+    slots:
+    - owl_inverse_Of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Transitive_Property
+  void_Linkset:
+    name: void_Linkset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/VoidLinkset
+    description: Class representing void_Linkset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_Linkset
+    slots:
+    - void_triples
+    - void_link_Predicate
+    - void_objects_Target
+    - void_subjects_Target
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_Linkset
+  owl_Axiom:
+    name: owl_Axiom
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/OwlAxiom
+    description: Class representing owl_Axiom
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Axiom
+    slots:
+    - oboinowl_has_Db_Xref
+    - owl_annotated_Target
+    - owl_annotated_Property
+    - owl_annotated_Source
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Axiom
+  void_Dataset:
+    name: void_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/VoidDataset
+    description: Class representing void_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_Dataset
+    slots:
+    - voidext_datatype
+    - voidext_datatype_Partition
+    - void_class
+    - void_class_Partition
+    - void_entities
+    - void_property
+    - void_property_Partition
+    - void_triples
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/void_Dataset
+  owl_Object_Property:
+    name: owl_Object_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/OwlObjectProperty
+    description: Class representing owl_Object_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Object_Property
+    slots:
+    - owl_inverse_Of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Object_Property
+  rdfs_Class:
+    name: rdfs_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/RdfsClass
+    description: Class representing rdfs_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_Class
+    slots:
+    - rdf_contains_22
+    - rdf_contains_6
+    - rdf_contains_40
+    - rdf_directional_Reaction
+    - rdf_contains_11
+    - rdf_contains_26
+    - rdf_contains_5
+    - rdf_equation
+    - rdf_contains
+    - rdf_contains_19
+    - rdf_contains_14
+    - rdf_location
+    - rdf_contains_9
+    - rdf_contains_N
+    - rdf_contains_3
+    - rdf_is_Chemically_Balanced
+    - rdf_html_Name
+    - rdf_html_Equation
+    - rdf_contains_7
+    - rdf_position
+    - rdf_contains_2n
+    - rdf_is_Transport
+    - rdf_bidirectional_Reaction
+    - rdf_formula
+    - rdf_contains_4
+    - rdf_contains_28
+    - rdf_compound
+    - rdf_contains_16
+    - rdf_contains_10
+    - rdf_contains_1
+    - rdf_contains_17
+    - rdf_contains_13
+    - rdf_citation
+    - rdf_chebi
+    - rdf_polymerization_Index
+    - rdf_contains_Nminus_1
+    - rdf_curated_Order
+    - rdf_id
+    - rdf_accession
+    - rdf_contains_2
+    - rdf_contains_20
+    - rdf_contains_24
+    - rdf_contains_Nplus_1
+    - rdf_contains_8
+    - rdf_ec
+    - rdf_contains_12
+    - rdf_charge
+    - rdf_contains_21
+    - rdf_contains_27
+    - rdf_name
+    - rdf_contains_18
+    - rdf_contains_32
+    - rdf_products
+    - rdf_status
+    - rdf_substrates_Or_Products
+    - rdfs_comment
+    - rdf_side
+    - rdf_underlying_Chebi
+    - rdfs_sub_Class_Of
+    - rdf_transformable_To
+    - rdfs_label
+    - rdf_substrates
+    - rdf_reactive_Part
+    - rdfs_see_Also
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/rdfs_Class
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Class
+    slots:
+    - rdf_html_Name
+    - rdf_formula
+    - rdf_chebi
+    - rdf_id
+    - rdf_accession
+    - rdf_charge
+    - rdf_name
+    - rdfs_sub_Class_Of
+    - rdfs_label
+    - oboinowl_has_Synonym
+    - obo_chebi_inchi
+    - obo_chebi_formula
+    - oboinowl_in_Subset
+    - obo_chebi_charge
+    - iao_0000115
+    - obo_chebi_inchikey
+    - oboinowl_has_Alternative_Id
+    - oboinowl_has_Db_Xref
+    - obo_chebi_smiles
+    - uniprot_core_name
+    - oboinowl_has_Id
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Class
+  sparqlserv_Named_Graph:
+    name: sparqlserv_Named_Graph
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/SparqlservNamedGraph
+    description: Class representing sparqlserv_Named_Graph
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_Named_Graph
+    slots:
+    - sparqlserv_graph
+    - sparqlserv_name
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_Named_Graph
+  sparqlserv_Dataset:
+    name: sparqlserv_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/SparqlservDataset
+    description: Class representing sparqlserv_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_Dataset
+    slots:
+    - dcterms_issued
+    - pav_version
+    - sparqlserv_default_Graph
+    - sparqlserv_named_Graph
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_Dataset
+  sparqlserv_Graph:
+    name: sparqlserv_Graph
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/SparqlservGraph
+    description: Class representing sparqlserv_Graph
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_Graph
+    slots:
+    - void_class_Partition
+    - void_property_Partition
+    - void_triples
+    - dcterms_issued
+    - voidext_distinct_Blank_Node_Objects
+    - voidext_distinct_Blank_Node_Subjects
+    - voidext_distinct_IRIReference_Objects
+    - voidext_distinct_IRIReference_Subjects
+    - voidext_distinct_Literals
+    - void_classes
+    - void_distinct_Objects
+    - void_distinct_Subjects
+    - void_subset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_Graph
+  sparqlserv_Service:
+    name: sparqlserv_Service
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/SparqlservService
+    description: Class representing sparqlserv_Service
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_Service
+    slots:
+    - sparqlserv_available_Graphs
+    - sparqlserv_default_Dataset
+    - sparqlserv_endpoint
+    - sparqlserv_feature
+    - sparqlserv_result_Format
+    - sparqlserv_supported_Language
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sparqlserv_Service
+  Resource:
+    name: Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/Resource
+    description: Class representing Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/Resource
+  Literal:
+    name: Literal
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/Literal
+    description: Class representing Literal
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/Literal
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/Literal
+  sh_SPARQLSelect_Executable:
+    name: sh_SPARQLSelect_Executable
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/ShSPARQLSelectExecutable
+    description: Class representing sh_SPARQLSelect_Executable
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_SPARQLSelect_Executable
+    slots:
+    - rdfs_comment
+    - ontology_federates_With
+    - sh_prefixes
+    - sh_select
+    - schema_target
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_SPARQLSelect_Executable
+  owl_Restriction:
+    name: owl_Restriction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/OwlRestriction
+    description: Class representing owl_Restriction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Restriction
+    slots:
+    - owl_some_Values_From
+    - owl_on_Property
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/owl_Restriction
+  sh_SPARQLExecutable:
+    name: sh_SPARQLExecutable
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/ShSPARQLExecutable
+    description: Class representing sh_SPARQLExecutable
+    from_schema: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_SPARQLExecutable
+    slots:
+    - rdfs_comment
+    - ontology_federates_With
+    - sh_prefixes
+    - sh_select
+    - schema_target
+    class_uri: http://jmillanacosta.github.io/rdfsolve/rhea/linkml/sh_SPARQLExecutable
+metamodel_version: 1.7.0
+generation_date: '2025-12-02T10:20:49'

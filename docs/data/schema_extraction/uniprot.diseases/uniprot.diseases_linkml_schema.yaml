@@ -1,0 +1,39 @@
+name: uniprot.diseases_schema
+description: LinkML schema for uniprot.diseases generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/uniprot.diseases/linkml/
+prefixes:
+  uniprot.diseases_schema:
+    prefix_prefix: uniprot.diseases_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/uniprot.diseases/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+default_prefix: uniprot.diseases_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/uniprot.diseases/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/uniprot.diseases/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/uniprot.diseases/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/uniprot.diseases/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+metamodel_version: 1.7.0
+generation_date: '2025-12-02T10:42:46'

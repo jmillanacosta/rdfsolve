@@ -1,0 +1,3267 @@
+{
+  "@context": {
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "uniprot.core": "http://purl.uniprot.org/core/",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "oboinowl": "http://www.geneontology.org/formats/oboInOwl#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "faldo": "http://biohackathon.org/resource/faldo#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "bibo": "http://purl.org/ontology/bibo/",
+    "iao": "http://purl.obolibrary.org/obo/"
+  },
+  "@graph": [
+    {
+      "@id": "rdf:Statement",
+      "rdf:subject": [
+        {
+          "@id": "uniprot.core:Annotation"
+        },
+        {
+          "@id": "rdf:Statement"
+        },
+        {
+          "@id": "uniprot.core:Absorption_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Allergen_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Alternative_Initiation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Alternative_Promoter_Usage_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Alternative_Splicing_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Biotechnology_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Catalytic_Activity_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Caution_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Citation_Statement"
+        },
+        {
+          "@id": "uniprot.core:Cofactor_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Developmental_Stage_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Disease_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Disruption_Phenotype_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Domain_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Enzyme_Regulation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Function_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Gene"
+        },
+        {
+          "@id": "uniprot.core:Induction_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Kinetics_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:PH_Dependence_Annotation"
+        },
+        {
+          "@id": "uniprot.core:PTM_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Part"
+        },
+        {
+          "@id": "uniprot.core:Pharmaceutical_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Polymorphism_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Protein"
+        },
+        {
+          "@id": "uniprot.core:RNA_Editing_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Redox_Potential_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Ribosomal_Frameshifting"
+        },
+        {
+          "@id": "uniprot.core:Similarity_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Structured_Name"
+        },
+        {
+          "@id": "uniprot.core:Subcellular_Location_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Subunit_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Temperature_Dependence_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Tissue_Specificity_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Toxic_Dose_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Unknown_Sequence"
+        }
+      ],
+      "uniprot.core:mappedAnnotation": {
+        "@id": "uniprot.core:Annotation"
+      },
+      "uniprot.core:citation": [
+        {
+          "@id": "uniprot.core:Book_Citation"
+        },
+        {
+          "@id": "uniprot.core:Electronic_Citation"
+        },
+        {
+          "@id": "uniprot.core:Observation_Citation"
+        },
+        {
+          "@id": "uniprot.core:Patent_Citation"
+        },
+        {
+          "@id": "uniprot.core:Submission_Citation"
+        },
+        {
+          "@id": "uniprot.core:Thesis_Citation"
+        }
+      ],
+      "rdf:object": [
+        {
+          "@id": "faldo:ExactPosition"
+        },
+        {
+          "@id": "faldo:Position"
+        },
+        {
+          "@id": "uniprot.core:Active_Site_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Alternative_Sequence_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Beta_Strand_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Binding_Site_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Book_Citation"
+        },
+        {
+          "@id": "uniprot.core:Calcium_Binding_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Chain_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Coiled_Coil_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Compositional_Bias_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Cross-link_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Disulfide_Bond_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Domain_Extent_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Electronic_Citation"
+        },
+        {
+          "@id": "uniprot.core:Erroneous_Gene_Model_Prediction_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Erroneous_Initiation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Erroneous_Termination_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Erroneous_Translation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Frameshift_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Glycosylation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Helix_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Initiator_Methionine_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Intramembrane_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Lipidation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Mass_Spectrometry_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Metal_Binding_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Modified_Residue_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Motif_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Mutagenesis_Annotation"
+        },
+        {
+          "@id": "uniprot.core:NP_Binding_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Natural_Variant_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Non-adjacent_Residues_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Non-standard_Residue_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Non-terminal_Residue_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Nucleotide_Binding_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Observation_Citation"
+        },
+        {
+          "@id": "uniprot.core:Patent_Citation"
+        },
+        {
+          "@id": "uniprot.core:Pathway_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Peptide_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Plasmid"
+        },
+        {
+          "@id": "uniprot.core:Propeptide_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Region_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Repeat_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Sequence_Caution_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Sequence_Conflict_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Sequence_Uncertainty_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Signal_Peptide_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Site_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Strain"
+        },
+        {
+          "@id": "uniprot.core:Submission_Citation"
+        },
+        {
+          "@id": "uniprot.core:Thesis_Citation"
+        },
+        {
+          "@id": "uniprot.core:Tissue"
+        },
+        {
+          "@id": "uniprot.core:Topological_Domain_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Transit_Peptide_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Transmembrane_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Turn_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Zinc_Finger_Annotation"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:context": [
+        {
+          "@id": "uniprot.core:Plasmid"
+        },
+        {
+          "@id": "uniprot.core:Strain"
+        },
+        {
+          "@id": "uniprot.core:Tissue"
+        },
+        {
+          "@id": "uniprot.core:Transposon"
+        }
+      ],
+      "rdf:predicate": {
+        "@id": "Resource"
+      },
+      "uniprot.core:attribution": {
+        "@id": "Resource"
+      },
+      "uniprot.core:scope": {
+        "@id": "Resource"
+      },
+      "uniprot.core:status": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Citation_Statement",
+      "rdf:subject": [
+        {
+          "@id": "Resource"
+        },
+        {
+          "@id": "uniprot.core:Protein"
+        }
+      ],
+      "uniprot.core:mappedAnnotation": {
+        "@id": "uniprot.core:Annotation"
+      },
+      "rdf:object": [
+        {
+          "@id": "Resource"
+        },
+        {
+          "@id": "uniprot.core:Book_Citation"
+        },
+        {
+          "@id": "uniprot.core:Electronic_Citation"
+        },
+        {
+          "@id": "uniprot.core:Observation_Citation"
+        },
+        {
+          "@id": "uniprot.core:Patent_Citation"
+        },
+        {
+          "@id": "uniprot.core:Submission_Citation"
+        },
+        {
+          "@id": "uniprot.core:Thesis_Citation"
+        }
+      ],
+      "uniprot.core:context": [
+        {
+          "@id": "uniprot.core:Plasmid"
+        },
+        {
+          "@id": "uniprot.core:Strain"
+        },
+        {
+          "@id": "uniprot.core:Tissue"
+        },
+        {
+          "@id": "uniprot.core:Transposon"
+        }
+      ],
+      "rdf:predicate": {
+        "@id": "Resource"
+      },
+      "uniprot.core:attribution": {
+        "@id": "Resource"
+      },
+      "uniprot.core:scope": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Journal_Citation",
+      "uniprot.core:erratum": {
+        "@id": "uniprot.core:Journal_Citation"
+      },
+      "dcterms:identifier": {
+        "@id": "Resource"
+      },
+      "uniprot.core:author": {
+        "@id": "Resource"
+      },
+      "uniprot.core:date": {
+        "@id": "Resource"
+      },
+      "uniprot.core:group": {
+        "@id": "Literal"
+      },
+      "uniprot.core:name": {
+        "@id": "Resource"
+      },
+      "uniprot.core:pages": {
+        "@id": "Resource"
+      },
+      "uniprot.core:title": {
+        "@id": "Resource"
+      },
+      "uniprot.core:volume": {
+        "@id": "Resource"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "foaf:primaryTopicOf": {
+        "@id": "Resource"
+      },
+      "skos:exactMatch": {
+        "@id": "Resource"
+      },
+      "uniprot.core:authorsIncomplete": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:AnnotationProperty",
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "rdfs:subPropertyOf": [
+        {
+          "@id": "owl:AnnotationProperty"
+        },
+        {
+          "@id": "owl:DatatypeProperty"
+        },
+        {
+          "@id": "owl:ObjectProperty"
+        }
+      ],
+      "rdfs:range": {
+        "@id": "Resource"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:DatatypeProperty",
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "rdfs:subPropertyOf": [
+        {
+          "@id": "owl:AnnotationProperty"
+        },
+        {
+          "@id": "owl:DatatypeProperty"
+        },
+        {
+          "@id": "owl:ObjectProperty"
+        }
+      ],
+      "rdfs:range": {
+        "@id": "rdfs:Datatype"
+      },
+      "owl:deprecated": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:FunctionalProperty",
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "rdfs:subPropertyOf": [
+        {
+          "@id": "owl:AnnotationProperty"
+        },
+        {
+          "@id": "owl:DatatypeProperty"
+        },
+        {
+          "@id": "owl:ObjectProperty"
+        }
+      ],
+      "rdfs:range": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Datatype"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:InverseFunctionalProperty",
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "rdfs:range": {
+        "@id": "owl:Class"
+      }
+    },
+    {
+      "@id": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "owl:Class"
+      },
+      "rdfs:subPropertyOf": [
+        {
+          "@id": "owl:AnnotationProperty"
+        },
+        {
+          "@id": "owl:DatatypeProperty"
+        },
+        {
+          "@id": "owl:ObjectProperty"
+        }
+      ],
+      "rdfs:range": {
+        "@id": "owl:Class"
+      },
+      "owl:inverseOf": {
+        "@id": "owl:ObjectProperty"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:Class",
+      "owl:disjointWith": {
+        "@id": "owl:Class"
+      },
+      "owl:equivalentClass": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "owl:Restriction"
+        }
+      ],
+      "rdfs:subClassOf": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "owl:Restriction"
+        }
+      ],
+      "owl:oneOf": {
+        "@id": "Resource"
+      },
+      "oboinowl:replaces": {
+        "@id": "owl:Class"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:intersectionOf": {
+        "@id": "Resource"
+      },
+      "owl:unionOf": {
+        "@id": "Resource"
+      },
+      "iao:0000115": {
+        "@id": "Resource"
+      },
+      "oboinowl:hasExactSynonym": {
+        "@id": "Resource"
+      },
+      "oboinowl:hasRelatedSynonym": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Enzyme",
+      "rdfs:subClassOf": {
+        "@id": "uniprot.core:Enzyme"
+      },
+      "skos:broaderTransitive": {
+        "@id": "uniprot.core:Enzyme"
+      },
+      "skos:narrowerTransitive": {
+        "@id": "uniprot.core:Enzyme"
+      },
+      "uniprot.core:replacedBy": {
+        "@id": "uniprot.core:Enzyme"
+      },
+      "uniprot.core:replaces": {
+        "@id": "uniprot.core:Enzyme"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "uniprot.core:activity": {
+        "@id": "Literal"
+      },
+      "uniprot.core:cofactorLabel": {
+        "@id": "Literal"
+      },
+      "uniprot.core:obsolete": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Concept",
+      "rdfs:subClassOf": {
+        "@id": "uniprot.core:Concept"
+      },
+      "skos:narrower": {
+        "@id": "uniprot.core:Concept"
+      },
+      "uniprot.core:category": {
+        "@id": "uniprot.core:Concept"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Cellular_Component",
+      "rdfs:subClassOf": {
+        "@id": "uniprot.core:Cellular_Component"
+      },
+      "uniprot.core:citation": {
+        "@id": "uniprot.core:Citation"
+      },
+      "uniprot.core:partOf": {
+        "@id": "uniprot.core:Cellular_Component"
+      },
+      "uniprot.core:relatedLocation": {
+        "@id": "uniprot.core:Cellular_Component"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "uniprot.core:alias": {
+        "@id": "Literal"
+      },
+      "skos:exactMatch": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Topology",
+      "rdfs:subClassOf": [
+        {
+          "@id": "uniprot.core:Cellular_Component"
+        },
+        {
+          "@id": "uniprot.core:Topology"
+        }
+      ],
+      "uniprot.core:relatedLocation": {
+        "@id": "uniprot.core:Topology"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "uniprot.core:alias": {
+        "@id": "Literal"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Pathway",
+      "rdfs:subClassOf": {
+        "@id": "uniprot.core:Pathway"
+      },
+      "rdfs:label": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Taxon",
+      "rdfs:subClassOf": {
+        "@id": "uniprot.core:Taxon"
+      },
+      "skos:narrowerTransitive": {
+        "@id": "uniprot.core:Taxon"
+      },
+      "uniprot.core:replacedBy": {
+        "@id": "uniprot.core:Taxon"
+      },
+      "uniprot.core:replaces": {
+        "@id": "uniprot.core:Taxon"
+      },
+      "uniprot.core:strain": {
+        "@id": "uniprot.core:Strain"
+      },
+      "foaf:depiction": {
+        "@id": "foaf:Image"
+      },
+      "uniprot.core:host": {
+        "@id": "uniprot.core:Taxon"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "uniprot.core:mnemonic": {
+        "@id": "Resource"
+      },
+      "uniprot.core:obsolete": {
+        "@id": "Resource"
+      },
+      "uniprot.core:commonName": {
+        "@id": "Resource"
+      },
+      "uniprot.core:otherName": {
+        "@id": "Resource"
+      },
+      "uniprot.core:partOfLineage": {
+        "@id": "Resource"
+      },
+      "uniprot.core:rank": {
+        "@id": "Resource"
+      },
+      "uniprot.core:scientificName": {
+        "@id": "Resource"
+      },
+      "uniprot.core:synonym": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Orientation",
+      "rdfs:subClassOf": {
+        "@id": "Resource"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "uniprot.core:alias": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:Restriction",
+      "owl:allValuesFrom": {
+        "@id": "owl:Class"
+      },
+      "owl:onClass": {
+        "@id": "owl:Class"
+      },
+      "owl:onProperty": [
+        {
+          "@id": "owl:AnnotationProperty"
+        },
+        {
+          "@id": "owl:DatatypeProperty"
+        },
+        {
+          "@id": "owl:FunctionalProperty"
+        },
+        {
+          "@id": "owl:ObjectProperty"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "owl:someValuesFrom": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdfs:Datatype"
+        }
+      ],
+      "owl:cardinality": {
+        "@id": "Literal"
+      },
+      "owl:hasValue": {
+        "@id": "Literal"
+      },
+      "owl:maxCardinality": {
+        "@id": "Literal"
+      },
+      "owl:maxQualifiedCardinality": {
+        "@id": "Literal"
+      },
+      "owl:minCardinality": {
+        "@id": "Literal"
+      },
+      "owl:onDataRange": {
+        "@id": "Resource"
+      },
+      "owl:qualifiedCardinality": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "rdf:List",
+      "rdf:rest": {
+        "@id": "rdf:List"
+      },
+      "rdf:first": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "rdfs:Datatype",
+      "owl:oneOf": {
+        "@id": "rdf:List"
+      }
+    },
+    {
+      "@id": "uniprot.core:Database",
+      "uniprot.core:citation": {
+        "@id": "uniprot.core:Citation"
+      },
+      "uniprot.core:category": {
+        "@id": "Literal"
+      },
+      "dcterms:identifier": {
+        "@id": "Resource"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "uniprot.core:abbreviation": {
+        "@id": "Literal"
+      },
+      "uniprot.core:linkIsExplicit": {
+        "@id": "Literal"
+      },
+      "uniprot.core:urlTemplate": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Proteome",
+      "uniprot.core:citation": [
+        {
+          "@id": "uniprot.core:Book_Citation"
+        },
+        {
+          "@id": "uniprot.core:Journal_Citation"
+        },
+        {
+          "@id": "uniprot.core:Submission_Citation"
+        }
+      ],
+      "skos:narrower": {
+        "@id": "uniprot.core:Proteome_Component"
+      },
+      "uniprot.core:panproteome": [
+        {
+          "@id": "uniprot.core:Proteome"
+        },
+        {
+          "@id": "uniprot.core:Reference_Proteome"
+        },
+        {
+          "@id": "uniprot.core:Representative_Proteome"
+        }
+      ],
+      "uniprot.core:strain": {
+        "@id": "uniprot.core:Strain"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Resource"
+      },
+      "dcterms:modified": {
+        "@id": "Resource"
+      },
+      "uniprot.core:organism": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Reference_Proteome",
+      "uniprot.core:citation": [
+        {
+          "@id": "uniprot.core:Book_Citation"
+        },
+        {
+          "@id": "uniprot.core:Journal_Citation"
+        },
+        {
+          "@id": "uniprot.core:Submission_Citation"
+        }
+      ],
+      "skos:narrower": {
+        "@id": "uniprot.core:Proteome_Component"
+      },
+      "uniprot.core:panproteome": [
+        {
+          "@id": "uniprot.core:Proteome"
+        },
+        {
+          "@id": "uniprot.core:Reference_Proteome"
+        },
+        {
+          "@id": "uniprot.core:Representative_Proteome"
+        }
+      ],
+      "uniprot.core:strain": {
+        "@id": "uniprot.core:Strain"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "dcterms:modified": {
+        "@id": "Literal"
+      },
+      "uniprot.core:organism": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Representative_Proteome",
+      "uniprot.core:citation": [
+        {
+          "@id": "uniprot.core:Book_Citation"
+        },
+        {
+          "@id": "uniprot.core:Journal_Citation"
+        },
+        {
+          "@id": "uniprot.core:Submission_Citation"
+        }
+      ],
+      "skos:narrower": {
+        "@id": "uniprot.core:Proteome_Component"
+      },
+      "uniprot.core:panproteome": [
+        {
+          "@id": "uniprot.core:Proteome"
+        },
+        {
+          "@id": "uniprot.core:Reference_Proteome"
+        },
+        {
+          "@id": "uniprot.core:Representative_Proteome"
+        }
+      ],
+      "uniprot.core:strain": {
+        "@id": "uniprot.core:Strain"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Resource"
+      },
+      "dcterms:modified": {
+        "@id": "Literal"
+      },
+      "uniprot.core:organism": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:External_Sequence",
+      "uniprot.core:citation": [
+        {
+          "@id": "uniprot.core:Book_Citation"
+        },
+        {
+          "@id": "uniprot.core:Electronic_Citation"
+        },
+        {
+          "@id": "uniprot.core:Observation_Citation"
+        },
+        {
+          "@id": "uniprot.core:Patent_Citation"
+        },
+        {
+          "@id": "uniprot.core:Submission_Citation"
+        },
+        {
+          "@id": "uniprot.core:Thesis_Citation"
+        }
+      ],
+      "uniprot.core:replaces": {
+        "@id": "Resource"
+      },
+      "uniprot.core:name": {
+        "@id": "Resource"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "rdf:value": {
+        "@id": "Literal"
+      },
+      "uniprot.core:basedOn": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "uniprot.core:modification": {
+        "@id": "uniprot.core:Alternative_Sequence_Annotation"
+      },
+      "uniprot.core:translatedFrom": {
+        "@id": "uniprot.core:Nucleotide_Resource"
+      },
+      "uniprot.core:crc64Checksum": {
+        "@id": "Resource"
+      },
+      "uniprot.core:fragment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:mass": {
+        "@id": "Resource"
+      },
+      "uniprot.core:modified": {
+        "@id": "Resource"
+      },
+      "uniprot.core:precursor": {
+        "@id": "Resource"
+      },
+      "uniprot.core:version": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Nucleotide_Resource",
+      "uniprot.core:citation": [
+        {
+          "@id": "uniprot.core:Book_Citation"
+        },
+        {
+          "@id": "uniprot.core:Electronic_Citation"
+        },
+        {
+          "@id": "uniprot.core:Patent_Citation"
+        },
+        {
+          "@id": "uniprot.core:Submission_Citation"
+        },
+        {
+          "@id": "uniprot.core:Thesis_Citation"
+        }
+      ],
+      "uniprot.core:locatedOn": [
+        {
+          "@id": "uniprot.core:Genomic_DNA"
+        },
+        {
+          "@id": "uniprot.core:Genomic_RNA"
+        },
+        {
+          "@id": "uniprot.core:MRNA"
+        },
+        {
+          "@id": "uniprot.core:Other_DNA"
+        },
+        {
+          "@id": "uniprot.core:Other_RNA"
+        },
+        {
+          "@id": "uniprot.core:Transcribed_RNA"
+        },
+        {
+          "@id": "uniprot.core:Unassigned_DNA"
+        },
+        {
+          "@id": "uniprot.core:Unassigned_RNA"
+        },
+        {
+          "@id": "uniprot.core:Viral_cRNA"
+        }
+      ],
+      "uniprot.core:database": {
+        "@id": "Resource"
+      },
+      "uniprot.core:sequenceDiscrepancy": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Protein",
+      "uniprot.core:citation": [
+        {
+          "@id": "uniprot.core:Book_Citation"
+        },
+        {
+          "@id": "uniprot.core:Electronic_Citation"
+        },
+        {
+          "@id": "uniprot.core:Observation_Citation"
+        },
+        {
+          "@id": "uniprot.core:Patent_Citation"
+        },
+        {
+          "@id": "uniprot.core:Submission_Citation"
+        },
+        {
+          "@id": "uniprot.core:Thesis_Citation"
+        }
+      ],
+      "uniprot.core:replacedBy": {
+        "@id": "uniprot.core:Protein"
+      },
+      "uniprot.core:replaces": {
+        "@id": "uniprot.core:Protein"
+      },
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Unknown_Sequence"
+        }
+      ],
+      "uniprot.core:attribution": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": [
+        {
+          "@id": "uniprot.core:Nucleotide_Resource"
+        },
+        {
+          "@id": "uniprot.core:Resource"
+        },
+        {
+          "@id": "uniprot.core:Structure_Resource"
+        },
+        {
+          "@id": "uniprot.core:Transcript_Resource"
+        }
+      ],
+      "uniprot.core:mnemonic": {
+        "@id": "Resource"
+      },
+      "uniprot.core:obsolete": {
+        "@id": "Resource"
+      },
+      "uniprot.core:organism": {
+        "@id": "Resource"
+      },
+      "uniprot.core:conflictingSequence": {
+        "@id": "uniprot.core:External_Sequence"
+      },
+      "uniprot.core:alternativeName": {
+        "@id": "uniprot.core:Structured_Name"
+      },
+      "uniprot.core:recommendedName": {
+        "@id": "uniprot.core:Structured_Name"
+      },
+      "uniprot.core:annotation": [
+        {
+          "@id": "uniprot.core:Absorption_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Active_Site_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Allergen_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Alternative_Initiation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Alternative_Promoter_Usage_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Alternative_Sequence_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Alternative_Splicing_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Annotation"
+        },
+        {
+          "@id": "uniprot.core:Beta_Strand_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Binding_Site_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Biotechnology_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Calcium_Binding_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Catalytic_Activity_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Caution_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Chain_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Cofactor_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Coiled_Coil_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Compositional_Bias_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Cross-link_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Developmental_Stage_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Disease_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Disruption_Phenotype_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Disulfide_Bond_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Domain_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Domain_Extent_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Enzyme_Regulation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Erroneous_Gene_Model_Prediction_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Erroneous_Initiation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Erroneous_Termination_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Erroneous_Translation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Frameshift_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Function_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Glycosylation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Helix_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Induction_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Initiator_Methionine_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Intramembrane_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Kinetics_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Lipidation_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Mass_Spectrometry_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Metal_Binding_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Modified_Residue_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Motif_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Mutagenesis_Annotation"
+        },
+        {
+          "@id": "uniprot.core:NP_Binding_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Natural_Variant_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Non-adjacent_Residues_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Non-standard_Residue_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Non-terminal_Residue_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Nucleotide_Binding_Annotation"
+        },
+        {
+          "@id": "uniprot.core:PH_Dependence_Annotation"
+        },
+        {
+          "@id": "uniprot.core:PTM_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Pathway_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Peptide_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Pharmaceutical_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Polymorphism_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Propeptide_Annotation"
+        },
+        {
+          "@id": "uniprot.core:RNA_Editing_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Redox_Potential_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Region_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Repeat_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Ribosomal_Frameshifting"
+        },
+        {
+          "@id": "uniprot.core:Sequence_Caution_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Sequence_Conflict_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Sequence_Uncertainty_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Signal_Peptide_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Similarity_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Site_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Subcellular_Location_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Subunit_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Temperature_Dependence_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Tissue_Specificity_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Topological_Domain_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Toxic_Dose_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Transit_Peptide_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Transmembrane_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Turn_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Zinc_Finger_Annotation"
+        }
+      ],
+      "uniprot.core:component": {
+        "@id": "uniprot.core:Part"
+      },
+      "uniprot.core:domain": {
+        "@id": "uniprot.core:Part"
+      },
+      "uniprot.core:encodedBy": {
+        "@id": "uniprot.core:Gene"
+      },
+      "uniprot.core:encodedIn": {
+        "@id": "uniprot.core:Plasmid"
+      },
+      "uniprot.core:interaction": [
+        {
+          "@id": "uniprot.core:Interaction"
+        },
+        {
+          "@id": "uniprot.core:Non_Self_Interaction"
+        },
+        {
+          "@id": "uniprot.core:Self_Interaction"
+        }
+      ],
+      "uniprot.core:isolatedFrom": {
+        "@id": "uniprot.core:Tissue"
+      },
+      "uniprot.core:submittedName": {
+        "@id": "uniprot.core:Structured_Name"
+      },
+      "uniprot.core:created": {
+        "@id": "Literal"
+      },
+      "uniprot.core:modified": {
+        "@id": "Resource"
+      },
+      "uniprot.core:version": {
+        "@id": "Resource"
+      },
+      "uniprot.core:reviewed": {
+        "@id": "Resource"
+      },
+      "uniprot.core:enzyme": {
+        "@id": "Resource"
+      },
+      "uniprot.core:classifiedWith": {
+        "@id": "Resource"
+      },
+      "uniprot.core:complete": {
+        "@id": "Resource"
+      },
+      "uniprot.core:existence": {
+        "@id": "Resource"
+      },
+      "uniprot.core:oldMnemonic": {
+        "@id": "Resource"
+      },
+      "uniprot.core:proteome": {
+        "@id": "Resource"
+      },
+      "uniprot.core:withdrawnFromINSDC": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Modified_Sequence",
+      "uniprot.core:replaces": {
+        "@id": "Resource"
+      },
+      "uniprot.core:name": {
+        "@id": "Resource"
+      },
+      "rdf:value": {
+        "@id": "Literal"
+      },
+      "uniprot.core:basedOn": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "uniprot.core:modification": {
+        "@id": "uniprot.core:Alternative_Sequence_Annotation"
+      }
+    },
+    {
+      "@id": "uniprot.core:Simple_Sequence",
+      "uniprot.core:replaces": {
+        "@id": "Resource"
+      },
+      "uniprot.core:name": {
+        "@id": "Resource"
+      },
+      "rdf:value": {
+        "@id": "Resource"
+      },
+      "uniprot.core:crc64Checksum": {
+        "@id": "Resource"
+      },
+      "uniprot.core:fragment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:mass": {
+        "@id": "Resource"
+      },
+      "uniprot.core:modified": {
+        "@id": "Resource"
+      },
+      "uniprot.core:precursor": {
+        "@id": "Resource"
+      },
+      "uniprot.core:version": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "faldo:ExactPosition",
+      "faldo:reference": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "faldo:position": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "faldo:InRangePosition",
+      "faldo:reference": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "faldo:begin": [
+        {
+          "@id": "faldo:ExactPosition"
+        },
+        {
+          "@id": "faldo:Position"
+        }
+      ],
+      "faldo:end": [
+        {
+          "@id": "faldo:ExactPosition"
+        },
+        {
+          "@id": "faldo:Position"
+        }
+      ]
+    },
+    {
+      "@id": "faldo:OneOfPosition",
+      "faldo:reference": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "faldo:possiblePosition": [
+        {
+          "@id": "faldo:ExactPosition"
+        },
+        {
+          "@id": "faldo:Position"
+        }
+      ]
+    },
+    {
+      "@id": "faldo:Position",
+      "faldo:reference": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "faldo:begin": [
+        {
+          "@id": "faldo:ExactPosition"
+        },
+        {
+          "@id": "faldo:Position"
+        }
+      ],
+      "faldo:end": [
+        {
+          "@id": "faldo:ExactPosition"
+        },
+        {
+          "@id": "faldo:Position"
+        }
+      ],
+      "faldo:possiblePosition": [
+        {
+          "@id": "faldo:ExactPosition"
+        },
+        {
+          "@id": "faldo:Position"
+        }
+      ],
+      "faldo:position": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "faldo:Region",
+      "faldo:begin": [
+        {
+          "@id": "faldo:ExactPosition"
+        },
+        {
+          "@id": "faldo:InRangePosition"
+        },
+        {
+          "@id": "faldo:OneOfPosition"
+        },
+        {
+          "@id": "faldo:Position"
+        }
+      ],
+      "faldo:end": [
+        {
+          "@id": "faldo:ExactPosition"
+        },
+        {
+          "@id": "faldo:InRangePosition"
+        },
+        {
+          "@id": "faldo:OneOfPosition"
+        },
+        {
+          "@id": "faldo:Position"
+        }
+      ]
+    },
+    {
+      "@id": "uniprot.core:Active_Site_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Alternative_Sequence_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:substitution": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Beta_Strand_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      }
+    },
+    {
+      "@id": "uniprot.core:Binding_Site_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Calcium_Binding_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Chain_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Coiled_Coil_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      }
+    },
+    {
+      "@id": "uniprot.core:Compositional_Bias_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Cross-link_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Disulfide_Bond_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Domain_Extent_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Erroneous_Termination_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "uniprot.core:sequence": {
+        "@id": "uniprot.core:Modified_Sequence"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:conflictingSequence": {
+        "@id": "uniprot.core:External_Sequence"
+      }
+    },
+    {
+      "@id": "uniprot.core:Frameshift_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:conflictingSequence": {
+        "@id": "uniprot.core:External_Sequence"
+      }
+    },
+    {
+      "@id": "uniprot.core:Glycosylation_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "uniprot.core:sequence": {
+        "@id": "uniprot.core:Modified_Sequence"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Helix_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      }
+    },
+    {
+      "@id": "uniprot.core:Initiator_Methionine_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "uniprot.core:sequence": {
+        "@id": "uniprot.core:Modified_Sequence"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Intramembrane_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Lipidation_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "uniprot.core:sequence": {
+        "@id": "uniprot.core:Modified_Sequence"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Mass_Spectrometry_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:measuredError": {
+        "@id": "Resource"
+      },
+      "uniprot.core:measuredValue": {
+        "@id": "Resource"
+      },
+      "uniprot.core:method": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Metal_Binding_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Modified_Residue_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Motif_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Mutagenesis_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:substitution": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:NP_Binding_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Natural_Variant_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "uniprot.core:sequence": {
+        "@id": "uniprot.core:Modified_Sequence"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "uniprot.core:substitution": {
+        "@id": "Resource"
+      },
+      "skos:related": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Non-adjacent_Residues_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      }
+    },
+    {
+      "@id": "uniprot.core:Non-standard_Residue_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Non-terminal_Residue_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      }
+    },
+    {
+      "@id": "uniprot.core:Nucleotide_Binding_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Peptide_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Propeptide_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Region_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Repeat_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Sequence_Conflict_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        }
+      ],
+      "uniprot.core:substitution": {
+        "@id": "Resource"
+      },
+      "uniprot.core:conflictingSequence": {
+        "@id": "uniprot.core:External_Sequence"
+      }
+    },
+    {
+      "@id": "uniprot.core:Sequence_Uncertainty_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Signal_Peptide_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Site_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Topological_Domain_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Transit_Peptide_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Transmembrane_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Turn_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      }
+    },
+    {
+      "@id": "uniprot.core:Zinc_Finger_Annotation",
+      "uniprot.core:range": {
+        "@id": "faldo:Region"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Alternative_Initiation_Annotation",
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Unknown_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Alternative_Promoter_Usage_Annotation",
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Unknown_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Alternative_Splicing_Annotation",
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Unknown_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Caution_Annotation",
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Unknown_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Cofactor_Annotation",
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:Chain_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:cofactor": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Erroneous_Gene_Model_Prediction_Annotation",
+      "uniprot.core:sequence": {
+        "@id": "uniprot.core:Modified_Sequence"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:conflictingSequence": {
+        "@id": "uniprot.core:External_Sequence"
+      }
+    },
+    {
+      "@id": "uniprot.core:Erroneous_Initiation_Annotation",
+      "uniprot.core:sequence": {
+        "@id": "uniprot.core:Modified_Sequence"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:conflictingSequence": {
+        "@id": "uniprot.core:External_Sequence"
+      }
+    },
+    {
+      "@id": "uniprot.core:Ribosomal_Frameshifting",
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Unknown_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "uniprot.core:Sequence_Caution_Annotation",
+      "uniprot.core:sequence": {
+        "@id": "uniprot.core:Modified_Sequence"
+      },
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:conflictingSequence": {
+        "@id": "uniprot.core:External_Sequence"
+      }
+    },
+    {
+      "@id": "uniprot.core:Subcellular_Location_Annotation",
+      "uniprot.core:sequence": [
+        {
+          "@id": "uniprot.core:Chain_Annotation"
+        },
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Peptide_Annotation"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Unknown_Sequence"
+        }
+      ],
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:locatedIn": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Book_Citation",
+      "dcterms:identifier": {
+        "@id": "Literal"
+      },
+      "uniprot.core:author": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:date": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:editor": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:group": {
+        "@id": "Resource"
+      },
+      "uniprot.core:name": {
+        "@id": "Literal"
+      },
+      "uniprot.core:pages": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:title": {
+        "@id": "Resource"
+      },
+      "uniprot.core:volume": {
+        "@id": "Literal"
+      },
+      "uniprot.core:place": {
+        "@id": "Resource"
+      },
+      "uniprot.core:publisher": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Electronic_Citation",
+      "dcterms:identifier": {
+        "@id": "Literal"
+      },
+      "uniprot.core:author": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:date": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:name": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:title": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "skos:exactMatch": {
+        "@id": "Resource"
+      },
+      "uniprot.core:locator": [
+        {
+          "@id": "Resource"
+        },
+        {
+          "@id": "Literal"
+        }
+      ]
+    },
+    {
+      "@id": "uniprot.core:Citation",
+      "dcterms:identifier": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "foaf:primaryTopicOf": {
+        "@id": "Resource"
+      },
+      "skos:exactMatch": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Submission_Citation",
+      "uniprot.core:author": {
+        "@id": "Resource"
+      },
+      "uniprot.core:date": {
+        "@id": "Resource"
+      },
+      "uniprot.core:group": {
+        "@id": "Resource"
+      },
+      "uniprot.core:title": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:submittedTo": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Observation_Citation",
+      "uniprot.core:author": [
+        {
+          "@id": "Resource"
+        },
+        {
+          "@id": "Literal"
+        }
+      ],
+      "uniprot.core:date": {
+        "@id": "Literal"
+      },
+      "uniprot.core:group": {
+        "@id": "Literal"
+      },
+      "uniprot.core:title": [
+        {
+          "@id": "Resource"
+        },
+        {
+          "@id": "Literal"
+        }
+      ]
+    },
+    {
+      "@id": "uniprot.core:Patent_Citation",
+      "uniprot.core:author": {
+        "@id": "Resource"
+      },
+      "uniprot.core:date": [
+        {
+          "@id": "Resource"
+        },
+        {
+          "@id": "Literal"
+        }
+      ],
+      "uniprot.core:title": {
+        "@id": "Resource"
+      },
+      "skos:exactMatch": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Thesis_Citation",
+      "uniprot.core:author": {
+        "@id": "Resource"
+      },
+      "uniprot.core:date": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:institution": [
+        {
+          "@id": "Literal"
+        },
+        {
+          "@id": "Resource"
+        }
+      ],
+      "uniprot.core:title": {
+        "@id": "Resource"
+      },
+      "uniprot.core:place": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Strain",
+      "uniprot.core:name": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Unknown_Sequence",
+      "uniprot.core:name": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:Ontology",
+      "owl:versionInfo": {
+        "@id": "Literal"
+      },
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "owl:imports": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:NamedIndividual",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:Thing",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Mass_Measurement_Method",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Protein_Existence",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "uniprot.core:Status",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "uniprot.core:Structure_Determination_Method",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "rdfs:label": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "bibo:Journal",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "bibo:coden": {
+        "@id": "Literal"
+      },
+      "bibo:eissn": {
+        "@id": "Literal"
+      },
+      "bibo:issn": {
+        "@id": "Literal"
+      },
+      "bibo:shortTitle": {
+        "@id": "Literal"
+      },
+      "bibo:title": {
+        "@id": "Literal"
+      },
+      "dcterms:publisher": {
+        "@id": "Literal"
+      },
+      "uniprot.core:shortCoden": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Absorption_Annotation",
+      "rdfs:comment": {
+        "@id": "Literal"
+      },
+      "uniprot.core:certain": {
+        "@id": "Resource"
+      },
+      "uniprot.core:maximum": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Disease",
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Literal"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      },
+      "uniprot.core:mnemonic": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Proteome_Component",
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Sequence",
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "rdfs:label": {
+        "@id": "Resource"
+      },
+      "uniprot.core:organism": {
+        "@id": "Resource"
+      },
+      "rdf:value": {
+        "@id": "Resource"
+      },
+      "uniprot.core:md5Checksum": {
+        "@id": "Resource"
+      },
+      "uniprot.core:sequenceFor": {
+        "@id": "Resource"
+      },
+      "uniprot.core:memberOf": {
+        "@id": "uniprot.core:Cluster"
+      },
+      "uniprot.core:representativeFor": {
+        "@id": "uniprot.core:Cluster"
+      },
+      "uniprot.core:seedFor": {
+        "@id": "uniprot.core:Cluster"
+      },
+      "uniprot.core:length": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Allergen_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Biotechnology_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Catalytic_Activity_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Developmental_Stage_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Disease_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:disease": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Disruption_Phenotype_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Domain_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Enzyme_Regulation_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Erroneous_Translation_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:conflictingSequence": {
+        "@id": "uniprot.core:External_Sequence"
+      }
+    },
+    {
+      "@id": "uniprot.core:Function_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Induction_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Kinetics_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "uniprot.core:measuredActivity": {
+        "@id": "Resource"
+      },
+      "uniprot.core:measuredAffinity": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:PH_Dependence_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:PTM_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Pharmaceutical_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Polymorphism_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:RNA_Editing_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "faldo:location": [
+        {
+          "@id": "faldo:ExactPosition"
+        },
+        {
+          "@id": "faldo:Position"
+        }
+      ],
+      "uniprot.core:frameshift": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Redox_Potential_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Resource",
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "uniprot.core:database": {
+        "@id": "Resource"
+      },
+      "uniprot.core:signatureSequenceMatch": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Similarity_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Subunit_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Temperature_Dependence_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Tissue_Specificity_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Toxic_Dose_Annotation",
+      "rdfs:comment": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Transcript_Resource",
+      "rdfs:comment": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ],
+      "uniprot.core:transcribedFrom": {
+        "@id": "uniprot.core:Transcript_Resource"
+      },
+      "uniprot.core:translatedTo": {
+        "@id": "uniprot.core:Transcript_Resource"
+      },
+      "uniprot.core:database": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Organelle",
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "uniprot.core:Rank",
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "uniprot.core:Transposon",
+      "rdfs:label": {
+        "@id": "Literal"
+      }
+    },
+    {
+      "@id": "uniprot.core:Participant",
+      "rdfs:label": {
+        "@id": "Resource"
+      },
+      "owl:sameAs": [
+        {
+          "@id": "uniprot.core:External_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Modified_Sequence"
+        },
+        {
+          "@id": "uniprot.core:Protein"
+        },
+        {
+          "@id": "uniprot.core:Simple_Sequence"
+        }
+      ]
+    },
+    {
+      "@id": "uniprot.core:Plasmid",
+      "rdfs:label": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Tissue",
+      "rdfs:label": {
+        "@id": "Resource"
+      },
+      "skos:altLabel": {
+        "@id": "Literal"
+      },
+      "skos:prefLabel": {
+        "@id": "Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Cluster",
+      "rdfs:label": {
+        "@id": "Resource"
+      },
+      "uniprot.core:member": {
+        "@id": "uniprot.core:Sequence"
+      },
+      "uniprot.core:modified": {
+        "@id": "Resource"
+      },
+      "uniprot.core:commonTaxon": {
+        "@id": "Resource"
+      },
+      "uniprot.core:identity": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Gene",
+      "skos:altLabel": {
+        "@id": "Resource"
+      },
+      "skos:prefLabel": {
+        "@id": "Resource"
+      },
+      "uniprot.core:locusName": {
+        "@id": "Resource"
+      },
+      "uniprot.core:orfName": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "foaf:Image",
+      "uniprot.core:height": {
+        "@id": "Literal"
+      },
+      "uniprot.core:width": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "owl:AllDifferent",
+      "owl:distinctMembers": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Pathway_Annotation",
+      "rdfs:seeAlso": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Member_Of_Redudant_Proteome",
+      "uniprot.core:mnemonic": {
+        "@id": "Resource"
+      },
+      "uniprot.core:obsolete": {
+        "@id": "Resource"
+      },
+      "uniprot.core:created": {
+        "@id": "Resource"
+      },
+      "uniprot.core:modified": {
+        "@id": "Resource"
+      },
+      "uniprot.core:version": {
+        "@id": "Resource"
+      },
+      "uniprot.core:reviewed": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Structured_Name",
+      "uniprot.core:structuredNameType": {
+        "@id": "Resource"
+      },
+      "uniprot.core:allergenName": {
+        "@id": "Literal"
+      },
+      "uniprot.core:internationalNonproprietaryName": {
+        "@id": "Literal"
+      },
+      "uniprot.core:cdAntigenName": {
+        "@id": "Resource"
+      },
+      "uniprot.core:ecName": {
+        "@id": "Resource"
+      },
+      "uniprot.core:fullName": {
+        "@id": "Resource"
+      },
+      "uniprot.core:shortName": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Interaction",
+      "uniprot.core:participant": {
+        "@id": "uniprot.core:Participant"
+      },
+      "uniprot.core:experiments": {
+        "@id": "Resource"
+      },
+      "uniprot.core:xeno": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Non_Self_Interaction",
+      "uniprot.core:participant": {
+        "@id": "uniprot.core:Participant"
+      },
+      "uniprot.core:experiments": {
+        "@id": "Resource"
+      },
+      "uniprot.core:xeno": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Self_Interaction",
+      "uniprot.core:participant": {
+        "@id": "uniprot.core:Participant"
+      },
+      "uniprot.core:experiments": {
+        "@id": "Resource"
+      },
+      "uniprot.core:xeno": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Part",
+      "uniprot.core:alternativeName": {
+        "@id": "uniprot.core:Structured_Name"
+      },
+      "uniprot.core:recommendedName": {
+        "@id": "uniprot.core:Structured_Name"
+      },
+      "uniprot.core:enzyme": {
+        "@id": "Resource"
+      }
+    },
+    {
+      "@id": "uniprot.core:Structure_Resource",
+      "uniprot.core:method": {
+        "@id": "Resource"
+      },
+      "uniprot.core:database": {
+        "@id": "Resource"
+      },
+      "uniprot.core:chainSequenceMapping": {
+        "@id": "Resource"
+      },
+      "uniprot.core:resolution": {
+        "@id": "Resource"
+      }
+    }
+  ]
+}

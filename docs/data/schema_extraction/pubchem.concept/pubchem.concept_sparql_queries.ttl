@@ -1,0 +1,2764 @@
+@prefix ex: <https://github.com/jmillanacosta/rdfsolve/sparql/pubchem.concept/pubchem.concept/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:91575b99fb13 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+        SELECT ?class (COUNT(DISTINCT ?s) AS ?total) WHERE {
+            GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                ?s a ?class .
+            }
+        }
+        GROUP BY ?class
+        ORDER BY DESC(?total)
+        
+OFFSET 0
+LIMIT 300
+""" ;
+    schema:dateCreated "2025-12-02T10:10:04.990576+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:f698fddbb112 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:05.099250+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:bd232ff69459 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:05.205004+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7ab7ecfb7c7c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:05.310758+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:784dc264096a a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:05.415938+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:fca65ac5f632 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:05.521629+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:337c197064fe a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:05.627206+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:9a4ed2fe16d7 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:05.732786+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:758e91f41256 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:05.838316+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:b8725d0696b5 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:05.943958+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:663fd6aca664 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:06.049419+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:99eef3e47e78 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:06.155025+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:19280cfd43d4 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:06.261730+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:3e73de3bedcf a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:06.367904+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d2e7f2f2255c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:06.474313+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:bd31310e26e9 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:06.580830+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a4c2cf259fce a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:06.686977+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7c2c5bf51205 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:06.793577+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a97be42ab4fc a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:06.900219+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:9530654952fb a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:07.006689+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:fa1b3019475e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:07.112830+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:b68088517f92 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:07.219303+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d46c22cf2582 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:07.324882+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:26ba29520239 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:07.431724+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e33628e9263c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:07.537541+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:6b08dc9b594e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:07.643724+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a3df61bf9d79 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:07.750199+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:603424aaddc8 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:07.855952+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:3b6b4a1f05ea a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:07.962507+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:c4e1bcc4b49f a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:08.067983+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:502f93e8f5ac a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:08.173358+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:1c8d48aa3de8 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:08.278281+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d40578d94d1a a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:08.384378+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:44ec45b7f69b a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:08.490127+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:fd4d73526d62 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:08.596123+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:726c815fc1a9 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:08.701892+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:9332f06b39a7 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:08.807913+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:2c62cc68533d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:08.913127+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d3b186aea3e6 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:09.018488+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:dcefd5a86447 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:09.134715+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:edfb8579291d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:09.242032+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:56af7a2d3035 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:09.349952+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:c44bd8af0d2e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:09.455619+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:64ea94d30938 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:09.562663+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a8e551cdb518 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:09.668434+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:b68da81bc214 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:09.776281+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:86a63c184c96 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:09.885807+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:22f25f648984 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:09.991902+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d66d247d528e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:10.097457+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e159d7d93acc a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:10.202990+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:0fe506bb27f6 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:10.308632+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e9668526738c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:10.423961+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:1b82b51643b4 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:10.530883+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7aad878e6dc4 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:10.639677+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7f6758304224 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:10.745287+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:0fbe1893fa03 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:10.850724+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:302ff083387f a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:10.956044+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:738fc4bc1c4c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:11.066652+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:6c1cca8645a8 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:11.180868+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:54e1e5d10d52 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:11.288653+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:fe26c8a7f779 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:11.395498+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:97a0e1726821 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:11.503052+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:bbf371d10337 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:11.608309+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:04e11650cad7 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:11.715529+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7ca1bd1eabfe a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:11.823299+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:464f896b56bf a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:11.929667+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:001c466a515e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:12.035583+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a493daa8ffc2 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:12.141081+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a70520c2344b a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:12.246300+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:71fdcef083f5 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:12.354961+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:92a97591a595 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:12.468897+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:431e8e8ebe16 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:12.575399+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:976a3f369181 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:12.680729+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:92274889bc5e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:13.131882+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:135588072a69 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:13.230180+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:3c8b1974a9ba a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:13.327982+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:eeeff5e37ec5 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:13.425413+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:9953037d7288 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:13.523898+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:c447adbbaf6c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:13.621285+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:20ccb11e2878 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:13.718460+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:2c0c21c55243 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:13.816640+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:55b244482dd9 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:13.914192+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:16c16793b974 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.011807+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:c975351875b6 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.110069+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:5145fca6d1fb a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.207546+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:bbad1991f54e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.311534+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:64201fa4cf7b a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.409912+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:46e7af912363 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.507288+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d1cfbb39e69d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.604902+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:78e057856b6f a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.703240+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:f01593b07a91 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://purl.org/pav/importedFrom> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.801786+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:05979a7df829 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.899465+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:678bee0c4b90 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:14.997265+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:5cb547d051c4 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:15.095072+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:ce358c962866 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:15.192760+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:bbf0b85b2cbc a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:15.289719+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e700b88fea78 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:15.387274+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:806ef83a0c44 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:15.485046+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:0cb6446fbd8d a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:15.583395+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d57a58b65cda a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:15.681923+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:bdd0413ebed7 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:15.779824+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:925a72b08540 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:15.877491+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:ed3df2af58d9 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:15.975292+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:3efc81ac34da a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:16.073096+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:398cbe953b92 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:16.170734+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:5f2e4c24256c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:16.268482+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:807fcd5a2e65 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:16.366859+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:11d6ecd8897e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:16.464979+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:592b9c305d26 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:16.563057+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:03bbfb55be28 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:16.660706+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:0a9f564e33c6 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:16.758625+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:b5dc6460f076 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:17.337044+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:0d293dbb2338 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:17.481642+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7b03f8774256 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:17.684735+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:99ef8931e30c a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:17.825022+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:72f8cc66bd00 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:17.924823+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:9cf8aa7d66dc a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:18.023026+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d4abbab1dcb3 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:18.123155+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:c021b55e3128 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:18.223645+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e4c5a228b207 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:18.322999+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:b9c1bbb86080 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:18.423977+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:883c3510b217 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:18.523253+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:400342c74924 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:18.622786+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e7371c879bbe a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:18.798546+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:d097f1746a47 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:18.940970+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:335cdffcc877 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:19.099590+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:c450a41d91de a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#broader> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:19.240591+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:eb1d034c3ecd a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:19.339962+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7f43bbb4bfdc a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:19.438711+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:12d13bda3711 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:19.543060+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a067b4240e68 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:19.707493+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:c5964ca7c5f5 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:19.911020+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:3e0a6c6abe81 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:20.054053+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:8432a4291598 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:20.153280+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:6e76378d69bb a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:20.250438+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:5a1c6354524a a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:20.349849+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:e64e86b00e86 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:20.449118+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:c58696c7af61 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:20.547574+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:b689b7becefb a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:20.646010+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:3e159848fa94 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://purl.org/dc/terms/Dataset> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:20.743527+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:513236827867 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2002/07/owl#Class> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:20.840971+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:a33cad5d4c00 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:20.943549+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:b4607d7fe9f5 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:21.103618+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:16368c38d8b0 a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:21.294596+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:bc9d05c61d0e a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    sh:select """
+
+                    SELECT DISTINCT ?s ?o WHERE {
+                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/concept> {
+                            ?s <http://www.w3.org/2004/02/skos/core#inScheme> ?o .
+                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept> .
+                            ?o a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source> .
+                        }
+                    }
+                    
+""" ;
+    schema:dateCreated "2025-12-02T10:10:21.437606+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .

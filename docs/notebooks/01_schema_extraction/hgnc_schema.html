@@ -7611,7 +7611,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:49 INFO hgnc: Logging configured for hgnc
+<pre>2025-12-02 10:27:24 INFO hgnc: Logging configured for hgnc
 </pre>
 </div>
 </div>
@@ -7633,7 +7633,17 @@ a.anchor-link {
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.offline</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span><span class="p">,</span> <span class="n">display</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">rdfsolve.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">VoidParser</span>
+<span class="c1"># Import rdfsolve API functions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdfsolve.api</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">discover_void_graphs</span><span class="p">,</span>
+    <span class="n">generate_void_from_endpoint</span><span class="p">,</span>
+    <span class="n">load_parser_from_graph</span><span class="p">,</span>
+    <span class="n">retrieve_void_from_graphs</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rdfsolve.sparql_helper</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparqlHelper</span>
+
+<span class="c1"># Enable query collection to track all SPARQL queries executed</span>
+<span class="n">SparqlHelper</span><span class="o">.</span><span class="n">enable_query_collection</span><span class="p">()</span>
 
 <span class="c1"># Set renderer to 'notebook' for Jupyter, but ensure HTML export works</span>
 <span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">"notebook+plotly_mimetype"</span>
@@ -7810,8 +7820,8 @@ a.anchor-link {
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Clear specific cache files (uncomment lines as needed for testing)</span>
 
-<span class="c1"># When testing new parser changes:</span>
-<span class="c1"># clear_cache(f"{dataset_name}_voidparser")</span>
+<span class="c1"># When testing new VoID discovery/generation:</span>
+<span class="c1"># clear_cache(f"{dataset_name}_voidgraph")</span>
 
 <span class="c1"># When testing JSON-LD generation (primary output):</span>
 <span class="c1"># clear_cache(f"{dataset_name}_jsonld_schema")</span>
@@ -7821,10 +7831,10 @@ a.anchor-link {
 <span class="c1"># clear_cache(f"{dataset_name}_frequencies_with_instances")</span>
 
 <span class="c1"># Clear everything:</span>
-<span class="c1"># clear_cache()</span>
+<span class="n">clear_cache</span><span class="p">()</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Cleared parser and JSON-LD caches to test schema pattern fix"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Note: JSON-LD cache is now the primary cache - clear it when testing schema changes."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Cache control ready"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Note: VoID graph and JSON-LD are the primary caches"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7837,8 +7847,9 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cleared parser and JSON-LD caches to test schema pattern fix
-Note: JSON-LD cache is now the primary cache - clear it when testing schema changes.
+<pre>No cache directory to clear
+Cache control ready
+Note: VoID graph and JSON-LD are the primary caches
 </pre>
 </div>
 </div>
@@ -7863,33 +7874,57 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Generate VoID schema with caching</span>
-<span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_voidparser"</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Discover or generate VoID schema with caching</span>
+<span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_voidgraph"</span>
 
 <span class="c1"># Try to load from cache first</span>
-<span class="n">vp</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
+<span class="n">void_graph</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
 
-<span class="k">if</span> <span class="n">vp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"VoidParser not found in cache, generating..."</span><span class="p">)</span>
-    <span class="n">vp</span> <span class="o">=</span> <span class="n">VoidParser</span><span class="o">.</span><span class="n">from_endpoint_with_discovery</span><span class="p">(</span>
-        <span class="n">endpoint_url</span><span class="o">=</span><span class="n">endpoint_url</span><span class="p">,</span>
-        <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
-        <span class="n">exports_path</span><span class="o">=</span><span class="n">exports_path</span><span class="p">,</span>
-        <span class="c1"># Arguments for the case when a suitable VoID is not found</span>
-        <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">exclude_graph_patterns</span><span class="o">=</span><span class="p">[</span>
-            <span class="s2">"openlinksw"</span><span class="p">,</span>
-            <span class="s2">"well-known"</span><span class="p">,</span>
-            <span class="s2">"void"</span><span class="p">,</span>
-            <span class="s2">"service"</span><span class="p">,</span>
-        <span class="p">],</span>  <span class="c1"># Filter out service description and administrative graphs</span>
-        <span class="n">counts</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>  <span class="c1"># pagination</span>
+<span class="k">if</span> <span class="n">void_graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"VoID graph not found in cache, attempting discovery..."</span><span class="p">)</span>
+
+    <span class="c1"># Step 1: Try to discover existing VoID graphs</span>
+    <span class="n">discovery_result</span> <span class="o">=</span> <span class="n">discover_void_graphs</span><span class="p">(</span>
+        <span class="n">endpoint_url</span><span class="p">,</span> <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="p">)</span>
-    <span class="c1"># Cache the VoidParser for future use</span>
-    <span class="n">save_cache</span><span class="p">(</span><span class="n">vp</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
+
+    <span class="n">found_graphs</span> <span class="o">=</span> <span class="n">discovery_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"found_graphs"</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">partitions</span> <span class="o">=</span> <span class="n">discovery_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"partitions"</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="k">if</span> <span class="n">found_graphs</span> <span class="ow">and</span> <span class="n">partitions</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">found_graphs</span><span class="p">)</span><span class="si">}</span><span class="s2"> VoID graphs with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">partitions</span><span class="p">)</span><span class="si">}</span><span class="s2"> partitions"</span><span class="p">)</span>
+        <span class="c1"># Build VoID graph directly from partition data (no CONSTRUCT query needed)</span>
+        <span class="n">void_graph</span> <span class="o">=</span> <span class="n">retrieve_void_from_graphs</span><span class="p">(</span>
+            <span class="n">endpoint_url</span><span class="p">,</span>
+            <span class="n">found_graphs</span><span class="p">,</span>
+            <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span>  <span class="c1"># Pass partition data directly</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Save to file</span>
+        <span class="n">void_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_existing_void.ttl"</span><span class="p">)</span>
+        <span class="n">void_graph</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">destination</span><span class="o">=</span><span class="n">void_path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"turtle"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Built VoID graph from: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">found_graphs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"No VoID graphs found, generating from queries..."</span><span class="p">)</span>
+        <span class="c1"># Step 2: Generate new VoID if none found</span>
+        <span class="n">void_graph</span> <span class="o">=</span> <span class="n">generate_void_from_endpoint</span><span class="p">(</span>
+            <span class="n">endpoint_url</span><span class="o">=</span><span class="n">endpoint_url</span><span class="p">,</span>
+            <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">output_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_generated_void.ttl"</span><span class="p">),</span>
+            <span class="n">counts</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">offset_limit_steps</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+            <span class="n">exclude_graphs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Cache the VoID graph for future use</span>
+    <span class="n">save_cache</span><span class="p">(</span><span class="n">void_graph</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"VoID graph cached with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">void_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> triples"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loaded VoidParser from cache"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded VoID graph from cache (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">void_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> triples)"</span><span class="p">)</span>
+
+<span class="c1"># Load parser from the VoID graph</span>
+<span class="n">vp</span> <span class="o">=</span> <span class="n">load_parser_from_graph</span><span class="p">(</span><span class="n">void_graph</span><span class="p">,</span> <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7902,363 +7937,155 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>VoidParser not found in cache, generating...
-2025-12-01 10:28:51 DEBUG rdfsolve.parser: Starting endpoint discovery process...
+<pre>VoID graph not found in cache, attempting discovery...
+2025-12-02 10:27:26 DEBUG rdfsolve.parser: Starting VoID partition discovery for https://bio2rdf.org/sparql
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:51 DEBUG rdfsolve.parser: Endpoint: https://bio2rdf.org/sparql
+<pre>2025-12-02 10:27:26 INFO rdfsolve.parser: Discovering VoID partitions across all graphs
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 2/3 failed: HTTPSConnectionPool(host='bio2rdf.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("&lt;urllib3.connection.HTTPSConnection object at 0x7eff0c443160&gt;: Failed to resolve 'bio2rdf.org' ([Errno -5] No address associated with hostname)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 3/3 failed: HTTPSConnectionPool(host='bio2rdf.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("&lt;urllib3.connection.HTTPSConnection object at 0x7eff0c4435b0&gt;: Failed to resolve 'bio2rdf.org' ([Errno -5] No address associated with hostname)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>SELECT failed after 3 tries
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:51 DEBUG rdfsolve.parser: Dataset: hgnc
+<pre>2025-12-02 10:27:33 INFO rdfsolve.parser: VoID discovery failed: Query failed after 3 attempts: HTTPSConnectionPool(host='bio2rdf.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("&lt;urllib3.connection.HTTPSConnection object at 0x7eff0c4435b0&gt;: Failed to resolve 'bio2rdf.org' ([Errno -5] No address associated with hostname)"))
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:51 DEBUG rdfsolve.parser:  Provided graph URIs: ['http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3']
+<pre>2025-12-02 10:27:33 DEBUG rdfsolve.parser: Discovery exception: EndpointError: Query failed after 3 attempts: HTTPSConnectionPool(host='bio2rdf.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("&lt;urllib3.connection.HTTPSConnection object at 0x7eff0c4435b0&gt;: Failed to resolve 'bio2rdf.org' ([Errno -5] No address associated with hostname)"))
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:51 DEBUG rdfsolve.parser: Settings: prefer_existing=True, exclude_graphs=True
+<pre>No VoID graphs found, generating from queries...
+2025-12-02 10:27:34 WARNING rdfsolve.parser: Query attempt 1 failed: &lt;urlopen error [Errno -5] No address associated with hostname&gt;
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:51 DEBUG rdfsolve.parser: Validating provided graph URIs...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:52 DEBUG rdfsolve.parser: Step 1: Discovering existing VoID graphs...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:52 DEBUG rdfsolve.parser:  Starting chunked VoID graph discovery for https://bio2rdf.org/sparql
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:52 DEBUG rdfsolve.parser: Starting VoID graph discovery with pagination...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:52 INFO rdfsolve.parser: Discovering VoID candidate graphs with chunked approach
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:28:52 DEBUG rdfsolve.parser: Executing chunked query: offset=0, limit=50
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:29:53 WARNING rdfsolve.parser: Query attempt 1 failed: HTTP Error 504: Gateway Time-out
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:29:53 DEBUG rdfsolve.parser: Query:
-
-            SELECT DISTINCT ?g WHERE {
-                GRAPH ?g {
-                    ?s ?p ?o
-                }
-                FILTER(
-                    REGEX(STR(?g), "void") ||
-                    REGEX(STR(?g), "well-known") ||
-                    REGEX(STR(?g), "service")
-                )
+<pre>2025-12-02 10:27:34 DEBUG rdfsolve.parser: Query:
+PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
+PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
+CONSTRUCT {
+    ?cp void:class ?class ;
+        void:entities ?count .
+}
+WHERE {
+    {
+        SELECT ?class (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH &lt;http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3&gt; {
+                ?s a ?class
             }
-            ORDER BY ?g
-            OFFSET 0
-            LIMIT 50
-            
+        }
+        GROUP BY ?class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3/void/class_partition_',
+                   REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
+}
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:29:53 INFO rdfsolve.parser: Retrying after 1.0s (attempt 2/4)
+<pre>2025-12-02 10:27:34 INFO rdfsolve.parser: Retrying after 1.0s (attempt 2/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:30:54 WARNING rdfsolve.parser: Query attempt 2 failed: HTTP Error 504: Gateway Time-out
+<pre>2025-12-02 10:27:35 WARNING rdfsolve.parser: Query attempt 2 failed: &lt;urlopen error [Errno -5] No address associated with hostname&gt;
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:30:54 DEBUG rdfsolve.parser: Query:
-
-            SELECT DISTINCT ?g WHERE {
-                GRAPH ?g {
-                    ?s ?p ?o
-                }
-                FILTER(
-                    REGEX(STR(?g), "void") ||
-                    REGEX(STR(?g), "well-known") ||
-                    REGEX(STR(?g), "service")
-                )
+<pre>2025-12-02 10:27:35 DEBUG rdfsolve.parser: Query:
+PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
+PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
+CONSTRUCT {
+    ?cp void:class ?class ;
+        void:entities ?count .
+}
+WHERE {
+    {
+        SELECT ?class (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH &lt;http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3&gt; {
+                ?s a ?class
             }
-            ORDER BY ?g
-            OFFSET 0
-            LIMIT 50
-            
+        }
+        GROUP BY ?class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3/void/class_partition_',
+                   REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
+}
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:30:54 INFO rdfsolve.parser: Retrying after 2.0s (attempt 3/4)
+<pre>2025-12-02 10:27:35 INFO rdfsolve.parser: Retrying after 2.2s (attempt 3/4)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:31:57 WARNING rdfsolve.parser: Query attempt 3 failed: HTTP Error 504: Gateway Time-out
+<pre>2025-12-02 10:28:02 INFO rdfsolve.parser: Successfully extracted 773 RDF triples
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:31:57 DEBUG rdfsolve.parser: Query:
-
-            SELECT DISTINCT ?g WHERE {
-                GRAPH ?g {
-                    ?s ?p ?o
-                }
-                FILTER(
-                    REGEX(STR(?g), "void") ||
-                    REGEX(STR(?g), "well-known") ||
-                    REGEX(STR(?g), "service")
-                )
-            }
-            ORDER BY ?g
-            OFFSET 0
-            LIMIT 50
-            
+<pre>2025-12-02 10:28:02 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hgnc/hgnc_generated_void.ttl
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:31:57 INFO rdfsolve.parser: Retrying after 4.0s (attempt 4/4)
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 WARNING rdfsolve.parser: Query attempt 4 failed: HTTP Error 504: Gateway Time-out
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser: Query:
-
-            SELECT DISTINCT ?g WHERE {
-                GRAPH ?g {
-                    ?s ?p ?o
-                }
-                FILTER(
-                    REGEX(STR(?g), "void") ||
-                    REGEX(STR(?g), "well-known") ||
-                    REGEX(STR(?g), "service")
-                )
-            }
-            ORDER BY ?g
-            OFFSET 0
-            LIMIT 50
-            
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 ERROR rdfsolve.parser: Query failed after 4 attempts
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 WARNING rdfsolve.parser: Chunk query failed at offset 0
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser: Query error details:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser:    • Error type: HTTPError
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser:    • Error message: HTTP Error 504: Gateway Time-out
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser:    • Query: 
-
-            SELECT DISTINCT ?g WHERE {
-                GRAPH ?g {
-                    ?s ?p ?o
-                }
-                FILTER(
-                    REGEX(STR(?g), "void") ||
-                    REGEX(STR(?g), "well-known") ||
-                    REGEX(STR(?g), "service")
-                )
-            }
-            ORDER BY ?g
-            OFFSET 0
-            LIMIT 50
-            
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser: Found 0 candidate VoID graphs
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser: No candidate VoID graphs found
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser: Discovery result: found=False
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser: Found 0 graphs with VoID data
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 INFO rdfsolve.parser: No suitable VoID found; generating from queries...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser: Step 2: Generating new VoID from SPARQL queries...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser: Generation settings: counts=True, offset_limit_steps=300
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser: Output path: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hgnc/hgnc_generated_void.ttl
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:02 DEBUG rdfsolve.parser: Starting VoID generation process...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:39 INFO rdfsolve.parser: Successfully extracted 577 RDF triples
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:39 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hgnc/hgnc_generated_void.ttl
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:33:39 DEBUG rdfsolve.parser: VoID generation completed
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hgnc/cache/hgnc_voidparser.pkl
+<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hgnc/cache/hgnc_voidgraph.pkl
+VoID graph cached with 773 triples
 </pre>
 </div>
 </div>
@@ -8298,7 +8125,7 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <span class="n">jsonld_schema</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
 
 <span class="k">if</span> <span class="n">jsonld_schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Generating standards-compliant JSON-LD schema..."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Generating JSON-LD schema..."</span><span class="p">)</span>
     <span class="n">jsonld_schema</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">to_jsonld</span><span class="p">(</span><span class="n">filter_void_admin_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">save_cache</span><span class="p">(</span><span class="n">jsonld_schema</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
@@ -8341,7 +8168,7 @@ Note: JSON-LD cache is now the primary cache - clear it when testing schema chan
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Generating standards-compliant JSON-LD schema...
+<pre>Generating JSON-LD schema...
 </pre>
 </div>
 </div>
@@ -8395,35 +8222,35 @@ Schema Patterns Preview (159 total):
 <td>http://bio2rdf.org/omim_vocabulary:Resource</td>
 <td>rdf:type</td>
 <td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
-<td>owl:Class</td>
-<td>http://www.w3.org/2002/07/owl#Class</td>
-</tr>
-<tr>
-<th>1</th>
-<td>bio2rdf:omim_vocabulary:Resource</td>
-<td>http://bio2rdf.org/omim_vocabulary:Resource</td>
-<td>rdf:type</td>
-<td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
 <td>rdfs:Resource</td>
 <td>http://www.w3.org/2000/01/rdf-schema#Resource</td>
 </tr>
 <tr>
-<th>2</th>
-<td>owl:DatatypeProperty</td>
-<td>http://www.w3.org/2002/07/owl#DatatypeProperty</td>
-<td>rdf:type</td>
-<td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
-<td>rdfs:Class</td>
-<td>http://www.w3.org/2000/01/rdf-schema#Class</td>
-</tr>
-<tr>
-<th>3</th>
+<th>1</th>
 <td>owl:DatatypeProperty</td>
 <td>http://www.w3.org/2002/07/owl#DatatypeProperty</td>
 <td>rdf:type</td>
 <td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
 <td>owl:Class</td>
 <td>http://www.w3.org/2002/07/owl#Class</td>
+</tr>
+<tr>
+<th>2</th>
+<td>rdf:Property</td>
+<td>http://www.w3.org/1999/02/22-rdf-syntax-ns#Pro...</td>
+<td>rdf:type</td>
+<td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
+<td>owl:Class</td>
+<td>http://www.w3.org/2002/07/owl#Class</td>
+</tr>
+<tr>
+<th>3</th>
+<td>bio2rdf:hgnc_vocabulary:Approved-Gene-Symbol</td>
+<td>http://bio2rdf.org/hgnc_vocabulary:Approved-Ge...</td>
+<td>rdf:type</td>
+<td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
+<td>bio2rdf:hgnc_vocabulary:Resource</td>
+<td>http://bio2rdf.org/hgnc_vocabulary:Resource</td>
 </tr>
 <tr>
 <th>4</th>
@@ -8431,8 +8258,8 @@ Schema Patterns Preview (159 total):
 <td>http://www.w3.org/2002/07/owl#DatatypeProperty</td>
 <td>rdf:type</td>
 <td>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</td>
-<td>rdfs:Resource</td>
-<td>http://www.w3.org/2000/01/rdf-schema#Resource</td>
+<td>rdfs:Class</td>
+<td>http://www.w3.org/2000/01/rdf-schema#Class</td>
 </tr>
 </tbody>
 </table>
@@ -8514,6 +8341,42 @@ Schema Patterns Preview (159 total):
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Calculating schema pattern frequencies...
+2025-12-02 10:28:03 INFO rdfsolve.parser: Using chunked pagination for entity counts (step size: 300)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Using chunked pagination for entity counts (step size: 300)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-12-02 10:28:05 DEBUG rdfsolve.parser: Chunked entity count: chunk 1, rows=23, total=23
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Chunked entity count: chunk 1, rows=23, total=23
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2025-12-02 10:28:05 INFO rdfsolve.parser: Chunked entity counting complete: 1 chunks, 23 total results
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Chunked entity counting complete: 1 chunks, 23 total results
 </pre>
 </div>
 </div>
@@ -8561,36 +8424,36 @@ Sample Coverage Data:
 </thead>
 <tbody>
 <tr>
-<th>4</th>
-<td>owl:DatatypeProperty</td>
-<td>rdf:type</td>
-<td>rdfs:Resource</td>
-<td>100.0</td>
-</tr>
-<tr>
-<th>6</th>
-<td>rdf:Property</td>
-<td>rdf:type</td>
-<td>rdfs:Resource</td>
-<td>100.0</td>
-</tr>
-<tr>
-<th>7</th>
-<td>bio2rdf:hgnc_vocabulary:Approved-Gene-Symbol</td>
-<td>rdf:type</td>
-<td>owl:Class</td>
-<td>100.0</td>
-</tr>
-<tr>
-<th>8</th>
+<th>3</th>
 <td>bio2rdf:hgnc_vocabulary:Approved-Gene-Symbol</td>
 <td>rdf:type</td>
 <td>bio2rdf:hgnc_vocabulary:Resource</td>
 <td>100.0</td>
 </tr>
 <tr>
-<th>14</th>
+<th>6</th>
 <td>bio2rdf:hgnc.symbol_vocabulary:Resource</td>
+<td>rdf:type</td>
+<td>owl:Class</td>
+<td>100.0</td>
+</tr>
+<tr>
+<th>10</th>
+<td>owl:Class</td>
+<td>rdf:type</td>
+<td>rdfs:Resource</td>
+<td>100.0</td>
+</tr>
+<tr>
+<th>11</th>
+<td>owl:ObjectProperty</td>
+<td>rdf:type</td>
+<td>rdfs:Resource</td>
+<td>100.0</td>
+</tr>
+<tr>
+<th>12</th>
+<td>bio2rdf:hgnc_vocabulary:Previous-Symbol</td>
 <td>rdf:type</td>
 <td>bio2rdf:hgnc_vocabulary:Resource</td>
 <td>100.0</td>
@@ -8663,12 +8526,10 @@ Name: coverage_percent, dtype: float64</pre>
 
 <span class="c1"># Display basic information about the data structure</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Frequencies DataFrame: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frequencies_with_instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> shapes"</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Instances DataFrame: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> subject-object pairs"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">frequencies_with_instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"Memory usage - Frequencies: </span><span class="si">{</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span>
+        <span class="sa">f</span><span class="s2">"Memory usage - Instances: </span><span class="si">{</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span>
     <span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Memory usage - Instances: </span><span class="si">{</span><span class="n">instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"No instances collected"</span><span class="p">)</span>
 </pre></div>
@@ -8684,133 +8545,49 @@ Name: coverage_percent, dtype: float64</pre>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Collecting frequency data and instances...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:38:52 WARNING rdfsolve.parser: Query attempt 1 failed: &lt;urlopen error [Errno -5] No address associated with hostname&gt;
+2025-12-02 10:28:33 INFO rdfsolve.parser: Using chunked pagination for entity counts (step size: 300)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>WARNING:rdfsolve.parser:Query attempt 1 failed: &lt;urlopen error [Errno -5] No address associated with hostname&gt;
+<pre>INFO:rdfsolve.parser:Using chunked pagination for entity counts (step size: 300)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:38:52 DEBUG rdfsolve.parser: Query:
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH &lt;http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3&gt; {
-                            ?s &lt;http://bio2rdf.org/hgnc_vocabulary:has-approved-symbol&gt; ?o .
-                            ?s a &lt;http://bio2rdf.org/hgnc_vocabulary:Gene-Symbol&gt; .
-                            ?o a &lt;http://bio2rdf.org/hgnc.symbol_vocabulary:Resource&gt; .
-                        }
-                    }
-                    
+<pre>2025-12-02 10:28:34 DEBUG rdfsolve.parser: Chunked entity count: chunk 1, rows=23, total=23
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>DEBUG:rdfsolve.parser:Query:
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH &lt;http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3&gt; {
-                            ?s &lt;http://bio2rdf.org/hgnc_vocabulary:has-approved-symbol&gt; ?o .
-                            ?s a &lt;http://bio2rdf.org/hgnc_vocabulary:Gene-Symbol&gt; .
-                            ?o a &lt;http://bio2rdf.org/hgnc.symbol_vocabulary:Resource&gt; .
-                        }
-                    }
-                    
+<pre>DEBUG:rdfsolve.parser:Chunked entity count: chunk 1, rows=23, total=23
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:38:52 INFO rdfsolve.parser: Retrying after 1.1s (attempt 2/4)
+<pre>2025-12-02 10:28:34 INFO rdfsolve.parser: Chunked entity counting complete: 1 chunks, 23 total results
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>INFO:rdfsolve.parser:Retrying after 1.1s (attempt 2/4)
+<pre>INFO:rdfsolve.parser:Chunked entity counting complete: 1 chunks, 23 total results
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:38:54 WARNING rdfsolve.parser: Query attempt 2 failed: &lt;urlopen error [Errno -5] No address associated with hostname&gt;
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>WARNING:rdfsolve.parser:Query attempt 2 failed: &lt;urlopen error [Errno -5] No address associated with hostname&gt;
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:38:54 DEBUG rdfsolve.parser: Query:
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH &lt;http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3&gt; {
-                            ?s &lt;http://bio2rdf.org/hgnc_vocabulary:has-approved-symbol&gt; ?o .
-                            ?s a &lt;http://bio2rdf.org/hgnc_vocabulary:Gene-Symbol&gt; .
-                            ?o a &lt;http://bio2rdf.org/hgnc.symbol_vocabulary:Resource&gt; .
-                        }
-                    }
-                    
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>DEBUG:rdfsolve.parser:Query:
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH &lt;http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3&gt; {
-                            ?s &lt;http://bio2rdf.org/hgnc_vocabulary:has-approved-symbol&gt; ?o .
-                            ?s a &lt;http://bio2rdf.org/hgnc_vocabulary:Gene-Symbol&gt; .
-                            ?o a &lt;http://bio2rdf.org/hgnc.symbol_vocabulary:Resource&gt; .
-                        }
-                    }
-                    
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:38:54 INFO rdfsolve.parser: Retrying after 2.1s (attempt 3/4)
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>INFO:rdfsolve.parser:Retrying after 2.1s (attempt 3/4)
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-01 10:39:45 INFO rdfsolve.parser: Total instances collected: 1611599
+<pre>2025-12-02 10:32:52 INFO rdfsolve.parser: Total instances collected: 1611599
 </pre>
 </div>
 </div>
@@ -8826,15 +8603,7 @@ Name: coverage_percent, dtype: float64</pre>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hgnc/cache/hgnc_frequencies_with_instances.pkl
 Frequencies DataFrame: 159 shapes
-Instances DataFrame: 1611599 subject-object pairs
-Memory usage - Frequencies: 128.6 KB
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Memory usage - Instances: 297072.7 KB
+Memory usage - Instances: 128.6 KB
 </pre>
 </div>
 </div>
@@ -8850,10 +8619,9 @@ Memory usage - Frequencies: 128.6 KB
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.io</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pio</span>
 
-<span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">frequencies_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"coverage_percent"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"coverage_percent"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -8958,9 +8726,9 @@ Memory usage - Frequencies: 128.6 KB
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <div> <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script> <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="7813063a-0ddd-4ab9-a272-b3db3ba02e39" style="height:2000px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("7813063a-0ddd-4ab9-a272-b3db3ba02e39")) {                    Plotly.newPlot(                        "7813063a-0ddd-4ab9-a272-b3db3ba02e39",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlACtejcD36WEAK16NwPfpYQArXo3A9+lhACtejcD36WEAK16NwPfpYQJqZmZmZ+VhApHA9CtfzWED2KFyPwoVUQOF6FK5HgVRACtejcD0qVED2KFyPwiVUQK5H4XoUXlNAmpmZmZlZU0AAAAAAAEBTQAAAAAAAQFNAKVyPwvVoTkDD9Shcj2JOQM3MzMzMLElAZmZmZmYmSUAAAAAAAABJQEjhehSuJ0hAw\u002fUoXI8iSEDNzMzMzKxGQEjhehSup0ZAexSuR+F6RUD2KFyPwnVFQK5H4XoUbkVAhetRuB4FREDhehSuRwFEQHsUrkfhekFA16NwPQp3QUA9CtejcL06QPYoXI\u002fCtTpArkfhehTuOEApXI\u002fC9eg4QFK4HoXr0ThAzczMzMzMOEDD9Shcj8LVP8P1KFyPwtU\u002fUrgehetRyD9SuB6F61HIP5qZmZmZmbk\u002fmpmZmZmZuT8K16NwPQq3P3sUrkfheoQ\u002fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","99.9%","99.9%","99.9%","99.9%","99.9%","99.9%","99.8%","82.1%","82.0%","80.7%","80.6%","77.5%","77.4%","77.0%","77.0%","60.8%","60.8%","50.4%","50.3%","50.0%","48.3%","48.3%","45.4%","45.3%","43.0%","42.9%","42.9%","40.0%","40.0%","35.0%","34.9%","26.7%","26.7%","24.9%","24.9%","24.8%","24.8%","0.3%","0.3%","0.2%","0.2%","0.1%","0.1%","0.1%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlACtejcD36WEAK16NwPfpYQArXo3A9+lhACtejcD36WEAK16NwPfpYQJqZmZmZ+VhApHA9CtfzWED2KFyPwoVUQOF6FK5HgVRACtejcD0qVED2KFyPwiVUQK5H4XoUXlNAmpmZmZlZU0AAAAAAAEBTQAAAAAAAQFNAKVyPwvVoTkDD9Shcj2JOQM3MzMzMLElAZmZmZmYmSUAAAAAAAABJQEjhehSuJ0hAw\u002fUoXI8iSEDNzMzMzKxGQEjhehSup0ZAexSuR+F6RUD2KFyPwnVFQK5H4XoUbkVAhetRuB4FREDhehSuRwFEQHsUrkfhekFA16NwPQp3QUA9CtejcL06QPYoXI\u002fCtTpArkfhehTuOEApXI\u002fC9eg4QFK4HoXr0ThAzczMzMzMOEDD9Shcj8LVP8P1KFyPwtU\u002fUrgehetRyD9SuB6F61HIP5qZmZmZmbk\u002fmpmZmZmZuT8K16NwPQq3P3sUrkfheoQ\u002fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"y":["\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003erdf:Property\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003edcterms:Dataset\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcat:distribution\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edcat:Distribution\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:status\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:status\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:status\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:status\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ensembl\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ensembl_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ensembl\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ensembl_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-refseq\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:refseq_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-refseq\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:refseq_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-vega\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:vega_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-vega\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:vega_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ucsc\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ucsc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ucsc\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ucsc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003edcat:Distribution\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:source\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edcat:Distribution\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:pubmed_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:pubmed_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:uniprot_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:uniprot_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ccds\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ccds_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ccds\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ccds_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-rgd\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:rgd_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-rgd\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:rgd_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:refseq_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:vega_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:vega_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:refseq_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:omim_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:omim_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003erdf:Property\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:mgi_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:mgi_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:uniprot_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ucsc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Pseudogene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ucsc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003edcat:Distribution\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:pubmed_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:pubmed_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ncbigene_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ncbigene_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ensembl_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ensembl_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Phenotype\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ctd_vocabulary:Disease\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Gene-phenotype\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Predominantly-phenotypes\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ctd_vocabulary:Disease\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Gene-phenotype\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ctd_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:SnRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Phenotype\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Predominantly-phenotypes\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:SnoRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Pseudo-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Other-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Protein-coding-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Unknown-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:SnRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ctd_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:SnoRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:TRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:RRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:NcRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Protein-coding-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Other-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Unknown-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:RRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:TRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:NcRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Pseudo-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:rgd_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:rgd_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:uniprot_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ccds_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ccds_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Marker\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Pseudogene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Marker\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Pairwise-Interaction\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0914\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Homopolymeric-Complex\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:clinicaltrials_vocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:clinicaltrials_vocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Homopolymeric-Complex\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0914\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-refseq\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0326\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-refseq\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0326\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Multimeric-Complex\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Pairwise-Interaction\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Multimeric-Complex\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C43568\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C43568\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:omim_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C7057\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0326\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:goa_vocabulary:GO-Annotation\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0326\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C43568\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:pubmed_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C47902\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:uniprot_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C17021\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:goa_vocabulary:GO-Annotation\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ncbigene_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C16612\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for hgnc","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":2000,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "hgnc_schema_coverage", "height": 2000, "width": 600, "scale": 1}}                    ).then(function(){
+<script charset="utf-8" crossorigin="anonymous" integrity="sha256-iZ2u/oU2wf/vDbl/ChcX93WgbBRSBvUO6N413hDz7xM=" src="https://cdn.plot.ly/plotly-3.2.0.min.js"></script> <div class="plotly-graph-div" id="9989e22c-bf40-46e6-9212-77469124f19c" style="height:2000px; width:100%;"></div> <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("9989e22c-bf40-46e6-9212-77469124f19c")) {                    Plotly.newPlot(                        "9989e22c-bf40-46e6-9212-77469124f19c",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eCoverage: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"cmax":100,"cmin":0,"color":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlACtejcD36WEAK16NwPfpYQArXo3A9+lhACtejcD36WEAK16NwPfpYQJqZmZmZ+VhApHA9CtfzWED2KFyPwoVUQOF6FK5HgVRACtejcD0qVED2KFyPwiVUQK5H4XoUXlNAmpmZmZlZU0AAAAAAAEBTQAAAAAAAQFNAKVyPwvVoTkDD9Shcj2JOQM3MzMzMLElAZmZmZmYmSUAAAAAAAABJQEjhehSuJ0hAw\u002fUoXI8iSEDNzMzMzKxGQEjhehSup0ZAexSuR+F6RUD2KFyPwnVFQK5H4XoUbkVAhetRuB4FREDhehSuRwFEQHsUrkfhekFA16NwPQp3QUA9CtejcL06QPYoXI\u002fCtTpArkfhehTuOEApXI\u002fC9eg4QFK4HoXr0ThAzczMzMzMOEDD9Shcj8LVP8P1KFyPwtU\u002fUrgehetRyD9SuB6F61HIP5qZmZmZmbk\u002fmpmZmZmZuT8K16NwPQq3P3sUrkfheoQ\u002fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"colorscale":[[0.0,"#d36e61"],[0.4,"#e5cdbd"],[0.7,"#e8e4cf"],[1.0,"#c3d9c0"]],"line":{"color":"white","width":0.6}},"orientation":"h","text":["100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","100.0%","99.9%","99.9%","99.9%","99.9%","99.9%","99.9%","99.8%","82.1%","82.0%","80.7%","80.6%","77.5%","77.4%","77.0%","77.0%","60.8%","60.8%","50.4%","50.3%","50.0%","48.3%","48.3%","45.4%","45.3%","43.0%","42.9%","42.9%","40.0%","40.0%","35.0%","34.9%","26.7%","26.7%","24.9%","24.9%","24.8%","24.8%","0.3%","0.3%","0.2%","0.2%","0.1%","0.1%","0.1%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%","0.0%"],"textposition":["inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","inside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside","outside"],"x":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlACtejcD36WEAK16NwPfpYQArXo3A9+lhACtejcD36WEAK16NwPfpYQJqZmZmZ+VhApHA9CtfzWED2KFyPwoVUQOF6FK5HgVRACtejcD0qVED2KFyPwiVUQK5H4XoUXlNAmpmZmZlZU0AAAAAAAEBTQAAAAAAAQFNAKVyPwvVoTkDD9Shcj2JOQM3MzMzMLElAZmZmZmYmSUAAAAAAAABJQEjhehSuJ0hAw\u002fUoXI8iSEDNzMzMzKxGQEjhehSup0ZAexSuR+F6RUD2KFyPwnVFQK5H4XoUbkVAhetRuB4FREDhehSuRwFEQHsUrkfhekFA16NwPQp3QUA9CtejcL06QPYoXI\u002fCtTpArkfhehTuOEApXI\u002fC9eg4QFK4HoXr0ThAzczMzMzMOEDD9Shcj8LVP8P1KFyPwtU\u002fUrgehetRyD9SuB6F61HIP5qZmZmZmbk\u002fmpmZmZmZuT8K16NwPQq3P3sUrkfheoQ\u002fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"y":["\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003erdf:Property\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:status\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:status\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003edcterms:Dataset\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcat:distribution\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edcat:Distribution\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:status\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:status\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ensembl\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ensembl_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ensembl\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ensembl_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-refseq\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:refseq_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-refseq\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:refseq_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-vega\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:vega_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-vega\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:vega_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ucsc\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ucsc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ucsc\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ucsc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003edcat:Distribution\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003edcterms:source\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003edcat:Distribution\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:pubmed_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:pubmed_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:uniprot_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:uniprot_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ccds\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ccds_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ccds\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ccds_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-rgd\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:rgd_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-rgd\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:rgd_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:is-approved-symbol-of\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:previous-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:has-approved-symbol\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdfs:subClassOf\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:uniprot_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ccds_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:vega_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:pubmed_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:refseq_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003edcat:Distribution\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:rgd_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:omim_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ncbigene_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:refseq_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:vega_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ensembl_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:omim_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003erdf:Property\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:DatatypeProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Marker\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ucsc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:mgi_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:Class\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:pubmed_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ncbigene_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ccds_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ensembl_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0914\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ctd_vocabulary:Disease\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ctd_vocabulary:Disease\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Phenotype\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Predominantly-phenotypes\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Gene-phenotype\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Unknown-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Predominantly-phenotypes\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Gene-phenotype\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-omim\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:omim_vocabulary:Phenotype\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Protein-coding-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Protein-coding-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:NcRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:RRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:NcRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:SnoRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Pseudo-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ctd_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:TRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:RRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:SnoRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Pseudo-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:SnRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Other-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:TRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:SnRNA-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ctd_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Other-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:uniprot_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:rgd_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003eowl:Class\u003c\u002fb\u003e","\u003cb\u003eowl:ObjectProperty\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Class\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-ncbigene\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:ncbigene_vocabulary:Unknown-Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Pseudogene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Gene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Pseudogene\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-mgi\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mgi_vocabulary:Marker\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ucsc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:mgi_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003erdf:type\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003erdfs:Resource\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Pairwise-Interaction\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0914\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Multimeric-Complex\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Pairwise-Interaction\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Homopolymeric-Complex\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:clinicaltrials_vocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-refseq\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0326\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-refseq\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0326\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Homopolymeric-Complex\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:irefindex_vocabulary:Multimeric-Complex\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-pubmed\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:clinicaltrials_vocabulary:Reference\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Approved-Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C43568\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Previous-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C43568\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:omim_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C7057\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0326\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:goa_vocabulary:GO-Annotation\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Gene-Symbol\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:mi:0326\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc.symbol_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C43568\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:pubmed_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C47902\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:uniprot_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C17021\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:hgnc_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:hgnc_vocabulary:x-uniprot\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003ebio2rdf:goa_vocabulary:GO-Annotation\u003c\u002fb\u003e","\u003cb\u003ebio2rdf:ncbigene_vocabulary:Resource\u003c\u002fb\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003ci\u003ebio2rdf:bio2rdf_vocabulary:x-identifiers.org\u003c\u002fi\u003e \u003cspan style='color:#888;'\u003e\u003c\u002fspan\u003e \u003cb\u003encit:C16612\u003c\u002fb\u003e"],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"title":{"font":{"size":18},"text":"Schema Pattern Coverage for hgnc","x":0.5},"xaxis":{"title":{"text":"Coverage (%)"},"range":[0,100],"ticksuffix":"%","showgrid":true,"gridcolor":"rgba(220,220,220,0.3)","fixedrange":true},"yaxis":{"title":{"text":""},"autorange":"reversed","automargin":true,"fixedrange":false},"margin":{"t":80,"b":50,"l":480,"r":150},"autosize":true,"height":2000,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"scrollZoom": true, "responsive": true, "toImageButtonOptions": {"format": "png", "filename": "hgnc_schema_coverage", "height": 2000, "width": 600, "scale": 1}}                    ).then(function(){
                             
-var gd = document.getElementById('7813063a-0ddd-4ab9-a272-b3db3ba02e39');
+var gd = document.getElementById('9989e22c-bf40-46e6-9212-77469124f19c');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
@@ -9088,7 +8856,7 @@ if (outputEl) {{
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-OutputArea-output" data-mime-type="text/markdown" tabindex="0">
-<p><strong>Parsed LinkML schema:</strong> Classes = 34, Slots = 21</p>
+<p><strong>Parsed LinkML schema:</strong> Classes = 35, Slots = 21</p>
 </div>
 </div>
 <div class="jp-OutputArea-child">
@@ -9097,6 +8865,9 @@ if (outputEl) {{
 <div class="jp-Mermaid"><pre class="mermaid">
 erDiagram
 Bio2rdfCcdsVocabularyResource {
+
+}
+Bio2rdfClinicaltrialsVocabularyReference {
 
 }
 Bio2rdfEnsemblVocabularyResource {
@@ -9117,9 +8888,6 @@ Bio2rdfHgncVocabularyPreviousSymbol {
 Bio2rdfHgncVocabularyResource {
 
 }
-Bio2rdfIrefindexVocabularyMultimericComplex {
-
-}
 Bio2rdfMgiVocabularyGene {
 
 }
@@ -9127,6 +8895,9 @@ Bio2rdfMgiVocabularyResource {
 
 }
 Bio2rdfMi0326 {
+
+}
+Bio2rdfMi0914 {
 
 }
 Bio2rdfNcbigeneVocabularyResource {
@@ -9213,19 +8984,19 @@ Bio2rdfHgncVocabularyApprovedGeneSymbol ||--|o NcitC17021 : "bio2rdf_bio_2rdf_vo
 Bio2rdfHgncVocabularyApprovedGeneSymbol ||--|o OwlClass : "rdf_type"
 Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfCcdsVocabularyResource : "bio2rdf_hgnc_vocabulary_x_ccds"
 Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfEnsemblVocabularyResource : "bio2rdf_hgnc_vocabulary_x_ensembl"
-Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfHgncSymbolVocabularyResource : "bio2rdf_hgnc_vocabulary_has_approved_symbol"
-Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfHgncVocabularyApprovedGeneSymbol : "bio2rdf_hgnc_vocabulary_previous_symbol"
+Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfHgncVocabularyPreviousSymbol : "bio2rdf_hgnc_vocabulary_has_approved_symbol"
+Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfHgncVocabularyPreviousSymbol : "bio2rdf_hgnc_vocabulary_previous_symbol"
+Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfHgncVocabularyResource : "bio2rdf_hgnc_vocabulary_status"
 Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfMgiVocabularyGene : "bio2rdf_hgnc_vocabulary_x_mgi"
 Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfMi0326 : "bio2rdf_hgnc_vocabulary_x_refseq"
-Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfNcbigeneVocabularyUnknownGene : "bio2rdf_hgnc_vocabulary_x_ncbigene"
+Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfMi0326 : "bio2rdf_hgnc_vocabulary_x_uniprot"
+Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfMi0914 : "bio2rdf_hgnc_vocabulary_x_pubmed"
+Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfNcbigeneVocabularyResource : "bio2rdf_hgnc_vocabulary_x_ncbigene"
 Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfOmimVocabularyGene : "bio2rdf_hgnc_vocabulary_x_omim"
-Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfPubmedVocabularyResource : "bio2rdf_hgnc_vocabulary_x_pubmed"
 Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfRgdVocabularyResource : "bio2rdf_hgnc_vocabulary_x_rgd"
 Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfUcscVocabularyResource : "bio2rdf_hgnc_vocabulary_x_ucsc"
-Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfUniprotVocabularyResource : "bio2rdf_hgnc_vocabulary_x_uniprot"
 Bio2rdfHgncVocabularyGeneSymbol ||--|o Bio2rdfVegaVocabularyResource : "bio2rdf_hgnc_vocabulary_x_vega"
 Bio2rdfHgncVocabularyGeneSymbol ||--|o DctermsDataset : "void_in_Dataset"
-Bio2rdfHgncVocabularyGeneSymbol ||--|o OwlClass : "bio2rdf_hgnc_vocabulary_status"
 Bio2rdfHgncVocabularyGeneSymbol ||--|o OwlClass : "rdf_type"
 Bio2rdfHgncVocabularyPreviousSymbol ||--|o Bio2rdfHgncVocabularyGeneSymbol : "bio2rdf_hgnc_vocabulary_is_approved_symbol_of"
 Bio2rdfHgncVocabularyPreviousSymbol ||--|o DctermsDataset : "void_in_Dataset"
@@ -9233,19 +9004,19 @@ Bio2rdfHgncVocabularyPreviousSymbol ||--|o NcitC17021 : "bio2rdf_bio_2rdf_vocabu
 Bio2rdfHgncVocabularyPreviousSymbol ||--|o OwlClass : "rdf_type"
 Bio2rdfHgncVocabularyResource ||--|o Bio2rdfCcdsVocabularyResource : "bio2rdf_hgnc_vocabulary_x_ccds"
 Bio2rdfHgncVocabularyResource ||--|o Bio2rdfEnsemblVocabularyResource : "bio2rdf_hgnc_vocabulary_x_ensembl"
-Bio2rdfHgncVocabularyResource ||--|o Bio2rdfHgncSymbolVocabularyResource : "bio2rdf_hgnc_vocabulary_has_approved_symbol"
-Bio2rdfHgncVocabularyResource ||--|o Bio2rdfHgncVocabularyApprovedGeneSymbol : "bio2rdf_hgnc_vocabulary_previous_symbol"
+Bio2rdfHgncVocabularyResource ||--|o Bio2rdfHgncVocabularyPreviousSymbol : "bio2rdf_hgnc_vocabulary_has_approved_symbol"
+Bio2rdfHgncVocabularyResource ||--|o Bio2rdfHgncVocabularyPreviousSymbol : "bio2rdf_hgnc_vocabulary_previous_symbol"
+Bio2rdfHgncVocabularyResource ||--|o Bio2rdfHgncVocabularyResource : "bio2rdf_hgnc_vocabulary_status"
 Bio2rdfHgncVocabularyResource ||--|o Bio2rdfMgiVocabularyGene : "bio2rdf_hgnc_vocabulary_x_mgi"
 Bio2rdfHgncVocabularyResource ||--|o Bio2rdfMi0326 : "bio2rdf_hgnc_vocabulary_x_refseq"
-Bio2rdfHgncVocabularyResource ||--|o Bio2rdfNcbigeneVocabularyUnknownGene : "bio2rdf_hgnc_vocabulary_x_ncbigene"
+Bio2rdfHgncVocabularyResource ||--|o Bio2rdfMi0326 : "bio2rdf_hgnc_vocabulary_x_uniprot"
+Bio2rdfHgncVocabularyResource ||--|o Bio2rdfMi0914 : "bio2rdf_hgnc_vocabulary_x_pubmed"
+Bio2rdfHgncVocabularyResource ||--|o Bio2rdfNcbigeneVocabularyResource : "bio2rdf_hgnc_vocabulary_x_ncbigene"
 Bio2rdfHgncVocabularyResource ||--|o Bio2rdfOmimVocabularyGene : "bio2rdf_hgnc_vocabulary_x_omim"
-Bio2rdfHgncVocabularyResource ||--|o Bio2rdfPubmedVocabularyResource : "bio2rdf_hgnc_vocabulary_x_pubmed"
 Bio2rdfHgncVocabularyResource ||--|o Bio2rdfRgdVocabularyResource : "bio2rdf_hgnc_vocabulary_x_rgd"
 Bio2rdfHgncVocabularyResource ||--|o Bio2rdfUcscVocabularyResource : "bio2rdf_hgnc_vocabulary_x_ucsc"
-Bio2rdfHgncVocabularyResource ||--|o Bio2rdfUniprotVocabularyResource : "bio2rdf_hgnc_vocabulary_x_uniprot"
 Bio2rdfHgncVocabularyResource ||--|o Bio2rdfVegaVocabularyResource : "bio2rdf_hgnc_vocabulary_x_vega"
 Bio2rdfHgncVocabularyResource ||--|o DctermsDataset : "void_in_Dataset"
-Bio2rdfHgncVocabularyResource ||--|o OwlClass : "bio2rdf_hgnc_vocabulary_status"
 Bio2rdfHgncVocabularyResource ||--|o OwlClass : "rdf_type"
 Bio2rdfHgncVocabularyResource ||--|o OwlClass : "rdfs_sub_Class_Of"
 Bio2rdfMgiVocabularyResource ||--|o DctermsDataset : "void_in_Dataset"
@@ -9321,6 +9092,45 @@ RdfProperty ||--|o OwlClass : "rdf_type"
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hgnc/hgnc_schema.csv
 JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hgnc/hgnc_schema.json
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0fb4e6d9">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Export collected SPARQL queries as TTL</span>
+<span class="n">queries_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_sparql_queries.ttl"</span><span class="p">)</span>
+<span class="n">queries</span> <span class="o">=</span> <span class="n">SparqlHelper</span><span class="o">.</span><span class="n">get_collected_queries</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">queries</span><span class="p">:</span>
+    <span class="n">ttl_content</span> <span class="o">=</span> <span class="n">SparqlHelper</span><span class="o">.</span><span class="n">export_queries_as_ttl</span><span class="p">(</span>
+        <span class="n">output_file</span><span class="o">=</span><span class="n">queries_path</span><span class="p">,</span>
+        <span class="n">base_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://github.com/jmillanacosta/rdfsolve/sparql/</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
+        <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">queries</span><span class="p">)</span><span class="si">}</span><span class="s2"> SPARQL queries to: </span><span class="si">{</span><span class="n">queries_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"No SPARQL queries were collected"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Exported 320 SPARQL queries to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/hgnc/hgnc_sparql_queries.ttl
 </pre>
 </div>
 </div>

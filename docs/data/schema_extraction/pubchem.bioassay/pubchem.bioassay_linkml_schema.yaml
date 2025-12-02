@@ -1,0 +1,360 @@
+name: pubchem.bioassay_schema
+description: LinkML schema for pubchem.bioassay generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+prefixes:
+  pubchem.bioassay_schema:
+    prefix_prefix: pubchem.bioassay_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  bao:
+    prefix_prefix: bao
+    prefix_reference: http://www.bioassayontology.org/bao#
+  sio:
+    prefix_prefix: sio
+    prefix_reference: http://semanticscience.org/resource/
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  chembl:
+    prefix_prefix: chembl
+    prefix_reference: http://rdf.ebi.ac.uk/terms/chembl#
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  vocabulary:
+    prefix_prefix: vocabulary
+    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
+  resource:
+    prefix_prefix: resource
+    prefix_reference: http://semanticscience.org/resource/
+default_prefix: pubchem.bioassay_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  bao_0000210:
+    name: bao_0000210
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000210
+    description: Property bao:0000210
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000210
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000210
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+  bao_0000540:
+    name: bao_0000540
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000540
+    description: Property bao:0000540
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000540
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000540
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+  bao_0000209:
+    name: bao_0000209
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000209
+    description: Property bao:0000209
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000209
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000209
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/rdf_type
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/rdf_type
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+  bao_0001094:
+    name: bao_0001094
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0001094
+    description: Property bao:0001094
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0001094
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0001094
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+  dcterms_source:
+    name: dcterms_source
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/dcterms_source
+    description: Property dcterms:source
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/dcterms_source
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/dcterms_source
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+  sio_000008:
+    name: sio_000008
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_000008
+    description: Property sio:000008
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_000008
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_000008
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+  bao_0001067:
+    name: bao_0001067
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0001067
+    description: Property bao:0001067
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0001067
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0001067
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+  rdfs_see_Also:
+    name: rdfs_see_Also
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/rdfs_see_Also
+    description: Property rdfs:seeAlso
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/rdfs_see_Also
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/rdfs_see_Also
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+  resource_is_attribute_of:
+    name: resource_is_attribute_of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/resource_is_attribute_of
+    description: Property resource:is-attribute-of
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/resource_is_attribute_of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/resource_is_attribute_of
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+  sio_000011:
+    name: sio_000011
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_000011
+    description: Property sio:000011
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_000011
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_000011
+    owner: sio_001041
+    domain_of:
+    - bao_0000015
+    - sio_000136
+    - vocabulary_Bio_Assay
+    - sio_001041
+    - sio_001167
+    range: bao_0000015
+    inlined: true
+    inlined_as_list: true
+classes:
+  sio_001167:
+    name: sio_001167
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/Sio001167
+    description: Class representing sio_001167
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_001167
+    slots:
+    - sio_000008
+    - sio_000011
+    - bao_0000209
+    - bao_0000210
+    - dcterms_source
+    - resource_is_attribute_of
+    - rdf_type
+    - rdfs_see_Also
+    - bao_0000540
+    - bao_0001067
+    - bao_0001094
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_001167
+  bao_0000015:
+    name: bao_0000015
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/Bao0000015
+    description: Class representing bao_0000015
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000015
+    slots:
+    - sio_000008
+    - sio_000011
+    - bao_0000209
+    - bao_0000210
+    - dcterms_source
+    - resource_is_attribute_of
+    - rdf_type
+    - rdfs_see_Also
+    - bao_0000540
+    - bao_0001067
+    - bao_0001094
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/bao_0000015
+  sio_000136:
+    name: sio_000136
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/Sio000136
+    description: Class representing sio_000136
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_000136
+    slots:
+    - sio_000008
+    - sio_000011
+    - bao_0000209
+    - bao_0000210
+    - dcterms_source
+    - resource_is_attribute_of
+    - rdf_type
+    - rdfs_see_Also
+    - bao_0000540
+    - bao_0001067
+    - bao_0001094
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_000136
+  vocabulary_Bio_Assay:
+    name: vocabulary_Bio_Assay
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/VocabularyBioAssay
+    description: Class representing vocabulary_Bio_Assay
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/vocabulary_Bio_Assay
+    slots:
+    - sio_000008
+    - sio_000011
+    - bao_0000209
+    - bao_0000210
+    - dcterms_source
+    - resource_is_attribute_of
+    - rdf_type
+    - rdfs_see_Also
+    - bao_0000540
+    - bao_0001067
+    - bao_0001094
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/vocabulary_Bio_Assay
+  sio_001041:
+    name: sio_001041
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/Sio001041
+    description: Class representing sio_001041
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_001041
+    slots:
+    - sio_000008
+    - sio_000011
+    - bao_0000209
+    - bao_0000210
+    - dcterms_source
+    - resource_is_attribute_of
+    - rdf_type
+    - rdfs_see_Also
+    - bao_0000540
+    - bao_0001067
+    - bao_0001094
+    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.bioassay/linkml/sio_001041
+metamodel_version: 1.7.0
+generation_date: '2025-12-02T10:24:16'

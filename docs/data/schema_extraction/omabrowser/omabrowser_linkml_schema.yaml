@@ -1,0 +1,1421 @@
+name: omabrowser_schema
+description: LinkML schema for omabrowser generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+prefixes:
+  omabrowser_schema:
+    prefix_prefix: omabrowser_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: https://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  owl:
+    prefix_prefix: owl
+    prefix_reference: http://www.w3.org/2002/07/owl#
+  orth:
+    prefix_prefix: orth
+    prefix_reference: http://purl.org/net/orth#
+  uniprot.core:
+    prefix_prefix: uniprot.core
+    prefix_reference: http://purl.uniprot.org/core/
+  lscr:
+    prefix_prefix: lscr
+    prefix_reference: http://purl.org/lscr#
+  so:
+    prefix_prefix: so
+    prefix_reference: http://purl.obolibrary.org/obo/
+  ro:
+    prefix_prefix: ro
+    prefix_reference: http://purl.obolibrary.org/obo/
+  sio:
+    prefix_prefix: sio
+    prefix_reference: http://semanticscience.org/resource/
+  ensembl:
+    prefix_prefix: ensembl
+    prefix_reference: http://rdf.ebi.ac.uk/resource/ensembl/
+  cdao:
+    prefix_prefix: cdao
+    prefix_reference: http://purl.obolibrary.org/obo/
+  sh:
+    prefix_prefix: sh
+    prefix_reference: http://www.w3.org/ns/shacl#
+  pav:
+    prefix_prefix: pav
+    prefix_reference: http://purl.org/pav/
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  example:
+    prefix_prefix: example
+    prefix_reference: http://example.org/
+  skos:
+    prefix_prefix: skos
+    prefix_reference: http://www.w3.org/2004/02/skos/core#
+default_prefix: omabrowser_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  rdfs_sub_Class_Of:
+    name: rdfs_sub_Class_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_sub_Class_Of
+    description: Property rdfs:subClassOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_sub_Class_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_sub_Class_Of
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    - rdfs_Class
+    range: rdfs_Class
+    inlined: true
+    inlined_as_list: true
+  owl_on_Property:
+    name: owl_on_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_on_Property
+    description: Property owl:onProperty
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_on_Property
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_on_Property
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: owl_Object_Property
+    inlined: true
+    inlined_as_list: true
+  uniprot_core_scientific_Name:
+    name: uniprot_core_scientific_Name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_scientific_Name
+    description: Property uniprot.core:scientificName
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_scientific_Name
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_scientific_Name
+    owner: orth_Taxonomic_Range
+    domain_of:
+    - uniprot_core_Taxon
+    - orth_Taxonomic_Range
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_Ensembl_Transcript:
+    name: lscr_xref_Ensembl_Transcript
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Ensembl_Transcript
+    description: Property lscr:xrefEnsemblTranscript
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Ensembl_Transcript
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Ensembl_Transcript
+    owner: orth_Protein
+    domain_of:
+    - orth_Protein
+    range: so_0000673
+    inlined: true
+    inlined_as_list: true
+  owl_imports:
+    name: owl_imports
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_imports
+    description: Property owl:imports
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_imports
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_imports
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_complement_Of:
+    name: owl_complement_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_complement_Of
+    description: Property owl:complementOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_complement_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_complement_Of
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  sio_010079:
+    name: sio_010079
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sio_010079
+    description: Property sio:010079
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sio_010079
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sio_010079
+    owner: orth_Protein
+    domain_of:
+    - orth_Protein
+    range: orth_Gene
+    inlined: true
+    inlined_as_list: true
+  owl_disjoint_With:
+    name: owl_disjoint_With
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_disjoint_With
+    description: Property owl:disjointWith
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_disjoint_With
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_disjoint_With
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  orth_in_Dataset:
+    name: orth_in_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_in_Dataset
+    description: Property orth:inDataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_in_Dataset
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_in_Dataset
+    owner: orth_Orthologs_Cluster
+    domain_of:
+    - orth_Orthologs_Cluster
+    - orth_Paralogs_Cluster
+    range: orth_Orthology_Dataset
+    inlined: true
+    inlined_as_list: true
+  sh_declare:
+    name: sh_declare
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_declare
+    description: Property sh:declare
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_declare
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_declare
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  sh_prefixes:
+    name: sh_prefixes
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_prefixes
+    description: Property sh:prefixes
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_prefixes
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_prefixes
+    owner: sh_SPARQLSelect_Executable
+    domain_of:
+    - sh_SPARQLExecutable
+    - sh_SPARQLSelect_Executable
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  uniprot_core_mnemonic:
+    name: uniprot_core_mnemonic
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_mnemonic
+    description: Property uniprot.core:mnemonic
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_mnemonic
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_mnemonic
+    owner: orth_Taxonomic_Range
+    domain_of:
+    - uniprot_core_Taxon
+    - orth_Taxonomic_Range
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  rdfs_domain:
+    name: rdfs_domain
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_domain
+    description: Property rdfs:domain
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_domain
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_domain
+    owner: rdf_Property
+    domain_of:
+    - owl_Ontology_Property
+    - rdf_Property
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Symmetric_Property
+    - owl_Datatype_Property
+    - owl_Functional_Property
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  orth_tax_Range_Id:
+    name: orth_tax_Range_Id
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_tax_Range_Id
+    description: Property orth:taxRangeId
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_tax_Range_Id
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_tax_Range_Id
+    owner: orth_Taxonomic_Range
+    domain_of:
+    - uniprot_core_Taxon
+    - orth_Taxonomic_Range
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  skos_alt_Label:
+    name: skos_alt_Label
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_alt_Label
+    description: Property skos:altLabel
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_alt_Label
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_alt_Label
+    owner: owl_Class
+    domain_of:
+    - owl_Object_Property
+    - owl_Symmetric_Property
+    - owl_Datatype_Property
+    - owl_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_inverse_Of:
+    name: owl_inverse_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_inverse_Of
+    description: Property owl:inverseOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_inverse_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_inverse_Of
+    owner: owl_Object_Property
+    domain_of:
+    - owl_Object_Property
+    range: owl_Object_Property
+    inlined: true
+    inlined_as_list: true
+  owl_equivalent_Class:
+    name: owl_equivalent_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_equivalent_Class
+    description: Property owl:equivalentClass
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_equivalent_Class
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_equivalent_Class
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_NCBIRef_Seq:
+    name: lscr_xref_NCBIRef_Seq
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_NCBIRef_Seq
+    description: Property lscr:xrefNCBIRefSeq
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_NCBIRef_Seq
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_NCBIRef_Seq
+    owner: orth_Protein
+    domain_of:
+    - orth_Protein
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  schema_target:
+    name: schema_target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/schema_target
+    description: Property schema:target
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/schema_target
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/schema_target
+    owner: sh_SPARQLSelect_Executable
+    domain_of:
+    - sh_SPARQLExecutable
+    - sh_SPARQLSelect_Executable
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdfs_label:
+    name: rdfs_label
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_label
+    description: Property rdfs:label
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_label
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_label
+    owner: rdf_Property
+    domain_of:
+    - owl_Ontology_Property
+    - rdf_Property
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Symmetric_Property
+    - owl_Datatype_Property
+    - owl_Functional_Property
+    - owl_Class
+    - rdfs_Class
+    - orth_Protein
+    - uniprot_core_Rank
+    - owl_Named_Individual
+    - owl_Reflexive_Property
+    - owl_Transitive_Property
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  cdao_0000148:
+    name: cdao_0000148
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/cdao_0000148
+    description: Property cdao:0000148
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/cdao_0000148
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/cdao_0000148
+    owner: orth_Hierarchical_Gene_Tree
+    domain_of:
+    - orth_Hierarchical_Gene_Tree
+    range: orth_Orthologs_Cluster
+    inlined: true
+    inlined_as_list: true
+  example_file_name:
+    name: example_file_name
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/example_file_name
+    description: Property example:file_name
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/example_file_name
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/example_file_name
+    owner: sh_SPARQLSelect_Executable
+    domain_of:
+    - owl_Ontology
+    - sh_SPARQLExecutable
+    - sh_SPARQLSelect_Executable
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  sh_select:
+    name: sh_select
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_select
+    description: Property sh:select
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_select
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_select
+    owner: sh_SPARQLSelect_Executable
+    domain_of:
+    - sh_SPARQLExecutable
+    - sh_SPARQLSelect_Executable
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  orth_has_Homologous_Member:
+    name: orth_has_Homologous_Member
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_has_Homologous_Member
+    description: Property orth:hasHomologousMember
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_has_Homologous_Member
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_has_Homologous_Member
+    owner: orth_Orthologs_Cluster
+    domain_of:
+    - orth_Orthologs_Cluster
+    - orth_Paralogs_Cluster
+    range: orth_Orthologs_Cluster
+    inlined: true
+    inlined_as_list: true
+  owl_version_IRI:
+    name: owl_version_IRI
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_version_IRI
+    description: Property owl:versionIRI
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_version_IRI
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_version_IRI
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_union_Of:
+    name: owl_union_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_union_Of
+    description: Property owl:unionOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_union_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_union_Of
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_qualified_Cardinality:
+    name: owl_qualified_Cardinality
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_qualified_Cardinality
+    description: Property owl:qualifiedCardinality
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_qualified_Cardinality
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_qualified_Cardinality
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_Swiss_Prot:
+    name: lscr_xref_Swiss_Prot
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Swiss_Prot
+    description: Property lscr:xrefSwissProt
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Swiss_Prot
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Swiss_Prot
+    owner: orth_Protein
+    domain_of:
+    - orth_Protein
+    range: uniprot_core_Protein
+    inlined: true
+    inlined_as_list: true
+  dcterms_identifier:
+    name: dcterms_identifier
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/dcterms_identifier
+    description: Property dcterms:identifier
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/dcterms_identifier
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/dcterms_identifier
+    owner: orth_Hierarchical_Gene_Tree
+    domain_of:
+    - orth_Orthologs_Cluster
+    - orth_Protein
+    - orth_Gene
+    - orth_Hierarchical_Gene_Tree
+    - uniprot_core_Protein
+    - ensembl_protein
+    - so_0000673
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  ro_0001018:
+    name: ro_0001018
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/ro_0001018
+    description: Property ro:0001018
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/ro_0001018
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/ro_0001018
+    owner: orth_Protein
+    domain_of:
+    - orth_Protein
+    range: sio_000750
+    inlined: true
+    inlined_as_list: true
+  skos_example:
+    name: skos_example
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_example
+    description: Property skos:example
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_example
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_example
+    owner: owl_Annotation_Property
+    domain_of:
+    - owl_Annotation_Property
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_max_Qualified_Cardinality:
+    name: owl_max_Qualified_Cardinality
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_max_Qualified_Cardinality
+    description: Property owl:maxQualifiedCardinality
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_max_Qualified_Cardinality
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_max_Qualified_Cardinality
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  uniprot_core_rank:
+    name: uniprot_core_rank
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_rank
+    description: Property uniprot.core:rank
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_rank
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_rank
+    owner: orth_Taxonomic_Range
+    domain_of:
+    - uniprot_core_Taxon
+    - orth_Taxonomic_Range
+    range: uniprot_core_Rank
+    inlined: true
+    inlined_as_list: true
+  orth_organism:
+    name: orth_organism
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_organism
+    description: Property orth:organism
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_organism
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_organism
+    owner: so_0000704
+    domain_of:
+    - orth_Protein
+    - orth_Gene
+    - so_0000704
+    range: orth_Organism
+    inlined: true
+    inlined_as_list: true
+  orth_tax_Range:
+    name: orth_tax_Range
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_tax_Range
+    description: Property orth:taxRange
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_tax_Range
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_tax_Range
+    owner: orth_Taxonomic_Range
+    domain_of:
+    - uniprot_core_Taxon
+    - orth_Taxonomic_Range
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  owl_on_Class:
+    name: owl_on_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_on_Class
+    description: Property owl:onClass
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_on_Class
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_on_Class
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  owl_on_Data_Range:
+    name: owl_on_Data_Range
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_on_Data_Range
+    description: Property owl:onDataRange
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_on_Data_Range
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_on_Data_Range
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_some_Values_From:
+    name: owl_some_Values_From
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_some_Values_From
+    description: Property owl:someValuesFrom
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_some_Values_From
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_some_Values_From
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  skos_scope_Note:
+    name: skos_scope_Note
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_scope_Note
+    description: Property skos:scopeNote
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_scope_Note
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_scope_Note
+    owner: owl_Annotation_Property
+    domain_of:
+    - owl_Annotation_Property
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_prior_Version:
+    name: owl_prior_Version
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_prior_Version
+    description: Property owl:priorVersion
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_prior_Version
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_prior_Version
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_intersection_Of:
+    name: owl_intersection_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_intersection_Of
+    description: Property owl:intersectionOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_intersection_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_intersection_Of
+    owner: owl_Class
+    domain_of:
+    - owl_Class
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_Uniprot:
+    name: lscr_xref_Uniprot
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Uniprot
+    description: Property lscr:xrefUniprot
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Uniprot
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Uniprot
+    owner: orth_Protein
+    domain_of:
+    - orth_Protein
+    range: uniprot_core_Protein
+    inlined: true
+    inlined_as_list: true
+  rdfs_comment:
+    name: rdfs_comment
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_comment
+    description: Property rdfs:comment
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_comment
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_comment
+    owner: sh_SPARQLSelect_Executable
+    domain_of:
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Symmetric_Property
+    - owl_Datatype_Property
+    - owl_Functional_Property
+    - owl_Class
+    - orth_Protein
+    - owl_Ontology
+    - owl_Reflexive_Property
+    - owl_Transitive_Property
+    - sio_000750
+    - sh_SPARQLExecutable
+    - sh_SPARQLSelect_Executable
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdfs_is_Defined_By:
+    name: rdfs_is_Defined_By
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_is_Defined_By
+    description: Property rdfs:isDefinedBy
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_is_Defined_By
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_is_Defined_By
+    owner: owl_Transitive_Property
+    domain_of:
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Symmetric_Property
+    - owl_Datatype_Property
+    - owl_Functional_Property
+    - owl_Class
+    - owl_Ontology
+    - uniprot_core_Rank
+    - owl_Named_Individual
+    - owl_Reflexive_Property
+    - owl_Transitive_Property
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_NCBIGene:
+    name: lscr_xref_NCBIGene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_NCBIGene
+    description: Property lscr:xrefNCBIGene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_NCBIGene
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_NCBIGene
+    owner: so_0000704
+    domain_of:
+    - orth_Gene
+    - so_0000704
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  skos_definition:
+    name: skos_definition
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_definition
+    description: Property skos:definition
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_definition
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/skos_definition
+    owner: owl_Annotation_Property
+    domain_of:
+    - owl_Annotation_Property
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdfs_range:
+    name: rdfs_range
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_range
+    description: Property rdfs:range
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_range
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_range
+    owner: rdf_Property
+    domain_of:
+    - owl_Ontology_Property
+    - rdf_Property
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Symmetric_Property
+    - owl_Datatype_Property
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_Ensembl_Protein:
+    name: lscr_xref_Ensembl_Protein
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Ensembl_Protein
+    description: Property lscr:xrefEnsemblProtein
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Ensembl_Protein
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Ensembl_Protein
+    owner: orth_Protein
+    domain_of:
+    - orth_Protein
+    range: ensembl_protein
+    inlined: true
+    inlined_as_list: true
+  owl_has_Value:
+    name: owl_has_Value
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_has_Value
+    description: Property owl:hasValue
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_has_Value
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_has_Value
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  orth_has_Taxonomic_Range:
+    name: orth_has_Taxonomic_Range
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_has_Taxonomic_Range
+    description: Property orth:hasTaxonomicRange
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_has_Taxonomic_Range
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_has_Taxonomic_Range
+    owner: orth_Orthologs_Cluster
+    domain_of:
+    - orth_Orthologs_Cluster
+    range: uniprot_core_Taxon
+    inlined: true
+    inlined_as_list: true
+  owl_version_Info:
+    name: owl_version_Info
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_version_Info
+    description: Property owl:versionInfo
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_version_Info
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_version_Info
+    owner: owl_Ontology
+    domain_of:
+    - owl_Ontology
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_Ensembl_Gene:
+    name: lscr_xref_Ensembl_Gene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Ensembl_Gene
+    description: Property lscr:xrefEnsemblGene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Ensembl_Gene
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_Ensembl_Gene
+    owner: so_0000704
+    domain_of:
+    - orth_Gene
+    - so_0000704
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_EMBLSequence:
+    name: lscr_xref_EMBLSequence
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_EMBLSequence
+    description: Property lscr:xrefEMBLSequence
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_EMBLSequence
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_EMBLSequence
+    owner: orth_Protein
+    domain_of:
+    - orth_Protein
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  owl_all_Values_From:
+    name: owl_all_Values_From
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_all_Values_From
+    description: Property owl:allValuesFrom
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_all_Values_From
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_all_Values_From
+    owner: owl_Restriction
+    domain_of:
+    - owl_Restriction
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  rdfs_see_Also:
+    name: rdfs_see_Also
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_see_Also
+    description: Property rdfs:seeAlso
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_see_Also
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_see_Also
+    owner: owl_Class
+    domain_of:
+    - owl_Datatype_Property
+    - owl_Class
+    - orth_Protein
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  pav_version:
+    name: pav_version
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/pav_version
+    description: Property pav:version
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/pav_version
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/pav_version
+    owner: sio_000750
+    domain_of:
+    - sio_000750
+    - orth_Orthology_Dataset
+    range: Literal
+    inlined: true
+    inlined_as_list: true
+  ro_0002162:
+    name: ro_0002162
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/ro_0002162
+    description: Property ro:0002162
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/ro_0002162
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/ro_0002162
+    owner: orth_Organism
+    domain_of:
+    - orth_Organism
+    range: uniprot_core_Taxon
+    inlined: true
+    inlined_as_list: true
+  lscr_xref_NCBIProtein:
+    name: lscr_xref_NCBIProtein
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_NCBIProtein
+    description: Property lscr:xrefNCBIProtein
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_NCBIProtein
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/lscr_xref_NCBIProtein
+    owner: orth_Protein
+    domain_of:
+    - orth_Protein
+    range: Resource
+    inlined: true
+    inlined_as_list: true
+  rdfs_sub_Property_Of:
+    name: rdfs_sub_Property_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_sub_Property_Of
+    description: Property rdfs:subPropertyOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_sub_Property_Of
+    slot_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_sub_Property_Of
+    owner: rdf_Property
+    domain_of:
+    - rdf_Property
+    - owl_Object_Property
+    - owl_Annotation_Property
+    - owl_Symmetric_Property
+    - owl_Datatype_Property
+    range: owl_Datatype_Property
+    inlined: true
+    inlined_as_list: true
+classes:
+  owl_Annotation_Property:
+    name: owl_Annotation_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlAnnotationProperty
+    description: Class representing owl_Annotation_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Annotation_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - rdfs_sub_Property_Of
+    - rdfs_label
+    - rdfs_comment
+    - rdfs_is_Defined_By
+    - skos_example
+    - skos_scope_Note
+    - skos_definition
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Annotation_Property
+  sh_SPARQLExecutable:
+    name: sh_SPARQLExecutable
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/ShSPARQLExecutable
+    description: Class representing sh_SPARQLExecutable
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_SPARQLExecutable
+    slots:
+    - rdfs_comment
+    - sh_select
+    - example_file_name
+    - schema_target
+    - sh_prefixes
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_SPARQLExecutable
+  uniprot_core_Protein:
+    name: uniprot_core_Protein
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/UniprotCoreProtein
+    description: Class representing uniprot_core_Protein
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_Protein
+    slots:
+    - dcterms_identifier
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_Protein
+  owl_Ontology_Property:
+    name: owl_Ontology_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlOntologyProperty
+    description: Class representing owl_Ontology_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Ontology_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - rdfs_label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Ontology_Property
+  orth_Protein:
+    name: orth_Protein
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OrthProtein
+    description: Class representing orth_Protein
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Protein
+    slots:
+    - lscr_xref_Uniprot
+    - orth_organism
+    - ro_0001018
+    - lscr_xref_Ensembl_Protein
+    - lscr_xref_Ensembl_Transcript
+    - sio_010079
+    - lscr_xref_Swiss_Prot
+    - rdfs_label
+    - rdfs_comment
+    - rdfs_see_Also
+    - dcterms_identifier
+    - lscr_xref_NCBIRef_Seq
+    - lscr_xref_NCBIProtein
+    - lscr_xref_EMBLSequence
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Protein
+  owl_Reflexive_Property:
+    name: owl_Reflexive_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlReflexiveProperty
+    description: Class representing owl_Reflexive_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Reflexive_Property
+    slots:
+    - rdfs_label
+    - rdfs_comment
+    - rdfs_is_Defined_By
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Reflexive_Property
+  owl_Functional_Property:
+    name: owl_Functional_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlFunctionalProperty
+    description: Class representing owl_Functional_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Functional_Property
+    slots:
+    - rdfs_domain
+    - rdfs_label
+    - rdfs_comment
+    - rdfs_is_Defined_By
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Functional_Property
+  orth_Orthology_Dataset:
+    name: orth_Orthology_Dataset
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OrthOrthologyDataset
+    description: Class representing orth_Orthology_Dataset
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Orthology_Dataset
+    slots:
+    - pav_version
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Orthology_Dataset
+  orth_Paralogs_Cluster:
+    name: orth_Paralogs_Cluster
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OrthParalogsCluster
+    description: Class representing orth_Paralogs_Cluster
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Paralogs_Cluster
+    slots:
+    - orth_has_Homologous_Member
+    - orth_in_Dataset
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Paralogs_Cluster
+  orth_Gene:
+    name: orth_Gene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OrthGene
+    description: Class representing orth_Gene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Gene
+    slots:
+    - orth_organism
+    - dcterms_identifier
+    - lscr_xref_NCBIGene
+    - lscr_xref_Ensembl_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Gene
+  owl_Restriction:
+    name: owl_Restriction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlRestriction
+    description: Class representing owl_Restriction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Restriction
+    slots:
+    - owl_on_Property
+    - owl_on_Class
+    - owl_all_Values_From
+    - owl_some_Values_From
+    - owl_qualified_Cardinality
+    - owl_max_Qualified_Cardinality
+    - owl_has_Value
+    - owl_on_Data_Range
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Restriction
+  so_0000704:
+    name: so_0000704
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/So0000704
+    description: Class representing so_0000704
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/so_0000704
+    slots:
+    - orth_organism
+    - lscr_xref_NCBIGene
+    - lscr_xref_Ensembl_Gene
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/so_0000704
+  owl_Datatype_Property:
+    name: owl_Datatype_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlDatatypeProperty
+    description: Class representing owl_Datatype_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Datatype_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - rdfs_sub_Property_Of
+    - rdfs_label
+    - rdfs_comment
+    - rdfs_see_Also
+    - rdfs_is_Defined_By
+    - skos_alt_Label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Datatype_Property
+  owl_Named_Individual:
+    name: owl_Named_Individual
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlNamedIndividual
+    description: Class representing owl_Named_Individual
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Named_Individual
+    slots:
+    - rdfs_label
+    - rdfs_is_Defined_By
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Named_Individual
+  owl_Ontology:
+    name: owl_Ontology
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlOntology
+    description: Class representing owl_Ontology
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Ontology
+    slots:
+    - owl_version_Info
+    - rdfs_comment
+    - rdfs_is_Defined_By
+    - owl_prior_Version
+    - owl_imports
+    - sh_declare
+    - example_file_name
+    - owl_version_IRI
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Ontology
+  orth_Organism:
+    name: orth_Organism
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OrthOrganism
+    description: Class representing orth_Organism
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Organism
+    slots:
+    - ro_0002162
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Organism
+  so_0000673:
+    name: so_0000673
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/So0000673
+    description: Class representing so_0000673
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/so_0000673
+    slots:
+    - dcterms_identifier
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/so_0000673
+  rdfs_Class:
+    name: rdfs_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/RdfsClass
+    description: Class representing rdfs_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_Class
+    slots:
+    - rdfs_sub_Class_Of
+    - rdfs_label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdfs_Class
+  uniprot_core_Rank:
+    name: uniprot_core_Rank
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/UniprotCoreRank
+    description: Class representing uniprot_core_Rank
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_Rank
+    slots:
+    - rdfs_label
+    - rdfs_is_Defined_By
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_Rank
+  owl_Symmetric_Property:
+    name: owl_Symmetric_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlSymmetricProperty
+    description: Class representing owl_Symmetric_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Symmetric_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - rdfs_sub_Property_Of
+    - rdfs_label
+    - rdfs_comment
+    - rdfs_is_Defined_By
+    - skos_alt_Label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Symmetric_Property
+  owl_Object_Property:
+    name: owl_Object_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlObjectProperty
+    description: Class representing owl_Object_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Object_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - owl_inverse_Of
+    - rdfs_sub_Property_Of
+    - rdfs_label
+    - rdfs_comment
+    - rdfs_is_Defined_By
+    - skos_alt_Label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Object_Property
+  uniprot_core_Taxon:
+    name: uniprot_core_Taxon
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/UniprotCoreTaxon
+    description: Class representing uniprot_core_Taxon
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_Taxon
+    slots:
+    - uniprot_core_rank
+    - orth_tax_Range_Id
+    - uniprot_core_mnemonic
+    - orth_tax_Range
+    - uniprot_core_scientific_Name
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/uniprot_core_Taxon
+  orth_Orthologs_Cluster:
+    name: orth_Orthologs_Cluster
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OrthOrthologsCluster
+    description: Class representing orth_Orthologs_Cluster
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Orthologs_Cluster
+    slots:
+    - orth_has_Taxonomic_Range
+    - orth_has_Homologous_Member
+    - orth_in_Dataset
+    - dcterms_identifier
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Orthologs_Cluster
+  sio_000750:
+    name: sio_000750
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/Sio000750
+    description: Class representing sio_000750
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sio_000750
+    slots:
+    - rdfs_comment
+    - pav_version
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sio_000750
+  Literal:
+    name: Literal
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/Literal
+    description: Class representing Literal
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/Literal
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/Literal
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Class
+    slots:
+    - owl_complement_Of
+    - rdfs_sub_Class_Of
+    - owl_disjoint_With
+    - owl_equivalent_Class
+    - rdfs_label
+    - rdfs_comment
+    - rdfs_see_Also
+    - rdfs_is_Defined_By
+    - owl_union_Of
+    - skos_alt_Label
+    - owl_intersection_Of
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Class
+  Resource:
+    name: Resource
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/Resource
+    description: Class representing Resource
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/Resource
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/Resource
+  orth_Taxonomic_Range:
+    name: orth_Taxonomic_Range
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OrthTaxonomicRange
+    description: Class representing orth_Taxonomic_Range
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Taxonomic_Range
+    slots:
+    - uniprot_core_rank
+    - orth_tax_Range_Id
+    - uniprot_core_mnemonic
+    - orth_tax_Range
+    - uniprot_core_scientific_Name
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Taxonomic_Range
+  owl_Transitive_Property:
+    name: owl_Transitive_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OwlTransitiveProperty
+    description: Class representing owl_Transitive_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Transitive_Property
+    slots:
+    - rdfs_label
+    - rdfs_comment
+    - rdfs_is_Defined_By
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/owl_Transitive_Property
+  ensembl_protein:
+    name: ensembl_protein
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/EnsemblProtein
+    description: Class representing ensembl_protein
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/ensembl_protein
+    slots:
+    - dcterms_identifier
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/ensembl_protein
+  orth_Hierarchical_Gene_Tree:
+    name: orth_Hierarchical_Gene_Tree
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/OrthHierarchicalGeneTree
+    description: Class representing orth_Hierarchical_Gene_Tree
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Hierarchical_Gene_Tree
+    slots:
+    - cdao_0000148
+    - dcterms_identifier
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/orth_Hierarchical_Gene_Tree
+  sh_SPARQLSelect_Executable:
+    name: sh_SPARQLSelect_Executable
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/ShSPARQLSelectExecutable
+    description: Class representing sh_SPARQLSelect_Executable
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_SPARQLSelect_Executable
+    slots:
+    - rdfs_comment
+    - sh_select
+    - example_file_name
+    - schema_target
+    - sh_prefixes
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/sh_SPARQLSelect_Executable
+  rdf_Property:
+    name: rdf_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/RdfProperty
+    description: Class representing rdf_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/
+    mappings:
+    - http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdf_Property
+    slots:
+    - rdfs_range
+    - rdfs_domain
+    - rdfs_sub_Property_Of
+    - rdfs_label
+    class_uri: http://jmillanacosta.github.io/rdfsolve/omabrowser/linkml/rdf_Property
+metamodel_version: 1.7.0
+generation_date: '2025-12-02T10:38:35'

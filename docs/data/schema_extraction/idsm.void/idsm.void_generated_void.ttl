@@ -1,0 +1,80 @@
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://idsm.elixir-czech.cz/.well-known/void/void/class_partition_> void:class void:Dataset,
+        void:Linkset,
+        <http://www.w3.org/ns/sparql-service-description#Dataset>,
+        <http://www.w3.org/ns/sparql-service-description#Feature>,
+        <http://www.w3.org/ns/sparql-service-description#Function>,
+        <http://www.w3.org/ns/sparql-service-description#Graph>,
+        <http://www.w3.org/ns/sparql-service-description#GraphCollection>,
+        <http://www.w3.org/ns/sparql-service-description#Service> ;
+    void:entities 1,
+        6,
+        27,
+        38,
+        20987,
+        29259 .
+
+<https://idsm.elixir-czech.cz/.well-known/void/void/datatype_partition_> ns1:datatypePartition xsd:dateTime,
+        xsd:long ;
+    void:triples 2,
+        176904 .
+
+<https://idsm.elixir-czech.cz/.well-known/void/void/property_partition_> ns1:objectClass void:Dataset,
+        void:Linkset,
+        rdf:Property,
+        owl:Class,
+        <http://www.w3.org/ns/sparql-service-description#Dataset>,
+        <http://www.w3.org/ns/sparql-service-description#Feature>,
+        <http://www.w3.org/ns/sparql-service-description#Function>,
+        <http://www.w3.org/ns/sparql-service-description#Graph>,
+        <http://www.w3.org/ns/sparql-service-description#GraphCollection>,
+        <http://www.w3.org/ns/sparql-service-description#Service> ;
+    ns1:subjectClass void:Dataset,
+        void:Linkset,
+        <http://www.w3.org/ns/sparql-service-description#Dataset>,
+        <http://www.w3.org/ns/sparql-service-description#Graph>,
+        <http://www.w3.org/ns/sparql-service-description#Service> ;
+    void:property ns1:datatype,
+        ns1:datatypePartition,
+        void:class,
+        void:classPartition,
+        void:linkPredicate,
+        void:objectsTarget,
+        void:property,
+        void:propertyPartition,
+        void:subjectsTarget,
+        void:subset,
+        void:target,
+        rdf:type,
+        <http://www.w3.org/ns/sparql-service-description#availableGraphs>,
+        <http://www.w3.org/ns/sparql-service-description#defaultDataset>,
+        <http://www.w3.org/ns/sparql-service-description#defaultGraph>,
+        <http://www.w3.org/ns/sparql-service-description#endpoint>,
+        <http://www.w3.org/ns/sparql-service-description#extensionFunction>,
+        <http://www.w3.org/ns/sparql-service-description#propertyFeature> ;
+    void:triples 1,
+        4,
+        6,
+        27,
+        38,
+        559,
+        637,
+        951,
+        2065,
+        2073,
+        5188,
+        5524,
+        20851,
+        20987,
+        27995,
+        29221,
+        41974,
+        50246,
+        62388,
+        85987 .
+

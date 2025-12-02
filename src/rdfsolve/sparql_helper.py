@@ -1,5 +1,5 @@
 """
-SPARQL Helper - Centralized SPARQL query execution with automatic fallback.
+SPARQL Helper, Centralized SPARQL query execution with automatic fallback.
 
 This module is a SPARQL client that handles:
 - Automatic GET → POST fallback for endpoints that require POST
@@ -27,16 +27,37 @@ Usage:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import secrets
 import time
-from typing import Any, Literal
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any, ClassVar, Literal
 
 import requests
 from rdflib import Graph
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class QueryRecord:
+    """Record of a SPARQL query execution."""
+
+    query: str
+    query_type: Literal["SELECT", "CONSTRUCT", "ASK"]
+    endpoint_url: str
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    description: str = ""
+    keywords: list[str] = field(default_factory=list)
+    success: bool = True
+
+    def query_id(self) -> str:
+        """Generate a unique ID for this query based on content hash."""
+        content = f"{self.query_type}:{self.query}"
+        return hashlib.md5(content.encode()).hexdigest()[:12]
 
 
 class SparqlHelperError(Exception):
@@ -87,7 +108,7 @@ class SparqlHelper:
     - Consistent error handling and logging
     - Support for SELECT, CONSTRUCT, and ASK queries
 
-    Uses standard `requests` library - no SPARQLWrapper dependency required.
+    Uses standard `requests` library.
 
     Attributes:
         endpoint_url: The SPARQL endpoint URL
@@ -112,6 +133,142 @@ class SparqlHelper:
 
     # HTTP status codes that warrant a retry
     RETRY_STATUS_CODES = (500, 502, 503, 504, 429)
+
+    # Class-level query registry to collect all executed queries
+    _query_registry: ClassVar[list[QueryRecord]] = []
+    _collect_queries: ClassVar[bool] = False
+
+    @classmethod
+    def enable_query_collection(cls) -> None:
+        """Enable collection of all executed queries."""
+        cls._collect_queries = True
+        cls._query_registry = []
+        logger.debug("Query collection enabled")
+
+    @classmethod
+    def disable_query_collection(cls) -> None:
+        """Disable query collection."""
+        cls._collect_queries = False
+        logger.debug("Query collection disabled")
+
+    @classmethod
+    def get_collected_queries(cls) -> list[QueryRecord]:
+        """Get all collected queries."""
+        return cls._query_registry.copy()
+
+    @classmethod
+    def clear_collected_queries(cls) -> None:
+        """Clear all collected queries."""
+        cls._query_registry = []
+
+    @classmethod
+    def _record_query(
+        cls,
+        query: str,
+        query_type: Literal["SELECT", "CONSTRUCT", "ASK"],
+        endpoint_url: str,
+        description: str = "",
+        keywords: list[str] | None = None,
+        success: bool = True,
+    ) -> None:
+        """Record a query if collection is enabled."""
+        if cls._collect_queries:
+            record = QueryRecord(
+                query=query,
+                query_type=query_type,
+                endpoint_url=endpoint_url,
+                description=description,
+                keywords=keywords or [],
+                success=success,
+            )
+            cls._query_registry.append(record)
+
+    @classmethod
+    def export_queries_as_ttl(
+        cls,
+        output_file: str | None = None,
+        base_uri: str = "https://example.org/sparql-queries/",
+        dataset_name: str = "dataset",
+    ) -> str:
+        """
+        Export collected queries as TTL using SHACL SPARQL representation.
+
+        Args:
+            output_file: Optional file path to write TTL
+            base_uri: Base URI for query IRIs
+            dataset_name: Name of the dataset for namespacing
+
+        Returns:
+            TTL string with all collected queries
+        """
+        # Deduplicate queries by content hash
+        seen_hashes: set[str] = set()
+        unique_queries: list[QueryRecord] = []
+        for record in cls._query_registry:
+            query_hash = record.query_id()
+            if query_hash not in seen_hashes:
+                seen_hashes.add(query_hash)
+                unique_queries.append(record)
+
+        # Build TTL
+        lines = [
+            f"@prefix ex: <{base_uri}{dataset_name}/> .",
+            "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
+            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
+            "@prefix schema: <https://schema.org/> .",
+            "@prefix sh: <http://www.w3.org/ns/shacl#> .",
+            "@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .",
+            "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",
+            "",
+        ]
+
+        for record in unique_queries:
+            query_id = record.query_id()
+            query_type_class = {
+                "SELECT": "sh:SPARQLSelectExecutable",
+                "CONSTRUCT": "sh:SPARQLConstructExecutable",
+                "ASK": "sh:SPARQLAskExecutable",
+            }.get(record.query_type, "sh:SPARQLExecutable")
+
+            query_predicate = {
+                "SELECT": "sh:select",
+                "CONSTRUCT": "sh:construct",
+                "ASK": "sh:ask",
+            }.get(record.query_type, "sh:select")
+
+            # Escape the query for TTL (triple-quoted string)
+            escaped_query = record.query.replace("\\", "\\\\").replace('"""', '\\"\\"\\"')
+
+            lines.append(f"ex:{query_id} a sh:SPARQLExecutable,")
+            lines.append(f"        {query_type_class} ;")
+
+            if record.description:
+                escaped_desc = record.description.replace('"', '\\"')
+                lines.append(f'    rdfs:comment "{escaped_desc}" ;')
+
+            lines.append(f'    {query_predicate} """')
+            lines.append(escaped_query)
+            lines.append('""" ;')
+
+            if record.keywords:
+                kw_str = " , ".join(f'"{kw}"' for kw in record.keywords)
+                lines.append(f"    schema:keywords {kw_str} ;")
+
+            lines.append(f'    schema:dateCreated "{record.timestamp}"^^xsd:dateTime ;')
+            lines.append("    schema:target [")
+            lines.append("        a sd:Service ;")
+            lines.append(f"        sd:endpoint <{record.endpoint_url}>")
+            lines.append("    ] .")
+            lines.append("")
+
+        ttl_content = "\n".join(lines)
+
+        if output_file:
+            with open(output_file, "w", encoding="utf-8") as f:
+                f.write(ttl_content)
+            logger.info(f"Exported {len(unique_queries)} queries to {output_file}")
+
+        return ttl_content
 
     def __init__(
         self,
@@ -292,6 +449,14 @@ class SparqlHelper:
                     else:
                         raise EndpointError("Endpoint returned HTML error even with POST")
 
+                # Record successful query
+                SparqlHelper._record_query(
+                    query=query,
+                    query_type=query_type,
+                    endpoint_url=self.endpoint_url,
+                    success=True,
+                )
+
                 # Parse JSON if requested
                 if parse_json:
                     return json.loads(result)
@@ -330,7 +495,7 @@ class SparqlHelper:
                 self._handle_retry(attempt, query_type, e)
 
             except json.JSONDecodeError as e:
-                # JSON parse error - might be HTML response
+                # JSON parse error, might be HTML response
                 self._handle_retry(attempt, query_type, e)
 
             except Exception as e:
@@ -592,7 +757,7 @@ class SparqlHelper:
         """
         # Escape existing braces for .format() compatibility
         escaped = base_query.replace("{", "{{").replace("}", "}}")
-        # Add pagination placeholders (single braces - these get substituted)
+        # Add pagination placeholders (single braces, these get substituted)
         return escaped + "\nOFFSET {offset}\nLIMIT {limit}"
 
     @staticmethod
@@ -628,7 +793,7 @@ class SparqlHelper:
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Context manager exit - close session."""
+        """Context manager exit, close session."""
         self.close()
 
     def __repr__(self) -> str:
