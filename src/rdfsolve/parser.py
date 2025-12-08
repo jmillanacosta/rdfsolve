@@ -2876,16 +2876,14 @@ WHERE {{
                             object_iri = binding["o"]["value"]
                             unique_subjects.add(subject_iri)
 
-                            # Add instance data for linking
+                            # Add instance data for linking - only store the shape_id and IRIs
+                            # The full shape details are in the frequencies DataFrame
                             if instances_data is not None:
                                 instances_data.append(
                                     {
                                         "shape_id": shape_id,
                                         "subject_iri": subject_iri,
                                         "object_iri": object_iri,
-                                        "subject_class": row["subject_class"],
-                                        "property": row["property"],
-                                        "object_class": row["object_class"],
                                     }
                                 )
                         participating = len(unique_subjects)
@@ -2919,11 +2917,11 @@ WHERE {{
                     {
                         "shape_id": shape_id,
                         "subject_class": row["subject_class"],
-                        "subject_uri": subject_class_uri,
+                        "subject_uri": row["s"],
                         "property": row["property"],
                         "property_uri": property_uri,
                         "object_class": row["object_class"],
-                        "object_uri": object_class_uri,
+                        "object_uri": row["o"],
                         "total_entities": total_entities,
                         "participating_entities": participating,
                         "occurrence_count": participating,
@@ -2977,15 +2975,9 @@ WHERE {{
         instances_df = None
         if collect_instances and instances_data:
             instances_df = pd.DataFrame(instances_data)
-            # Optimize memory by using categorical data types for repeated values
-            instances_df = instances_df.astype(
-                {
-                    "shape_id": "category",
-                    "subject_class": "category",
-                    "property": "category",
-                    "object_class": "category",
-                }
-            )
+            # Optimize memory by using categorical data types for shape_id
+            # No need to store subject_class, property, object_class as they're in frequencies_df
+            instances_df = instances_df.astype({"shape_id": "category"})
 
         # Report query statistics (only if tracking was enabled)
         if track_queries:
@@ -3350,6 +3342,161 @@ WHERE {{
             },
             "top_shapes_by_instances": combined.nlargest(10, "actual_instances").to_dict("index"),
         }
+
+    def create_instances_index(
+        self, instances_df: pd.DataFrame
+    ) -> tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+        """
+        Create optimized hash-based index structures for instances.
+
+        This creates two inverted index structures:
+        1. subject_index: Maps each unique subject IRI to list of shape_ids where it appears as subject
+        2. object_index: Maps each unique object IRI to list of shape_ids where it appears as object
+
+        This structure is much more memory-efficient than the full DataFrame when
+        you need to query "which shapes does this IRI participate in?"
+
+        Args:
+            instances_df: DataFrame with shape_id, subject_iri, object_iri columns
+
+        Returns:
+            Tuple of (subject_index, object_index) dictionaries
+        """
+        if instances_df is None or instances_df.empty:
+            return {}, {}
+
+        subject_index: Dict[str, List[str]] = {}
+        object_index: Dict[str, List[str]] = {}
+
+        # Group by IRI to build inverted index
+        for _, row in instances_df.iterrows():
+            shape_id = row["shape_id"]
+            subject_iri = row["subject_iri"]
+            object_iri = row["object_iri"]
+
+            # Add to subject index
+            if subject_iri not in subject_index:
+                subject_index[subject_iri] = []
+            subject_index[subject_iri].append(shape_id)
+
+            # Add to object index
+            if object_iri not in object_index:
+                object_index[object_iri] = []
+            object_index[object_iri].append(shape_id)
+
+        return subject_index, object_index
+
+    def export_instances_compact(
+        self,
+        instances_df: pd.DataFrame,
+        output_prefix: str,
+    ) -> Dict[str, str]:
+        """
+        Export instances data in a compact, memory-efficient format.
+
+        Creates three files:
+        1. {prefix}_subject_index.json: Maps subject IRIs to shape_ids
+        2. {prefix}_object_index.json: Maps object IRIs to shape_ids
+        3. {prefix}_instances_minimal.jsonl: JSON Lines file with core data
+
+        All files are text-based for portability and easy inspection.
+
+        Args:
+            instances_df: DataFrame with instance data
+            output_prefix: Path prefix for output files (without extension)
+
+        Returns:
+            Dictionary with paths to created files and their sizes
+        """
+        import json
+        import os
+
+        if instances_df is None or instances_df.empty:
+            return {}
+
+        # Create indices
+        subject_index, object_index = self.create_instances_index(instances_df)
+
+        # Export subject index
+        subject_path = f"{output_prefix}_subject_index.json"
+        with open(subject_path, "w") as f:
+            json.dump(subject_index, f, indent=2)
+
+        # Export object index
+        object_path = f"{output_prefix}_object_index.json"
+        with open(object_path, "w") as f:
+            json.dump(object_index, f, indent=2)
+
+        # Export minimal instances data as JSON Lines
+        jsonl_path = f"{output_prefix}_instances_minimal.jsonl"
+        with open(jsonl_path, "w") as f:
+            for _, row in instances_df.iterrows():
+                json.dump(
+                    {
+                        "shape_id": row["shape_id"],
+                        "subject_iri": row["subject_iri"],
+                        "object_iri": row["object_iri"],
+                    },
+                    f,
+                )
+                f.write("\n")
+
+        # Get file sizes for reporting
+        result = {
+            "subject_index": subject_path,
+            "subject_index_size_mb": os.path.getsize(subject_path) / 1024 / 1024,
+            "object_index": object_path,
+            "object_index_size_mb": os.path.getsize(object_path) / 1024 / 1024,
+            "instances_jsonl": jsonl_path,
+            "instances_jsonl_size_mb": os.path.getsize(jsonl_path) / 1024 / 1024,
+            "total_subjects": len(subject_index),
+            "total_objects": len(object_index),
+            "total_relationships": len(instances_df),
+        }
+
+        logger.info("Exported compact instances data:")
+        logger.info(f"  Subject index: {result['subject_index_size_mb']:.2f} MB")
+        logger.info(f"  Object index: {result['object_index_size_mb']:.2f} MB")
+        logger.info(f"  Instances data: {result['instances_jsonl_size_mb']:.2f} MB")
+        total_size = sum([
+            result['subject_index_size_mb'],
+            result['object_index_size_mb'],
+            result['instances_jsonl_size_mb']
+        ])
+        logger.info(f"  Total: {total_size:.2f} MB")
+
+        return result
+
+    def load_instances_compact(
+        self, output_prefix: str
+    ) -> tuple[pd.DataFrame, Dict[str, List[str]], Dict[str, List[str]]]:
+        """
+        Load instances data that was exported in compact format.
+
+        Args:
+            output_prefix: Path prefix used during export (without extension)
+
+        Returns:
+            Tuple of (instances_df, subject_index, object_index)
+        """
+        import json
+
+        # Load indices
+        with open(f"{output_prefix}_subject_index.json", "r") as f:
+            subject_index = json.load(f)
+
+        with open(f"{output_prefix}_object_index.json", "r") as f:
+            object_index = json.load(f)
+
+        # Load instances DataFrame from JSON Lines
+        instances_data = []
+        with open(f"{output_prefix}_instances_minimal.jsonl", "r") as f:
+            for line in f:
+                instances_data.append(json.loads(line))
+        
+        instances_df = pd.DataFrame(instances_data)
+
+        return instances_df, subject_index, object_index
 
     def diagnose_object_classes(self, endpoint_url: str) -> Dict[str, Any]:
         """

@@ -23,7 +23,7 @@ def main():
     parser.add_argument(
         "--type",
         "-t",
-        choices=["schema", "pydantic", "all"],
+        choices=["schema", "pydantic", "namespace", "all"],
         default="all",
         help="Type of notebook to generate (default: all)",
     )
@@ -32,6 +32,7 @@ def main():
     script_dir = Path(__file__).parent
     schema_template_file = script_dir / "01_schema_extraction" / "_schema_template.ipynb"
     pydantic_template_file = script_dir / "02_pydantic_models" / "_pydantic_template.ipynb"
+    namespace_template_file = script_dir / "03_bioregistry_namespaces" / "_namespace_template.ipynb"
     sources_file = Path(os.path.abspath(os.path.join(script_dir, "..", "data", "sources.csv")))
 
     # Check if templates exist
@@ -40,6 +41,8 @@ def main():
         templates_to_check.append(("schema", schema_template_file))
     if args.type in ["pydantic", "all"]:
         templates_to_check.append(("pydantic", pydantic_template_file))
+    if args.type in ["namespace", "all"]:
+        templates_to_check.append(("namespace", namespace_template_file))
 
     for template_type, template_path in templates_to_check:
         if not template_path.exists():
@@ -111,9 +114,12 @@ def main():
             if template_type == "schema":
                 output_dir = script_dir / "01_schema_extraction"
                 output_file = output_dir / f"{dataset_name}_schema.ipynb"
-            else:  # pydantic
+            elif template_type == "pydantic":
                 output_dir = script_dir / "02_pydantic_models"
                 output_file = output_dir / f"{dataset_name}_pydantic.ipynb"
+            else:  # namespace
+                output_dir = script_dir / "03_bioregistry_namespaces"
+                output_file = output_dir / f"{dataset_name}_namespaces.ipynb"
 
             # Create directory if it doesn't exist
             output_dir.mkdir(exist_ok=True)
@@ -126,6 +132,10 @@ def main():
             content = content.replace("{{dataset_name}}", dataset_name)
             content = content.replace("{{void_iri}}", void_iri)
             content = content.replace("{{graph_uri}}", graph_uri)
+            
+            # Add ttl_db_path for namespace templates
+            ttl_db_path = f"../../docs/data/schema_extraction/{dataset_name}/{dataset_name}_generated_void.ttl"
+            content = content.replace("{{ttl_db_path}}", ttl_db_path)
 
             # Conditionally add graph_uri parameter based on use_graph flag
             if use_graph:

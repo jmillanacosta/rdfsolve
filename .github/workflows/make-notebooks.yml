@@ -7,8 +7,9 @@ on:
     paths:
       - 'data/sources.csv'
       - 'notebooks/make_notebooks.py'
-      - 'notebooks/schema_extraction/_schema_template.ipynb'
-      - 'notebooks/pydantic_models/_pydantic_template.ipynb'
+      - 'notebooks/01_schema_extraction/_schema_template.ipynb'
+      - 'notebooks/02_pydantic_models/_pydantic_template.ipynb'
+      - 'notebooks/03_bioregistry_namespaces/_namespace_template.ipynb'
       - '.github/workflows/make-notebooks.yml'
       - 'src/**'
   workflow_dispatch:
@@ -18,7 +19,7 @@ on:
         required: false
         type: string
       notebook_type:
-        description: 'Type of notebooks to generate (schema, pydantic, or all)'
+        description: 'Type of notebooks to generate (schema, pydantic, namespace, or all)'
         required: false
         default: 'all'
         type: choice
@@ -26,6 +27,7 @@ on:
           - all
           - schema
           - pydantic
+          - namespace
 
 # Prevent concurrent runs per PR
 concurrency:
@@ -43,6 +45,7 @@ jobs:
     outputs:
       schema-matrix: ${{ steps.set-matrix.outputs.schema-matrix }}
       pydantic-matrix: ${{ steps.set-matrix.outputs.pydantic-matrix }}
+      namespace-matrix: ${{ steps.set-matrix.outputs.namespace-matrix }}
     steps:
     - uses: actions/checkout@v4
     
@@ -55,6 +58,7 @@ jobs:
         # Create matrices for different notebook types
         echo "schema-matrix={\"dataset\":$datasets}" >> $GITHUB_OUTPUT
         echo "pydantic-matrix={\"dataset\":$datasets}" >> $GITHUB_OUTPUT
+        echo "namespace-matrix={\"dataset\":$datasets}" >> $GITHUB_OUTPUT
         
         # Log for debugging
         dataset_count=$(echo $datasets | jq length)
@@ -171,7 +175,7 @@ jobs:
 
   pydantic-nb:
     needs: [prepare-matrix, schema-nb]
-    if: ${{ !failure() && (github.event.inputs.notebook_type == 'all' || github.event.inputs.notebook_type == 'pydantic') }}
+    if: ${{ always() && !cancelled() && (github.event.inputs.notebook_type == 'all' || github.event.inputs.notebook_type == 'pydantic' || github.event.inputs.notebook_type == '') }}
     runs-on: ubuntu-latest
     timeout-minutes: 300
     continue-on-error: true
@@ -278,8 +282,123 @@ jobs:
         # Add timing information
         echo "**Duration**: Job completed at $(date)" >> $GITHUB_STEP_SUMMARY
 
+  namespace-nb:
+    needs: [prepare-matrix, schema-nb]
+    if: ${{ always() && !cancelled() && (github.event.inputs.notebook_type == 'all' || github.event.inputs.notebook_type == 'namespace' || github.event.inputs.notebook_type == '') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    continue-on-error: true
+    strategy:
+      matrix: ${{fromJson(needs.prepare-matrix.outputs.namespace-matrix)}}
+      max-parallel: ${{ github.event.inputs.max_parallel || 50 }}
+      fail-fast: false
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pandoc
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[notebooks]
+        pip install jupyter nbconvert pandas
+
+    - name: Download schema artifacts for ${{ matrix.dataset }}
+      uses: actions/download-artifact@v4
+      with:
+        name: schema-${{ matrix.dataset }}
+        path: .
+
+    - name: Generate namespace notebook for ${{ matrix.dataset }}
+      run: |
+        cd notebooks
+        echo "Generating namespace notebook for dataset: ${{ matrix.dataset }}"
+        python make_notebooks.py --dataset "${{ matrix.dataset }}" --type namespace
+
+    - name: Execute namespace notebook and convert to HTML
+      id: convert-namespace
+      run: |
+        cd notebooks/03_bioregistry_namespaces
+        notebook="${{ matrix.dataset }}_namespaces.ipynb"
+        
+        # Create HTML output directory
+        mkdir -p ../../docs/notebooks/03_bioregistry_namespaces
+        
+        echo "Processing: $notebook"
+        
+        # Execute and convert to html
+        if jupyter nbconvert \
+            --execute \
+            --to html \
+            "$notebook" \
+            --output-dir ../../docs/notebooks/03_bioregistry_namespaces \
+            --ExecutePreprocessor.kernel_name=python3 ; then
+          echo "SUCCESS=true" >> $GITHUB_OUTPUT
+          echo "Successfully converted: $notebook"
+        else
+          echo "SUCCESS=false" >> $GITHUB_OUTPUT
+          echo "Failed to convert: $notebook"
+          
+          # Create error report HTML
+          base_name=$(basename "$notebook" .ipynb)
+          cat > "../../docs/notebooks/03_bioregistry_namespaces/${base_name}.html" << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Namespace Discovery Failed - ${{ matrix.dataset }}</title>
+        </head>
+        <body>
+            <h1>Namespace Discovery Failed</h1>
+            <h2>Dataset Information</h2>
+            <p><strong>Dataset:</strong> ${{ matrix.dataset }}</p>
+            <p><strong>Attempted:</strong> <script>document.write(new Date().toUTCString())</script></p>
+            <p><strong>Workflow:</strong> <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Matrix-based parallel processing</a></p>
+            <h2>Manual Execution</h2>
+            <pre>cd notebooks
+            python make_notebooks.py --dataset ${{ matrix.dataset }} --type namespace
+            cd 03_bioregistry_namespaces
+            jupyter nbconvert --execute --to html ${{ matrix.dataset }}_namespaces.ipynb</pre>
+          </body>
+        </html>
+        EOF
+        fi
+
+    - name: Upload individual namespace result
+      uses: actions/upload-artifact@v4
+      with:
+        name: namespace-${{ matrix.dataset }}
+        path: |
+          notebooks/03_bioregistry_namespaces/${{ matrix.dataset }}_namespaces.ipynb
+          docs/notebooks/03_bioregistry_namespaces/${{ matrix.dataset }}_namespaces.html
+          docs/data/schema_extraction/${{ matrix.dataset }}/namespaces/**
+        retention-days: 7
+        if-no-files-found: warn
+
+    - name: Namespace job summary
+      run: |
+        if [ "${{ steps.convert-namespace.outputs.SUCCESS }}" == "true" ]; then
+          echo "**${{ matrix.dataset }}**: Namespace discovery completed successfully" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**${{ matrix.dataset }}**: Namespace discovery failed (timeout or error)" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Add timing information
+        echo "**Duration**: Job completed at $(date)" >> $GITHUB_STEP_SUMMARY
+
   collect-results:
-    needs: [schema-nb, pydantic-nb]
+    needs: [schema-nb, pydantic-nb, namespace-nb]
     runs-on: ubuntu-latest
     if: always()
     permissions:
@@ -298,7 +417,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: artifacts/
-        pattern: "{schema,pydantic}-*"
+        pattern: "{schema,pydantic,namespace}-*"
         merge-multiple: true
       continue-on-error: true
 
@@ -307,8 +426,10 @@ jobs:
         # Create final output directories
         mkdir -p docs/notebooks/01_schema_extraction
         mkdir -p docs/notebooks/02_pydantic_models
+        mkdir -p docs/notebooks/03_bioregistry_namespaces
         mkdir -p notebooks/01_schema_extraction/
         mkdir -p notebooks/02_pydantic_models/
+        mkdir -p notebooks/03_bioregistry_namespaces/
         mkdir -p docs/data/schema_extraction/
         
         # Check if artifacts directory exists and has content
@@ -343,10 +464,13 @@ jobs:
           schema_html=$(find artifacts/ -name "*_schema.html" 2>/dev/null | wc -l)
           pydantic_notebooks=$(find artifacts/ -name "*_pydantic.ipynb" 2>/dev/null | wc -l)
           pydantic_html=$(find artifacts/ -name "*_pydantic.html" 2>/dev/null | wc -l)
+          namespace_notebooks=$(find artifacts/ -name "*_namespaces.ipynb" 2>/dev/null | wc -l)
+          namespace_html=$(find artifacts/ -name "*_namespaces.html" 2>/dev/null | wc -l)
           data_dirs=$(find artifacts/ -type d -path "*/data/schema_extraction/*" 2>/dev/null | wc -l)
           
           echo "Found artifacts: $schema_notebooks schema notebooks, $schema_html schema HTML files"
           echo "Found artifacts: $pydantic_notebooks pydantic notebooks, $pydantic_html pydantic HTML files"
+          echo "Found artifacts: $namespace_notebooks namespace notebooks, $namespace_html namespace HTML files"
           echo "Found artifacts: $data_dirs data directories"
           
           # Copy files with error handling
@@ -366,10 +490,18 @@ jobs:
             find artifacts/ -name "*_pydantic.html" -exec cp {} docs/notebooks/02_pydantic_models/ \; 2>/dev/null || echo "Some pydantic HTML copies failed"
           fi
           
+          if [ "$namespace_notebooks" -gt 0 ]; then
+            find artifacts/ -name "*_namespaces.ipynb" -exec cp {} notebooks/03_bioregistry_namespaces/ \; 2>/dev/null || echo "Some namespace notebook copies failed"
+          fi
+          
+          if [ "$namespace_html" -gt 0 ]; then
+            find artifacts/ -name "*_namespaces.html" -exec cp {} docs/notebooks/03_bioregistry_namespaces/ \; 2>/dev/null || echo "Some namespace HTML copies failed"
+          fi
+          
           # Copy data files from artifacts
           if [ "$data_dirs" -gt 0 ]; then
             echo "Copying data files from artifacts..."
-            find artifacts/ -path "*/data/schema_extraction/*" -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) -exec bash -c '
+            find artifacts/ -path "*/data/schema_extraction/*" -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" -o -name "*.json" -o -name "*.jsonl" \) -exec bash -c '
               file="$1"
               relative_path="${file#*/data/schema_extraction/}"
               dataset_name=$(echo "$relative_path" | cut -d/ -f1)
@@ -386,29 +518,36 @@ jobs:
         final_schema_html=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
         final_pydantic_notebooks=$(find notebooks/02_pydantic_models/ -name "*_pydantic.ipynb" 2>/dev/null | wc -l)
         final_pydantic_html=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
-        final_data_files=$(find docs/data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) 2>/dev/null | wc -l)
+        final_namespace_notebooks=$(find notebooks/03_bioregistry_namespaces/ -name "*_namespaces.ipynb" 2>/dev/null | wc -l)
+        final_namespace_html=$(find docs/notebooks/03_bioregistry_namespaces/ -name "*_namespaces.html" 2>/dev/null | wc -l)
+        final_data_files=$(find docs/data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" -o -name "*.json" -o -name "*.jsonl" \) 2>/dev/null | wc -l)
         
         echo "Final collection results:"
         echo "  Schema notebooks: $final_schema_notebooks"
         echo "  Schema HTML files: $final_schema_html"
         echo "  Pydantic notebooks: $final_pydantic_notebooks"
         echo "  Pydantic HTML files: $final_pydantic_html"
+        echo "  Namespace notebooks: $final_namespace_notebooks"
+        echo "  Namespace HTML files: $final_namespace_html"
         echo "  Data files: $final_data_files"
 
     - name: Generate results data
       run: |
-        # Count results from both directories
+        # Count results from all directories
         total_schema_files=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
         total_pydantic_files=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
+        total_namespace_files=$(find docs/notebooks/03_bioregistry_namespaces/ -name "*_namespaces.html" 2>/dev/null | wc -l)
         
         schema_success_count=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" -exec grep -L "Schema Analysis Failed" {} \; 2>/dev/null | wc -l)
         pydantic_success_count=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" -exec grep -L "Pydantic Generation Failed" {} \; 2>/dev/null | wc -l)
+        namespace_success_count=$(find docs/notebooks/03_bioregistry_namespaces/ -name "*_namespaces.html" -exec grep -L "Namespace Discovery Failed" {} \; 2>/dev/null | wc -l)
         
         schema_failed_count=$((total_schema_files - schema_success_count))
         pydantic_failed_count=$((total_pydantic_files - pydantic_success_count))
+        namespace_failed_count=$((total_namespace_files - namespace_success_count))
         
-        # Count generated data files
-        data_files_count=$(find docs/data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" \) 2>/dev/null | wc -l)
+        # Count generated data files (including new JSON Lines files)
+        data_files_count=$(find docs/data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" -o -name "*.nq" -o -name "*.parquet" -o -name "*.json" -o -name "*.jsonl" \) 2>/dev/null | wc -l)
         
         # Generate JSON data for JavaScript consumption
         cat > docs/results.json << EOF
@@ -416,28 +555,64 @@ jobs:
           "lastUpdated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
           "stats": {
             "totalDatasets": $total_schema_files,
-            "successfulDatasets": $schema_success_count,
-            "failedDatasets": $schema_failed_count,
+            "schemaSuccessful": $schema_success_count,
+            "schemaFailed": $schema_failed_count,
+            "pydanticSuccessful": $pydantic_success_count,
+            "pydanticFailed": $pydantic_failed_count,
+            "namespaceSuccessful": $namespace_success_count,
+            "namespaceFailed": $namespace_failed_count,
             "totalDataFiles": $data_files_count
           },
-          "schemaResults": [
+          "datasets": [
         EOF
         
-        # Process schema results
+        # Process all datasets - combine schema, pydantic, and namespace results
         first=true
         for html_file in docs/notebooks/01_schema_extraction/*_schema.html; do
           if [ -f "$html_file" ]; then
             dataset_name=$(basename "$html_file" .html | sed 's/_schema$//')
             
-            # Check success/failure
+            # Check schema success/failure
             if grep -q "Schema Analysis Failed" "$html_file"; then
-              status="error"
+              schema_status="error"
             else
-              status="success"
+              schema_status="success"
             fi
             
-            file_size=$(ls -lh "$html_file" | awk '{print $5}')
-            report_url="notebooks/01_schema_extraction/$(basename $html_file)"
+            schema_file_size=$(ls -lh "$html_file" | awk '{print $5}')
+            schema_report_url="notebooks/01_schema_extraction/$(basename $html_file)"
+            
+            # Check pydantic status
+            pydantic_html="docs/notebooks/02_pydantic_models/${dataset_name}_pydantic.html"
+            if [ -f "$pydantic_html" ]; then
+              if grep -q "Pydantic Generation Failed" "$pydantic_html"; then
+                pydantic_status="error"
+              else
+                pydantic_status="success"
+              fi
+              pydantic_file_size=$(ls -lh "$pydantic_html" | awk '{print $5}')
+              pydantic_report_url="notebooks/02_pydantic_models/${dataset_name}_pydantic.html"
+            else
+              pydantic_status="missing"
+              pydantic_file_size="N/A"
+              pydantic_report_url=""
+            fi
+            
+            # Check namespace status
+            namespace_html="docs/notebooks/03_bioregistry_namespaces/${dataset_name}_namespaces.html"
+            if [ -f "$namespace_html" ]; then
+              if grep -q "Namespace Discovery Failed" "$namespace_html"; then
+                namespace_status="error"
+              else
+                namespace_status="success"
+              fi
+              namespace_file_size=$(ls -lh "$namespace_html" | awk '{print $5}')
+              namespace_report_url="notebooks/03_bioregistry_namespaces/${dataset_name}_namespaces.html"
+            else
+              namespace_status="missing"
+              namespace_file_size="N/A"
+              namespace_report_url=""
+            fi
             
             # Add comma for all but first entry
             if [ "$first" = false ]; then
@@ -445,14 +620,28 @@ jobs:
             fi
             first=false
             
-            # Start dataset object
+            # Start dataset object with all three notebook types
             cat >> docs/results.json << EOF
             {
               "name": "$dataset_name",
-              "status": "$status",
-              "reportSize": "$file_size",
-              "reportUrl": "$report_url",
               "generated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+              "notebooks": {
+                "schema": {
+                  "status": "$schema_status",
+                  "reportSize": "$schema_file_size",
+                  "reportUrl": "$schema_report_url"
+                },
+                "pydantic": {
+                  "status": "$pydantic_status",
+                  "reportSize": "$pydantic_file_size",
+                  "reportUrl": "$pydantic_report_url"
+                },
+                "namespace": {
+                  "status": "$namespace_status",
+                  "reportSize": "$namespace_file_size",
+                  "reportUrl": "$namespace_report_url"
+                }
+              },
               "dataFiles": {
         EOF
             
@@ -500,49 +689,49 @@ jobs:
               data_first=false
             fi
             
+            # Add JSON Lines instance files
+            if [ -f "docs/data/schema_extraction/$dataset_name/${dataset_name}_instances_minimal.jsonl" ]; then
+              if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
+              echo "        \"instancesJsonl\": \"../data/schema_extraction/$dataset_name/${dataset_name}_instances_minimal.jsonl\"" >> docs/results.json
+              data_first=false
+            fi
+            
+            if [ -f "docs/data/schema_extraction/$dataset_name/${dataset_name}_subject_index.json" ]; then
+              if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
+              echo "        \"subjectIndex\": \"../data/schema_extraction/$dataset_name/${dataset_name}_subject_index.json\"" >> docs/results.json
+              data_first=false
+            fi
+            
+            if [ -f "docs/data/schema_extraction/$dataset_name/${dataset_name}_object_index.json" ]; then
+              if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
+              echo "        \"objectIndex\": \"../data/schema_extraction/$dataset_name/${dataset_name}_object_index.json\"" >> docs/results.json
+              data_first=false
+            fi
+            
+            # Add namespace discovery results
+            if [ -d "docs/data/schema_extraction/$dataset_name/namespaces" ]; then
+              if [ -f "docs/data/schema_extraction/$dataset_name/namespaces/prefix_summary.csv" ]; then
+                if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
+                echo "        \"prefixSummary\": \"../data/schema_extraction/$dataset_name/namespaces/prefix_summary.csv\"" >> docs/results.json
+                data_first=false
+              fi
+              
+              if [ -f "docs/data/schema_extraction/$dataset_name/namespaces/matched_resources.csv" ]; then
+                if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
+                echo "        \"matchedResources\": \"../data/schema_extraction/$dataset_name/namespaces/matched_resources.csv\"" >> docs/results.json
+                data_first=false
+              fi
+              
+              if [ -f "docs/data/schema_extraction/$dataset_name/namespaces/unmatched_resources.csv" ]; then
+                if [ "$data_first" = false ]; then echo "        ," >> docs/results.json; fi
+                echo "        \"unmatchedResources\": \"../data/schema_extraction/$dataset_name/namespaces/unmatched_resources.csv\"" >> docs/results.json
+                data_first=false
+              fi
+            fi
+            
             # Close dataset object
             cat >> docs/results.json << EOF
               }
-            }
-        EOF
-          fi
-        done
-        
-        # Close schema results and start pydantic results
-        cat >> docs/results.json << EOF
-          ],
-          "pydanticResults": [
-        EOF
-        
-        # Process pydantic results
-        first=true
-        for html_file in docs/notebooks/02_pydantic_models/*_pydantic.html; do
-          if [ -f "$html_file" ]; then
-            dataset_name=$(basename "$html_file" .html | sed 's/_pydantic$//')
-            
-            # Check success/failure
-            if grep -q "Pydantic Generation Failed" "$html_file"; then
-              status="error"
-            else
-              status="success"
-            fi
-            
-            file_size=$(ls -lh "$html_file" | awk '{print $5}')
-            report_url="notebooks/02_pydantic_models/$(basename $html_file)"
-            
-            # Add comma for all but first entry
-            if [ "$first" = false ]; then
-              echo "    ," >> docs/results.json
-            fi
-            first=false
-            
-            cat >> docs/results.json << EOF
-            {
-              "name": "$dataset_name",
-              "status": "$status",
-              "reportSize": "$file_size", 
-              "reportUrl": "$report_url",
-              "generated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             }
         EOF
           fi
@@ -566,18 +755,22 @@ jobs:
         # Add all generated files
         git add notebooks/01_schema_extraction/*.ipynb 2>/dev/null || true
         git add notebooks/02_pydantic_models/*.ipynb 2>/dev/null || true
+        git add notebooks/03_bioregistry_namespaces/*.ipynb 2>/dev/null || true
         git add docs/notebooks/01_schema_extraction/ 2>/dev/null || true
         git add docs/notebooks/02_pydantic_models/ 2>/dev/null || true
+        git add docs/notebooks/03_bioregistry_namespaces/ 2>/dev/null || true
         git add docs/data/schema_extraction/ 2>/dev/null || true
         git add docs/results.json 2>/dev/null || true
         
         # Count files for commit message
         schema_files=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
         pydantic_files=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
+        namespace_files=$(find docs/notebooks/03_bioregistry_namespaces/ -name "*_namespaces.html" 2>/dev/null | wc -l)
         data_files=$(find docs/data/schema_extraction/ -type f 2>/dev/null | wc -l)
         
         schema_success=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" -exec grep -L "Schema Analysis Failed" {} \; 2>/dev/null | wc -l)
         pydantic_success=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" -exec grep -L "Pydantic Generation Failed" {} \; 2>/dev/null | wc -l)
+        namespace_success=$(find docs/notebooks/03_bioregistry_namespaces/ -name "*_namespaces.html" -exec grep -L "Namespace Discovery Failed" {} \; 2>/dev/null | wc -l)
         
         # Check if there are changes to commit
         if git diff --cached --quiet; then
@@ -590,6 +783,7 @@ jobs:
 
         Schema: $schema_success/$schema_files successful
         Pydantic: $pydantic_success/$pydantic_files successful
+        Namespace: $namespace_success/$namespace_files successful
         Data files: $data_files generated
         
         Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
@@ -609,9 +803,11 @@ jobs:
           // Count results
           const schemaDir = 'docs/notebooks/01_schema_extraction/';
           const pydanticDir = 'docs/notebooks/02_pydantic_models/';
+          const namespaceDir = 'docs/notebooks/03_bioregistry_namespaces/';
           
           let schemaFiles = [];
           let pydanticFiles = [];
+          let namespaceFiles = [];
           
           try {
             schemaFiles = fs.readdirSync(schemaDir).filter(f => f.endsWith('_schema.html'));
@@ -625,8 +821,15 @@ jobs:
             console.log('No pydantic files found');
           }
           
+          try {
+            namespaceFiles = fs.readdirSync(namespaceDir).filter(f => f.endsWith('_namespaces.html'));
+          } catch (e) {
+            console.log('No namespace files found');
+          }
+          
           const schemaTotal = schemaFiles.length;
           const pydanticTotal = pydanticFiles.length;
+          const namespaceTotal = namespaceFiles.length;
           
           // Count successes vs failures
           let schemaSuccess = 0;
@@ -653,6 +856,18 @@ jobs:
             }
           }
           
+          let namespaceSuccess = 0;
+          let namespaceFailed = 0;
+          
+          for (const file of namespaceFiles) {
+            const content = fs.readFileSync(path.join(namespaceDir, file), 'utf8');
+            if (!content.includes('Namespace Discovery Failed')) {
+              namespaceSuccess++;
+            } else {
+              namespaceFailed++;
+            }
+          }
+          
           // Generate comment body
           const timestamp = new Date().toUTCString();
           const workflowUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
@@ -660,6 +875,7 @@ jobs:
           
           const schemaRate = schemaTotal > 0 ? ((schemaSuccess / schemaTotal) * 100).toFixed(1) : 'N/A';
           const pydanticRate = pydanticTotal > 0 ? ((pydanticSuccess / pydanticTotal) * 100).toFixed(1) : 'N/A';
+          const namespaceRate = namespaceTotal > 0 ? ((namespaceSuccess / namespaceTotal) * 100).toFixed(1) : 'N/A';
           
           const commentBody = `## 📊 Notebook Generation Results
           
@@ -667,29 +883,19 @@ jobs:
           **Completed:** ${timestamp}
           **Files Committed:** ✅ All generated notebooks and data files have been committed to this branch
           
-          ### Schema Extraction Notebooks
+          ### Results Summary
           
-          | Metric | Value |
-          |--------|-------|
-          | Total Processed | ${schemaTotal} |
-          | ✅ Successful | ${schemaSuccess} |
-          | ❌ Failed | ${schemaFailed} |
-          | Success Rate | ${schemaRate}% |
-          
-          ### Pydantic Model Notebooks
-          
-          | Metric | Value |
-          |--------|-------|
-          | Total Processed | ${pydanticTotal} |
-          | ✅ Successful | ${pydanticSuccess} |
-          | ❌ Failed | ${pydanticFailed} |
-          | Success Rate | ${pydanticRate}% |
+          | Notebook Type | Total | ✅ Success | ❌ Failed | Success Rate |
+          |--------------|-------|-----------|----------|--------------|
+          | Schema Extraction | ${schemaTotal} | ${schemaSuccess} | ${schemaFailed} | ${schemaRate}% |
+          | Pydantic Models | ${pydanticTotal} | ${pydanticSuccess} | ${pydanticFailed} | ${pydanticRate}% |
+          | Namespace Discovery | ${namespaceTotal} | ${namespaceSuccess} | ${namespaceFailed} | ${namespaceRate}% |
           
           ### 📦 Generated Files
           
-          - **Notebooks:** Available in \`notebooks/01_schema_extraction/\` and \`notebooks/02_pydantic_models/\`
+          - **Notebooks:** Available in \`notebooks/01_schema_extraction/\`, \`notebooks/02_pydantic_models/\`, and \`notebooks/03_bioregistry_namespaces/\`
           - **HTML Reports:** Available in \`docs/notebooks/\`
-          - **Data Files:** Available in \`docs/data/schema_extraction/\`
+          - **Data Files:** Available in \`docs/data/schema_extraction/\` (includes JSON Lines instance files)
           - **Artifacts:** Download \`notebooks-matrix-complete\` for quick access
           
           ### 📝 Next Steps
@@ -739,6 +945,7 @@ jobs:
         path: |
           docs/notebooks/01_schema_extraction/
           docs/notebooks/02_pydantic_models/
+          docs/notebooks/03_bioregistry_namespaces/
         retention-days: 30
 
     - name: Final summary
@@ -748,27 +955,35 @@ jobs:
         
         schema_total=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
         pydantic_total=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" 2>/dev/null | wc -l)
+        namespace_total=$(find docs/notebooks/03_bioregistry_namespaces/ -name "*_namespaces.html" 2>/dev/null | wc -l)
         
         schema_success=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" -exec grep -L "Schema Analysis Failed" {} \; 2>/dev/null | wc -l)
         pydantic_success=$(find docs/notebooks/02_pydantic_models/ -name "*_pydantic.html" -exec grep -L "Pydantic Generation Failed" {} \; 2>/dev/null | wc -l)
+        namespace_success=$(find docs/notebooks/03_bioregistry_namespaces/ -name "*_namespaces.html" -exec grep -L "Namespace Discovery Failed" {} \; 2>/dev/null | wc -l)
         
         schema_failed=$((schema_total - schema_success))
         pydantic_failed=$((pydantic_total - pydantic_success))
+        namespace_failed=$((namespace_total - namespace_success))
         
-        echo "**Schema Analysis Results:**" >> $GITHUB_STEP_SUMMARY
-        echo "- Total: $schema_total" >> $GITHUB_STEP_SUMMARY
-        echo "- Successful: $schema_success" >> $GITHUB_STEP_SUMMARY  
-        echo "- Failed: $schema_failed" >> $GITHUB_STEP_SUMMARY
+        echo "| Notebook Type | Total | Success | Failed | Rate |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------------|-------|---------|--------|------|" >> $GITHUB_STEP_SUMMARY
         if [ "$schema_total" -gt 0 ]; then
-          echo "- Success Rate: $(echo "scale=1; $schema_success * 100 / $schema_total" | bc -l)%" >> $GITHUB_STEP_SUMMARY
+          schema_rate=$(echo "scale=1; $schema_success * 100 / $schema_total" | bc -l)
+          echo "| Schema | $schema_total | $schema_success | $schema_failed | ${schema_rate}% |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Schema | 0 | 0 | 0 | N/A |" >> $GITHUB_STEP_SUMMARY
         fi
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Pydantic Model Results:**" >> $GITHUB_STEP_SUMMARY
-        echo "- Total: $pydantic_total" >> $GITHUB_STEP_SUMMARY
-        echo "- Successful: $pydantic_success" >> $GITHUB_STEP_SUMMARY  
-        echo "- Failed: $pydantic_failed" >> $GITHUB_STEP_SUMMARY
         if [ "$pydantic_total" -gt 0 ]; then
-          echo "- Success Rate: $(echo "scale=1; $pydantic_success * 100 / $pydantic_total" | bc -l)%" >> $GITHUB_STEP_SUMMARY
+          pydantic_rate=$(echo "scale=1; $pydantic_success * 100 / $pydantic_total" | bc -l)
+          echo "| Pydantic | $pydantic_total | $pydantic_success | $pydantic_failed | ${pydantic_rate}% |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Pydantic | 0 | 0 | 0 | N/A |" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ "$namespace_total" -gt 0 ]; then
+          namespace_rate=$(echo "scale=1; $namespace_success * 100 / $namespace_total" | bc -l)
+          echo "| Namespace | $namespace_total | $namespace_success | $namespace_failed | ${namespace_rate}% |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| Namespace | 0 | 0 | 0 | N/A |" >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Web Dashboard:** [View Results](https://jmillanacosta.github.io/rdfsolve/) (updated with results.json)" >> $GITHUB_STEP_SUMMARY
