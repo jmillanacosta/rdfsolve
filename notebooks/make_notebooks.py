@@ -132,9 +132,12 @@ def main():
             content = content.replace("{{dataset_name}}", dataset_name)
             content = content.replace("{{void_iri}}", void_iri)
             content = content.replace("{{graph_uri}}", graph_uri)
-            
+
             # Add ttl_db_path for namespace templates
-            ttl_db_path = f"../../docs/data/schema_extraction/{dataset_name}/{dataset_name}_generated_void.ttl"
+            ttl_db_path = (
+                f"../../docs/data/schema_extraction/{dataset_name}/"
+                f"{dataset_name}_generated_void.ttl"
+            )
             content = content.replace("{{ttl_db_path}}", ttl_db_path)
 
             # Conditionally add graph_uri parameter based on use_graph flag

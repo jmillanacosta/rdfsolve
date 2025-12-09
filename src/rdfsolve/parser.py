@@ -3390,7 +3390,7 @@ WHERE {{
         self,
         instances_df: pd.DataFrame,
         output_prefix: str,
-    ) -> Dict[str, str]:
+    ) -> Dict[str, Any]:
         """
         Export instances data in a compact, memory-efficient format.
 
@@ -3454,17 +3454,6 @@ WHERE {{
             "total_relationships": len(instances_df),
         }
 
-        logger.info("Exported compact instances data:")
-        logger.info(f"  Subject index: {result['subject_index_size_mb']:.2f} MB")
-        logger.info(f"  Object index: {result['object_index_size_mb']:.2f} MB")
-        logger.info(f"  Instances data: {result['instances_jsonl_size_mb']:.2f} MB")
-        total_size = sum([
-            result['subject_index_size_mb'],
-            result['object_index_size_mb'],
-            result['instances_jsonl_size_mb']
-        ])
-        logger.info(f"  Total: {total_size:.2f} MB")
-
         return result
 
     def load_instances_compact(
@@ -3482,18 +3471,18 @@ WHERE {{
         import json
 
         # Load indices
-        with open(f"{output_prefix}_subject_index.json", "r") as f:
+        with open(f"{output_prefix}_subject_index.json") as f:
             subject_index = json.load(f)
 
-        with open(f"{output_prefix}_object_index.json", "r") as f:
+        with open(f"{output_prefix}_object_index.json") as f:
             object_index = json.load(f)
 
         # Load instances DataFrame from JSON Lines
         instances_data = []
-        with open(f"{output_prefix}_instances_minimal.jsonl", "r") as f:
+        with open(f"{output_prefix}_instances_minimal.jsonl") as f:
             for line in f:
                 instances_data.append(json.loads(line))
-        
+
         instances_df = pd.DataFrame(instances_data)
 
         return instances_df, subject_index, object_index

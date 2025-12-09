@@ -1,4 +1,4 @@
-name: Generate Schema and Pydantic Notebooks (Matrix)
+name: Make Notebooks
 
 on:
   pull_request:
@@ -181,7 +181,6 @@ jobs:
     continue-on-error: true
     strategy:
       matrix: ${{fromJson(needs.prepare-matrix.outputs.pydantic-matrix)}}
-      max-parallel: ${{ github.event.inputs.max_parallel || 50 }}
       fail-fast: false
     
     steps:
@@ -267,7 +266,6 @@ jobs:
         path: |
           notebooks/02_pydantic_models/${{ matrix.dataset }}_pydantic.ipynb
           docs/notebooks/02_pydantic_models/${{ matrix.dataset }}_pydantic.html
-          docs/data/schema_extraction/${{ matrix.dataset }}/**
         retention-days: 7
         if-no-files-found: warn
 
@@ -752,15 +750,24 @@ jobs:
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         
-        # Add all generated files
+        # Add all generated files (excluding large instance map files)
         git add notebooks/01_schema_extraction/*.ipynb 2>/dev/null || true
         git add notebooks/02_pydantic_models/*.ipynb 2>/dev/null || true
         git add notebooks/03_bioregistry_namespaces/*.ipynb 2>/dev/null || true
         git add docs/notebooks/01_schema_extraction/ 2>/dev/null || true
         git add docs/notebooks/02_pydantic_models/ 2>/dev/null || true
         git add docs/notebooks/03_bioregistry_namespaces/ 2>/dev/null || true
-        git add docs/data/schema_extraction/ 2>/dev/null || true
         git add docs/results.json 2>/dev/null || true
+        
+        # Add data files but exclude large files
+        find docs/data/schema_extraction/ -type f \( -name "*.jsonld" -o -name "*.yaml" -o -name "*.csv" -o -name "*.ttl" \) -exec git add {} \; 2>/dev/null || true
+        
+        # Explicitly exclude large files from commit
+        git reset HEAD -- 'docs/data/schema_extraction/**/*_instances_minimal.jsonl' 2>/dev/null || true
+        git reset HEAD -- 'docs/data/schema_extraction/**/*_subject_index.json' 2>/dev/null || true
+        git reset HEAD -- 'docs/data/schema_extraction/**/*_object_index.json' 2>/dev/null || true
+        git reset HEAD -- 'docs/data/schema_extraction/**/*_instances.parquet' 2>/dev/null || true
+        git reset HEAD -- 'docs/data/schema_extraction/**/*.nq' 2>/dev/null || true
         
         # Count files for commit message
         schema_files=$(find docs/notebooks/01_schema_extraction/ -name "*_schema.html" 2>/dev/null | wc -l)
@@ -785,6 +792,8 @@ jobs:
         Pydantic: $pydantic_success/$pydantic_files successful
         Namespace: $namespace_success/$namespace_files successful
         Data files: $data_files generated
+        
+        Note: Large files (*.jsonl, *_index.json, *.parquet, *.nq) excluded to save space
         
         Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
         Workflow: ${{ github.run_id }}"

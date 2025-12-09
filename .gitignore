@@ -908,3 +908,10 @@ scratch/
 # Other
 
 notebooks/config/*
+
+# Large instance map files (too large to commit)
+docs/data/schema_extraction/**/*_instances_minimal.jsonl
+docs/data/schema_extraction/**/*_subject_index.json
+docs/data/schema_extraction/**/*_object_index.json
+docs/data/schema_extraction/**/*_instances.parquet
+docs/data/schema_extraction/**/*.nq
