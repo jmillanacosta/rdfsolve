@@ -29,10 +29,10 @@ on:
           - pydantic
           - namespace
 
-# Prevent concurrent runs per PR
+# Prevent concurrent runs per PR, but let running jobs complete
 concurrency:
   group: schema-notebooks-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: write
