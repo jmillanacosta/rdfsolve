@@ -60,7 +60,7 @@ class VoidParser:
         self.void_propertyPartition = URIRef("http://rdfs.org/ns/void#propertyPartition")
         self.void_classPartition = URIRef("http://rdfs.org/ns/void#classPartition")
         self.void_datatypePartition = URIRef("http://ldf.fi/void-ext#datatypePartition")
-        
+
         # Bind common namespace prefixes
         self.void_ns = "http://rdfs.org/ns/void#"
         self.void_ext_ns = "http://ldf.fi/void-ext#"
