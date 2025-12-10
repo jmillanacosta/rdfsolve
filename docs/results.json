@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-12-10T12:02:44Z",
+  "lastUpdated": "2025-12-10T12:25:59Z",
   "stats": {
     "totalDatasets": 84,
     "schemaSuccessful": 83,
@@ -13,7 +13,7 @@
   "datasets": [
     {
       "name": "affymetrix",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -44,7 +44,7 @@
     ,
     {
       "name": "aopwikirdf",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -81,7 +81,7 @@
     ,
     {
       "name": "apo",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -112,7 +112,7 @@
     ,
     {
       "name": "bgee",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -143,7 +143,7 @@
     ,
     {
       "name": "cellosaurus",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -174,7 +174,7 @@
     ,
     {
       "name": "chebi",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -207,7 +207,7 @@
     ,
     {
       "name": "chembl",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -236,7 +236,7 @@
     ,
     {
       "name": "clinicaltrials",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -267,7 +267,7 @@
     ,
     {
       "name": "ctd",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -298,7 +298,7 @@
     ,
     {
       "name": "drugbank.drugs",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -331,7 +331,7 @@
     ,
     {
       "name": "drugbank",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -362,7 +362,7 @@
     ,
     {
       "name": "eco",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -393,7 +393,7 @@
     ,
     {
       "name": "goa",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -424,7 +424,7 @@
     ,
     {
       "name": "hamap",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -453,7 +453,7 @@
     ,
     {
       "name": "hgnc",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -486,7 +486,7 @@
     ,
     {
       "name": "homologene",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -517,7 +517,7 @@
     ,
     {
       "name": "hp",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -548,7 +548,7 @@
     ,
     {
       "name": "idsm.void",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -581,7 +581,7 @@
     ,
     {
       "name": "interpro",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -612,7 +612,7 @@
     ,
     {
       "name": "iocb.ontology",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -645,7 +645,7 @@
     ,
     {
       "name": "irefindex",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -676,7 +676,7 @@
     ,
     {
       "name": "isdb",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -709,7 +709,7 @@
     ,
     {
       "name": "jpost",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -740,7 +740,7 @@
     ,
     {
       "name": "kegg",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -771,7 +771,7 @@
     ,
     {
       "name": "lsr",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -802,7 +802,7 @@
     ,
     {
       "name": "medgen",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -833,7 +833,7 @@
     ,
     {
       "name": "mesh.heading",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -866,7 +866,7 @@
     ,
     {
       "name": "mesh",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -897,7 +897,7 @@
     ,
     {
       "name": "metanext",
-      "generated": "2025-12-10T12:02:44Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -928,7 +928,7 @@
     ,
     {
       "name": "mgi",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -959,7 +959,7 @@
     ,
     {
       "name": "mona",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -992,7 +992,7 @@
     ,
     {
       "name": "nanosafetyrdf",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1023,7 +1023,7 @@
     ,
     {
       "name": "ncbigene",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1054,7 +1054,7 @@
     ,
     {
       "name": "ndc",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1085,7 +1085,7 @@
     ,
     {
       "name": "omabrowser",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1116,7 +1116,7 @@
     ,
     {
       "name": "omim",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1147,7 +1147,7 @@
     ,
     {
       "name": "orthodb",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1180,7 +1180,7 @@
     ,
     {
       "name": "pdb",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1213,7 +1213,7 @@
     ,
     {
       "name": "pharmgkb",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1244,7 +1244,7 @@
     ,
     {
       "name": "pubcasefinder",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1275,7 +1275,7 @@
     ,
     {
       "name": "pubchem.anatomy",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1308,7 +1308,7 @@
     ,
     {
       "name": "pubchem.author",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1337,7 +1337,7 @@
     ,
     {
       "name": "pubchem.bioassay",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1370,7 +1370,7 @@
     ,
     {
       "name": "pubchem.book",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1403,7 +1403,7 @@
     ,
     {
       "name": "pubchem.cell",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1436,7 +1436,7 @@
     ,
     {
       "name": "pubchem.compound",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1467,7 +1467,7 @@
     ,
     {
       "name": "pubchem.concept",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1500,7 +1500,7 @@
     ,
     {
       "name": "pubchem.conserveddomain",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1533,7 +1533,7 @@
     ,
     {
       "name": "pubchem.cooccurrence",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1566,7 +1566,7 @@
     ,
     {
       "name": "pubchem.descriptor.compound",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1595,7 +1595,7 @@
     ,
     {
       "name": "pubchem.descriptor.substance",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1628,7 +1628,7 @@
     ,
     {
       "name": "pubchem.disease",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1661,7 +1661,7 @@
     ,
     {
       "name": "pubchem.endpoint",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1694,7 +1694,7 @@
     ,
     {
       "name": "pubchem.gene",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1727,7 +1727,7 @@
     ,
     {
       "name": "pubchem.grant",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1760,7 +1760,7 @@
     ,
     {
       "name": "pubchem.inchikey",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1793,7 +1793,7 @@
     ,
     {
       "name": "pubchem.journal",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1826,7 +1826,7 @@
     ,
     {
       "name": "pubchem.measuregroup",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1859,7 +1859,7 @@
     ,
     {
       "name": "pubchem.organization",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1892,7 +1892,7 @@
     ,
     {
       "name": "pubchem.patent",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:25:59Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1925,7 +1925,7 @@
     ,
     {
       "name": "pubchem.pathway",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1958,7 +1958,7 @@
     ,
     {
       "name": "pubchem.protein",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -1991,7 +1991,7 @@
     ,
     {
       "name": "pubchem.reference",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2024,7 +2024,7 @@
     ,
     {
       "name": "pubchem.source",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2057,7 +2057,7 @@
     ,
     {
       "name": "pubchem.substance",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2090,7 +2090,7 @@
     ,
     {
       "name": "pubchem.synonym",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2119,7 +2119,7 @@
     ,
     {
       "name": "pubchem.taxonomy",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2152,7 +2152,7 @@
     ,
     {
       "name": "rhea",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2183,7 +2183,7 @@
     ,
     {
       "name": "sgd",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2214,7 +2214,7 @@
     ,
     {
       "name": "sibils",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "error",
@@ -2241,7 +2241,7 @@
     ,
     {
       "name": "sider",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2272,7 +2272,7 @@
     ,
     {
       "name": "taxonomy",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2303,7 +2303,7 @@
     ,
     {
       "name": "uniprot.chebi",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2332,7 +2332,7 @@
     ,
     {
       "name": "uniprot.citationmapping",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2361,7 +2361,7 @@
     ,
     {
       "name": "uniprot.citations",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2390,7 +2390,7 @@
     ,
     {
       "name": "uniprot.core",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2419,7 +2419,7 @@
     ,
     {
       "name": "uniprot.database",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2448,7 +2448,7 @@
     ,
     {
       "name": "uniprot.diseases",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2477,7 +2477,7 @@
     ,
     {
       "name": "uniprot.enzymes",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2506,7 +2506,7 @@
     ,
     {
       "name": "uniprot.go",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2535,7 +2535,7 @@
     ,
     {
       "name": "uniprot",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2566,7 +2566,7 @@
     ,
     {
       "name": "wikidata.idsm.entity",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2599,7 +2599,7 @@
     ,
     {
       "name": "wikipathways",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
@@ -2632,7 +2632,7 @@
     ,
     {
       "name": "wormbase",
-      "generated": "2025-12-10T12:02:45Z",
+      "generated": "2025-12-10T12:26:00Z",
       "notebooks": {
         "schema": {
           "status": "success",
