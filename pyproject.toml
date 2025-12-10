@@ -59,8 +59,8 @@ dependencies = [
     # Data processing and analysis
     "pandas>=2.0.0", # DataFrame operations for analysis results
     "numpy", # Numerical operations (pandas dependency)
-    #"bioregistry",
-    "bioregistry @ git+https://github.com/biopragmatics/bioregistry@main", #Use latest, TODO replace with official release when available
+    "bioregistry",
+    #"bioregistry @ git+https://github.com/biopragmatics/bioregistry@main", #Use latest, TODO replace with official release when available
     # Schema modeling
     "linkml>=1.9.1",
     "pyld",
@@ -163,6 +163,7 @@ max-line-length = 120
 [tool.pytest.ini_options]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests that require network access and hit live endpoints (deselect with '-m \"not integration\"')",
 ]
 
 # Coverage, see https://coverage.readthedocs.io/en/latest/config.html
