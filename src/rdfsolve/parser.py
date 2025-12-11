@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 import pandas as pd
 from bioregistry import curie_from_iri
+from linkml.generators.shaclgen import ShaclGenerator
 from linkml.generators.yamlgen import YAMLGenerator
 from linkml_runtime.linkml_model import (
     ClassDefinition,
@@ -971,6 +972,9 @@ class VoidParser:
         class_properties: Dict[str, List[str]] = {}  # class_name -> [property_names]
         property_ranges: Dict[str, str] = {}  # property_name -> range_type
         property_descriptions: Dict[str, str] = {}  # property_name -> description
+        # Track original URIs/CURIEs for classes and slots
+        original_class_uris: Dict[str, str] = {}  # class_name -> original CURIE/URI
+        original_slot_uris: Dict[str, str] = {}  # slot_name -> original CURIE/URI
 
         for item in schema_items:
             if "@id" not in item:
@@ -979,6 +983,10 @@ class VoidParser:
             subject = item["@id"]
             subject_clean = self._make_valid_linkml_name(subject)
             all_class_names.add(subject_clean)
+
+            # Store original URI/CURIE for this class
+            if subject_clean not in original_class_uris:
+                original_class_uris[subject_clean] = subject
 
             if subject_clean not in class_properties:
                 class_properties[subject_clean] = []
@@ -990,6 +998,10 @@ class VoidParser:
 
                 prop_clean = self._make_valid_linkml_name(prop)
                 all_slot_names.add(prop_clean)
+
+                # Store original URI/CURIE for this property
+                if prop_clean not in original_slot_uris:
+                    original_slot_uris[prop_clean] = prop
 
                 if prop_clean not in class_properties[subject_clean]:
                     class_properties[subject_clean].append(prop_clean)
@@ -1004,6 +1016,9 @@ class VoidParser:
                         # It's a reference to another resource
                         target_clean = self._make_valid_linkml_name(value["@id"])
                         all_class_names.add(target_clean)
+                        # Store original URI/CURIE for the target class
+                        if target_clean not in original_class_uris:
+                            original_class_uris[target_clean] = value["@id"]
                         property_ranges[prop_clean] = target_clean
                     elif "@value" in value:
                         # It's a literal value
@@ -1031,7 +1046,7 @@ class VoidParser:
                 final_name = slot_name
             slot_name_mapping[slot_name] = final_name
 
-        # Create class definitions with URIs using original prefixes
+        # Create class definitions with original URIs from source data
         classes = {}
         for class_name in all_class_names:
             # Get properties for this class, applying name mapping
@@ -1041,8 +1056,18 @@ class VoidParser:
                     slot_name_mapping.get(prop, prop) for prop in class_properties[class_name]
                 ]
 
-            # Generate class URI using original prefix format: schema_uri/prefix_class
-            class_uri = f"{schema_uri}{class_name}"
+            # Use original CURIE/URI from the source data
+            # Expand CURIE to full URI using context if needed
+            original_uri = original_class_uris.get(class_name, class_name)
+            if ":" in original_uri and not original_uri.startswith(("http://", "https://")):
+                # It's a CURIE, try to expand it using the context
+                prefix, local = original_uri.split(":", 1)
+                if prefix in all_prefixes:
+                    class_uri = all_prefixes[prefix] + local
+                else:
+                    class_uri = original_uri
+            else:
+                class_uri = original_uri
 
             class_def = ClassDefinition(
                 name=class_name,
@@ -1064,8 +1089,17 @@ class VoidParser:
             elif range_type not in ["string", "uriorcurie"]:
                 range_type = "string"  # Default fallback
 
-            # Generate slot URI using original prefix format: schema_uri/prefix_property
-            slot_uri = f"{schema_uri}{final_slot_name}"
+            # Use original CURIE/URI from the source data
+            original_uri = original_slot_uris.get(original_slot_name, original_slot_name)
+            if ":" in original_uri and not original_uri.startswith(("http://", "https://")):
+                # It's a CURIE, try to expand it using the context
+                prefix, local = original_uri.split(":", 1)
+                if prefix in all_prefixes:
+                    slot_uri = all_prefixes[prefix] + local
+                else:
+                    slot_uri = original_uri
+            else:
+                slot_uri = original_uri
 
             slot_def = SlotDefinition(
                 name=final_slot_name,
@@ -1375,6 +1409,326 @@ class VoidParser:
         )
 
         return cast(str, YAMLGenerator(linkml_schema).serialize())
+
+    def to_shacl(
+        self,
+        filter_void_nodes: bool = True,
+        schema_name: Optional[str] = None,
+        schema_description: Optional[str] = None,
+        schema_base_uri: Optional[str] = None,
+        closed: bool = True,
+        suffix: Optional[str] = None,
+        include_annotations: bool = False,
+    ) -> str:
+        """
+        Generate SHACL (Shapes Constraint Language) shapes from VoID schema.
+
+        This method converts the VoID schema to LinkML and then generates SHACL
+        shapes using LinkML's ShaclGenerator. SHACL shapes can be used to validate
+        RDF data against the extracted schema constraints.
+
+        Args:
+            filter_void_nodes: Whether to filter out VoID-specific nodes
+            schema_name: Name for the LinkML schema (used as base for SHACL shapes)
+            schema_description: Description for the LinkML schema
+            schema_base_uri: Base URI for the schema
+            closed: If True, generate closed SHACL shapes (sh:closed true).
+            suffix: Optional suffix to append to shape names (e.g., "Shape" -> PersonShape)
+            include_annotations: If True, include annotations from classes/slots in shapes.
+
+        Returns:
+            SHACL shapes as Turtle/RDF string
+
+        Example:
+            >>> parser = VoidParser("dataset_void.ttl")
+            >>> shacl_ttl = parser.to_shacl(schema_name="my_dataset", closed=True, suffix="Shape")
+            >>> # Save to file
+            >>> with open("schema.shacl.ttl", "w") as f:
+            ...     f.write(shacl_ttl)
+        """
+        # First generate LinkML schema
+        linkml_schema = self.to_linkml(
+            filter_void_nodes=filter_void_nodes,
+            schema_name=schema_name,
+            schema_description=schema_description,
+            schema_base_uri=schema_base_uri,
+        )
+
+        # Create a StringIO stream from the LinkML YAML serialization
+        linkml_yaml = YAMLGenerator(linkml_schema).serialize()
+
+        # Generate SHACL from LinkML schema
+        shacl_gen = ShaclGenerator(
+            schema=linkml_yaml,
+            closed=closed,
+            # suffix=suffix,
+            include_annotations=include_annotations,
+        )
+
+        return cast(str, shacl_gen.serialize())
+
+    def to_rdfconfig(
+        self,
+        filter_void_nodes: bool = True,
+        endpoint_url: Optional[str] = None,
+        endpoint_name: Optional[str] = None,
+        graph_uri: Optional[str] = None,
+    ) -> Dict[str, str]:
+        """
+        Generate RDF-config YAML files (model.yaml, prefix.yaml, endpoint.yaml).
+
+        RDF-config is a schema standard that describes RDF data models using
+        YAML configuration files. This method converts the VoID schema to
+        RDF-config format with three files:
+        - model.yaml: Describes classes, properties, and their relationships
+        - prefix.yaml: Namespace prefix definitions
+        - endpoint.yaml: SPARQL endpoint configuration
+
+        IMPORTANT: The rdf-config tool requires these files to be named
+        exactly model.yaml, prefix.yaml, and endpoint.yaml, and placed in a
+        directory named {dataset}_config. The CLI automatically creates
+        this structure when using --format rdfconfig.
+
+        Args:
+            filter_void_nodes: Whether to filter out VoID-specific nodes
+            endpoint_url: SPARQL endpoint URL for endpoint.yaml
+            endpoint_name: Name for the endpoint (defaults to "endpoint")
+            graph_uri: Optional graph URI to include in endpoint.yaml
+
+        Returns:
+            Dictionary with keys 'model', 'prefix', 'endpoint' containing
+            YAML strings
+        """
+        # Get JSON-LD as source of truth
+        jsonld = self.to_jsonld(filter_void_nodes)
+
+        # Generate prefix.yaml from @context
+        prefixes = jsonld.get("@context", {})
+        prefix_yaml = self._generate_rdfconfig_prefix(prefixes)
+
+        # Generate model.yaml from @graph
+        graph_data = jsonld.get("@graph", [])
+        model_yaml = self._generate_rdfconfig_model(graph_data, prefixes)
+
+        # Generate endpoint.yaml
+        endpoint_yaml = self._generate_rdfconfig_endpoint(endpoint_url, endpoint_name, graph_uri)
+
+        return {
+            "model": model_yaml,
+            "prefix": prefix_yaml,
+            "endpoint": endpoint_yaml,
+        }
+
+    def _generate_rdfconfig_prefix(self, prefixes: Dict[str, str]) -> str:
+        """Generate prefix.yaml content for RDF-config."""
+        lines = []
+        for prefix, uri in sorted(prefixes.items()):
+            # Format as: prefix: <uri>
+            lines.append(f"{prefix}: <{uri}>")
+        return "\n".join(lines) + "\n"
+
+    def _generate_rdfconfig_endpoint(
+        self,
+        endpoint_url: Optional[str],
+        endpoint_name: Optional[str],
+        graph_uri: Optional[str],
+    ) -> str:
+        """Generate endpoint.yaml content for RDF-config."""
+        if not endpoint_url:
+            return ""
+
+        name = endpoint_name or "endpoint"
+        lines = [f"{name}:"]
+        lines.append(f"  - {endpoint_url}")
+
+        if graph_uri:
+            lines.append("  - graph:")
+            lines.append(f"    - {graph_uri}")
+
+        return "\n".join(lines) + "\n"
+
+    def _generate_rdfconfig_model(
+        self, graph_data: List[Dict[str, Any]], prefixes: Dict[str, str]
+    ) -> str:
+        """
+        Generate model.yaml content for RDF-config.
+
+        The model describes classes and their properties in a structured
+        format. Each class becomes a top-level entry with its properties
+        as nested items.
+        """
+        # Group items by class (@id becomes the class subject)
+        classes: Dict[str, List[Dict[str, Any]]] = {}
+
+        for item in graph_data:
+            if "@id" not in item:
+                continue
+
+            subject = item["@id"]
+
+            # Initialize class entry if not exists
+            if subject not in classes:
+                classes[subject] = []
+
+            # Get snake_case version for variable prefixes
+            class_var = self._make_rdfconfig_variable(subject)
+
+            # Process each property in the item
+            for prop, value in item.items():
+                if prop.startswith("@"):  # Skip JSON-LD keywords
+                    continue
+
+                # Determine if value is a reference or literal
+                prop_info = self._analyze_rdfconfig_property(prop, value, class_var)
+                if prop_info:
+                    classes[subject].append(prop_info)
+
+        # Format as RDF-config YAML
+        return self._format_rdfconfig_classes_yaml(classes)
+
+    def _analyze_rdfconfig_property(
+        self, prop: str, value: Any, class_context: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Analyze a property and return structured info for RDF-config.
+
+        Args:
+            prop: Property URI/CURIE
+            value: Property value (dict, list, or literal)
+            class_context: Class name for scoping variable names
+
+        Returns:
+            Dictionary with property info or None
+        """
+        # Determine if value is a reference or literal
+        is_reference = False
+        target_class = None
+
+        if isinstance(value, dict) and "@id" in value:
+            is_reference = True
+            target_class = value["@id"]
+        elif isinstance(value, list) and len(value) > 0:
+            first_val = value[0]
+            if isinstance(first_val, dict) and "@id" in first_val:
+                is_reference = True
+                target_class = first_val["@id"]
+
+        # Create variable name from property URI
+        # Prefix with class context to ensure uniqueness
+        prop_base = self._make_rdfconfig_variable(prop)
+        prop_var = f"{class_context}_{prop_base}"
+
+        if is_reference and target_class:
+            # Object property pointing to another class
+            target_name = self._make_rdfconfig_class_name(target_class)
+            return {
+                "property": prop,
+                "variable": prop_var,
+                "range": target_name,
+            }
+        else:
+            # Data property (literal)
+            return {
+                "property": prop,
+                "variable": prop_var,
+                "range": f'"{prop_var}_value"',
+            }
+
+    def _format_rdfconfig_classes_yaml(self, classes: Dict[str, List[Dict[str, Any]]]) -> str:
+        """Format classes dictionary as RDF-config YAML."""
+        lines = []
+
+        for class_uri in sorted(classes.keys()):
+            properties = classes[class_uri]
+
+            # Class header: - ClassName uri:
+            # RDF-config requires CamelCase without underscores
+            class_name = self._make_rdfconfig_class_name(class_uri)
+            lines.append(f"- {class_name} {class_uri}:")
+
+            # Add properties
+            for prop_info in properties:
+                lines.append(f"  - {prop_info['property']}:")
+                var_name = prop_info["variable"]
+                range_val = prop_info["range"]
+                lines.append(f"    - {var_name}: {range_val}")
+
+        return "\n".join(lines) + "\n"
+
+    def _make_rdfconfig_class_name(self, uri_or_curie: str) -> str:
+        """
+        Convert URI/CURIE to RDF-config class name.
+
+        RDF-config requires class names to:
+        - Start with a capital letter
+        - Be alphanumeric only (no underscores or special chars)
+        - Be in CamelCase format
+
+        Args:
+            uri_or_curie: URI or CURIE to convert
+
+        Returns:
+            Valid RDF-config class name in CamelCase
+        """
+        import re
+
+        # Extract local part
+        if ":" in uri_or_curie:
+            local = uri_or_curie.split(":", 1)[1]
+        elif "/" in uri_or_curie:
+            local = uri_or_curie.split("/")[-1]
+        elif "#" in uri_or_curie:
+            local = uri_or_curie.split("#")[-1]
+        else:
+            local = uri_or_curie
+
+        # Remove all non-alphanumeric characters
+        local = re.sub(r"[^a-zA-Z0-9]", "", local)
+
+        # If starts with number, prefix with letter
+        if local and local[0].isdigit():
+            local = "C" + local
+
+        # Ensure first letter is capital
+        if local:
+            local = local[0].upper() + local[1:]
+        else:
+            local = "Class"
+
+        return local
+
+    def _make_rdfconfig_variable(self, uri_or_curie: str) -> str:
+        """
+        Convert URI/CURIE to RDF-config variable name.
+
+        RDF-config uses snake_case variable names derived from the local
+        part of the URI/CURIE.
+        """
+        import re
+
+        # Extract local part
+        if ":" in uri_or_curie:
+            local = uri_or_curie.split(":", 1)[1]
+        elif "/" in uri_or_curie:
+            local = uri_or_curie.split("/")[-1]
+        elif "#" in uri_or_curie:
+            local = uri_or_curie.split("#")[-1]
+        else:
+            local = uri_or_curie
+
+        # Convert to snake_case
+        # Replace non-alphanumeric with underscore
+        local = re.sub(r"[^a-zA-Z0-9_]", "_", local)
+        # Add underscore before capitals (camelCase -> camel_Case)
+        local = re.sub(r"([a-z])([A-Z])", r"\1_\2", local)
+        # Lowercase
+        local = local.lower()
+        # Remove consecutive underscores
+        local = re.sub(r"_+", "_", local)
+        # Remove leading/trailing underscores
+        local = local.strip("_")
+
+        return local
 
     def to_json(self, filter_void_nodes: bool = True) -> Dict[str, Any]:
         """

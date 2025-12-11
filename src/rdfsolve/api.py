@@ -16,11 +16,14 @@ __all__ = [
     "graph_to_jsonld",
     "graph_to_linkml",
     "graph_to_schema",
+    "graph_to_shacl",
     "load_parser_from_file",
     "load_parser_from_graph",
     "retrieve_void_from_graphs",
     "to_jsonld_from_file",
     "to_linkml_from_file",
+    "to_rdfconfig_from_file",
+    "to_shacl_from_file",
 ]
 
 
@@ -90,6 +93,109 @@ def to_linkml_from_file(
     )
 
 
+def to_shacl_from_file(
+    void_file_path: str,
+    filter_void_nodes: bool = True,
+    schema_name: Optional[str] = None,
+    schema_description: Optional[str] = None,
+    schema_base_uri: Optional[str] = None,
+    closed: bool = True,
+    suffix: Optional[str] = None,
+    include_annotations: bool = False,
+) -> str:
+    """Convert a VoID file to SHACL shapes.
+
+    Generates SHACL (Shapes Constraint Language) shapes from a VoID
+    description file. SHACL shapes define constraints on RDF data and
+    can be used for validation.
+
+    Args:
+        void_file_path: Path to VoID file
+        filter_void_nodes: Remove VoID-specific nodes
+        schema_name: Name for the schema
+        schema_description: Description for the schema
+        schema_base_uri: Base URI for the schema
+        closed: Generate closed shapes (only allow defined properties)
+        suffix: Optional suffix for shape names (e.g., "Shape")
+        include_annotations: Include class/slot annotations in shapes
+
+    Returns:
+        SHACL shapes as Turtle/RDF string
+
+    Example:
+        >>> from rdfsolve.api import to_shacl_from_file
+        >>> shacl_ttl = to_shacl_from_file(
+        ...     "dataset_void.ttl", schema_name="my_dataset", closed=True
+        ... )
+        >>> with open("schema.shacl.ttl", "w") as f:
+        ...     f.write(shacl_ttl)
+    """
+    parser = load_parser_from_file(void_file_path)
+    return parser.to_shacl(
+        filter_void_nodes=filter_void_nodes,
+        schema_name=schema_name,
+        schema_description=schema_description,
+        schema_base_uri=schema_base_uri,
+        closed=closed,
+        suffix=suffix,
+        include_annotations=include_annotations,
+    )
+
+
+def to_rdfconfig_from_file(
+    void_file_path: str,
+    filter_void_nodes: bool = True,
+    endpoint_url: Optional[str] = None,
+    endpoint_name: Optional[str] = None,
+    graph_uri: Optional[str] = None,
+) -> Dict[str, str]:
+    """Convert a VoID file to RDF-config YAML files.
+
+    RDF-config is a schema standard that describes RDF data models using
+    YAML configuration files. This function generates three files:
+    - model.yml: Class and property structure
+    - prefix.yml: Namespace prefix definitions
+    - endpoint.yml: SPARQL endpoint configuration
+
+    Note: The rdf-config tool requires these files to be named exactly
+    model.yml, prefix.yml, and endpoint.yml, and placed in a directory
+    named {dataset}_config. The CLI automatically creates this structure.
+
+    Args:
+        void_file_path: Path to VoID file
+        filter_void_nodes: Remove VoID-specific nodes
+        endpoint_url: SPARQL endpoint URL (optional)
+        endpoint_name: Name for endpoint (default: "endpoint")
+        graph_uri: Named graph URI (optional)
+
+    Returns:
+        Dictionary with 'model', 'prefix', 'endpoint' keys containing
+        YAML strings
+
+    Example:
+        >>> from rdfsolve.api import to_rdfconfig_from_file
+        >>> rdfconfig = to_rdfconfig_from_file(
+        ...     "dataset_void.ttl",
+        ...     endpoint_url="https://example.org/sparql",
+        ...     graph_uri="http://example.org/graph",
+        ... )
+        >>> # Save files
+        >>> with open("model.yml", "w") as f:
+        ...     f.write(rdfconfig["model"])
+        >>> with open("prefix.yml", "w") as f:
+        ...     f.write(rdfconfig["prefix"])
+        >>> with open("endpoint.yml", "w") as f:
+        ...     f.write(rdfconfig["endpoint"])
+    """
+    parser = load_parser_from_file(void_file_path)
+    return parser.to_rdfconfig(
+        filter_void_nodes=filter_void_nodes,
+        endpoint_url=endpoint_url,
+        endpoint_name=endpoint_name,
+        graph_uri=graph_uri,
+    )
+
+
 def to_jsonld_from_file(
     void_file_path: str, filter_void_admin_nodes: bool = True
 ) -> Dict[str, Any]:
@@ -152,6 +258,56 @@ def graph_to_linkml(
         schema_name=schema_name,
         schema_description=schema_description,
         schema_base_uri=schema_base_uri,
+    )
+
+
+def graph_to_shacl(
+    graph: Graph,
+    graph_uris: Optional[Union[str, List[str]]] = None,
+    filter_void_nodes: bool = True,
+    schema_name: Optional[str] = None,
+    schema_description: Optional[str] = None,
+    schema_base_uri: Optional[str] = None,
+    closed: bool = True,
+    suffix: Optional[str] = None,
+    include_annotations: bool = False,
+) -> str:
+    """Convert a VoID graph to SHACL shapes.
+
+    Generates SHACL (Shapes Constraint Language) shapes from a VoID
+    graph. SHACL shapes define constraints on RDF data and can be used
+    for validation.
+
+    Args:
+        graph: RDFLib Graph with VoID data
+        graph_uris: Graph URIs to filter extraction
+        filter_void_nodes: Remove VoID-specific nodes
+        schema_name: Name for the schema
+        schema_description: Description for the schema
+        schema_base_uri: Base URI for the schema
+        closed: Generate closed shapes (only allow defined properties)
+        suffix: Optional suffix for shape names (e.g., "Shape")
+        include_annotations: Include class/slot annotations in shapes
+
+    Returns:
+        SHACL shapes as Turtle/RDF string
+
+    Example:
+        >>> from rdflib import Graph
+        >>> from rdfsolve.api import graph_to_shacl
+        >>> void_graph = Graph()
+        >>> void_graph.parse("dataset_void.ttl", format="turtle")
+        >>> shacl_ttl = graph_to_shacl(void_graph, schema_name="my_dataset")
+    """
+    parser = load_parser_from_graph(graph, graph_uris=graph_uris)
+    return parser.to_shacl(
+        filter_void_nodes=filter_void_nodes,
+        schema_name=schema_name,
+        schema_description=schema_description,
+        schema_base_uri=schema_base_uri,
+        closed=closed,
+        suffix=suffix,
+        include_annotations=include_annotations,
     )
 
 

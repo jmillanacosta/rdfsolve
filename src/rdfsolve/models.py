@@ -105,7 +105,15 @@ class LinkMLSlot(BaseModel):
 
 
 class LinkMLSchema(BaseModel):
-    """Represents a complete LinkML schema."""
+    """Represents a complete LinkML schema.
+
+    LinkML schemas can be exported to multiple formats including:
+    - YAML: Human-readable schema definition
+    - JSON Schema: For JSON validation
+    - SHACL: For RDF data validation (Shapes Constraint Language)
+    - Python: Pydantic models for data validation
+    - And more...
+    """
 
     id: str = Field(..., description="Schema ID")
     name: str = Field(..., description="Schema name")
