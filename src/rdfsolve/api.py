@@ -22,6 +22,7 @@ __all__ = [
     "retrieve_void_from_graphs",
     "to_jsonld_from_file",
     "to_linkml_from_file",
+    "to_rdfconfig_from_file",
     "to_shacl_from_file",
 ]
 
@@ -138,6 +139,60 @@ def to_shacl_from_file(
         closed=closed,
         suffix=suffix,
         include_annotations=include_annotations,
+    )
+
+
+def to_rdfconfig_from_file(
+    void_file_path: str,
+    filter_void_nodes: bool = True,
+    endpoint_url: Optional[str] = None,
+    endpoint_name: Optional[str] = None,
+    graph_uri: Optional[str] = None,
+) -> Dict[str, str]:
+    """Convert a VoID file to RDF-config YAML files.
+
+    RDF-config is a schema standard that describes RDF data models using
+    YAML configuration files. This function generates three files:
+    - model.yml: Class and property structure
+    - prefix.yml: Namespace prefix definitions
+    - endpoint.yml: SPARQL endpoint configuration
+
+    Note: The rdf-config tool requires these files to be named exactly
+    model.yml, prefix.yml, and endpoint.yml, and placed in a directory
+    named {dataset}_config. The CLI automatically creates this structure.
+
+    Args:
+        void_file_path: Path to VoID file
+        filter_void_nodes: Remove VoID-specific nodes
+        endpoint_url: SPARQL endpoint URL (optional)
+        endpoint_name: Name for endpoint (default: "endpoint")
+        graph_uri: Named graph URI (optional)
+
+    Returns:
+        Dictionary with 'model', 'prefix', 'endpoint' keys containing
+        YAML strings
+
+    Example:
+        >>> from rdfsolve.api import to_rdfconfig_from_file
+        >>> rdfconfig = to_rdfconfig_from_file(
+        ...     "dataset_void.ttl",
+        ...     endpoint_url="https://example.org/sparql",
+        ...     graph_uri="http://example.org/graph",
+        ... )
+        >>> # Save files
+        >>> with open("model.yml", "w") as f:
+        ...     f.write(rdfconfig["model"])
+        >>> with open("prefix.yml", "w") as f:
+        ...     f.write(rdfconfig["prefix"])
+        >>> with open("endpoint.yml", "w") as f:
+        ...     f.write(rdfconfig["endpoint"])
+    """
+    parser = load_parser_from_file(void_file_path)
+    return parser.to_rdfconfig(
+        filter_void_nodes=filter_void_nodes,
+        endpoint_url=endpoint_url,
+        endpoint_name=endpoint_name,
+        graph_uri=graph_uri,
     )
 
 
