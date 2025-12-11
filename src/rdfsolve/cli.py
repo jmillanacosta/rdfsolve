@@ -198,7 +198,8 @@ def extract(
 
 
     Example:
-      >>> rdfsolve extract --endpoint https://sparql.uniprot.org/sparql --output-dir ./uniprot_schema
+      >>> rdfsolve extract --endpoint https://sparql.uniprot.org/sparql \
+        --output-dir ./uniprot_schema
     """
     click.echo(f"Extracting schema from endpoint: {endpoint}")
     if graph_uri:
