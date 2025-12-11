@@ -16,11 +16,13 @@ __all__ = [
     "graph_to_jsonld",
     "graph_to_linkml",
     "graph_to_schema",
+    "graph_to_shacl",
     "load_parser_from_file",
     "load_parser_from_graph",
     "retrieve_void_from_graphs",
     "to_jsonld_from_file",
     "to_linkml_from_file",
+    "to_shacl_from_file",
 ]
 
 
@@ -90,6 +92,55 @@ def to_linkml_from_file(
     )
 
 
+def to_shacl_from_file(
+    void_file_path: str,
+    filter_void_nodes: bool = True,
+    schema_name: Optional[str] = None,
+    schema_description: Optional[str] = None,
+    schema_base_uri: Optional[str] = None,
+    closed: bool = True,
+    suffix: Optional[str] = None,
+    include_annotations: bool = False,
+) -> str:
+    """Convert a VoID file to SHACL shapes.
+
+    Generates SHACL (Shapes Constraint Language) shapes from a VoID
+    description file. SHACL shapes define constraints on RDF data and
+    can be used for validation.
+
+    Args:
+        void_file_path: Path to VoID file
+        filter_void_nodes: Remove VoID-specific nodes
+        schema_name: Name for the schema
+        schema_description: Description for the schema
+        schema_base_uri: Base URI for the schema
+        closed: Generate closed shapes (only allow defined properties)
+        suffix: Optional suffix for shape names (e.g., "Shape")
+        include_annotations: Include class/slot annotations in shapes
+
+    Returns:
+        SHACL shapes as Turtle/RDF string
+
+    Example:
+        >>> from rdfsolve.api import to_shacl_from_file
+        >>> shacl_ttl = to_shacl_from_file(
+        ...     "dataset_void.ttl", schema_name="my_dataset", closed=True
+        ... )
+        >>> with open("schema.shacl.ttl", "w") as f:
+        ...     f.write(shacl_ttl)
+    """
+    parser = load_parser_from_file(void_file_path)
+    return parser.to_shacl(
+        filter_void_nodes=filter_void_nodes,
+        schema_name=schema_name,
+        schema_description=schema_description,
+        schema_base_uri=schema_base_uri,
+        closed=closed,
+        suffix=suffix,
+        include_annotations=include_annotations,
+    )
+
+
 def to_jsonld_from_file(
     void_file_path: str, filter_void_admin_nodes: bool = True
 ) -> Dict[str, Any]:
@@ -152,6 +203,56 @@ def graph_to_linkml(
         schema_name=schema_name,
         schema_description=schema_description,
         schema_base_uri=schema_base_uri,
+    )
+
+
+def graph_to_shacl(
+    graph: Graph,
+    graph_uris: Optional[Union[str, List[str]]] = None,
+    filter_void_nodes: bool = True,
+    schema_name: Optional[str] = None,
+    schema_description: Optional[str] = None,
+    schema_base_uri: Optional[str] = None,
+    closed: bool = True,
+    suffix: Optional[str] = None,
+    include_annotations: bool = False,
+) -> str:
+    """Convert a VoID graph to SHACL shapes.
+
+    Generates SHACL (Shapes Constraint Language) shapes from a VoID
+    graph. SHACL shapes define constraints on RDF data and can be used
+    for validation.
+
+    Args:
+        graph: RDFLib Graph with VoID data
+        graph_uris: Graph URIs to filter extraction
+        filter_void_nodes: Remove VoID-specific nodes
+        schema_name: Name for the schema
+        schema_description: Description for the schema
+        schema_base_uri: Base URI for the schema
+        closed: Generate closed shapes (only allow defined properties)
+        suffix: Optional suffix for shape names (e.g., "Shape")
+        include_annotations: Include class/slot annotations in shapes
+
+    Returns:
+        SHACL shapes as Turtle/RDF string
+
+    Example:
+        >>> from rdflib import Graph
+        >>> from rdfsolve.api import graph_to_shacl
+        >>> void_graph = Graph()
+        >>> void_graph.parse("dataset_void.ttl", format="turtle")
+        >>> shacl_ttl = graph_to_shacl(void_graph, schema_name="my_dataset")
+    """
+    parser = load_parser_from_graph(graph, graph_uris=graph_uris)
+    return parser.to_shacl(
+        filter_void_nodes=filter_void_nodes,
+        schema_name=schema_name,
+        schema_description=schema_description,
+        schema_base_uri=schema_base_uri,
+        closed=closed,
+        suffix=suffix,
+        include_annotations=include_annotations,
     )
 
 

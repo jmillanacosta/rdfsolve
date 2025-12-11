@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 import pandas as pd
 from bioregistry import curie_from_iri
+from linkml.generators.shaclgen import ShaclGenerator
 from linkml.generators.yamlgen import YAMLGenerator
 from linkml_runtime.linkml_model import (
     ClassDefinition,
@@ -971,6 +972,9 @@ class VoidParser:
         class_properties: Dict[str, List[str]] = {}  # class_name -> [property_names]
         property_ranges: Dict[str, str] = {}  # property_name -> range_type
         property_descriptions: Dict[str, str] = {}  # property_name -> description
+        # Track original URIs/CURIEs for classes and slots
+        original_class_uris: Dict[str, str] = {}  # class_name -> original CURIE/URI
+        original_slot_uris: Dict[str, str] = {}  # slot_name -> original CURIE/URI
 
         for item in schema_items:
             if "@id" not in item:
@@ -979,6 +983,10 @@ class VoidParser:
             subject = item["@id"]
             subject_clean = self._make_valid_linkml_name(subject)
             all_class_names.add(subject_clean)
+
+            # Store original URI/CURIE for this class
+            if subject_clean not in original_class_uris:
+                original_class_uris[subject_clean] = subject
 
             if subject_clean not in class_properties:
                 class_properties[subject_clean] = []
@@ -990,6 +998,10 @@ class VoidParser:
 
                 prop_clean = self._make_valid_linkml_name(prop)
                 all_slot_names.add(prop_clean)
+
+                # Store original URI/CURIE for this property
+                if prop_clean not in original_slot_uris:
+                    original_slot_uris[prop_clean] = prop
 
                 if prop_clean not in class_properties[subject_clean]:
                     class_properties[subject_clean].append(prop_clean)
@@ -1004,6 +1016,9 @@ class VoidParser:
                         # It's a reference to another resource
                         target_clean = self._make_valid_linkml_name(value["@id"])
                         all_class_names.add(target_clean)
+                        # Store original URI/CURIE for the target class
+                        if target_clean not in original_class_uris:
+                            original_class_uris[target_clean] = value["@id"]
                         property_ranges[prop_clean] = target_clean
                     elif "@value" in value:
                         # It's a literal value
@@ -1031,7 +1046,7 @@ class VoidParser:
                 final_name = slot_name
             slot_name_mapping[slot_name] = final_name
 
-        # Create class definitions with URIs using original prefixes
+        # Create class definitions with original URIs from source data
         classes = {}
         for class_name in all_class_names:
             # Get properties for this class, applying name mapping
@@ -1041,8 +1056,18 @@ class VoidParser:
                     slot_name_mapping.get(prop, prop) for prop in class_properties[class_name]
                 ]
 
-            # Generate class URI using original prefix format: schema_uri/prefix_class
-            class_uri = f"{schema_uri}{class_name}"
+            # Use original CURIE/URI from the source data
+            # Expand CURIE to full URI using context if needed
+            original_uri = original_class_uris.get(class_name, class_name)
+            if ":" in original_uri and not original_uri.startswith(("http://", "https://")):
+                # It's a CURIE, try to expand it using the context
+                prefix, local = original_uri.split(":", 1)
+                if prefix in all_prefixes:
+                    class_uri = all_prefixes[prefix] + local
+                else:
+                    class_uri = original_uri
+            else:
+                class_uri = original_uri
 
             class_def = ClassDefinition(
                 name=class_name,
@@ -1064,8 +1089,17 @@ class VoidParser:
             elif range_type not in ["string", "uriorcurie"]:
                 range_type = "string"  # Default fallback
 
-            # Generate slot URI using original prefix format: schema_uri/prefix_property
-            slot_uri = f"{schema_uri}{final_slot_name}"
+            # Use original CURIE/URI from the source data
+            original_uri = original_slot_uris.get(original_slot_name, original_slot_name)
+            if ":" in original_uri and not original_uri.startswith(("http://", "https://")):
+                # It's a CURIE, try to expand it using the context
+                prefix, local = original_uri.split(":", 1)
+                if prefix in all_prefixes:
+                    slot_uri = all_prefixes[prefix] + local
+                else:
+                    slot_uri = original_uri
+            else:
+                slot_uri = original_uri
 
             slot_def = SlotDefinition(
                 name=final_slot_name,
@@ -1375,6 +1409,63 @@ class VoidParser:
         )
 
         return cast(str, YAMLGenerator(linkml_schema).serialize())
+
+    def to_shacl(
+        self,
+        filter_void_nodes: bool = True,
+        schema_name: Optional[str] = None,
+        schema_description: Optional[str] = None,
+        schema_base_uri: Optional[str] = None,
+        closed: bool = True,
+        suffix: Optional[str] = None,
+        include_annotations: bool = False,
+    ) -> str:
+        """
+        Generate SHACL (Shapes Constraint Language) shapes from VoID schema.
+
+        This method converts the VoID schema to LinkML and then generates SHACL
+        shapes using LinkML's ShaclGenerator. SHACL shapes can be used to validate
+        RDF data against the extracted schema constraints.
+
+        Args:
+            filter_void_nodes: Whether to filter out VoID-specific nodes
+            schema_name: Name for the LinkML schema (used as base for SHACL shapes)
+            schema_description: Description for the LinkML schema
+            schema_base_uri: Base URI for the schema
+            closed: If True, generate closed SHACL shapes (sh:closed true).
+            suffix: Optional suffix to append to shape names (e.g., "Shape" -> PersonShape)
+            include_annotations: If True, include annotations from classes/slots in shapes.
+
+        Returns:
+            SHACL shapes as Turtle/RDF string
+
+        Example:
+            >>> parser = VoidParser("dataset_void.ttl")
+            >>> shacl_ttl = parser.to_shacl(schema_name="my_dataset", closed=True, suffix="Shape")
+            >>> # Save to file
+            >>> with open("schema.shacl.ttl", "w") as f:
+            ...     f.write(shacl_ttl)
+        """
+        # First generate LinkML schema
+        linkml_schema = self.to_linkml(
+            filter_void_nodes=filter_void_nodes,
+            schema_name=schema_name,
+            schema_description=schema_description,
+            schema_base_uri=schema_base_uri,
+        )
+
+        # Create a StringIO stream from the LinkML YAML serialization
+        linkml_yaml = YAMLGenerator(linkml_schema).serialize()
+
+        # Generate SHACL from LinkML schema
+        shacl_gen = ShaclGenerator(
+            schema=linkml_yaml,
+            closed=closed,
+            # suffix=suffix,
+            include_annotations=include_annotations,
+        )
+
+        return cast(str, shacl_gen.serialize())
 
     def to_json(self, filter_void_nodes: bool = True) -> Dict[str, Any]:
         """

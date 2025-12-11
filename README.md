@@ -62,6 +62,7 @@ rdfsolve extract --endpoint URL \
 - `csv` - Schema patterns table
 - `jsonld` - JSON-LD representation
 - `linkml` - LinkML YAML schema
+- `shacl` - SHACL shapes for RDF validation
 - `coverage` - Pattern frequency analysis
 - `all` - All formats (default)
 
@@ -74,6 +75,23 @@ rdfsolve export --void-file void_description.ttl \
   --schema-uri "http://example.org/schemas/custom" \
   --schema-description "Custom schema description"
 ```
+
+**Export SHACL shapes for RDF validation:**
+
+```bash
+# Export closed SHACL shapes (strict validation)
+rdfsolve export --void-file void_description.ttl \
+  --format shacl \
+  --shacl-closed \
+  --shacl-suffix Shape
+
+# Export open SHACL shapes (flexible validation)
+rdfsolve export --void-file void_description.ttl \
+  --format shacl \
+  --shacl-open
+```
+
+SHACL (Shapes Constraint Language) shapes define constraints on RDF data and can be used to validate RDF instances against the extracted schema. Closed shapes only allow properties explicitly defined in the schema, while open shapes are more permissive.
 
 **Count instances per class:**
 
@@ -92,6 +110,7 @@ from rdfsolve.api import (
     generate_void_from_endpoint,
     load_parser_from_graph,
     count_instances_per_class,
+    to_shacl_from_file,
 )
 
 # Generate VoID from endpoint
@@ -112,6 +131,21 @@ linkml_yaml = parser.to_linkml_yaml(
     schema_base_uri="http://example.org/schemas/my_schema"
 )
 
+# Export to SHACL shapes for validation
+shacl_ttl = parser.to_shacl(
+    schema_name="my_schema",
+    schema_base_uri="http://example.org/schemas/my_schema",
+    closed=True,  # Closed shapes for strict validation
+    suffix="Shape",  # Append "Shape" to class names
+)
+
+# Or use the convenience function
+shacl_ttl = to_shacl_from_file(
+    "void_description.ttl",
+    schema_name="my_schema",
+    closed=True,
+)
+
 # Count instances per class
 class_counts = count_instances_per_class(
     "https://sparql.example.org/",
@@ -123,7 +157,8 @@ class_counts = count_instances_per_class(
 
 - Extract RDF schemas from SPARQL endpoints using VoID partitions
 - Discover existing VoID metadata or generate fresh
-- Export to multiple formats: CSV, JSON-LD, LinkML, coverage analysis
+- Export to multiple formats: CSV, JSON-LD, LinkML, SHACL, coverage analysis
+- SHACL shapes generation for RDF data validation
 - Customizable dataset naming and VoID partition URIs
 - Service graph filtering (excludes Virtuoso system graphs by default)
 - Instance counting per class with optional sampling

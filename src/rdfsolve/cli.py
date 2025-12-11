@@ -14,6 +14,7 @@ from .api import (
     load_parser_from_file,
     to_jsonld_from_file,
     to_linkml_from_file,
+    to_shacl_from_file,
 )
 
 __all__ = [
@@ -76,7 +77,7 @@ def discover(endpoint: str, graph_uri: tuple[str, ...], output_dir: str) -> None
 
 
     Example:
-      rdfsolve discover --endpoint https://sparql.uniprot.org/sparql
+      >>> rdfsolve discover --endpoint https://sparql.uniprot.org/sparql
     """
     from pathlib import Path
 
@@ -197,8 +198,7 @@ def extract(
 
 
     Example:
-      rdfsolve extract --endpoint https://sparql.uniprot.org/sparql \
-                       --output-dir ./uniprot_schema
+      >>> rdfsolve extract --endpoint https://sparql.uniprot.org/sparql --output-dir ./uniprot_schema
     """
     click.echo(f"Extracting schema from endpoint: {endpoint}")
     if graph_uri:
@@ -299,7 +299,7 @@ def extract(
 @click.option("--output-dir", default=".", help="Output directory for exports")
 @click.option(
     "--format",
-    type=click.Choice(["csv", "jsonld", "linkml", "coverage", "all"]),
+    type=click.Choice(["csv", "jsonld", "linkml", "shacl", "coverage", "all"]),
     default="all",
     help="Export format (default: all)",
 )
@@ -315,6 +315,15 @@ def extract(
     "--schema-uri",
     help="Base URI for LinkML schema (e.g., http://example.org/schemas/myschema)",
 )
+@click.option(
+    "--shacl-closed/--shacl-open",
+    default=True,
+    help="Generate closed SHACL shapes (default: closed)",
+)
+@click.option(
+    "--shacl-suffix",
+    help="Suffix for SHACL shape names (e.g., 'Shape' -> PersonShape)",
+)
 def export(
     void_file: str,
     output_dir: str,
@@ -322,15 +331,38 @@ def export(
     schema_name: Optional[str],
     schema_description: Optional[str],
     schema_uri: Optional[str],
+    shacl_closed: bool,
+    shacl_suffix: Optional[str],
 ) -> None:
     r"""Export RDF schema to various formats.
 
     Takes a VoID description file and exports the schema in multiple
     formats for different use cases: analysis (CSV), semantic web
-    (JSON-LD), data modeling (LinkML), and coverage analysis.
+    (JSON-LD), data modeling (LinkML), validation (SHACL), and
+    coverage analysis.
+
+
+    Formats:
+      - csv:      Schema patterns as CSV table
+      - jsonld:   Semantic web JSON-LD format
+      - linkml:   LinkML YAML schema for data modeling
+      - shacl:    SHACL shapes for RDF validation
+      - coverage: Pattern coverage analysis
+      - all:      Export all formats (default)
+
+
+    SHACL Export:
+      SHACL (Shapes Constraint Language) shapes can be used to validate
+      RDF data against the extracted schema. Use --shacl-closed for
+      strict validation (only allows defined properties) or --shacl-open
+      for flexible validation.
 
     Example:
-      rdfsolve export --void-file void_description.ttl --format jsonld --output-dir ./exports
+      >>> rdfsolve export --void-file void_description.ttl \
+                      --format shacl \
+                      --shacl-closed \
+                      --shacl-suffix Shape \
+                      --output-dir ./exports
     """
     click.echo(f"Exporting schema from: {void_file}")
 
@@ -374,6 +406,28 @@ def export(
             if schema_uri:
                 click.echo(f"            Schema URI: {schema_uri}")
 
+        # SHACL export
+        if format in ["shacl", "all"]:
+            # Use provided schema_name or derive from filename
+            shacl_schema_name = schema_name or dataset_name
+
+            shacl_ttl = to_shacl_from_file(
+                void_file,
+                filter_void_nodes=True,
+                schema_name=shacl_schema_name,
+                schema_description=schema_description,
+                schema_base_uri=schema_uri,
+                closed=shacl_closed,
+                suffix=shacl_suffix,
+            )
+            shacl_file = output_path / f"{dataset_name}_schema.shacl.ttl"
+            with open(shacl_file, "w") as f:
+                f.write(shacl_ttl)
+            shape_type = "closed" if shacl_closed else "open"
+            click.echo(f"OK SHACL:    {shacl_file} ({shape_type} shapes)")
+            if shacl_suffix:
+                click.echo(f"            Shape suffix: {shacl_suffix}")
+
         # Pattern coverage export - requires instance data (not available from VoID alone)
         if format in ["coverage", "all"]:
             click.echo("  Coverage: Skipped (requires instance data, not available from VoID file)")
@@ -415,7 +469,7 @@ def count(
     --include-service-graphs to include them.
 
     Example:
-      rdfsolve count --endpoint https://sparql.uniprot.org/sparql \
+      >>> rdfsolve count --endpoint https://sparql.uniprot.org/sparql \
                      --output class_counts.csv
     """
     click.echo(f"Counting instances at: {endpoint}")
