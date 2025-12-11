@@ -1560,6 +1560,16 @@ class VoidParser:
         # Group items by class (@id becomes the class subject)
         classes: Dict[str, List[Dict[str, Any]]] = {}
 
+        # First pass: collect all class URIs
+        class_uris = set()
+        for item in graph_data:
+            if "@id" in item:
+                class_uris.add(item["@id"])
+
+        # Build unique class name mapping to handle duplicates
+        class_name_map = self._build_unique_class_names(class_uris, prefixes)
+
+        # Second pass: process properties
         for item in graph_data:
             if "@id" not in item:
                 continue
@@ -1570,8 +1580,11 @@ class VoidParser:
             if subject not in classes:
                 classes[subject] = []
 
-            # Get snake_case version for variable prefixes
-            class_var = self._make_rdfconfig_variable(subject)
+            # Get snake_case version for variable prefixes from unique name
+            unique_class_name = class_name_map.get(
+                subject, self._make_rdfconfig_class_name(subject)
+            )
+            class_var = self._make_rdfconfig_variable(unique_class_name)
 
             # Process each property in the item
             for prop, value in item.items():
@@ -1579,15 +1592,19 @@ class VoidParser:
                     continue
 
                 # Determine if value is a reference or literal
-                prop_info = self._analyze_rdfconfig_property(prop, value, class_var)
+                prop_info = self._analyze_rdfconfig_property(prop, value, class_var, class_name_map)
                 if prop_info:
                     classes[subject].append(prop_info)
 
         # Format as RDF-config YAML
-        return self._format_rdfconfig_classes_yaml(classes)
+        return self._format_rdfconfig_classes_yaml(classes, class_name_map)
 
     def _analyze_rdfconfig_property(
-        self, prop: str, value: Any, class_context: str
+        self,
+        prop: str,
+        value: Any,
+        class_context: str,
+        class_name_map: Dict[str, str],
     ) -> Optional[Dict[str, Any]]:
         """
         Analyze a property and return structured info for RDF-config.
@@ -1596,6 +1613,7 @@ class VoidParser:
             prop: Property URI/CURIE
             value: Property value (dict, list, or literal)
             class_context: Class name for scoping variable names
+            class_name_map: Mapping of class URIs to unique names
 
         Returns:
             Dictionary with property info or None
@@ -1620,7 +1638,10 @@ class VoidParser:
 
         if is_reference and target_class:
             # Object property pointing to another class
-            target_name = self._make_rdfconfig_class_name(target_class)
+            # Use unique name from map
+            target_name = class_name_map.get(
+                target_class, self._make_rdfconfig_class_name(target_class)
+            )
             return {
                 "property": prop,
                 "variable": prop_var,
@@ -1634,16 +1655,97 @@ class VoidParser:
                 "range": f'"{prop_var}_value"',
             }
 
-    def _format_rdfconfig_classes_yaml(self, classes: Dict[str, List[Dict[str, Any]]]) -> str:
-        """Format classes dictionary as RDF-config YAML."""
+    def _build_unique_class_names(
+        self, class_uris: Any, prefixes: Dict[str, str]
+    ) -> Dict[str, str]:
+        """
+        Build a mapping of class URIs to unique class names.
+
+        Handles collisions by including the prefix in the class name
+        when the same local name appears in multiple namespaces.
+
+        Args:
+            class_uris: Iterable of class URIs
+            prefixes: Dictionary of prefix to namespace URI mappings
+
+        Returns:
+            Dictionary mapping class URI to unique class name
+        """
+        import re
+
+        # Reverse prefix mapping for lookup
+        ns_to_prefix = {ns: prefix for prefix, ns in prefixes.items()}
+
+        # First pass: collect all base names and their URIs
+        name_to_uris: Dict[str, List[str]] = {}
+        uri_to_base_name: Dict[str, str] = {}
+
+        for class_uri in class_uris:
+            base_name = self._make_rdfconfig_class_name(class_uri)
+            uri_to_base_name[class_uri] = base_name
+
+            if base_name not in name_to_uris:
+                name_to_uris[base_name] = []
+            name_to_uris[base_name].append(class_uri)
+
+        # Second pass: resolve collisions
+        class_name_map: Dict[str, str] = {}
+
+        for base_name, uris in name_to_uris.items():
+            if len(uris) == 1:
+                # No collision, use base name
+                class_name_map[uris[0]] = base_name
+            else:
+                # Collision detected, add prefix to disambiguate
+                for uri in uris:
+                    # Try to extract prefix from CURIE
+                    prefix_part = None
+                    if ":" in uri:
+                        prefix_part = uri.split(":", 1)[0]
+                    else:
+                        # Try to find matching namespace
+                        for ns_uri, prefix in ns_to_prefix.items():
+                            if uri.startswith(ns_uri):
+                                prefix_part = prefix
+                                break
+
+                    if prefix_part:
+                        # Create name: PrefixBaseName (e.g., WpDataNode)
+                        # Capitalize prefix and prepend to base name
+                        prefix_clean = re.sub(r"[^a-zA-Z0-9]", "", prefix_part)
+                        prefix_cap = (
+                            prefix_clean[0].upper() + prefix_clean[1:] if prefix_clean else ""
+                        )
+                        unique_name = f"{prefix_cap}{base_name}"
+                    else:
+                        # Fallback: use hash of URI
+                        uri_hash = str(abs(hash(uri)))[:6]
+                        unique_name = f"{base_name}{uri_hash}"
+
+                    class_name_map[uri] = unique_name
+
+        return class_name_map
+
+    def _format_rdfconfig_classes_yaml(
+        self, classes: Dict[str, List[Dict[str, Any]]], class_name_map: Dict[str, str]
+    ) -> str:
+        """
+        Format classes dictionary as RDF-config YAML.
+
+        Args:
+            classes: Dictionary mapping class URIs to their properties
+            class_name_map: Dictionary mapping class URIs to unique names
+
+        Returns:
+            YAML string for model.yaml
+        """
         lines = []
 
         for class_uri in sorted(classes.keys()):
             properties = classes[class_uri]
 
-            # Class header: - ClassName uri:
-            # RDF-config requires CamelCase without underscores
-            class_name = self._make_rdfconfig_class_name(class_uri)
+            # Get unique class name from map
+            class_name = class_name_map.get(class_uri, self._make_rdfconfig_class_name(class_uri))
             lines.append(f"- {class_name} {class_uri}:")
 
             # Add properties
