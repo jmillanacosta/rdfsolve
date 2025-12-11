@@ -62,8 +62,8 @@ dependencies = [
     "bioregistry",
     #"bioregistry @ git+https://github.com/biopragmatics/bioregistry@main", #Use latest, TODO replace with official release when available
     # Schema modeling
-    "linkml==1.9.1",
-    "linkml-runtime==1.9.0",  # Explicitly specify to ensure compatibility
+    "linkml>=1.9.1",
+    "linkml-runtime>=1.9.0",  # Explicitly specify to ensure compatibility
     "deprecated>=1.2.13",  # Required by linkml-runtime
     "pyld",
     # Utility libraries
