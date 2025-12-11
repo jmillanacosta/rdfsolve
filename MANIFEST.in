@@ -7,6 +7,7 @@ prune docs
 
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle .idea/**
 
-include README.md LICENSE
+include README.md LICENSE Makefile
 recursive-include data *.csv
+recursive-include scripts *.sh
 exclude tox.ini .readthedocs.yml .cruft.json CITATION.cff docker-compose.yml Dockerfile noxfile.py

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rdfsolve"
-version = "0.0.1-dev"
+version = "0.0.1"
 description = "Wraps several RDF schema solver tools"
 readme = "README.md"
 authors = [
@@ -59,10 +59,12 @@ dependencies = [
     # Data processing and analysis
     "pandas>=2.0.0", # DataFrame operations for analysis results
     "numpy", # Numerical operations (pandas dependency)
-    #"bioregistry",
-    "bioregistry @ git+https://github.com/biopragmatics/bioregistry@main", #Use latest, TODO replace with official release when available
+    "bioregistry",
+    #"bioregistry @ git+https://github.com/biopragmatics/bioregistry@main", #Use latest, TODO replace with official release when available
     # Schema modeling
     "linkml>=1.9.1",
+    "linkml-runtime>=1.9.0",  # Explicitly specify to ensure compatibility
+    "deprecated>=1.2.13",  # Required by linkml-runtime
     "pyld",
     # Utility libraries
     "more_itertools", # missing from itertools in stdlib
@@ -163,6 +165,7 @@ max-line-length = 120
 [tool.pytest.ini_options]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests that require network access and hit live endpoints (deselect with '-m \"not integration\"')",
 ]
 
 # Coverage, see https://coverage.readthedocs.io/en/latest/config.html
@@ -231,8 +234,8 @@ ignore = [
 # Tests should use assert statements - this is pytest standard
 "tests/*.py" = ["S101"]
 "tests/**/*.py" = ["S101"]
-# Notebooks have different standards - allow prints, exec, line length, bare except, missing docstrings, naming conventions, complexity, commented code, pickle usage, ambiguous unicode
-"notebooks/**/*.ipynb" = ["T201", "S102", "E501", "E722", "D103", "D205", "N803", "N806", "N816", "C901", "B007", "ERA001", "S301", "RUF001"]
+# Notebooks have different standards - allow prints, exec, line length, bare except, missing docstrings, naming conventions, complexity, commented code, pickle usage, ambiguous unicode, quadratic list summation
+"notebooks/**/*.ipynb" = ["T201", "S102", "E501", "E722", "D103", "D205", "N803", "N806", "N816", "C901", "B007", "ERA001", "S301", "RUF001", "RUF017"]
 "notebooks/**/*.py" = ["T201", "D103", "C901", "B007", "D205"]
 # Parser has legitimate complexity, security warnings, naming conventions for RDF namespaces, docstring formatting, long SPARQL queries, commented code, MD5 for hashing (not security)
 "src/rdfsolve/parser.py" = ["C901", "S311", "S324", "E722", "B030", "N806", "D205", "E501", "ERA001", "D401", "B904"]
@@ -266,7 +269,7 @@ known-first-party = [
 docstring-code-format = true
 
 [tool.bumpversion]
-current_version = "0.0.1-dev"
+current_version = "0.0.1"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+(?P<build>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?"
 serialize = [
     "{major}.{minor}.{patch}-{release}+{build}",

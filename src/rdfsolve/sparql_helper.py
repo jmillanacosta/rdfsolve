@@ -355,6 +355,10 @@ class SparqlHelper:
         """
         Execute a CONSTRUCT query and return an RDFLib Graph.
 
+        The CONSTRUCT method internally uses _execute which handles
+        GET→POST fallback automatically when HTML is detected in the
+        response string.
+
         Args:
             query: SPARQL CONSTRUCT query string
 
@@ -365,12 +369,8 @@ class SparqlHelper:
             EndpointError: If the endpoint returns an error after all retries
             QueryError: If the query is malformed
         """
+        # construct() calls _execute which handles GET→POST fallback
         turtle_data = self.construct(query)
-
-        # Skip if we got HTML error response
-        if self._is_html_response(turtle_data):
-            logger.warning("Received HTML instead of RDF data")
-            return Graph()
 
         graph = Graph()
         if turtle_data.strip():
