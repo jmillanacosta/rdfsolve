@@ -35,7 +35,120 @@ ex:621c66dce143 a sh:SPARQLExecutable,
         }
         
 """ ;
-    schema:dateCreated "2025-12-02T10:05:20.714103+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:30.699598+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
+    ] .
+
+ex:91a8987ec69f a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+CONSTRUCT {
+    ?cp void:class ?class ;
+        void:entities ?count .
+}
+WHERE {
+    {
+        SELECT ?class (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH <http://aopwiki.org/> {
+                ?s a ?class
+            }
+        }
+        GROUP BY ?class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://aopwiki.org//void/class_partition_',
+                   REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
+}
+""" ;
+    schema:dateCreated "2025-12-10T11:56:30.894643+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
+    ] .
+
+ex:4219247aba85 a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+CONSTRUCT {
+    ?pp void:property ?property ;
+        void:triples ?count ;
+        void-ext:subjectClass ?subject_class ;
+        void-ext:objectClass ?object_class .
+}
+WHERE {
+    {
+        SELECT ?property ?subject_class ?object_class (COUNT(*) AS ?count)
+        WHERE {
+            GRAPH <http://aopwiki.org/> {
+                ?subject ?property ?object .
+                ?subject rdf:type ?subject_class .
+            }
+
+            # Determine object class based on object type
+            {
+                BIND(rdfs:Literal AS ?object_class)
+                FILTER(isLiteral(?object))
+            }
+            UNION
+            {
+                ?object rdf:type ?object_class .
+                FILTER(isURI(?object))
+            }
+            UNION
+            {
+                BIND(rdfs:Resource AS ?object_class)
+                FILTER(isURI(?object))
+                FILTER NOT EXISTS { ?object rdf:type ?any_type }
+            }
+        }
+        GROUP BY ?property ?subject_class ?object_class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://aopwiki.org//void/property_partition_',
+                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class), '_', STR(?object_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
+}
+""" ;
+    schema:dateCreated "2025-12-10T11:56:31.010184+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
+    ] .
+
+ex:de6ff5cee1a5 a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+CONSTRUCT {
+    ?dp void-ext:datatypePartition ?datatype ;
+        void:triples ?count .
+}
+WHERE {
+    {
+        SELECT ?datatype (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH <http://aopwiki.org/> {
+                ?s ?p ?o .
+                FILTER(isLiteral(?o))
+                BIND(datatype(?o) AS ?datatype)
+            }
+        }
+        GROUP BY ?datatype
+    }
+    BIND(IRI(CONCAT('http://aopwiki.org//void/datatype_partition_',
+                   REPLACE(STR(?datatype), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?dp)
+}
+""" ;
+    schema:dateCreated "2025-12-10T11:56:31.615819+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
@@ -56,3655 +169,1831 @@ ex:3ed70698afc1 a sh:SPARQLExecutable,
 OFFSET 0
 LIMIT 300
 """ ;
-    schema:dateCreated "2025-12-02T10:05:25.244703+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:33.214781+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:91916f01a8d7 a sh:SPARQLExecutable,
+ex:41e862c81115 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
+                        ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:25.367071+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:33.380280+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:1d324750207c a sh:SPARQLExecutable,
+ex:4564324bf459 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_1025> .
-                            ?o a <http://edamontology.org/data_2291> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://edamontology.org/data_1025> .
+                        ?o a <http://edamontology.org/data_2291> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:25.493874+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:34.386635+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:fd7f14d889ae a sh:SPARQLExecutable,
+ex:54f8e2327c9f a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_1025> .
-                            ?o a <http://edamontology.org/data_1027> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://edamontology.org/data_1025> .
+                        ?o a <http://edamontology.org/data_1027> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:25.627159+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:34.689029+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:1b9cb7ddfdea a sh:SPARQLExecutable,
+ex:427a008f28b0 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000564> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000564> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:25.750488+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:34.737858+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:4853682d97ba a sh:SPARQLExecutable,
+ex:19c4d2550489 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_1025> .
-                            ?o a <http://edamontology.org/data_1033> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://edamontology.org/data_1025> .
+                        ?o a <http://edamontology.org/data_1033> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:25.875007+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:34.996741+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:218f67f145f0 a sh:SPARQLExecutable,
+ex:a4d866b85276 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000412> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000412> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:26.000634+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:35.088080+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:484cbfab9399 a sh:SPARQLExecutable,
+ex:5727fab1d4cc a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000405> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000405> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:26.118990+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:35.178035+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:390f75efd20f a sh:SPARQLExecutable,
+ex:19549d22985a a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000409> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000409> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:26.241009+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:35.301908+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:b9939e3bc245 a sh:SPARQLExecutable,
+ex:aeb5fcbdfb58 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000406> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000406> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:26.359397+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:35.371487+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:cf5cd8b1cf96 a sh:SPARQLExecutable,
+ex:78bbfe75a1d7 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_2298> .
-                            ?o a <http://edamontology.org/data_1025> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://edamontology.org/data_2298> .
+                        ?o a <http://edamontology.org/data_1025> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:26.489017+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:36.863933+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:1ed27f4308ba a sh:SPARQLExecutable,
+ex:9a38157f5553 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://edamontology.org/data_1025> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
+                        ?o a <http://edamontology.org/data_1025> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:26.619163+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:37.019391+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:962815477daa a sh:SPARQLExecutable,
+ex:115d2038fa50 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000408> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000408> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:26.744980+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:37.124212+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:8b6c5a58f1e1 a sh:SPARQLExecutable,
+ex:77dfae5d51d8 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_2298> .
-                            ?o a <http://edamontology.org/data_2291> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://edamontology.org/data_2298> .
+                        ?o a <http://edamontology.org/data_2291> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:26.901362+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:38.163069+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:e5fb29938401 a sh:SPARQLExecutable,
+ex:3f71c547e76d a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_2298> .
-                            ?o a <http://edamontology.org/data_1027> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://edamontology.org/data_2298> .
+                        ?o a <http://edamontology.org/data_1027> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:27.027361+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:38.410583+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:a5732cb68070 a sh:SPARQLExecutable,
+ex:ec5d3fd8ee0d a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000405> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000405> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:27.145384+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:38.512723+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:e52300ec003a a sh:SPARQLExecutable,
+ex:9a079d04e471 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000564> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000564> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:27.262871+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:38.553407+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:7dd2f195bd63 a sh:SPARQLExecutable,
+ex:5e2d55ad03f7 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000407> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000407> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:27.380833+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:38.650472+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:a4a499387188 a sh:SPARQLExecutable,
+ex:fd55c2c74cad a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://edamontology.org/data_2298> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
+                        ?o a <http://edamontology.org/data_2298> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:27.499458+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:38.717357+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:a034048d1d71 a sh:SPARQLExecutable,
+ex:eab5bb92a100 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000567> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000567> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:27.616983+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:38.823088+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:6ec025000054 a sh:SPARQLExecutable,
+ex:7b88f2de6107 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://edamontology.org/data_2291> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
+                        ?o a <http://edamontology.org/data_2291> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:27.734370+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:38.956546+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:2bde42a01c3f a sh:SPARQLExecutable,
+ex:f3f90828ed41 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_1025> .
-                            ?o a <http://edamontology.org/data_1025> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://edamontology.org/data_1025> .
+                        ?o a <http://edamontology.org/data_1025> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:27.858964+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:40.268192+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:b356564faae8 a sh:SPARQLExecutable,
+ex:bd949bf14b80 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000407> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000407> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:27.985080+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:40.371200+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:937278ffa160 a sh:SPARQLExecutable,
+ex:47da73e18019 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000412> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000412> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:28.110277+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:40.474020+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:84cba406fa15 a sh:SPARQLExecutable,
+ex:f7181accfbb8 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000409> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000409> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:28.233324+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:40.586597+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:60854b028300 a sh:SPARQLExecutable,
+ex:a925390fa97d a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000408> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000408> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:28.355601+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:40.696458+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:fe1f41915f59 a sh:SPARQLExecutable,
+ex:c47a7f87e089 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://edamontology.org/data_1027> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
+                        ?o a <http://edamontology.org/data_1027> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:28.484579+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:40.775923+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:8c5e14255c73 a sh:SPARQLExecutable,
+ex:ba748114c3fd a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000406> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000406> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:28.603589+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:40.865926+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:0a4226138672 a sh:SPARQLExecutable,
+ex:4fd7839bceb2 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000567> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000567> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:28.730497+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:40.942754+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:3c007015732b a sh:SPARQLExecutable,
+ex:f1a93f42b37d a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000140> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000140> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:28.849625+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:41.051985+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:9c46d26a23f5 a sh:SPARQLExecutable,
+ex:419e908dde39 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000140> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000140> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:28.968082+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:41.156807+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:45590b5d2353 a sh:SPARQLExecutable,
+ex:9937ee50b46c a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_2298> .
-                            ?o a <http://edamontology.org/data_1033> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
+                        ?s a <http://edamontology.org/data_2298> .
+                        ?o a <http://edamontology.org/data_1033> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:29.087462+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:41.408768+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:7f237d61e525 a sh:SPARQLExecutable,
+ex:3573ceec04b7 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:29.210823+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:41.655774+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:c6be28358b65 a sh:SPARQLExecutable,
+ex:3d09a65ed599 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/GO_0008150> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://purl.obolibrary.org/obo/GO_0008150> .
+                        ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:29.335630+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:41.698905+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:f59cab1c95cb a sh:SPARQLExecutable,
+ex:cc1c5d6c66fb a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000000> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000000> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:29.461274+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:41.812673+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:c00b57e09f87 a sh:SPARQLExecutable,
+ex:126cdcd55345 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#OrganContext> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#OrganContext> .
+                        ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:29.585853+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:41.857532+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:412591a25afd a sh:SPARQLExecutable,
+ex:7773b5596e62 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#OrganContext> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#OrganContext> .
+                        ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:29.708204+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:41.897136+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:30f17adf8f10 a sh:SPARQLExecutable,
+ex:58fbf9362fa5 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#OrganContext> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#OrganContext> .
+                        ?o a <http://aopkb.org/aop_ontology#OrganContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:29.832928+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:41.956741+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:1b2726fbaccf a sh:SPARQLExecutable,
+ex:46779d024aea a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
+                        ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:29.957532+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.002077+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:b3f6f3a33a83 a sh:SPARQLExecutable,
+ex:60a274567f7c a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#CellTypeContext> .
+                        ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:30.076901+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.053127+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:0b1f2fe7d4e4 a sh:SPARQLExecutable,
+ex:3932f02316e0 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#CellTypeContext> .
+                        ?o a <http://aopkb.org/aop_ontology#OrganContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:30.198598+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.095392+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:35d72d48e2f9 a sh:SPARQLExecutable,
+ex:6b3eba54fccd a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
+                        ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:30.323977+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.226532+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:542d1c26ec03 a sh:SPARQLExecutable,
+ex:6d4dc32c8a53 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                            ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
+                        ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:30.451384+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.372202+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:f0a6774088ea a sh:SPARQLExecutable,
+ex:25534585e5e3 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000000> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000000> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:30.577052+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.478585+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:1462c5cb7412 a sh:SPARQLExecutable,
+ex:a57b52874dfd a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/GO_0008150> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://purl.obolibrary.org/obo/GO_0008150> .
+                        ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:30.703547+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.593397+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:88ef0f5bb88c a sh:SPARQLExecutable,
+ex:97c73e0a03dc a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
+                        ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:30.826775+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.711073+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:22ee6acbd0d6 a sh:SPARQLExecutable,
+ex:546e298b74ff a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000446> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000446> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:30.953107+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.811939+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:072d65148229 a sh:SPARQLExecutable,
+ex:b6c2d36cdc58 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#CellTypeContext> .
+                        ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:31.077436+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.865299+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:3dc94d3fb420 a sh:SPARQLExecutable,
+ex:6e356a242413 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000446> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000446> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:31.203631+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:42.957187+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:b664a9f34fc6 a sh:SPARQLExecutable,
+ex:09c8a10cc7ef a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:31.338415+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:43.283412+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:7c5a11bebcd2 a sh:SPARQLExecutable,
+ex:67a1a1c66e5e a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
+                        ?o a <http://aopkb.org/aop_ontology#OrganContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:31.462892+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:43.325367+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:308bc8604c82 a sh:SPARQLExecutable,
+ex:46d7914341cc a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
+                        ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:31.584812+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:43.360965+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:c5e86713262d a sh:SPARQLExecutable,
+ex:6376172e524b a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
-                            ?o a <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
+                        ?s a <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
+                        ?o a <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:31.709547+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:43.406997+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:0bec737cf8fa a sh:SPARQLExecutable,
+ex:43b87a7f6e05 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://xmlns.com/foaf/0.1/page> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://xmlns.com/foaf/0.1/page> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:31.844414+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:43.819894+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:f489af6eebcc a sh:SPARQLExecutable,
+ex:2338f400412c a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://xmlns.com/foaf/0.1/page> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://xmlns.com/foaf/0.1/page> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
+                        ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:31.971218+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:43.957673+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:31b713e53840 a sh:SPARQLExecutable,
+ex:aea72dbbd6bc a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://xmlns.com/foaf/0.1/page> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://xmlns.com/foaf/0.1/page> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:32.102822+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:44.200221+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:6977e270417d a sh:SPARQLExecutable,
+ex:9bf5fc8c81dd a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://xmlns.com/foaf/0.1/page> ?o .
-                            ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                            ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://xmlns.com/foaf/0.1/page> ?o .
+                        ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
+                        ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:32.230215+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:44.356732+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:95f75df55428 a sh:SPARQLExecutable,
+ex:b738023753ab a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:32.352221+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:44.409155+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:70f9adaba549 a sh:SPARQLExecutable,
+ex:b22eb04ddbf6 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#OrganContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:32.476960+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:44.460153+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:2c1e4b9bd57d a sh:SPARQLExecutable,
+ex:a90c16613f1c a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
+                        ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:32.605354+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:44.622196+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:490176db667e a sh:SPARQLExecutable,
+ex:4fc49fcc9fee a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
+                        ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:32.731749+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:44.662185+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:2c7fd9526a50 a sh:SPARQLExecutable,
+ex:1c9d19128325 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/terms/isPartOf> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/terms/isPartOf> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
+                        ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:32.857956+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:44.771307+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:033dad5aef92 a sh:SPARQLExecutable,
+ex:36eddee11e42 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/terms/isPartOf> ?o .
-                            ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/terms/isPartOf> ?o .
+                        ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
+                        ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:32.981103+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:44.916072+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:9071f3ca5502 a sh:SPARQLExecutable,
+ex:79266b06c5cd a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/terms/isPartOf> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/terms/isPartOf> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:33.117247+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:45.344889+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:7b0bca2fe2e1 a sh:SPARQLExecutable,
+ex:2b34c2e0c89b a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/terms/isPartOf> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/terms/isPartOf> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
+                        ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:33.254172+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:45.851119+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:464313ecde58 a sh:SPARQLExecutable,
+ex:2fad458d4571 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/terms/isPartOf> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.org/dc/terms/isPartOf> ?o .
+                        ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
+                        ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:33.380152+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:45.932707+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:d0a50ea27a0c a sh:SPARQLExecutable,
+ex:07fab22e08b7 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_chemical_entity> ?o .
-                            ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000446> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#has_chemical_entity> ?o .
+                        ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000446> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:33.507641+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:46.029269+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:eb934b4f3387 a sh:SPARQLExecutable,
+ex:0ca96250307a a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_chemical_entity> ?o .
-                            ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000000> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#has_chemical_entity> ?o .
+                        ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
+                        ?o a <http://semanticscience.org/resource/CHEMINF_000000> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:33.630229+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:46.136769+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:ad9613130bea a sh:SPARQLExecutable,
+ex:b61892a02be3 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://edamontology.org/data_1025> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://edamontology.org/data_2298> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://edamontology.org/data_1025> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
+                        ?o a <http://edamontology.org/data_2298> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:33.750915+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:46.568105+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:5f4a24c23608 a sh:SPARQLExecutable,
+ex:b1fd65074180 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://edamontology.org/data_1025> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://edamontology.org/data_1025> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://edamontology.org/data_1025> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
+                        ?o a <http://edamontology.org/data_1025> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:33.887016+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:47.123763+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:8b2391167576 a sh:SPARQLExecutable,
+ex:1d8582453f8a a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://edamontology.org/data_1025> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://edamontology.org/data_2298> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://edamontology.org/data_1025> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://edamontology.org/data_2298> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:34.020017+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:47.352574+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:b11e89322725 a sh:SPARQLExecutable,
+ex:3042d10fbc3a a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://edamontology.org/data_1025> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://edamontology.org/data_1025> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://edamontology.org/data_1025> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://edamontology.org/data_1025> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:34.152563+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:47.606913+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:4e894a9cfb56 a sh:SPARQLExecutable,
+ex:634d1440a9f1 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasBiologicalEvent> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#hasBiologicalEvent> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#BiologicalEvent> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:34.286995+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:47.779519+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:3e211e6a9362 a sh:SPARQLExecutable,
+ex:d413fb156f95 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_downstream_key_event> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#has_downstream_key_event> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:34.423654+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:48.090488+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:7f725dbc78b7 a sh:SPARQLExecutable,
+ex:740d8f03fb50 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:34.549991+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:48.132937+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:a7a1cbc34428 a sh:SPARQLExecutable,
+ex:6835be518bf2 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#OrganContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:34.672038+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:48.180402+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:e239e6a5fae6 a sh:SPARQLExecutable,
+ex:b150e12d0ed4 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:34.800330+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:48.302927+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:092c35994a12 a sh:SPARQLExecutable,
+ex:3e07c2c2e2d6 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:34.924887+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:48.355642+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:04918096a340 a sh:SPARQLExecutable,
+ex:5777d3907e13 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
+                        ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:35.052093+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:48.475825+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:03d3747c7d1b a sh:SPARQLExecutable,
+ex:b48d1fb5d25f a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:35.173523+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:48.786757+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:eac87707371a a sh:SPARQLExecutable,
+ex:de39f5ef7192 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:35.297359+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.035015+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:7ad41cdbc44d a sh:SPARQLExecutable,
+ex:620362c5428b a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasProcess> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#hasProcess> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
+                        ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:35.425868+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.183336+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:98ca08a5928d a sh:SPARQLExecutable,
+ex:b401da8399fc a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasProcess> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#hasProcess> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
+                        ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:35.551185+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.223571+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:4e743970cc85 a sh:SPARQLExecutable,
+ex:f01b4595a4a5 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#OrganContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#OrganContext> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#OrganContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:35.676862+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.324185+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:c5c39e51f817 a sh:SPARQLExecutable,
+ex:31deb66e847d a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#OrganContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#OrganContext> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:35.794436+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.403213+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:f31256c03936 a sh:SPARQLExecutable,
+ex:4a770f488381 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#OrganContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#OrganContext> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:35.911656+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.438734+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:ce8996435043 a sh:SPARQLExecutable,
+ex:67bca0033d33 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/GO_0008150> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.obolibrary.org/obo/GO_0008150> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:36.035520+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.613462+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:468b75043ce2 a sh:SPARQLExecutable,
+ex:17a3073a49ae a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/GO_0008150> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.obolibrary.org/obo/GO_0008150> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:36.153711+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.650069+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:dbf7aca00bf4 a sh:SPARQLExecutable,
+ex:e57a3240a6f8 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#CellTypeContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#CellTypeContext> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#OrganContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:36.278608+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.689549+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:bca47af44313 a sh:SPARQLExecutable,
+ex:15cfe3579eab a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#CellTypeContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#CellTypeContext> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:36.403659+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.804459+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:a70083639b48 a sh:SPARQLExecutable,
+ex:ff8ed3af64e1 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#CellTypeContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#CellTypeContext> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:36.525237+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:49.880531+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:7460bac098e9 a sh:SPARQLExecutable,
+ex:bc7c6dc34871 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_adverse_outcome> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#has_adverse_outcome> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:36.644034+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:50.004091+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:301a7abb42d2 a sh:SPARQLExecutable,
+ex:9c83b3a7bedc a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_key_event> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#has_key_event> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:36.778724+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:50.451205+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:27ebaf468ed7 a sh:SPARQLExecutable,
+ex:717a17fb4359 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_key_event_relationship> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#has_key_event_relationship> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:36.912210+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:50.815858+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:99f84a5c6f6f a sh:SPARQLExecutable,
+ex:6161faf4d790 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_upstream_key_event> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#has_upstream_key_event> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:37.049284+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:51.114882+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:c29971690c57 a sh:SPARQLExecutable,
+ex:88d04256503d a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_molecular_initiating_event> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://aopkb.org/aop_ontology#has_molecular_initiating_event> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
+                        ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:37.175840+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:51.232039+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
     ] .
 
-ex:80a25364f196 a sh:SPARQLExecutable,
+ex:f567dcb36fd6 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.bioontology.org/ontology/NCBITAXON/131567> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://aopwiki.org/> {
+                        ?s <http://purl.bioontology.org/ontology/NCBITAXON/131567> ?o .
+                        ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
+                        ?o a <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:05:37.298327+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:b2f1c22f8cb4 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:38.454070+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:7f780d49ff30 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_1025> .
-                            ?o a <http://edamontology.org/data_2291> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:39.763546+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:92d7fa8a5639 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_1025> .
-                            ?o a <http://edamontology.org/data_1027> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:40.103313+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:88fa6d048f39 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000564> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:40.245151+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:ec7404c08d82 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_1025> .
-                            ?o a <http://edamontology.org/data_1033> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:40.571618+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:a788ee3f4aa8 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000412> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:40.769789+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:e77c147e5858 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000405> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:40.937101+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:c73cda3aa3e8 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000409> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:41.111057+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:79ae71527c16 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000406> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:41.255703+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:7e4ca69f257c a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_2298> .
-                            ?o a <http://edamontology.org/data_1025> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:42.661007+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:41630ea0c964 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://edamontology.org/data_1025> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:42.935728+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:1cca7e45b514 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000408> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:43.106828+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:edc23f7a8db5 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_2298> .
-                            ?o a <http://edamontology.org/data_2291> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:44.207797+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:db083984be88 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_2298> .
-                            ?o a <http://edamontology.org/data_1027> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:44.541052+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:3023506a8b5f a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000405> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:44.718078+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:97f19a26a1e3 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000564> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:44.842804+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:6b5a2a665a72 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000407> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:45.007983+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:7300abec1283 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://edamontology.org/data_2298> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:45.142692+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:15e69dda424b a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000567> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:45.309312+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:b2c9412d812b a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://edamontology.org/data_2291> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:45.493762+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:50786751c416 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_1025> .
-                            ?o a <http://edamontology.org/data_1025> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:46.904869+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:87baf73bd698 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000407> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:47.147043+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:855825a4acde a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000412> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:47.330702+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:c0796eabb96d a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000409> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:47.521182+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:8d1eaadfe5b6 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000408> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:47.695506+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:164ff2951f3d a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://edamontology.org/data_1027> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:47.827903+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:1f646bea177a a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000406> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:47.996174+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:f323faaef756 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000567> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:48.199311+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:ab6e7479a227 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000140> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:48.376429+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:9ca945105d46 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000140> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:48.551732+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:0305525155cd a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2004/02/skos/core#exactMatch> ?o .
-                            ?s a <http://edamontology.org/data_2298> .
-                            ?o a <http://edamontology.org/data_1033> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:48.948056+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:b7da6a3600b9 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:49.272159+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:4b874606c410 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/GO_0008150> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:49.402074+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:59acbdf786eb a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000000> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:49.570900+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:1413fc7db761 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#OrganContext> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:49.696371+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:a62acb250226 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#OrganContext> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:49.816136+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:eabf9991096c a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#OrganContext> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:49.947780+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:2425d3acfea5 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:50.070825+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:24fe805e90de a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:50.193180+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:33a3e3cfaa82 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:50.313434+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:b64919178ac7 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:50.496456+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:e603e8bd1cc1 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                            ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:50.711551+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:bfee886c7871 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000000> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:50.886234+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:849b05296d9c a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/GO_0008150> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:51.078322+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:2442562c0e13 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:51.264596+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:044877a6927b a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000446> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:51.436011+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:c2ba1a90a791 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:51.565967+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:310a2222a086 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000446> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:51.734097+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:b93c468c11fb a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:52.162008+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:2a671f7a7a40 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:52.300330+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:427fe31e196d a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:52.420023+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:edd988cf0344 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/elements/1.1/identifier> ?o .
-                            ?s a <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
-                            ?o a <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:52.564030+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:dff95dcb0e97 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://xmlns.com/foaf/0.1/page> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:53.037548+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:cce4c423bbbc a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://xmlns.com/foaf/0.1/page> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:53.239471+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:50eafb05bc3b a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://xmlns.com/foaf/0.1/page> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:53.541562+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:9e68d675c57f a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://xmlns.com/foaf/0.1/page> ?o .
-                            ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                            ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:53.756137+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:68d5cb68a0b6 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:53.895124+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:efcd9d97a31b a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:54.026500+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:44f2ccf4a728 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:54.260523+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:5afd59a06af2 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasObject> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:54.392999+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:2cd3405443bc a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/terms/isPartOf> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000000> .
-                            ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:54.561650+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:b17c76f7ff07 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/terms/isPartOf> ?o .
-                            ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:54.801182+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:2bed904031c4 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/terms/isPartOf> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:55.408561+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:f988f0986452 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/terms/isPartOf> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:55.901564+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:a9e350a13416 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.org/dc/terms/isPartOf> ?o .
-                            ?s a <http://semanticscience.org/resource/CHEMINF_000446> .
-                            ?o a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:56.092931+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:9c520d9bc27d a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_chemical_entity> ?o .
-                            ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000446> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:56.291445+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:c9a3b7b0fd8c a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_chemical_entity> ?o .
-                            ?s a <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571> .
-                            ?o a <http://semanticscience.org/resource/CHEMINF_000000> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:56.487688+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:fd58496e2e1f a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://edamontology.org/data_1025> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://edamontology.org/data_2298> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:57.119746+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:5d597db23927 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://edamontology.org/data_1025> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://edamontology.org/data_1025> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:57.732988+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:1b6116e1241e a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://edamontology.org/data_1025> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://edamontology.org/data_2298> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:58.074476+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:c654b73d080a a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://edamontology.org/data_1025> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://edamontology.org/data_1025> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:58.436501+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:b8c5c93239e1 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasBiologicalEvent> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:58.677155+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:fe1967d30b18 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_downstream_key_event> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:59.090026+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:a79b882f8d93 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:59.225769+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:93c734a34165 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:59.354278+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:1ea66ebb986e a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:59.594504+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:13728a390193 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/PATO_0001241> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:59.733499+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:6d0588c0e61d a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:05:59.941640+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:07707cdeb47a a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:00.456132+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:37cfcd9da353 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:00.767899+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:73bdf402ad4b a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasProcess> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:01.028123+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:7a4893fef48a a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#hasProcess> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#BiologicalEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:01.159952+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:fc4d9089fdc8 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#OrganContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:01.320176+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:f83ba85ac270 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#OrganContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:01.483294+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:4fa88eb8bf5e a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#OrganContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:01.607982+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:aea7a8d4865e a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/GO_0008150> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/GO_0008150> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:01.865171+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:9272a21eb6a8 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.obolibrary.org/obo/GO_0008150> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:01.995941+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:38c9f441fac4 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#CellTypeContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#OrganContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:02.118834+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:d4723855cf82 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#CellTypeContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://aopkb.org/aop_ontology#CellTypeContext> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:02.315057+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:3f62f89e2054 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#CellTypeContext> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.obolibrary.org/obo/PATO_0001241> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:02.476453+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:20dcd306679e a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_adverse_outcome> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:02.697324+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:caee3b9306eb a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_key_event> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:03.290525+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:cf1c060c4d56 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_key_event_relationship> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:03.781204+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:cc952284a244 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_upstream_key_event> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEventRelationship> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:04.188029+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:9b51534b91d7 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://aopkb.org/aop_ontology#has_molecular_initiating_event> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> .
-                            ?o a <http://aopkb.org/aop_ontology#KeyEvent> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:04.409588+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>
-    ] .
-
-ex:41846487b92c a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://aopwiki.org/> {
-                            ?s <http://purl.bioontology.org/ontology/NCBITAXON/131567> ?o .
-                            ?s a <http://aopkb.org/aop_ontology#KeyEvent> .
-                            ?o a <http://purl.bioontology.org/ontology/NCBITAXON/131567> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:06:04.661016+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2025-12-10T11:56:51.375865+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql>

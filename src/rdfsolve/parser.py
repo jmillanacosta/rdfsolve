@@ -20,11 +20,10 @@ from linkml_runtime.linkml_model import (
     TypeDefinition,
 )
 from rdflib import Graph, Literal, URIRef
-from SPARQLWrapper import TURTLE, SPARQLWrapper
 
 from rdfsolve.sparql_helper import SparqlHelper
 
-# Create logger with NullHandler by default - no output unless user configures
+# Create logger with NullHandler by default , no output unless user configures
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     logger.addHandler(logging.NullHandler())
@@ -61,6 +60,10 @@ class VoidParser:
         self.void_propertyPartition = URIRef("http://rdfs.org/ns/void#propertyPartition")
         self.void_classPartition = URIRef("http://rdfs.org/ns/void#classPartition")
         self.void_datatypePartition = URIRef("http://ldf.fi/void-ext#datatypePartition")
+
+        # Bind common namespace prefixes
+        self.void_ns = "http://rdfs.org/ns/void#"
+        self.void_ext_ns = "http://ldf.fi/void-ext#"
         # Extended VoID properties for schema
         self.void_subjectClass = URIRef("http://ldf.fi/void-ext#subjectClass")
         self.void_objectClass = URIRef("http://ldf.fi/void-ext#objectClass")
@@ -142,24 +145,31 @@ class VoidParser:
         if graph_uris is None:
             graph_uris = self.graph_uris
 
+        logger.debug(f"Replacing graph clause, graph_uris={graph_uris}")
+        logger.debug(f"Query has #GRAPH_CLAUSE: {'#GRAPH_CLAUSE' in query}")
+
         # Replace graph clause markers
         if not graph_uris:
-            # No specific graphs - query default graph (remove GRAPH clause)
-            # Simply remove the markers and keep the content
-            result = query.replace("#GRAPH_CLAUSE\n", "")
-            result = result.replace("#GRAPH_CLAUSE", "")
-            result = result.replace("#END_GRAPH_CLAUSE\n", "")
+            # No specific graphs - query default graph (remove GRAPH clause, keep structure)
+            # Just remove the placeholder markers, keeping the content and braces
+            result = query.replace("#GRAPH_CLAUSE", "")
             result = result.replace("#END_GRAPH_CLAUSE", "")
+            logger.debug("Removed markers for default graph")
         elif len(graph_uris) == 1:
             # Single specific graph
             graph_clause = f"GRAPH <{graph_uris[0]}> {{"
             result = query.replace("#GRAPH_CLAUSE", graph_clause)
             result = result.replace("#END_GRAPH_CLAUSE", "}")
+            logger.debug(f"Single graph: {graph_clause}")
         else:
-            # Multiple specific graphs - for now, just use the first one
-            graph_clause = f"GRAPH <{graph_uris[0]}> {{"
+            # Multiple specific graphs - use VALUES clause
+            values_clause = " ".join([f"<{uri}>" for uri in graph_uris])
+            graph_clause = f"VALUES ?g {{ {values_clause} }}\n            GRAPH ?g {{"
             result = query.replace("#GRAPH_CLAUSE", graph_clause)
             result = result.replace("#END_GRAPH_CLAUSE", "}")
+            logger.debug("Multiple graphs, VALUES clause")
+
+        logger.debug(f"After replacement has #GRAPH_CLAUSE: {'#GRAPH_CLAUSE' in result}")
 
         return result
 
@@ -173,9 +183,9 @@ class VoidParser:
 
         Query pattern inspired by: https://github.com/sib-swiss/sparql-editor/
 
-        Uses SparqlHelper for automatic GET→POST fallback on endpoints that
-        require POST (like SwissLipids). The SELECT query returns partition data
-        directly, which is then converted to an RDF graph - no additional
+        Uses SparqlHelper for automatic GET-->POST fallback on endpoints that
+        require POST. The SELECT query returns partition data
+        directly, which is then converted to an RDF graph, no additional
         CONSTRUCT query needed.
 
         Args:
@@ -215,7 +225,7 @@ class VoidParser:
             logger.debug(f"Starting VoID partition discovery for {endpoint_url}")
             logger.info("Discovering VoID partitions across all graphs")
 
-            # Use SparqlHelper - automatic GET→POST fallback
+            # Use SparqlHelper - automatic GET-->POST fallback
             helper = SparqlHelper(endpoint_url)
             results = helper.select(partition_discovery_query)
 
@@ -376,6 +386,10 @@ class VoidParser:
                 void_graph.add((dt_uri, URIRef(f"{VOID_EXT}datatype"), URIRef(object_datatype)))
 
         logger.info(f"Built VoID graph with {len(void_graph)} triples from partition data")
+
+        # Enrich with bioregistry prefixes before returning
+        void_graph = VoidParser._enrich_void_with_bioregistry_prefixes(void_graph)
+
         return void_graph
 
     def retrieve_partitions_from_void(
@@ -384,9 +398,9 @@ class VoidParser:
         """
         Retrieve partition data (class-property-datatype triples) from VoID graphs.
 
-        Uses a lightweight unified query to extract partition information.
+        Queries to extract partition information.
         This is called AFTER discovering that VoID graphs exist and have partitions.
-        Uses SparqlHelper for automatic GET→POST fallback.
+        Uses SparqlHelper for automatic GET-->POST fallback.
 
         Args:
             endpoint_url: SPARQL endpoint URL
@@ -436,7 +450,7 @@ class VoidParser:
 
                 logger.debug("Executing partition query...")
 
-                # SparqlHelper handles GET→POST fallback automatically
+                # SparqlHelper handles GET-->POST fallback automatically
                 results = helper.select(partition_query)
 
                 bindings = results.get("results", {}).get("bindings", [])
@@ -469,8 +483,8 @@ class VoidParser:
         """
         Query existing VoID descriptions from specific graphs using CONSTRUCT.
 
-        Uses SparqlHelper for automatic GET→POST fallback on endpoints that
-        require POST (like SwissLipids).
+        Uses SparqlHelper for automatic GET-->POST fallback on endpoints that
+        require POST.
 
         Note: For most cases, prefer using build_void_graph_from_partitions()
         with partition data from discover_void_graphs() - it's more efficient
@@ -530,7 +544,7 @@ class VoidParser:
 
                 logger.debug("Executing VoID CONSTRUCT query...")
 
-                # SparqlHelper handles GET→POST fallback automatically
+                # SparqlHelper handles GET-->POST fallback automatically
                 graph_data = helper.construct_graph(void_query)
 
                 logger.debug("VoID CONSTRUCT query completed")
@@ -629,7 +643,6 @@ class VoidParser:
     def to_jsonld(self, filter_void_admin_nodes: bool = True) -> Dict[str, Any]:
         """
         Parse VoID file and return simple JSON-LD with the schema triples.
-        Just normal RDF triples in JSON-LD format - no metadata, no VoID, no SHACL.
 
         Args:
             filter_void_admin_nodes: Whether to filter out VoID-specific nodes
@@ -1088,7 +1101,7 @@ class VoidParser:
         LinkML identifiers must:
         - Start with a letter
         - Contain only letters, digits, and underscores
-        - Not contain dots, colons, or other special characters
+        , not contain dots, colons, or other special characters
 
         Examples:
         - "aopo:KeyEvent" -> "aopo_KeyEvent" (preserve prefix)
@@ -1205,23 +1218,31 @@ class VoidParser:
         # First try bioregistry conversion
         if uri.startswith(("http://", "https://")):
             try:
-                curie = curie_from_iri(uri)
-                if curie and ":" in curie:
-                    prefix = curie.split(":", 1)[0]
-                    # Try to get the namespace from bioregistry
-                    try:
-                        from bioregistry import get_namespace_uri
+                from bioregistry import curie_from_iri, parse_iri
 
-                        namespace_uri = get_namespace_uri(prefix)
-                    except Exception:
-                        # Fallback: extract namespace from original URI
+                # Parse IRI to get prefix and local ID
+                parsed = parse_iri(uri)
+                if parsed:
+                    prefix, local_id = parsed
+                    # Reconstruct namespace by removing local_id from URI
+                    if local_id in uri:
+                        idx = uri.rfind(local_id)
+                        namespace_uri = uri[:idx]
+                    else:
+                        # Fallback: standard URI patterns
                         if "#" in uri:
                             namespace_uri = uri.rsplit("#", 1)[0] + "#"
                         else:
                             namespace_uri = uri.rsplit("/", 1)[0] + "/"
-            except Exception:
-                if curie is None:
-                    logger.warn("Couldn't validate %s", curie)
+
+                    # Get CURIE representation
+                    curie = curie_from_iri(uri)
+                    if not curie and prefix and local_id:
+                        curie = f"{prefix}:{local_id}"
+
+            except Exception as e:
+                # Fallback if bioregistry fails
+                logger.debug(f"Bioregistry failed for {uri}: {e}")
 
         # Fallback to string manipulation if bioregistry fails
         if not curie:
@@ -1398,6 +1419,105 @@ class VoidParser:
         return schema_graph
 
     @staticmethod
+    def _enrich_void_with_bioregistry_prefixes(void_graph: Graph) -> Graph:
+        """
+        Enrich VoID graph with bioregistry-resolved prefixes.
+
+        Collects all URIs from the VoID graph, converts them to CURIEs using
+        bioregistry, and binds the prefixes to the graph namespace manager.
+
+        Args:
+            void_graph: RDF Graph containing VoID description
+
+        Returns:
+            The same graph with enriched namespace bindings
+        """
+        from bioregistry import curie_from_iri, parse_iri
+
+        logger.debug("Enriching VoID graph with bioregistry prefixes")
+
+        # Collect all URIs from the graph (subjects, predicates, objects)
+        all_uris = set()
+        for s, p, o in void_graph:
+            if isinstance(s, URIRef):
+                all_uris.add(str(s))
+            if isinstance(p, URIRef):
+                all_uris.add(str(p))
+            if isinstance(o, URIRef):
+                all_uris.add(str(o))
+
+        logger.debug(f"Collected {len(all_uris)} unique URIs from VoID graph")
+
+        # Track discovered prefixes
+        discovered_prefixes = {}
+
+        # Process each URI with bioregistry
+        for uri in all_uris:
+            try:
+                # Parse IRI to get prefix and local ID
+                parsed = parse_iri(uri)
+                if parsed:
+                    prefix, local_id = parsed
+                    # Reconstruct namespace by removing local_id from URI
+                    # Get CURIE to understand the pattern
+                    curie = curie_from_iri(uri)
+                    if curie and ":" in curie:
+                        # Extract namespace pattern from original URI
+                        # Try to find where the local_id appears in the URI
+                        if local_id in uri:
+                            # Find the position and extract namespace
+                            idx = uri.rfind(local_id)
+                            namespace_uri = uri[:idx]
+                        else:
+                            # Fallback: use standard patterns
+                            if "#" in uri:
+                                namespace_uri = uri.rsplit("#", 1)[0] + "#"
+                            else:
+                                namespace_uri = uri.rsplit("/", 1)[0] + "/"
+
+                        discovered_prefixes[prefix] = namespace_uri
+                        logger.debug(f"Bioregistry: {prefix} -> {namespace_uri}")
+
+            except Exception:
+                # Fallback for URIs that bioregistry doesn't recognize
+                try:
+                    curie = curie_from_iri(uri)
+                    if curie and ":" in curie:
+                        prefix = curie.split(":", 1)[0]
+                        # Extract namespace from URI structure
+                        if "#" in uri:
+                            namespace_uri = uri.rsplit("#", 1)[0] + "#"
+                        else:
+                            namespace_uri = uri.rsplit("/", 1)[0] + "/"
+                        discovered_prefixes[prefix] = namespace_uri
+                        logger.debug(f"Fallback: {prefix} -> {namespace_uri}")
+                except Exception as e:
+                    # Skip URIs that can't be processed
+                    logger.debug(f"Could not process URI {uri}: {e}")
+
+        logger.info(f"Discovered {len(discovered_prefixes)} prefixes")
+
+        # Get existing namespace bindings to avoid overwriting
+        existing_namespaces = {str(ns): prefix for prefix, ns in void_graph.namespaces()}
+
+        # Bind all discovered prefixes to the graph
+        for prefix, namespace_uri in discovered_prefixes.items():
+            # Skip if this namespace is already bound with a different prefix
+            if namespace_uri in existing_namespaces:
+                logger.debug(
+                    f"Skipping {prefix} -> {namespace_uri} "
+                    f"(already bound as {existing_namespaces[namespace_uri]})"
+                )
+                continue
+
+            try:
+                void_graph.bind(prefix, namespace_uri, override=False)
+            except Exception as e:
+                logger.debug(f"Failed to bind {prefix}: {e}")
+
+        return void_graph
+
+    @staticmethod
     def get_void_queries(
         graph_uris: Optional[Union[str, List[str]]] = None,
         counts: bool = True,
@@ -1405,6 +1525,7 @@ class VoidParser:
         exclude_graphs: bool = True,
         exclude_graph_patterns: Optional[List[str]] = None,
         endpoint_url: Optional[str] = None,
+        void_base_uri: Optional[str] = None,
     ) -> Dict[str, str]:
         """
         Get formatted CONSTRUCT queries for VoID generation.
@@ -1416,6 +1537,7 @@ class VoidParser:
             exclude_graphs: Whether to exclude system or any specific graphs
             exclude_graph_patterns: List of regex patterns to exclude specific graphs
             endpoint_url: SPARQL endpoint URL for generating meaningful base URIs
+            void_base_uri: Custom base URI for VoID partition IRIs (e.g., 'http://example.org/void')
 
         Returns:
             Dictionary containing the formatted queries
@@ -1426,7 +1548,10 @@ class VoidParser:
         temp_parser.exclude_graph_patterns = exclude_graph_patterns
 
         # Determine the base graph URI for VoID partition naming
-        if isinstance(graph_uris, str):
+        if void_base_uri:
+            # Use custom void_base_uri if provided
+            base_graph_uri = void_base_uri.rstrip("/")
+        elif isinstance(graph_uris, str):
             base_graph_uri = graph_uris
         elif isinstance(graph_uris, list) and len(graph_uris) == 1:
             base_graph_uri = graph_uris[0]
@@ -1450,7 +1575,7 @@ class VoidParser:
         # Build limit and offset clause
         limit_offset_clause = ""
 
-        # Use offset_limit_steps if provided
+        # Use offset_limit_steps if provided, or default LIMIT for discovery
         if offset_limit_steps is not None:
             limit_offset_clause += f"LIMIT {offset_limit_steps}"
 
@@ -1643,6 +1768,7 @@ WHERE {{
         offset_limit_steps: Optional[int] = None,
         exclude_graphs: bool = True,
         exclude_graph_patterns: Optional[List[str]] = None,
+        void_base_uri: Optional[str] = None,
     ) -> Graph:
         """
         Generate VoID description from SPARQL endpoint using CONSTRUCT queries.
@@ -1654,6 +1780,7 @@ WHERE {{
             counts: If True, include COUNT aggregations; else faster discovery
             offset_limit_steps: If provided, use this as both LIMIT and OFFSET step
             exclude_graphs: Whether to exclude Virtuoso system graphs
+            void_base_uri: Custom base URI for VoID partition IRIs
 
         Returns:
             RDF Graph containing the VoID description
@@ -1665,11 +1792,19 @@ WHERE {{
             exclude_graphs,
             exclude_graph_patterns,
             endpoint_url,
+            void_base_uri,
         )
 
-        sparql = SPARQLWrapper(endpoint_url)
+        # Use SparqlHelper which handles GET-->POST fallback automatically
+        helper = SparqlHelper(endpoint_url, timeout=120.0)
 
         merged_graph = Graph()
+
+        # Bind common prefixes for VoID generation
+        merged_graph.bind("void", "http://rdfs.org/ns/void#")
+        merged_graph.bind("void-ext", "http://ldf.fi/void-ext#")
+        merged_graph.bind("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+        merged_graph.bind("rdfs", "http://www.w3.org/2000/01/rdf-schema#")
 
         # Ensure we're in a valid working directory for RDFLib parsing
         import os
@@ -1705,98 +1840,44 @@ WHERE {{
                 public_id: Base URI for VoID dataset identifier
             """
             public_id = f"{public_id}/{name}/void"
-            sparql.setReturnFormat(TURTLE)
+
+            # Log the query being executed
+            logger.info(f"Executing CONSTRUCT query: {name}")
+            logger.debug(f"Query text:\n{query_text}")
 
             t0 = time.monotonic()
 
             try:
-                results = VoidParser._safe_query(sparql, query_text)
+                # Use SparqlHelper which handles GET-->POST fallback automatically
+                turtle_data = helper.construct(query_text)
+                results = (
+                    turtle_data.encode("utf-8") if isinstance(turtle_data, str) else turtle_data
+                )
                 dt = time.monotonic() - t0
 
-                # Parse result - handle bytes properly
-                try:
-                    # Handle both bytes and string results
-                    if results:
-                        if isinstance(results, bytes):
-                            result_str = results.decode("utf-8")
-                        else:
-                            result_str = str(results)
+                # Parse result
+                if results:
+                    result_str = (
+                        results.decode("utf-8") if isinstance(results, bytes) else str(results)
+                    )
 
-                        if result_str.strip():
-                            # Check if result looks like HTML (common error response)
-                            result_lower = result_str.lower().strip()
-                            if (
-                                result_lower.startswith("<!doctype html")
-                                or result_lower.startswith("<html")
-                                or "<title>" in result_lower[:500]
-                            ):
-                                logger.warning(
-                                    f"Query {name} returned HTML error page with Turtle format"
-                                )
-                                logger.info(f"Retrying {name} with N-Triples format...")
-
-                                # Retry with N-Triples format
-                                try:
-                                    from SPARQLWrapper import N3
-
-                                    sparql.setReturnFormat(N3)
-                                    retry_results = VoidParser._safe_query(sparql, query_text)
-
-                                    if retry_results:
-                                        if isinstance(retry_results, bytes):
-                                            retry_str = retry_results.decode("utf-8")
-                                        else:
-                                            retry_str = str(retry_results)
-
-                                        if retry_str.strip():
-                                            retry_lower = retry_str.lower().strip()
-                                            if not (
-                                                retry_lower.startswith("<!doctype html")
-                                                or retry_lower.startswith("<html")
-                                                or "<title>" in retry_lower[:500]
-                                            ):
-                                                logger.info(
-                                                    f"Success with N-Triples format for {name}"
-                                                )
-                                                merged_graph.parse(
-                                                    data=retry_str, format="nt", publicID=public_id
-                                                )
-                                                return
-                                            else:
-                                                logger.warning(
-                                                    f"N-Triples retry also returned HTML for {name}"
-                                                )
-                                except Exception as retry_e:
-                                    logger.warning(f"N-Triples retry failed for {name}: {retry_e}")
-
-                                # If retry failed and not optional, raise error
-                                if not is_optional:
-                                    raise RuntimeError(
-                                        f"SPARQL endpoint returned HTML error page for {name} (tried both Turtle and N-Triples)"
-                                    )
-                                return
-
+                    if result_str.strip():
+                        try:
                             merged_graph.parse(data=result_str, format="turtle", publicID=public_id)
-                        else:
-                            logger.info(f"Empty results for {name}")
+                            logger.info(f"Query {name} completed in {dt:.2f}s")
+                        except Exception as parse_e:
+                            logger.warning(f"Failed to parse {name} results: {parse_e}")
+                            if not is_optional:
+                                raise
                     else:
-                        logger.warning(f"No results for {name}")
-                except Exception as e:
-                    logger.warning(f"Failed to parse results for {name}: {e}")
-                    # Check if this is likely an HTML error page in the exception message
-                    if any(
-                        html_indicator in str(e).lower()
-                        for html_indicator in ["<html", "<title>", "xml:lang"]
-                    ):
-                        logger.warning(f"Query {name} appears to have returned HTML error page")
-                        if is_optional:
-                            return
-                    if not is_optional:
-                        raise
+                        logger.info(f"Empty results for {name}")
+                else:
+                    logger.warning(f"No results for {name}")
 
             except Exception as e:
                 dt = time.monotonic() - t0
-                logger.warning(f"Query {name} failed after {dt:.2f}s: {e}")
+                logger.error(f"Query {name} failed after {dt:.2f}s: {e}")
+                logger.error(f"Failed query text:\n{query_text}")
 
                 # Check for timeout conditions
                 timeout_keywords = ["timeout", "timed out"]
@@ -1850,6 +1931,9 @@ WHERE {{
         else:
             logger.info(f"Successfully extracted {len(merged_graph)} RDF triples")
 
+        # Enrich VoID graph with bioregistry prefixes before returning
+        merged_graph = VoidParser._enrich_void_with_bioregistry_prefixes(merged_graph)
+
         # Save to file if specified
         if output_file:
             try:
@@ -1881,8 +1965,8 @@ Last query: {query_type}
         in one request, without pagination. Adapted from void-generator project but
         using read-only CONSTRUCT instead of UPDATE operations.
 
-        Uses SparqlHelper for automatic GET→POST fallback on endpoints that
-        require POST (like SwissLipids).
+        Uses SparqlHelper for automatic GET-->POST fallback on endpoints that
+        require POST.
 
         Source: https://github.com/sib-swiss/void-generator/issues/30
 
@@ -1985,7 +2069,7 @@ WHERE {{
 
             logger.debug("Executing unified CONSTRUCT query...")
 
-            # Use SparqlHelper for automatic GET→POST fallback
+            # Use SparqlHelper for automatic GET-->POST fallback
             helper = SparqlHelper(endpoint_url)
             void_graph = helper.construct_graph(construct_query)
 
@@ -2083,10 +2167,8 @@ WHERE {{
         if graph_uris:
             logger.debug("Validating provided graph URIs...")
             try:
-                from SPARQLWrapper import JSON, SPARQLWrapper
-
-                sparql_checker = SPARQLWrapper(endpoint_url)
-                sparql_checker.setReturnFormat(JSON)
+                # Use SparqlHelper for automatic GET-->POST fallback
+                helper = SparqlHelper(endpoint_url)
 
                 # Normalize to list
                 if isinstance(graph_uris, list):
@@ -2097,15 +2179,7 @@ WHERE {{
                 for uri in candidate_uris:
                     try:
                         ask_q = f"ASK {{ GRAPH <{uri}> {{ ?s ?p ?o }} }}"
-                        # use safe query to retry transient failures
-                        resp = cls._safe_query(sparql_checker, ask_q)
-                        exists = False
-                        if isinstance(resp, dict):
-                            # ASK returns {'boolean': True/False} in JSON
-                            exists = bool(resp.get("boolean", False))
-                        else:
-                            # Fallback: truthiness of response
-                            exists = bool(resp)
+                        exists = helper.ask(ask_q)
 
                         if exists:
                             valid_uris.append(uri)
@@ -2224,8 +2298,8 @@ WHERE {{
         """
         Count instances for each class in the dataset.
 
-        Uses SparqlHelper for automatic GET→POST fallback on endpoints that
-        require POST (like SwissLipids).
+        Uses SparqlHelper for automatic GET-->POST fallback on endpoints that
+        require POST.
 
         Args:
             endpoint_url: SPARQL endpoint URL
@@ -2240,7 +2314,7 @@ WHERE {{
             Dictionary mapping class URIs to instance counts,
             or generator if streaming=True
         """
-        # Create SparqlHelper - handles GET→POST fallback automatically
+        # Create SparqlHelper - handles GET-->POST fallback automatically
         helper = SparqlHelper(endpoint_url)
 
         # If offset_limit_steps is provided, use it for chunked querying
@@ -2347,7 +2421,7 @@ WHERE {{
     ) -> Any:
         """
         Streaming version of chunked instance counting that yields results
-        as they arrive. Uses SparqlHelper for automatic GET→POST fallback.
+        as they arrive. Uses SparqlHelper for automatic GET-->POST fallback.
 
         Yields:
             Tuple[str, int]: (class_uri, count) pairs for immediate processing
@@ -2382,7 +2456,7 @@ WHERE {{
             query = self._replace_graph_clause_placeholder(query_template)
 
             try:
-                # Use SparqlHelper - handles GET→POST fallback automatically
+                # Use SparqlHelper - handles GET-->POST fallback automatically
                 results = helper.select(query)
                 chunk_results = results["results"]["bindings"]
 
@@ -2424,7 +2498,7 @@ WHERE {{
         """
         Execute a SPARQL query in chunks using OFFSET/LIMIT pagination.
 
-        Uses SparqlHelper for automatic GET→POST fallback on endpoints that
+        Uses SparqlHelper for automatic GET-->POST fallback on endpoints that
         require POST.
 
         Args:
@@ -2465,7 +2539,7 @@ WHERE {{
                     current_offset,
                     current_chunk_size,
                 )
-                # SparqlHelper handles GET→POST fallback and retries
+                # SparqlHelper handles GET-->POST fallback and retries
                 results = helper.select(query)
 
                 # Extract bindings
@@ -2523,13 +2597,13 @@ WHERE {{
         max_backoff: float = 30.0,
     ) -> Any:
         """
+        DEPRECATED: This method is only kept for backward compatibility.
+
+        All internal code now uses SparqlHelper which handles automatic
+        GET-->POST fallback, retries, and proper error handling.
+
         Execute a SPARQL query with retries and exponential backoff.
-
-        NOTE: This method is kept for backward compatibility and for methods
-        that still use SPARQLWrapper directly. For new code, prefer using
-        SparqlHelper which handles this automatically.
-
-        Transient failures (connection resets, RemoteDisconnected,
+        Handles transient failures (connection resets, RemoteDisconnected,
         temporary endpoint failures). The function will raise the last
         exception if all retries fail.
         """
@@ -2540,6 +2614,11 @@ WHERE {{
         while True:
             attempt += 1
             try:
+                logger.debug(f"Setting query (attempt {attempt}/{max_retries})")
+                if attempt == 1:
+                    # Log full query on first attempt only
+                    logger.info(f"Executing query:\n{query}")
+                    logger.info(f"Using method: {sparql.method}")
                 sparql.setQuery(query)
                 results = sparql.query().convert()
                 return results
@@ -2676,13 +2755,13 @@ WHERE {{
 
         Args:
             endpoint_url: SPARQL endpoint URL
-            sample_limit: Optional limit for sampling entities
+            sample_limit: Optional limit for entity counting only
             sample_offset: Optional offset for pagination
-            offset_limit_steps: If provided, use chunked pagination with this step size
-            collect_instances: If True, also collect actual subject/object IRI instances
+            offset_limit_steps: If provided, use chunked pagination
+            collect_instances: If True, store IRIs in instances_df
             batch_size: Size of batches for VALUES queries (default: 20)
-            track_queries: If True, collect detailed query statistics and report them
-            delay_between_chunks: Seconds to wait between chunked queries (default: 10.0)
+            track_queries: If True, collect detailed query statistics
+            delay_between_chunks: Seconds between chunked queries (10.0)
 
         Returns:
             Tuple of (frequencies_df, instances_df):
@@ -2703,7 +2782,7 @@ WHERE {{
         # First, get total entity counts using batched VALUES queries
         class_entity_counts: Dict[str, int] = {}
 
-        # Use SparqlHelper for automatic GET→POST fallback
+        # Use SparqlHelper for automatic GET-->POST fallback
         helper = SparqlHelper(endpoint_url)
 
         # Get unique subject class URIs and batch them
@@ -2786,74 +2865,31 @@ WHERE {{
                     # For untyped resources (rdfs:Resource)
                     object_filter = "FILTER(isURI(?o) && !EXISTS { ?o a ?any_type })"
 
-                if collect_instances:
-                    pattern_query = f"""
-                    SELECT DISTINCT ?s ?o WHERE {{
-                        #GRAPH_CLAUSE
-                            ?s <{property_uri}> ?o .
-                            ?s a <{subject_class_uri}> .
-                            {object_filter}
-                        #END_GRAPH_CLAUSE
-                    }}
-                    """
-                else:
-                    pattern_query = f"""
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {{
-                        #GRAPH_CLAUSE
-                            ?s <{property_uri}> ?o .
-                            ?s a <{subject_class_uri}> .
-                            {object_filter}
-                        #END_GRAPH_CLAUSE
-                    }}
-                    """
+                # Always use SELECT DISTINCT (not COUNT) - it's more reliable
+                pattern_query = f"""
+                SELECT DISTINCT ?s ?o WHERE {{
+                    #GRAPH_CLAUSE
+                        ?s <{property_uri}> ?o .
+                        ?s a <{subject_class_uri}> .
+                        {object_filter}
+                    #END_GRAPH_CLAUSE
+                }}
+                """
             else:
                 # For object properties: ?s ?p ?o where ?s a ?s_shape and ?o a ?o_shape
-                if collect_instances:
-                    pattern_query = f"""
-                    SELECT DISTINCT ?s ?o WHERE {{
-                        #GRAPH_CLAUSE
-                            ?s <{property_uri}> ?o .
-                            ?s a <{subject_class_uri}> .
-                            ?o a <{object_class_uri}> .
-                        #END_GRAPH_CLAUSE
-                    }}
-                    """
-                else:
-                    pattern_query = f"""
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {{
-                        #GRAPH_CLAUSE
-                            ?s <{property_uri}> ?o .
-                            ?s a <{subject_class_uri}> .
-                            ?o a <{object_class_uri}> .
-                        #END_GRAPH_CLAUSE
-                    }}
-                    """
+                # Always use SELECT DISTINCT (not COUNT) - it's more reliable
+                pattern_query = f"""
+                SELECT DISTINCT ?s ?o WHERE {{
+                    #GRAPH_CLAUSE
+                        ?s <{property_uri}> ?o .
+                        ?s a <{subject_class_uri}> .
+                        ?o a <{object_class_uri}> .
+                    #END_GRAPH_CLAUSE
+                }}
+                """
 
-            # Apply consistent sampling when specified
-            if sample_limit:
-                if collect_instances:
-                    # For instance collection: limit subjects, get their actual relationships
-                    pattern_query = pattern_query.replace(
-                        "SELECT DISTINCT ?s ?o WHERE {",
-                        f"""SELECT DISTINCT ?s ?o WHERE {{
-                        {{ SELECT DISTINCT ?s WHERE {{
-                            #GRAPH_CLAUSE
-                                ?s a <{subject_class_uri}> .
-                            #END_GRAPH_CLAUSE
-                        }} LIMIT {sample_limit} }}""",
-                    )
-                else:
-                    # For counting: ensure we count within the same subject sample
-                    pattern_query = pattern_query.replace(
-                        "SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {",
-                        f"""SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {{
-                        {{ SELECT DISTINCT ?s WHERE {{
-                            #GRAPH_CLAUSE
-                                ?s a <{subject_class_uri}> .
-                            #END_GRAPH_CLAUSE
-                        }} LIMIT {sample_limit} }}""",
-                    )
-
+            # NOTE: sample_limit is ONLY used for entity counting, not for pattern queries
+            # Pattern queries must run without LIMIT to get accurate occurrence counts
             query = self._replace_graph_clause_placeholder(pattern_query)
 
             try:
@@ -2863,35 +2899,37 @@ WHERE {{
 
                 participating = 0
                 rows_in_pattern = 0
-                if results and results.get("results", {}).get("bindings"):
+                # Check if bindings key exists (not if it's truthy - empty list is valid)
+                has_bindings = results and "results" in results and "bindings" in results["results"]
+                if has_bindings:
                     rows_in_pattern = len(results["results"]["bindings"])
                     if track_queries:
                         total_rows_collected += rows_in_pattern
 
-                    if collect_instances:
-                        # Process instance data and count unique subjects
-                        unique_subjects = set()
-                        for binding in results["results"]["bindings"]:
-                            subject_iri = binding["s"]["value"]
-                            object_iri = binding["o"]["value"]
-                            unique_subjects.add(subject_iri)
+                    # Always count from actual results (works for both modes)
+                    unique_subjects = set()
+                    for binding in results["results"]["bindings"]:
+                        subject_iri = binding["s"]["value"]
+                        object_iri = binding["o"]["value"]
+                        unique_subjects.add(subject_iri)
 
-                            # Add instance data for linking
-                            if instances_data is not None:
-                                instances_data.append(
-                                    {
-                                        "shape_id": shape_id,
-                                        "subject_iri": subject_iri,
-                                        "object_iri": object_iri,
-                                        "subject_class": row["subject_class"],
-                                        "property": row["property"],
-                                        "object_class": row["object_class"],
-                                    }
-                                )
-                        participating = len(unique_subjects)
-                    else:
-                        participating = int(
-                            results["results"]["bindings"][0]["participating"]["value"]
+                        # Store instances if requested
+                        if collect_instances and instances_data is not None:
+                            instances_data.append(
+                                {
+                                    "shape_id": shape_id,
+                                    "subject_iri": subject_iri,
+                                    "object_iri": object_iri,
+                                }
+                            )
+                    participating = len(unique_subjects)
+
+                    # Debug logging
+                    if participating == 0 and rows_in_pattern > 0:
+                        logger.warning(
+                            "Pattern has %d rows but 0 participating: %s",
+                            rows_in_pattern,
+                            shape_id,
                         )
 
                 if track_queries and query_details is not None:
@@ -2934,6 +2972,13 @@ WHERE {{
                 )
 
             except Exception as e:
+                # Query execution failed - log and record error
+                logger.error(
+                    "Pattern query failed for %s: %s",
+                    shape_id,
+                    str(e),
+                )
+
                 if track_queries:
                     total_queries_sent += 1
                     if query_details is not None:
@@ -2977,15 +3022,9 @@ WHERE {{
         instances_df = None
         if collect_instances and instances_data:
             instances_df = pd.DataFrame(instances_data)
-            # Optimize memory by using categorical data types for repeated values
-            instances_df = instances_df.astype(
-                {
-                    "shape_id": "category",
-                    "subject_class": "category",
-                    "property": "category",
-                    "object_class": "category",
-                }
-            )
+            # Optimize memory by using categorical data types for shape_id
+            # No need to store subject_class, property, object_class as they're in frequencies_df
+            instances_df = instances_df.astype({"shape_id": "category"})
 
         # Report query statistics (only if tracking was enabled)
         if track_queries:
@@ -3351,6 +3390,150 @@ WHERE {{
             "top_shapes_by_instances": combined.nlargest(10, "actual_instances").to_dict("index"),
         }
 
+    def create_instances_index(
+        self, instances_df: pd.DataFrame
+    ) -> tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+        """
+        Create optimized hash-based index structures for instances.
+
+        This creates two inverted index structures:
+        1. subject_index: Maps each unique subject IRI to list of shape_ids where it appears as subject
+        2. object_index: Maps each unique object IRI to list of shape_ids where it appears as object
+
+        This structure is much more memory-efficient than the full DataFrame when
+        you need to query "which shapes does this IRI participate in?"
+
+        Args:
+            instances_df: DataFrame with shape_id, subject_iri, object_iri columns
+
+        Returns:
+            Tuple of (subject_index, object_index) dictionaries
+        """
+        if instances_df is None or instances_df.empty:
+            return {}, {}
+
+        subject_index: Dict[str, List[str]] = {}
+        object_index: Dict[str, List[str]] = {}
+
+        # Group by IRI to build inverted index
+        for _, row in instances_df.iterrows():
+            shape_id = row["shape_id"]
+            subject_iri = row["subject_iri"]
+            object_iri = row["object_iri"]
+
+            # Add to subject index
+            if subject_iri not in subject_index:
+                subject_index[subject_iri] = []
+            subject_index[subject_iri].append(shape_id)
+
+            # Add to object index
+            if object_iri not in object_index:
+                object_index[object_iri] = []
+            object_index[object_iri].append(shape_id)
+
+        return subject_index, object_index
+
+    def export_instances_compact(
+        self,
+        instances_df: pd.DataFrame,
+        output_prefix: str,
+    ) -> Dict[str, Any]:
+        """
+        Export instances data in a compact, memory-efficient format.
+
+        Creates three files:
+        1. {prefix}_subject_index.json: Maps subject IRIs to shape_ids
+        2. {prefix}_object_index.json: Maps object IRIs to shape_ids
+        3. {prefix}_instances_minimal.jsonl: JSON Lines file with core data
+
+        All files are text-based for portability and easy inspection.
+
+        Args:
+            instances_df: DataFrame with instance data
+            output_prefix: Path prefix for output files (without extension)
+
+        Returns:
+            Dictionary with paths to created files and their sizes
+        """
+        import json
+        import os
+
+        if instances_df is None or instances_df.empty:
+            return {}
+
+        # Create indices
+        subject_index, object_index = self.create_instances_index(instances_df)
+
+        # Export subject index
+        subject_path = f"{output_prefix}_subject_index.json"
+        with open(subject_path, "w") as f:
+            json.dump(subject_index, f, indent=2)
+
+        # Export object index
+        object_path = f"{output_prefix}_object_index.json"
+        with open(object_path, "w") as f:
+            json.dump(object_index, f, indent=2)
+
+        # Export minimal instances data as JSON Lines
+        jsonl_path = f"{output_prefix}_instances_minimal.jsonl"
+        with open(jsonl_path, "w") as f:
+            for _, row in instances_df.iterrows():
+                json.dump(
+                    {
+                        "shape_id": row["shape_id"],
+                        "subject_iri": row["subject_iri"],
+                        "object_iri": row["object_iri"],
+                    },
+                    f,
+                )
+                f.write("\n")
+
+        # Get file sizes for reporting
+        result = {
+            "subject_index": subject_path,
+            "subject_index_size_mb": os.path.getsize(subject_path) / 1024 / 1024,
+            "object_index": object_path,
+            "object_index_size_mb": os.path.getsize(object_path) / 1024 / 1024,
+            "instances_jsonl": jsonl_path,
+            "instances_jsonl_size_mb": os.path.getsize(jsonl_path) / 1024 / 1024,
+            "total_subjects": len(subject_index),
+            "total_objects": len(object_index),
+            "total_relationships": len(instances_df),
+        }
+
+        return result
+
+    def load_instances_compact(
+        self, output_prefix: str
+    ) -> tuple[pd.DataFrame, Dict[str, List[str]], Dict[str, List[str]]]:
+        """
+        Load instances data that was exported in compact format.
+
+        Args:
+            output_prefix: Path prefix used during export (without extension)
+
+        Returns:
+            Tuple of (instances_df, subject_index, object_index)
+        """
+        import json
+
+        # Load indices
+        with open(f"{output_prefix}_subject_index.json") as f:
+            subject_index = json.load(f)
+
+        with open(f"{output_prefix}_object_index.json") as f:
+            object_index = json.load(f)
+
+        # Load instances DataFrame from JSON Lines
+        instances_data = []
+        with open(f"{output_prefix}_instances_minimal.jsonl") as f:
+            for line in f:
+                instances_data.append(json.loads(line))
+
+        instances_df = pd.DataFrame(instances_data)
+
+        return instances_df, subject_index, object_index
+
     def diagnose_object_classes(self, endpoint_url: str) -> Dict[str, Any]:
         """
         Diagnostic method to analyze what object classes are found in schema vs
@@ -3359,14 +3542,11 @@ WHERE {{
         Returns:
             Dictionary with diagnostic information about object types
         """
-        from SPARQLWrapper import JSON, SPARQLWrapper
-
         # Get raw schema
         schema_df = self.to_schema(filter_void_admin_nodes=True)
 
-        # Direct query to find literal properties
-        sparql = SPARQLWrapper(endpoint_url)
-        sparql.setReturnFormat(JSON)
+        # Use SparqlHelper for automatic GET-->POST fallback
+        helper = SparqlHelper(endpoint_url)
 
         # Query for properties with literal values
         literal_props_query = """
@@ -3383,8 +3563,7 @@ WHERE {{
         query = self._replace_graph_clause_placeholder(literal_props_query)
 
         try:
-            sparql.setQuery(query)
-            results = self._safe_query(sparql, query)
+            results = helper.select(query)
             literal_props = []
             for result in results["results"]["bindings"]:
                 prop_uri = result["property"]["value"]
@@ -3415,8 +3594,7 @@ WHERE {{
         query = self._replace_graph_clause_placeholder(untyped_resource_query)
 
         try:
-            sparql.setQuery(query)
-            results = self._safe_query(sparql, query)
+            results = helper.select(query)
             untyped_props = []
             for result in results["results"]["bindings"]:
                 prop_uri = result["property"]["value"]

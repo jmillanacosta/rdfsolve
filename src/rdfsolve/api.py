@@ -12,7 +12,6 @@ __all__ = [
     "count_instances_per_class",
     "discover_void_graphs",
     "extract_partitions_from_void",
-    "generate_void_alternative_method",
     "generate_void_from_endpoint",
     "graph_to_jsonld",
     "graph_to_linkml",
@@ -98,7 +97,7 @@ def to_jsonld_from_file(
 
     Args:
         void_file_path: Path to VoID file
-        filter_void_admin_nodes: Remove VoID administrative nodes
+        filter_void_admin_nodes: Remove VoID and administrative nodes
 
     Returns:
         JSON-LD with @context and @graph
@@ -117,7 +116,7 @@ def graph_to_jsonld(
     Args:
         graph: RDFLib Graph with VoID data
         graph_uris: Graph URIs to filter extraction
-        filter_void_admin_nodes: Remove VoID administrative nodes
+        filter_void_admin_nodes: Remove VoID and administrative nodes
 
     Returns:
         JSON-LD with @context and @graph
@@ -157,18 +156,25 @@ def graph_to_linkml(
 
 
 def discover_void_graphs(
-    endpoint_url: str, graph_uris: Optional[Union[str, List[str]]] = None
+    endpoint_url: str,
+    graph_uris: Optional[Union[str, List[str]]] = None,
+    exclude_graphs: bool = False,
 ) -> Dict[str, Any]:
     """Find VoID graphs in a SPARQL endpoint.
+
+    Discovery always includes well-known URIs and VoID graphs by default,
+    as these commonly contain metadata descriptions. Only Virtuoso system
+    graphs are excluded by default.
 
     Args:
         endpoint_url: SPARQL endpoint URL
         graph_uris: Graph URIs to search
+        exclude_graphs: Exclude Virtuoso system graphs (default: False for discovery)
 
     Returns:
         Discovery metadata per graph URI
     """
-    parser = VoidParser(graph_uris=graph_uris)
+    parser = VoidParser(graph_uris=graph_uris, exclude_graphs=exclude_graphs)
     return parser.discover_void_graphs(endpoint_url)
 
 
@@ -271,6 +277,8 @@ def generate_void_from_endpoint(
     counts: bool = True,
     offset_limit_steps: Optional[int] = None,
     exclude_graphs: bool = True,
+    dataset_uri: Optional[str] = None,
+    void_base_uri: Optional[str] = None,
 ) -> Graph:
     """Generate VoID description from a SPARQL endpoint.
 
@@ -281,10 +289,22 @@ def generate_void_from_endpoint(
         counts: Include instance counts
         offset_limit_steps: Chunk size for pagination
         exclude_graphs: Exclude system graphs
+        dataset_uri: Custom URI for the VoID dataset (default: uses first graph_uri or endpoint URL)
+        void_base_uri: Custom base URI for VoID partition IRIs
 
     Returns:
         RDF graph with VoID description
     """
+    # Determine dataset_uri if not provided
+    if dataset_uri is None:
+        if graph_uris:
+            dataset_uri = graph_uris[0] if isinstance(graph_uris, list) else graph_uris
+        else:
+            # Use endpoint URL as fallback
+            dataset_uri = endpoint_url.rstrip("/")
+
+    # Note: VoidParser.generate_void_from_sparql uses graph_uris for building partition IRIs
+    # The dataset_uri is embedded in the VoID graph structure
     return VoidParser.generate_void_from_sparql(
         endpoint_url=endpoint_url,
         graph_uris=graph_uris,
@@ -292,37 +312,7 @@ def generate_void_from_endpoint(
         counts=counts,
         offset_limit_steps=offset_limit_steps,
         exclude_graphs=exclude_graphs,
-    )
-
-
-def generate_void_alternative_method(
-    endpoint_url: str,
-    dataset_prefix: str,
-    graph_uri: Optional[str] = None,
-    output_file: Optional[str] = None,
-) -> Graph:
-    """Generate VoID using alternative single-query method.
-
-    Uses a unified non-paginated CONSTRUCT query that extracts all VoID
-    partition data in one request. Read-only approach adapted from
-    void-generator project.
-
-    Source: https://github.com/sib-swiss/void-generator/issues/30
-
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        dataset_prefix: Prefix for partition node IRIs
-        graph_uri: Optional graph URI to restrict queries
-        output_file: Path to save Turtle output
-
-    Returns:
-        RDF graph with VoID description
-    """
-    return VoidParser.generate_void_alternative_method(
-        endpoint_url=endpoint_url,
-        dataset_prefix=dataset_prefix,
-        graph_uri=graph_uri,
-        output_file=output_file,
+        void_base_uri=void_base_uri,
     )
 
 
@@ -336,7 +326,7 @@ def graph_to_schema(
     Args:
         void_graph: RDFLib graph with VoID data
         graph_uris: Graph URIs to extract
-        filter_void_admin_nodes: Filter VoID admin nodes
+        filter_void_admin_nodes: Filter VoID or administrative nodes
 
     Returns:
         DataFrame with schema patterns (subject/property/object URIs)
@@ -349,6 +339,7 @@ def count_instances_per_class(
     endpoint_url: str,
     graph_uris: Optional[Union[str, List[str]]] = None,
     sample_limit: Optional[int] = None,
+    exclude_graphs: bool = True,
 ) -> Dict[str, int]:
     """Count instances per class in a SPARQL endpoint.
 
@@ -356,11 +347,12 @@ def count_instances_per_class(
         endpoint_url: SPARQL endpoint URL
         graph_uris: Graph URI(s) to query
         sample_limit: Max results to sample
+        exclude_graphs: Exclude service/system graphs from counting
 
     Returns:
         Class URI to instance count mapping
     """
-    parser = VoidParser(graph_uris=graph_uris)
+    parser = VoidParser(graph_uris=graph_uris, exclude_graphs=exclude_graphs)
     result = parser.count_instances_per_class(endpoint_url, sample_limit=sample_limit)
     if isinstance(result, dict):
         return result
