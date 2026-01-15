@@ -317,6 +317,25 @@ body {
     color: var(--text-secondary);
 }
 
+.endpoint-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.endpoint-link:hover {
+    text-decoration: underline;
+}
+
+.graph-uri {
+    font-family: monospace;
+    font-size: 11px;
+    background: var(--card-background);
+    padding: 2px 4px;
+    border-radius: 3px;
+    word-break: break-all;
+}
+
 /* Notebooks Section */
 .notebooks-section {
     margin: 12px 0;

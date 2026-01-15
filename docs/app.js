@@ -2,13 +2,18 @@
 class RDFSolveDashboard {
     constructor() {
         this.data = null;
+        this.sourcesData = null;
         this.githubBaseUrl = 'https://github.com/jmillanacosta/rdfsolve/blob/main/docs/';
+        this.githubRawBase = 'https://raw.githubusercontent.com/jmillanacosta/rdfsolve/main/';
         this.init();
     }
 
     async init() {
         try {
-            await this.loadData();
+            await Promise.all([
+                this.loadData(),
+                this.loadSources()
+            ]);
             this.renderStats();
             this.renderDatasets();
             this.updateLastUpdated();
@@ -31,6 +36,39 @@ class RDFSolveDashboard {
             console.warn('Could not load results.json, using fallback data');
             this.data = this.generateFallbackData();
         }
+    }
+
+    async loadSources() {
+        try {
+            const response = await fetch(this.githubRawBase + 'data/sources.csv');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const csvText = await response.text();
+            this.sourcesData = this.parseSourcesCSV(csvText);
+        } catch (error) {
+            console.warn('Could not load sources.csv:', error);
+            this.sourcesData = {};
+        }
+    }
+
+    parseSourcesCSV(csvText) {
+        const lines = csvText.trim().split('\n');
+        const sources = {};
+        // Skip header: dataset_name,void_iri,graph_uri,endpoint_url,use_graph
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',');
+            if (cols.length >= 4) {
+                const datasetName = cols[0].trim();
+                sources[datasetName] = {
+                    voidIri: cols[1]?.trim(),
+                    graphUri: cols[2]?.trim(),
+                    endpointUrl: cols[3]?.trim(),
+                    useGraph: cols[4]?.trim() === 'True'
+                };
+            }
+        }
+        return sources;
     }
 
     generateFallbackData() {
@@ -90,6 +128,7 @@ class RDFSolveDashboard {
 
         const dataFilesHTML = this.createDataFilesSection(dataset.dataFiles || {});
         const notebooksHTML = this.createNotebooksSection(dataset.notebooks || {});
+        const endpointHTML = this.createEndpointSection(dataset.name);
 
         return `
             <div class="dataset-card">
@@ -104,6 +143,7 @@ class RDFSolveDashboard {
                     <div>Generated: ${this.formatDate(dataset.generated)}</div>
                 </div>
                 
+                ${endpointHTML}
                 ${notebooksHTML}
                 ${dataFilesHTML}
                 
@@ -115,6 +155,24 @@ class RDFSolveDashboard {
                         Coverage Statistics
                     </button>
                 </div>
+            </div>
+        `;
+    }
+
+    createEndpointSection(datasetName) {
+        const source = this.sourcesData?.[datasetName];
+        if (!source?.endpointUrl) {
+            return '';
+        }
+        
+        const graphLine = source.useGraph && source.graphUri 
+            ? `<div>Graph: <code class="graph-uri">${source.graphUri}</code></div>` 
+            : '';
+        
+        return `
+            <div class="dataset-meta">
+                <div>Endpoint: <a href="${source.endpointUrl}" class="endpoint-link" target="_blank">${source.endpointUrl}</a></div>
+                ${graphLine}
             </div>
         `;
     }
