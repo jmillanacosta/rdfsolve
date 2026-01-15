@@ -135,9 +135,13 @@ def main():
 
             # Add ttl_db_path for namespace templates
             ttl_db_path = os.path.join(
-                "..", "..", "docs",
-                "data", "schema_extraction", dataset_name,
-                f"{dataset_name}_generated_void.ttl"
+                "..",
+                "..",
+                "docs",
+                "data",
+                "schema_extraction",
+                dataset_name,
+                f"{dataset_name}_generated_void.ttl",
             )
             content = content.replace("{{ttl_db_path}}", ttl_db_path)
 

@@ -10,9 +10,9 @@ class RDFSolveDashboard {
         try {
             await this.loadData();
             this.renderStats();
-            this.renderSchemaResults();
-            this.renderPydanticResults();
+            this.renderDatasets();
             this.updateLastUpdated();
+            this.initializeVisualizations();
         } catch (error) {
             console.error('Failed to initialize dashboard:', error);
             this.showError('Failed to load results data');
@@ -54,59 +54,42 @@ class RDFSolveDashboard {
     renderStats() {
         const stats = this.data.stats || {};
         
-        document.getElementById('total-datasets').textContent = stats.totalDatasets || 0;
-        document.getElementById('successful-datasets').textContent = stats.schemaSuccessful || 0;
-        document.getElementById('failed-datasets').textContent = stats.schemaFailed || 0;
-        document.getElementById('total-data-files').textContent = stats.totalDataFiles || 0;
+        const totalDatasets = stats.totalDatasets || 0;
+        const successfulDatasets = stats.schemaSuccessful || 0;
+        const failedDatasets = stats.schemaFailed || 0;
+        const totalDataFiles = stats.totalDataFiles || 0;
+        
+        document.getElementById('total-datasets').textContent = totalDatasets;
+        document.getElementById('successful-datasets').textContent = successfulDatasets;
+        document.getElementById('failed-datasets').textContent = failedDatasets;
+        document.getElementById('total-data-files').textContent = totalDataFiles;
     }
 
-    renderSchemaResults() {
+    renderDatasets() {
         const container = document.getElementById('datasets-grid');
         const datasets = this.data.datasets || [];
-        
-        // Filter datasets that have schema notebooks
-        const results = datasets.filter(d => d.notebooks && d.notebooks.schema);
 
-        if (results.length === 0) {
+        if (datasets.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <h3>No Schema Results</h3>
-                    <p>No schema analysis results available yet.</p>
+                    <h3>No Results</h3>
+                    <p>No dataset analysis results available yet.</p>
                 </div>
             `;
             return;
         }
 
-        container.innerHTML = results.map(dataset => this.createDatasetCard(dataset, 'schema')).join('');
+        container.innerHTML = datasets.map(dataset => this.createDatasetCard(dataset)).join('');
     }
 
-    renderPydanticResults() {
-        const container = document.getElementById('pydantic-grid');
-        const datasets = this.data.datasets || [];
-        
-        // Filter datasets that have pydantic notebooks and aren't missing
-        const results = datasets.filter(d => d.notebooks && d.notebooks.pydantic && d.notebooks.pydantic.status !== 'missing');
-
-        if (results.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <h3>No Pydantic Results</h3>
-                    <p>No pydantic model results available yet.</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = results.map(dataset => this.createPydanticCard(dataset)).join('');
-    }
-
-    createDatasetCard(dataset, notebookType) {
-        const notebook = dataset.notebooks[notebookType];
-        const statusClass = notebook.status === 'success' ? 'success' : 'error';
-        const statusIcon = notebook.status === 'success' ? '✓' : '✗';
-        const statusText = notebook.status === 'success' ? 'Completed Successfully' : 'Analysis Failed';
+    createDatasetCard(dataset) {
+        const schemaNotebook = dataset.notebooks?.schema;
+        const statusClass = schemaNotebook?.status === 'success' ? 'success' : 'error';
+        const statusIcon = schemaNotebook?.status === 'success' ? '✓' : '✗';
+        const statusText = schemaNotebook?.status === 'success' ? 'Analysis Complete' : 'Analysis Failed';
 
         const dataFilesHTML = this.createDataFilesSection(dataset.dataFiles || {});
+        const notebooksHTML = this.createNotebooksSection(dataset.notebooks || {});
 
         return `
             <div class="dataset-card">
@@ -118,42 +101,51 @@ class RDFSolveDashboard {
                 <div class="status-badge ${statusClass}">${statusText}</div>
                 
                 <div class="dataset-meta">
-                    <div>Report Size: ${notebook.reportSize || 'Unknown'}</div>
                     <div>Generated: ${this.formatDate(dataset.generated)}</div>
                 </div>
                 
+                ${notebooksHTML}
                 ${dataFilesHTML}
                 
-                <a href="${notebook.reportUrl}" class="view-link">
-                    View Analysis Report →
-                </a>
+                <div class="dataset-actions">
+                    <button class="view-schema-btn action-btn" data-dataset="${dataset.name}">
+                        Schema Diagram
+                    </button>
+                    <button class="view-coverage-btn action-btn" data-dataset="${dataset.name}">
+                        Coverage Statistics
+                    </button>
+                </div>
             </div>
         `;
     }
 
-    createPydanticCard(dataset) {
-        const notebook = dataset.notebooks.pydantic;
-        const statusClass = notebook.status === 'success' ? 'success' : 'error';
-        const statusIcon = notebook.status === 'success' ? '✓' : '✗';
-        const statusText = notebook.status === 'success' ? 'Models Generated' : 'Generation Failed';
+    createNotebooksSection(notebooks) {
+        const notebookTypes = [
+            { key: 'schema', label: 'Schema Analysis' },
+            { key: 'pydantic', label: 'Pydantic Models' },
+            { key: 'namespace', label: 'Namespaces' }
+        ];
+
+        const notebookButtons = notebookTypes.map(({ key, label }) => {
+            const notebook = notebooks[key];
+            if (!notebook || notebook.status === 'missing') {
+                return `<span class="notebook-btn disabled" title="Not available">${label}</span>`;
+            }
+            
+            const statusClass = notebook.status === 'success' ? 'success' : 'error';
+            const statusIcon = notebook.status === 'success' ? '✓' : '✗';
+            
+            return `<a href="${notebook.reportUrl}" class="notebook-btn ${statusClass}" target="_blank" title="${notebook.reportSize}">
+                ${label} ${statusIcon}
+            </a>`;
+        }).join('');
 
         return `
-            <div class="dataset-card">
-                <div class="dataset-name">
-                    <span class="status-icon ${statusClass}">${statusIcon}</span>
-                    ${dataset.name}
+            <div class="notebooks-section">
+                <div class="section-label">Generated Jupyter Notebooks</div>
+                <div class="notebook-buttons">
+                    ${notebookButtons}
                 </div>
-                
-                <div class="status-badge ${statusClass}">${statusText}</div>
-                
-                <div class="dataset-meta">
-                    <div>Report Size: ${notebook.reportSize || 'Unknown'}</div>
-                    <div>Generated: ${this.formatDate(dataset.generated)}</div>
-                </div>
-                
-                <a href="${notebook.reportUrl}" class="view-link">
-                    View Pydantic Models →
-                </a>
             </div>
         `;
     }
@@ -174,7 +166,9 @@ class RDFSolveDashboard {
             nquads: 'N-Quads',
             schema_json: 'JSON',
             schema_csv: 'CSV',
-            queries: 'SPARQL Queries'
+            queries: 'SPARQL Queries',
+            //subjectIndex: 'Subject Index',
+            //objectIndex: 'Object Index'
         };
 
         const linksHTML = files.map(([type, url]) => {
@@ -186,7 +180,7 @@ class RDFSolveDashboard {
 
         return `
             <div class="data-files">
-                <div class="data-files-title">📁 Generated Data Files</div>
+                <div class="section-label">Generated Data Files</div>
                 <div class="data-links">
                     ${linksHTML}
                 </div>
@@ -234,16 +228,33 @@ class RDFSolveDashboard {
     }
 
     showError(message) {
-        const containers = ['datasets-grid', 'pydantic-grid'];
-        containers.forEach(containerId => {
-            const container = document.getElementById(containerId);
+        const container = document.getElementById('datasets-grid');
+        if (container) {
             container.innerHTML = `
                 <div class="empty-state">
                     <h3>Error Loading Data</h3>
                     <p>${message}</p>
                 </div>
             `;
-        });
+        }
+    }
+    
+    initializeVisualizations() {
+        const datasets = this.data.datasets || [];
+        
+        // Initialize coverage visualization
+        if (window.CoverageVisualization) {
+            this.coverageViz = new window.CoverageVisualization(datasets);
+        }
+        
+        // Initialize schema diagram
+        if (window.SchemaDiagram) {
+            this.schemaDiagram = new window.SchemaDiagram(datasets);
+            // Add schema buttons to dataset cards
+            if (window.addSchemaButtons) {
+                setTimeout(() => window.addSchemaButtons(), 100);
+            }
+        }
     }
 }
 

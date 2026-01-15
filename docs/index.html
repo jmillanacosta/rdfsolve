@@ -5,72 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RDFSolve - Schema Analysis Results</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1>RDFSolve</h1>
-            <p>RDF schema extraction and analysis toolkit</p>
-            <nav class="header-nav">
-                <a href="https://rdfsolve.readthedocs.io">Documentation</a>
-                <a href="https://github.com/jmillanacosta/rdfsolve">GitHub</a>
-            </nav>
-            <div id="last-updated" class="last-updated">Loading...</div>
-        </header>
+    <div class="dashboard-container">
+        <!-- Main Content Area -->
+        <div class="main-content" id="main-content">
+            <header class="header">
+                <h1>RDFSolve</h1>
+                <p>RDF schema extraction and analysis toolkit</p>
+                <nav class="header-nav">
+                    <a href="https://rdfsolve.readthedocs.io">Documentation</a>
+                    <a href="https://github.com/jmillanacosta/rdfsolve">GitHub</a>
+                </nav>
+                <div id="last-updated" class="last-updated">Loading...</div>
+            </header>
 
-        <section class="stats" id="stats-section">
-            <div class="stat-card">
-                <div class="stat-number total-number" id="total-datasets">-</div>
-                <div>Total Datasets</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number success-number" id="successful-datasets">-</div>
-                <div>Successful</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number error-number" id="failed-datasets">-</div>
-                <div>Failed</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number data-number" id="total-data-files">-</div>
-                <div>Data Files</div>
-            </div>
-        </section>
-
-        <section class="results-section">
-            <h2 class="section-title">Schema Analysis Results</h2>
-            <div id="datasets-grid" class="dataset-grid">
-                <!-- Datasets will be populated here by JavaScript -->
-            </div>
-        </section>
-
-        <section class="pydantic-section">
-            <h2 class="section-title">Pydantic Model Results</h2>
-            <div id="pydantic-grid" class="dataset-grid">
-                <!-- Pydantic results will be populated here by JavaScript -->
-            </div>
-        </section>
-
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>RDFSolve</h3>
-                    <p>Automated RDF schema extraction and analysis toolkit</p>
-                    <p><em>Matrix processing enables parallel analysis of multiple datasets</em></p>
+            <section class="stats" id="stats-section">
+                <div class="stat-card">
+                    <div class="stat-number total-number" id="total-datasets">-</div>
+                    <div>Total Datasets</div>
                 </div>
-                <div class="footer-section">
-                    <h4>Resources</h4>
-                    <ul class="footer-links">
-                        <li><a href="https://github.com/jmillanacosta/rdfsolve">GitHub Repository</a></li>
-                        <li><a href="https://github.com/jmillanacosta/rdfsolve/issues">Issue Tracker</a></li>
-                        <li><a href="https://pypi.org/project/rdfsolve/">PyPI Package</a></li>
-                        <li><a href="https://rdfsolve.readthedocs.io">Read the docs</li>
-                    </ul>
+                <div class="stat-card">
+                    <div class="stat-number success-number" id="successful-datasets">-</div>
+                    <div>Successful</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number error-number" id="failed-datasets">-</div>
+                    <div>Failed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number data-number" id="total-data-files">-</div>
+                    <div>Data Files</div>
+                </div>
+            </section>
+
+            <section class="results-section">
+                <h2 class="section-title">Dataset Analysis Results</h2>
+                <div id="datasets-grid" class="dataset-grid"></div>
+            </section>
+
+            <footer class="footer">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h3>RDFSolve</h3>
+                        <p>Automated RDF schema extraction and analysis toolkit</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Resources</h4>
+                        <ul class="footer-links">
+                            <li><a href="https://github.com/jmillanacosta/rdfsolve">GitHub Repository</a></li>
+                            <li><a href="https://pypi.org/project/rdfsolve/">PyPI Package</a></li>
+                            <li><a href="https://rdfsolve.readthedocs.io">Read the docs</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </footer>
+        </div>
+
+        <!-- Coverage Analysis Panel -->
+        <div class="dashboard-panel" id="coverage-panel">
+            <div class="panel-header">
+                <h2>Coverage Analysis</h2>
+                <button class="close-panel-btn" data-panel="coverage">&times;</button>
+            </div>
+            <div class="panel-content">
+                <div id="coverage-stats"></div>
+                <div class="viz-section">
+                    <div class="viz-header">
+                        <h3>Coverage vs Occurrence</h3>
+                    </div>
+                    <div id="coverage-histogram"></div>
+                </div>
+                <div class="viz-section">
+                    <div class="viz-header">
+                        <h3>Top Patterns</h3>
+                        <label class="show-all-toggle">
+                            <input type="checkbox" id="show-all-patterns"> Show All
+                        </label>
+                    </div>
+                    <div id="top-patterns"></div>
+                </div>
+                <div class="viz-section">
+                    <div class="viz-header">
+                        <h3>Property Usage</h3>
+                        <label class="show-all-toggle">
+                            <input type="checkbox" id="show-all-properties"> Show All
+                        </label>
+                    </div>
+                    <div id="property-distribution"></div>
                 </div>
             </div>
-        </footer>
+        </div>
+
+        <!-- Schema Diagram Panel -->
+        <div class="dashboard-panel" id="schema-panel">
+            <div class="panel-header">
+                <h2>Schema Diagram</h2>
+                <button class="close-panel-btn" data-panel="schema">&times;</button>
+            </div>
+            <div class="panel-controls">
+                <label for="diagram-type">Type:</label>
+                <select id="diagram-type">
+                    <option value="class">Class Diagram</option>
+                    <option value="graph">Graph View</option>
+                </select>
+                <div class="zoom-controls">
+                    <button id="zoom-out" class="zoom-btn" title="Zoom Out">-</button>
+                    <input type="range" id="zoom-slider" min="10" max="300" value="100" class="zoom-slider" title="Zoom Level" aria-label="Zoom Level">
+                    <button id="zoom-in" class="zoom-btn" title="Zoom In">+</button>
+                    <span id="zoom-level">100%</span>
+                    <button id="zoom-fit" class="zoom-btn">Fit</button>
+                </div>
+            </div>
+            <div class="panel-content schema-content">
+                <div id="schema-info"></div>
+                <div id="schema-diagram"></div>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
+    <script src="coverage_visualization.js"></script>
+    <script src="schema_diagram.js"></script>
 </body>
 </html>
