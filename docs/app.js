@@ -230,11 +230,12 @@ class RDFSolveDashboard {
         };
 
         const linksHTML = files.map(([type, url]) => {
-            const name = fileTypeNames[type] || type.toUpperCase();
+            const name = fileTypeNames[type];
+            if (!name) return ''; // Skip if no display name is defined
             // Convert relative path to GitHub blob URL
             const githubUrl = this.toGithubUrl(url);
             return `<a href="${githubUrl}" class="data-link" target="_blank">${name}</a>`;
-        }).join('');
+        }).filter(html => html).join('');
 
         return `
             <div class="data-files">
