@@ -1,18 +1,19 @@
-@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix void: <http://rdfs.org/ns/void#> .
+@prefix void-ext: <http://ldf.fi/void-ext#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/journal/void/class_partition_> void:class <http://purl.org/spar/fabio/Journal>,
+<http://rdf.ncbi.nlm.nih.gov/pubchem/journal/void/class_partition_> void:class fabio:Journal,
         <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Journal> ;
     void:entities 39859 .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/journal/void/datatype_partition_> ns1:datatypePartition xsd:string ;
+<http://rdf.ncbi.nlm.nih.gov/pubchem/journal/void/datatype_partition_> void-ext:datatypePartition xsd:string ;
     void:triples 168156 .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/journal/void/property_partition_> ns1:objectClass owl:Class ;
-    ns1:subjectClass <http://purl.org/spar/fabio/Journal>,
+<http://rdf.ncbi.nlm.nih.gov/pubchem/journal/void/property_partition_> void-ext:objectClass owl:Class ;
+    void-ext:subjectClass fabio:Journal,
         <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Journal> ;
     void:property rdf:type ;
     void:triples 39859 .

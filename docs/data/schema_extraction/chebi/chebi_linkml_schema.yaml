@@ -25,10 +25,10 @@ prefixes:
     prefix_reference: http://www.w3.org/2002/07/owl#
   sio:
     prefix_prefix: sio
-    prefix_reference: http://semanticscience.org/resource/
+    prefix_reference: http://semanticscience.org/resource/SIO_
   iao:
     prefix_prefix: iao
-    prefix_reference: http://purl.obolibrary.org/obo/
+    prefix_reference: http://purl.obolibrary.org/obo/IAO_
   resource:
     prefix_prefix: resource
     prefix_reference: http://semanticscience.org/resource/
@@ -51,83 +51,15 @@ types:
     base: URIorCURIE
     uri: xsd:anyURI
 slots:
-  rdf_type:
-    name: rdf_type
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/rdf_type
-    description: Property rdf:type
+  iao_0100001:
+    name: iao_0100001
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/iao_0100001
+    description: Property iao:0100001
     from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/rdf_type
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/rdf_type
-    owner: owl_Class
-    domain_of:
-    - owl_Axiom
-    - owl_Class
-    - owl_Restriction
-    - sio_011120
-    range: rdf_Property
-    inlined: true
-    inlined_as_list: true
-  owl_on_Property:
-    name: owl_on_Property
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_on_Property
-    description: Property owl:onProperty
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_on_Property
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_on_Property
-    owner: owl_Class
-    domain_of:
-    - owl_Axiom
-    - owl_Class
-    - owl_Restriction
-    - sio_011120
-    range: rdf_Property
-    inlined: true
-    inlined_as_list: true
-  resource_is_attribute_of:
-    name: resource_is_attribute_of
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/resource_is_attribute_of
-    description: Property resource:is-attribute-of
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/resource_is_attribute_of
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/resource_is_attribute_of
-    owner: owl_Class
-    domain_of:
-    - owl_Axiom
-    - owl_Class
-    - owl_Restriction
-    - sio_011120
-    range: rdf_Property
-    inlined: true
-    inlined_as_list: true
-  sio_000011:
-    name: sio_000011
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/sio_000011
-    description: Property sio:000011
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/sio_000011
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/sio_000011
-    owner: owl_Class
-    domain_of:
-    - owl_Axiom
-    - owl_Class
-    - owl_Restriction
-    - sio_011120
-    range: rdf_Property
-    inlined: true
-    inlined_as_list: true
-  rdfs_sub_Class_Of:
-    name: rdfs_sub_Class_Of
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/rdfs_sub_Class_Of
-    description: Property rdfs:subClassOf
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/rdfs_sub_Class_Of
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/rdfs_sub_Class_Of
-    owner: owl_Class
+    - http://purl.obolibrary.org/obo/IAO_0100001
+    slot_uri: http://purl.obolibrary.org/obo/IAO_0100001
+    owner: owl_Axiom
     domain_of:
     - owl_Axiom
     - owl_Class
@@ -142,60 +74,9 @@ slots:
     description: Property owl:annotatedSource
     from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_annotated_Source
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_annotated_Source
-    owner: owl_Class
-    domain_of:
-    - owl_Axiom
-    - owl_Class
-    - owl_Restriction
-    - sio_011120
-    range: rdf_Property
-    inlined: true
-    inlined_as_list: true
-  iao_0100001:
-    name: iao_0100001
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/iao_0100001
-    description: Property iao:0100001
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/iao_0100001
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/iao_0100001
-    owner: owl_Class
-    domain_of:
-    - owl_Axiom
-    - owl_Class
-    - owl_Restriction
-    - sio_011120
-    range: rdf_Property
-    inlined: true
-    inlined_as_list: true
-  oboinowl_has_Synonym_Type:
-    name: oboinowl_has_Synonym_Type
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/oboinowl_has_Synonym_Type
-    description: Property oboinowl:hasSynonymType
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/oboinowl_has_Synonym_Type
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/oboinowl_has_Synonym_Type
-    owner: owl_Class
-    domain_of:
-    - owl_Axiom
-    - owl_Class
-    - owl_Restriction
-    - sio_011120
-    range: rdf_Property
-    inlined: true
-    inlined_as_list: true
-  owl_some_Values_From:
-    name: owl_some_Values_From
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_some_Values_From
-    description: Property owl:someValuesFrom
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_some_Values_From
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_some_Values_From
-    owner: owl_Class
+    - http://www.w3.org/2002/07/owl#annotatedSource
+    slot_uri: http://www.w3.org/2002/07/owl#annotatedSource
+    owner: owl_Axiom
     domain_of:
     - owl_Axiom
     - owl_Class
@@ -210,9 +91,9 @@ slots:
     description: Property owl:annotatedProperty
     from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_annotated_Property
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_annotated_Property
-    owner: owl_Class
+    - http://www.w3.org/2002/07/owl#annotatedProperty
+    slot_uri: http://www.w3.org/2002/07/owl#annotatedProperty
+    owner: owl_Axiom
     domain_of:
     - owl_Axiom
     - owl_Class
@@ -221,15 +102,32 @@ slots:
     range: rdf_Property
     inlined: true
     inlined_as_list: true
-  sio_000008:
-    name: sio_000008
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/sio_000008
-    description: Property sio:000008
+  rdfs_sub_Class_Of:
+    name: rdfs_sub_Class_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/rdfs_sub_Class_Of
+    description: Property rdfs:subClassOf
     from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/sio_000008
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/sio_000008
-    owner: owl_Class
+    - http://www.w3.org/2000/01/rdf-schema#subClassOf
+    slot_uri: http://www.w3.org/2000/01/rdf-schema#subClassOf
+    owner: owl_Axiom
+    domain_of:
+    - owl_Axiom
+    - owl_Class
+    - owl_Restriction
+    - sio_011120
+    range: rdf_Property
+    inlined: true
+    inlined_as_list: true
+  resource_is_attribute_of:
+    name: resource_is_attribute_of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/resource_is_attribute_of
+    description: Property resource:is-attribute-of
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://semanticscience.org/resource/is-attribute-of
+    slot_uri: http://semanticscience.org/resource/is-attribute-of
+    owner: owl_Axiom
     domain_of:
     - owl_Axiom
     - owl_Class
@@ -244,9 +142,43 @@ slots:
     description: Property oboinowl:inSubset
     from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/oboinowl_in_Subset
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/oboinowl_in_Subset
-    owner: owl_Class
+    - http://www.geneontology.org/formats/oboInOwl#inSubset
+    slot_uri: http://www.geneontology.org/formats/oboInOwl#inSubset
+    owner: owl_Axiom
+    domain_of:
+    - owl_Axiom
+    - owl_Class
+    - owl_Restriction
+    - sio_011120
+    range: rdf_Property
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+    slot_uri: http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+    owner: owl_Axiom
+    domain_of:
+    - owl_Axiom
+    - owl_Class
+    - owl_Restriction
+    - sio_011120
+    range: rdf_Property
+    inlined: true
+    inlined_as_list: true
+  owl_on_Property:
+    name: owl_on_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_on_Property
+    description: Property owl:onProperty
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://www.w3.org/2002/07/owl#onProperty
+    slot_uri: http://www.w3.org/2002/07/owl#onProperty
+    owner: owl_Axiom
     domain_of:
     - owl_Axiom
     - owl_Class
@@ -261,9 +193,77 @@ slots:
     description: Property iao:0000231
     from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/iao_0000231
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/iao_0000231
-    owner: owl_Class
+    - http://purl.obolibrary.org/obo/IAO_0000231
+    slot_uri: http://purl.obolibrary.org/obo/IAO_0000231
+    owner: owl_Axiom
+    domain_of:
+    - owl_Axiom
+    - owl_Class
+    - owl_Restriction
+    - sio_011120
+    range: rdf_Property
+    inlined: true
+    inlined_as_list: true
+  sio_000011:
+    name: sio_000011
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/sio_000011
+    description: Property sio:000011
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://semanticscience.org/resource/SIO_000011
+    slot_uri: http://semanticscience.org/resource/SIO_000011
+    owner: owl_Axiom
+    domain_of:
+    - owl_Axiom
+    - owl_Class
+    - owl_Restriction
+    - sio_011120
+    range: rdf_Property
+    inlined: true
+    inlined_as_list: true
+  oboinowl_has_Synonym_Type:
+    name: oboinowl_has_Synonym_Type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/oboinowl_has_Synonym_Type
+    description: Property oboinowl:hasSynonymType
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://www.geneontology.org/formats/oboInOwl#hasSynonymType
+    slot_uri: http://www.geneontology.org/formats/oboInOwl#hasSynonymType
+    owner: owl_Axiom
+    domain_of:
+    - owl_Axiom
+    - owl_Class
+    - owl_Restriction
+    - sio_011120
+    range: rdf_Property
+    inlined: true
+    inlined_as_list: true
+  sio_000008:
+    name: sio_000008
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/sio_000008
+    description: Property sio:000008
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://semanticscience.org/resource/SIO_000008
+    slot_uri: http://semanticscience.org/resource/SIO_000008
+    owner: owl_Axiom
+    domain_of:
+    - owl_Axiom
+    - owl_Class
+    - owl_Restriction
+    - sio_011120
+    range: rdf_Property
+    inlined: true
+    inlined_as_list: true
+  owl_some_Values_From:
+    name: owl_some_Values_From
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_some_Values_From
+    description: Property owl:someValuesFrom
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://www.w3.org/2002/07/owl#someValuesFrom
+    slot_uri: http://www.w3.org/2002/07/owl#someValuesFrom
+    owner: owl_Axiom
     domain_of:
     - owl_Axiom
     - owl_Class
@@ -273,87 +273,13 @@ slots:
     inlined: true
     inlined_as_list: true
 classes:
-  owl_Axiom:
-    name: owl_Axiom
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/OwlAxiom
-    description: Class representing owl_Axiom
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_Axiom
-    slots:
-    - sio_000008
-    - sio_000011
-    - iao_0000231
-    - resource_is_attribute_of
-    - oboinowl_has_Synonym_Type
-    - oboinowl_in_Subset
-    - rdf_type
-    - rdfs_sub_Class_Of
-    - owl_annotated_Property
-    - owl_annotated_Source
-    - owl_on_Property
-    - owl_some_Values_From
-    - iao_0100001
-    class_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_Axiom
-  sio_011120:
-    name: sio_011120
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/Sio011120
-    description: Class representing sio_011120
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/sio_011120
-    slots:
-    - sio_000008
-    - sio_000011
-    - iao_0000231
-    - resource_is_attribute_of
-    - oboinowl_has_Synonym_Type
-    - oboinowl_in_Subset
-    - rdf_type
-    - rdfs_sub_Class_Of
-    - owl_annotated_Property
-    - owl_annotated_Source
-    - owl_on_Property
-    - owl_some_Values_From
-    - iao_0100001
-    class_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/sio_011120
-  rdf_Property:
-    name: rdf_Property
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/RdfProperty
-    description: Class representing rdf_Property
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/rdf_Property
-    class_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/rdf_Property
-  owl_Restriction:
-    name: owl_Restriction
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/OwlRestriction
-    description: Class representing owl_Restriction
-    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_Restriction
-    slots:
-    - sio_000008
-    - sio_000011
-    - iao_0000231
-    - resource_is_attribute_of
-    - oboinowl_has_Synonym_Type
-    - oboinowl_in_Subset
-    - rdf_type
-    - rdfs_sub_Class_Of
-    - owl_annotated_Property
-    - owl_annotated_Source
-    - owl_on_Property
-    - owl_some_Values_From
-    - iao_0100001
-    class_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_Restriction
   owl_Class:
     name: owl_Class
     definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/OwlClass
     description: Class representing owl_Class
     from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_Class
+    - http://www.w3.org/2002/07/owl#Class
     slots:
     - sio_000008
     - sio_000011
@@ -368,6 +294,80 @@ classes:
     - owl_on_Property
     - owl_some_Values_From
     - iao_0100001
-    class_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/owl_Class
+    class_uri: http://www.w3.org/2002/07/owl#Class
+  owl_Restriction:
+    name: owl_Restriction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/OwlRestriction
+    description: Class representing owl_Restriction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://www.w3.org/2002/07/owl#Restriction
+    slots:
+    - sio_000008
+    - sio_000011
+    - iao_0000231
+    - resource_is_attribute_of
+    - oboinowl_has_Synonym_Type
+    - oboinowl_in_Subset
+    - rdf_type
+    - rdfs_sub_Class_Of
+    - owl_annotated_Property
+    - owl_annotated_Source
+    - owl_on_Property
+    - owl_some_Values_From
+    - iao_0100001
+    class_uri: http://www.w3.org/2002/07/owl#Restriction
+  rdf_Property:
+    name: rdf_Property
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/RdfProperty
+    description: Class representing rdf_Property
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+    class_uri: http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+  sio_011120:
+    name: sio_011120
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/Sio011120
+    description: Class representing sio_011120
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://semanticscience.org/resource/SIO_011120
+    slots:
+    - sio_000008
+    - sio_000011
+    - iao_0000231
+    - resource_is_attribute_of
+    - oboinowl_has_Synonym_Type
+    - oboinowl_in_Subset
+    - rdf_type
+    - rdfs_sub_Class_Of
+    - owl_annotated_Property
+    - owl_annotated_Source
+    - owl_on_Property
+    - owl_some_Values_From
+    - iao_0100001
+    class_uri: http://semanticscience.org/resource/SIO_011120
+  owl_Axiom:
+    name: owl_Axiom
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/OwlAxiom
+    description: Class representing owl_Axiom
+    from_schema: http://jmillanacosta.github.io/rdfsolve/chebi/linkml/
+    mappings:
+    - http://www.w3.org/2002/07/owl#Axiom
+    slots:
+    - sio_000008
+    - sio_000011
+    - iao_0000231
+    - resource_is_attribute_of
+    - oboinowl_has_Synonym_Type
+    - oboinowl_in_Subset
+    - rdf_type
+    - rdfs_sub_Class_Of
+    - owl_annotated_Property
+    - owl_annotated_Source
+    - owl_on_Property
+    - owl_some_Values_From
+    - iao_0100001
+    class_uri: http://www.w3.org/2002/07/owl#Axiom
 metamodel_version: 1.7.0
-generation_date: '2025-12-02T10:09:37'
+generation_date: '2026-01-16T14:28:14'

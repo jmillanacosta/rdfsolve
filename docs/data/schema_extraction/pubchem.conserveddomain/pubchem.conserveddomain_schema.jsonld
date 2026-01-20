@@ -1,6 +1,6 @@
 {
   "@context": {
-    "so": "http://purl.obolibrary.org/obo/",
+    "so": "http://purl.obolibrary.org/obo/SO_",
     "cito": "http://purl.org/spar/cito/",
     "owl": "http://www.w3.org/2002/07/owl#",
     "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",

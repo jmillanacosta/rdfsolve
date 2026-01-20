@@ -1,6 +1,6 @@
 {
   "@context": {
-    "sio": "http://semanticscience.org/resource/",
+    "sio": "http://semanticscience.org/resource/SIO_",
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "owl": "http://www.w3.org/2002/07/owl#"
   },

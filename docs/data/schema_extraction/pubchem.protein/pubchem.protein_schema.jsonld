@@ -1,10 +1,10 @@
 {
   "@context": {
-    "pr": "http://purl.obolibrary.org/obo/",
+    "pr": "http://purl.obolibrary.org/obo/PR_",
     "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
     "biopaxleve": "http://www.biopax.org/release/biopax-level3.owl#",
-    "sio": "http://semanticscience.org/resource/",
-    "chebi": "http://purl.obolibrary.org/obo/"
+    "sio": "http://semanticscience.org/resource/SIO_",
+    "chebi": "http://purl.obolibrary.org/obo/CHEBI_"
   },
   "@graph": [
     {

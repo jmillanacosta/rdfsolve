@@ -22,7 +22,7 @@ prefixes:
     prefix_reference: http://www.w3.org/2001/XMLSchema#
   so:
     prefix_prefix: so
-    prefix_reference: http://purl.obolibrary.org/obo/
+    prefix_reference: http://purl.obolibrary.org/obo/SO_
   cito:
     prefix_prefix: cito
     prefix_reference: http://purl.org/spar/cito/
@@ -54,9 +54,9 @@ slots:
     description: Property rdf:type
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/rdf_type
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/rdf_type
-    owner: so_0000417
+    - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+    slot_uri: http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+    owner: vocabulary_Conserved_Domain
     domain_of:
     - so_0000417
     - vocabulary_Conserved_Domain
@@ -69,9 +69,9 @@ slots:
     description: Property cito:isDiscussedBy
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/cito_is_Discussed_By
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/cito_is_Discussed_By
-    owner: so_0000417
+    - http://purl.org/spar/cito/isDiscussedBy
+    slot_uri: http://purl.org/spar/cito/isDiscussedBy
+    owner: vocabulary_Conserved_Domain
     domain_of:
     - so_0000417
     - vocabulary_Conserved_Domain
@@ -79,35 +79,35 @@ slots:
     inlined: true
     inlined_as_list: true
 classes:
-  owl_Class:
-    name: owl_Class
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/OwlClass
-    description: Class representing owl_Class
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/owl_Class
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/owl_Class
-  vocabulary_Conserved_Domain:
-    name: vocabulary_Conserved_Domain
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/VocabularyConservedDomain
-    description: Class representing vocabulary_Conserved_Domain
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/vocabulary_Conserved_Domain
-    slots:
-    - cito_is_Discussed_By
-    - rdf_type
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/vocabulary_Conserved_Domain
   so_0000417:
     name: so_0000417
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/So0000417
     description: Class representing so_0000417
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/so_0000417
+    - http://purl.obolibrary.org/obo/SO_0000417
     slots:
     - cito_is_Discussed_By
     - rdf_type
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/so_0000417
+    class_uri: http://purl.obolibrary.org/obo/SO_0000417
+  owl_Class:
+    name: owl_Class
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/OwlClass
+    description: Class representing owl_Class
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+    mappings:
+    - http://www.w3.org/2002/07/owl#Class
+    class_uri: http://www.w3.org/2002/07/owl#Class
+  vocabulary_Conserved_Domain:
+    name: vocabulary_Conserved_Domain
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/VocabularyConservedDomain
+    description: Class representing vocabulary_Conserved_Domain
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.conserveddomain/linkml/
+    mappings:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain
+    slots:
+    - cito_is_Discussed_By
+    - rdf_type
+    class_uri: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain
 metamodel_version: 1.7.0
-generation_date: '2025-12-02T10:09:49'
+generation_date: '2026-01-16T14:24:39'

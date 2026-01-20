@@ -1,0 +1,171 @@
+{
+  "triples": [
+    [
+      "http://purl.obolibrary.org/obo/SO_0000417",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://purl.obolibrary.org/obo/SO_0000417",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://purl.obolibrary.org/obo/SO_0000417",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://purl.obolibrary.org/obo/SO_0000417",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 8,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "so": "http://purl.obolibrary.org/obo/SO_",
+      "cito": "http://purl.org/spar/cito/",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "so": "http://purl.obolibrary.org/obo/SO_",
+      "cito": "http://purl.org/spar/cito/",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    },
+    "@graph": [
+      {
+        "@id": "so:0000417",
+        "cito:isDiscussedBy": [
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          }
+        ]
+      },
+      {
+        "@id": "vocabulary:ConservedDomain",
+        "cito:isDiscussedBy": [
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          }
+        ]
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "so:0000417",
+      "subject_uri": "http://purl.obolibrary.org/obo/SO_0000417",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "so:0000417",
+      "subject_uri": "http://purl.obolibrary.org/obo/SO_0000417",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "vocabulary:ConservedDomain",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:ConservedDomain",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "so:0000417",
+      "subject_uri": "http://purl.obolibrary.org/obo/SO_0000417",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "so:0000417",
+      "subject_uri": "http://purl.obolibrary.org/obo/SO_0000417",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "vocabulary:ConservedDomain",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:ConservedDomain",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    }
+  ]
+}

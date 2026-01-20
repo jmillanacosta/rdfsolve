@@ -1,21 +1,23 @@
-@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix frapo: <http://purl.org/cerif/frapo/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix void: <http://rdfs.org/ns/void#> .
+@prefix void-ext: <http://ldf.fi/void-ext#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/class_partition_> void:class <http://purl.org/cerif/frapo/FundingAgency>,
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/class_partition_> void:class frapo:FundingAgency,
         <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization>,
-        <http://www.w3.org/2006/vcard/ns#Organization> ;
+        vcard:Organization ;
     void:entities 2406719 .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/datatype_partition_> ns1:datatypePartition xsd:string ;
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/datatype_partition_> void-ext:datatypePartition xsd:string ;
     void:triples 2458530 .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_> ns1:objectClass owl:Class ;
-    ns1:subjectClass <http://purl.org/cerif/frapo/FundingAgency>,
+<http://rdf.ncbi.nlm.nih.gov/pubchem/organization/void/property_partition_> void-ext:objectClass owl:Class ;
+    void-ext:subjectClass frapo:FundingAgency,
         <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization>,
-        <http://www.w3.org/2006/vcard/ns#Organization> ;
+        vcard:Organization ;
     void:property rdf:type ;
     void:triples 4813438 .
 

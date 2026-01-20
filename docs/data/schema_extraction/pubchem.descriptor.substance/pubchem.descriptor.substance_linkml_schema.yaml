@@ -20,15 +20,6 @@ prefixes:
   xsd:
     prefix_prefix: xsd
     prefix_reference: http://www.w3.org/2001/XMLSchema#
-  iao:
-    prefix_prefix: iao
-    prefix_reference: http://purl.obolibrary.org/obo/
-  owl:
-    prefix_prefix: owl
-    prefix_reference: http://www.w3.org/2002/07/owl#
-  vocabulary:
-    prefix_prefix: vocabulary
-    prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
 default_prefix: pubchem.descriptor.substance_schema
 default_range: string
 types:
@@ -44,50 +35,5 @@ types:
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
     base: URIorCURIE
     uri: xsd:anyURI
-slots:
-  rdf_type:
-    name: rdf_type
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/rdf_type
-    description: Property rdf:type
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/rdf_type
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/rdf_type
-    owner: vocabulary_Descriptor
-    domain_of:
-    - iao_0000129
-    - vocabulary_Descriptor
-    range: owl_Class
-    inlined: true
-    inlined_as_list: true
-classes:
-  iao_0000129:
-    name: iao_0000129
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/Iao0000129
-    description: Class representing iao_0000129
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/iao_0000129
-    slots:
-    - rdf_type
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/iao_0000129
-  owl_Class:
-    name: owl_Class
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/OwlClass
-    description: Class representing owl_Class
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/owl_Class
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/owl_Class
-  vocabulary_Descriptor:
-    name: vocabulary_Descriptor
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/VocabularyDescriptor
-    description: Class representing vocabulary_Descriptor
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/vocabulary_Descriptor
-    slots:
-    - rdf_type
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.descriptor.substance/linkml/vocabulary_Descriptor
 metamodel_version: 1.7.0
-generation_date: '2025-12-02T10:02:40'
+generation_date: '2026-01-16T14:13:20'

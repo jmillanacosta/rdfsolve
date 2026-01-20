@@ -25,7 +25,7 @@ prefixes:
     prefix_reference: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#
   chebi:
     prefix_prefix: chebi
-    prefix_reference: http://purl.obolibrary.org/obo/
+    prefix_reference: http://purl.obolibrary.org/obo/CHEBI_
   ncit:
     prefix_prefix: ncit
     prefix_reference: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#
@@ -57,8 +57,8 @@ slots:
     description: Property vocabulary:discussesAsDerivedByTextMining
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/vocabulary_discusses_As_Derived_By_Text_Mining
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/vocabulary_discusses_As_Derived_By_Text_Mining
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#discussesAsDerivedByTextMining
+    slot_uri: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#discussesAsDerivedByTextMining
     owner: vocabulary_Reference
     domain_of:
     - vocabulary_Reference
@@ -66,23 +66,23 @@ slots:
     inlined: true
     inlined_as_list: true
 classes:
-  vocabulary_Reference:
-    name: vocabulary_Reference
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/VocabularyReference
-    description: Class representing vocabulary_Reference
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/vocabulary_Reference
-    slots:
-    - vocabulary_discusses_As_Derived_By_Text_Mining
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/vocabulary_Reference
   chebi_23:
     name: chebi_23
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/Chebi23
     description: Class representing chebi_23
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/chebi_23
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/chebi_23
+    - http://purl.obolibrary.org/obo/CHEBI_23
+    class_uri: http://purl.obolibrary.org/obo/CHEBI_23
+  vocabulary_Reference:
+    name: vocabulary_Reference
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/VocabularyReference
+    description: Class representing vocabulary_Reference
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.reference/linkml/
+    mappings:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference
+    slots:
+    - vocabulary_discusses_As_Derived_By_Text_Mining
+    class_uri: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference
 metamodel_version: 1.7.0
-generation_date: '2025-12-02T10:06:01'
+generation_date: '2026-01-16T15:03:05'

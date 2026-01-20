@@ -48,30 +48,30 @@ types:
     base: URIorCURIE
     uri: xsd:anyURI
 slots:
-  dcterms_creator:
-    name: dcterms_creator
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/dcterms_creator
-    description: Property dcterms:creator
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/dcterms_creator
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/dcterms_creator
-    owner: fabio_Book
-    domain_of:
-    - fabio_Book
-    - vocabulary_Book
-    range: owl_Class
-    inlined: true
-    inlined_as_list: true
   rdf_type:
     name: rdf_type
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/rdf_type
     description: Property rdf:type
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/rdf_type
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/rdf_type
-    owner: fabio_Book
+    - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+    slot_uri: http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+    owner: vocabulary_Book
+    domain_of:
+    - fabio_Book
+    - vocabulary_Book
+    range: owl_Class
+    inlined: true
+    inlined_as_list: true
+  dcterms_creator:
+    name: dcterms_creator
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/dcterms_creator
+    description: Property dcterms:creator
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/
+    mappings:
+    - http://purl.org/dc/terms/creator
+    slot_uri: http://purl.org/dc/terms/creator
+    owner: vocabulary_Book
     domain_of:
     - fabio_Book
     - vocabulary_Book
@@ -79,35 +79,35 @@ slots:
     inlined: true
     inlined_as_list: true
 classes:
-  vocabulary_Book:
-    name: vocabulary_Book
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/VocabularyBook
-    description: Class representing vocabulary_Book
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/vocabulary_Book
-    slots:
-    - dcterms_creator
-    - rdf_type
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/vocabulary_Book
   fabio_Book:
     name: fabio_Book
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/FabioBook
     description: Class representing fabio_Book
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/fabio_Book
+    - http://purl.org/spar/fabio/Book
     slots:
     - dcterms_creator
     - rdf_type
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/fabio_Book
+    class_uri: http://purl.org/spar/fabio/Book
+  vocabulary_Book:
+    name: vocabulary_Book
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/VocabularyBook
+    description: Class representing vocabulary_Book
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/
+    mappings:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book
+    slots:
+    - dcterms_creator
+    - rdf_type
+    class_uri: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book
   owl_Class:
     name: owl_Class
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/OwlClass
     description: Class representing owl_Class
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/owl_Class
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.book/linkml/owl_Class
+    - http://www.w3.org/2002/07/owl#Class
+    class_uri: http://www.w3.org/2002/07/owl#Class
 metamodel_version: 1.7.0
-generation_date: '2025-12-02T10:08:32'
+generation_date: '2026-01-16T14:38:22'

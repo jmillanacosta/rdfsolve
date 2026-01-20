@@ -6,6 +6,119 @@
 @prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+ex:b8a1a6130f2b a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+CONSTRUCT {
+    ?cp void:class ?class ;
+        void:entities ?count .
+}
+WHERE {
+    {
+        SELECT ?class (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH <http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/> {
+                ?s a ?class
+            }
+        }
+        GROUP BY ?class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/class_partition_',
+                   REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
+}
+""" ;
+    schema:dateCreated "2026-01-16T13:12:58.044437+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7dc5a2e4edcd a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+CONSTRUCT {
+    ?pp void:property ?property ;
+        void:triples ?count ;
+        void-ext:subjectClass ?subject_class ;
+        void-ext:objectClass ?object_class .
+}
+WHERE {
+    {
+        SELECT ?property ?subject_class ?object_class (COUNT(*) AS ?count)
+        WHERE {
+            GRAPH <http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/> {
+                ?subject ?property ?object .
+                ?subject rdf:type ?subject_class .
+            }
+
+            # Determine object class based on object type
+            {
+                BIND(rdfs:Literal AS ?object_class)
+                FILTER(isLiteral(?object))
+            }
+            UNION
+            {
+                ?object rdf:type ?object_class .
+                FILTER(isURI(?object))
+            }
+            UNION
+            {
+                BIND(rdfs:Resource AS ?object_class)
+                FILTER(isURI(?object))
+                FILTER NOT EXISTS { ?object rdf:type ?any_type }
+            }
+        }
+        GROUP BY ?property ?subject_class ?object_class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/property_partition_',
+                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class), '_', STR(?object_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
+}
+""" ;
+    schema:dateCreated "2026-01-16T13:12:58.250669+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:389ec08daf26 a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+CONSTRUCT {
+    ?dp void-ext:datatypePartition ?datatype ;
+        void:triples ?count .
+}
+WHERE {
+    {
+        SELECT ?datatype (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH <http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/> {
+                ?s ?p ?o .
+                FILTER(isLiteral(?o))
+                BIND(datatype(?o) AS ?datatype)
+            }
+        }
+        GROUP BY ?datatype
+    }
+    BIND(IRI(CONCAT('http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs//void/datatype_partition_',
+                   REPLACE(STR(?datatype), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?dp)
+}
+""" ;
+    schema:dateCreated "2026-01-16T13:12:58.312018+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
 ex:560e80b1fb4a a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
@@ -21,45 +134,26 @@ ex:560e80b1fb4a a sh:SPARQLExecutable,
 OFFSET 0
 LIMIT 300
 """ ;
-    schema:dateCreated "2025-12-02T10:01:07.919763+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:13:01.673471+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:dfa70aac926d a sh:SPARQLExecutable,
+ex:ca259a69b26a a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_011120> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/> {
+                        ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                        ?s a <http://semanticscience.org/resource/SIO_011120> .
+                        ?o a <http://www.w3.org/2002/07/owl#Class> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:01:08.024356+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:8b5352dd35f2 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_011120> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:01:08.659810+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:13:01.719542+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>

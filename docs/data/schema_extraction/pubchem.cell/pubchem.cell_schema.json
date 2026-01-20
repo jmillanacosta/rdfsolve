@@ -1,0 +1,1345 @@
+{
+  "triples": [
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://semanticscience.org/resource/SIO_001262"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://semanticscience.org/resource/SIO_010000"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://semanticscience.org/resource/SIO_001262"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://semanticscience.org/resource/SIO_010000"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.uniprot.org/core/organism",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.uniprot.org/core/organism",
+      "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.uniprot.org/core/organism",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.uniprot.org/core/organism",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.uniprot.org/core/organism",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.uniprot.org/core/organism",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.uniprot.org/core/organism",
+      "http://semanticscience.org/resource/SIO_001262"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.uniprot.org/core/organism",
+      "http://semanticscience.org/resource/SIO_010000"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.uniprot.org/core/organism",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.uniprot.org/core/organism",
+      "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.uniprot.org/core/organism",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.uniprot.org/core/organism",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.uniprot.org/core/organism",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.uniprot.org/core/organism",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.uniprot.org/core/organism",
+      "http://semanticscience.org/resource/SIO_001262"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.uniprot.org/core/organism",
+      "http://semanticscience.org/resource/SIO_010000"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://semanticscience.org/resource/SIO_001262"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://semanticscience.org/resource/SIO_010000"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://semanticscience.org/resource/SIO_001262"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://semanticscience.org/resource/SIO_010000"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://semanticscience.org/resource/SIO_001262"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://semanticscience.org/resource/SIO_010000"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://semanticscience.org/resource/SIO_001262"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://semanticscience.org/resource/SIO_010000"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://semanticscience.org/resource/SIO_001262"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://semanticscience.org/resource/SIO_010000"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://semanticscience.org/resource/SIO_001262"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010054",
+      "http://purl.obolibrary.org/obo/RO_0001000",
+      "http://semanticscience.org/resource/SIO_010000"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 80,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+      "cito": "http://purl.org/spar/cito/",
+      "mesh.vocab": "http://id.nlm.nih.gov/mesh/vocab#",
+      "chembl": "http://rdf.ebi.ac.uk/terms/chembl#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "sio": "http://semanticscience.org/resource/SIO_",
+      "uniprot.core": "http://purl.uniprot.org/core/",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "ro": "http://purl.obolibrary.org/obo/RO_"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+      "cito": "http://purl.org/spar/cito/",
+      "mesh.vocab": "http://id.nlm.nih.gov/mesh/vocab#",
+      "chembl": "http://rdf.ebi.ac.uk/terms/chembl#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "sio": "http://semanticscience.org/resource/SIO_",
+      "uniprot.core": "http://purl.uniprot.org/core/",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "ro": "http://purl.obolibrary.org/obo/RO_"
+    },
+    "@graph": [
+      {
+        "@id": "vocabulary:Cell",
+        "cito:isDiscussedBy": [
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "chembl:CellLine"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Anatomy"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          },
+          {
+            "@id": "vocabulary:Taxonomy"
+          },
+          {
+            "@id": "sio:001262"
+          },
+          {
+            "@id": "sio:010000"
+          }
+        ],
+        "uniprot.core:organism": [
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "chembl:CellLine"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Anatomy"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          },
+          {
+            "@id": "vocabulary:Taxonomy"
+          },
+          {
+            "@id": "sio:001262"
+          },
+          {
+            "@id": "sio:010000"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "chembl:CellLine"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Anatomy"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          },
+          {
+            "@id": "vocabulary:Taxonomy"
+          },
+          {
+            "@id": "sio:001262"
+          },
+          {
+            "@id": "sio:010000"
+          }
+        ],
+        "rdfs:seeAlso": [
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "chembl:CellLine"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Anatomy"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          },
+          {
+            "@id": "vocabulary:Taxonomy"
+          },
+          {
+            "@id": "sio:001262"
+          },
+          {
+            "@id": "sio:010000"
+          }
+        ],
+        "ro:0001000": [
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "chembl:CellLine"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Anatomy"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          },
+          {
+            "@id": "vocabulary:Taxonomy"
+          },
+          {
+            "@id": "sio:001262"
+          },
+          {
+            "@id": "sio:010000"
+          }
+        ]
+      },
+      {
+        "@id": "sio:010054",
+        "cito:isDiscussedBy": [
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "chembl:CellLine"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Anatomy"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          },
+          {
+            "@id": "vocabulary:Taxonomy"
+          },
+          {
+            "@id": "sio:001262"
+          },
+          {
+            "@id": "sio:010000"
+          }
+        ],
+        "uniprot.core:organism": [
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "chembl:CellLine"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Anatomy"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          },
+          {
+            "@id": "vocabulary:Taxonomy"
+          },
+          {
+            "@id": "sio:001262"
+          },
+          {
+            "@id": "sio:010000"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "chembl:CellLine"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Anatomy"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          },
+          {
+            "@id": "vocabulary:Taxonomy"
+          },
+          {
+            "@id": "sio:001262"
+          },
+          {
+            "@id": "sio:010000"
+          }
+        ],
+        "rdfs:seeAlso": [
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "chembl:CellLine"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Anatomy"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          },
+          {
+            "@id": "vocabulary:Taxonomy"
+          },
+          {
+            "@id": "sio:001262"
+          },
+          {
+            "@id": "sio:010000"
+          }
+        ],
+        "ro:0001000": [
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "chembl:CellLine"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Anatomy"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          },
+          {
+            "@id": "vocabulary:Taxonomy"
+          },
+          {
+            "@id": "sio:001262"
+          },
+          {
+            "@id": "sio:010000"
+          }
+        ]
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "chembl:CellLine",
+      "object_uri": "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Anatomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Taxonomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "sio:001262",
+      "object_uri": "http://semanticscience.org/resource/SIO_001262"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "sio:010000",
+      "object_uri": "http://semanticscience.org/resource/SIO_010000"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "chembl:CellLine",
+      "object_uri": "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Anatomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Taxonomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "sio:001262",
+      "object_uri": "http://semanticscience.org/resource/SIO_001262"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "sio:010000",
+      "object_uri": "http://semanticscience.org/resource/SIO_010000"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "chembl:CellLine",
+      "object_uri": "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "vocabulary:Anatomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "vocabulary:Taxonomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "sio:001262",
+      "object_uri": "http://semanticscience.org/resource/SIO_001262"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "sio:010000",
+      "object_uri": "http://semanticscience.org/resource/SIO_010000"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "chembl:CellLine",
+      "object_uri": "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "vocabulary:Anatomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "vocabulary:Taxonomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "sio:001262",
+      "object_uri": "http://semanticscience.org/resource/SIO_001262"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "uniprot.core:organism",
+      "property_uri": "http://purl.uniprot.org/core/organism",
+      "object_class": "sio:010000",
+      "object_uri": "http://semanticscience.org/resource/SIO_010000"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "chembl:CellLine",
+      "object_uri": "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Anatomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Taxonomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "sio:001262",
+      "object_uri": "http://semanticscience.org/resource/SIO_001262"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "sio:010000",
+      "object_uri": "http://semanticscience.org/resource/SIO_010000"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "chembl:CellLine",
+      "object_uri": "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Anatomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Taxonomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "sio:001262",
+      "object_uri": "http://semanticscience.org/resource/SIO_001262"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "sio:010000",
+      "object_uri": "http://semanticscience.org/resource/SIO_010000"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "chembl:CellLine",
+      "object_uri": "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "vocabulary:Anatomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "vocabulary:Taxonomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "sio:001262",
+      "object_uri": "http://semanticscience.org/resource/SIO_001262"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "sio:010000",
+      "object_uri": "http://semanticscience.org/resource/SIO_010000"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "chembl:CellLine",
+      "object_uri": "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "vocabulary:Anatomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "vocabulary:Taxonomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "sio:001262",
+      "object_uri": "http://semanticscience.org/resource/SIO_001262"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "sio:010000",
+      "object_uri": "http://semanticscience.org/resource/SIO_010000"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "chembl:CellLine",
+      "object_uri": "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "vocabulary:Anatomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "vocabulary:Taxonomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "sio:001262",
+      "object_uri": "http://semanticscience.org/resource/SIO_001262"
+    },
+    {
+      "subject_class": "vocabulary:Cell",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Cell",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "sio:010000",
+      "object_uri": "http://semanticscience.org/resource/SIO_010000"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "chembl:CellLine",
+      "object_uri": "http://rdf.ebi.ac.uk/terms/chembl#CellLine"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "vocabulary:Anatomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "vocabulary:Taxonomy",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "sio:001262",
+      "object_uri": "http://semanticscience.org/resource/SIO_001262"
+    },
+    {
+      "subject_class": "sio:010054",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010054",
+      "property": "ro:0001000",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_0001000",
+      "object_class": "sio:010000",
+      "object_uri": "http://semanticscience.org/resource/SIO_010000"
+    }
+  ]
+}

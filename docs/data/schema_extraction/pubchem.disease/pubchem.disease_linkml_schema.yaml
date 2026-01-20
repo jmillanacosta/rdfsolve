@@ -31,7 +31,7 @@ prefixes:
     prefix_reference: http://www.w3.org/2002/07/owl#
   sio:
     prefix_prefix: sio
-    prefix_reference: http://semanticscience.org/resource/
+    prefix_reference: http://semanticscience.org/resource/SIO_
   skos:
     prefix_prefix: skos
     prefix_reference: http://www.w3.org/2004/02/skos/core#
@@ -57,8 +57,8 @@ slots:
     description: Property skos:closeMatch
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/skos_close_Match
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/skos_close_Match
+    - http://www.w3.org/2004/02/skos/core#closeMatch
+    slot_uri: http://www.w3.org/2004/02/skos/core#closeMatch
     owner: vocabulary_Disease
     domain_of:
     - vocabulary_Disease
@@ -72,8 +72,8 @@ slots:
     description: Property skos:relatedMatch
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/skos_related_Match
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/skos_related_Match
+    - http://www.w3.org/2004/02/skos/core#relatedMatch
+    slot_uri: http://www.w3.org/2004/02/skos/core#relatedMatch
     owner: vocabulary_Disease
     domain_of:
     - vocabulary_Disease
@@ -87,8 +87,8 @@ slots:
     description: Property rdf:type
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/rdf_type
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/rdf_type
+    - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+    slot_uri: http://www.w3.org/1999/02/22-rdf-syntax-ns#type
     owner: vocabulary_Disease
     domain_of:
     - vocabulary_Disease
@@ -97,37 +97,37 @@ slots:
     inlined: true
     inlined_as_list: true
 classes:
-  sio_010299:
-    name: sio_010299
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/Sio010299
-    description: Class representing sio_010299
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/sio_010299
-    slots:
-    - rdf_type
-    - skos_close_Match
-    - skos_related_Match
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/sio_010299
   mesh_vocab_SCR_Disease:
     name: mesh_vocab_SCR_Disease
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/MeshVocabSCRDisease
     description: Class representing mesh_vocab_SCR_Disease
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/mesh_vocab_SCR_Disease
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/mesh_vocab_SCR_Disease
+    - http://id.nlm.nih.gov/mesh/vocab#SCR_Disease
+    class_uri: http://id.nlm.nih.gov/mesh/vocab#SCR_Disease
+  sio_010299:
+    name: sio_010299
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/Sio010299
+    description: Class representing sio_010299
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/
+    mappings:
+    - http://semanticscience.org/resource/SIO_010299
+    slots:
+    - rdf_type
+    - skos_close_Match
+    - skos_related_Match
+    class_uri: http://semanticscience.org/resource/SIO_010299
   vocabulary_Disease:
     name: vocabulary_Disease
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/VocabularyDisease
     description: Class representing vocabulary_Disease
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/vocabulary_Disease
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease
     slots:
     - rdf_type
     - skos_close_Match
     - skos_related_Match
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.disease/linkml/vocabulary_Disease
+    class_uri: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease
 metamodel_version: 1.7.0
-generation_date: '2025-12-02T10:20:24'
+generation_date: '2026-01-16T14:37:36'

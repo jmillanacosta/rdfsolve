@@ -1,0 +1,44 @@
+{
+  "triples": [
+    [
+      "http://semanticscience.org/resource/CHEMINF_000018",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 1,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "cheminf": "http://semanticscience.org/resource/CHEMINF_",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "owl": "http://www.w3.org/2002/07/owl#"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "cheminf": "http://semanticscience.org/resource/CHEMINF_",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "owl": "http://www.w3.org/2002/07/owl#"
+    },
+    "@graph": [
+      {
+        "@id": "cheminf:000018",
+        "rdf:type": {
+          "@id": "owl:Class"
+        }
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "cheminf:000018",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000018",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    }
+  ]
+}

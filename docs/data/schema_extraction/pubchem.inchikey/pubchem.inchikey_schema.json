@@ -1,0 +1,4832 @@
+{
+  "triples": [
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_7"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_8"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_9"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_10"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_11"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_17"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_19"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_20"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_22"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_23"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_24"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_25"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_26"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_28"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_29"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_30"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_31"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_32"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_33"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_36"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_37"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_38"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_39"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_40"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_41"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_42"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_43"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_47"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_49"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_53"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_60"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_61"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_62"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_63"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_64"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_65"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_73"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_74"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_75"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_76"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_77"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_78"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_79"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_80"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_84"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_87"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_88"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_89"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_90"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_92"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_93"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_98"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_99"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_100"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_104"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_105"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_106"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_107"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_108"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_109"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_110"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_112"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_113"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_114"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_115"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_116"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_118"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_119"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_120"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_122"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_123"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_125"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_126"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_128"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_129"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_139"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_141"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_146"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_149"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_150"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_151"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_152"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_153"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_154"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_155"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_157"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_158"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_160"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_165"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_166"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_168"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_192"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C192"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C193"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C194"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C197"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C198"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C199"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C200"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C201"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C202"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C203"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_204"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C205"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C206"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C207"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C208"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C209"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_211"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_212"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C212"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_214"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C215"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C217"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_218"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C219"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C220"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C224"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_227"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C227"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_228"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C228"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C229"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C230"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_232"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_233"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C233"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C234"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_235"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C235"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C236"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C237"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C238"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C239"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C240"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_241"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_242"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C244"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C246"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C249"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C251"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C252"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C253"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_268"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_269"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_270"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_272"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_282"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C282"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C285"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_286"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C287"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C289"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C290"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C291"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C293"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C294"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C295"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C297"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_299"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C299"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_300"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C300"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_301"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C302"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C303"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C305"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C309"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C310"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C311"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C312"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C313"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C315"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C317"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C318"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C320"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C321"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C322"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C323"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C327"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C328"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C329"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C330"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C331"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C332"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C334"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C335"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C336"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C337"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C338"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C339"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C340"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C341"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C342"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C343"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C349"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C351"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C352"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C353"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C354"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C355"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C356"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C357"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C358"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C359"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C362"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C363"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C364"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C365"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C366"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_367"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C367"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_368"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C369"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C370"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_371"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C372"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C373"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C374"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C375"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C376"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C377"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C378"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C379"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C380"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C381"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C382"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C383"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C384"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C385"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C386"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C391"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C393"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C394"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C395"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C397"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C398"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C399"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C401"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C402"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C403"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C404"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C405"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C406"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C407"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C408"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C409"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C410"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C411"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C412"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C414"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C415"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C416"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C417"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C418"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C419"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C420"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C421"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_422"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C422"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C423"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C424"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C425"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C428"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C429"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C430"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_431"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C431"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C432"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_433"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C433"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C435"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C436"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C437"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C439"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C440"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_444"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C445"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C447"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_448"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_453"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C454"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C455"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C456"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C457"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C458"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C460"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C462"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C463"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C466"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_468"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C468"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_469"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_470"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C472"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C473"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C474"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C476"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C478"
+    ],
+    [
+      "http://semanticscience.org/resource/CHEMINF_000399",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://purl.obolibrary.org/obo/CHEBI_479"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 300,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "cheminf": "http://semanticscience.org/resource/CHEMINF_",
+      "resource": "http://semanticscience.org/resource/",
+      "chebi": "http://purl.obolibrary.org/obo/CHEBI_",
+      "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "cheminf": "http://semanticscience.org/resource/CHEMINF_",
+      "resource": "http://semanticscience.org/resource/",
+      "chebi": "http://purl.obolibrary.org/obo/CHEBI_",
+      "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#"
+    },
+    "@graph": [
+      {
+        "@id": "cheminf:000399",
+        "resource:is-attribute-of": [
+          {
+            "@id": "chebi:7"
+          },
+          {
+            "@id": "chebi:8"
+          },
+          {
+            "@id": "chebi:9"
+          },
+          {
+            "@id": "chebi:10"
+          },
+          {
+            "@id": "chebi:11"
+          },
+          {
+            "@id": "chebi:17"
+          },
+          {
+            "@id": "chebi:19"
+          },
+          {
+            "@id": "chebi:20"
+          },
+          {
+            "@id": "chebi:22"
+          },
+          {
+            "@id": "chebi:23"
+          },
+          {
+            "@id": "chebi:24"
+          },
+          {
+            "@id": "chebi:25"
+          },
+          {
+            "@id": "chebi:26"
+          },
+          {
+            "@id": "chebi:28"
+          },
+          {
+            "@id": "chebi:29"
+          },
+          {
+            "@id": "chebi:30"
+          },
+          {
+            "@id": "chebi:31"
+          },
+          {
+            "@id": "chebi:32"
+          },
+          {
+            "@id": "chebi:33"
+          },
+          {
+            "@id": "chebi:36"
+          },
+          {
+            "@id": "chebi:37"
+          },
+          {
+            "@id": "chebi:38"
+          },
+          {
+            "@id": "chebi:39"
+          },
+          {
+            "@id": "chebi:40"
+          },
+          {
+            "@id": "chebi:41"
+          },
+          {
+            "@id": "chebi:42"
+          },
+          {
+            "@id": "chebi:43"
+          },
+          {
+            "@id": "chebi:47"
+          },
+          {
+            "@id": "chebi:49"
+          },
+          {
+            "@id": "chebi:53"
+          },
+          {
+            "@id": "chebi:60"
+          },
+          {
+            "@id": "chebi:61"
+          },
+          {
+            "@id": "chebi:62"
+          },
+          {
+            "@id": "chebi:63"
+          },
+          {
+            "@id": "chebi:64"
+          },
+          {
+            "@id": "chebi:65"
+          },
+          {
+            "@id": "chebi:73"
+          },
+          {
+            "@id": "chebi:74"
+          },
+          {
+            "@id": "chebi:75"
+          },
+          {
+            "@id": "chebi:76"
+          },
+          {
+            "@id": "chebi:77"
+          },
+          {
+            "@id": "chebi:78"
+          },
+          {
+            "@id": "chebi:79"
+          },
+          {
+            "@id": "chebi:80"
+          },
+          {
+            "@id": "chebi:84"
+          },
+          {
+            "@id": "chebi:87"
+          },
+          {
+            "@id": "chebi:88"
+          },
+          {
+            "@id": "chebi:89"
+          },
+          {
+            "@id": "chebi:90"
+          },
+          {
+            "@id": "chebi:92"
+          },
+          {
+            "@id": "chebi:93"
+          },
+          {
+            "@id": "chebi:98"
+          },
+          {
+            "@id": "chebi:99"
+          },
+          {
+            "@id": "chebi:100"
+          },
+          {
+            "@id": "chebi:104"
+          },
+          {
+            "@id": "chebi:105"
+          },
+          {
+            "@id": "chebi:106"
+          },
+          {
+            "@id": "chebi:107"
+          },
+          {
+            "@id": "chebi:108"
+          },
+          {
+            "@id": "chebi:109"
+          },
+          {
+            "@id": "chebi:110"
+          },
+          {
+            "@id": "chebi:112"
+          },
+          {
+            "@id": "chebi:113"
+          },
+          {
+            "@id": "chebi:114"
+          },
+          {
+            "@id": "chebi:115"
+          },
+          {
+            "@id": "chebi:116"
+          },
+          {
+            "@id": "chebi:118"
+          },
+          {
+            "@id": "chebi:119"
+          },
+          {
+            "@id": "chebi:120"
+          },
+          {
+            "@id": "chebi:122"
+          },
+          {
+            "@id": "chebi:123"
+          },
+          {
+            "@id": "chebi:125"
+          },
+          {
+            "@id": "chebi:126"
+          },
+          {
+            "@id": "chebi:128"
+          },
+          {
+            "@id": "chebi:129"
+          },
+          {
+            "@id": "chebi:139"
+          },
+          {
+            "@id": "chebi:141"
+          },
+          {
+            "@id": "chebi:146"
+          },
+          {
+            "@id": "chebi:149"
+          },
+          {
+            "@id": "chebi:150"
+          },
+          {
+            "@id": "chebi:151"
+          },
+          {
+            "@id": "chebi:152"
+          },
+          {
+            "@id": "chebi:153"
+          },
+          {
+            "@id": "chebi:154"
+          },
+          {
+            "@id": "chebi:155"
+          },
+          {
+            "@id": "chebi:157"
+          },
+          {
+            "@id": "chebi:158"
+          },
+          {
+            "@id": "chebi:160"
+          },
+          {
+            "@id": "chebi:165"
+          },
+          {
+            "@id": "chebi:166"
+          },
+          {
+            "@id": "chebi:168"
+          },
+          {
+            "@id": "chebi:192"
+          },
+          {
+            "@id": "ncit:C192"
+          },
+          {
+            "@id": "ncit:C193"
+          },
+          {
+            "@id": "ncit:C194"
+          },
+          {
+            "@id": "ncit:C197"
+          },
+          {
+            "@id": "ncit:C198"
+          },
+          {
+            "@id": "ncit:C199"
+          },
+          {
+            "@id": "ncit:C200"
+          },
+          {
+            "@id": "ncit:C201"
+          },
+          {
+            "@id": "ncit:C202"
+          },
+          {
+            "@id": "ncit:C203"
+          },
+          {
+            "@id": "chebi:204"
+          },
+          {
+            "@id": "ncit:C205"
+          },
+          {
+            "@id": "ncit:C206"
+          },
+          {
+            "@id": "ncit:C207"
+          },
+          {
+            "@id": "ncit:C208"
+          },
+          {
+            "@id": "ncit:C209"
+          },
+          {
+            "@id": "chebi:211"
+          },
+          {
+            "@id": "chebi:212"
+          },
+          {
+            "@id": "ncit:C212"
+          },
+          {
+            "@id": "chebi:214"
+          },
+          {
+            "@id": "ncit:C215"
+          },
+          {
+            "@id": "ncit:C217"
+          },
+          {
+            "@id": "chebi:218"
+          },
+          {
+            "@id": "ncit:C219"
+          },
+          {
+            "@id": "ncit:C220"
+          },
+          {
+            "@id": "ncit:C224"
+          },
+          {
+            "@id": "chebi:227"
+          },
+          {
+            "@id": "ncit:C227"
+          },
+          {
+            "@id": "chebi:228"
+          },
+          {
+            "@id": "ncit:C228"
+          },
+          {
+            "@id": "ncit:C229"
+          },
+          {
+            "@id": "ncit:C230"
+          },
+          {
+            "@id": "chebi:232"
+          },
+          {
+            "@id": "chebi:233"
+          },
+          {
+            "@id": "ncit:C233"
+          },
+          {
+            "@id": "ncit:C234"
+          },
+          {
+            "@id": "chebi:235"
+          },
+          {
+            "@id": "ncit:C235"
+          },
+          {
+            "@id": "ncit:C236"
+          },
+          {
+            "@id": "ncit:C237"
+          },
+          {
+            "@id": "ncit:C238"
+          },
+          {
+            "@id": "ncit:C239"
+          },
+          {
+            "@id": "ncit:C240"
+          },
+          {
+            "@id": "chebi:241"
+          },
+          {
+            "@id": "chebi:242"
+          },
+          {
+            "@id": "ncit:C244"
+          },
+          {
+            "@id": "ncit:C246"
+          },
+          {
+            "@id": "ncit:C249"
+          },
+          {
+            "@id": "ncit:C251"
+          },
+          {
+            "@id": "ncit:C252"
+          },
+          {
+            "@id": "ncit:C253"
+          },
+          {
+            "@id": "chebi:268"
+          },
+          {
+            "@id": "chebi:269"
+          },
+          {
+            "@id": "chebi:270"
+          },
+          {
+            "@id": "chebi:272"
+          },
+          {
+            "@id": "chebi:282"
+          },
+          {
+            "@id": "ncit:C282"
+          },
+          {
+            "@id": "ncit:C285"
+          },
+          {
+            "@id": "chebi:286"
+          },
+          {
+            "@id": "ncit:C287"
+          },
+          {
+            "@id": "ncit:C289"
+          },
+          {
+            "@id": "ncit:C290"
+          },
+          {
+            "@id": "ncit:C291"
+          },
+          {
+            "@id": "ncit:C293"
+          },
+          {
+            "@id": "ncit:C294"
+          },
+          {
+            "@id": "ncit:C295"
+          },
+          {
+            "@id": "ncit:C297"
+          },
+          {
+            "@id": "chebi:299"
+          },
+          {
+            "@id": "ncit:C299"
+          },
+          {
+            "@id": "chebi:300"
+          },
+          {
+            "@id": "ncit:C300"
+          },
+          {
+            "@id": "chebi:301"
+          },
+          {
+            "@id": "ncit:C302"
+          },
+          {
+            "@id": "ncit:C303"
+          },
+          {
+            "@id": "ncit:C305"
+          },
+          {
+            "@id": "ncit:C309"
+          },
+          {
+            "@id": "ncit:C310"
+          },
+          {
+            "@id": "ncit:C311"
+          },
+          {
+            "@id": "ncit:C312"
+          },
+          {
+            "@id": "ncit:C313"
+          },
+          {
+            "@id": "ncit:C315"
+          },
+          {
+            "@id": "ncit:C317"
+          },
+          {
+            "@id": "ncit:C318"
+          },
+          {
+            "@id": "ncit:C320"
+          },
+          {
+            "@id": "ncit:C321"
+          },
+          {
+            "@id": "ncit:C322"
+          },
+          {
+            "@id": "ncit:C323"
+          },
+          {
+            "@id": "ncit:C327"
+          },
+          {
+            "@id": "ncit:C328"
+          },
+          {
+            "@id": "ncit:C329"
+          },
+          {
+            "@id": "ncit:C330"
+          },
+          {
+            "@id": "ncit:C331"
+          },
+          {
+            "@id": "ncit:C332"
+          },
+          {
+            "@id": "ncit:C334"
+          },
+          {
+            "@id": "ncit:C335"
+          },
+          {
+            "@id": "ncit:C336"
+          },
+          {
+            "@id": "ncit:C337"
+          },
+          {
+            "@id": "ncit:C338"
+          },
+          {
+            "@id": "ncit:C339"
+          },
+          {
+            "@id": "ncit:C340"
+          },
+          {
+            "@id": "ncit:C341"
+          },
+          {
+            "@id": "ncit:C342"
+          },
+          {
+            "@id": "ncit:C343"
+          },
+          {
+            "@id": "ncit:C349"
+          },
+          {
+            "@id": "ncit:C351"
+          },
+          {
+            "@id": "ncit:C352"
+          },
+          {
+            "@id": "ncit:C353"
+          },
+          {
+            "@id": "ncit:C354"
+          },
+          {
+            "@id": "ncit:C355"
+          },
+          {
+            "@id": "ncit:C356"
+          },
+          {
+            "@id": "ncit:C357"
+          },
+          {
+            "@id": "ncit:C358"
+          },
+          {
+            "@id": "ncit:C359"
+          },
+          {
+            "@id": "ncit:C362"
+          },
+          {
+            "@id": "ncit:C363"
+          },
+          {
+            "@id": "ncit:C364"
+          },
+          {
+            "@id": "ncit:C365"
+          },
+          {
+            "@id": "ncit:C366"
+          },
+          {
+            "@id": "chebi:367"
+          },
+          {
+            "@id": "ncit:C367"
+          },
+          {
+            "@id": "chebi:368"
+          },
+          {
+            "@id": "ncit:C369"
+          },
+          {
+            "@id": "ncit:C370"
+          },
+          {
+            "@id": "chebi:371"
+          },
+          {
+            "@id": "ncit:C372"
+          },
+          {
+            "@id": "ncit:C373"
+          },
+          {
+            "@id": "ncit:C374"
+          },
+          {
+            "@id": "ncit:C375"
+          },
+          {
+            "@id": "ncit:C376"
+          },
+          {
+            "@id": "ncit:C377"
+          },
+          {
+            "@id": "ncit:C378"
+          },
+          {
+            "@id": "ncit:C379"
+          },
+          {
+            "@id": "ncit:C380"
+          },
+          {
+            "@id": "ncit:C381"
+          },
+          {
+            "@id": "ncit:C382"
+          },
+          {
+            "@id": "ncit:C383"
+          },
+          {
+            "@id": "ncit:C384"
+          },
+          {
+            "@id": "ncit:C385"
+          },
+          {
+            "@id": "ncit:C386"
+          },
+          {
+            "@id": "ncit:C391"
+          },
+          {
+            "@id": "ncit:C393"
+          },
+          {
+            "@id": "ncit:C394"
+          },
+          {
+            "@id": "ncit:C395"
+          },
+          {
+            "@id": "ncit:C397"
+          },
+          {
+            "@id": "ncit:C398"
+          },
+          {
+            "@id": "ncit:C399"
+          },
+          {
+            "@id": "ncit:C401"
+          },
+          {
+            "@id": "ncit:C402"
+          },
+          {
+            "@id": "ncit:C403"
+          },
+          {
+            "@id": "ncit:C404"
+          },
+          {
+            "@id": "ncit:C405"
+          },
+          {
+            "@id": "ncit:C406"
+          },
+          {
+            "@id": "ncit:C407"
+          },
+          {
+            "@id": "ncit:C408"
+          },
+          {
+            "@id": "ncit:C409"
+          },
+          {
+            "@id": "ncit:C410"
+          },
+          {
+            "@id": "ncit:C411"
+          },
+          {
+            "@id": "ncit:C412"
+          },
+          {
+            "@id": "ncit:C414"
+          },
+          {
+            "@id": "ncit:C415"
+          },
+          {
+            "@id": "ncit:C416"
+          },
+          {
+            "@id": "ncit:C417"
+          },
+          {
+            "@id": "ncit:C418"
+          },
+          {
+            "@id": "ncit:C419"
+          },
+          {
+            "@id": "ncit:C420"
+          },
+          {
+            "@id": "ncit:C421"
+          },
+          {
+            "@id": "chebi:422"
+          },
+          {
+            "@id": "ncit:C422"
+          },
+          {
+            "@id": "ncit:C423"
+          },
+          {
+            "@id": "ncit:C424"
+          },
+          {
+            "@id": "ncit:C425"
+          },
+          {
+            "@id": "ncit:C428"
+          },
+          {
+            "@id": "ncit:C429"
+          },
+          {
+            "@id": "ncit:C430"
+          },
+          {
+            "@id": "chebi:431"
+          },
+          {
+            "@id": "ncit:C431"
+          },
+          {
+            "@id": "ncit:C432"
+          },
+          {
+            "@id": "chebi:433"
+          },
+          {
+            "@id": "ncit:C433"
+          },
+          {
+            "@id": "ncit:C435"
+          },
+          {
+            "@id": "ncit:C436"
+          },
+          {
+            "@id": "ncit:C437"
+          },
+          {
+            "@id": "ncit:C439"
+          },
+          {
+            "@id": "ncit:C440"
+          },
+          {
+            "@id": "chebi:444"
+          },
+          {
+            "@id": "ncit:C445"
+          },
+          {
+            "@id": "ncit:C447"
+          },
+          {
+            "@id": "chebi:448"
+          },
+          {
+            "@id": "chebi:453"
+          },
+          {
+            "@id": "ncit:C454"
+          },
+          {
+            "@id": "ncit:C455"
+          },
+          {
+            "@id": "ncit:C456"
+          },
+          {
+            "@id": "ncit:C457"
+          },
+          {
+            "@id": "ncit:C458"
+          },
+          {
+            "@id": "ncit:C460"
+          },
+          {
+            "@id": "ncit:C462"
+          },
+          {
+            "@id": "ncit:C463"
+          },
+          {
+            "@id": "ncit:C466"
+          },
+          {
+            "@id": "chebi:468"
+          },
+          {
+            "@id": "ncit:C468"
+          },
+          {
+            "@id": "chebi:469"
+          },
+          {
+            "@id": "chebi:470"
+          },
+          {
+            "@id": "ncit:C472"
+          },
+          {
+            "@id": "ncit:C473"
+          },
+          {
+            "@id": "ncit:C474"
+          },
+          {
+            "@id": "ncit:C476"
+          },
+          {
+            "@id": "ncit:C478"
+          },
+          {
+            "@id": "chebi:479"
+          }
+        ]
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:7",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_7"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:8",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_8"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:9",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_9"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:10",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_10"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:11",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_11"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:17",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_17"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:19",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_19"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:20",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_20"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:22",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_22"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:23",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_23"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:24",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_24"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:25",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_25"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:26",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_26"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:28",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_28"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:29",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_29"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:30",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_30"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:31",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_31"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:32",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_32"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:33",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_33"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:36",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_36"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:37",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_37"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:38",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_38"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:39",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_39"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:40",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_40"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:41",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_41"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:42",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_42"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:43",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_43"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:47",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_47"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:49",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_49"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:53",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_53"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:60",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_60"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:61",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_61"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:62",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_62"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:63",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_63"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:64",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_64"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:65",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_65"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:73",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_73"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:74",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_74"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:75",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_75"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:76",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_76"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:77",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_77"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:78",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_78"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:79",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_79"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:80",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_80"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:84",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_84"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:87",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_87"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:88",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_88"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:89",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_89"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:90",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_90"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:92",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_92"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:93",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_93"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:98",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_98"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:99",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_99"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:100",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_100"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:104",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_104"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:105",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_105"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:106",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_106"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:107",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_107"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:108",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_108"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:109",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_109"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:110",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_110"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:112",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_112"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:113",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_113"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:114",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_114"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:115",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_115"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:116",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_116"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:118",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_118"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:119",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_119"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:120",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_120"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:122",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_122"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:123",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_123"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:125",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_125"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:126",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_126"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:128",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_128"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:129",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_129"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:139",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_139"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:141",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_141"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:146",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_146"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:149",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_149"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:150",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_150"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:151",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_151"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:152",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_152"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:153",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_153"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:154",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_154"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:155",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_155"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:157",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_157"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:158",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_158"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:160",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_160"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:165",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_165"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:166",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_166"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:168",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_168"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:192",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_192"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C192",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C192"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C193",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C193"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C194",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C194"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C197",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C197"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C198",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C198"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C199",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C199"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C200",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C200"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C201",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C201"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C202",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C202"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C203",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C203"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:204",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_204"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C205",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C205"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C206",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C206"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C207",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C207"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C208",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C208"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C209",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C209"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:211",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_211"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:212",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_212"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C212",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C212"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:214",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_214"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C215",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C215"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C217",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C217"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:218",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_218"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C219",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C219"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C220",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C220"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C224",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C224"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:227",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_227"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C227",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C227"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:228",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_228"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C228",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C228"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C229",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C229"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C230",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C230"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:232",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_232"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:233",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_233"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C233",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C233"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C234",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C234"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:235",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_235"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C235",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C235"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C236",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C236"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C237",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C237"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C238",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C238"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C239",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C239"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C240",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C240"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:241",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_241"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:242",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_242"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C244",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C244"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C246",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C246"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C249",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C249"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C251",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C251"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C252",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C252"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C253",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C253"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:268",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_268"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:269",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_269"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:270",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_270"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:272",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_272"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:282",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_282"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C282",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C282"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C285",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C285"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:286",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_286"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C287",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C287"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C289",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C289"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C290",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C290"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C291",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C291"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C293",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C293"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C294",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C294"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C295",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C295"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C297",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C297"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:299",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_299"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C299",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C299"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:300",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_300"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C300",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C300"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:301",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_301"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C302",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C302"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C303",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C303"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C305",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C305"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C309",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C309"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C310",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C310"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C311",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C311"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C312",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C312"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C313",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C313"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C315",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C315"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C317",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C317"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C318",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C318"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C320",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C320"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C321",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C321"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C322",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C322"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C323",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C323"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C327",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C327"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C328",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C328"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C329",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C329"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C330",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C330"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C331",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C331"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C332",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C332"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C334",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C334"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C335",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C335"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C336",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C336"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C337",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C337"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C338",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C338"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C339",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C339"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C340",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C340"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C341",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C341"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C342",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C342"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C343",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C343"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C349",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C349"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C351",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C351"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C352",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C352"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C353",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C353"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C354",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C354"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C355",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C355"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C356",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C356"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C357",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C357"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C358",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C358"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C359",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C359"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C362",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C362"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C363",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C363"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C364",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C364"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C365",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C365"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C366",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C366"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:367",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_367"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C367",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C367"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:368",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_368"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C369",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C369"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C370",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C370"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:371",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_371"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C372",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C372"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C373",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C373"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C374",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C374"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C375",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C375"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C376",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C376"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C377",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C377"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C378",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C378"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C379",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C379"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C380",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C380"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C381",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C381"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C382",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C382"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C383",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C383"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C384",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C384"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C385",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C385"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C386",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C386"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C391",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C391"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C393",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C393"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C394",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C394"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C395",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C395"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C397",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C397"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C398",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C398"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C399",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C399"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C401",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C401"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C402",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C402"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C403",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C403"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C404",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C404"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C405",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C405"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C406",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C406"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C407",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C407"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C408",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C408"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C409",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C409"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C410",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C410"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C411",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C411"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C412",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C412"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C414",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C414"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C415",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C415"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C416",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C416"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C417",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C417"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C418",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C418"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C419",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C419"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C420",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C420"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C421",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C421"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:422",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_422"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C422",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C422"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C423",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C423"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C424",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C424"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C425",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C425"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C428",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C428"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C429",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C429"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C430",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C430"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:431",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_431"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C431",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C431"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C432",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C432"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:433",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_433"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C433",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C433"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C435",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C435"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C436",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C436"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C437",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C437"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C439",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C439"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C440",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C440"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:444",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_444"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C445",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C445"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C447",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C447"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:448",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_448"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:453",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_453"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C454",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C454"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C455",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C455"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C456",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C456"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C457",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C457"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C458",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C458"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C460",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C460"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C462",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C462"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C463",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C463"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C466",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C466"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:468",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_468"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C468",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C468"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:469",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_469"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:470",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_470"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C472",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C472"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C473",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C473"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C474",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C474"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C476",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C476"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "ncit:C478",
+      "object_uri": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C478"
+    },
+    {
+      "subject_class": "cheminf:000399",
+      "subject_uri": "http://semanticscience.org/resource/CHEMINF_000399",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "chebi:479",
+      "object_uri": "http://purl.obolibrary.org/obo/CHEBI_479"
+    }
+  ]
+}

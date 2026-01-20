@@ -1,0 +1,1216 @@
+{
+  "triples": [
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://purl.org/pav/importedFrom",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://purl.org/pav/importedFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://purl.org/pav/importedFrom",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://purl.org/pav/importedFrom",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://purl.org/pav/importedFrom",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://purl.org/pav/importedFrom",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://purl.org/pav/importedFrom",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#broader",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://purl.org/dc/terms/Dataset"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "http://www.w3.org/2004/02/skos/core#inScheme",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 72,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "skos": "http://www.w3.org/2004/02/skos/core#",
+      "pav": "http://purl.org/pav/",
+      "dcterms": "http://purl.org/dc/terms/",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "skos": "http://www.w3.org/2004/02/skos/core#",
+      "pav": "http://purl.org/pav/",
+      "dcterms": "http://purl.org/dc/terms/",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    },
+    "@graph": [
+      {
+        "@id": "skos:Concept",
+        "pav:importedFrom": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ],
+        "skos:broader": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ],
+        "skos:inScheme": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ]
+      },
+      {
+        "@id": "skos:ConceptScheme",
+        "pav:importedFrom": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ],
+        "skos:broader": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ],
+        "skos:inScheme": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ]
+      },
+      {
+        "@id": "vocabulary:Concept",
+        "pav:importedFrom": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ],
+        "skos:broader": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ],
+        "skos:inScheme": [
+          {
+            "@id": "dcterms:Dataset"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "skos:Concept"
+          },
+          {
+            "@id": "skos:ConceptScheme"
+          },
+          {
+            "@id": "vocabulary:Concept"
+          },
+          {
+            "@id": "vocabulary:Source"
+          }
+        ]
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "pav:importedFrom",
+      "property_uri": "http://purl.org/pav/importedFrom",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:broader",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#broader",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "skos:Concept",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "skos:ConceptScheme",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "dcterms:Dataset",
+      "object_uri": "http://purl.org/dc/terms/Dataset"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "skos:Concept",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "skos:ConceptScheme",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "vocabulary:Concept",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Concept",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Concept",
+      "property": "skos:inScheme",
+      "property_uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "object_class": "vocabulary:Source",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Source"
+    }
+  ]
+}

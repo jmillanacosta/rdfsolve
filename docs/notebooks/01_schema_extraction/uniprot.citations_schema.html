@@ -7517,7 +7517,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="uniprot.citations-Schema-Extraction">uniprot.citations Schema Extraction<a class="anchor-link" href="#uniprot.citations-Schema-Extraction">¶</a></h1><p>This notebook demonstrates RDF schema extraction from the uniprot.citations SPARQL endpoint. It discovers VoID (Vocabulary of Interlinked Datasets) descriptions and generates  JSON-LD as the source for all downstream outputs including frequency analysis and LinkML schemas.</p>
+<h1 id="uniprot.citations-Schema-Extraction">uniprot.citations Schema Extraction<a class="anchor-link" href="#uniprot.citations-Schema-Extraction">¶</a></h1><p>This notebook extracts RDF schema from the uniprot.citations SPARQL endpoint. It attempts discovery of existing VoID (Vocabulary of Interlinked Datasets) metadata first, then generates VoID from queries if needed. All downstream outputs are generated from the VoID description.</p>
 </div>
 </div>
 </div>
@@ -7529,12 +7529,12 @@ a.anchor-link {
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="Exports">Exports<a class="anchor-link" href="#Exports">¶</a></h2><ul>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations_schema/uniprot.citations_schema.jsonld">JSON-LD Schema</a> (primary output)</li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations_schema/uniprot.citations_schema.nq">N-Quads RDF</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations_schema/uniprot.citations_generated_void.ttl">VoID Graph</a> for the dataset in its original source</li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations_schema/uniprot.citations_pattern_coverage.csv">Coverage report</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations_schema/uniprot.citations_linkml_schema.yaml">LinkML Schema</a></li>
-<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations_schema/uniprot.citationsinstances.parquet">Full parquet entity dataframe</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations/uniprot.citations_schema.jsonld">JSON-LD Schema</a> (primary output)</li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations/uniprot.citations_schema.nq">N-Quads RDF</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations/uniprot.citations_generated_void.ttl">VoID Graph</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations/uniprot.citations_pattern_coverage.csv">Coverage Report</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations/uniprot.citations_linkml_schema.yaml">LinkML Schema</a></li>
+<li><a href="https://github.com/jmillanacosta/rdfsolve/blob/main/docs/data/schema_extraction/uniprot.citations/uniprot.citations_instances_subject_index.json">Instance Data</a> (subject index, object index, and instances in JSON Lines format)</li>
 </ul>
 </div>
 </div>
@@ -7611,7 +7611,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:02:36 INFO uniprot.citations: Logging configured for uniprot.citations
+<pre>2026-01-16 15:30:50 INFO uniprot.citations: Logging configured for uniprot.citations
 </pre>
 </div>
 </div>
@@ -7862,7 +7862,7 @@ Note: VoID graph and JSON-LD are the primary caches
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Discover-or-get-VoID-Schema">Discover or get VoID Schema<a class="anchor-link" href="#Discover-or-get-VoID-Schema">¶</a></h2>
+<h2 id="VoID-Discovery">VoID Discovery<a class="anchor-link" href="#VoID-Discovery">¶</a></h2>
 </div>
 </div>
 </div>
@@ -7874,16 +7874,10 @@ Note: VoID graph and JSON-LD are the primary caches
 <div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Discover or generate VoID schema with caching</span>
-<span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_voidgraph"</span>
-
-<span class="c1"># Try to load from cache first</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_voidgraph"</span>
 <span class="n">void_graph</span> <span class="o">=</span> <span class="n">load_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
 
 <span class="k">if</span> <span class="n">void_graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"VoID graph not found in cache, attempting discovery..."</span><span class="p">)</span>
-
-    <span class="c1"># Step 1: Try to discover existing VoID graphs</span>
     <span class="n">discovery_result</span> <span class="o">=</span> <span class="n">discover_void_graphs</span><span class="p">(</span>
         <span class="n">endpoint_url</span><span class="p">,</span> <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="p">)</span>
@@ -7893,21 +7887,17 @@ Note: VoID graph and JSON-LD are the primary caches
 
     <span class="k">if</span> <span class="n">found_graphs</span> <span class="ow">and</span> <span class="n">partitions</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">found_graphs</span><span class="p">)</span><span class="si">}</span><span class="s2"> VoID graphs with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">partitions</span><span class="p">)</span><span class="si">}</span><span class="s2"> partitions"</span><span class="p">)</span>
-        <span class="c1"># Build VoID graph directly from partition data (no CONSTRUCT query needed)</span>
         <span class="n">void_graph</span> <span class="o">=</span> <span class="n">retrieve_void_from_graphs</span><span class="p">(</span>
             <span class="n">endpoint_url</span><span class="p">,</span>
             <span class="n">found_graphs</span><span class="p">,</span>
             <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span>  <span class="c1"># Pass partition data directly</span>
+            <span class="n">partitions</span><span class="o">=</span><span class="n">partitions</span><span class="p">,</span>
         <span class="p">)</span>
-
-        <span class="c1"># Save to file</span>
-        <span class="n">void_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_existing_void.ttl"</span><span class="p">)</span>
+        <span class="n">void_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_discovered_void.ttl"</span><span class="p">)</span>
         <span class="n">void_graph</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">destination</span><span class="o">=</span><span class="n">void_path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"turtle"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Built VoID graph from: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">found_graphs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Saved discovered VoID to: </span><span class="si">{</span><span class="n">void_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"No VoID graphs found, generating from queries..."</span><span class="p">)</span>
-        <span class="c1"># Step 2: Generate new VoID if none found</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"No VoID found, generating from endpoint..."</span><span class="p">)</span>
         <span class="n">void_graph</span> <span class="o">=</span> <span class="n">generate_void_from_endpoint</span><span class="p">(</span>
             <span class="n">endpoint_url</span><span class="o">=</span><span class="n">endpoint_url</span><span class="p">,</span>
             <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
@@ -7917,13 +7907,11 @@ Note: VoID graph and JSON-LD are the primary caches
             <span class="n">exclude_graphs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="c1"># Cache the VoID graph for future use</span>
     <span class="n">save_cache</span><span class="p">(</span><span class="n">void_graph</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"VoID graph cached with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">void_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> triples"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cached VoID graph (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">void_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> triples)"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded VoID graph from cache (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">void_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> triples)"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded from cache (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">void_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> triples)"</span><span class="p">)</span>
 
-<span class="c1"># Load parser from the VoID graph</span>
 <span class="n">vp</span> <span class="o">=</span> <span class="n">load_parser_from_graph</span><span class="p">(</span><span class="n">void_graph</span><span class="p">,</span> <span class="n">graph_uris</span><span class="o">=</span><span class="p">[</span><span class="n">graph_uri</span><span class="p">]</span> <span class="k">if</span> <span class="n">graph_uri</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -7937,81 +7925,321 @@ Note: VoID graph and JSON-LD are the primary caches
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>VoID graph not found in cache, attempting discovery...
-2025-12-02 10:02:38 DEBUG rdfsolve.parser: Starting VoID partition discovery for https://sparql.uniprot.org/sparql/
+<pre>2026-01-16 15:30:53 DEBUG rdfsolve.parser: Starting VoID partition discovery for https://sparql.uniprot.org/sparql/
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:02:38 INFO rdfsolve.parser: Discovering VoID partitions across all graphs
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:02:38 INFO rdfsolve.parser: VoID discovery failed: HTTP 400: 400 Client Error: Bad Request for url: https://sparql.uniprot.org/sparql?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:02:38 DEBUG rdfsolve.parser: Discovery exception: EndpointError: HTTP 400: 400 Client Error: Bad Request for url: https://sparql.uniprot.org/sparql?query=%0A++++++++PREFIX+void%3A+%3Chttp%3A%2F%2Frdfs.org%2Fns%2Fvoid%23%3E%0A++++++++PREFIX+void-ext%3A+%3Chttp%3A%2F%2Fldf.fi%2Fvoid-ext%23%3E%0A++++++++SELECT+DISTINCT+%3FsubjectClass+%3Fprop+%3FobjectClass+%3FobjectDatatype+%3Fg%0A++++++++WHERE+%7B%0A++++++++++GRAPH+%3Fg+%7B%0A++++++++++++%7B%0A++++++++++++++%3Fcp+void%3Aclass+%3FsubjectClass+%3B%0A++++++++++++++++++void%3ApropertyPartition+%3Fpp+.%0A++++++++++++++%3Fpp+void%3Aproperty+%3Fprop+.%0A++++++++++++++OPTIONAL+%7B%0A++++++++++++++++++%7B%0A++++++++++++++++++++++%3Fpp++void%3AclassPartition+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++++++++%7D+UNION+%7B%0A++++++++++++++++++++++%3Fpp+void-ext%3AdatatypePartition+%5B+void-ext%3Adatatype+%3FobjectDatatype+%5D+.%0A++++++++++++++++++%7D%0A++++++++++++++%7D%0A++++++++++++%7D+UNION+%7B%0A++++++++++++++%3Fls+void%3AsubjectsTarget+%5B+void%3Aclass+%3FsubjectClass+%5D+%3B%0A++++++++++++++++++void%3AlinkPredicate+%3Fprop+%3B%0A++++++++++++++++++void%3AobjectsTarget+%5B+void%3Aclass+%3FobjectClass+%5D+.%0A++++++++++++%7D%0A++++++++++%7D%0A++++++++%7D%0A++++++++
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>No VoID graphs found, generating from queries...
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:02:52 WARNING rdfsolve.parser: Query class_partitions returned HTML error page with Turtle format
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:02:52 INFO rdfsolve.parser: Retrying class_partitions with N-Triples format...
+<pre>2026-01-16 15:30:53 INFO rdfsolve.parser: Discovering VoID partitions across all graphs
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>/opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages/SPARQLWrapper/Wrapper.py:1215: RuntimeWarning:
+<pre>Query attempt 2/3 failed: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 3/3 failed: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>SELECT failed after 3 tries
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 INFO rdfsolve.parser: VoID discovery failed: Query failed after 3 attempts: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: Discovery exception: EndpointError: Query failed after 3 attempts: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>No VoID found, generating from endpoint...
+2026-01-16 15:30:55 DEBUG rdfsolve.parser: Replacing graph clause, graph_uris=['http://sparql.uniprot.org/citations']
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: Query has #GRAPH_CLAUSE: True
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: Single graph: GRAPH &lt;http://sparql.uniprot.org/citations&gt; {
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: After replacement has #GRAPH_CLAUSE: False
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: Replacing graph clause, graph_uris=['http://sparql.uniprot.org/citations']
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: Query has #GRAPH_CLAUSE: True
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: Single graph: GRAPH &lt;http://sparql.uniprot.org/citations&gt; {
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: After replacement has #GRAPH_CLAUSE: False
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: Replacing graph clause, graph_uris=['http://sparql.uniprot.org/citations']
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: Query has #GRAPH_CLAUSE: True
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: Single graph: GRAPH &lt;http://sparql.uniprot.org/citations&gt; {
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: After replacement has #GRAPH_CLAUSE: False
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 INFO rdfsolve.parser: Executing CONSTRUCT query: class_partitions
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:55 DEBUG rdfsolve.parser: Query text:
+PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
+PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
+CONSTRUCT {
+    ?cp void:class ?class ;
+        void:entities ?count .
+}
+WHERE {
+    {
+        SELECT ?class (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH &lt;http://sparql.uniprot.org/citations&gt; {
+                ?s a ?class
+            }
+        }
+        GROUP BY ?class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://sparql.uniprot.org/citations/void/class_partition_',
+                   REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
+}
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 2/3 failed: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 3/3 failed: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>CONSTRUCT failed after 3 tries
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:57 ERROR rdfsolve.parser: Query class_partitions failed after 2.05s: Query failed after 3 attempts: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:57 ERROR rdfsolve.parser: Failed query text:
+PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
+PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
+CONSTRUCT {
+    ?cp void:class ?class ;
+        void:entities ?count .
+}
+WHERE {
+    {
+        SELECT ?class (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH &lt;http://sparql.uniprot.org/citations&gt; {
+                ?s a ?class
+            }
+        }
+        GROUP BY ?class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://sparql.uniprot.org/citations/void/class_partition_',
+                   REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
+}
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:57 INFO rdfsolve.parser: Executing CONSTRUCT query: property_partitions
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:30:57 DEBUG rdfsolve.parser: Query text:
+PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
+PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
+PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
+PREFIX rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+CONSTRUCT {
+    ?pp void:property ?property ;
+        void:triples ?count ;
+        void-ext:subjectClass ?subject_class ;
+        void-ext:objectClass ?object_class .
+}
+WHERE {
+    {
+        SELECT ?property ?subject_class ?object_class (COUNT(*) AS ?count)
+        WHERE {
+            GRAPH &lt;http://sparql.uniprot.org/citations&gt; {
+                ?subject ?property ?object .
+                ?subject rdf:type ?subject_class .
+            }
 
-unknown response content type 'text/html;charset=UTF-8' returning raw response...
-
+            # Determine object class based on object type
+            {
+                BIND(rdfs:Literal AS ?object_class)
+                FILTER(isLiteral(?object))
+            }
+            UNION
+            {
+                ?object rdf:type ?object_class .
+                FILTER(isURI(?object))
+            }
+            UNION
+            {
+                BIND(rdfs:Resource AS ?object_class)
+                FILTER(isURI(?object))
+                FILTER NOT EXISTS { ?object rdf:type ?any_type }
+            }
+        }
+        GROUP BY ?property ?subject_class ?object_class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://sparql.uniprot.org/citations/void/property_partition_',
+                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class), '_', STR(?object_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
+}
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 1/3 failed: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 2/3 failed: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 3/3 failed: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>CONSTRUCT failed after 3 tries
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:02:53 WARNING rdfsolve.parser: N-Triples retry also returned HTML for class_partitions
+<pre>2026-01-16 15:31:01 ERROR rdfsolve.parser: Query property_partitions failed after 3.10s: Query failed after 3 attempts: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:07:38 WARNING rdfsolve.parser: Query attempt 1 failed: Remote end closed connection without response
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:07:38 DEBUG rdfsolve.parser: Query:
+<pre>2026-01-16 15:31:01 ERROR rdfsolve.parser: Failed query text:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
 PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
@@ -8060,125 +8288,97 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:07:38 INFO rdfsolve.parser: Retrying after 1.0s (attempt 2/4)
+<pre>2026-01-16 15:31:01 INFO rdfsolve.parser: Executing CONSTRUCT query: datatype_partitions
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:12:23 WARNING rdfsolve.parser: Query attempt 2 failed: Remote end closed connection without response
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:12:23 DEBUG rdfsolve.parser: Query:
+<pre>2026-01-16 15:31:01 DEBUG rdfsolve.parser: Query text:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
-PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
-PREFIX rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
 CONSTRUCT {
-    ?pp void:property ?property ;
-        void:triples ?count ;
-        void-ext:subjectClass ?subject_class ;
-        void-ext:objectClass ?object_class .
+    ?dp void-ext:datatypePartition ?datatype ;
+        void:triples ?count .
 }
 WHERE {
     {
-        SELECT ?property ?subject_class ?object_class (COUNT(*) AS ?count)
+        SELECT ?datatype (COUNT(?s) AS ?count)
         WHERE {
             GRAPH &lt;http://sparql.uniprot.org/citations&gt; {
-                ?subject ?property ?object .
-                ?subject rdf:type ?subject_class .
-            }
-
-            # Determine object class based on object type
-            {
-                BIND(rdfs:Literal AS ?object_class)
-                FILTER(isLiteral(?object))
-            }
-            UNION
-            {
-                ?object rdf:type ?object_class .
-                FILTER(isURI(?object))
-            }
-            UNION
-            {
-                BIND(rdfs:Resource AS ?object_class)
-                FILTER(isURI(?object))
-                FILTER NOT EXISTS { ?object rdf:type ?any_type }
+                ?s ?p ?o .
+                FILTER(isLiteral(?o))
+                BIND(datatype(?o) AS ?datatype)
             }
         }
-        GROUP BY ?property ?subject_class ?object_class
-        LIMIT 300
+        GROUP BY ?datatype
     }
-    BIND(IRI(CONCAT('http://sparql.uniprot.org/citations/void/property_partition_',
-                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class), '_', STR(?object_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
+    BIND(IRI(CONCAT('http://sparql.uniprot.org/citations/void/datatype_partition_',
+                   REPLACE(STR(?datatype), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?dp)
 }
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:12:23 INFO rdfsolve.parser: Retrying after 2.1s (attempt 3/4)
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 1/3 failed: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 2/3 failed: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Query attempt 3/3 failed: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>CONSTRUCT failed after 3 tries
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:17:10 WARNING rdfsolve.parser: Query attempt 3 failed: Remote end closed connection without response
+<pre>2026-01-16 15:31:04 ERROR rdfsolve.parser: Query datatype_partitions failed after 3.14s: Query failed after 3 attempts: HTTPSConnectionPool(host='sparql.uniprot.org', port=443): Max retries exceeded with url: /sparql (Caused by NameResolutionError("HTTPSConnection(host='sparql.uniprot.org', port=443): Failed to resolve 'sparql.uniprot.org' ([Errno -2] Name or service not known)"))
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:17:10 DEBUG rdfsolve.parser: Query:
+<pre>2026-01-16 15:31:04 ERROR rdfsolve.parser: Failed query text:
 PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
 PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
-PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
-PREFIX rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
 CONSTRUCT {
-    ?pp void:property ?property ;
-        void:triples ?count ;
-        void-ext:subjectClass ?subject_class ;
-        void-ext:objectClass ?object_class .
+    ?dp void-ext:datatypePartition ?datatype ;
+        void:triples ?count .
 }
 WHERE {
     {
-        SELECT ?property ?subject_class ?object_class (COUNT(*) AS ?count)
+        SELECT ?datatype (COUNT(?s) AS ?count)
         WHERE {
             GRAPH &lt;http://sparql.uniprot.org/citations&gt; {
-                ?subject ?property ?object .
-                ?subject rdf:type ?subject_class .
-            }
-
-            # Determine object class based on object type
-            {
-                BIND(rdfs:Literal AS ?object_class)
-                FILTER(isLiteral(?object))
-            }
-            UNION
-            {
-                ?object rdf:type ?object_class .
-                FILTER(isURI(?object))
-            }
-            UNION
-            {
-                BIND(rdfs:Resource AS ?object_class)
-                FILTER(isURI(?object))
-                FILTER NOT EXISTS { ?object rdf:type ?any_type }
+                ?s ?p ?o .
+                FILTER(isLiteral(?o))
+                BIND(datatype(?o) AS ?datatype)
             }
         }
-        GROUP BY ?property ?subject_class ?object_class
-        LIMIT 300
+        GROUP BY ?datatype
     }
-    BIND(IRI(CONCAT('http://sparql.uniprot.org/citations/void/property_partition_',
-                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class), '_', STR(?object_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
+    BIND(IRI(CONCAT('http://sparql.uniprot.org/citations/void/datatype_partition_',
+                   REPLACE(STR(?datatype), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?dp)
 }
 </pre>
 </div>
@@ -8186,127 +8386,162 @@ WHERE {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:17:10 INFO rdfsolve.parser: Retrying after 4.2s (attempt 4/4)
+<pre>2026-01-16 15:31:04 WARNING rdfsolve.parser: No RDF data was successfully extracted from endpoint
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:21:58 WARNING rdfsolve.parser: Query attempt 4 failed: Remote end closed connection without response
+<pre>2026-01-16 15:31:04 INFO rdfsolve.parser: This could indicate endpoint compatibility issues - creating minimal VoID
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:21:58 DEBUG rdfsolve.parser: Query:
-PREFIX void: &lt;http://rdfs.org/ns/void#&gt;
-PREFIX void-ext: &lt;http://ldf.fi/void-ext#&gt;
-PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
-PREFIX rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
-CONSTRUCT {
-    ?pp void:property ?property ;
-        void:triples ?count ;
-        void-ext:subjectClass ?subject_class ;
-        void-ext:objectClass ?object_class .
-}
-WHERE {
-    {
-        SELECT ?property ?subject_class ?object_class (COUNT(*) AS ?count)
-        WHERE {
-            GRAPH &lt;http://sparql.uniprot.org/citations&gt; {
-                ?subject ?property ?object .
-                ?subject rdf:type ?subject_class .
-            }
-
-            # Determine object class based on object type
-            {
-                BIND(rdfs:Literal AS ?object_class)
-                FILTER(isLiteral(?object))
-            }
-            UNION
-            {
-                ?object rdf:type ?object_class .
-                FILTER(isURI(?object))
-            }
-            UNION
-            {
-                BIND(rdfs:Resource AS ?object_class)
-                FILTER(isURI(?object))
-                FILTER NOT EXISTS { ?object rdf:type ?any_type }
-            }
-        }
-        GROUP BY ?property ?subject_class ?object_class
-        LIMIT 300
-    }
-    BIND(IRI(CONCAT('http://sparql.uniprot.org/citations/void/property_partition_',
-                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class), '_', STR(?object_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
-}
+<pre>2026-01-16 15:31:04 DEBUG rdfsolve.parser: Enriching VoID graph with bioregistry prefixes
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:21:58 ERROR rdfsolve.parser: Query failed after 4 attempts
+<pre>2026-01-16 15:31:04 DEBUG rdfsolve.parser: Collected 6 unique URIs from VoID graph
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:21:58 WARNING rdfsolve.parser: Query property_partitions failed after 1145.85s: Remote end closed connection without response
+<pre>2026-01-16 15:31:06 DEBUG rdfsolve.parser: Bioregistry: dcterms -&gt; http://purl.org/dc/terms/
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Bioregistry: dcterms -&gt; http://purl.org/dc/terms/
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:24:39 WARNING rdfsolve.parser: Query datatype_partitions returned HTML error page with Turtle format
+<pre>2026-01-16 15:31:06 DEBUG rdfsolve.parser: Bioregistry: void -&gt; http://rdfs.org/ns/void#
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Bioregistry: void -&gt; http://rdfs.org/ns/void#
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:24:39 INFO rdfsolve.parser: Retrying datatype_partitions with N-Triples format...
+<pre>2026-01-16 15:31:06 DEBUG rdfsolve.parser: Bioregistry: void -&gt; http://rdfs.org/ns/void#
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Bioregistry: void -&gt; http://rdfs.org/ns/void#
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:26:20 WARNING rdfsolve.parser: N-Triples retry also returned HTML for datatype_partitions
+<pre>2026-01-16 15:31:06 DEBUG rdfsolve.parser: Bioregistry: rdf -&gt; http://www.w3.org/1999/02/22-rdf-syntax-ns#
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Bioregistry: rdf -&gt; http://www.w3.org/1999/02/22-rdf-syntax-ns#
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:26:20 WARNING rdfsolve.parser: No RDF data was successfully extracted from endpoint
+<pre>2026-01-16 15:31:06 INFO rdfsolve.parser: Discovered 3 prefixes
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:Discovered 3 prefixes
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:26:20 INFO rdfsolve.parser: This could indicate endpoint compatibility issues - creating minimal VoID
+<pre>2026-01-16 15:31:06 DEBUG rdfsolve.parser: Skipping dcterms -&gt; http://purl.org/dc/terms/ (already bound as dcterms)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Skipping dcterms -&gt; http://purl.org/dc/terms/ (already bound as dcterms)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2025-12-02 10:26:20 INFO rdfsolve.parser: VoID description saved to /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_generated_void.ttl
+<pre>2026-01-16 15:31:06 DEBUG rdfsolve.parser: Skipping void -&gt; http://rdfs.org/ns/void# (already bound as void)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Skipping void -&gt; http://rdfs.org/ns/void# (already bound as void)
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/cache/uniprot.citations_voidgraph.pkl
-VoID graph cached with 3 triples
+<pre>2026-01-16 15:31:06 DEBUG rdfsolve.parser: Skipping rdf -&gt; http://www.w3.org/1999/02/22-rdf-syntax-ns# (already bound as rdf)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>DEBUG:rdfsolve.parser:Skipping rdf -&gt; http://www.w3.org/1999/02/22-rdf-syntax-ns# (already bound as rdf)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2026-01-16 15:31:06 INFO rdfsolve.parser: VoID description saved to /home/javi/rdfsolve-1/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_generated_void.ttl
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:rdfsolve.parser:VoID description saved to /home/javi/rdfsolve-1/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_generated_void.ttl
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Cached data to: /home/javi/rdfsolve-1/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/cache/uniprot.citations_voidgraph.pkl
+Cached VoID graph (3 triples)
 </pre>
 </div>
 </div>
@@ -8390,8 +8625,8 @@ VoID graph cached with 3 triples
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Generating JSON-LD schema...
-Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/cache/uniprot.citations_jsonld_schema.pkl
-JSON-LD Schema saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_schema.jsonld
+Cached data to: /home/javi/rdfsolve-1/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/cache/uniprot.citations_jsonld_schema.pkl
+JSON-LD Schema saved to: /home/javi/rdfsolve-1/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_schema.jsonld
 
 Schema Summary:
    • Prefixes: 0
@@ -8505,7 +8740,7 @@ Schema Patterns Preview (0 total):
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Calculating schema pattern frequencies...
-Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/cache/uniprot.citations_frequencies_basic.pkl
+Cached data to: /home/javi/rdfsolve-1/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/cache/uniprot.citations_frequencies_basic.pkl
 No frequency data available
 </pre>
 </div>
@@ -8551,9 +8786,18 @@ No frequency data available
 
 <span class="c1"># Display basic information about the data structure</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Frequencies DataFrame: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frequencies_with_instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> shapes"</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">frequencies_with_instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Instances DataFrame: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">instances_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> relationships"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Memory usage: </span><span class="si">{</span><span class="n">instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> MB"</span><span class="p">)</span>
+
+    <span class="c1"># Export instances in compact format</span>
+    <span class="n">instances_prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_instances"</span><span class="p">)</span>
+    <span class="n">export_result</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">export_instances_compact</span><span class="p">(</span><span class="n">instances_df</span><span class="p">,</span> <span class="n">instances_prefix</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported instances: </span><span class="si">{</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'total_relationships'</span><span class="p">]</span><span class="si">}</span><span class="s2"> relationships"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Subject index: </span><span class="si">{</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'total_subjects'</span><span class="p">]</span><span class="si">}</span><span class="s2"> unique subjects"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Object index: </span><span class="si">{</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'total_objects'</span><span class="p">]</span><span class="si">}</span><span class="s2"> unique objects"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"Memory usage - Instances: </span><span class="si">{</span><span class="n">frequencies_with_instances_df</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> KB"</span>
+        <span class="sa">f</span><span class="s2">"   • Total size: </span><span class="si">{</span><span class="nb">sum</span><span class="p">([</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'subject_index_size_mb'</span><span class="p">],</span><span class="w"> </span><span class="n">export_result</span><span class="p">[</span><span class="s1">'object_index_size_mb'</span><span class="p">],</span><span class="w"> </span><span class="n">export_result</span><span class="p">[</span><span class="s1">'instances_jsonl_size_mb'</span><span class="p">]])</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB"</span>
     <span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"No instances collected"</span><span class="p">)</span>
@@ -8570,10 +8814,33 @@ No frequency data available
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Collecting frequency data and instances...
-Cached data to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/cache/uniprot.citations_frequencies_with_instances.pkl
+Cached data to: /home/javi/rdfsolve-1/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/cache/uniprot.citations_frequencies_with_instances.pkl
 Frequencies DataFrame: 0 shapes
-Memory usage - Instances: 0.1 KB
+No instances collected
 </pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=55f98d62">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Export instances in compact format</span>
+<span class="k">if</span> <span class="n">instances_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">instances_prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_instances"</span><span class="p">)</span>
+    <span class="n">export_result</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">export_instances_compact</span><span class="p">(</span><span class="n">instances_df</span><span class="p">,</span> <span class="n">instances_prefix</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Exported instances: </span><span class="si">{</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'total_relationships'</span><span class="p">]</span><span class="si">}</span><span class="s2"> relationships"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Subject index: </span><span class="si">{</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'total_subjects'</span><span class="p">]</span><span class="si">}</span><span class="s2"> unique subjects"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   • Object index: </span><span class="si">{</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'total_objects'</span><span class="p">]</span><span class="si">}</span><span class="s2"> unique objects"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"   • Total size: </span><span class="si">{</span><span class="nb">sum</span><span class="p">([</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'subject_index_size_mb'</span><span class="p">],</span><span class="w"> </span><span class="n">export_result</span><span class="p">[</span><span class="s1">'object_index_size_mb'</span><span class="p">],</span><span class="w"> </span><span class="n">export_result</span><span class="p">[</span><span class="s1">'instances_jsonl_size_mb'</span><span class="p">]])</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB"</span>
+    <span class="p">)</span>
+</pre></div>
 </div>
 </div>
 </div>
@@ -8583,7 +8850,7 @@ Memory usage - Instances: 0.1 KB
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -8715,7 +8982,7 @@ Memory usage - Instances: 0.1 KB
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Generate LinkML directly from JSON-LD with custom schema URI</span>
@@ -8752,14 +9019,21 @@ Memory usage - Instances: 0.1 KB
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Regenerating LinkML schema from JSON-LD with custom schema URI...
-2025-12-02 10:26:20 WARNING rdfsolve.parser: No schema triples found in JSON-LD @graph
+2026-01-16 15:31:07 WARNING rdfsolve.parser: No schema triples found in JSON-LD @graph
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>WARNING:rdfsolve.parser:No schema triples found in JSON-LD @graph
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>LinkML YAML saved to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_linkml_schema.yaml
+<pre>LinkML YAML saved to: /home/javi/rdfsolve-1/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_linkml_schema.yaml
 </pre>
 </div>
 </div>
@@ -8770,7 +9044,7 @@ Memory usage - Instances: 0.1 KB
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">linkml.generators.erdiagramgen</span><span class="w"> </span><span class="kn">import</span> <span class="n">ERDiagramGenerator</span>
@@ -8819,7 +9093,7 @@ erDiagram
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">json_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exports_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">_schema.json"</span><span class="p">)</span>
@@ -8846,8 +9120,8 @@ erDiagram
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>CSV exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_schema.csv
-JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_schema.json
+<pre>CSV exported to: /home/javi/rdfsolve-1/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_schema.csv
+JSON exported to: /home/javi/rdfsolve-1/notebooks/01_schema_extraction/../../docs/data/schema_extraction/uniprot.citations/uniprot.citations_schema.json
 </pre>
 </div>
 </div>
@@ -8858,7 +9132,7 @@ JSON exported to: /home/runner/work/rdfsolve/rdfsolve/notebooks/01_schema_extrac
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Export collected SPARQL queries as TTL</span>

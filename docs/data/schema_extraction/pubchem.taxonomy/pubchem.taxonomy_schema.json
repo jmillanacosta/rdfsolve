@@ -1,0 +1,725 @@
+{
+  "triples": [
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://data.epo.org/linked-data/def/patent/Publication"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://data.epo.org/linked-data/def/patent/Publication"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://purl.org/spar/cito/isDiscussedBy",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://data.epo.org/linked-data/def/patent/Publication"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://data.epo.org/linked-data/def/patent/Publication"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://data.epo.org/linked-data/def/patent/Publication"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://data.epo.org/linked-data/def/patent/Publication"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_010000",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 42,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+      "cito": "http://purl.org/spar/cito/",
+      "mesh.vocab": "http://id.nlm.nih.gov/mesh/vocab#",
+      "patent": "http://data.epo.org/linked-data/def/patent/",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "sio": "http://semanticscience.org/resource/SIO_",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+      "cito": "http://purl.org/spar/cito/",
+      "mesh.vocab": "http://id.nlm.nih.gov/mesh/vocab#",
+      "patent": "http://data.epo.org/linked-data/def/patent/",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "sio": "http://semanticscience.org/resource/SIO_",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+    },
+    "@graph": [
+      {
+        "@id": "vocabulary:Taxonomy",
+        "cito:isDiscussedBy": [
+          {
+            "@id": "mesh.vocab:Concept"
+          },
+          {
+            "@id": "mesh.vocab:SCR_Organism"
+          },
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "patent:Publication"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Patent"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "mesh.vocab:Concept"
+          },
+          {
+            "@id": "mesh.vocab:SCR_Organism"
+          },
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "patent:Publication"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Patent"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          }
+        ],
+        "rdfs:seeAlso": [
+          {
+            "@id": "mesh.vocab:Concept"
+          },
+          {
+            "@id": "mesh.vocab:SCR_Organism"
+          },
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "patent:Publication"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Patent"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          }
+        ]
+      },
+      {
+        "@id": "sio:010000",
+        "cito:isDiscussedBy": [
+          {
+            "@id": "mesh.vocab:Concept"
+          },
+          {
+            "@id": "mesh.vocab:SCR_Organism"
+          },
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "patent:Publication"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Patent"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "mesh.vocab:Concept"
+          },
+          {
+            "@id": "mesh.vocab:SCR_Organism"
+          },
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "patent:Publication"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Patent"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          }
+        ],
+        "rdfs:seeAlso": [
+          {
+            "@id": "mesh.vocab:Concept"
+          },
+          {
+            "@id": "mesh.vocab:SCR_Organism"
+          },
+          {
+            "@id": "mesh.vocab:TopicalDescriptor"
+          },
+          {
+            "@id": "patent:Publication"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vocabulary:Patent"
+          },
+          {
+            "@id": "vocabulary:Reference"
+          }
+        ]
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "mesh.vocab:Concept",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "mesh.vocab:SCR_Organism",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "patent:Publication",
+      "object_uri": "http://data.epo.org/linked-data/def/patent/Publication"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Patent",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "mesh.vocab:Concept",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "mesh.vocab:SCR_Organism",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "patent:Publication",
+      "object_uri": "http://data.epo.org/linked-data/def/patent/Publication"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Patent",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "cito:isDiscussedBy",
+      "property_uri": "http://purl.org/spar/cito/isDiscussedBy",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "mesh.vocab:Concept",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "mesh.vocab:SCR_Organism",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "patent:Publication",
+      "object_uri": "http://data.epo.org/linked-data/def/patent/Publication"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Patent",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "mesh.vocab:Concept",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "mesh.vocab:SCR_Organism",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "patent:Publication",
+      "object_uri": "http://data.epo.org/linked-data/def/patent/Publication"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Patent",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "mesh.vocab:Concept",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "mesh.vocab:SCR_Organism",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "patent:Publication",
+      "object_uri": "http://data.epo.org/linked-data/def/patent/Publication"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "vocabulary:Patent",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    },
+    {
+      "subject_class": "vocabulary:Taxonomy",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "mesh.vocab:Concept",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#Concept"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "mesh.vocab:SCR_Organism",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#SCR_Organism"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "mesh.vocab:TopicalDescriptor",
+      "object_uri": "http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "patent:Publication",
+      "object_uri": "http://data.epo.org/linked-data/def/patent/Publication"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "vocabulary:Patent",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Patent"
+    },
+    {
+      "subject_class": "sio:010000",
+      "subject_uri": "http://semanticscience.org/resource/SIO_010000",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "vocabulary:Reference",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference"
+    }
+  ]
+}
