@@ -1,4 +1,8 @@
-// RDFSolve Schema Diagram Module using Mermaid
+/**
+ * RDFSolve Schema Diagram Module using D3.js
+ * Single-dataset class diagram visualization in side panel
+ */
+
 class SchemaDiagram {
     constructor(datasets) {
         this.datasets = datasets;
@@ -6,40 +10,31 @@ class SchemaDiagram {
         this.coverageData = null;
         this.githubRawBase = 'https://raw.githubusercontent.com/jmillanacosta/rdfsolve/main/docs/';
         
-        // Zoom/pan state
-        this.scale = 1;
-        this.translateX = 0;
-        this.translateY = 0;
-        this.isPanning = false;
-        this.startX = 0;
-        this.startY = 0;
+        this.svg = null;
+        this.zoom = null;
+        this.graphData = { nodes: [], links: [] };
+        
+        // Configuration
+        this.config = {
+            nodeWidth: 180,
+            nodeHeaderHeight: 28,
+            propertyLineHeight: 16,
+            nodePadding: 12,
+            maxPatterns: 80
+        };
+        
+        this.excludeOwl = true;
+        
+        // Spacing multipliers (controlled by sliders)
+        this.xSpacing = 1.0;
+        this.ySpacing = 1.0;
         
         this.init();
     }
 
     init() {
-        this.initializeMermaid();
         this.setupEventListeners();
-    }
-
-    initializeMermaid() {
-        if (typeof mermaid !== 'undefined') {
-            mermaid.initialize({
-                startOnLoad: false,
-                theme: 'default',
-                securityLevel: 'loose',
-                flowchart: { 
-                    useMaxWidth: false, 
-                    htmlLabels: true, 
-                    curve: 'stepBefore',
-                    rankSpacing: 80,
-                    nodeSpacing: 40
-                },
-                class: {
-                    useMaxWidth: false
-                }
-            });
-        }
+        this.setupSpacingSliders();
     }
 
     setupEventListeners() {
@@ -53,23 +48,37 @@ class SchemaDiagram {
             }
         });
 
-        // Diagram type selector
-        document.getElementById('diagram-type')?.addEventListener('change', () => {
-            if (this.coverageData) this.renderSchemaDiagram();
+        // Exclude OWL checkbox
+        document.getElementById('schema-exclude-owl')?.addEventListener('change', (e) => {
+            this.excludeOwl = e.target.checked;
+            if (this.coverageData) this.renderDiagram();
         });
 
         // Zoom controls
-        document.getElementById('zoom-in')?.addEventListener('click', () => this.zoom(1.25));
-        document.getElementById('zoom-out')?.addEventListener('click', () => this.zoom(0.8));
-        document.getElementById('zoom-fit')?.addEventListener('click', () => this.fitToContainer());
-        
-        // Zoom slider
-        const slider = document.getElementById('zoom-slider');
-        if (slider) {
-            slider.addEventListener('input', (e) => {
-                this.scale = parseInt(e.target.value) / 100;
-                this.applyTransform();
-                this.updateZoomDisplay();
+        document.getElementById('zoom-in')?.addEventListener('click', () => this.zoomBy(1.3));
+        document.getElementById('zoom-out')?.addEventListener('click', () => this.zoomBy(0.7));
+        document.getElementById('zoom-fit')?.addEventListener('click', () => this.zoomFit());
+    }
+
+    setupSpacingSliders() {
+        const xSlider = document.getElementById('schema-x-spacing');
+        const ySlider = document.getElementById('schema-y-spacing');
+        const xVal = document.getElementById('schema-x-spacing-val');
+        const yVal = document.getElementById('schema-y-spacing-val');
+
+        if (xSlider) {
+            xSlider.addEventListener('input', (e) => {
+                this.xSpacing = parseInt(e.target.value) / 100;
+                if (xVal) xVal.textContent = `${e.target.value}%`;
+                if (this.graphData.nodes.length > 0) this.renderDiagram();
+            });
+        }
+
+        if (ySlider) {
+            ySlider.addEventListener('input', (e) => {
+                this.ySpacing = parseInt(e.target.value) / 100;
+                if (yVal) yVal.textContent = `${e.target.value}%`;
+                if (this.graphData.nodes.length > 0) this.renderDiagram();
             });
         }
     }
@@ -83,7 +92,6 @@ class SchemaDiagram {
 
         this.showLoading();
         this.openSidebar();
-        this.resetZoom();
 
         try {
             const coveragePath = this.currentDataset.dataFiles.coverage
@@ -95,37 +103,14 @@ class SchemaDiagram {
             if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
             const csvText = await response.text();
-            this.coverageData = this.parseCSV(csvText);
+            this.coverageData = D3DiagramUtils.parseCSV(csvText);
             
             this.renderSchemaInfo();
-            this.renderSchemaDiagram();
+            this.renderDiagram();
         } catch (error) {
             console.error('Failed to load schema data:', error);
             this.showError('Failed to load schema data. The file may not be available.');
         }
-    }
-
-    parseCSV(csvText) {
-        const lines = csvText.trim().split('\n');
-        const headers = lines[0].split(',');
-        return lines.slice(1).map(line => {
-            const values = this.parseCSVLine(line);
-            const row = {};
-            headers.forEach((h, i) => row[h] = values[i]);
-            return row;
-        });
-    }
-
-    parseCSVLine(line) {
-        const result = [];
-        let current = '', inQuotes = false;
-        for (const char of line) {
-            if (char === '"') inQuotes = !inQuotes;
-            else if (char === ',' && !inQuotes) { result.push(current); current = ''; }
-            else current += char;
-        }
-        result.push(current);
-        return result;
     }
 
     renderSchemaInfo() {
@@ -150,272 +135,241 @@ class SchemaDiagram {
         `;
     }
 
-    renderSchemaDiagram() {
+    renderDiagram() {
         const container = document.getElementById('schema-diagram');
         if (!container || !this.coverageData) return;
 
-        container.innerHTML = '<div class="loading">Rendering diagram...</div>';
-        const diagramType = document.getElementById('diagram-type')?.value || 'class';
-        const maxNodes = 50;
+        container.innerHTML = '';
 
-        try {
-            const diagram = diagramType === 'class' 
-                ? this.generateClassDiagram(maxNodes) 
-                : this.generateGraphDiagram(maxNodes);
+        // Build graph data
+        this.graphData = D3DiagramUtils.buildGraphFromCoverage(this.coverageData, {
+            maxPatterns: this.config.maxPatterns,
+            excludeOwl: this.excludeOwl
+        });
 
-            if (!diagram || diagram.length < 20) throw new Error('Generated diagram is too short');
+        const { nodes, links } = this.graphData;
 
-            // Hide container during rendering to prevent visual glitches
-            const mermaidDiv = document.createElement('div');
-            mermaidDiv.className = 'mermaid';
-            mermaidDiv.style.visibility = 'hidden';
-            mermaidDiv.textContent = diagram;
-            container.innerHTML = '';
-            container.appendChild(mermaidDiv);
-            
-            if (typeof mermaid !== 'undefined') {
-                mermaid.init(undefined, mermaidDiv)
-                    .then(() => {
-                        // Show diagram after rendering is complete
-                        mermaidDiv.style.visibility = 'visible';
-                        this.setupDiagramInteraction(container);
-                        setTimeout(() => this.fitToContainer(), 100);
-                    })
-                    .catch(err => {
-                        console.error('Mermaid rendering error:', err);
-                        container.innerHTML = `<div class="error-message"><strong>Diagram Rendering Failed</strong><br>Try switching diagram type.<br><small>${err.message || 'Parse error'}</small></div>`;
+        if (nodes.length === 0) {
+            container.innerHTML = '<div class="empty-message">No data to display. Try unchecking "Exclude OWL/RDF(S)" if enabled.</div>';
+            return;
+        }
+
+        // Calculate node heights
+        nodes.forEach(node => {
+            const propsToShow = Math.min(node.properties.length, 4);
+            node.height = this.config.nodeHeaderHeight + propsToShow * this.config.propertyLineHeight + this.config.nodePadding;
+        });
+
+        // Compute layout
+        D3DiagramUtils.computeHierarchicalLayout(nodes, links, this.config);
+
+        // Calculate SVG dimensions
+        const padding = 40;
+        const maxX = Math.max(...nodes.map(n => n.x + this.config.nodeWidth)) + padding;
+        const maxY = Math.max(...nodes.map(n => n.y + n.height)) + padding;
+        const width = Math.max(600, maxX);
+        const height = Math.max(400, maxY);
+
+        // Create SVG
+        this.svg = d3.select(container)
+            .append('svg')
+            .attr('width', '100%')
+            .attr('height', '100%')
+            .attr('viewBox', [0, 0, width, height])
+            .attr('preserveAspectRatio', 'xMidYMid meet');
+
+        // Add styles
+        this.svg.append('style').text(D3DiagramUtils.getSvgStyles());
+
+        // Setup zoom
+        this.zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on('zoom', e => g.attr('transform', e.transform));
+        this.svg.call(this.zoom);
+
+        const g = this.svg.append('g');
+
+        // Arrowhead marker
+        this.svg.append('defs').append('marker')
+            .attr('id', 'schema-arrowhead')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#57606a');
+
+        // Render edges
+        const linkGroups = g.selectAll('.link-group')
+            .data(links)
+            .enter()
+            .append('g')
+            .attr('class', 'link-group');
+
+        linkGroups.append('path')
+            .attr('d', d => {
+                const source = nodes.find(n => n.id === d.source);
+                const target = nodes.find(n => n.id === d.target);
+                if (!source || !target) return '';
+                return D3DiagramUtils.createEdgePath(source, target, this.config.nodeWidth);
+            })
+            .attr('fill', 'none')
+            .attr('stroke', '#8b949e')
+            .attr('stroke-width', 1.5)
+            .attr('marker-end', 'url(#schema-arrowhead)');
+
+        // Edge labels
+        linkGroups.append('text')
+            .attr('x', d => {
+                const source = nodes.find(n => n.id === d.source);
+                const target = nodes.find(n => n.id === d.target);
+                if (!source || !target) return 0;
+                return D3DiagramUtils.getEdgeLabelPosition(source, target, this.config.nodeWidth).x;
+            })
+            .attr('y', d => {
+                const source = nodes.find(n => n.id === d.source);
+                const target = nodes.find(n => n.id === d.target);
+                if (!source || !target) return 0;
+                return D3DiagramUtils.getEdgeLabelPosition(source, target, this.config.nodeWidth).y;
+            })
+            .attr('font-size', '9px')
+            .attr('fill', '#57606a')
+            .text(d => d.label.length > 20 ? d.label.substring(0, 18) + '...' : d.label);
+
+        // Render nodes
+        const nodeGroups = g.selectAll('.node-group')
+            .data(nodes)
+            .enter()
+            .append('g')
+            .attr('class', 'node-group')
+            .attr('transform', d => `translate(${d.x}, ${d.y})`);
+
+        // Node background
+        nodeGroups.append('rect')
+            .attr('class', 'node-rect')
+            .attr('width', this.config.nodeWidth)
+            .attr('height', d => d.height)
+            .attr('rx', 4)
+            .attr('fill', '#ffffff')
+            .attr('stroke', '#d0d7de')
+            .attr('stroke-width', 1);
+
+        // Node header background
+        nodeGroups.append('rect')
+            .attr('width', this.config.nodeWidth)
+            .attr('height', this.config.nodeHeaderHeight)
+            .attr('rx', 4)
+            .attr('fill', '#f6f8fa');
+
+        // Cover bottom corners of header
+        nodeGroups.append('rect')
+            .attr('y', this.config.nodeHeaderHeight - 4)
+            .attr('width', this.config.nodeWidth)
+            .attr('height', 4)
+            .attr('fill', '#f6f8fa');
+
+        // Node header text
+        nodeGroups.append('text')
+            .attr('class', 'node-header')
+            .attr('x', this.config.nodeWidth / 2)
+            .attr('y', 18)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '11px')
+            .attr('font-weight', '600')
+            .attr('fill', '#24292f')
+            .text(d => d.label.length > 22 ? d.label.substring(0, 20) + '...' : d.label);
+
+        // Node properties
+        nodeGroups.each((d, i, nodeElements) => {
+            const nodeEl = d3.select(nodeElements[i]);
+            d.properties.slice(0, 4).forEach((prop, j) => {
+                nodeEl.append('text')
+                    .attr('class', 'node-property')
+                    .attr('x', 8)
+                    .attr('y', this.config.nodeHeaderHeight + 14 + j * this.config.propertyLineHeight)
+                    .attr('font-size', '10px')
+                    .attr('fill', '#57606a')
+                    .text(prop.length > 22 ? prop.substring(0, 20) + '...' : prop);
+            });
+        });
+
+        // Tooltips
+        nodeGroups.append('title')
+            .text(d => `${d.id}\n\nProperties: ${d.properties.join(', ')}\nConnections: ${d.degree}`);
+
+        // Make nodes draggable
+        this.setupDrag(nodeGroups, nodes, links, linkGroups, this.config.nodeWidth);
+    }
+
+    setupDrag(nodeGroups, nodes, links, linkGroups, nodeWidth) {
+        const self = this;
+        
+        const drag = d3.drag()
+            .on('start', function(event, d) {
+                d3.select(this).raise().classed('dragging', true);
+            })
+            .on('drag', function(event, d) {
+                d.x = event.x;
+                d.y = event.y;
+                d3.select(this).attr('transform', `translate(${d.x}, ${d.y})`);
+
+                // Update connected edges
+                linkGroups.select('path')
+                    .attr('d', l => {
+                        const source = nodes.find(n => n.id === l.source);
+                        const target = nodes.find(n => n.id === l.target);
+                        if (!source || !target) return '';
+                        return D3DiagramUtils.createEdgePath(source, target, nodeWidth);
                     });
-            }
-        } catch (error) {
-            console.error('Failed to generate diagram:', error);
-            container.innerHTML = `<div class="error-message"><strong>Failed to Generate Diagram</strong><br>${error.message}</div>`;
+
+                linkGroups.select('text')
+                    .attr('x', l => {
+                        const source = nodes.find(n => n.id === l.source);
+                        const target = nodes.find(n => n.id === l.target);
+                        if (!source || !target) return 0;
+                        return D3DiagramUtils.getEdgeLabelPosition(source, target, nodeWidth).x;
+                    })
+                    .attr('y', l => {
+                        const source = nodes.find(n => n.id === l.source);
+                        const target = nodes.find(n => n.id === l.target);
+                        if (!source || !target) return 0;
+                        return D3DiagramUtils.getEdgeLabelPosition(source, target, nodeWidth).y;
+                    });
+            })
+            .on('end', function(event, d) {
+                d3.select(this).classed('dragging', false);
+            });
+
+        nodeGroups.call(drag);
+    }
+
+    zoomBy(factor) {
+        if (this.svg && this.zoom) {
+            this.svg.transition().duration(200).call(this.zoom.scaleBy, factor);
         }
     }
 
-    setupDiagramInteraction(container) {
-        const svg = container.querySelector('svg');
-        if (!svg) return;
-
-        // Make SVG fill its container naturally
-        svg.style.cssText = 'display:block;max-width:100%;height:auto;';
-        svg.removeAttribute('width');
-        svg.removeAttribute('height');
-        
-        // Use the mermaid div as the zoomable element
-        const mermaidDiv = container.querySelector('.mermaid');
-        if (mermaidDiv) {
-            mermaidDiv.style.transformOrigin = 'center center';
+    zoomFit() {
+        if (this.svg && this.zoom) {
+            this.svg.transition().duration(300).call(this.zoom.transform, d3.zoomIdentity);
         }
-
-        // Mouse wheel zoom
-        container.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            this.zoom(e.deltaY > 0 ? 0.9 : 1.1);
-        }, { passive: false });
-
-        // Pan with mouse drag
-        container.addEventListener('mousedown', (e) => {
-            if (e.button === 0) {
-                this.isPanning = true;
-                this.startX = e.clientX - this.translateX;
-                this.startY = e.clientY - this.translateY;
-                container.style.cursor = 'grabbing';
-            }
-        });
-
-        container.addEventListener('mousemove', (e) => {
-            if (this.isPanning) {
-                this.translateX = e.clientX - this.startX;
-                this.translateY = e.clientY - this.startY;
-                this.applyTransform();
-            }
-        });
-
-        const endPan = () => { this.isPanning = false; container.style.cursor = 'grab'; };
-        container.addEventListener('mouseup', endPan);
-        container.addEventListener('mouseleave', endPan);
-        container.style.cursor = 'grab';
-    }
-
-    zoom(factor) {
-        const newScale = Math.min(Math.max(this.scale * factor, 0.1), 5);
-        this.scale = newScale;
-        this.applyTransform();
-        this.updateZoomDisplay();
-    }
-
-    resetZoom() {
-        this.scale = 1;
-        this.translateX = 0;
-        this.translateY = 0;
-        this.applyTransform();
-        this.updateZoomDisplay();
-    }
-
-    fitToContainer() {
-        this.scale = 1;
-        this.translateX = 0;
-        this.translateY = 0;
-        this.applyTransform();
-        this.updateZoomDisplay();
-    }
-
-    applyTransform() {
-        const mermaidDiv = document.querySelector('#schema-diagram .mermaid');
-        if (mermaidDiv) {
-            mermaidDiv.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
-        }
-        
-        // Sync slider
-        const slider = document.getElementById('zoom-slider');
-        if (slider) slider.value = Math.round(this.scale * 100);
-    }
-
-    updateZoomDisplay() {
-        const display = document.getElementById('zoom-level');
-        if (display) display.textContent = `${Math.round(this.scale * 100)}%`;
-    }
-
-    generateClassDiagram(maxNodes) {
-        const classMap = new Map();
-        const topPatterns = [...this.coverageData]
-            .sort((a, b) => parseInt(b.occurrence_count || 0) - parseInt(a.occurrence_count || 0))
-            .slice(0, maxNodes);
-
-        topPatterns.forEach(row => {
-            const subject = this.sanitizeClassName(row.subject_class);
-            const object = this.sanitizeClassName(row.object_class);
-            const subjectLabel = this.formatLabel(row.subject_class);
-            const objectLabel = this.formatLabel(row.object_class);
-            const propLabel = this.formatPropertyLabel(row.property);
-
-            if (!classMap.has(subject)) classMap.set(subject, { label: subjectLabel, properties: new Set() });
-            if (subject !== object && !classMap.has(object)) classMap.set(object, { label: objectLabel, properties: new Set() });
-            classMap.get(subject).properties.add(propLabel);
-        });
-
-        let diagram = 'classDiagram\n';
-        
-        classMap.forEach((info, className) => {
-            diagram += `    class ${className}["${info.label}"] {\n`;
-            const props = Array.from(info.properties).slice(0, 5);
-            if (props.length > 0) props.forEach(p => diagram += `        ${p.replace(/[<>{}()\[\]]/g, '')}\n`);
-            else diagram += `        .\n`;
-            if (info.properties.size > 5) diagram += `        +${info.properties.size - 5} more\n`;
-            diagram += `    }\n`;
-        });
-
-        const relationships = new Map();
-        topPatterns.forEach(row => {
-            const subject = this.sanitizeClassName(row.subject_class);
-            const object = this.sanitizeClassName(row.object_class);
-            if (subject !== object) {
-                const key = `${subject}-->${object}`;
-                if (!relationships.has(key)) relationships.set(key, this.formatPropertyLabel(row.property).replace(/[<>{}()\[\]]/g, ''));
-            }
-        });
-
-        relationships.forEach((label, key) => {
-            const [subject, object] = key.split('-->');
-            diagram += `    ${subject} --> ${object} : ${label}\n`;
-        });
-
-        return diagram;
-    }
-
-    generateGraphDiagram(maxNodes) {
-        const edges = new Map();
-        const nodeLabels = new Map();
-        const topPatterns = [...this.coverageData]
-            .sort((a, b) => parseInt(b.occurrence_count || 0) - parseInt(a.occurrence_count || 0))
-            .slice(0, maxNodes);
-
-        topPatterns.forEach(row => {
-            const subject = this.sanitizeClassName(row.subject_class);
-            const object = this.sanitizeClassName(row.object_class);
-            nodeLabels.set(subject, this.formatLabel(row.subject_class));
-            nodeLabels.set(object, this.formatLabel(row.object_class));
-            
-            const key = `${subject}->${object}`;
-            if (!edges.has(key)) edges.set(key, []);
-            edges.get(key).push(this.formatPropertyLabel(row.property));
-        });
-
-        let diagram = '%%{init: {"flowchart": {"curve": "stepBefore"}}}%%\ngraph TD\n';
-        edges.forEach((properties, key) => {
-            const [subject, object] = key.split('->');
-            const cleanProps = properties.slice(0, 2).map(p => p.replace(/[<>{}()\[\]|]/g, ''));
-            const displayLabel = properties.length > 2 ? `"${cleanProps.join(', ')} +${properties.length - 2}"` : `"${cleanProps.join(', ')}"`;
-            diagram += `    ${subject}["${nodeLabels.get(subject)}"] -->|${displayLabel}| ${object}["${nodeLabels.get(object)}"]\n`;
-        });
-
-        return diagram;
-    }
-
-    sanitizeClassName(name) {
-        if (!name) return 'Unknown';
-        let s = name.replace(/[^a-zA-Z0-9_]/g, '_');
-        if (/^[0-9]/.test(s)) s = 'C' + s;
-        return s.replace(/_+/g, '_').replace(/^_+|_+$/g, '') || 'Unknown';
-    }
-
-    formatLabel(text) {
-        if (!text) return 'Unknown';
-        const parts = text.split(/[#\/]/);
-        let localName = parts[parts.length - 1];
-        try { localName = decodeURIComponent(localName); } catch {}
-        // Replace colons and other problematic chars with spaces
-        return localName.substring(0, 22).replace(/["'`\\:]/g, ' ').replace(/\s+/g, ' ').trim() + (localName.length > 22 ? '...' : '');
-    }
-
-    // Format property with prefix localname notation
-    formatPropertyLabel(uri) {
-        if (!uri) return 'unknown';
-        
-        // Common namespace prefixes
-        const prefixes = {
-            'http://www.w3.org/1999/02/22-rdf-syntax-ns#': 'rdf',
-            'http://www.w3.org/2000/01/rdf-schema#': 'rdfs',
-            'http://www.w3.org/2002/07/owl#': 'owl',
-            'http://www.w3.org/2001/XMLSchema#': 'xsd',
-            'http://purl.org/dc/elements/1.1/': 'dc',
-            'http://purl.org/dc/terms/': 'dcterms',
-            'http://xmlns.com/foaf/0.1/': 'foaf',
-            'http://www.w3.org/2004/02/skos/core#': 'skos',
-            'http://schema.org/': 'schema',
-            'http://purl.org/ontology/bibo/': 'bibo',
-            'http://semanticscience.org/resource/': 'sio',
-            'http://purl.obolibrary.org/obo/': 'obo',
-            'http://www.w3.org/ns/prov#': 'prov',
-            'http://rdfs.org/ns/void#': 'void',
-            'http://purl.org/pav/': 'pav',
-            'http://www.wikidata.org/prop/direct/': 'wdt',
-            'http://www.wikidata.org/entity/': 'wd',
-        };
-        
-        for (const [namespace, prefix] of Object.entries(prefixes)) {
-            if (uri.startsWith(namespace)) {
-                const localName = uri.substring(namespace.length);
-                // Use space instead of colon to avoid Mermaid parsing issues
-                return `${prefix} ${localName.substring(0, 18)}${localName.length > 18 ? '...' : ''}`;
-            }
-        }
-        
-        // Fallback: extract local name from URI
-        const parts = uri.split(/[#\/]/);
-        let localName = parts[parts.length - 1];
-        try { localName = decodeURIComponent(localName); } catch {}
-        return localName.substring(0, 22).replace(/["'`\\:]/g, ' ').replace(/\s+/g, ' ').trim() + (localName.length > 22 ? '...' : '');
     }
 
     showLoading() {
         const container = document.getElementById('schema-diagram');
-        if (container) container.innerHTML = '<div class="loading">Loading schema...</div>';
+        if (container) {
+            container.innerHTML = '<div class="loading" style="display: flex; align-items: center; justify-content: center; height: 200px; color: #656d76;">Loading schema...</div>';
+        }
     }
 
     showError(message) {
         const container = document.getElementById('schema-diagram');
-        if (container) container.innerHTML = `<div class="error-message">${message}</div>`;
+        if (container) {
+            container.innerHTML = `<div class="error-message" style="padding: 20px; color: #cf222e;">${message}</div>`;
+        }
     }
 
     openSidebar() {
