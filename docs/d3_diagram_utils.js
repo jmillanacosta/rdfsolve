@@ -360,15 +360,17 @@ const D3DiagramUtils = {
 
     /**
      * Create orthogonal edge path between two nodes
+     * Ends before target node to leave room for arrowhead
      */
     createEdgePath(source, target, nodeWidth, edgeOffset = 0) {
         const offsetSpacing = 8;
         const offset = edgeOffset * offsetSpacing;
+        const arrowPadding = 12; // Space for arrowhead
 
         const sx = source.x + nodeWidth / 2 + offset;
         const sy = source.y + (source.height || 80);
         const tx = target.x + nodeWidth / 2 + offset;
-        const ty = target.y;
+        const ty = target.y - arrowPadding; // End before target for arrow
 
         // Simple orthogonal path
         if (ty > sy + 20) {
@@ -387,7 +389,7 @@ const D3DiagramUtils = {
     },
 
     /**
-     * Get label position for an edge
+     * Get label position for an edge (anchored to edge path, not just midpoint)
      */
     getEdgeLabelPosition(source, target, nodeWidth) {
         const sx = source.x + nodeWidth / 2;
@@ -395,15 +397,46 @@ const D3DiagramUtils = {
         const tx = target.x + nodeWidth / 2;
         const ty = target.y;
 
-        if (ty > sy) {
+        // Orthogonal edges: place label on the horizontal segment, or midpoint for vertical
+        if (ty > sy + 20) {
+            // Edge goes down: horizontal segment is at midY
             const midY = sy + (ty - sy) / 2;
-            if (Math.abs(tx - sx) < 50) {
-                return { x: sx + 8, y: midY };
+            // For mostly vertical edges, place label just to the right of the vertical line
+            if (Math.abs(tx - sx) < 30) {
+                return { x: sx + 12, y: midY };
             }
-            return { x: (sx + tx) / 2 + 8, y: sy + 30 };
+            // For edges with a horizontal segment, place label above the horizontal segment
+            return { x: (sx + tx) / 2, y: midY - 6 };
         }
+        // Back-edge or same-level: place label above the topmost point
+        return { x: (sx + tx) / 2, y: Math.min(sy, ty) - 14 };
+    },
+    /**
+     * Filter nodes by a predicate, highlight them, and return filtered/hidden nodes.
+     * Optionally zoom to the last filtered node (provide a zoom callback).
+     * @param {Array} nodes - All nodes in the diagram
+     * @param {Function} predicate - Function(node) => boolean
+     * @param {Function} [highlightCallback] - Called with filtered nodes for highlighting
+     * @param {Function} [zoomCallback] - Called with last filtered node for zooming
+     * @returns {Object} { filteredNodes, hiddenNodes }
+     */
+    filterAndHighlightNodes(nodes, predicate, highlightCallback, zoomCallback) {
+        const filteredNodes = nodes.filter(predicate);
+        const hiddenNodes = nodes.filter(n => !predicate(n));
+        if (highlightCallback) highlightCallback(filteredNodes);
+        if (zoomCallback && filteredNodes.length > 0) {
+            zoomCallback(filteredNodes[filteredNodes.length - 1]);
+        }
+        return { filteredNodes, hiddenNodes };
+    },
 
-        return { x: (sx + tx) / 2 + 8, y: Math.min(sy, ty) - 8 };
+    /**
+     * Utility to clear node filtering/highlighting (reset all nodes to normal state)
+     * @param {Array} nodes
+     * @param {Function} [highlightCallback]
+     */
+    clearNodeFiltering(nodes, highlightCallback) {
+        if (highlightCallback) highlightCallback(nodes);
     },
 
     /**
@@ -415,26 +448,163 @@ const D3DiagramUtils = {
     },
 
     /**
-     * Create D3 SVG styles for diagram
+     * Setup +/- spacing controls for a visualization
+     * @param {Object} options - Configuration options
+     * @param {string} options.xPlusId - ID for X+ button
+     * @param {string} options.xMinusId - ID for X- button
+     * @param {string} options.xValId - ID for X value display
+     * @param {string} options.yPlusId - ID for Y+ button
+     * @param {string} options.yMinusId - ID for Y- button
+     * @param {string} options.yValId - ID for Y value display
+     * @param {number} options.initialX - Initial X spacing value (default 1.0)
+     * @param {number} options.initialY - Initial Y spacing value (default 8.0)
+     * @param {number} options.step - Step increment (default 0.2)
+     * @param {Function} options.onChange - Callback with (xSpacing, ySpacing) when values change
+     * @returns {Object} { xSpacing, ySpacing, getValues() }
      */
-    getSvgStyles() {
-        return `
-            .node-group { cursor: grab; }
-            .node-group:active { cursor: grabbing; }
-            .node-group:hover .node-rect { stroke-width: 2px; stroke: #0969da; }
-            .node-group.dimmed { opacity: 0.15; }
-            .node-group.path-node .node-rect { stroke: #e85d04; stroke-width: 3px; }
-            .node-group.path-start .node-rect { stroke: #2da44e; stroke-width: 3px; }
-            .link-group { pointer-events: none; }
-            .link-group.dimmed { opacity: 0.1; }
-            .link-group.path-link path { stroke: #e85d04; stroke-width: 2.5px; }
-            .node-header { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
-            .node-property { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
-        `;
+    setupSpacingControls(options) {
+        const {
+            xPlusId, xMinusId, xValId,
+            yPlusId, yMinusId, yValId,
+            initialX = 6.0,
+            initialY = 8.0,
+            step = 0.2,
+            onChange = () => {}
+        } = options;
+
+        const state = {
+            xSpacing: initialX,
+            ySpacing: initialY
+        };
+
+        const updateDisplay = () => {
+            const xValEl = document.getElementById(xValId);
+            const yValEl = document.getElementById(yValId);
+            if (xValEl) xValEl.textContent = state.xSpacing.toFixed(1);
+            if (yValEl) yValEl.textContent = state.ySpacing.toFixed(1);
+        };
+
+        // X controls
+        const xPlus = document.getElementById(xPlusId);
+        const xMinus = document.getElementById(xMinusId);
+        if (xPlus) {
+            xPlus.addEventListener('click', () => {
+                state.xSpacing += step;
+                updateDisplay();
+                onChange(state.xSpacing, state.ySpacing);
+            });
+        }
+        if (xMinus) {
+            xMinus.addEventListener('click', () => {
+                state.xSpacing = Math.max(step, state.xSpacing - step);
+                updateDisplay();
+                onChange(state.xSpacing, state.ySpacing);
+            });
+        }
+
+        // Y controls
+        const yPlus = document.getElementById(yPlusId);
+        const yMinus = document.getElementById(yMinusId);
+        if (yPlus) {
+            yPlus.addEventListener('click', () => {
+                state.ySpacing += step;
+                updateDisplay();
+                onChange(state.xSpacing, state.ySpacing);
+            });
+        }
+        if (yMinus) {
+            yMinus.addEventListener('click', () => {
+                state.ySpacing = Math.max(step, state.ySpacing - step);
+                updateDisplay();
+                onChange(state.xSpacing, state.ySpacing);
+            });
+        }
+
+        // Initialize display
+        updateDisplay();
+
+        return {
+            get xSpacing() { return state.xSpacing; },
+            get ySpacing() { return state.ySpacing; },
+            set xSpacing(v) { state.xSpacing = v; updateDisplay(); },
+            set ySpacing(v) { state.ySpacing = v; updateDisplay(); },
+            getValues() { return { xSpacing: state.xSpacing, ySpacing: state.ySpacing }; }
+        };
+    },
+
+    /**
+     * Setup zoom controls for a visualization
+     * @param {Object} options - Configuration options
+     * @param {string} options.zoomInId - ID for zoom in button
+     * @param {string} options.zoomOutId - ID for zoom out button
+     * @param {string} options.zoomFitId - ID for zoom fit button
+     * @param {Function} options.getSvgAndZoom - Callback that returns { svg, zoom }
+     */
+    setupZoomControls(options) {
+        const { zoomInId, zoomOutId, zoomFitId, getSvgAndZoom } = options;
+
+        const zoomBy = (factor) => {
+            const { svg, zoom } = getSvgAndZoom();
+            if (svg && zoom) {
+                svg.transition().duration(200).call(zoom.scaleBy, factor);
+            }
+        };
+
+        const zoomFit = () => {
+            const { svg, zoom } = getSvgAndZoom();
+            if (svg && zoom) {
+                svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+            }
+        };
+
+        document.getElementById(zoomInId)?.addEventListener('click', () => zoomBy(1.3));
+        document.getElementById(zoomOutId)?.addEventListener('click', () => zoomBy(0.7));
+        document.getElementById(zoomFitId)?.addEventListener('click', zoomFit);
+
+        return { zoomBy, zoomFit };
+    },
+
+    /**
+     * Toggle fullscreen mode for a container element
+     * @param {HTMLElement} container - The container to toggle fullscreen
+     * @param {string} fullscreenClass - CSS class to add when in fullscreen mode
+     * @param {Function} [onToggle] - Optional callback with (isFullscreen) parameter
+     */
+    toggleFullscreen(container, fullscreenClass = 'fullscreen-mode', onToggle) {
+        if (!container) return;
+
+        if (document.fullscreenElement) {
+            document.exitFullscreen().then(() => {
+                container.classList.remove(fullscreenClass);
+                if (onToggle) onToggle(false);
+            });
+        } else {
+            container.requestFullscreen().then(() => {
+                container.classList.add(fullscreenClass);
+                if (onToggle) onToggle(true);
+            }).catch(err => {
+                console.warn('Fullscreen not available:', err);
+            });
+        }
+    },
+
+    /**
+     * Create arrowhead marker definition for SVG
+     * @param {Object} svg - D3 SVG selection
+     * @param {string} id - Marker ID
+     * @param {string} [color='#57606a'] - Arrow fill color
+     */
+    createArrowheadMarker(svg, id, color = '#57606a') {
+        svg.append('defs').append('marker')
+            .attr('id', id)
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 0)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', color);
     }
 };
-
-// Export for use in other modules
-if (typeof window !== 'undefined') {
-    window.D3DiagramUtils = D3DiagramUtils;
-}

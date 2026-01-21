@@ -4,7 +4,7 @@
  * Class diagram layout with:
  * - D3 tree layout for hierarchical positioning
  * - Orthogonal edges (right angles only)
- * - OWL/RDF(S)/XSD node exclusion
+ * - OWL/RDF(S)/FOAF node exclusion
  * - Path finding between nodes
  * - Adjustable X/Y spacing
  */
@@ -28,11 +28,26 @@ class lsCloudVisualization {
     this.pathFindingMode = false;
     this.selectedNodes = [];
     this.highlightedPath = [];
+    this.allPaths = []; // Store all found paths for accumulation
     this.intersectionMode = false;
+    
+    // Path color palette (light, visible colors that work well on white background)
+    this.pathColors = [
+        '#4285f4', // Blue
+        '#ea4335', // Red
+        '#34a853', // Green
+        '#fbbc04', // Yellow/Gold
+        '#9c27b0', // Purple
+        '#00acc1', // Cyan
+        '#ff7043', // Deep Orange
+        '#7cb342', // Light Green
+        '#5c6bc0', // Indigo
+        '#f06292', // Pink
+    ];
         
-        // Spacing multipliers (controlled by sliders)
+        // Spacing multipliers (controlled by buttons) - start with high Y for readability
         this.xSpacing = 1.0;
-        this.ySpacing = 1.0;
+        this.ySpacing = 8.0;
         
         // Prefixes to exclude
         this.excludedPrefixes = [
@@ -40,7 +55,8 @@ class lsCloudVisualization {
             'rdfs',
             'owl',
             'sh',
-            'sparqlserv'
+            'sparqlserv',
+            'foaf'
         ];
         
         // Common terms to exclude by local name
@@ -85,6 +101,11 @@ class lsCloudVisualization {
         });
     }
 
+    // Get color for path at given index
+    getPathColor(index) {
+        return this.pathColors[index % this.pathColors.length];
+    }
+
     init() {
         this.allDatasetNames = this.datasets
             .filter(d => d.dataFiles?.coverage && d.notebooks?.schema?.status === 'success')
@@ -93,7 +114,8 @@ class lsCloudVisualization {
         
         this.setupDatasetSelector();
         this.setupEventListeners();
-        this.setupSpacingSliders();
+        this.setupSpacingControls();
+        this.setupPathAutocomplete();
     }
 
     // ========== Dataset Selector ==========
@@ -155,7 +177,7 @@ class lsCloudVisualization {
     setupEventListeners() {
         document.getElementById('render-ls-cloud')?.addEventListener('click', () => this.renderCloud());
         
-        // Node filter with Bootstrap Select
+        // Node filter with Bootstrap Select (focus)
         const nodeFilter = document.getElementById('ls-node-filter');
         if (nodeFilter && typeof $ !== 'undefined' && $.fn.selectpicker) {
             $(nodeFilter).on('changed.bs.select', (e) => {
@@ -163,6 +185,20 @@ class lsCloudVisualization {
             });
         } else if (nodeFilter) {
             nodeFilter.addEventListener('change', e => this.filterByNode(e.target.value));
+        }
+
+        // Node highlight filter (multi-select, highlights and zooms)
+        const nodeHighlightFilter = document.getElementById('ls-node-highlight-filter');
+        if (nodeHighlightFilter && typeof $ !== 'undefined' && $.fn.selectpicker) {
+            $(nodeHighlightFilter).on('changed.bs.select', () => {
+                const selected = $(nodeHighlightFilter).val() || [];
+                this.applyNodeHighlightFilter(selected);
+            });
+        } else if (nodeHighlightFilter) {
+            nodeHighlightFilter.addEventListener('change', e => {
+                const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+                this.applyNodeHighlightFilter(selected);
+            });
         }
         
         document.getElementById('ls-neighbor-depth')?.addEventListener('change', () => {
@@ -173,6 +209,30 @@ class lsCloudVisualization {
             if (node) this.filterByNode(node);
         });
         document.getElementById('ls-find-path-btn')?.addEventListener('click', () => this.togglePathFindingMode());
+        
+        // Add path button (for accumulating multiple paths)
+        document.getElementById('ls-add-path-btn')?.addEventListener('click', () => this.startAddPath());
+        
+        // Clear paths button
+        document.getElementById('ls-clear-paths-btn')?.addEventListener('click', () => this.clearAllPaths());
+        
+        // Fullscreen toggle (both buttons)
+        document.getElementById('ls-fullscreen-btn')?.addEventListener('click', () => this.toggleFullscreen());
+        document.getElementById('ls-exit-fullscreen-btn')?.addEventListener('click', () => this.toggleFullscreen());
+        
+        // Collapsible section toggle (use ID selector)
+        document.getElementById('ls-cloud-header')?.addEventListener('click', (e) => {
+            // Don't collapse if clicking on buttons in the header
+            if (e.target.closest('button')) return;
+            this.toggleCollapse();
+        });
+        
+        // Path sidebar toggle
+        document.getElementById('ls-path-toggle-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent header click from firing
+            this.togglePathSidebar();
+        });
+        document.getElementById('ls-path-sidebar-close')?.addEventListener('click', () => this.togglePathSidebar(false));
         
         // Rebuild diagram when exclude-OWL checkbox changes so exclusion affects construction
         const excludeChk = document.getElementById('ls-exclude-owl');
@@ -238,26 +298,274 @@ class lsCloudVisualization {
         // No union/intersection toggle — diagram shows union of nodes/links by default.
     }
 
-    setupSpacingSliders() {
-        const xSlider = document.getElementById('ls-x-spacing');
-        const ySlider = document.getElementById('ls-y-spacing');
-        const xVal = document.getElementById('ls-x-spacing-val');
-        const yVal = document.getElementById('ls-y-spacing-val');
+    setupSpacingControls() {
+        // Use shared spacing control utility from D3DiagramUtils
+        D3DiagramUtils.setupSpacingControls({
+            xPlusId: 'ls-x-spacing-plus',
+            xMinusId: 'ls-x-spacing-minus',
+            xValId: 'ls-x-spacing-val',
+            yPlusId: 'ls-y-spacing-plus',
+            yMinusId: 'ls-y-spacing-minus',
+            yValId: 'ls-y-spacing-val',
+            initialX: 1.0,
+            initialY: 8.0,
+            step: 0.2,
+            onChange: (xSpacing, ySpacing) => {
+                this.xSpacing = xSpacing;
+                this.ySpacing = ySpacing;
+                if (this.graphData.nodes.length > 0) {
+                    this.renderDiagram();
+                }
+            }
+        });
 
-        if (xSlider) {
-            xSlider.addEventListener('input', (e) => {
-                this.xSpacing = parseInt(e.target.value) / 100;
-                if (xVal) xVal.textContent = `${e.target.value}%`;
-                if (this.graphData.nodes.length > 0) this.renderDiagram();
+        // Copy path button
+        const copyBtn = document.getElementById('ls-copy-path-btn');
+        const txtarea = document.getElementById('ls-path-query-txtarea');
+        if (copyBtn && txtarea) {
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(txtarea.value).then(() => {
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+                }).catch(() => {
+                    txtarea.select();
+                    document.execCommand('copy');
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+                });
+            });
+        }
+    }
+
+    // ========== Path Finding Autocomplete ==========
+    
+    setupPathAutocomplete() {
+        const fromInput = document.getElementById('ls-path-from');
+        const toInput = document.getElementById('ls-path-to');
+        const fromSuggestions = document.getElementById('ls-path-from-suggestions');
+        const toSuggestions = document.getElementById('ls-path-to-suggestions');
+        const findBtn = document.getElementById('ls-find-path-btn');
+        const addBtn = document.getElementById('ls-add-path-btn');
+        const clearBtn = document.getElementById('ls-clear-paths-btn');
+
+        // Store selected node IDs
+        this.pathFromNodeId = null;
+        this.pathToNodeId = null;
+
+        // Setup autocomplete for both inputs
+        if (fromInput && fromSuggestions) {
+            this.setupAutocompleteInput(fromInput, fromSuggestions, (nodeId) => {
+                this.pathFromNodeId = nodeId;
+            });
+        }
+        if (toInput && toSuggestions) {
+            this.setupAutocompleteInput(toInput, toSuggestions, (nodeId) => {
+                this.pathToNodeId = nodeId;
             });
         }
 
-        if (ySlider) {
-            ySlider.addEventListener('input', (e) => {
-                this.ySpacing = parseInt(e.target.value) / 100;
-                if (yVal) yVal.textContent = `${e.target.value}%`;
-                if (this.graphData.nodes.length > 0) this.renderDiagram();
+        // Find Path button - now uses autocomplete values
+        if (findBtn) {
+            findBtn.addEventListener('click', () => this.findPathFromInputs());
+        }
+
+        // Add Path button
+        if (addBtn) {
+            addBtn.addEventListener('click', () => this.findPathFromInputs());
+        }
+
+        // Clear Paths button
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => this.clearAllPaths());
+        }
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.path-autocomplete') && !e.target.closest('.autocomplete-suggestions')) {
+                fromSuggestions?.style && (fromSuggestions.style.display = 'none');
+                toSuggestions?.style && (toSuggestions.style.display = 'none');
+            }
+        });
+    }
+
+    setupAutocompleteInput(input, suggestionsDiv, onSelect) {
+        let activeIndex = -1;
+
+        input.addEventListener('input', () => {
+            const query = input.value.toLowerCase().trim();
+            if (query.length < 1 || !this.graphData.nodes || this.graphData.nodes.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            // Filter nodes matching query
+            const matches = this.graphData.nodes
+                .filter(n => n.label.toLowerCase().includes(query) || n.id.toLowerCase().includes(query))
+                .slice(0, 15); // Limit results
+
+            if (matches.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            // Render suggestions
+            suggestionsDiv.innerHTML = matches.map((n, i) => {
+                const datasets = n.datasets || [];
+                const badges = datasets.slice(0, 3).map(ds => 
+                    `<span class="dataset-badge" style="background: ${this.getDatasetColor(ds)};" title="${ds}"></span>`
+                ).join('');
+                return `<div class="suggestion-item" data-index="${i}" data-id="${n.id}">
+                    <span class="node-label">${this.highlightMatch(n.label, query)}</span>
+                    <div class="dataset-badges">${badges}</div>
+                </div>`;
+            }).join('');
+
+            suggestionsDiv.style.display = 'block';
+            activeIndex = -1;
+
+            // Add click handlers to suggestions
+            suggestionsDiv.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const nodeId = item.dataset.id;
+                    const node = this.graphData.nodes.find(n => n.id === nodeId);
+                    if (node) {
+                        input.value = node.label;
+                        onSelect(nodeId);
+                        suggestionsDiv.style.display = 'none';
+                    }
+                });
             });
+        });
+
+        // Keyboard navigation
+        input.addEventListener('keydown', (e) => {
+            const items = suggestionsDiv.querySelectorAll('.suggestion-item');
+            if (items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                this.updateActiveItem(items, activeIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                this.updateActiveItem(items, activeIndex);
+            } else if (e.key === 'Enter' && activeIndex >= 0) {
+                e.preventDefault();
+                items[activeIndex].click();
+            } else if (e.key === 'Escape') {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        input.addEventListener('focus', () => {
+            if (input.value.trim().length >= 1 && this.graphData.nodes?.length > 0) {
+                input.dispatchEvent(new Event('input'));
+            }
+        });
+    }
+
+    updateActiveItem(items, activeIndex) {
+        items.forEach((item, i) => {
+            item.classList.toggle('active', i === activeIndex);
+        });
+        if (items[activeIndex]) {
+            items[activeIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    highlightMatch(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<strong>$1</strong>');
+    }
+
+    findPathFromInputs() {
+        const status = document.getElementById('ls-path-status');
+        
+        if (!this.pathFromNodeId || !this.pathToNodeId) {
+            status.textContent = 'Please select both From and To nodes';
+            return;
+        }
+
+        if (this.pathFromNodeId === this.pathToNodeId) {
+            status.textContent = 'From and To nodes must be different';
+            return;
+        }
+
+        const path = this.findPath(this.pathFromNodeId, this.pathToNodeId);
+        if (path) {
+            // Add path with metadata for display
+            const fromNode = this.graphData.nodes.find(n => n.id === this.pathFromNodeId);
+            const toNode = this.graphData.nodes.find(n => n.id === this.pathToNodeId);
+            this.allPaths.push({
+                path: path,
+                fromLabel: fromNode?.label || this.pathFromNodeId,
+                toLabel: toNode?.label || this.pathToNodeId
+            });
+            
+            status.textContent = `${this.allPaths.length} path(s) found`;
+            this.highlightAllPaths();
+            this.updatePathsList();
+            this.showAllPathsQueryPanel();
+            
+            // Show add/clear buttons
+            document.getElementById('ls-add-path-btn').style.display = 'inline-block';
+            document.getElementById('ls-clear-paths-btn').style.display = 'inline-block';
+            
+            // Clear inputs for next path
+            document.getElementById('ls-path-from').value = '';
+            document.getElementById('ls-path-to').value = '';
+            this.pathFromNodeId = null;
+            this.pathToNodeId = null;
+        } else {
+            status.textContent = 'No path found between selected nodes';
+        }
+    }
+
+    updatePathsList() {
+        const listContainer = document.getElementById('ls-paths-list');
+        if (!listContainer) return;
+
+        if (this.allPaths.length === 0) {
+            listContainer.style.display = 'none';
+            listContainer.innerHTML = '';
+            return;
+        }
+
+        listContainer.style.display = 'block';
+        listContainer.innerHTML = this.allPaths.map((pathData, i) => {
+            const label = `${pathData.fromLabel} → ${pathData.toLabel}`;
+            const color = this.getPathColor(i);
+            return `<div class="path-list-item" data-index="${i}" style="border-left: 3px solid ${color};">
+                <span class="path-color-dot" style="width: 10px; height: 10px; border-radius: 50%; background: ${color}; flex-shrink: 0;"></span>
+                <span class="path-text" title="${label}">${label}</span>
+                <button class="remove-path-btn" data-index="${i}" title="Remove this path">×</button>
+            </div>`;
+        }).join('');
+
+        // Add click handlers for remove buttons
+        listContainer.querySelectorAll('.remove-path-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const index = parseInt(btn.dataset.index);
+                this.removePath(index);
+            });
+        });
+    }
+
+    removePath(index) {
+        if (index >= 0 && index < this.allPaths.length) {
+            this.allPaths.splice(index, 1);
+            
+            if (this.allPaths.length === 0) {
+                this.clearAllPaths();
+            } else {
+                this.highlightAllPaths();
+                this.updatePathsList();
+                this.showAllPathsQueryPanel();
+                document.getElementById('ls-path-status').textContent = `${this.allPaths.length} path(s)`;
+            }
         }
     }
 
@@ -613,6 +921,83 @@ class lsCloudVisualization {
         if (typeof $ !== 'undefined' && $.fn.selectpicker) {
             $(select).selectpicker('refresh');
         }
+
+        // Also populate node highlight filter
+        this.populateNodeHighlightFilter();
+    }
+
+    // Populate the node highlight filter (multi-select for highlighting)
+    populateNodeHighlightFilter() {
+        const select = document.getElementById('ls-node-highlight-filter');
+        if (!select) return;
+
+        const sorted = [...this.fullGraphData.nodes].sort((a, b) => b.degree - a.degree);
+        select.innerHTML = sorted.map(n => {
+            return `<option value="${n.id}">${n.label}</option>`;
+        }).join('');
+
+        if (typeof $ !== 'undefined' && $.fn.selectpicker) {
+            $(select).selectpicker('refresh');
+        }
+    }
+
+    // Apply highlight filter: highlight selected nodes, dim others, and zoom to last selected
+    applyNodeHighlightFilter(selectedIds) {
+        if (!this.svg) return;
+        const nodeWidth = 200; // must match renderDiagram
+
+        if (!selectedIds || selectedIds.length === 0) {
+            // Clear highlight: show all nodes/links normally
+            d3.selectAll('.node-group').classed('dimmed', false);
+            d3.selectAll('.link-group').classed('dimmed', false);
+            return;
+        }
+
+        const selectedSet = new Set(selectedIds);
+
+        // Highlight selected nodes, dim others
+        d3.selectAll('.node-group').classed('dimmed', d => !selectedSet.has(d.id));
+        d3.selectAll('.link-group').classed('dimmed', l => {
+            const s = typeof l.source === 'object' ? l.source.id : l.source;
+            const t = typeof l.target === 'object' ? l.target.id : l.target;
+            return !(selectedSet.has(s) || selectedSet.has(t));
+        });
+
+        // Zoom to last selected node
+        const lastId = selectedIds[selectedIds.length - 1];
+        const targetNode = this.graphData.nodes.find(n => n.id === lastId);
+        if (targetNode && this.zoom) {
+            this.zoomToNode(targetNode, nodeWidth);
+        }
+    }
+
+    // Zoom and center on a specific node
+    zoomToNode(node, nodeWidth = 200) {
+        if (!this.svg || !this.zoom || !node) return;
+        const container = document.getElementById('ls-diagram');
+        const containerRect = container?.getBoundingClientRect();
+        const width = containerRect?.width || 1200;
+        const height = containerRect?.height || 600;
+
+        // Get current viewBox
+        const viewBox = this.svg.attr('viewBox')?.split(' ').map(Number) || [0, 0, width, height];
+        const [vbX, vbY, vbW, vbH] = viewBox;
+
+        // Node center in viewBox coordinates
+        const nodeCenterX = node.x + nodeWidth / 2;
+        const nodeCenterY = node.y + (node.height || 80) / 2;
+
+        // Calculate scale to fit node nicely (zoom in to 2x)
+        const scale = 2;
+
+        // Translate to center the node
+        const tx = width / 2 - nodeCenterX * scale;
+        const ty = height / 2 - nodeCenterY * scale;
+
+        this.svg.transition().duration(500).call(
+            this.zoom.transform,
+            d3.zoomIdentity.translate(tx, ty).scale(scale)
+        );
     }
 
     filterByNode(nodeId) {
@@ -661,9 +1046,10 @@ class lsCloudVisualization {
     togglePathFindingMode() {
         this.pathFindingMode = !this.pathFindingMode;
         this.selectedNodes = [];
-        this.highlightedPath = [];
         
         const btn = document.getElementById('ls-find-path-btn');
+        const addBtn = document.getElementById('ls-add-path-btn');
+        const clearBtn = document.getElementById('ls-clear-paths-btn');
         const status = document.getElementById('ls-path-status');
         
         if (this.pathFindingMode) {
@@ -674,14 +1060,52 @@ class lsCloudVisualization {
             btn.style.background = '';
             btn.style.color = '';
             status.textContent = '';
-            this.clearHighlights();
+            // Don't clear paths when exiting mode, just stop selecting
         }
+    }
+
+    startAddPath() {
+        // Start adding another path without clearing existing ones
+        this.pathFindingMode = true;
+        this.selectedNodes = [];
+        const btn = document.getElementById('ls-find-path-btn');
+        const status = document.getElementById('ls-path-status');
+        btn.style.background = '#0969da';
+        btn.style.color = 'white';
+        status.textContent = 'Click first node for new path...';
+    }
+
+    clearAllPaths() {
+        this.allPaths = [];
+        this.highlightedPath = [];
+        this.pathFromNodeId = null;
+        this.pathToNodeId = null;
+        this.clearHighlights();
+        this.hidePathQueryPanel();
+        
+        // Clear UI elements
+        const addBtn = document.getElementById('ls-add-path-btn');
+        const clearBtn = document.getElementById('ls-clear-paths-btn');
+        const status = document.getElementById('ls-path-status');
+        const pathsList = document.getElementById('ls-paths-list');
+        const fromInput = document.getElementById('ls-path-from');
+        const toInput = document.getElementById('ls-path-to');
+        
+        if (addBtn) addBtn.style.display = 'none';
+        if (clearBtn) clearBtn.style.display = 'none';
+        if (status) status.textContent = '';
+        if (pathsList) {
+            pathsList.style.display = 'none';
+            pathsList.innerHTML = '';
+        }
+        if (fromInput) fromInput.value = '';
+        if (toInput) toInput.value = '';
     }
 
     handleNodeClick(node) {
         if (!this.pathFindingMode) return;
         const status = document.getElementById('ls-path-status');
-        
+
         if (this.selectedNodes.length === 0) {
             this.selectedNodes.push(node.id);
             status.textContent = `From: ${node.label} → Click second node`;
@@ -689,13 +1113,107 @@ class lsCloudVisualization {
         } else if (this.selectedNodes[0] !== node.id) {
             const path = this.findPath(this.selectedNodes[0], node.id);
             if (path) {
-                status.textContent = `Path: ${path.length} nodes`;
-                this.highlightPath(path);
+                this.allPaths.push(path);
+                status.textContent = `${this.allPaths.length} path(s) found`;
+                this.highlightAllPaths();
+                this.showAllPathsQueryPanel();
+                // Show add/clear buttons
+                document.getElementById('ls-add-path-btn').style.display = 'inline-block';
+                document.getElementById('ls-clear-paths-btn').style.display = 'inline-block';
             } else {
-                status.textContent = 'No path found';
+                status.textContent = 'No path found between selected nodes';
             }
             this.selectedNodes = [];
+            // Exit path finding mode after finding a path
+            this.pathFindingMode = false;
+            const btn = document.getElementById('ls-find-path-btn');
+            btn.style.background = '';
+            btn.style.color = '';
         }
+    }
+
+    // Show all accumulated paths as SPARQL-like text in colored bubbles
+    showAllPathsQueryPanel() {
+        const panel = document.getElementById('ls-path-query-text');
+        const bubblesContainer = document.getElementById('ls-path-bubbles');
+        const txtarea = document.getElementById('ls-path-query-txtarea');
+        if (!panel || !bubblesContainer) return;
+        
+        if (this.allPaths.length === 0) {
+            panel.style.display = 'none';
+            bubblesContainer.innerHTML = '';
+            if (txtarea) txtarea.value = '';
+            return;
+        }
+
+        // Build both visual bubbles and plain text (for copy)
+        let allPlainText = [];
+        let bubblesHtml = [];
+        
+        this.allPaths.forEach((pathData, pathIdx) => {
+            const path = Array.isArray(pathData) ? pathData : pathData.path;
+            if (!path || path.length < 2) return;
+            
+            const color = this.getPathColor(pathIdx);
+            const lightBg = this.hexToRgba(color, 0.1);
+            const borderColor = this.hexToRgba(color, 0.4);
+            
+            let lines = [];
+            for (let i = 0; i < path.length - 1; i++) {
+                const subj = this.graphData.nodes.find(n => n.id === path[i]);
+                const obj = this.graphData.nodes.find(n => n.id === path[i+1]);
+                const link = this.graphData.links.find(l => 
+                    (l.source === path[i] && l.target === path[i+1]) || 
+                    (l.source === path[i+1] && l.target === path[i]) ||
+                    (l.source?.id === path[i] && l.target?.id === path[i+1]) ||
+                    (l.source?.id === path[i+1] && l.target?.id === path[i])
+                );
+                const subjLabel = subj ? subj.label : path[i];
+                const objLabel = obj ? obj.label : path[i+1];
+                const predLabel = link ? (link.label || '?p') : '?p';
+                lines.push(`${subjLabel}  ${predLabel}  ${objLabel} .`);
+            }
+            
+            const pathLabel = `${pathData.fromLabel || 'Start'} → ${pathData.toLabel || 'End'}`;
+            allPlainText.push(`# Path ${pathIdx + 1}: ${pathLabel}`);
+            allPlainText.push(...lines);
+            allPlainText.push('');
+            
+            bubblesHtml.push(`
+                <div class="path-bubble" style="background: ${lightBg}; border: 1px solid ${borderColor}; border-left: 4px solid ${color}; border-radius: 6px; padding: 8px 12px;">
+                    <div style="font-size: 11px; font-weight: 600; color: ${color}; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
+                        Path ${pathIdx + 1}: ${pathLabel}
+                    </div>
+                    <pre style="margin: 0; font-family: 'SF Mono', Consolas, monospace; font-size: 10px; line-height: 1.5; color: var(--text-primary); white-space: pre-wrap; word-break: break-word;">${lines.join('\n')}</pre>
+                </div>
+            `);
+        });
+        
+        bubblesContainer.innerHTML = bubblesHtml.join('');
+        if (txtarea) txtarea.value = allPlainText.join('\n').trim();
+        panel.style.display = 'block';
+    }
+    
+    // Helper to convert hex color to rgba
+    hexToRgba(hex, alpha) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (result) {
+            const r = parseInt(result[1], 16);
+            const g = parseInt(result[2], 16);
+            const b = parseInt(result[3], 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+        return hex;
+    }
+
+    hidePathQueryPanel() {
+        const panel = document.getElementById('ls-path-query-text');
+        const bubblesContainer = document.getElementById('ls-path-bubbles');
+        const txtarea = document.getElementById('ls-path-query-txtarea');
+        if (panel) panel.style.display = 'none';
+        if (bubblesContainer) bubblesContainer.innerHTML = '';
+        if (txtarea) txtarea.value = '';
     }
 
     findPath(startId, endId) {
@@ -751,9 +1269,173 @@ class lsCloudVisualization {
             });
     }
 
+    // Highlight all accumulated paths with distinct colors
+    highlightAllPaths() {
+        // Build maps of node/edge to their path colors (for multi-path, first path wins)
+        const nodeColorMap = new Map(); // nodeId -> color
+        const edgeColorMap = new Map(); // "source|||target" -> color
+        const allPathNodes = new Set();
+        const allPathEdges = new Set();
+        
+        this.allPaths.forEach((pathData, pathIdx) => {
+            const path = Array.isArray(pathData) ? pathData : pathData.path;
+            if (!path) return;
+            const color = this.getPathColor(pathIdx);
+            
+            path.forEach(nodeId => {
+                allPathNodes.add(nodeId);
+                if (!nodeColorMap.has(nodeId)) {
+                    nodeColorMap.set(nodeId, color);
+                }
+            });
+            
+            for (let i = 0; i < path.length - 1; i++) {
+                const edgeKey1 = `${path[i]}|||${path[i+1]}`;
+                const edgeKey2 = `${path[i+1]}|||${path[i]}`;
+                allPathEdges.add(edgeKey1);
+                allPathEdges.add(edgeKey2);
+                if (!edgeColorMap.has(edgeKey1)) {
+                    edgeColorMap.set(edgeKey1, color);
+                    edgeColorMap.set(edgeKey2, color);
+                }
+            }
+        });
+
+        // Apply colors to nodes
+        d3.selectAll('.node-group')
+            .classed('path-node', d => allPathNodes.has(d.id))
+            .classed('dimmed', d => allPathNodes.size > 0 && !allPathNodes.has(d.id))
+            .each(function(d) {
+                const color = nodeColorMap.get(d.id);
+                const rect = d3.select(this).select('rect');
+                if (color && allPathNodes.has(d.id)) {
+                    rect.style('stroke', color).style('stroke-width', '3px');
+                } else {
+                    rect.style('stroke', null).style('stroke-width', null);
+                }
+            });
+        
+        // Apply colors to links
+        d3.selectAll('.link-group')
+            .classed('path-link', d => {
+                const s = d.source.id || d.source;
+                const t = d.target.id || d.target;
+                return allPathEdges.has(`${s}|||${t}`);
+            })
+            .classed('dimmed', d => {
+                const s = d.source.id || d.source;
+                const t = d.target.id || d.target;
+                return allPathEdges.size > 0 && !allPathEdges.has(`${s}|||${t}`);
+            })
+            .each(function(d) {
+                const s = d.source.id || d.source;
+                const t = d.target.id || d.target;
+                const color = edgeColorMap.get(`${s}|||${t}`);
+                const path = d3.select(this).select('path');
+                if (color) {
+                    path.style('stroke', color).style('stroke-width', '3px');
+                } else {
+                    path.style('stroke', null).style('stroke-width', null);
+                }
+            });
+    }
+
     clearHighlights() {
-        d3.selectAll('.node-group').classed('path-node path-start dimmed', false);
-        d3.selectAll('.link-group').classed('path-link dimmed', false);
+        d3.selectAll('.node-group')
+            .classed('path-node path-start dimmed', false)
+            .each(function() {
+                d3.select(this).select('rect').style('stroke', null).style('stroke-width', null);
+            });
+        d3.selectAll('.link-group')
+            .classed('path-link dimmed', false)
+            .each(function() {
+                d3.select(this).select('path').style('stroke', null).style('stroke-width', null);
+            });
+    }
+
+    // Toggle fullscreen mode for the LS Cloud section
+    toggleFullscreen() {
+        const container = document.getElementById('ls-cloud-container');
+        const diagram = document.getElementById('ls-diagram');
+        const btn = document.getElementById('ls-fullscreen-btn');
+        const exitBtn = document.getElementById('ls-exit-fullscreen-btn');
+        if (!container) return;
+        
+        const isCurrentlyFullscreen = container.classList.contains('ls-cloud-fullscreen');
+        
+        if (isCurrentlyFullscreen) {
+            // Exit fullscreen
+            container.classList.remove('ls-cloud-fullscreen');
+            if (btn) {
+                btn.style.display = '';
+                btn.textContent = 'Fullscreen';
+            }
+            if (exitBtn) exitBtn.style.display = 'none';
+            document.body.style.overflow = '';
+            
+            // Reset any inline styles that might have been set during fullscreen
+            if (diagram) {
+                diagram.style.height = '';
+                diagram.style.minHeight = '';
+            }
+        } else {
+            // Enter fullscreen
+            container.classList.add('ls-cloud-fullscreen');
+            if (btn) btn.style.display = 'none';
+            if (exitBtn) exitBtn.style.display = '';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Re-render diagram to fit new size
+        if (this.graphData.nodes.length > 0) {
+            setTimeout(() => this.renderDiagram(), 100);
+        }
+    }
+
+    // Toggle collapse state for the LS Cloud section
+    toggleCollapse(forceCollapse = null) {
+        const container = document.getElementById('ls-cloud-container');
+        const icon = container?.querySelector('.collapse-icon');
+        if (!container) return;
+        
+        const shouldCollapse = forceCollapse !== null ? forceCollapse : !container.classList.contains('collapsed');
+        
+        if (shouldCollapse) {
+            container.classList.add('collapsed');
+            if (icon) icon.style.transform = 'rotate(-90deg)';
+        } else {
+            container.classList.remove('collapsed');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    }
+    
+    // Toggle path finder sidebar visibility
+    togglePathSidebar(forceOpen = null) {
+        const sidebar = document.getElementById('ls-path-sidebar');
+        const toggleBtn = document.getElementById('ls-path-toggle-btn');
+        if (!sidebar) return;
+        
+        const isCurrentlyOpen = sidebar.classList.contains('open');
+        const shouldOpen = forceOpen !== null ? forceOpen : !isCurrentlyOpen;
+        
+        if (shouldOpen) {
+            sidebar.classList.add('open');
+            toggleBtn?.classList.add('active');
+            toggleBtn.style.background = 'var(--primary-color)';
+            toggleBtn.style.color = '#fff';
+            toggleBtn.style.borderColor = 'var(--primary-color)';
+        } else {
+            sidebar.classList.remove('open');
+            toggleBtn?.classList.remove('active');
+            toggleBtn.style.background = '';
+            toggleBtn.style.color = '';
+            toggleBtn.style.borderColor = '';
+        }
+    }
+    
+    // Collapse LS Cloud (called when schema/coverage panels open)
+    collapseForPanel() {
+        this.toggleCollapse(true);
     }
 
     // ========== Rendering ==========
@@ -815,22 +1497,22 @@ class lsCloudVisualization {
             return;
         }
 
-        // Node dimensions - wider for readability
-        const nodeWidth = 160;
-        const nodeHeaderHeight = 28;
-        const propertyLineHeight = 16;
-        const nodePadding = 12;
+        // Node dimensions - wider for readability and ensure all text fits
+        const nodeWidth = 200;
+        const nodeHeaderHeight = 32;
+        const propertyLineHeight = 18;
+        const nodePadding = 16;
 
         // Calculate node heights based on content
         nodes.forEach(node => {
             const propsToShow = Math.min(node.properties.length, 4);
-            node.height = nodeHeaderHeight + propsToShow * propertyLineHeight + nodePadding + 16; // +16 for dataset dots
+            node.height = nodeHeaderHeight + propsToShow * propertyLineHeight + nodePadding + 20; // +20 for dataset dots
         });
 
         // Get container dimensions for fitting
         const containerRect = container.getBoundingClientRect();
         const containerWidth = containerRect.width || 1200;
-        const containerHeight = Math.max(500, containerRect.height || 600);
+        const containerHeight = containerRect.height || 400;
 
         // Use D3 tree layout with spacing multipliers
         D3DiagramUtils.computeTreeLayout(nodes, links, {
@@ -850,16 +1532,12 @@ class lsCloudVisualization {
         
         const contentWidth = maxX - minX;
         const contentHeight = maxY - minY;
-        
-        // Use container size as viewport, content size as viewBox
-        const width = containerWidth;
-        const height = containerHeight;
 
-        // Create SVG
+        // Create SVG - use 100% height so it adapts to container
         this.svg = d3.select(container)
             .append('svg')
             .attr('width', '100%')
-            .attr('height', height)
+            .attr('height', '100%')
             .attr('viewBox', [minX, minY, contentWidth, contentHeight])
             .attr('preserveAspectRatio', 'xMidYMid meet');
 
@@ -888,17 +1566,17 @@ class lsCloudVisualization {
 
         const g = this.svg.append('g');
 
-        // Arrowhead marker
+        // Arrowhead marker - refX set to 0 so arrow tip is at path end
         this.svg.append('defs').append('marker')
             .attr('id', 'arrow')
             .attr('viewBox', '0 -5 10 10')
-            .attr('refX', 10)
+            .attr('refX', 0)
             .attr('refY', 0)
-            .attr('markerWidth', 7)
-            .attr('markerHeight', 7)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
             .attr('orient', 'auto')
             .append('path')
-            .attr('d', 'M0,-4L10,0L0,4')
+            .attr('d', 'M0,-4L10,0L0,4Z')
             .attr('fill', '#666');
 
         // Build node lookup
@@ -920,27 +1598,22 @@ class lsCloudVisualization {
             .attr('class', 'link-group');
 
         linkGroups.each((d, i, elements) => {
-            const source = nodeById.get(d.source);
-            const target = nodeById.get(d.target);
+            const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
+            const targetId = typeof d.target === 'object' ? d.target.id : d.target;
+            const source = nodeById.get(sourceId);
+            const target = nodeById.get(targetId);
             if (!source || !target) return;
-            
+
             d3.select(elements[i]).append('path')
                 .attr('class', 'link-path')
-                .attr('d', this.createEdgePath(source, target, nodeWidth, d.edgeOffset || 0))
+                .attr('d', D3DiagramUtils.createEdgePath(source, target, nodeWidth, d.edgeOffset || 0))
                 .attr('fill', 'none')
                 .attr('stroke', '#aaa')
                 .attr('stroke-width', 1.5)
                 .attr('marker-end', 'url(#arrow)');
-        });
 
-        // Link labels (on the path midpoint)
-        linkGroups.each((d, i, elements) => {
-            const source = nodeById.get(d.source);
-            const target = nodeById.get(d.target);
-            if (!source || !target) return;
-            
-            const labelPos = this.getEdgeLabelPosition(source, target, nodeWidth);
-            
+            // Improved: place label at the true midpoint of the edge path
+            const labelPos = D3DiagramUtils.getEdgeLabelPosition(source, target, nodeWidth);
             d3.select(elements[i]).append('text')
                 .attr('x', labelPos.x)
                 .attr('y', labelPos.y)
@@ -1002,16 +1675,16 @@ class lsCloudVisualization {
             .attr('y2', nodeHeaderHeight)
             .attr('stroke', '#d0d7de');
 
-        // Class name (larger, readable)
+        // Class name (larger, readable, full width)
         nodeGroups.append('text')
             .attr('class', 'node-header')
             .attr('x', nodeWidth / 2)
-            .attr('y', 18)
+            .attr('y', 22)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '12px')
+            .attr('font-size', '13px')
             .attr('font-weight', '600')
             .attr('fill', '#1f2328')
-            .text(d => d.label.length > 18 ? d.label.substring(0, 16) + '..' : d.label);
+            .text(d => d.label.length > 24 ? d.label.substring(0, 22) + '..' : d.label);
 
         // Properties section
         nodeGroups.each(function(d) {
@@ -1019,11 +1692,11 @@ class lsCloudVisualization {
             propsToShow.forEach((prop, i) => {
                 d3.select(this).append('text')
                     .attr('class', 'node-property')
-                    .attr('x', 8)
-                    .attr('y', nodeHeaderHeight + 14 + i * propertyLineHeight)
-                    .attr('font-size', '10px')
+                    .attr('x', 10)
+                    .attr('y', nodeHeaderHeight + 16 + i * propertyLineHeight)
+                    .attr('font-size', '11px')
                     .attr('fill', '#57606a')
-                    .text(prop.length > 20 ? prop.substring(0, 18) + '..' : prop);
+                    .text(prop.length > 26 ? prop.substring(0, 24) + '..' : prop);
             });
         });
 
@@ -1146,10 +1819,8 @@ class lsCloudVisualization {
         });
     }
 
-    // Create drag behavior for nodes
+    // Create drag behavior for nodes (uses shared D3DiagramUtils for edge/label updates)
     createDrag(nodeById, linkGroups, nodeWidth) {
-        const self = this;
-        
         return d3.drag()
             .on('start', function(event, d) {
                 d3.select(this).raise();
@@ -1158,18 +1829,20 @@ class lsCloudVisualization {
                 d.x = event.x;
                 d.y = event.y;
                 d3.select(this).attr('transform', `translate(${d.x}, ${d.y})`);
-                
+
                 // Update connected links
                 linkGroups.each(function(link) {
-                    const source = nodeById.get(link.source);
-                    const target = nodeById.get(link.target);
+                    const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                    const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+                    const source = nodeById.get(sourceId);
+                    const target = nodeById.get(targetId);
                     if (!source || !target) return;
-                    
+
                     d3.select(this).select('.link-path')
-                        .attr('d', self.createEdgePath(source, target, nodeWidth, link.edgeOffset || 0));
-                    
+                        .attr('d', D3DiagramUtils.createEdgePath(source, target, nodeWidth, link.edgeOffset || 0));
+
                     // Update label position
-                    const labelPos = self.getEdgeLabelPosition(source, target, nodeWidth);
+                    const labelPos = D3DiagramUtils.getEdgeLabelPosition(source, target, nodeWidth);
                     d3.select(this).select('.link-label')
                         .attr('x', labelPos.x)
                         .attr('y', labelPos.y);

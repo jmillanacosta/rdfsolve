@@ -881,3 +881,447 @@ body {
         flex-direction: column;
     }
 }
+
+/* Fullscreen mode for LS Cloud */
+.ls-cloud-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    z-index: 9999 !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+    background: var(--card-background) !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.ls-cloud-fullscreen .ls-cloud-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.ls-cloud-fullscreen .ls-cloud-content > div {
+    flex: 1;
+    min-height: 0;
+}
+
+.ls-cloud-fullscreen #ls-diagram {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+/* Ensure all controls visible in fullscreen */
+.ls-cloud-fullscreen .section-title {
+    margin-bottom: 12px !important;
+}
+
+.ls-cloud-fullscreen > div:first-child {
+    flex-shrink: 0;
+}
+
+/* Fullscreen mode for Schema Diagram */
+.schema-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    z-index: 9999 !important;
+    border-radius: 0 !important;
+    overflow: auto;
+    background: var(--background-color);
+}
+
+.schema-fullscreen #schema-diagram {
+    min-height: calc(100vh - 200px) !important;
+    height: calc(100vh - 200px) !important;
+}
+
+/* Autocomplete Suggestions for Path Finding */
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: var(--box-shadow);
+}
+
+.autocomplete-suggestions .suggestion-item {
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--card-background);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.autocomplete-suggestions .suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-suggestions .suggestion-item:hover,
+.autocomplete-suggestions .suggestion-item.active {
+    background: var(--card-background);
+}
+
+.autocomplete-suggestions .suggestion-item .node-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.autocomplete-suggestions .suggestion-item .dataset-badges {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.autocomplete-suggestions .suggestion-item .dataset-badge {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+/* Path List Items (removable) */
+.path-list-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 4px 10px;
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    font-size: 11px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+}
+
+.path-list-item .path-text {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.path-list-item .remove-path-btn {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    transition: var(--transition);
+}
+
+.path-list-item .remove-path-btn:hover {
+    background: var(--error-color);
+    color: #fff;
+}
+
+/* Path autocomplete input focus state */
+.path-autocomplete:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.15);
+}
+
+/* ============================================
+   LS Cloud Collapsible Section & Path Sidebar
+   ============================================ */
+
+/* Section Header Styling */
+.ls-cloud-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f6f8fa 0%, #e8eef4 100%);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition);
+}
+
+.ls-cloud-header:hover {
+    background: linear-gradient(135deg, #e8eef4 0%, #dbe4ed 100%);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.collapse-icon {
+    font-size: 10px;
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+}
+
+.ls-cloud-container.collapsed .collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.header-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-actions .btn {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+/* Content wrapper for collapse */
+.ls-cloud-content {
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.ls-cloud-container.collapsed .ls-cloud-content {
+    display: none;
+}
+
+/* Main visualization area */
+.ls-cloud-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 16px;
+}
+
+/* Path Finder Sidebar */
+.ls-path-sidebar {
+    width: 0;
+    overflow: hidden;
+    border-left: 1px solid var(--border-color);
+    background: var(--card-background);
+    transition: width 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.ls-path-sidebar.open {
+    width: 300px;
+}
+
+.ls-path-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    background: #fff;
+}
+
+.ls-path-sidebar-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ls-path-sidebar-close {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+.ls-path-sidebar-close:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+.ls-path-sidebar-content {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+/* Path Controls Group in sidebar */
+.path-controls-group {
+    margin-bottom: 16px;
+}
+
+.path-controls-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.path-input-wrapper {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.path-input-wrapper input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: #fff;
+}
+
+.path-input-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+}
+
+.path-actions-sidebar {
+    display: flex;
+    gap: 8px;
+}
+
+.path-actions-sidebar .btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+/* Current Paths Section in Sidebar */
+.current-paths-section {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.current-paths-section h5 {
+    margin: 0 0 12px 0;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.paths-list-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.paths-list-sidebar .path-list-item {
+    display: flex;
+    margin: 0;
+    border-radius: 4px;
+}
+
+.paths-list-sidebar .path-list-item .path-text {
+    flex: 1;
+    max-width: none;
+}
+
+/* Toggle button in header */
+.ls-path-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.ls-path-toggle-btn:hover {
+    background: var(--card-background);
+    color: var(--text-primary);
+}
+
+.ls-path-toggle-btn.active {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+/* Fullscreen adjustments for path sidebar */
+.ls-cloud-fullscreen .ls-path-sidebar.open {
+    width: 350px;
+}
+
+.ls-cloud-fullscreen .ls-cloud-header {
+    flex-shrink: 0;
+}
+
+.ls-cloud-fullscreen .ls-cloud-content {
+    flex: 1;
+    min-height: 0;
+}
+
+.ls-cloud-fullscreen .ls-cloud-main {
+    overflow: auto;
+}
+
+/* Exit fullscreen button styling */
+.ls-exit-fullscreen-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+    background: var(--text-secondary);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.ls-exit-fullscreen-btn:hover {
+    background: var(--text-primary);
+}
+

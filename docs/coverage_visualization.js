@@ -44,6 +44,11 @@ class CoverageVisualization {
             return;
         }
 
+        // Set the dataset name in the panel header
+        const nameSpan = document.getElementById('coverage-dataset-name');
+        console.log("coverage-dataset-name element:", nameSpan, "setting to:", datasetName);
+        if (nameSpan) nameSpan.textContent = datasetName;
+
         this.showLoading();
         this.openSidebar();
 
@@ -421,6 +426,11 @@ class CoverageVisualization {
         
         document.getElementById('coverage-panel')?.classList.add('open');
         document.getElementById('main-content')?.classList.add('panel-open');
+        
+        // Collapse LS Cloud section when panel opens
+        if (window.lsCloud) {
+            window.lsCloud.toggleCollapse(true);
+        }
     }
 
     closeSidebar() {
