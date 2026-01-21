@@ -359,6 +359,103 @@ const D3DiagramUtils = {
     },
 
     /**
+     * Assign edge offsets to prevent overlapping labels when multiple edges exist
+     * between the same pair of nodes. Groups edges by source-target pair and assigns
+     * sequential offsets so paths and labels are visually separated.
+     */
+    assignEdgeOffsets(links) {
+        // Group edges by unordered node pair
+        const pairMap = new Map();
+        links.forEach(link => {
+            const s = typeof link.source === 'object' ? link.source.id : link.source;
+            const t = typeof link.target === 'object' ? link.target.id : link.target;
+            // Use sorted key so A->B and B->A are grouped together
+            const key = [s, t].sort().join('|||');
+            if (!pairMap.has(key)) {
+                pairMap.set(key, []);
+            }
+            pairMap.get(key).push(link);
+        });
+
+        // Assign offsets within each group
+        pairMap.forEach(group => {
+            const count = group.length;
+            group.forEach((link, idx) => {
+                // Center the group: offsets are -1, 0, 1 for 3 edges, etc.
+                link.edgeOffset = idx - Math.floor(count / 2);
+                link.edgeIndex = idx;
+                link.edgeCount = count;
+            });
+        });
+    },
+
+    /**
+     * Create a drag behavior for diagram nodes
+     * @param {Object} options - Configuration options
+     * @param {Map|Function} options.nodeById - Map of nodeId -> node, or function to get node by id
+     * @param {Object} options.linkGroups - D3 selection of link groups
+     * @param {number} options.nodeWidth - Width of nodes
+     * @param {Function} options.getCurvedEdges - Function that returns current curvedEdges setting
+     * @param {Function} [options.onDragStart] - Optional callback on drag start
+     * @param {Function} [options.onDragEnd] - Optional callback on drag end
+     * @returns {Object} D3 drag behavior
+     */
+    createDragBehavior(options) {
+        const { nodeById, linkGroups, nodeWidth, getCurvedEdges, onDragStart, onDragEnd } = options;
+        const self = this;
+        
+        // Helper to get node from nodeById (supports Map or Function)
+        const getNode = (id) => {
+            if (typeof nodeById === 'function') return nodeById(id);
+            if (nodeById instanceof Map) return nodeById.get(id);
+            return nodeById[id];
+        };
+
+        return d3.drag()
+            .on('start', function(event, d) {
+                d3.select(this).raise().classed('dragging', true);
+                if (onDragStart) onDragStart.call(this, event, d);
+            })
+            .on('drag', function(event, d) {
+                d.x = event.x;
+                d.y = event.y;
+                d3.select(this).attr('transform', `translate(${d.x}, ${d.y})`);
+
+                // Choose edge path function based on curvedEdges setting
+                const useCurved = getCurvedEdges ? getCurvedEdges() : false;
+                const pathFn = useCurved 
+                    ? self.createCurvedEdgePath.bind(self)
+                    : self.createEdgePath.bind(self);
+
+                // Update connected links
+                linkGroups.each(function(link) {
+                    const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                    const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+                    const source = getNode(sourceId);
+                    const target = getNode(targetId);
+                    if (!source || !target) return;
+
+                    // Update path
+                    d3.select(this).select('path, .link-path')
+                        .attr('d', pathFn(source, target, nodeWidth, link.edgeOffset || 0));
+
+                    // Update label position
+                    const labelPos = self.getEdgeLabelPosition(
+                        source, target, nodeWidth,
+                        link.edgeOffset || 0, link.edgeIndex || 0, link.edgeCount || 1
+                    );
+                    d3.select(this).select('text, .link-label')
+                        .attr('x', labelPos.x)
+                        .attr('y', labelPos.y);
+                });
+            })
+            .on('end', function(event, d) {
+                d3.select(this).classed('dragging', false);
+                if (onDragEnd) onDragEnd.call(this, event, d);
+            });
+    },
+
+    /**
      * Create orthogonal edge path between two nodes
      * Ends before target node to leave room for arrowhead
      */
@@ -389,27 +486,77 @@ const D3DiagramUtils = {
     },
 
     /**
-     * Get label position for an edge (anchored to edge path, not just midpoint)
+     * Create curved edge path between two nodes (Bezier version)
+     * Ends before target node to leave room for arrowhead
      */
-    getEdgeLabelPosition(source, target, nodeWidth) {
+    createCurvedEdgePath(source, target, nodeWidth, edgeOffset = 0) {
+        const offsetSpacing = 15;
+        const offset = edgeOffset * offsetSpacing;
+        const arrowPadding = 12; // Space for arrowhead
+
         const sx = source.x + nodeWidth / 2;
         const sy = source.y + (source.height || 80);
         const tx = target.x + nodeWidth / 2;
+        const ty = target.y - arrowPadding;
+
+        // Calculate control point offset based on edge offset
+        const curveOffset = offset;
+
+        // For edges going down (normal case)
+        if (ty > sy + 20) {
+            const midY = sy + (ty - sy) / 2;
+            // Cubic Bezier curve with offset control points
+            const cy1 = sy + (midY - sy) / 2;
+            const cy2 = midY + (ty - midY) / 2;
+            return `M${sx},${sy} C${sx + curveOffset},${cy1} ${tx + curveOffset},${cy2} ${tx},${ty}`;
+        }
+
+        // Back-edges or same level: curve around
+        const detour = 60 + Math.abs(offset);
+        const goRight = tx > sx || offset > 0;
+        const sideOffset = goRight ? detour : -detour;
+        const cx = (sx + tx) / 2 + sideOffset;
+        const cy = Math.min(sy, ty) - 40;
+        
+        return `M${sx},${sy} Q${cx},${cy} ${tx},${ty}`;
+    },
+
+    /**
+     * Get label position for an edge (anchored to edge path, not just midpoint)
+     * @param {Object} source - Source node
+     * @param {Object} target - Target node
+     * @param {number} nodeWidth - Width of nodes
+     * @param {number} edgeOffset - Offset index for this edge (0 = center, negative = left, positive = right)
+     * @param {number} edgeIndex - Index of this edge within its group
+     * @param {number} edgeCount - Total edges between this node pair
+     */
+    getEdgeLabelPosition(source, target, nodeWidth, edgeOffset = 0, edgeIndex = 0, edgeCount = 1) {
+        const offsetSpacing = 8;
+        const labelVerticalSpacing = 14; // Vertical spacing between stacked labels
+        const offset = edgeOffset * offsetSpacing;
+        
+        const sx = source.x + nodeWidth / 2 + offset;
+        const sy = source.y + (source.height || 80);
+        const tx = target.x + nodeWidth / 2 + offset;
         const ty = target.y;
 
         // Orthogonal edges: place label on the horizontal segment, or midpoint for vertical
         if (ty > sy + 20) {
             // Edge goes down: horizontal segment is at midY
             const midY = sy + (ty - sy) / 2;
+            // Stack labels vertically when multiple edges exist
+            const labelY = midY - 6 + (edgeIndex - Math.floor(edgeCount / 2)) * labelVerticalSpacing;
+            
             // For mostly vertical edges, place label just to the right of the vertical line
             if (Math.abs(tx - sx) < 30) {
-                return { x: sx + 12, y: midY };
+                return { x: sx + 12, y: labelY };
             }
             // For edges with a horizontal segment, place label above the horizontal segment
-            return { x: (sx + tx) / 2, y: midY - 6 };
+            return { x: (sx + tx) / 2, y: labelY };
         }
-        // Back-edge or same-level: place label above the topmost point
-        return { x: (sx + tx) / 2, y: Math.min(sy, ty) - 14 };
+        // Back-edge or same-level: place label above the topmost point, stacked vertically
+        const labelY = Math.min(sy, ty) - 14 + (edgeIndex - Math.floor(edgeCount / 2)) * labelVerticalSpacing;
+        return { x: (sx + tx) / 2, y: labelY };
     },
     /**
      * Filter nodes by a predicate, highlight them, and return filtered/hidden nodes.
@@ -457,7 +604,7 @@ const D3DiagramUtils = {
      * @param {string} options.yMinusId - ID for Y- button
      * @param {string} options.yValId - ID for Y value display
      * @param {number} options.initialX - Initial X spacing value (default 1.0)
-     * @param {number} options.initialY - Initial Y spacing value (default 8.0)
+     * @param {number} options.initialY - Initial Y spacing value (default 1.0)
      * @param {number} options.step - Step increment (default 0.2)
      * @param {Function} options.onChange - Callback with (xSpacing, ySpacing) when values change
      * @returns {Object} { xSpacing, ySpacing, getValues() }
@@ -466,8 +613,8 @@ const D3DiagramUtils = {
         const {
             xPlusId, xMinusId, xValId,
             yPlusId, yMinusId, yValId,
-            initialX = 6.0,
-            initialY = 8.0,
+            initialX = 1,
+            initialY = 1,
             step = 0.2,
             onChange = () => {}
         } = options;

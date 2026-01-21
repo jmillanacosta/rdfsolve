@@ -47,7 +47,10 @@ class lsCloudVisualization {
         
         // Spacing multipliers (controlled by buttons) - start with high Y for readability
         this.xSpacing = 1.0;
-        this.ySpacing = 8.0;
+        this.ySpacing = 1.0;
+        
+        // Edge style: false = orthogonal, true = curved
+        this.curvedEdges = false;
         
         // Prefixes to exclude
         this.excludedPrefixes = [
@@ -234,6 +237,12 @@ class lsCloudVisualization {
         });
         document.getElementById('ls-path-sidebar-close')?.addEventListener('click', () => this.togglePathSidebar(false));
         
+        // Edge style toggle (orthogonal vs curved)
+        document.getElementById('ls-edge-style-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleEdgeStyle();
+        });
+        
         // Rebuild diagram when exclude-OWL checkbox changes so exclusion affects construction
         const excludeChk = document.getElementById('ls-exclude-owl');
         if (excludeChk) {
@@ -307,8 +316,8 @@ class lsCloudVisualization {
             yPlusId: 'ls-y-spacing-plus',
             yMinusId: 'ls-y-spacing-minus',
             yValId: 'ls-y-spacing-val',
-            initialX: 1.0,
-            initialY: 8.0,
+            initialX: 6.0,
+            initialY: 3.0,
             step: 0.2,
             onChange: (xSpacing, ySpacing) => {
                 this.xSpacing = xSpacing;
@@ -493,20 +502,53 @@ class lsCloudVisualization {
             return;
         }
 
-        const path = this.findPath(this.pathFromNodeId, this.pathToNodeId);
-        if (path) {
-            // Add path with metadata for display
+        // Get path settings from UI
+        const shortestOnly = document.getElementById('ls-path-shortest-only')?.checked ?? true;
+        const maxDepth = parseInt(document.getElementById('ls-path-max-depth')?.value) || 5;
+
+        let nodePaths;
+        if (shortestOnly) {
+            // Use BFS to find shortest path only
+            const shortestPath = this.findPath(this.pathFromNodeId, this.pathToNodeId);
+            nodePaths = shortestPath ? [shortestPath] : [];
+        } else {
+            // Find all paths with the configured max depth
+            nodePaths = this.findAllPaths(this.pathFromNodeId, this.pathToNodeId, 50, maxDepth);
+        }
+        
+        // Expand node-paths to edge-paths (each unique edge sequence is a separate path)
+        let expandedPaths = [];
+        nodePaths.forEach(nodePath => {
+            const edgePaths = this.expandPathToEdgePaths(nodePath);
+            expandedPaths.push(...edgePaths);
+        });
+        
+        if (expandedPaths && expandedPaths.length > 0) {
             const fromNode = this.graphData.nodes.find(n => n.id === this.pathFromNodeId);
             const toNode = this.graphData.nodes.find(n => n.id === this.pathToNodeId);
-            this.allPaths.push({
-                path: path,
-                fromLabel: fromNode?.label || this.pathFromNodeId,
-                toLabel: toNode?.label || this.pathToNodeId
+            const fromLabel = fromNode?.label || this.pathFromNodeId;
+            const toLabel = toNode?.label || this.pathToNodeId;
+            
+            // Add all paths with same color (they share the same endpoint pair)
+            const colorIndex = this.allPaths.length > 0 
+                ? Math.max(...this.allPaths.map(p => p.colorIndex || 0)) + 1 
+                : 0;
+            
+            expandedPaths.forEach((edgePath, i) => {
+                this.allPaths.push({
+                    path: edgePath.nodes,
+                    edges: edgePath.edges,
+                    fromLabel: fromLabel,
+                    toLabel: toLabel,
+                    colorIndex: colorIndex, // All paths between same nodes share color
+                    pathNumber: i + 1,
+                    totalPaths: expandedPaths.length
+                });
             });
             
-            status.textContent = `${this.allPaths.length} path(s) found`;
+            const modeText = shortestOnly ? 'shortest path' : `${expandedPaths.length} path(s)`;
+            status.textContent = `Found ${modeText} (${this.allPaths.length} total)`;
             this.highlightAllPaths();
-            this.updatePathsList();
             this.showAllPathsQueryPanel();
             
             // Show add/clear buttons
@@ -523,37 +565,6 @@ class lsCloudVisualization {
         }
     }
 
-    updatePathsList() {
-        const listContainer = document.getElementById('ls-paths-list');
-        if (!listContainer) return;
-
-        if (this.allPaths.length === 0) {
-            listContainer.style.display = 'none';
-            listContainer.innerHTML = '';
-            return;
-        }
-
-        listContainer.style.display = 'block';
-        listContainer.innerHTML = this.allPaths.map((pathData, i) => {
-            const label = `${pathData.fromLabel} → ${pathData.toLabel}`;
-            const color = this.getPathColor(i);
-            return `<div class="path-list-item" data-index="${i}" style="border-left: 3px solid ${color};">
-                <span class="path-color-dot" style="width: 10px; height: 10px; border-radius: 50%; background: ${color}; flex-shrink: 0;"></span>
-                <span class="path-text" title="${label}">${label}</span>
-                <button class="remove-path-btn" data-index="${i}" title="Remove this path">×</button>
-            </div>`;
-        }).join('');
-
-        // Add click handlers for remove buttons
-        listContainer.querySelectorAll('.remove-path-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const index = parseInt(btn.dataset.index);
-                this.removePath(index);
-            });
-        });
-    }
-
     removePath(index) {
         if (index >= 0 && index < this.allPaths.length) {
             this.allPaths.splice(index, 1);
@@ -562,7 +573,6 @@ class lsCloudVisualization {
                 this.clearAllPaths();
             } else {
                 this.highlightAllPaths();
-                this.updatePathsList();
                 this.showAllPathsQueryPanel();
                 document.getElementById('ls-path-status').textContent = `${this.allPaths.length} path(s)`;
             }
@@ -752,17 +762,18 @@ class lsCloudVisualization {
             }
 
             // add link between non-excluded nodes
+            // Each subject-property-object is a unique edge (not merged by subject-object pair)
             if (!subjectExcluded && !objectExcluded && subjectUri !== objectUri) {
-                const key = `${subjectUri}|||${objectUri}`;
+                const key = `${subjectUri}|||${propertyLabel}|||${objectUri}`;
                 if (!linkMap.has(key)) {
                     linkMap.set(key, {
                         source: subjectUri,
                         target: objectUri,
-                        properties: new Set(),
+                        property: propertyLabel,
+                        label: propertyLabel,
                         datasets: new Set()
                     });
                 }
-                linkMap.get(key).properties.add(propertyLabel);
                 linkMap.get(key).datasets.add(dataset);
                 // increment degrees
                 const sNode = nodeMap.get(subjectUri);
@@ -781,9 +792,7 @@ class lsCloudVisualization {
 
         const links = Array.from(linkMap.values()).map(l => ({
             ...l,
-            properties: Array.from(l.properties),
-            datasets: Array.from(l.datasets),
-            label: Array.from(l.properties).slice(0, 2).join(', ')
+            datasets: Array.from(l.datasets)
         }));
 
         return { nodes, links };
@@ -1152,9 +1161,12 @@ class lsCloudVisualization {
         
         this.allPaths.forEach((pathData, pathIdx) => {
             const path = Array.isArray(pathData) ? pathData : pathData.path;
+            const storedEdges = pathData.edges; // May have pre-computed edges from expansion
             if (!path || path.length < 2) return;
             
-            const color = this.getPathColor(pathIdx);
+            // Use colorIndex if available (paths between same nodes share color)
+            const colorIdx = pathData.colorIndex !== undefined ? pathData.colorIndex : pathIdx;
+            const color = this.getPathColor(colorIdx);
             const lightBg = this.hexToRgba(color, 0.1);
             const borderColor = this.hexToRgba(color, 0.4);
             
@@ -1162,28 +1174,50 @@ class lsCloudVisualization {
             for (let i = 0; i < path.length - 1; i++) {
                 const subj = this.graphData.nodes.find(n => n.id === path[i]);
                 const obj = this.graphData.nodes.find(n => n.id === path[i+1]);
-                const link = this.graphData.links.find(l => 
-                    (l.source === path[i] && l.target === path[i+1]) || 
-                    (l.source === path[i+1] && l.target === path[i]) ||
-                    (l.source?.id === path[i] && l.target?.id === path[i+1]) ||
-                    (l.source?.id === path[i+1] && l.target?.id === path[i])
-                );
+                
                 const subjLabel = subj ? subj.label : path[i];
                 const objLabel = obj ? obj.label : path[i+1];
-                const predLabel = link ? (link.label || '?p') : '?p';
-                lines.push(`${subjLabel}  ${predLabel}  ${objLabel} .`);
+                
+                // Use stored edge if available, otherwise search for it
+                if (storedEdges && storedEdges[i]) {
+                    const edge = storedEdges[i];
+                    const predLabel = edge.property || edge.label || '?p';
+                    lines.push(`${subjLabel}  ${predLabel}  ${objLabel} .`);
+                } else {
+                    // Fallback: find edge in graph data
+                    const link = this.graphData.links.find(l => 
+                        (l.source === path[i] && l.target === path[i+1]) || 
+                        (l.source === path[i+1] && l.target === path[i]) ||
+                        (l.source?.id === path[i] && l.target?.id === path[i+1]) ||
+                        (l.source?.id === path[i+1] && l.target?.id === path[i])
+                    );
+                    const predLabel = link ? (link.property || link.label || '?p') : '?p';
+                    lines.push(`${subjLabel}  ${predLabel}  ${objLabel} .`);
+                }
             }
             
-            const pathLabel = `${pathData.fromLabel || 'Start'} → ${pathData.toLabel || 'End'}`;
-            allPlainText.push(`# Path ${pathIdx + 1}: ${pathLabel}`);
+            // Show path number if there are multiple paths between same nodes
+            const pathInfo = pathData.totalPaths > 1 
+                ? ` (${pathData.pathNumber}/${pathData.totalPaths})`
+                : '';
+            const pathLabel = `${pathData.fromLabel || 'Start'} → ${pathData.toLabel || 'End'}${pathInfo}`;
+            
+            // Path length = number of nodes in path, edges = nodes - 1
+            const pathLength = path.length;
+            const edgeCount = lines.length; // Number of triples (includes multiple edges between same nodes)
+            const lengthInfo = `${pathLength} nodes, ${edgeCount} edges`;
+            
+            allPlainText.push(`# Path ${pathIdx + 1}: ${pathLabel} [${lengthInfo}]`);
             allPlainText.push(...lines);
             allPlainText.push('');
             
             bubblesHtml.push(`
-                <div class="path-bubble" style="background: ${lightBg}; border: 1px solid ${borderColor}; border-left: 4px solid ${color}; border-radius: 6px; padding: 8px 12px;">
-                    <div style="font-size: 11px; font-weight: 600; color: ${color}; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                <div class="path-bubble" data-path-index="${pathIdx}" style="background: ${lightBg}; border: 1px solid ${borderColor}; border-left: 4px solid ${color}; border-radius: 6px; padding: 8px 12px; position: relative;">
+                    <button class="remove-path-bubble-btn" data-index="${pathIdx}" style="position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border: none; background: ${borderColor}; color: ${color}; border-radius: 50%; cursor: pointer; font-size: 12px; line-height: 1; display: flex; align-items: center; justify-content: center;" title="Remove this path">×</button>
+                    <div style="font-size: 11px; font-weight: 600; color: ${color}; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; padding-right: 20px;">
                         <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
                         Path ${pathIdx + 1}: ${pathLabel}
+                        <span style="font-weight: 400; font-size: 10px; color: var(--text-secondary); margin-left: auto;">${lengthInfo}</span>
                     </div>
                     <pre style="margin: 0; font-family: 'SF Mono', Consolas, monospace; font-size: 10px; line-height: 1.5; color: var(--text-primary); white-space: pre-wrap; word-break: break-word;">${lines.join('\n')}</pre>
                 </div>
@@ -1191,6 +1225,16 @@ class lsCloudVisualization {
         });
         
         bubblesContainer.innerHTML = bubblesHtml.join('');
+        
+        // Add click handlers for delete buttons on bubbles
+        bubblesContainer.querySelectorAll('.remove-path-bubble-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const index = parseInt(btn.dataset.index);
+                this.removePath(index);
+            });
+        });
+        
         if (txtarea) txtarea.value = allPlainText.join('\n').trim();
         panel.style.display = 'block';
     }
@@ -1244,6 +1288,97 @@ class lsCloudVisualization {
         return null;
     }
 
+    /**
+     * Find ALL paths between two nodes using DFS with backtracking
+     * @param {string} startId - Start node ID
+     * @param {string} endId - End node ID
+     * @param {number} maxPaths - Maximum number of paths to return (default 50)
+     * @param {number} maxDepth - Maximum path length to explore (default 10)
+     * @returns {Array} Array of paths (each path is an array of node IDs)
+     */
+    findAllPaths(startId, endId, maxPaths = 50, maxDepth = 10) {
+        const adjacency = new Map();
+        this.graphData.links.forEach(l => {
+            const s = l.source.id || l.source;
+            const t = l.target.id || l.target;
+            if (!adjacency.has(s)) adjacency.set(s, []);
+            if (!adjacency.has(t)) adjacency.set(t, []);
+            adjacency.get(s).push(t);
+            adjacency.get(t).push(s);
+        });
+
+        const allPaths = [];
+        const visited = new Set();
+
+        const dfs = (currentId, path) => {
+            if (allPaths.length >= maxPaths) return;
+            if (path.length > maxDepth) return;
+            
+            if (currentId === endId) {
+                allPaths.push([...path]);
+                return;
+            }
+
+            visited.add(currentId);
+            const neighbors = adjacency.get(currentId) || [];
+            for (const neighbor of neighbors) {
+                if (!visited.has(neighbor)) {
+                    path.push(neighbor);
+                    dfs(neighbor, path);
+                    path.pop();
+                    if (allPaths.length >= maxPaths) break;
+                }
+            }
+            visited.delete(currentId);
+        };
+
+        dfs(startId, [startId]);
+        return allPaths;
+    }
+
+    /**
+     * Expand a node-path into multiple edge-paths when there are multiple edges between nodes.
+     * Each unique sequence of edges becomes a separate path.
+     * @param {Array} nodePath - Array of node IDs representing a path
+     * @returns {Array} Array of edge-paths, each containing { nodes: [...], edges: [...] }
+     */
+    expandPathToEdgePaths(nodePath) {
+        if (!nodePath || nodePath.length < 2) return [];
+        
+        // For each consecutive node pair, find all edges between them
+        const edgeOptions = [];
+        for (let i = 0; i < nodePath.length - 1; i++) {
+            const fromId = nodePath[i];
+            const toId = nodePath[i + 1];
+            const edges = this.graphData.links.filter(l => {
+                const s = l.source?.id || l.source;
+                const t = l.target?.id || l.target;
+                return (s === fromId && t === toId) || (s === toId && t === fromId);
+            });
+            edgeOptions.push(edges.length > 0 ? edges : [{ property: '?p' }]);
+        }
+        
+        // Generate all combinations (Cartesian product)
+        const expandedPaths = [];
+        const generateCombinations = (index, currentEdges) => {
+            if (index === edgeOptions.length) {
+                expandedPaths.push({
+                    nodes: nodePath,
+                    edges: [...currentEdges]
+                });
+                return;
+            }
+            for (const edge of edgeOptions[index]) {
+                currentEdges.push(edge);
+                generateCombinations(index + 1, currentEdges);
+                currentEdges.pop();
+            }
+        };
+        
+        generateCombinations(0, []);
+        return expandedPaths;
+    }
+
     highlightPath(path) {
         const pathSet = new Set(path);
         d3.selectAll('.node-group')
@@ -1273,14 +1408,17 @@ class lsCloudVisualization {
     highlightAllPaths() {
         // Build maps of node/edge to their path colors (for multi-path, first path wins)
         const nodeColorMap = new Map(); // nodeId -> color
-        const edgeColorMap = new Map(); // "source|||target" -> color
+        const edgeColorMap = new Map(); // "source|||target|||property" -> color
         const allPathNodes = new Set();
-        const allPathEdges = new Set();
+        const allPathEdges = new Set(); // Set of "source|||target|||property" keys
         
         this.allPaths.forEach((pathData, pathIdx) => {
             const path = Array.isArray(pathData) ? pathData : pathData.path;
+            const storedEdges = pathData.edges;
             if (!path) return;
-            const color = this.getPathColor(pathIdx);
+            // Use colorIndex if available (paths between same nodes share color)
+            const colorIdx = pathData.colorIndex !== undefined ? pathData.colorIndex : pathIdx;
+            const color = this.getPathColor(colorIdx);
             
             path.forEach(nodeId => {
                 allPathNodes.add(nodeId);
@@ -1290,8 +1428,14 @@ class lsCloudVisualization {
             });
             
             for (let i = 0; i < path.length - 1; i++) {
-                const edgeKey1 = `${path[i]}|||${path[i+1]}`;
-                const edgeKey2 = `${path[i+1]}|||${path[i]}`;
+                // If we have stored edges, use the specific edge property
+                const edgeProp = storedEdges && storedEdges[i] 
+                    ? (storedEdges[i].property || storedEdges[i].label || '') 
+                    : '';
+                
+                // Create edge keys that include the property for specific matching
+                const edgeKey1 = `${path[i]}|||${path[i+1]}|||${edgeProp}`;
+                const edgeKey2 = `${path[i+1]}|||${path[i]}|||${edgeProp}`;
                 allPathEdges.add(edgeKey1);
                 allPathEdges.add(edgeKey2);
                 if (!edgeColorMap.has(edgeKey1)) {
@@ -1320,17 +1464,20 @@ class lsCloudVisualization {
             .classed('path-link', d => {
                 const s = d.source.id || d.source;
                 const t = d.target.id || d.target;
-                return allPathEdges.has(`${s}|||${t}`);
+                const prop = d.property || d.label || '';
+                return allPathEdges.has(`${s}|||${t}|||${prop}`);
             })
             .classed('dimmed', d => {
                 const s = d.source.id || d.source;
                 const t = d.target.id || d.target;
-                return allPathEdges.size > 0 && !allPathEdges.has(`${s}|||${t}`);
+                const prop = d.property || d.label || '';
+                return allPathEdges.size > 0 && !allPathEdges.has(`${s}|||${t}|||${prop}`);
             })
             .each(function(d) {
                 const s = d.source.id || d.source;
                 const t = d.target.id || d.target;
-                const color = edgeColorMap.get(`${s}|||${t}`);
+                const prop = d.property || d.label || '';
+                const color = edgeColorMap.get(`${s}|||${t}|||${prop}`);
                 const path = d3.select(this).select('path');
                 if (color) {
                     path.style('stroke', color).style('stroke-width', '3px');
@@ -1430,6 +1577,28 @@ class lsCloudVisualization {
             toggleBtn.style.background = '';
             toggleBtn.style.color = '';
             toggleBtn.style.borderColor = '';
+        }
+    }
+    
+    // Toggle edge style between orthogonal and curved
+    toggleEdgeStyle() {
+        this.curvedEdges = !this.curvedEdges;
+        const btn = document.getElementById('ls-edge-style-btn');
+        if (btn) {
+            btn.textContent = this.curvedEdges ? 'Curved' : 'Orthogonal';
+            if (this.curvedEdges) {
+                btn.style.background = 'var(--primary-color)';
+                btn.style.color = '#fff';
+                btn.style.borderColor = 'var(--primary-color)';
+            } else {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.borderColor = '';
+            }
+        }
+        // Re-render diagram with new edge style immediately
+        if (this.graphData && this.graphData.nodes.length > 0) {
+            this.renderDiagram();
         }
     }
     
@@ -1589,7 +1758,7 @@ class lsCloudVisualization {
         const nodeLayer = g.append('g').attr('class', 'nodes-layer');
 
         // Assign edge offsets to prevent overlapping edges from same source
-        this.assignEdgeOffsets(links);
+        D3DiagramUtils.assignEdgeOffsets(links);
 
         // Draw links
         const linkGroups = linkLayer.selectAll('g')
@@ -1604,16 +1773,24 @@ class lsCloudVisualization {
             const target = nodeById.get(targetId);
             if (!source || !target) return;
 
+            // Choose edge path function based on curvedEdges setting
+            const pathFn = this.curvedEdges 
+                ? D3DiagramUtils.createCurvedEdgePath 
+                : D3DiagramUtils.createEdgePath;
+
             d3.select(elements[i]).append('path')
                 .attr('class', 'link-path')
-                .attr('d', D3DiagramUtils.createEdgePath(source, target, nodeWidth, d.edgeOffset || 0))
+                .attr('d', pathFn(source, target, nodeWidth, d.edgeOffset || 0))
                 .attr('fill', 'none')
                 .attr('stroke', '#aaa')
                 .attr('stroke-width', 1.5)
                 .attr('marker-end', 'url(#arrow)');
 
-            // Improved: place label at the true midpoint of the edge path
-            const labelPos = D3DiagramUtils.getEdgeLabelPosition(source, target, nodeWidth);
+            // Place label with offset to avoid overlapping when multiple edges exist
+            const labelPos = D3DiagramUtils.getEdgeLabelPosition(
+                source, target, nodeWidth, 
+                d.edgeOffset || 0, d.edgeIndex || 0, d.edgeCount || 1
+            );
             d3.select(elements[i]).append('text')
                 .attr('x', labelPos.x)
                 .attr('y', labelPos.y)
@@ -1780,132 +1957,15 @@ class lsCloudVisualization {
         if (this.intersectionMode) this.applyIntersectionDimming();
     }
 
-    // Assign offsets to edges sharing the same source to prevent overlap
-    assignEdgeOffsets(links) {
-        // Group links by source
-        const bySource = new Map();
-        links.forEach(link => {
-            if (!bySource.has(link.source)) bySource.set(link.source, []);
-            bySource.get(link.source).push(link);
-        });
-
-        // Assign offsets within each group
-        bySource.forEach((group, sourceId) => {
-            if (group.length <= 1) {
-                group.forEach(l => l.edgeOffset = 0);
-                return;
-            }
-            // Center the offsets around 0
-            const mid = (group.length - 1) / 2;
-            group.forEach((link, i) => {
-                link.edgeOffset = i - mid;
-            });
-        });
-
-        // Also offset edges going to the same target
-        const byTarget = new Map();
-        links.forEach(link => {
-            if (!byTarget.has(link.target)) byTarget.set(link.target, []);
-            byTarget.get(link.target).push(link);
-        });
-
-        byTarget.forEach((group, targetId) => {
-            if (group.length <= 1) return;
-            const mid = (group.length - 1) / 2;
-            group.forEach((link, i) => {
-                // Add to existing offset
-                link.edgeOffset = (link.edgeOffset || 0) + (i - mid) * 0.5;
-            });
-        });
-    }
-
-    // Create drag behavior for nodes (uses shared D3DiagramUtils for edge/label updates)
+    // Create drag behavior for nodes using shared D3DiagramUtils
     createDrag(nodeById, linkGroups, nodeWidth) {
-        return d3.drag()
-            .on('start', function(event, d) {
-                d3.select(this).raise();
-            })
-            .on('drag', function(event, d) {
-                d.x = event.x;
-                d.y = event.y;
-                d3.select(this).attr('transform', `translate(${d.x}, ${d.y})`);
-
-                // Update connected links
-                linkGroups.each(function(link) {
-                    const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-                    const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-                    const source = nodeById.get(sourceId);
-                    const target = nodeById.get(targetId);
-                    if (!source || !target) return;
-
-                    d3.select(this).select('.link-path')
-                        .attr('d', D3DiagramUtils.createEdgePath(source, target, nodeWidth, link.edgeOffset || 0));
-
-                    // Update label position
-                    const labelPos = D3DiagramUtils.getEdgeLabelPosition(source, target, nodeWidth);
-                    d3.select(this).select('.link-label')
-                        .attr('x', labelPos.x)
-                        .attr('y', labelPos.y);
-                });
-            });
-    }
-
-    // Create edge path with offset to avoid overlaps
-    createEdgePath(source, target, nodeWidth, offset = 0) {
-        const sx = source.x + nodeWidth / 2;
-        const sy = source.y + source.height;
-        const tx = target.x + nodeWidth / 2;
-        const ty = target.y;
-
-        // Apply horizontal offset to avoid overlapping edges
-        const offsetX = offset * 15;
-
-        // Target is below source (normal tree flow)
-        if (ty > sy + 10) {
-            // Stagger the vertical midpoint based on offset to separate parallel edges
-            const midY = sy + (ty - sy) * (0.4 + offset * 0.1);
-            return `M ${sx} ${sy} V ${midY} H ${tx + offsetX} V ${ty}`;
-        }
-        
-        // Back-edge (target is above or same level)
-        const loopOffset = 40 + Math.abs(offset) * 20;
-        const goRight = tx >= sx;
-        const routeX = goRight ? 
-            Math.max(source.x + nodeWidth, target.x + nodeWidth) + loopOffset :
-            Math.min(source.x, target.x) - loopOffset;
-        
-        return `M ${sx} ${sy} V ${sy + 25} H ${routeX} V ${ty - 25} H ${tx} V ${ty}`;
-    }
-
-    // Get label position for an edge - positioned right next to the edge path
-    getEdgeLabelPosition(source, target, nodeWidth) {
-        const sx = source.x + nodeWidth / 2;
-        const sy = source.y + source.height;
-        const tx = target.x + nodeWidth / 2;
-        const ty = target.y;
-
-        // For vertical edges (going down), place label on the right side of the vertical segment
-        if (ty > sy) {
-            // Orthogonal path goes: down from source, then horizontal, then down to target
-            // Place label at the midpoint of the path, slightly offset from the line
-            const midY = sy + (ty - sy) / 2;
-            const midX = (sx + tx) / 2;
-            
-            // If mostly vertical, place label just to the right of the line
-            if (Math.abs(tx - sx) < 50) {
-                return { x: sx + 8, y: midY };
-            }
-            // If there's a horizontal segment, place at the corner
-            return { x: midX + 8, y: sy + 30 };
-        }
-        
-        // For edges going up or same level
-        return { x: (sx + tx) / 2 + 8, y: Math.min(sy, ty) - 8 };
-    }
-
-    // Wrapper for orthogonalPath that assigns edge offsets
-    orthogonalPath(source, target, nodeWidth) {
-        return this.createEdgePath(source, target, nodeWidth, 0);
+        const self = this;
+        return D3DiagramUtils.createDragBehavior({
+            nodeById: nodeById,
+            linkGroups: linkGroups,
+            nodeWidth: nodeWidth,
+            getCurvedEdges: () => self.curvedEdges
+        });
     }
 
     showMessage(msg) {

@@ -28,7 +28,10 @@ class SchemaDiagram {
         
         // Spacing multipliers (controlled by +/- buttons)
         this.xSpacing = 1.0;
-        this.ySpacing = 2.0;
+        this.ySpacing = 1.0;
+        
+        // Edge style: false = orthogonal, true = curved
+        this.curvedEdges = false;
         
         this.init();
     }
@@ -37,6 +40,7 @@ class SchemaDiagram {
         this.setupEventListeners();
         this.setupSpacingControls();
         this.setupFullscreenButton();
+        this.setupEdgeStyleToggle();
     }
 
     setupEventListeners() {
@@ -75,7 +79,7 @@ class SchemaDiagram {
             yMinusId: 'schema-y-minus',
             yValId: 'schema-y-spacing-val',
             initialX: 1.0,
-            initialY: 8.0,
+            initialY: 1.0,
             step: 0.2,
             onChange: (xSpacing, ySpacing) => {
                 this.xSpacing = xSpacing;
@@ -88,6 +92,25 @@ class SchemaDiagram {
 
         // Keep reference for external access
         this.spacingController = spacingController;
+    }
+
+    setupEdgeStyleToggle() {
+        const btn = document.getElementById('schema-edge-style-btn');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                this.curvedEdges = !this.curvedEdges;
+                btn.textContent = this.curvedEdges ? 'Curved' : 'Orthogonal';
+                if (this.curvedEdges) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+                // Re-render diagram with new edge style
+                if (this.graphData.nodes.length > 0) {
+                    this.renderDiagram();
+                }
+            });
+        }
     }
 
     setupFullscreenButton() {
@@ -252,12 +275,17 @@ class SchemaDiagram {
             .append('g')
             .attr('class', 'link-group');
 
+        // Choose edge path function based on curvedEdges setting
+        const pathFn = this.curvedEdges 
+            ? D3DiagramUtils.createCurvedEdgePath.bind(D3DiagramUtils)
+            : D3DiagramUtils.createEdgePath.bind(D3DiagramUtils);
+
         linkGroups.append('path')
             .attr('d', d => {
                 const source = nodes.find(n => n.id === d.source);
                 const target = nodes.find(n => n.id === d.target);
                 if (!source || !target) return '';
-                return D3DiagramUtils.createEdgePath(source, target, this.config.nodeWidth);
+                return pathFn(source, target, this.config.nodeWidth, d.edgeOffset || 0);
             })
             .attr('fill', 'none')
             .attr('stroke', '#8b949e')
@@ -364,42 +392,17 @@ class SchemaDiagram {
 
     setupDrag(nodeGroups, nodes, links, linkGroups) {
         const nodeWidth = this.config.nodeWidth;
-        const drag = d3.drag()
-            .on('start', function(event, d) {
-                d3.select(this).raise().classed('dragging', true);
-            })
-            .on('drag', function(event, d) {
-                d.x = event.x;
-                d.y = event.y;
-                d3.select(this).attr('transform', `translate(${d.x}, ${d.y})`);
-
-                // Update edges
-                linkGroups.select('path')
-                    .attr('d', l => {
-                        const source = nodes.find(n => n.id === l.source);
-                        const target = nodes.find(n => n.id === l.target);
-                        if (!source || !target) return '';
-                        return D3DiagramUtils.createEdgePath(source, target, nodeWidth);
-                    });
-
-                // Update edge labels
-                linkGroups.select('text')
-                    .attr('x', l => {
-                        const source = nodes.find(n => n.id === l.source);
-                        const target = nodes.find(n => n.id === l.target);
-                        if (!source || !target) return 0;
-                        return D3DiagramUtils.getEdgeLabelPosition(source, target, nodeWidth).x;
-                    })
-                    .attr('y', l => {
-                        const source = nodes.find(n => n.id === l.source);
-                        const target = nodes.find(n => n.id === l.target);
-                        if (!source || !target) return 0;
-                        return D3DiagramUtils.getEdgeLabelPosition(source, target, nodeWidth).y;
-                    });
-            })
-            .on('end', function(event, d) {
-                d3.select(this).classed('dragging', false);
-            });
+        const self = this;
+        
+        // Create a nodeById function for the shared utility
+        const nodeById = (id) => nodes.find(n => n.id === id);
+        
+        const drag = D3DiagramUtils.createDragBehavior({
+            nodeById: nodeById,
+            linkGroups: linkGroups,
+            nodeWidth: nodeWidth,
+            getCurvedEdges: () => self.curvedEdges
+        });
 
         nodeGroups.call(drag);
     }
