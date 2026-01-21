@@ -344,6 +344,451 @@ class lsCloudVisualization {
                 });
             });
         }
+
+        // SPARQL Modal Setup
+        this.setupSparqlModal();
+    }
+
+    // ========== SPARQL Modal ==========
+    
+    setupSparqlModal() {
+        const modal = document.getElementById('sparql-modal');
+        const closeBtn = document.getElementById('sparql-modal-close');
+        const generateBtn = document.getElementById('ls-generate-sparql-btn');
+        const copyBtn = document.getElementById('sparql-copy-btn');
+        const sendBtn = document.getElementById('sparql-send-btn');
+        const queryTextarea = document.getElementById('sparql-query-textarea');
+        const requireTypeCheckbox = document.getElementById('sparql-require-type');
+
+        if (!modal) return;
+
+        // Open modal
+        if (generateBtn) {
+            generateBtn.addEventListener('click', () => {
+                this.openSparqlModal();
+            });
+        }
+
+        // Close modal
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        }
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Copy query
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(queryTextarea.value).then(() => {
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => { copyBtn.textContent = 'Copy Query'; }, 1500);
+                });
+            });
+        }
+
+        // Send query - open primary endpoint with query
+        if (sendBtn) {
+            sendBtn.addEventListener('click', () => {
+                if (this.primaryEndpoint) {
+                    const query = queryTextarea?.value || '';
+                    const encodedQuery = encodeURIComponent(query);
+                    window.open(`${this.primaryEndpoint}?query=${encodedQuery}`, '_blank');
+                }
+            });
+        }
+
+        // Regenerate query when require-type checkbox changes
+        if (requireTypeCheckbox) {
+            requireTypeCheckbox.addEventListener('change', () => {
+                this.regenerateSparqlQuery();
+            });
+        }
+    }
+
+    regenerateSparqlQuery() {
+        const queryTextarea = document.getElementById('sparql-query-textarea');
+        const requireTypeCheckbox = document.getElementById('sparql-require-type');
+        if (!queryTextarea) return;
+        
+        const requireType = requireTypeCheckbox?.checked ?? true;
+        const query = this.generateSparqlFromPaths(requireType);
+        queryTextarea.value = query;
+    }
+
+    openSparqlModal() {
+        const modal = document.getElementById('sparql-modal');
+        const queryTextarea = document.getElementById('sparql-query-textarea');
+        const primaryEndpointEl = document.getElementById('sparql-primary-endpoint');
+        const servicesSection = document.getElementById('sparql-services-section');
+        const servicesList = document.getElementById('sparql-services-list');
+        const graphsSection = document.getElementById('sparql-graphs-section');
+        const graphsList = document.getElementById('sparql-graphs-list');
+        const datasetsList = document.getElementById('sparql-datasets-list');
+        const infoEl = document.getElementById('sparql-modal-info');
+        const sendBtn = document.getElementById('sparql-send-btn');
+
+        if (!modal) return;
+
+        // Get sources data and selected datasets
+        const sourcesData = window.rdfsolve?.sourcesData || {};
+        const selectedDatasets = Array.from(this.selectedDatasets || []);
+        
+        // Analyze selected datasets for endpoint/graph configuration
+        const datasetSources = selectedDatasets
+            .map(name => ({ name, source: sourcesData[name] }))
+            .filter(d => d.source);
+        
+        // Group datasets by endpoint
+        const endpointMap = new Map(); // endpoint -> { datasets: [], graphs: Set }
+        datasetSources.forEach(({ name, source }) => {
+            const endpoint = source.endpointUrl || '';
+            if (!endpointMap.has(endpoint)) {
+                endpointMap.set(endpoint, { datasets: [], graphs: new Set() });
+            }
+            endpointMap.get(endpoint).datasets.push(name);
+            if (source.useGraph && source.graphUri) {
+                endpointMap.get(endpoint).graphs.add(source.graphUri);
+            }
+        });
+
+        // Get ordered list of endpoints (first selected dataset's endpoint is primary)
+        const endpoints = [...endpointMap.keys()].filter(Boolean);
+        const primaryEndpoint = endpoints[0] || '';
+        const serviceEndpoints = endpoints.slice(1); // All other endpoints are services
+        
+        // Store for query generation and send button
+        this.primaryEndpoint = primaryEndpoint;
+        this.endpointMap = endpointMap;
+        this.currentDatasetSources = datasetSources;
+
+        // Populate info panel - Primary Endpoint
+        if (primaryEndpointEl) {
+            primaryEndpointEl.textContent = primaryEndpoint || '(none)';
+            primaryEndpointEl.title = primaryEndpoint;
+        }
+
+        // Populate info panel - SERVICE endpoints
+        if (servicesSection && servicesList) {
+            servicesList.innerHTML = '';
+            if (serviceEndpoints.length > 0) {
+                servicesSection.style.display = 'block';
+                serviceEndpoints.forEach(ep => {
+                    const group = endpointMap.get(ep);
+                    const div = document.createElement('div');
+                    div.style.cssText = 'color: var(--text-secondary); word-break: break-all; font-family: "SF Mono", Consolas, monospace; padding: 6px 8px; background: var(--card-background); border-radius: 4px; border: 1px solid var(--border-color);';
+                    div.textContent = ep;
+                    div.title = `Datasets: ${group.datasets.join(', ')}`;
+                    servicesList.appendChild(div);
+                });
+            } else {
+                servicesSection.style.display = 'none';
+            }
+        }
+
+        // Populate info panel - Graphs
+        const allGraphs = new Map(); // graph -> endpoint
+        endpointMap.forEach((group, endpoint) => {
+            group.graphs.forEach(g => allGraphs.set(g, endpoint));
+        });
+        
+        if (graphsSection && graphsList) {
+            graphsList.innerHTML = '';
+            if (allGraphs.size > 0) {
+                graphsSection.style.display = 'block';
+                allGraphs.forEach((endpoint, graph) => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'color: var(--text-secondary); word-break: break-all; font-family: "SF Mono", Consolas, monospace; padding: 6px 8px; background: var(--card-background); border-radius: 4px; border: 1px solid var(--border-color); font-size: 10px;';
+                    div.textContent = graph;
+                    div.title = `Endpoint: ${endpoint}`;
+                    graphsList.appendChild(div);
+                });
+            } else {
+                graphsSection.style.display = 'none';
+            }
+        }
+
+        // Populate info panel - Datasets
+        if (datasetsList) {
+            datasetsList.innerHTML = '';
+            selectedDatasets.forEach(name => {
+                const span = document.createElement('span');
+                span.style.cssText = 'padding: 2px 6px; background: var(--primary-color); color: #fff; border-radius: 3px; font-size: 10px;';
+                span.textContent = name;
+                const source = sourcesData[name];
+                if (source) {
+                    span.title = `Endpoint: ${source.endpointUrl || '?'}\nGraph: ${source.graphUri || '—'}`;
+                }
+                datasetsList.appendChild(span);
+            });
+        }
+
+        // Generate query using regenerate method (respects checkbox state)
+        this.regenerateSparqlQuery();
+
+        // Update info text
+        if (infoEl) {
+            const parts = [`${this.allPaths.length} path(s)`];
+            if (serviceEndpoints.length > 0) {
+                parts.push(`${serviceEndpoints.length} federated`);
+            }
+            if (allGraphs.size > 0) {
+                parts.push(`${allGraphs.size} graph(s)`);
+            }
+            infoEl.textContent = parts.join(' · ');
+        }
+
+        // Enable/disable send button
+        if (sendBtn) {
+            sendBtn.disabled = !primaryEndpoint;
+            sendBtn.style.opacity = primaryEndpoint ? '1' : '0.5';
+        }
+
+        // Show modal
+        modal.style.display = 'flex';
+    }
+
+    /**
+     * Generate SPARQL query from accumulated paths
+     * Automatically uses endpoint/graph info from sources.csv for selected datasets
+     * @param {boolean} requireType - Whether to include rdf:type assertions (default true)
+     * @returns {string} SPARQL query
+     */
+    generateSparqlFromPaths(requireType = true) {
+        if (this.allPaths.length === 0) {
+            return '# No paths selected';
+        }
+
+        const primaryEndpoint = this.primaryEndpoint || '';
+        const endpointMap = this.endpointMap || new Map();
+        const endpoints = [...endpointMap.keys()].filter(Boolean);
+        const serviceEndpoints = endpoints.slice(1); // All except primary
+        const hasServices = serviceEndpoints.length > 0;
+
+        // Collect all unique types (node labels) to create variables
+        const varCounter = {};
+        
+        const getVarName = (typeLabel) => {
+            // Clean up the label to create a valid variable name
+            let baseName = typeLabel.replace(/^[^:]+:/, ''); // Remove prefix
+            baseName = baseName.replace(/[^a-zA-Z0-9_]/g, ''); // Remove invalid chars
+            if (!baseName) baseName = 'node';
+            
+            // Make first char lowercase
+            baseName = baseName.charAt(0).toLowerCase() + baseName.slice(1);
+            
+            return baseName;
+        };
+
+        // Build WHERE clause body (the basic triple patterns)
+        let whereBody = [];
+        let selectVars = new Set();
+        
+        this.allPaths.forEach((pathData, pathIdx) => {
+            const path = Array.isArray(pathData) ? pathData : pathData.path;
+            const storedEdges = pathData.edges;
+            if (!path || path.length < 2) return;
+            
+            whereBody.push(`# Path ${pathIdx + 1}: ${pathData.fromLabel || ''} → ${pathData.toLabel || ''}`);
+            
+            // Map each node in this path to a variable
+            const nodeVarMap = new Map();
+            
+            path.forEach((nodeId, i) => {
+                const node = this.graphData.nodes.find(n => n.id === nodeId);
+                const typeLabel = node ? node.label : nodeId;
+                const typeUri = node ? node.id : nodeId;
+                
+                // Create variable for this type if not exists
+                let varName = getVarName(typeLabel);
+                
+                // Handle duplicate variable names by adding suffix
+                if (!varCounter[varName]) {
+                    varCounter[varName] = 0;
+                }
+                const varWithSuffix = varCounter[varName] === 0 ? varName : `${varName}${varCounter[varName]}`;
+                varCounter[varName]++;
+                
+                nodeVarMap.set(nodeId, varWithSuffix);
+                selectVars.add(varWithSuffix);
+                
+                // Add type assertion only if requireType is true
+                if (requireType) {
+                    whereBody.push(`?${varWithSuffix} a <${typeUri}> .`);
+                }
+            });
+            
+            // Add triple patterns for edges
+            for (let i = 0; i < path.length - 1; i++) {
+                const subjVar = nodeVarMap.get(path[i]);
+                const objVar = nodeVarMap.get(path[i + 1]);
+                
+                // Get the predicate
+                let predUri = '?p';
+                if (storedEdges && storedEdges[i]) {
+                    const edge = storedEdges[i];
+                    predUri = edge.property || edge.label || '?p';
+                    // If it's a CURIE, try to expand it or wrap in <>
+                    if (predUri.includes(':') && !predUri.startsWith('?') && !predUri.startsWith('<')) {
+                        predUri = `<${this.expandCurie(predUri)}>`;
+                    }
+                } else {
+                    // Find edge
+                    const link = this.graphData.links.find(l => 
+                        (l.source === path[i] && l.target === path[i+1]) ||
+                        (l.source === path[i+1] && l.target === path[i]) ||
+                        (l.source?.id === path[i] && l.target?.id === path[i+1]) ||
+                        (l.source?.id === path[i+1] && l.target?.id === path[i])
+                    );
+                    if (link) {
+                        predUri = link.property || link.label || '?p';
+                        if (predUri.includes(':') && !predUri.startsWith('?') && !predUri.startsWith('<')) {
+                            predUri = `<${this.expandCurie(predUri)}>`;
+                        }
+                    }
+                }
+                
+                whereBody.push(`?${subjVar} ${predUri} ?${objVar} .`);
+            }
+            
+            whereBody.push('');
+        });
+
+        // Build SELECT clause
+        const selectVarsList = Array.from(selectVars).map(v => `?${v}`).join(' ');
+
+        // Helper to indent lines
+        const indent = (lines, spaces) => lines.map(l => l ? ' '.repeat(spaces) + l : l).join('\n');
+
+        // Build WHERE clause with proper SERVICE/GRAPH wrapping
+        let whereContent = '';
+
+        if (hasServices) {
+            // Multiple endpoints: wrap service endpoints in SERVICE clauses
+            // Primary endpoint content goes directly, others wrapped in SERVICE
+            
+            // For simplicity, put all patterns in primary context, 
+            // then add SERVICE blocks for other endpoints
+            // (In a more sophisticated version, we'd track which patterns belong to which dataset)
+            
+            const primaryGroup = endpointMap.get(primaryEndpoint);
+            const primaryGraphs = primaryGroup ? [...primaryGroup.graphs] : [];
+            
+            // Primary endpoint patterns
+            if (primaryGraphs.length > 0) {
+                // Wrap in GRAPH for primary
+                whereContent += primaryGraphs.map(g => 
+                    `  GRAPH <${g}> {\n${indent(whereBody, 4)}\n  }`
+                ).join('\n');
+            } else {
+                whereContent += indent(whereBody, 2);
+            }
+            
+            // Add SERVICE blocks for other endpoints
+            serviceEndpoints.forEach(ep => {
+                const group = endpointMap.get(ep);
+                const graphs = group ? [...group.graphs] : [];
+                
+                whereContent += `\n\n  # Federated: ${group?.datasets?.join(', ') || ep}\n`;
+                whereContent += `  SERVICE <${ep}> {\n`;
+                
+                if (graphs.length > 0) {
+                    graphs.forEach(g => {
+                        whereContent += `    GRAPH <${g}> {\n`;
+                        whereContent += `      # Add patterns for ${g} here\n`;
+                        whereContent += `    }\n`;
+                    });
+                } else {
+                    whereContent += `    # Add patterns here\n`;
+                }
+                
+                whereContent += `  }`;
+            });
+            
+        } else if (primaryEndpoint) {
+            // Single endpoint
+            const group = endpointMap.get(primaryEndpoint);
+            const graphs = group ? [...group.graphs] : [];
+            
+            if (graphs.length > 0) {
+                // Wrap all patterns in GRAPH clause(s)
+                if (graphs.length === 1) {
+                    whereContent = `  GRAPH <${graphs[0]}> {\n${indent(whereBody, 4)}\n  }`;
+                } else {
+                    // Multiple graphs - use UNION or just list them
+                    whereContent = graphs.map(g => 
+                        `  GRAPH <${g}> {\n${indent(whereBody, 4)}\n  }`
+                    ).join('\n  UNION\n');
+                }
+            } else {
+                whereContent = indent(whereBody, 2);
+            }
+        } else {
+            // No endpoint info, just output patterns
+            whereContent = indent(whereBody, 2);
+        }
+
+        // Build complete query
+        let query = `SELECT DISTINCT ${selectVarsList}\nWHERE {\n${whereContent}\n}`;
+        
+        // Add LIMIT for safety
+        query += '\nLIMIT 100';
+        
+        return query;
+    }
+
+    /**
+     * Expand a CURIE to full URI using known namespaces
+     */
+    expandCurie(curie) {
+        if (!curie || curie.startsWith('http://') || curie.startsWith('https://')) {
+            return curie;
+        }
+        
+        const [prefix, local] = curie.split(':');
+        const namespaces = D3DiagramUtils?.namespaces || {};
+        
+        // Reverse lookup: find namespace by prefix
+        for (const [uri, pref] of Object.entries(namespaces)) {
+            if (pref === prefix) {
+                return uri + local;
+            }
+        }
+        
+        // Common namespaces fallback
+        const commonNs = {
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+            'owl': 'http://www.w3.org/2002/07/owl#',
+            'xsd': 'http://www.w3.org/2001/XMLSchema#',
+            'dc': 'http://purl.org/dc/elements/1.1/',
+            'dcterms': 'http://purl.org/dc/terms/',
+            'foaf': 'http://xmlns.com/foaf/0.1/',
+            'skos': 'http://www.w3.org/2004/02/skos/core#',
+            'schema': 'http://schema.org/',
+            'aopo': 'http://aopkb.org/aop_ontology#',
+            'pato': 'http://purl.obolibrary.org/obo/PATO_'
+        };
+        
+        if (commonNs[prefix]) {
+            return commonNs[prefix] + local;
+        }
+        
+        // Return as-is if can't expand
+        return curie;
     }
 
     // ========== Path Finding Autocomplete ==========

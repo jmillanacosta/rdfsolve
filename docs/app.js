@@ -40,12 +40,18 @@ class RDFSolveDashboard {
 
     async loadSources() {
         try {
-            const response = await fetch(this.githubRawBase + 'data/sources.csv');
+            // Try fetching from GitHub raw first, then fall back to local
+            let response = await fetch(this.githubRawBase + 'data/sources.csv');
+            if (!response.ok) {
+                // Fallback to local path (for local development)
+                response = await fetch('../data/sources.csv');
+            }
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
             const csvText = await response.text();
             this.sourcesData = this.parseSourcesCSV(csvText);
+            console.log('Loaded sources.csv:', Object.keys(this.sourcesData).length, 'datasets');
         } catch (error) {
             console.warn('Could not load sources.csv:', error);
             this.sourcesData = {};
@@ -319,7 +325,7 @@ class RDFSolveDashboard {
 
 // Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new RDFSolveDashboard();
+    window.rdfsolve = new RDFSolveDashboard();
 });
 
 // Add refresh functionality

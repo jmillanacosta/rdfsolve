@@ -296,11 +296,15 @@
                                 <div id="ls-path-query-text" style="display: none;">
                                     <div
                                         style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                                        <label style="font-size: 11px; color: var(--text-secondary);">SPARQL-like
-                                            output:</label>
-                                        <button id="ls-copy-path-btn"
-                                            style="padding: 2px 8px; font-size: 10px; background: var(--background-color); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;"
-                                            title="Copy all to clipboard">Copy</button>
+                                        <label style="font-size: 11px; color: var(--text-secondary);">Path output:</label>
+                                        <div style="display: flex; gap: 4px;">
+                                            <button id="ls-generate-sparql-btn"
+                                                style="padding: 2px 8px; font-size: 10px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer;"
+                                                title="Generate SPARQL query">SPARQL</button>
+                                            <button id="ls-copy-path-btn"
+                                                style="padding: 2px 8px; font-size: 10px; background: var(--background-color); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;"
+                                                title="Copy all to clipboard">Copy</button>
+                                        </div>
                                     </div>
                                     <div id="ls-path-bubbles"
                                         style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto;">
@@ -334,6 +338,64 @@
                     </div>
                 </div>
             </footer>
+        </div>
+
+        <!-- SPARQL Query Modal -->
+        <div id="sparql-modal" class="sparql-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+            <div class="sparql-modal-content" style="background: var(--card-background); border-radius: 8px; width: 95%; max-width: 1100px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 4px 24px rgba(0,0,0,0.3);">
+                <!-- Modal Header -->
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
+                    <h3 style="margin: 0; font-size: 16px; color: var(--text-primary);">SPARQL Query</h3>
+                    <button id="sparql-modal-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); line-height: 1;">&times;</button>
+                </div>
+                
+                <!-- Main Content: Query + Info Panel -->
+                <div style="flex: 1; display: flex; overflow: hidden; min-height: 350px;">
+                    <!-- Query Editor (left) -->
+                    <div style="flex: 1; padding: 16px; display: flex; flex-direction: column; border-right: 1px solid var(--border-color);">
+                        <textarea id="sparql-query-textarea" style="flex: 1; width: 100%; padding: 12px; font-family: 'SF Mono', Consolas, 'Courier New', monospace; font-size: 12px; line-height: 1.5; border: 1px solid var(--border-color); border-radius: 6px; background: #1e1e1e; color: #d4d4d4; resize: none;" spellcheck="false"></textarea>
+                    </div>
+                    
+                    <!-- Endpoint Info Panel (right) -->
+                    <div style="width: 280px; padding: 16px; background: var(--background-color); overflow-y: auto; font-size: 11px;">
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-size: 12px;">Primary Endpoint</div>
+                            <div id="sparql-primary-endpoint" style="color: var(--text-secondary); word-break: break-all; font-family: 'SF Mono', Consolas, monospace; padding: 8px; background: var(--card-background); border-radius: 4px; border: 1px solid var(--border-color);">—</div>
+                        </div>
+                        
+                        <div id="sparql-services-section" style="margin-bottom: 16px; display: none;">
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-size: 12px;">Federated Services</div>
+                            <div id="sparql-services-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                        </div>
+                        
+                        <div id="sparql-graphs-section" style="margin-bottom: 16px; display: none;">
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-size: 12px;">Named Graphs</div>
+                            <div id="sparql-graphs-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-size: 12px;">Datasets</div>
+                            <div id="sparql-datasets-list" style="display: flex; flex-wrap: wrap; gap: 4px;"></div>
+                        </div>
+                        
+                        <div style="padding-top: 12px; border-top: 1px solid var(--border-color); color: var(--text-secondary);">
+                            <div id="sparql-modal-info"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-top: 1px solid var(--border-color); background: var(--background-color);">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="sparql-require-type" checked style="margin: 0;">
+                        <label for="sparql-require-type" style="font-size: 11px; color: var(--text-secondary); cursor: pointer;" title="When checked, variables are constrained to their rdf:type. Uncheck to get broader results without type restrictions.">Require rdf:type</label>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="sparql-copy-btn" style="padding: 8px 16px; font-size: 12px; background: var(--card-background); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;">Copy Query</button>
+                        <button id="sparql-send-btn" style="padding: 8px 16px; font-size: 12px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer;">Send Query ↗</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Coverage Analysis Panel -->
