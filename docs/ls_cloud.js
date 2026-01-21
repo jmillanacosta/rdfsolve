@@ -572,179 +572,198 @@ class lsCloudVisualization {
             return '# No paths selected';
         }
 
+        const sourcesData = window.rdfsolve?.sourcesData || {};
         const primaryEndpoint = this.primaryEndpoint || '';
-        const endpointMap = this.endpointMap || new Map();
-        const endpoints = [...endpointMap.keys()].filter(Boolean);
-        const serviceEndpoints = endpoints.slice(1); // All except primary
-        const hasServices = serviceEndpoints.length > 0;
+
+        // Helper to get endpoint/graph info for a dataset
+        const getDatasetInfo = (datasetName) => {
+            const src = sourcesData[datasetName];
+            return src ? {
+                endpoint: src.endpointUrl || '',
+                graph: (src.useGraph && src.graphUri) ? src.graphUri : null
+            } : { endpoint: '', graph: null };
+        };
 
         // Collect all unique types (node labels) to create variables
         const varCounter = {};
         
         const getVarName = (typeLabel) => {
-            // Clean up the label to create a valid variable name
-            let baseName = typeLabel.replace(/^[^:]+:/, ''); // Remove prefix
-            baseName = baseName.replace(/[^a-zA-Z0-9_]/g, ''); // Remove invalid chars
+            let baseName = typeLabel.replace(/^[^:]+:/, '');
+            baseName = baseName.replace(/[^a-zA-Z0-9_]/g, '');
             if (!baseName) baseName = 'node';
-            
-            // Make first char lowercase
             baseName = baseName.charAt(0).toLowerCase() + baseName.slice(1);
-            
             return baseName;
         };
 
-        // Build WHERE clause body (the basic triple patterns)
-        let whereBody = [];
+        // Build patterns grouped by endpoint -> graph -> patterns
+        // Structure: Map<endpoint, Map<graph|'', patterns[]>>
+        const endpointPatterns = new Map();
         let selectVars = new Set();
-        
+
+        const addPattern = (endpoint, graph, pattern) => {
+            if (!endpointPatterns.has(endpoint)) {
+                endpointPatterns.set(endpoint, new Map());
+            }
+            const graphKey = graph || '';
+            if (!endpointPatterns.get(endpoint).has(graphKey)) {
+                endpointPatterns.get(endpoint).set(graphKey, []);
+            }
+            endpointPatterns.get(endpoint).get(graphKey).push(pattern);
+        };
+
         this.allPaths.forEach((pathData, pathIdx) => {
             const path = Array.isArray(pathData) ? pathData : pathData.path;
-            const storedEdges = pathData.edges;
+            const storedEdges = pathData.edges || [];
             if (!path || path.length < 2) return;
-            
-            whereBody.push(`# Path ${pathIdx + 1}: ${pathData.fromLabel || ''} → ${pathData.toLabel || ''}`);
-            
+
             // Map each node in this path to a variable
             const nodeVarMap = new Map();
             
-            path.forEach((nodeId, i) => {
+            path.forEach((nodeId) => {
+                if (nodeVarMap.has(nodeId)) return;
+                
                 const node = this.graphData.nodes.find(n => n.id === nodeId);
                 const typeLabel = node ? node.label : nodeId;
-                const typeUri = node ? node.id : nodeId;
                 
-                // Create variable for this type if not exists
                 let varName = getVarName(typeLabel);
-                
-                // Handle duplicate variable names by adding suffix
-                if (!varCounter[varName]) {
-                    varCounter[varName] = 0;
-                }
+                if (!varCounter[varName]) varCounter[varName] = 0;
                 const varWithSuffix = varCounter[varName] === 0 ? varName : `${varName}${varCounter[varName]}`;
                 varCounter[varName]++;
                 
                 nodeVarMap.set(nodeId, varWithSuffix);
                 selectVars.add(varWithSuffix);
-                
-                // Add type assertion only if requireType is true
-                if (requireType) {
-                    whereBody.push(`?${varWithSuffix} a <${typeUri}> .`);
-                }
             });
-            
-            // Add triple patterns for edges
+
+            // Process each edge
             for (let i = 0; i < path.length - 1; i++) {
-                const subjVar = nodeVarMap.get(path[i]);
-                const objVar = nodeVarMap.get(path[i + 1]);
+                const fromId = path[i];
+                const toId = path[i + 1];
+                const fromVar = nodeVarMap.get(fromId);
+                const toVar = nodeVarMap.get(toId);
                 
-                // Get the predicate
-                let predUri = '?p';
-                if (storedEdges && storedEdges[i]) {
-                    const edge = storedEdges[i];
-                    predUri = edge.property || edge.label || '?p';
-                    // If it's a CURIE, try to expand it or wrap in <>
-                    if (predUri.includes(':') && !predUri.startsWith('?') && !predUri.startsWith('<')) {
-                        predUri = `<${this.expandCurie(predUri)}>`;
-                    }
-                } else {
-                    // Find edge
-                    const link = this.graphData.links.find(l => 
-                        (l.source === path[i] && l.target === path[i+1]) ||
-                        (l.source === path[i+1] && l.target === path[i]) ||
-                        (l.source?.id === path[i] && l.target?.id === path[i+1]) ||
-                        (l.source?.id === path[i+1] && l.target?.id === path[i])
-                    );
-                    if (link) {
-                        predUri = link.property || link.label || '?p';
-                        if (predUri.includes(':') && !predUri.startsWith('?') && !predUri.startsWith('<')) {
-                            predUri = `<${this.expandCurie(predUri)}>`;
+                // Get the edge - prefer stored edge which has correct direction
+                const edge = storedEdges[i] || this.graphData.links.find(l => {
+                    const s = l.source?.id || l.source;
+                    const t = l.target?.id || l.target;
+                    return (s === fromId && t === toId) || (s === toId && t === fromId);
+                });
+
+                if (!edge) continue;
+
+                // CRITICAL: Determine actual edge direction
+                // Edge source/target define the TRUE direction of the predicate
+                const edgeSource = edge.source?.id || edge.source;
+                const edgeTarget = edge.target?.id || edge.target;
+                
+                // Check if path direction matches edge direction
+                const isForward = (edgeSource === fromId && edgeTarget === toId);
+                
+                // Subject and object based on edge's actual direction, NOT path direction
+                const subjVar = isForward ? fromVar : toVar;
+                const objVar = isForward ? toVar : fromVar;
+                const subjNodeId = isForward ? fromId : toId;
+                const objNodeId = isForward ? toId : fromId;
+
+                const predIri = edge.property;
+                const predSparql = predIri ? `<${predIri}>` : `?p${pathIdx}_${i}`;
+                
+                // Get datasets this edge belongs to
+                const edgeDatasets = edge.datasets || [];
+                
+                // For each dataset this edge is in, add pattern to that endpoint/graph
+                if (edgeDatasets.length > 0) {
+                    // Use first dataset to determine placement (edges typically belong to one dataset)
+                    const dsName = edgeDatasets[0];
+                    const info = getDatasetInfo(dsName);
+                    
+                    // Add type assertions if required
+                    if (requireType) {
+                        const subjNode = this.graphData.nodes.find(n => n.id === subjNodeId);
+                        const objNode = this.graphData.nodes.find(n => n.id === objNodeId);
+                        if (subjNode) {
+                            addPattern(info.endpoint, info.graph, `?${subjVar} a <${subjNode.id}> .`);
+                        }
+                        if (objNode) {
+                            addPattern(info.endpoint, info.graph, `?${objVar} a <${objNode.id}> .`);
                         }
                     }
+                    
+                    // Add the triple pattern - ALWAYS edge.source pred edge.target
+                    addPattern(info.endpoint, info.graph, `?${subjVar} ${predSparql} ?${objVar} .`);
+                } else {
+                    // No dataset info - add to primary endpoint without graph
+                    if (requireType) {
+                        const subjNode = this.graphData.nodes.find(n => n.id === subjNodeId);
+                        const objNode = this.graphData.nodes.find(n => n.id === objNodeId);
+                        if (subjNode) {
+                            addPattern(primaryEndpoint, null, `?${subjVar} a <${subjNode.id}> .`);
+                        }
+                        if (objNode) {
+                            addPattern(primaryEndpoint, null, `?${objVar} a <${objNode.id}> .`);
+                        }
+                    }
+                    addPattern(primaryEndpoint, null, `?${subjVar} ${predSparql} ?${objVar} .`);
                 }
-                
-                whereBody.push(`?${subjVar} ${predUri} ?${objVar} .`);
             }
-            
-            whereBody.push('');
         });
 
         // Build SELECT clause
         const selectVarsList = Array.from(selectVars).map(v => `?${v}`).join(' ');
 
-        // Helper to indent lines
-        const indent = (lines, spaces) => lines.map(l => l ? ' '.repeat(spaces) + l : l).join('\n');
-
         // Build WHERE clause with proper SERVICE/GRAPH wrapping
-        let whereContent = '';
+        const endpoints = [...endpointPatterns.keys()].filter(Boolean);
+        
+        // Deduplicate patterns within each graph
+        const dedupePatterns = (patterns) => [...new Set(patterns)];
 
-        if (hasServices) {
-            // Multiple endpoints: wrap service endpoints in SERVICE clauses
-            // Primary endpoint content goes directly, others wrapped in SERVICE
+        let whereLines = [];
+        
+        endpoints.forEach((endpoint, epIdx) => {
+            const graphMap = endpointPatterns.get(endpoint);
+            const isService = epIdx > 0; // First endpoint is primary, others are SERVICE
             
-            // For simplicity, put all patterns in primary context, 
-            // then add SERVICE blocks for other endpoints
-            // (In a more sophisticated version, we'd track which patterns belong to which dataset)
-            
-            const primaryGroup = endpointMap.get(primaryEndpoint);
-            const primaryGraphs = primaryGroup ? [...primaryGroup.graphs] : [];
-            
-            // Primary endpoint patterns
-            if (primaryGraphs.length > 0) {
-                // Wrap in GRAPH for primary
-                whereContent += primaryGraphs.map(g => 
-                    `  GRAPH <${g}> {\n${indent(whereBody, 4)}\n  }`
-                ).join('\n');
-            } else {
-                whereContent += indent(whereBody, 2);
-            }
-            
-            // Add SERVICE blocks for other endpoints
-            serviceEndpoints.forEach(ep => {
-                const group = endpointMap.get(ep);
-                const graphs = group ? [...group.graphs] : [];
-                
-                whereContent += `\n\n  # Federated: ${group?.datasets?.join(', ') || ep}\n`;
-                whereContent += `  SERVICE <${ep}> {\n`;
-                
-                if (graphs.length > 0) {
-                    graphs.forEach(g => {
-                        whereContent += `    GRAPH <${g}> {\n`;
-                        whereContent += `      # Add patterns for ${g} here\n`;
-                        whereContent += `    }\n`;
-                    });
+            const graphPatterns = [];
+            graphMap.forEach((patterns, graph) => {
+                const uniquePatterns = dedupePatterns(patterns);
+                if (graph) {
+                    // Wrap in GRAPH
+                    graphPatterns.push(`GRAPH <${graph}> {\n      ${uniquePatterns.join('\n      ')}\n    }`);
                 } else {
-                    whereContent += `    # Add patterns here\n`;
+                    // No graph wrapper
+                    graphPatterns.push(uniquePatterns.join('\n    '));
                 }
-                
-                whereContent += `  }`;
             });
             
-        } else if (primaryEndpoint) {
-            // Single endpoint
-            const group = endpointMap.get(primaryEndpoint);
-            const graphs = group ? [...group.graphs] : [];
+            const innerContent = graphPatterns.join('\n    ');
             
-            if (graphs.length > 0) {
-                // Wrap all patterns in GRAPH clause(s)
-                if (graphs.length === 1) {
-                    whereContent = `  GRAPH <${graphs[0]}> {\n${indent(whereBody, 4)}\n  }`;
-                } else {
-                    // Multiple graphs - use UNION or just list them
-                    whereContent = graphs.map(g => 
-                        `  GRAPH <${g}> {\n${indent(whereBody, 4)}\n  }`
-                    ).join('\n  UNION\n');
-                }
+            if (isService) {
+                whereLines.push(`  SERVICE <${endpoint}> {\n    ${innerContent}\n  }`);
             } else {
-                whereContent = indent(whereBody, 2);
+                // Primary endpoint - no SERVICE wrapper
+                if ([...graphMap.keys()].some(g => g)) {
+                    // Has graph wrappers
+                    whereLines.push(`  ${innerContent}`);
+                } else {
+                    whereLines.push(`  ${innerContent}`);
+                }
             }
-        } else {
-            // No endpoint info, just output patterns
-            whereContent = indent(whereBody, 2);
+        });
+
+        // Handle patterns with no endpoint (fallback)
+        if (endpointPatterns.has('')) {
+            const noEpGraphMap = endpointPatterns.get('');
+            noEpGraphMap.forEach((patterns, graph) => {
+                const uniquePatterns = dedupePatterns(patterns);
+                if (graph) {
+                    whereLines.push(`  GRAPH <${graph}> {\n    ${uniquePatterns.join('\n    ')}\n  }`);
+                } else {
+                    whereLines.push(`  ${uniquePatterns.join('\n  ')}`);
+                }
+            });
         }
 
         // Build complete query
-        let query = `SELECT DISTINCT ${selectVarsList}\nWHERE {\n${whereContent}\n}`;
-        
-        // Add LIMIT for safety
+        let query = `SELECT DISTINCT ${selectVarsList}\nWHERE {\n${whereLines.join('\n\n')}\n}`;
         query += '\nLIMIT 100';
         
         return query;
@@ -1209,13 +1228,13 @@ class lsCloudVisualization {
             // add link between non-excluded nodes
             // Each subject-property-object is a unique edge (not merged by subject-object pair)
             if (!subjectExcluded && !objectExcluded && subjectUri !== objectUri) {
-                const key = `${subjectUri}|||${propertyLabel}|||${objectUri}`;
+                const key = `${subjectUri}|||${propertyUri}|||${objectUri}`;
                 if (!linkMap.has(key)) {
                     linkMap.set(key, {
                         source: subjectUri,
                         target: objectUri,
-                        property: propertyLabel,
-                        label: propertyLabel,
+                        property: propertyUri,      // Full IRI
+                        label: propertyLabel,       // Short label for display
                         datasets: new Set()
                     });
                 }
@@ -1617,27 +1636,41 @@ class lsCloudVisualization {
             
             let lines = [];
             for (let i = 0; i < path.length - 1; i++) {
-                const subj = this.graphData.nodes.find(n => n.id === path[i]);
-                const obj = this.graphData.nodes.find(n => n.id === path[i+1]);
+                const fromId = path[i];
+                const toId = path[i+1];
                 
-                const subjLabel = subj ? subj.label : path[i];
-                const objLabel = obj ? obj.label : path[i+1];
+                const fromNode = this.graphData.nodes.find(n => n.id === fromId);
+                const toNode = this.graphData.nodes.find(n => n.id === toId);
                 
-                // Use stored edge if available, otherwise search for it
-                if (storedEdges && storedEdges[i]) {
-                    const edge = storedEdges[i];
-                    const predLabel = edge.property || edge.label || '?p';
+                const fromLabel = fromNode ? fromNode.label : fromId;
+                const toLabel = toNode ? toNode.label : toId;
+                
+                // Get edge - prefer stored edge, fallback to graph lookup
+                let edge = storedEdges && storedEdges[i] ? storedEdges[i] : null;
+                if (!edge) {
+                    edge = this.graphData.links.find(l => 
+                        (l.source === fromId && l.target === toId) || 
+                        (l.source === toId && l.target === fromId) ||
+                        (l.source?.id === fromId && l.target?.id === toId) ||
+                        (l.source?.id === toId && l.target?.id === fromId)
+                    );
+                }
+                
+                const predLabel = edge ? (edge.property || edge.label || '?p') : '?p';
+                
+                // CRITICAL: Respect edge directionality
+                // Edge source/target define the TRUE direction of the predicate
+                if (edge) {
+                    const edgeSource = edge.source?.id || edge.source;
+                    const edgeTarget = edge.target?.id || edge.target;
+                    const isForward = (edgeSource === fromId && edgeTarget === toId);
+                    
+                    const subjLabel = isForward ? fromLabel : toLabel;
+                    const objLabel = isForward ? toLabel : fromLabel;
                     lines.push(`${subjLabel}  ${predLabel}  ${objLabel} .`);
                 } else {
-                    // Fallback: find edge in graph data
-                    const link = this.graphData.links.find(l => 
-                        (l.source === path[i] && l.target === path[i+1]) || 
-                        (l.source === path[i+1] && l.target === path[i]) ||
-                        (l.source?.id === path[i] && l.target?.id === path[i+1]) ||
-                        (l.source?.id === path[i+1] && l.target?.id === path[i])
-                    );
-                    const predLabel = link ? (link.property || link.label || '?p') : '?p';
-                    lines.push(`${subjLabel}  ${predLabel}  ${objLabel} .`);
+                    // No edge found - use path order as fallback
+                    lines.push(`${fromLabel}  ${predLabel}  ${toLabel} .`);
                 }
             }
             
