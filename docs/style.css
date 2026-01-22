@@ -1374,3 +1374,80 @@ body {
     background: var(--text-primary);
 }
 
+/* IRI Resolver Sidebar */
+.iri-resolver-sidebar {
+    width: 0;
+    overflow: hidden;
+    border-left: 1px solid var(--border-color);
+    background: var(--card-background);
+    transition: width 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.iri-resolver-sidebar.open {
+    width: 320px;
+}
+
+.iri-results-list {
+    min-height: 60px;
+}
+
+.iri-result-item {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    user-select: none;
+}
+
+.iri-result-item:last-child {
+    border-bottom: none;
+}
+
+.iri-result-item:hover {
+    background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.05);
+}
+
+.iri-result-item.selected {
+    background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.15);
+    border-left: 3px solid var(--primary-color);
+    padding-left: 7px;
+}
+
+.iri-main {
+    font-size: 11px;
+    font-family: 'SF Mono', Consolas, monospace;
+    color: var(--text-primary);
+    word-break: break-all;
+    margin-bottom: 2px;
+}
+
+.iri-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 10px;
+}
+
+.iri-types {
+    color: var(--primary-color);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.iri-datasets {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.iri-status {
+    min-height: 16px;
+}
+
+/* Fullscreen adjustments for IRI resolver sidebar */
+.ls-cloud-fullscreen .iri-resolver-sidebar.open {
+    width: 380px;
+}
+

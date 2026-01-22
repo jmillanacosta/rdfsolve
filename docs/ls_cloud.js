@@ -233,6 +233,13 @@ class lsCloudVisualization {
         });
         document.getElementById('ls-path-sidebar-close')?.addEventListener('click', () => this.togglePathSidebar(false));
         
+        // IRI Resolver sidebar toggle
+        document.getElementById('iri-resolver-toggle-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleIriResolverSidebar();
+        });
+        document.getElementById('iri-sidebar-close')?.addEventListener('click', () => this.toggleIriResolverSidebar(false));
+        
         // Edge style toggle (orthogonal vs curved)
         document.getElementById('ls-edge-style-btn')?.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -355,6 +362,7 @@ class lsCloudVisualization {
         const sendBtn = document.getElementById('sparql-send-btn');
         const queryTextarea = document.getElementById('sparql-query-textarea');
         const requireTypeCheckbox = document.getElementById('sparql-require-type');
+        const includeLabelsCheckbox = document.getElementById('sparql-include-labels');
 
         if (!modal) return;
 
@@ -407,9 +415,15 @@ class lsCloudVisualization {
             });
         }
 
-        // Regenerate query when require-type checkbox changes
+        // Regenerate query when checkboxes change
         if (requireTypeCheckbox) {
             requireTypeCheckbox.addEventListener('change', () => {
+                this.regenerateSparqlQuery();
+            });
+        }
+        
+        if (includeLabelsCheckbox) {
+            includeLabelsCheckbox.addEventListener('change', () => {
                 this.regenerateSparqlQuery();
             });
         }
@@ -418,10 +432,12 @@ class lsCloudVisualization {
     regenerateSparqlQuery() {
         const queryTextarea = document.getElementById('sparql-query-textarea');
         const requireTypeCheckbox = document.getElementById('sparql-require-type');
+        const includeLabelsCheckbox = document.getElementById('sparql-include-labels');
         if (!queryTextarea) return;
         
         const requireType = requireTypeCheckbox?.checked ?? true;
-        const query = this.generateSparqlFromPaths(requireType);
+        const includeLabels = includeLabelsCheckbox?.checked ?? true;
+        const query = this.generateSparqlFromPaths(requireType, includeLabels);
         queryTextarea.value = query;
     }
 
@@ -643,9 +659,10 @@ class lsCloudVisualization {
      * Generate SPARQL query from accumulated paths
      * Automatically uses endpoint/graph info from sources.csv for selected datasets
      * @param {boolean} requireType - Whether to include rdf:type assertions (default true)
+     * @param {boolean} includeLabels - Whether to include OPTIONAL rdfs:label/dc:title clauses (default true)
      * @returns {string} SPARQL query
      */
-    generateSparqlFromPaths(requireType = true) {
+    generateSparqlFromPaths(requireType = true, includeLabels = true) {
         if (this.allPaths.length === 0) {
             return '# No paths selected';
         }
@@ -863,31 +880,74 @@ class lsCloudVisualization {
         // These fetch human-readable labels for each variable
         const labelOptionals = [];
         const labelVars = [];
-        selectVars.forEach(varName => {
-            const labelVar = `${varName}Label`;
-            const titleVar = `${varName}Title`;
-            labelVars.push(labelVar);
-            labelOptionals.push(
-                `  OPTIONAL { ?${varName} <http://www.w3.org/2000/01/rdf-schema#label> ?${labelVar} . }\n  OPTIONAL { ?${varName} <http://purl.org/dc/elements/1.1/title> ?${titleVar} . }\n`
-            );
-        });
+        if (includeLabels) {
+            selectVars.forEach(varName => {
+                const labelVar = `${varName}Label`;
+                const titleVar = `${varName}Title`;
+                labelVars.push(labelVar);
+                labelOptionals.push(
+                    `  OPTIONAL { ?${varName} <http://www.w3.org/2000/01/rdf-schema#label> ?${labelVar} . }\n  OPTIONAL { ?${varName} <http://purl.org/dc/elements/1.1/title> ?${titleVar} . }\n`
+                );
+            });
+        }
 
         // Add label optionals to where clause
         if (labelOptionals.length > 0) {
             whereLines.push(...labelOptionals);
         }
 
+        // Add VALUES clause if IRI resolver selection is active
+        const valuesClause = this._generateValuesClause(nodeVarMap);
+
         // Build SELECT clause with label variables
         const allSelectVars = [
             ...Array.from(selectVars).map(v => `?${v}`),
-            ...labelVars.map(v => `?${v}`)
+            ...(includeLabels ? labelVars.map(v => `?${v}`) : [])
         ].join(' ');
 
         // Build complete query
-        let query = `\nSELECT DISTINCT ${allSelectVars}\nWHERE {\n${whereLines.join('\n')}\n}`;
+        let query = `\nSELECT DISTINCT ${allSelectVars}\nWHERE {\n${valuesClause}${whereLines.join('\n')}\n}`;
         query += '\nLIMIT 100';
         
         return query;
+    }
+    
+    /**
+     * Generate VALUES clause from IRI resolver selection
+     */
+    _generateValuesClause(nodeVarMap) {
+        const selection = this.iriResolverSelection;
+        if (!selection || !selection.iriTypeMap || selection.iriTypeMap.size === 0) {
+            return '';
+        }
+        
+        // Group IRIs by their type -> variable mapping
+        const varToIris = new Map();
+        
+        for (const [iri, types] of selection.iriTypeMap) {
+            for (const typeIri of types) {
+                const varName = nodeVarMap.get(typeIri);
+                if (varName) {
+                    if (!varToIris.has(varName)) {
+                        varToIris.set(varName, new Set());
+                    }
+                    varToIris.get(varName).add(iri);
+                }
+            }
+        }
+        
+        if (varToIris.size === 0) {
+            return '';
+        }
+        
+        // Build VALUES clauses
+        const clauses = [];
+        for (const [varName, iris] of varToIris) {
+            const values = [...iris].map(i => `<${i}>`).join(' ');
+            clauses.push(`  VALUES ?${varName} { ${values} }`);
+        }
+        
+        return clauses.join('\n') + '\n\n';
     }
 
     /**
@@ -1830,10 +1890,19 @@ class lsCloudVisualization {
             // Clear highlight: show all nodes/links normally
             d3.selectAll('.node-group').classed('dimmed', false);
             d3.selectAll('.link-group').classed('dimmed', false);
+            // Clear DiagramState highlights
+            this.diagramState.highlightedNodes.clear();
             return;
         }
 
         const selectedSet = new Set(selectedIds);
+
+        // Sync with DiagramState (for consistency with IRI resolver)
+        const color = '#10b981'; // emerald green
+        this.diagramState.highlightedNodes.clear();
+        selectedIds.forEach(id => {
+            this.diagramState.highlightedNodes.set(id, { color, isStart: true });
+        });
 
         // Highlight selected nodes, dim others
         d3.selectAll('.node-group').classed('dimmed', d => !selectedSet.has(d.id));
@@ -2412,12 +2481,242 @@ class lsCloudVisualization {
             toggleBtn.style.background = 'var(--primary-color)';
             toggleBtn.style.color = '#fff';
             toggleBtn.style.borderColor = 'var(--primary-color)';
+            // Close IRI resolver sidebar if open
+            this.toggleIriResolverSidebar(false);
         } else {
             sidebar.classList.remove('open');
             toggleBtn?.classList.remove('active');
             toggleBtn.style.background = '';
             toggleBtn.style.color = '';
             toggleBtn.style.borderColor = '';
+        }
+    }
+    
+    // Toggle IRI resolver sidebar visibility
+    toggleIriResolverSidebar(forceOpen = null) {
+        const sidebar = document.getElementById('iri-resolver-sidebar');
+        const toggleBtn = document.getElementById('iri-resolver-toggle-btn');
+        if (!sidebar) return;
+        
+        const isCurrentlyOpen = sidebar.classList.contains('open');
+        const shouldOpen = forceOpen !== null ? forceOpen : !isCurrentlyOpen;
+        
+        if (shouldOpen) {
+            sidebar.classList.add('open');
+            sidebar.style.display = 'flex';
+            toggleBtn?.classList.add('active');
+            if (toggleBtn) {
+                toggleBtn.style.background = 'var(--primary-color)';
+                toggleBtn.style.color = '#fff';
+                toggleBtn.style.borderColor = 'var(--primary-color)';
+            }
+            // Close path sidebar if open
+            this.togglePathSidebar(false);
+            // Initialize IRI resolver if not done
+            this._initIriResolver();
+        } else {
+            sidebar.classList.remove('open');
+            toggleBtn?.classList.remove('active');
+            if (toggleBtn) {
+                toggleBtn.style.background = '';
+                toggleBtn.style.color = '';
+                toggleBtn.style.borderColor = '';
+            }
+            // Hide after transition
+            setTimeout(() => {
+                if (!sidebar.classList.contains('open')) {
+                    sidebar.style.display = 'none';
+                }
+            }, 300);
+        }
+    }
+    
+    // Initialize IRI Resolver (lazy)
+    _initIriResolver() {
+        if (this.iriResolver) return;
+        
+        const sourcesData = window.rdfsolve?.sourcesData || {};
+        
+        this.iriResolver = new IriResolver({
+            sourcesData,
+            schemaData: this.mergedData,
+            onResolve: (resolvedIris) => {
+                console.log('Resolved IRIs:', resolvedIris.size);
+            },
+            onApply: (selection) => {
+                this._applyIriSelection(selection);
+            }
+        });
+    }
+    
+    // Apply IRI selection to filter diagram
+    _applyIriSelection(selection) {
+        const { iris, types, datasets, iriTypeMap, neighborDepth } = selection;
+        
+        if (types.length === 0) {
+            this.showMessage('No types found for selected IRIs');
+            return;
+        }
+        
+        // Store for VALUES clause generation and node instance display
+        this.iriResolverSelection = selection;
+        
+        // Clear existing diagram state highlights to prevent stale data
+        this.diagramState.clearPaths();
+        
+        // Select the relevant datasets
+        const datasetSet = new Set(datasets);
+        const selectEl = document.getElementById('ls-dataset-select');
+        if (selectEl && typeof $ !== 'undefined' && $.fn.selectpicker) {
+            $(selectEl).selectpicker('val', datasets);
+            this.selectedDatasets = datasetSet;
+        }
+        
+        // Re-render with filtered view
+        this._renderFilteredByTypes(types, iriTypeMap, neighborDepth, iris);
+        
+        // Close sidebar
+        this.toggleIriResolverSidebar(false);
+    }
+    
+    // Render diagram filtered by specific types
+    _renderFilteredByTypes(typeIris, iriTypeMap, neighborDepth, iris) {
+        // Build full graph data first
+        if (!this.mergedData || this.mergedData.length === 0) {
+            // Need to load data first
+            this.renderCloud().then(() => {
+                this._applyTypeFilter(typeIris, iriTypeMap, neighborDepth, iris);
+            });
+        } else {
+            this._applyTypeFilter(typeIris, iriTypeMap, neighborDepth, iris);
+        }
+    }
+    
+    // Apply type filter to current graph
+    _applyTypeFilter(typeIris, iriTypeMap, neighborDepth, iris) {
+        const typeSet = new Set(typeIris);
+        
+        // Find all nodes matching the types
+        const matchingNodes = this.fullGraphData.nodes.filter(n => typeSet.has(n.id));
+        
+        if (matchingNodes.length === 0) {
+            this.showMessage('No matching nodes found in schema');
+            return;
+        }
+        
+        // Get neighbors up to depth
+        const depth = isFinite(neighborDepth) ? neighborDepth : Infinity;
+        const includedNodeIds = new Set(matchingNodes.map(n => n.id));
+        
+        if (depth > 0 && depth < Infinity) {
+            // BFS to find neighbors
+            let frontier = new Set(includedNodeIds);
+            for (let d = 0; d < depth; d++) {
+                const nextFrontier = new Set();
+                for (const link of this.fullGraphData.links) {
+                    const src = link.source?.id || link.source;
+                    const tgt = link.target?.id || link.target;
+                    if (frontier.has(src) && !includedNodeIds.has(tgt)) {
+                        includedNodeIds.add(tgt);
+                        nextFrontier.add(tgt);
+                    }
+                    if (frontier.has(tgt) && !includedNodeIds.has(src)) {
+                        includedNodeIds.add(src);
+                        nextFrontier.add(src);
+                    }
+                }
+                frontier = nextFrontier;
+                if (frontier.size === 0) break;
+            }
+        } else if (depth === Infinity || depth === 0) {
+            // Show all connected (0 means show all)
+            for (const n of this.fullGraphData.nodes) {
+                includedNodeIds.add(n.id);
+            }
+        }
+        
+        // Filter graph data
+        const nodes = this.fullGraphData.nodes.filter(n => includedNodeIds.has(n.id));
+        const links = this.fullGraphData.links.filter(l => {
+            const src = l.source?.id || l.source;
+            const tgt = l.target?.id || l.target;
+            return includedNodeIds.has(src) && includedNodeIds.has(tgt);
+        });
+        
+        // Attach resolved IRIs to nodes for display
+        nodes.forEach(n => {
+            n.resolvedIris = [];
+            if (iriTypeMap) {
+                for (const [iri, types] of iriTypeMap) {
+                    if (types.has(n.id)) {
+                        n.resolvedIris.push(iri);
+                    }
+                }
+            }
+        });
+        
+        this.graphData = { nodes, links };
+        this.populateNodeFilter();
+        this.renderInfo();
+        this.renderDiagram();
+        
+        // Highlight the matched type nodes using DiagramState
+        const matchedIds = matchingNodes.map(n => n.id);
+        this._highlightResolvedTypes(matchedIds);
+        
+        // Show status message in info bar (don't replace diagram!)
+        this._showInfoMessage(`Showing ${typeIris.length} type(s) for ${iris?.length || 0} IRI(s) (${nodes.length} nodes, depth ${depth === Infinity ? 'all' : depth})`);
+    }
+    
+    // Show a temporary info message without replacing the diagram
+    _showInfoMessage(msg) {
+        const info = document.getElementById('ls-info');
+        if (info) {
+            info.style.display = 'block';
+            // Prepend message to existing legend
+            const existingContent = info.innerHTML;
+            info.innerHTML = `<div style="margin-bottom: 8px; padding: 6px 10px; background: #dbeafe; border-radius: 4px; font-size: 11px; color: #1e40af;">
+                <strong></strong> ${msg}
+            </div>${existingContent}`;
+        }
+    }
+    
+    // Highlight resolved type nodes using DiagramState (persistent)
+    _highlightResolvedTypes(nodeIds) {
+        if (!nodeIds || nodeIds.length === 0) return;
+        
+        // Use a special color for IRI-resolved nodes
+        const color = '#10b981'; // emerald green
+        
+        // Add to diagram state as a pseudo-path for highlighting
+        this.diagramState.highlightedNodes.clear();
+        nodeIds.forEach(id => {
+            this.diagramState.highlightedNodes.set(id, { color, isStart: true });
+        });
+        
+        // Apply to DOM
+        this._applyHighlightsToDOM();
+        
+        // Sync with node highlight filter selector
+        this._syncNodeHighlightFilter(nodeIds);
+        
+        // Zoom to fit highlighted nodes
+        this.zoomToNodes(nodeIds);
+    }
+    
+    // Sync node highlight filter selector with a list of node IDs
+    _syncNodeHighlightFilter(nodeIds) {
+        const select = document.getElementById('ls-node-highlight-filter');
+        if (!select) return;
+        
+        if (typeof $ !== 'undefined' && $.fn.selectpicker) {
+            // Use Bootstrap selectpicker
+            $(select).selectpicker('val', nodeIds || []);
+        } else {
+            // Fallback: update native select
+            Array.from(select.options).forEach(opt => {
+                opt.selected = nodeIds && nodeIds.includes(opt.value);
+            });
         }
     }
     
@@ -2749,10 +3048,44 @@ class lsCloudVisualization {
                     .append('title').text(ds);
             });
         });
+        
+        // Resolved IRIs indicator badge (if node has instances)
+        nodeGroups.each(function(d) {
+            const resolvedIris = d.resolvedIris || [];
+            if (resolvedIris.length === 0) return;
+            
+            // Add badge showing count
+            const badge = d3.select(this).append('g')
+                .attr('class', 'iri-badge')
+                .attr('transform', `translate(${nodeWidth - 8}, 8)`);
+            
+            badge.append('circle')
+                .attr('r', 10)
+                .attr('fill', '#10b981')
+                .attr('stroke', 'white')
+                .attr('stroke-width', 2);
+            
+            badge.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'central')
+                .attr('font-size', '9px')
+                .attr('font-weight', 'bold')
+                .attr('fill', 'white')
+                .text(resolvedIris.length > 9 ? '9+' : resolvedIris.length);
+        });
 
-        // Tooltips
+        // Tooltips - include resolved IRIs if present
         nodeGroups.append('title')
-            .text(d => `${d.id}\n\nDatasets: ${d.datasets.join(', ')}\nConnections: ${d.degree}`);
+            .text(d => {
+                let tooltip = `${d.id}\n\nDatasets: ${d.datasets.join(', ')}\nConnections: ${d.degree}`;
+                const resolvedIris = d.resolvedIris || [];
+                if (resolvedIris.length > 0) {
+                    const irisPreview = resolvedIris.slice(0, 5).join('\n  ');
+                    const more = resolvedIris.length > 5 ? `\n  ... +${resolvedIris.length - 5} more` : '';
+                    tooltip += `\n\nResolved Instances (${resolvedIris.length}):\n  ${irisPreview}${more}`;
+                }
+                return tooltip;
+            });
 
         // Apply legend-based dimming if a subset is active
         if (this.legendSubset && this.legendSubset.size > 0) {
