@@ -18,48 +18,37 @@ class lsCloudVisualization {
         this.mergedData = [];
         this.datasetColorMap = new Map();
         this.allDatasetNames = [];
-    this.legendSubset = new Set();
+        this.legendSubset = new Set();
         
         this.svg = null;
         this.zoom = null;
         this.graphData = { nodes: [], links: [] };
         this.fullGraphData = { nodes: [], links: [] };
         
-    this.pathFindingMode = false;
-    this.selectedNodes = [];
-    this.highlightedPath = [];
-    this.allPaths = []; // Store all found paths for accumulation
-    this.intersectionMode = false;
-    
-    // Path color palette (light, visible colors that work well on white background)
-    this.pathColors = [
-        '#4285f4', // Blue
-        '#ea4335', // Red
-        '#34a853', // Green
-        '#fbbc04', // Yellow/Gold
-        '#9c27b0', // Purple
-        '#00acc1', // Cyan
-        '#ff7043', // Deep Orange
-        '#7cb342', // Light Green
-        '#5c6bc0', // Indigo
-        '#f06292', // Pink
-    ];
+        this.pathFindingMode = false;
+        this.selectedNodes = [];
+        this.intersectionMode = false;
         
-        // Spacing multipliers (controlled by buttons) - start with high Y for readability
+        // DiagramState is the SINGLE SOURCE OF TRUTH for path/highlight state
+        this.diagramState = new DiagramState({
+            onStateChange: (event) => {
+                // Auto-apply highlights when state changes
+                if (event === 'pathsChanged') {
+                    this._applyHighlightsToDOM();
+                }
+            }
+        });
+        
+        // Spacing multipliers
         this.xSpacing = 1.0;
         this.ySpacing = 1.0;
         
-        // Edge style: false = orthogonal, true = curved
+        // Edge style: true = curved, false = orthogonal
         this.curvedEdges = true;
         
         // Prefixes to exclude
         this.excludedPrefixes = [
-            'rdf',
-            'rdfs',
-            'owl',
-            'sh',
-            'sparqlserv',
-            'foaf'
+            'rdf', 'rdfs', 'owl', 'sh', 'sparqlserv', 'foaf'
         ];
         
         // Common terms to exclude by local name
@@ -104,9 +93,16 @@ class lsCloudVisualization {
         });
     }
 
-    // Get color for path at given index
-    getPathColor(index) {
-        return this.pathColors[index % this.pathColors.length];
+    // ========== Convenience Getters ==========
+    
+    /** Get all paths from DiagramState */
+    get allPaths() {
+        return this.diagramState.paths;
+    }
+    
+    /** Get color for path at given color index */
+    getPathColor(colorIndex) {
+        return this.diagramState.getPathColor(colorIndex);
     }
 
     init() {
@@ -863,8 +859,32 @@ class lsCloudVisualization {
             });
         }
 
+        // Add OPTIONAL clauses for labels (rdfs:label, dc:title, skos:prefLabel)
+        // These fetch human-readable labels for each variable
+        const labelOptionals = [];
+        const labelVars = [];
+        selectVars.forEach(varName => {
+            const labelVar = `${varName}Label`;
+            const titleVar = `${varName}Title`;
+            labelVars.push(labelVar);
+            labelOptionals.push(
+                `  OPTIONAL { ?${varName} <http://www.w3.org/2000/01/rdf-schema#label> ?${labelVar} . }\n  OPTIONAL { ?${varName} <http://purl.org/dc/elements/1.1/title> ?${titleVar} . }\n`
+            );
+        });
+
+        // Add label optionals to where clause
+        if (labelOptionals.length > 0) {
+            whereLines.push(...labelOptionals);
+        }
+
+        // Build SELECT clause with label variables
+        const allSelectVars = [
+            ...Array.from(selectVars).map(v => `?${v}`),
+            ...labelVars.map(v => `?${v}`)
+        ].join(' ');
+
         // Build complete query
-        let query = `SELECT DISTINCT ${selectVarsList}\nWHERE {\n${whereLines.join('\n\n')}\n}`;
+        let query = `\nSELECT DISTINCT ${allSelectVars}\nWHERE {\n${whereLines.join('\n')}\n}`;
         query += '\nLIMIT 100';
         
         return query;
@@ -1319,25 +1339,19 @@ class lsCloudVisualization {
             const fromLabel = fromNode?.label || this.pathFromNodeId;
             const toLabel = toNode?.label || this.pathToNodeId;
             
-            // Add all paths with same color (they share the same endpoint pair)
-            const colorIndex = this.allPaths.length > 0 
-                ? Math.max(...this.allPaths.map(p => p.colorIndex || 0)) + 1 
-                : 0;
-            
-            expandedPaths.forEach((edgePath, i) => {
-                this.allPaths.push({
-                    path: edgePath.nodes,
-                    edges: edgePath.edges,
-                    fromLabel: fromLabel,
-                    toLabel: toLabel,
-                    colorIndex: colorIndex, // All paths between same nodes share color
-                    pathNumber: i + 1,
-                    totalPaths: expandedPaths.length
-                });
-            });
+            // Use DiagramState.addPathGroup for paths between same endpoints (same color)
+            const pathDataArray = expandedPaths.map((edgePath, i) => ({
+                path: edgePath.nodes,
+                edges: edgePath.edges,
+                fromLabel: fromLabel,
+                toLabel: toLabel,
+                pathNumber: i + 1,
+                totalPaths: expandedPaths.length
+            }));
+            this.diagramState.addPathGroup(pathDataArray);
             
             const modeText = shortestOnly ? 'shortest path' : `${expandedPaths.length} path(s)`;
-            status.textContent = `Found ${modeText} (${this.allPaths.length} total)`;
+            status.textContent = `Found ${modeText} (${this.diagramState.paths.length} total)`;
             this.highlightAllPaths();
             this.showAllPathsQueryPanel();
             
@@ -1355,19 +1369,86 @@ class lsCloudVisualization {
         }
     }
 
+    /**
+     * Remove a path by index. DiagramState handles highlight updates via callback.
+     */
     removePath(index) {
-        if (index >= 0 && index < this.allPaths.length) {
-            this.allPaths.splice(index, 1);
-            
-            if (this.allPaths.length === 0) {
-                this.clearAllPaths();
-            } else {
-                // Skip zoom when removing a path to avoid jarring animation
-                this.highlightAllPaths(true);
-                this.showAllPathsQueryPanel();
-                document.getElementById('ls-path-status').textContent = `${this.allPaths.length} path(s)`;
-            }
+        if (index < 0 || index >= this.diagramState.paths.length) return;
+        
+        this.diagramState.removePath(index);
+        // Callback in diagramState handles _applyHighlightsToDOM
+        
+        if (this.diagramState.paths.length === 0) {
+            this._clearPathUI();
+        } else {
+            this.showAllPathsQueryPanel();
+            document.getElementById('ls-path-status').textContent = `${this.diagramState.paths.length} path(s)`;
         }
+    }
+    
+    /**
+     * SINGLE METHOD to apply highlights from DiagramState to DOM.
+     * Called automatically by DiagramState.onStateChange callback.
+     */
+    _applyHighlightsToDOM() {
+        const state = this.diagramState;
+        const hasHighlights = state.hasHighlights();
+        
+        // Clear all existing highlight styles first
+        d3.selectAll('.node-group')
+            .classed('path-node', false)
+            .classed('path-start', false)
+            .classed('dimmed', false)
+            .each(function() {
+                d3.select(this).select('rect').style('stroke', null).style('stroke-width', null);
+            });
+        
+        d3.selectAll('.link-group')
+            .classed('path-link', false)
+            .classed('dimmed', false)
+            .each(function() {
+                d3.select(this).select('path').style('stroke', null).style('stroke-width', null);
+            });
+        
+        if (!hasHighlights) return;
+        
+        // Apply node highlights from state
+        d3.selectAll('.node-group')
+            .each(function(d) {
+                const highlight = state.getNodeHighlight(d.id);
+                const el = d3.select(this);
+                const rect = el.select('rect');
+                
+                if (highlight) {
+                    el.classed('path-node', true);
+                    el.classed('path-start', highlight.isStart);
+                    rect.style('stroke', highlight.color).style('stroke-width', '3px');
+                } else {
+                    el.classed('dimmed', true);
+                }
+            });
+        
+        // Apply edge highlights from state
+        d3.selectAll('.link-group')
+            .each(function(d) {
+                const s = d.source?.id || d.source;
+                const t = d.target?.id || d.target;
+                const prop = d.property || '';
+                const highlight = state.getEdgeHighlight(s, t, prop);
+                const el = d3.select(this);
+                const path = el.select('path');
+                
+                if (highlight) {
+                    el.classed('path-link', true);
+                    path.style('stroke', highlight.color).style('stroke-width', '3px');
+                } else {
+                    el.classed('dimmed', true);
+                }
+            });
+        
+        // Bring highlighted elements to front
+        d3.selectAll('.link-group.path-link').raise();
+        d3.selectAll('.node-group.path-node').raise();
     }
 
     // ========== Data Loading ==========
@@ -1910,15 +1991,23 @@ class lsCloudVisualization {
         status.textContent = 'Click first node for new path...';
     }
 
+    /**
+     * Clear all paths. DiagramState handles highlight updates via callback.
+     */
     clearAllPaths() {
-        this.allPaths = [];
-        this.highlightedPath = [];
+        this.diagramState.clearPaths();
+        // Callback handles _applyHighlightsToDOM
+        this._clearPathUI();
+    }
+    
+    /**
+     * Clear path-related UI elements (called after paths cleared or last path removed)
+     */
+    _clearPathUI() {
         this.pathFromNodeId = null;
         this.pathToNodeId = null;
-        this.clearHighlights();
         this.hidePathQueryPanel();
         
-        // Clear UI elements
         const addBtn = document.getElementById('ls-add-path-btn');
         const clearBtn = document.getElementById('ls-clear-paths-btn');
         const status = document.getElementById('ls-path-status');
@@ -1929,10 +2018,7 @@ class lsCloudVisualization {
         if (addBtn) addBtn.style.display = 'none';
         if (clearBtn) clearBtn.style.display = 'none';
         if (status) status.textContent = '';
-        if (pathsList) {
-            pathsList.style.display = 'none';
-            pathsList.innerHTML = '';
-        }
+        if (pathsList) { pathsList.style.display = 'none'; pathsList.innerHTML = ''; }
         if (fromInput) fromInput.value = '';
         if (toInput) toInput.value = '';
     }
@@ -1956,23 +2042,18 @@ class lsCloudVisualization {
                 const fromLabel = fromNode?.label || this.selectedNodes[0];
                 const toLabel = toNode?.label || node.id;
                 
-                const colorIndex = this.allPaths.length > 0 
-                    ? Math.max(...this.allPaths.map(p => p.colorIndex || 0)) + 1 
-                    : 0;
+                // Use DiagramState.addPathGroup for paths between same endpoints
+                const pathDataArray = expandedPaths.map((edgePath, i) => ({
+                    path: edgePath.nodes,
+                    edges: edgePath.edges,
+                    fromLabel: fromLabel,
+                    toLabel: toLabel,
+                    pathNumber: i + 1,
+                    totalPaths: expandedPaths.length
+                }));
+                this.diagramState.addPathGroup(pathDataArray);
                 
-                expandedPaths.forEach((edgePath, i) => {
-                    this.allPaths.push({
-                        path: edgePath.nodes,
-                        edges: edgePath.edges,
-                        fromLabel: fromLabel,
-                        toLabel: toLabel,
-                        colorIndex: colorIndex,
-                        pathNumber: i + 1,
-                        totalPaths: expandedPaths.length
-                    });
-                });
-                
-                status.textContent = `${this.allPaths.length} path(s) found`;
+                status.textContent = `${this.diagramState.paths.length} path(s) found`;
                 this.highlightAllPaths();
                 this.showAllPathsQueryPanel();
                 // Show add/clear buttons
@@ -2242,196 +2323,22 @@ class lsCloudVisualization {
         return expandedPaths;
     }
 
-    highlightPath(path) {
-        const pathSet = new Set(path);
-        d3.selectAll('.node-group')
-            .classed('path-node', d => pathSet.has(d.id))
-            .classed('dimmed', d => !pathSet.has(d.id));
-        
-        d3.selectAll('.link-group')
-            .classed('dimmed', d => {
-                const s = d.source.id || d.source;
-                const t = d.target.id || d.target;
-                for (let i = 0; i < path.length - 1; i++) {
-                    if ((path[i] === s && path[i+1] === t) || (path[i] === t && path[i+1] === s)) return false;
-                }
-                return true;
-            })
-            .classed('path-link', d => {
-                const s = d.source.id || d.source;
-                const t = d.target.id || d.target;
-                for (let i = 0; i < path.length - 1; i++) {
-                    if ((path[i] === s && path[i+1] === t) || (path[i] === t && path[i+1] === s)) return true;
-                }
-                return false;
-            });
-        
-        // Zoom to fit the path nodes
-        const pathNodes = this.graphData.nodes.filter(n => pathSet.has(n.id));
-        if (pathNodes.length > 0) {
-            this.zoomToNodes(pathNodes, { maxScale: 2.5 });
-        }
-    }
-
-    // Highlight all accumulated paths with distinct colors and zoom to fit
+    /**
+     * Trigger highlight application and optionally zoom to path nodes.
+     * DiagramState.onStateChange callback handles the actual DOM updates.
+     */
     highlightAllPaths(skipZoom = false) {
-        // Build maps of node/edge to their path colors (for multi-path, first path wins)
-        const nodeColorMap = new Map(); // nodeId -> color
-        const edgeColorMap = new Map(); // "source|||target|||property" -> color
-        const allPathNodes = new Set();
-        const allPathEdges = new Set(); // Set of "source|||target|||property" keys
-        // Also track edges without property for loose matching (when edge property unknown)
-        const allPathEdgePairs = new Set(); // Set of "source|||target" keys
-        
-        
-        
-        this.allPaths.forEach((pathData, pathIdx) => {
-            const path = Array.isArray(pathData) ? pathData : pathData.path;
-            const storedEdges = pathData.edges;
-            if (!path) return;
-            
-            
-            
-            
-            // Use colorIndex if available (paths between same nodes share color)
-            const colorIdx = pathData.colorIndex !== undefined ? pathData.colorIndex : pathIdx;
-            const color = this.getPathColor(colorIdx);
-            
-            path.forEach(nodeId => {
-                allPathNodes.add(nodeId);
-                if (!nodeColorMap.has(nodeId)) {
-                    nodeColorMap.set(nodeId, color);
-                }
-            });
-            
-            for (let i = 0; i < path.length - 1; i++) {
-                const fromNode = path[i];
-                const toNode = path[i + 1];
-                
-                
-                
-                // Always add the node pair for loose matching
-                allPathEdgePairs.add(`${fromNode}|||${toNode}`);
-                allPathEdgePairs.add(`${toNode}|||${fromNode}`);
-                
-                // Also set colors for loose pair matching (fallback)
-                const pairKey1 = `${fromNode}|||${toNode}`;
-                const pairKey2 = `${toNode}|||${fromNode}`;
-                if (!edgeColorMap.has(pairKey1)) {
-                    edgeColorMap.set(pairKey1, color);
-                    edgeColorMap.set(pairKey2, color);
-                }
-                
-                // If we have stored edges, also add specific property keys
-                if (storedEdges && storedEdges[i]) {
-                    const edgeProp = storedEdges[i].property || storedEdges[i].label || '';
-                    if (edgeProp) {
-                        // Create edge keys that include the property for specific matching
-                        const edgeKey1 = `${fromNode}|||${toNode}|||${edgeProp}`;
-                        const edgeKey2 = `${toNode}|||${fromNode}|||${edgeProp}`;
-                        allPathEdges.add(edgeKey1);
-                        allPathEdges.add(edgeKey2);
-                        if (!edgeColorMap.has(edgeKey1)) {
-                            edgeColorMap.set(edgeKey1, color);
-                            edgeColorMap.set(edgeKey2, color);
-                        }
-                    }
-                }
-            }
-        });
+        // Force DOM update (in case callback wasn't triggered)
+        this._applyHighlightsToDOM();
 
-        // Apply colors to nodes
-        d3.selectAll('.node-group')
-            .classed('path-node', d => allPathNodes.has(d.id))
-            .classed('dimmed', d => allPathNodes.size > 0 && !allPathNodes.has(d.id))
-            .each(function(d) {
-                const color = nodeColorMap.get(d.id);
-                const rect = d3.select(this).select('rect');
-                if (color && allPathNodes.has(d.id)) {
-                    rect.style('stroke', color).style('stroke-width', '3px');
-                } else {
-                    rect.style('stroke', null).style('stroke-width', null);
-                }
-            });
-        
-        
-        
-        
-        // Helper function to check if link is in path (either specific property or loose pair)
-        const isLinkInPath = (source, target, prop) => {
-            // Check for specific edge match
-            if (allPathEdges.has(`${source}|||${target}|||${prop}`)) return true;
-            // Check for loose pair match (when stored edges don't have property info)
-            if (allPathEdgePairs.has(`${source}|||${target}`)) return true;
-            return false;
-        };
-        
-        // Helper function to get color for link
-        const getLinkColor = (source, target, prop) => {
-            // Try specific property match first
-            let color = edgeColorMap.get(`${source}|||${target}|||${prop}`);
-            if (color) return color;
-            // Fall back to pair match (without property)
-            color = edgeColorMap.get(`${source}|||${target}`);
-            return color;
-        };
-        
-        // Apply colors to links
-        let matchedCount = 0, totalLinks = 0;
-        d3.selectAll('.link-group')
-            .classed('path-link', d => {
-                const s = d.source.id || d.source;
-                const t = d.target.id || d.target;
-                const prop = d.property || d.label || '';
-                totalLinks++;
-                const matched = isLinkInPath(s, t, prop);
-                if (matched) matchedCount++;
-                return matched;
-            })
-            .classed('dimmed', d => {
-                const s = d.source.id || d.source;
-                const t = d.target.id || d.target;
-                const prop = d.property || d.label || '';
-                return (allPathEdges.size > 0 || allPathEdgePairs.size > 0) && !isLinkInPath(s, t, prop);
-            })
-            .each(function(d) {
-                const s = d.source.id || d.source;
-                const t = d.target.id || d.target;
-                const prop = d.property || d.label || '';
-                const color = getLinkColor(s, t, prop);
-                const path = d3.select(this).select('path');
-                if (color) {
-                    path.style('stroke', color).style('stroke-width', '3px');
-                } else {
-                    path.style('stroke', null).style('stroke-width', null);
-                }
-            });
-        
-        // Bring highlighted elements to front (higher z-index in SVG)
-        // First raise highlighted links, then nodes (so nodes appear on top of links)
-        d3.selectAll('.link-group.path-link').raise();
-        d3.selectAll('.node-group.path-node').raise();
-
-        // Zoom to fit all path nodes (unless skipZoom is true)
-        if (!skipZoom && allPathNodes.size > 0) {
-            const pathNodes = this.graphData.nodes.filter(n => allPathNodes.has(n.id));
+        // Zoom to fit all path nodes
+        if (!skipZoom && this.diagramState.hasHighlights()) {
+            const nodeIds = this.diagramState.getHighlightedNodeIds();
+            const pathNodes = this.graphData.nodes.filter(n => nodeIds.has(n.id));
             if (pathNodes.length > 0) {
                 this.zoomToNodes(pathNodes, { maxScale: 2.5, padding: 100 });
             }
         }
-    }
-
-    clearHighlights() {
-        d3.selectAll('.node-group')
-            .classed('path-node path-start dimmed', false)
-            .each(function() {
-                d3.select(this).select('rect').style('stroke', null).style('stroke-width', null);
-            });
-        d3.selectAll('.link-group')
-            .classed('path-link dimmed', false)
-            .each(function() {
-                d3.select(this).select('path').style('stroke', null).style('stroke-width', null);
-            });
     }
 
     // Toggle fullscreen mode for the LS Cloud section
@@ -2517,6 +2424,8 @@ class lsCloudVisualization {
     // Toggle edge style between orthogonal and curved
     toggleEdgeStyle() {
         this.curvedEdges = !this.curvedEdges;
+        this.diagramState.setEdgeStyle(this.curvedEdges ? 'curved' : 'orthogonal');
+        
         const btn = document.getElementById('ls-edge-style-btn');
         if (btn) {
             btn.textContent = this.curvedEdges ? 'Curved' : 'Orthogonal';
@@ -2533,9 +2442,9 @@ class lsCloudVisualization {
         // Re-render diagram with new edge style immediately
         if (this.graphData && this.graphData.nodes.length > 0) {
             this.renderDiagram();
-            // Reapply path highlights if we have any paths (skip zoom to preserve view)
-            if (this.allPaths && this.allPaths.length > 0) {
-                this.highlightAllPaths(true);
+            // Reapply path highlights from state (skip zoom to preserve view)
+            if (this.diagramState.hasHighlights()) {
+                this._applyHighlightsToDOM();
             }
         }
     }

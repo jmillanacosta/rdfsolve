@@ -5,8 +5,10 @@
 
 /**
  * DiagramState - Centralized state management for D3 diagrams
- * Tracks all visual state (paths, highlights, edge styles, zoom, etc.)
- * and provides methods to apply/restore state after re-renders.
+ * 
+ * PURE STATE MANAGEMENT - no DOM manipulation.
+ * Tracks paths, computes what should be highlighted.
+ * The visualization class is responsible for applying state to DOM.
  */
 class DiagramState {
     constructor(options = {}) {
@@ -19,101 +21,31 @@ class DiagramState {
         // Edge style: 'curved' or 'orthogonal'
         this.edgeStyle = options.edgeStyle || 'curved';
         
-        // Spacing multipliers
-        this.xSpacing = options.xSpacing || 1.0;
-        this.ySpacing = options.ySpacing || 1.0;
-        
-        // Stored paths: Array of { path: [nodeIds], edges: [edgeObjects], colorIndex, fromLabel, toLabel, ... }
+        // Stored paths: Array of { path: [nodeIds], edges: [edgeObjects], colorIndex, ... }
         this.paths = [];
         
         // Next color index for new path groups
         this.nextColorIndex = 0;
         
-        // Highlighted nodes: Map<nodeId, { color, isStart }>
-        this.highlightedNodes = new Map();
+        // Computed highlight maps (rebuilt after path changes)
+        this.highlightedNodes = new Map(); // nodeId -> { color, isStart }
+        this.highlightedEdges = new Map(); // "source|||target" or "source|||target|||property" -> { color }
         
-        // Highlighted edges: Map<"source|||target|||property", { color }>
-        this.highlightedEdges = new Map();
-        
-        // Dimmed items (not in current selection)
-        this.dimmedNodes = new Set();
-        this.dimmedEdges = new Set();
-        
-        // Intersection mode
-        this.intersectionMode = false;
-        
-        // Zoom transform
-        this.zoomTransform = null;
-        
-        // ViewBox info (for proper zoom calculations)
-        this.viewBox = null;
-        
-        // Callback for state changes (optional)
+        // Callback for state changes
         this.onStateChange = options.onStateChange || null;
-    }
-    
-    // ========== Edge Style ==========
-    
-    setEdgeStyle(style) {
-        if (style === 'curved' || style === 'orthogonal') {
-            this.edgeStyle = style;
-            this._notifyChange('edgeStyle');
-        }
-    }
-    
-    toggleEdgeStyle() {
-        this.edgeStyle = this.edgeStyle === 'curved' ? 'orthogonal' : 'curved';
-        this._notifyChange('edgeStyle');
-        return this.edgeStyle;
-    }
-    
-    // ========== Spacing ==========
-    
-    setSpacing(x, y) {
-        this.xSpacing = x;
-        this.ySpacing = y;
-        this._notifyChange('spacing');
     }
     
     // ========== Path Management ==========
     
     /**
-     * Add a path to the state
-     * @param {Object} pathData - { path: [nodeIds], edges: [edgeObjs], fromLabel, toLabel, ... }
-     * @param {number} [colorIndex] - Optional color index (auto-assigned if not provided)
-     * @returns {number} The index of the added path
-     */
-    addPath(pathData, colorIndex = null) {
-        const idx = colorIndex !== null ? colorIndex : this.nextColorIndex;
-        
-        const pathEntry = {
-            ...pathData,
-            colorIndex: idx,
-            id: this._generatePathId()
-        };
-        
-        this.paths.push(pathEntry);
-        
-        // Update next color index if needed
-        if (colorIndex === null || colorIndex >= this.nextColorIndex) {
-            this.nextColorIndex = idx + 1;
-        }
-        
-        // Rebuild highlight maps
-        this._rebuildHighlightMaps();
-        this._notifyChange('paths');
-        
-        return this.paths.length - 1;
-    }
-    
-    /**
-     * Add multiple paths with the same color (same endpoint pair)
-     * @param {Array} pathDataArray - Array of path data objects
+     * Add a group of paths with the same color (e.g., all paths between same endpoints)
+     * @param {Array} pathDataArray - Array of { path: [nodeIds], edges: [edgeObjs], fromLabel, toLabel }
      * @returns {number} The color index used
      */
     addPathGroup(pathDataArray) {
-        const colorIndex = this.nextColorIndex;
-        this.nextColorIndex++;
+        if (!pathDataArray || pathDataArray.length === 0) return -1;
+        
+        const colorIndex = this.nextColorIndex++;
         
         pathDataArray.forEach((pathData, i) => {
             this.paths.push({
@@ -121,26 +53,24 @@ class DiagramState {
                 colorIndex,
                 pathNumber: i + 1,
                 totalPaths: pathDataArray.length,
-                id: this._generatePathId()
+                id: this._generateId()
             });
         });
         
         this._rebuildHighlightMaps();
-        this._notifyChange('paths');
-        
+        this._notify('pathsChanged');
         return colorIndex;
     }
     
     /**
      * Remove a path by index
-     * @param {number} index - Path index to remove
      */
     removePath(index) {
-        if (index >= 0 && index < this.paths.length) {
-            this.paths.splice(index, 1);
-            this._rebuildHighlightMaps();
-            this._notifyChange('paths');
-        }
+        if (index < 0 || index >= this.paths.length) return;
+        
+        this.paths.splice(index, 1);
+        this._rebuildHighlightMaps();
+        this._notify('pathsChanged');
     }
     
     /**
@@ -151,83 +81,21 @@ class DiagramState {
         this.nextColorIndex = 0;
         this.highlightedNodes.clear();
         this.highlightedEdges.clear();
-        this.dimmedNodes.clear();
-        this.dimmedEdges.clear();
-        this._notifyChange('paths');
+        this._notify('pathsChanged');
     }
     
     /**
-     * Get color for a path index
+     * Get color for a color index
      */
-    getPathColor(index) {
-        return this.pathColors[index % this.pathColors.length];
+    getPathColor(colorIndex) {
+        return this.pathColors[colorIndex % this.pathColors.length];
     }
     
-    // ========== Highlight State Rebuilding ==========
-    
-    /**
-     * Rebuild highlight maps from current paths
-     * Called internally after path changes
-     */
-    _rebuildHighlightMaps() {
-        this.highlightedNodes.clear();
-        this.highlightedEdges.clear();
-        
-        this.paths.forEach((pathData) => {
-            const path = Array.isArray(pathData) ? pathData : pathData.path;
-            const storedEdges = pathData.edges || [];
-            if (!path) return;
-            
-            const color = this.getPathColor(pathData.colorIndex || 0);
-            
-            // Add nodes
-            path.forEach((nodeId, i) => {
-                if (!this.highlightedNodes.has(nodeId)) {
-                    this.highlightedNodes.set(nodeId, {
-                        color,
-                        isStart: i === 0
-                    });
-                }
-            });
-            
-            // Add edges - both with specific property and loose pair matching
-            for (let i = 0; i < path.length - 1; i++) {
-                const fromNode = path[i];
-                const toNode = path[i + 1];
-                const edge = storedEdges[i];
-                
-                // Loose pair key (both directions for matching)
-                const pairKey1 = `${fromNode}|||${toNode}`;
-                const pairKey2 = `${toNode}|||${fromNode}`;
-                
-                if (!this.highlightedEdges.has(pairKey1)) {
-                    this.highlightedEdges.set(pairKey1, { color });
-                }
-                if (!this.highlightedEdges.has(pairKey2)) {
-                    this.highlightedEdges.set(pairKey2, { color });
-                }
-                
-                // Specific property keys if edge info available
-                if (edge && edge.property) {
-                    const propKey1 = `${fromNode}|||${toNode}|||${edge.property}`;
-                    const propKey2 = `${toNode}|||${fromNode}|||${edge.property}`;
-                    if (!this.highlightedEdges.has(propKey1)) {
-                        this.highlightedEdges.set(propKey1, { color });
-                    }
-                    if (!this.highlightedEdges.has(propKey2)) {
-                        this.highlightedEdges.set(propKey2, { color });
-                    }
-                }
-            }
-        });
-    }
-    
-    // ========== State Application ==========
+    // ========== Highlight Queries ==========
     
     /**
      * Check if a node should be highlighted
-     * @param {string} nodeId - Node ID
-     * @returns {Object|null} { color, isStart } or null if not highlighted
+     * @returns {{ color: string, isStart: boolean } | null}
      */
     getNodeHighlight(nodeId) {
         return this.highlightedNodes.get(nodeId) || null;
@@ -235,194 +103,93 @@ class DiagramState {
     
     /**
      * Check if an edge should be highlighted
-     * @param {string} source - Source node ID
-     * @param {string} target - Target node ID
-     * @param {string} [property] - Optional edge property
-     * @returns {Object|null} { color } or null if not highlighted
+     * @returns {{ color: string } | null}
      */
     getEdgeHighlight(source, target, property = null) {
-        // Try specific property key first
+        // Try with property first (more specific)
         if (property) {
-            const propKey = `${source}|||${target}|||${property}`;
-            if (this.highlightedEdges.has(propKey)) {
-                return this.highlightedEdges.get(propKey);
-            }
+            const key = `${source}|||${target}|||${property}`;
+            const h = this.highlightedEdges.get(key);
+            if (h) return h;
         }
-        
-        // Fall back to pair key
-        const pairKey = `${source}|||${target}`;
-        return this.highlightedEdges.get(pairKey) || null;
+        // Try without property (both directions)
+        const key1 = `${source}|||${target}`;
+        const key2 = `${target}|||${source}`;
+        return this.highlightedEdges.get(key1) || this.highlightedEdges.get(key2) || null;
     }
     
     /**
      * Check if there are any active highlights
      */
     hasHighlights() {
-        return this.highlightedNodes.size > 0 || this.highlightedEdges.size > 0;
+        return this.highlightedNodes.size > 0;
     }
     
     /**
-     * Apply current state to D3 diagram elements
-     * Call this after re-rendering the diagram
-     * @param {Object} options - { nodeSelector, linkSelector, applyDimming }
+     * Get all highlighted node IDs
      */
-    applyToElements(options = {}) {
-        const {
-            nodeSelector = '.node-group',
-            linkSelector = '.link-group',
-            applyDimming = true
-        } = options;
+    getHighlightedNodeIds() {
+        return new Set(this.highlightedNodes.keys());
+    }
+    
+    // ========== Edge Style ==========
+    
+    setEdgeStyle(style) {
+        if (style === 'curved' || style === 'orthogonal') {
+            this.edgeStyle = style;
+            this._notify('edgeStyleChanged');
+        }
+    }
+    
+    // ========== Internal ==========
+    
+    /**
+     * Rebuild highlight maps from current paths
+     */
+    _rebuildHighlightMaps() {
+        this.highlightedNodes.clear();
+        this.highlightedEdges.clear();
         
-        const hasHighlights = this.hasHighlights();
-        
-        // Apply to nodes
-        d3.selectAll(nodeSelector)
-            .classed('path-node', d => this.highlightedNodes.has(d.id))
-            .classed('path-start', d => {
-                const h = this.highlightedNodes.get(d.id);
-                return h && h.isStart;
-            })
-            .classed('dimmed', d => {
-                if (!applyDimming || !hasHighlights) return false;
-                return !this.highlightedNodes.has(d.id);
-            })
-            .each(function(d) {
-                const highlight = d3.select(this).classed('path-node') 
-                    ? d3.select(this).datum() 
-                    : null;
-                const rect = d3.select(this).select('rect');
-                
-                if (highlight) {
-                    const h = this.highlightedNodes?.get?.(d.id);
-                    if (h) {
-                        rect.style('stroke', h.color).style('stroke-width', '3px');
-                    }
-                } else {
-                    rect.style('stroke', null).style('stroke-width', null);
+        this.paths.forEach((pathData) => {
+            const path = pathData.path;
+            const edges = pathData.edges || [];
+            if (!path || path.length === 0) return;
+            
+            const color = this.getPathColor(pathData.colorIndex);
+            
+            // Add nodes
+            path.forEach((nodeId, i) => {
+                if (!this.highlightedNodes.has(nodeId)) {
+                    this.highlightedNodes.set(nodeId, { color, isStart: i === 0 });
                 }
-            }.bind(this));
-        
-        // Apply to links
-        d3.selectAll(linkSelector)
-            .classed('path-link', d => {
-                const s = d.source?.id || d.source;
-                const t = d.target?.id || d.target;
-                const prop = d.property || d.label || '';
-                return this.getEdgeHighlight(s, t, prop) !== null;
-            })
-            .classed('dimmed', d => {
-                if (!applyDimming || !hasHighlights) return false;
-                const s = d.source?.id || d.source;
-                const t = d.target?.id || d.target;
-                const prop = d.property || d.label || '';
-                return this.getEdgeHighlight(s, t, prop) === null;
-            })
-            .each(function(d) {
-                const s = d.source?.id || d.source;
-                const t = d.target?.id || d.target;
-                const prop = d.property || d.label || '';
-                const highlight = this.getEdgeHighlight(s, t, prop);
-                const path = d3.select(this).select('path');
+            });
+            
+            // Add edges (both directions for matching)
+            for (let i = 0; i < path.length - 1; i++) {
+                const from = path[i];
+                const to = path[i + 1];
+                const edge = edges[i];
+                const edgeColor = { color };
                 
-                if (highlight) {
-                    path.style('stroke', highlight.color).style('stroke-width', '3px');
-                } else {
-                    path.style('stroke', null).style('stroke-width', null);
+                // Pair keys (no property)
+                this.highlightedEdges.set(`${from}|||${to}`, edgeColor);
+                this.highlightedEdges.set(`${to}|||${from}`, edgeColor);
+                
+                // Property-specific keys
+                if (edge && edge.property) {
+                    this.highlightedEdges.set(`${from}|||${to}|||${edge.property}`, edgeColor);
+                    this.highlightedEdges.set(`${to}|||${from}|||${edge.property}`, edgeColor);
                 }
-            }.bind(this));
+            }
+        });
     }
     
-    /**
-     * Clear all visual highlights from elements (without changing state)
-     */
-    clearVisualHighlights(options = {}) {
-        const {
-            nodeSelector = '.node-group',
-            linkSelector = '.link-group'
-        } = options;
-        
-        d3.selectAll(nodeSelector)
-            .classed('path-node path-start dimmed', false)
-            .each(function() {
-                d3.select(this).select('rect').style('stroke', null).style('stroke-width', null);
-            });
-        
-        d3.selectAll(linkSelector)
-            .classed('path-link dimmed', false)
-            .each(function() {
-                d3.select(this).select('path').style('stroke', null).style('stroke-width', null);
-            });
+    _generateId() {
+        return `p_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     }
     
-    // ========== Zoom State ==========
-    
-    setZoomTransform(transform) {
-        this.zoomTransform = transform;
-    }
-    
-    setViewBox(viewBox) {
-        this.viewBox = viewBox;
-    }
-    
-    // ========== Serialization ==========
-    
-    /**
-     * Export state to a plain object (for saving/debugging)
-     */
-    toJSON() {
-        return {
-            edgeStyle: this.edgeStyle,
-            xSpacing: this.xSpacing,
-            ySpacing: this.ySpacing,
-            paths: this.paths.map(p => ({
-                path: p.path,
-                colorIndex: p.colorIndex,
-                fromLabel: p.fromLabel,
-                toLabel: p.toLabel
-            })),
-            intersectionMode: this.intersectionMode,
-            zoomTransform: this.zoomTransform ? {
-                k: this.zoomTransform.k,
-                x: this.zoomTransform.x,
-                y: this.zoomTransform.y
-            } : null
-        };
-    }
-    
-    /**
-     * Import state from a plain object
-     */
-    fromJSON(data) {
-        if (data.edgeStyle) this.edgeStyle = data.edgeStyle;
-        if (data.xSpacing !== undefined) this.xSpacing = data.xSpacing;
-        if (data.ySpacing !== undefined) this.ySpacing = data.ySpacing;
-        if (data.intersectionMode !== undefined) this.intersectionMode = data.intersectionMode;
-        
-        if (data.paths && Array.isArray(data.paths)) {
-            this.paths = data.paths;
-            this.nextColorIndex = Math.max(0, ...data.paths.map(p => (p.colorIndex || 0) + 1));
-            this._rebuildHighlightMaps();
-        }
-        
-        if (data.zoomTransform) {
-            this.zoomTransform = d3.zoomIdentity
-                .translate(data.zoomTransform.x, data.zoomTransform.y)
-                .scale(data.zoomTransform.k);
-        }
-        
-        this._notifyChange('import');
-    }
-    
-    // ========== Helpers ==========
-    
-    _generatePathId() {
-        return `path_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-    
-    _notifyChange(changeType) {
-        if (this.onStateChange) {
-            this.onStateChange(changeType, this);
-        }
+    _notify(event) {
+        if (this.onStateChange) this.onStateChange(event, this);
     }
 }
 
