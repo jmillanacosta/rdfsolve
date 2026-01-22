@@ -3,7 +3,433 @@
  * Shared functionality for D3-based class diagram visualizations
  */
 
+/**
+ * DiagramState - Centralized state management for D3 diagrams
+ * Tracks all visual state (paths, highlights, edge styles, zoom, etc.)
+ * and provides methods to apply/restore state after re-renders.
+ */
+class DiagramState {
+    constructor(options = {}) {
+        // Path colors palette
+        this.pathColors = options.pathColors || [
+            '#4285f4', '#ea4335', '#34a853', '#fbbc04', '#9c27b0',
+            '#00acc1', '#ff7043', '#7cb342', '#5c6bc0', '#f06292'
+        ];
+        
+        // Edge style: 'curved' or 'orthogonal'
+        this.edgeStyle = options.edgeStyle || 'curved';
+        
+        // Spacing multipliers
+        this.xSpacing = options.xSpacing || 1.0;
+        this.ySpacing = options.ySpacing || 1.0;
+        
+        // Stored paths: Array of { path: [nodeIds], edges: [edgeObjects], colorIndex, fromLabel, toLabel, ... }
+        this.paths = [];
+        
+        // Next color index for new path groups
+        this.nextColorIndex = 0;
+        
+        // Highlighted nodes: Map<nodeId, { color, isStart }>
+        this.highlightedNodes = new Map();
+        
+        // Highlighted edges: Map<"source|||target|||property", { color }>
+        this.highlightedEdges = new Map();
+        
+        // Dimmed items (not in current selection)
+        this.dimmedNodes = new Set();
+        this.dimmedEdges = new Set();
+        
+        // Intersection mode
+        this.intersectionMode = false;
+        
+        // Zoom transform
+        this.zoomTransform = null;
+        
+        // ViewBox info (for proper zoom calculations)
+        this.viewBox = null;
+        
+        // Callback for state changes (optional)
+        this.onStateChange = options.onStateChange || null;
+    }
+    
+    // ========== Edge Style ==========
+    
+    setEdgeStyle(style) {
+        if (style === 'curved' || style === 'orthogonal') {
+            this.edgeStyle = style;
+            this._notifyChange('edgeStyle');
+        }
+    }
+    
+    toggleEdgeStyle() {
+        this.edgeStyle = this.edgeStyle === 'curved' ? 'orthogonal' : 'curved';
+        this._notifyChange('edgeStyle');
+        return this.edgeStyle;
+    }
+    
+    // ========== Spacing ==========
+    
+    setSpacing(x, y) {
+        this.xSpacing = x;
+        this.ySpacing = y;
+        this._notifyChange('spacing');
+    }
+    
+    // ========== Path Management ==========
+    
+    /**
+     * Add a path to the state
+     * @param {Object} pathData - { path: [nodeIds], edges: [edgeObjs], fromLabel, toLabel, ... }
+     * @param {number} [colorIndex] - Optional color index (auto-assigned if not provided)
+     * @returns {number} The index of the added path
+     */
+    addPath(pathData, colorIndex = null) {
+        const idx = colorIndex !== null ? colorIndex : this.nextColorIndex;
+        
+        const pathEntry = {
+            ...pathData,
+            colorIndex: idx,
+            id: this._generatePathId()
+        };
+        
+        this.paths.push(pathEntry);
+        
+        // Update next color index if needed
+        if (colorIndex === null || colorIndex >= this.nextColorIndex) {
+            this.nextColorIndex = idx + 1;
+        }
+        
+        // Rebuild highlight maps
+        this._rebuildHighlightMaps();
+        this._notifyChange('paths');
+        
+        return this.paths.length - 1;
+    }
+    
+    /**
+     * Add multiple paths with the same color (same endpoint pair)
+     * @param {Array} pathDataArray - Array of path data objects
+     * @returns {number} The color index used
+     */
+    addPathGroup(pathDataArray) {
+        const colorIndex = this.nextColorIndex;
+        this.nextColorIndex++;
+        
+        pathDataArray.forEach((pathData, i) => {
+            this.paths.push({
+                ...pathData,
+                colorIndex,
+                pathNumber: i + 1,
+                totalPaths: pathDataArray.length,
+                id: this._generatePathId()
+            });
+        });
+        
+        this._rebuildHighlightMaps();
+        this._notifyChange('paths');
+        
+        return colorIndex;
+    }
+    
+    /**
+     * Remove a path by index
+     * @param {number} index - Path index to remove
+     */
+    removePath(index) {
+        if (index >= 0 && index < this.paths.length) {
+            this.paths.splice(index, 1);
+            this._rebuildHighlightMaps();
+            this._notifyChange('paths');
+        }
+    }
+    
+    /**
+     * Clear all paths
+     */
+    clearPaths() {
+        this.paths = [];
+        this.nextColorIndex = 0;
+        this.highlightedNodes.clear();
+        this.highlightedEdges.clear();
+        this.dimmedNodes.clear();
+        this.dimmedEdges.clear();
+        this._notifyChange('paths');
+    }
+    
+    /**
+     * Get color for a path index
+     */
+    getPathColor(index) {
+        return this.pathColors[index % this.pathColors.length];
+    }
+    
+    // ========== Highlight State Rebuilding ==========
+    
+    /**
+     * Rebuild highlight maps from current paths
+     * Called internally after path changes
+     */
+    _rebuildHighlightMaps() {
+        this.highlightedNodes.clear();
+        this.highlightedEdges.clear();
+        
+        this.paths.forEach((pathData) => {
+            const path = Array.isArray(pathData) ? pathData : pathData.path;
+            const storedEdges = pathData.edges || [];
+            if (!path) return;
+            
+            const color = this.getPathColor(pathData.colorIndex || 0);
+            
+            // Add nodes
+            path.forEach((nodeId, i) => {
+                if (!this.highlightedNodes.has(nodeId)) {
+                    this.highlightedNodes.set(nodeId, {
+                        color,
+                        isStart: i === 0
+                    });
+                }
+            });
+            
+            // Add edges - both with specific property and loose pair matching
+            for (let i = 0; i < path.length - 1; i++) {
+                const fromNode = path[i];
+                const toNode = path[i + 1];
+                const edge = storedEdges[i];
+                
+                // Loose pair key (both directions for matching)
+                const pairKey1 = `${fromNode}|||${toNode}`;
+                const pairKey2 = `${toNode}|||${fromNode}`;
+                
+                if (!this.highlightedEdges.has(pairKey1)) {
+                    this.highlightedEdges.set(pairKey1, { color });
+                }
+                if (!this.highlightedEdges.has(pairKey2)) {
+                    this.highlightedEdges.set(pairKey2, { color });
+                }
+                
+                // Specific property keys if edge info available
+                if (edge && edge.property) {
+                    const propKey1 = `${fromNode}|||${toNode}|||${edge.property}`;
+                    const propKey2 = `${toNode}|||${fromNode}|||${edge.property}`;
+                    if (!this.highlightedEdges.has(propKey1)) {
+                        this.highlightedEdges.set(propKey1, { color });
+                    }
+                    if (!this.highlightedEdges.has(propKey2)) {
+                        this.highlightedEdges.set(propKey2, { color });
+                    }
+                }
+            }
+        });
+    }
+    
+    // ========== State Application ==========
+    
+    /**
+     * Check if a node should be highlighted
+     * @param {string} nodeId - Node ID
+     * @returns {Object|null} { color, isStart } or null if not highlighted
+     */
+    getNodeHighlight(nodeId) {
+        return this.highlightedNodes.get(nodeId) || null;
+    }
+    
+    /**
+     * Check if an edge should be highlighted
+     * @param {string} source - Source node ID
+     * @param {string} target - Target node ID
+     * @param {string} [property] - Optional edge property
+     * @returns {Object|null} { color } or null if not highlighted
+     */
+    getEdgeHighlight(source, target, property = null) {
+        // Try specific property key first
+        if (property) {
+            const propKey = `${source}|||${target}|||${property}`;
+            if (this.highlightedEdges.has(propKey)) {
+                return this.highlightedEdges.get(propKey);
+            }
+        }
+        
+        // Fall back to pair key
+        const pairKey = `${source}|||${target}`;
+        return this.highlightedEdges.get(pairKey) || null;
+    }
+    
+    /**
+     * Check if there are any active highlights
+     */
+    hasHighlights() {
+        return this.highlightedNodes.size > 0 || this.highlightedEdges.size > 0;
+    }
+    
+    /**
+     * Apply current state to D3 diagram elements
+     * Call this after re-rendering the diagram
+     * @param {Object} options - { nodeSelector, linkSelector, applyDimming }
+     */
+    applyToElements(options = {}) {
+        const {
+            nodeSelector = '.node-group',
+            linkSelector = '.link-group',
+            applyDimming = true
+        } = options;
+        
+        const hasHighlights = this.hasHighlights();
+        
+        // Apply to nodes
+        d3.selectAll(nodeSelector)
+            .classed('path-node', d => this.highlightedNodes.has(d.id))
+            .classed('path-start', d => {
+                const h = this.highlightedNodes.get(d.id);
+                return h && h.isStart;
+            })
+            .classed('dimmed', d => {
+                if (!applyDimming || !hasHighlights) return false;
+                return !this.highlightedNodes.has(d.id);
+            })
+            .each(function(d) {
+                const highlight = d3.select(this).classed('path-node') 
+                    ? d3.select(this).datum() 
+                    : null;
+                const rect = d3.select(this).select('rect');
+                
+                if (highlight) {
+                    const h = this.highlightedNodes?.get?.(d.id);
+                    if (h) {
+                        rect.style('stroke', h.color).style('stroke-width', '3px');
+                    }
+                } else {
+                    rect.style('stroke', null).style('stroke-width', null);
+                }
+            }.bind(this));
+        
+        // Apply to links
+        d3.selectAll(linkSelector)
+            .classed('path-link', d => {
+                const s = d.source?.id || d.source;
+                const t = d.target?.id || d.target;
+                const prop = d.property || d.label || '';
+                return this.getEdgeHighlight(s, t, prop) !== null;
+            })
+            .classed('dimmed', d => {
+                if (!applyDimming || !hasHighlights) return false;
+                const s = d.source?.id || d.source;
+                const t = d.target?.id || d.target;
+                const prop = d.property || d.label || '';
+                return this.getEdgeHighlight(s, t, prop) === null;
+            })
+            .each(function(d) {
+                const s = d.source?.id || d.source;
+                const t = d.target?.id || d.target;
+                const prop = d.property || d.label || '';
+                const highlight = this.getEdgeHighlight(s, t, prop);
+                const path = d3.select(this).select('path');
+                
+                if (highlight) {
+                    path.style('stroke', highlight.color).style('stroke-width', '3px');
+                } else {
+                    path.style('stroke', null).style('stroke-width', null);
+                }
+            }.bind(this));
+    }
+    
+    /**
+     * Clear all visual highlights from elements (without changing state)
+     */
+    clearVisualHighlights(options = {}) {
+        const {
+            nodeSelector = '.node-group',
+            linkSelector = '.link-group'
+        } = options;
+        
+        d3.selectAll(nodeSelector)
+            .classed('path-node path-start dimmed', false)
+            .each(function() {
+                d3.select(this).select('rect').style('stroke', null).style('stroke-width', null);
+            });
+        
+        d3.selectAll(linkSelector)
+            .classed('path-link dimmed', false)
+            .each(function() {
+                d3.select(this).select('path').style('stroke', null).style('stroke-width', null);
+            });
+    }
+    
+    // ========== Zoom State ==========
+    
+    setZoomTransform(transform) {
+        this.zoomTransform = transform;
+    }
+    
+    setViewBox(viewBox) {
+        this.viewBox = viewBox;
+    }
+    
+    // ========== Serialization ==========
+    
+    /**
+     * Export state to a plain object (for saving/debugging)
+     */
+    toJSON() {
+        return {
+            edgeStyle: this.edgeStyle,
+            xSpacing: this.xSpacing,
+            ySpacing: this.ySpacing,
+            paths: this.paths.map(p => ({
+                path: p.path,
+                colorIndex: p.colorIndex,
+                fromLabel: p.fromLabel,
+                toLabel: p.toLabel
+            })),
+            intersectionMode: this.intersectionMode,
+            zoomTransform: this.zoomTransform ? {
+                k: this.zoomTransform.k,
+                x: this.zoomTransform.x,
+                y: this.zoomTransform.y
+            } : null
+        };
+    }
+    
+    /**
+     * Import state from a plain object
+     */
+    fromJSON(data) {
+        if (data.edgeStyle) this.edgeStyle = data.edgeStyle;
+        if (data.xSpacing !== undefined) this.xSpacing = data.xSpacing;
+        if (data.ySpacing !== undefined) this.ySpacing = data.ySpacing;
+        if (data.intersectionMode !== undefined) this.intersectionMode = data.intersectionMode;
+        
+        if (data.paths && Array.isArray(data.paths)) {
+            this.paths = data.paths;
+            this.nextColorIndex = Math.max(0, ...data.paths.map(p => (p.colorIndex || 0) + 1));
+            this._rebuildHighlightMaps();
+        }
+        
+        if (data.zoomTransform) {
+            this.zoomTransform = d3.zoomIdentity
+                .translate(data.zoomTransform.x, data.zoomTransform.y)
+                .scale(data.zoomTransform.k);
+        }
+        
+        this._notifyChange('import');
+    }
+    
+    // ========== Helpers ==========
+    
+    _generatePathId() {
+        return `path_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+    
+    _notifyChange(changeType) {
+        if (this.onStateChange) {
+            this.onStateChange(changeType, this);
+        }
+    }
+}
+
 const D3DiagramUtils = {
+    // Expose DiagramState class
+    DiagramState,
+    
     // Default configuration
     config: {
         nodeWidth: 180,
@@ -23,27 +449,6 @@ const D3DiagramUtils = {
         y: 1.0
     },
 
-    // Common namespace prefixes for URI to CURIE conversion
-    namespaces: {
-        'http://www.w3.org/1999/02/22-rdf-syntax-ns#': 'rdf',
-        'http://www.w3.org/2000/01/rdf-schema#': 'rdfs',
-        'http://www.w3.org/2002/07/owl#': 'owl',
-        'http://www.w3.org/2001/XMLSchema#': 'xsd',
-        'http://purl.org/dc/elements/1.1/': 'dc',
-        'http://purl.org/dc/terms/': 'dcterms',
-        'http://xmlns.com/foaf/0.1/': 'foaf',
-        'http://www.w3.org/2004/02/skos/core#': 'skos',
-        'http://schema.org/': 'schema',
-        'http://purl.org/ontology/bibo/': 'bibo',
-        'http://semanticscience.org/resource/': 'sio',
-        'http://purl.obolibrary.org/obo/': 'obo',
-        'http://www.w3.org/ns/prov#': 'prov',
-        'http://rdfs.org/ns/void#': 'void',
-        'http://purl.org/pav/': 'pav',
-        'http://www.wikidata.org/prop/direct/': 'wdt',
-        'http://www.wikidata.org/entity/': 'wd',
-        'http://www.w3.org/ns/shacl#': 'sh'
-    },
 
     // Excluded namespaces for OWL/RDF(S) filtering
     excludedNamespaces: [
@@ -61,23 +466,6 @@ const D3DiagramUtils = {
         'FunctionalProperty', 'InverseFunctionalProperty', 'Restriction',
         'AllDifferent', 'AllDisjointClasses', 'AllDisjointProperties'
     ],
-
-    /**
-     * Convert URI to CURIE (prefix:localName) format
-     */
-    uriToCurie(uri) {
-        if (!uri) return 'Unknown';
-        
-        for (const [namespace, prefix] of Object.entries(this.namespaces)) {
-            if (uri.startsWith(namespace)) {
-                const localName = uri.substring(namespace.length);
-                return `${prefix}:${localName}`;
-            }
-        }
-        
-        // Fallback: extract local name
-        return this.getLocalName(uri);
-    },
 
     /**
      * Get local name from URI
@@ -558,6 +946,140 @@ const D3DiagramUtils = {
         const labelY = Math.min(sy, ty) - 14 + (edgeIndex - Math.floor(edgeCount / 2)) * labelVerticalSpacing;
         return { x: (sx + tx) / 2, y: labelY };
     },
+    
+    /**
+     * Calculate the bounding box for a set of nodes
+     * @param {Array} nodes - Array of node objects with x, y, width (optional), height (optional)
+     * @param {number} defaultWidth - Default node width if not specified
+     * @param {number} defaultHeight - Default node height if not specified
+     * @returns {Object} { minX, minY, maxX, maxY, width, height, centerX, centerY }
+     */
+    getNodesBoundingBox(nodes, defaultWidth = 180, defaultHeight = 80) {
+        if (!nodes || nodes.length === 0) {
+            return null;
+        }
+
+        let minX = Infinity, minY = Infinity;
+        let maxX = -Infinity, maxY = -Infinity;
+
+        nodes.forEach(node => {
+            const x = node.x || 0;
+            const y = node.y || 0;
+            const w = node.width || defaultWidth;
+            const h = node.height || defaultHeight;
+
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x + w);
+            maxY = Math.max(maxY, y + h);
+        });
+
+        const width = maxX - minX;
+        const height = maxY - minY;
+
+        return {
+            minX, minY, maxX, maxY,
+            width, height,
+            centerX: minX + width / 2,
+            centerY: minY + height / 2
+        };
+    },
+
+    /**
+     * Calculate zoom transform to fit nodes within a container with padding
+     * @param {Array} nodes - Array of node objects with x, y, width, height
+     * @param {number} containerWidth - Width of the container/viewport (viewBox width for SVG with viewBox)
+     * @param {number} containerHeight - Height of the container/viewport (viewBox height for SVG with viewBox)
+     * @param {Object} options - Configuration options
+     * @param {number} options.padding - Padding around the nodes (default 50)
+     * @param {number} options.minScale - Minimum zoom scale (default 0.1)
+     * @param {number} options.maxScale - Maximum zoom scale (default 4)
+     * @param {number} options.defaultNodeWidth - Default node width (default 180)
+     * @param {number} options.defaultNodeHeight - Default node height (default 80)
+     * @param {number} options.viewBoxOffsetX - X offset of viewBox origin (default 0)
+     * @param {number} options.viewBoxOffsetY - Y offset of viewBox origin (default 0)
+     * @returns {Object} { scale, translateX, translateY } or null if invalid
+     */
+    calculateZoomToFit(nodes, containerWidth, containerHeight, options = {}) {
+        const {
+            padding = 50,
+            minScale = 0.1,
+            maxScale = 4,
+            defaultNodeWidth = 180,
+            defaultNodeHeight = 80,
+            viewBoxOffsetX = 0,
+            viewBoxOffsetY = 0
+        } = options;
+
+        const bbox = this.getNodesBoundingBox(nodes, defaultNodeWidth, defaultNodeHeight);
+        if (!bbox) return null;
+
+        // Add padding to bounding box
+        const paddedWidth = bbox.width + padding * 2;
+        const paddedHeight = bbox.height + padding * 2;
+
+        // Calculate scale to fit
+        const scaleX = containerWidth / paddedWidth;
+        const scaleY = containerHeight / paddedHeight;
+        let scale = Math.min(scaleX, scaleY);
+
+        // Clamp scale
+        scale = Math.max(minScale, Math.min(maxScale, scale));
+
+        // Calculate translation to center the bounding box in the viewBox
+        // The viewBox visible area center is at (viewBoxOffsetX + containerWidth/2, viewBoxOffsetY + containerHeight/2)
+        // We want the bbox center to be at that position after scaling
+        const viewCenterX = viewBoxOffsetX + containerWidth / 2;
+        const viewCenterY = viewBoxOffsetY + containerHeight / 2;
+        
+        // After scaling around origin, bbox.centerX becomes bbox.centerX * scale
+        // We want: bbox.centerX * scale + translateX = viewCenterX
+        const translateX = viewCenterX - (bbox.centerX * scale);
+        const translateY = viewCenterY - (bbox.centerY * scale);
+
+        return { scale, translateX, translateY, bbox };
+    },
+
+    /**
+     * Apply zoom transform to an SVG using d3 with smooth animation
+     * @param {Object} svg - D3 selection of the SVG element
+     * @param {Object} zoom - D3 zoom behavior
+     * @param {Array} nodes - Array of nodes to zoom to
+     * @param {number} containerWidth - Container width
+     * @param {number} containerHeight - Container height
+     * @param {Object} options - Zoom options (see calculateZoomToFit)
+     * @param {number} options.duration - Animation duration in ms (default 750)
+     * @param {Function} options.ease - D3 easing function (default d3.easeCubicInOut)
+     * @returns {boolean} true if zoom was applied, false otherwise
+     */
+    zoomToFitNodes(svg, zoom, nodes, containerWidth, containerHeight, options = {}) {
+        const { 
+            duration = 750, 
+            ease = d3.easeCubicInOut,
+            ...zoomOptions 
+        } = options;
+
+        if (!svg || !zoom || !nodes || nodes.length === 0) {
+            return false;
+        }
+
+        const transform = this.calculateZoomToFit(nodes, containerWidth, containerHeight, zoomOptions);
+        if (!transform) return false;
+
+        // Apply the transform with smooth animation
+        svg.transition()
+            .duration(duration)
+            .ease(ease)
+            .call(
+                zoom.transform,
+                d3.zoomIdentity
+                    .translate(transform.translateX, transform.translateY)
+                    .scale(transform.scale)
+            );
+
+        return true;
+    },
+
     /**
      * Filter nodes by a predicate, highlight them, and return filtered/hidden nodes.
      * Optionally zoom to the last filtered node (provide a zoom callback).
@@ -615,7 +1137,7 @@ const D3DiagramUtils = {
             yPlusId, yMinusId, yValId,
             initialX = 1,
             initialY = 1,
-            step = 0.2,
+            step = 0.8,
             onChange = () => {}
         } = options;
 

@@ -1007,6 +1007,55 @@ body {
     border-radius: 50%;
 }
 
+/* Connected nodes suggestions styling */
+.autocomplete-suggestions .suggestion-header {
+    padding: 6px 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    background: var(--background-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.autocomplete-suggestions .suggestion-item.connected {
+    background: rgba(var(--primary-color-rgb, 58, 134, 255), 0.05);
+    border-left: 2px solid var(--primary-color);
+}
+
+.autocomplete-suggestions .suggestion-item.connected:hover,
+.autocomplete-suggestions .suggestion-item.connected.active {
+    background: rgba(var(--primary-color-rgb, 58, 134, 255), 0.1);
+}
+
+.autocomplete-suggestions .suggestion-item .suggestion-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.autocomplete-suggestions .suggestion-item .predicate-hint {
+    font-size: 10px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+    margin-left: auto;
+    padding-left: 8px;
+}
+
+.autocomplete-suggestions .suggestion-hint {
+    padding: 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+}
+
 /* Path List Items (removable) */
 .path-list-item {
     display: inline-flex;

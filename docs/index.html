@@ -360,7 +360,9 @@
                     <div style="width: 280px; padding: 16px; background: var(--background-color); overflow-y: auto; font-size: 11px;">
                         <div style="margin-bottom: 16px;">
                             <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-size: 12px;">Primary Endpoint</div>
-                            <div id="sparql-primary-endpoint" style="color: var(--text-secondary); word-break: break-all; font-family: 'SF Mono', Consolas, monospace; padding: 8px; background: var(--card-background); border-radius: 4px; border: 1px solid var(--border-color);">—</div>
+                            <select id="sparql-primary-endpoint-select" style="width: 100%; padding: 8px; font-family: 'SF Mono', Consolas, monospace; font-size: 10px; background: var(--card-background); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;">
+                                <option value="">— Select endpoint —</option>
+                            </select>
                         </div>
                         
                         <div id="sparql-services-section" style="margin-bottom: 16px; display: none;">
@@ -471,7 +473,7 @@
                             style="font-size: 9px; color: var(--text-secondary); writing-mode: vertical-rl; transform: rotate(180deg); margin-bottom: 4px;">Y</span>
                         <button id="schema-y-plus"
                             style="width: 22px; height: 22px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--background-color); cursor: pointer; font-size: 14px;">+</button>
-                        <span id="schema-y-spacing-val" style="font-size: 9px; color: var(--text-secondary);">8.0</span>
+                        <span id="schema-y-spacing-val" style="font-size: 9px; color: var(--text-secondary);">1.0</span>
                         <button id="schema-y-minus"
                             style="width: 22px; height: 22px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--background-color); cursor: pointer; font-size: 14px;">−</button>
                     </div>
@@ -487,7 +489,7 @@
                             <button id="schema-x-minus"
                                 style="width: 22px; height: 22px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--background-color); cursor: pointer; font-size: 14px;">−</button>
                             <span id="schema-x-spacing-val"
-                                style="font-size: 9px; color: var(--text-secondary); min-width: 24px; text-align: center;">8.0</span>
+                                style="font-size: 9px; color: var(--text-secondary); min-width: 24px; text-align: center;">1.0</span>
                             <button id="schema-x-plus"
                                 style="width: 22px; height: 22px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--background-color); cursor: pointer; font-size: 14px;">+</button>
                         </div>

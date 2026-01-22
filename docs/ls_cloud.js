@@ -50,7 +50,7 @@ class lsCloudVisualization {
         this.ySpacing = 1.0;
         
         // Edge style: false = orthogonal, true = curved
-        this.curvedEdges = false;
+        this.curvedEdges = true;
         
         // Prefixes to exclude
         this.excludedPrefixes = [
@@ -316,8 +316,8 @@ class lsCloudVisualization {
             yPlusId: 'ls-y-spacing-plus',
             yMinusId: 'ls-y-spacing-minus',
             yValId: 'ls-y-spacing-val',
-            initialX: 6.0,
-            initialY: 3.0,
+            initialX: 1.0,
+            initialY: 1.0,
             step: 0.2,
             onChange: (xSpacing, ySpacing) => {
                 this.xSpacing = xSpacing;
@@ -432,7 +432,7 @@ class lsCloudVisualization {
     openSparqlModal() {
         const modal = document.getElementById('sparql-modal');
         const queryTextarea = document.getElementById('sparql-query-textarea');
-        const primaryEndpointEl = document.getElementById('sparql-primary-endpoint');
+        const primaryEndpointSelect = document.getElementById('sparql-primary-endpoint-select');
         const servicesSection = document.getElementById('sparql-services-section');
         const servicesList = document.getElementById('sparql-services-list');
         const graphsSection = document.getElementById('sparql-graphs-section');
@@ -465,39 +465,61 @@ class lsCloudVisualization {
             }
         });
 
-        // Get ordered list of endpoints (first selected dataset's endpoint is primary)
+        // Get ordered list of endpoints
         const endpoints = [...endpointMap.keys()].filter(Boolean);
-        const primaryEndpoint = endpoints[0] || '';
-        const serviceEndpoints = endpoints.slice(1); // All other endpoints are services
         
-        // Store for query generation and send button
-        this.primaryEndpoint = primaryEndpoint;
+        // Store endpoint data for query generation
         this.endpointMap = endpointMap;
+        this.availableEndpoints = endpoints;
         this.currentDatasetSources = datasetSources;
 
-        // Populate info panel - Primary Endpoint
-        if (primaryEndpointEl) {
-            primaryEndpointEl.textContent = primaryEndpoint || '(none)';
-            primaryEndpointEl.title = primaryEndpoint;
+        // Populate primary endpoint dropdown
+        if (primaryEndpointSelect) {
+            primaryEndpointSelect.innerHTML = '';
+            
+            if (endpoints.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = '— No endpoints available —';
+                primaryEndpointSelect.appendChild(opt);
+            } else {
+                endpoints.forEach((ep, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = ep;
+                    // Show dataset names in dropdown for clarity
+                    const group = endpointMap.get(ep);
+                    const dsNames = group.datasets.join(', ');
+                    // Truncate long URLs for display
+                    const shortUrl = ep.length > 40 ? ep.substring(0, 37) + '...' : ep;
+                    opt.textContent = `${shortUrl} (${dsNames})`;
+                    opt.title = ep; // Full URL on hover
+                    primaryEndpointSelect.appendChild(opt);
+                });
+            }
+            
+            // Set initial primary endpoint (first one by default, or stored preference)
+            const storedPrimary = this.primaryEndpoint;
+            if (storedPrimary && endpoints.includes(storedPrimary)) {
+                primaryEndpointSelect.value = storedPrimary;
+            } else {
+                primaryEndpointSelect.value = endpoints[0] || '';
+                this.primaryEndpoint = endpoints[0] || '';
+            }
+            
+            // Add change listener to update query in real-time
+            primaryEndpointSelect.onchange = () => {
+                this.primaryEndpoint = primaryEndpointSelect.value;
+                this.updateServiceEndpointsDisplay();
+                this.regenerateSparqlQuery();
+                this.updateSparqlModalInfo();
+            };
         }
 
-        // Populate info panel - SERVICE endpoints
-        if (servicesSection && servicesList) {
-            servicesList.innerHTML = '';
-            if (serviceEndpoints.length > 0) {
-                servicesSection.style.display = 'block';
-                serviceEndpoints.forEach(ep => {
-                    const group = endpointMap.get(ep);
-                    const div = document.createElement('div');
-                    div.style.cssText = 'color: var(--text-secondary); word-break: break-all; font-family: "SF Mono", Consolas, monospace; padding: 6px 8px; background: var(--card-background); border-radius: 4px; border: 1px solid var(--border-color);';
-                    div.textContent = ep;
-                    div.title = `Datasets: ${group.datasets.join(', ')}`;
-                    servicesList.appendChild(div);
-                });
-            } else {
-                servicesSection.style.display = 'none';
-            }
-        }
+        // Initial primary endpoint
+        this.primaryEndpoint = primaryEndpointSelect?.value || endpoints[0] || '';
+
+        // Update services display and query
+        this.updateServiceEndpointsDisplay();
 
         // Populate info panel - Graphs
         const allGraphs = new Map(); // graph -> endpoint
@@ -540,25 +562,85 @@ class lsCloudVisualization {
         this.regenerateSparqlQuery();
 
         // Update info text
-        if (infoEl) {
-            const parts = [`${this.allPaths.length} path(s)`];
-            if (serviceEndpoints.length > 0) {
-                parts.push(`${serviceEndpoints.length} federated`);
-            }
-            if (allGraphs.size > 0) {
-                parts.push(`${allGraphs.size} graph(s)`);
-            }
-            infoEl.textContent = parts.join(' · ');
-        }
+        this.updateSparqlModalInfo();
 
         // Enable/disable send button
         if (sendBtn) {
-            sendBtn.disabled = !primaryEndpoint;
-            sendBtn.style.opacity = primaryEndpoint ? '1' : '0.5';
+            sendBtn.disabled = !this.primaryEndpoint;
+            sendBtn.style.opacity = this.primaryEndpoint ? '1' : '0.5';
         }
 
         // Show modal
         modal.style.display = 'flex';
+    }
+
+    /**
+     * Update the federated services display based on current primary endpoint selection
+     */
+    updateServiceEndpointsDisplay() {
+        const servicesSection = document.getElementById('sparql-services-section');
+        const servicesList = document.getElementById('sparql-services-list');
+        
+        if (!servicesSection || !servicesList) return;
+        
+        const endpoints = this.availableEndpoints || [];
+        const primaryEndpoint = this.primaryEndpoint || '';
+        const endpointMap = this.endpointMap || new Map();
+        
+        // All endpoints except the primary become federated services
+        const serviceEndpoints = endpoints.filter(ep => ep !== primaryEndpoint);
+        
+        servicesList.innerHTML = '';
+        if (serviceEndpoints.length > 0) {
+            servicesSection.style.display = 'block';
+            serviceEndpoints.forEach(ep => {
+                const group = endpointMap.get(ep);
+                const div = document.createElement('div');
+                div.style.cssText = 'color: var(--text-secondary); word-break: break-all; font-family: "SF Mono", Consolas, monospace; padding: 6px 8px; background: var(--card-background); border-radius: 4px; border: 1px solid var(--border-color);';
+                div.textContent = ep;
+                div.title = `Datasets: ${group?.datasets?.join(', ') || '?'}`;
+                servicesList.appendChild(div);
+            });
+        } else {
+            servicesSection.style.display = 'none';
+        }
+    }
+
+    /**
+     * Update the modal info text based on current state
+     */
+    updateSparqlModalInfo() {
+        const infoEl = document.getElementById('sparql-modal-info');
+        const sendBtn = document.getElementById('sparql-send-btn');
+        
+        if (!infoEl) return;
+        
+        const endpoints = this.availableEndpoints || [];
+        const primaryEndpoint = this.primaryEndpoint || '';
+        const endpointMap = this.endpointMap || new Map();
+        
+        const serviceEndpoints = endpoints.filter(ep => ep !== primaryEndpoint);
+        
+        // Count all graphs
+        let graphCount = 0;
+        endpointMap.forEach(group => {
+            graphCount += group.graphs.size;
+        });
+        
+        const parts = [`${this.allPaths.length} path(s)`];
+        if (serviceEndpoints.length > 0) {
+            parts.push(`${serviceEndpoints.length} federated`);
+        }
+        if (graphCount > 0) {
+            parts.push(`${graphCount} graph(s)`);
+        }
+        infoEl.textContent = parts.join(' · ');
+        
+        // Update send button state
+        if (sendBtn) {
+            sendBtn.disabled = !primaryEndpoint;
+            sendBtn.style.opacity = primaryEndpoint ? '1' : '0.5';
+        }
     }
 
     /**
@@ -599,6 +681,10 @@ class lsCloudVisualization {
         // Structure: Map<endpoint, Map<graph|'', patterns[]>>
         const endpointPatterns = new Map();
         let selectVars = new Set();
+        
+        // SHARED nodeVarMap across all paths - ensures same node uses same variable
+        // This is critical for federated queries where paths share common nodes
+        const nodeVarMap = new Map();
 
         const addPattern = (endpoint, graph, pattern) => {
             if (!endpointPatterns.has(endpoint)) {
@@ -617,10 +703,14 @@ class lsCloudVisualization {
             if (!path || path.length < 2) return;
 
             // Map each node in this path to a variable
-            const nodeVarMap = new Map();
-            
+            // Reuses existing variable if node was already seen in a previous path
             path.forEach((nodeId) => {
-                if (nodeVarMap.has(nodeId)) return;
+                // Skip if this node already has a variable assigned (from this or previous path)
+                if (nodeVarMap.has(nodeId)) {
+                    // Still add to selectVars in case it wasn't added
+                    selectVars.add(nodeVarMap.get(nodeId));
+                    return;
+                }
                 
                 const node = this.graphData.nodes.find(n => n.id === nodeId);
                 const typeLabel = node ? node.label : nodeId;
@@ -657,6 +747,11 @@ class lsCloudVisualization {
                 
                 // Check if path direction matches edge direction
                 const isForward = (edgeSource === fromId && edgeTarget === toId);
+                
+                // Debug logging - enable via window.debugSparql = true
+                if (window.debugSparql) {
+                    console.log(`Edge ${i}: path[${fromId}→${toId}], edge[${edgeSource}→${edgeTarget}], isForward=${isForward}`);
+                }
                 
                 // Subject and object based on edge's actual direction, NOT path direction
                 const subjVar = isForward ? fromVar : toVar;
@@ -711,16 +806,22 @@ class lsCloudVisualization {
         const selectVarsList = Array.from(selectVars).map(v => `?${v}`).join(' ');
 
         // Build WHERE clause with proper SERVICE/GRAPH wrapping
-        const endpoints = [...endpointPatterns.keys()].filter(Boolean);
+        // Sort endpoints: primary first, then federated services
+        const allEndpoints = [...endpointPatterns.keys()].filter(Boolean);
+        const sortedEndpoints = [
+            ...allEndpoints.filter(ep => ep === primaryEndpoint),
+            ...allEndpoints.filter(ep => ep !== primaryEndpoint)
+        ];
         
         // Deduplicate patterns within each graph
         const dedupePatterns = (patterns) => [...new Set(patterns)];
 
         let whereLines = [];
         
-        endpoints.forEach((endpoint, epIdx) => {
+        sortedEndpoints.forEach((endpoint) => {
             const graphMap = endpointPatterns.get(endpoint);
-            const isService = epIdx > 0; // First endpoint is primary, others are SERVICE
+            // Use selected primary endpoint, not iteration order
+            const isService = endpoint !== primaryEndpoint;
             
             const graphPatterns = [];
             graphMap.forEach((patterns, graph) => {
@@ -824,15 +925,26 @@ class lsCloudVisualization {
         // Store selected node IDs
         this.pathFromNodeId = null;
         this.pathToNodeId = null;
+        // Store connected nodes for "To" suggestions
+        this.connectedToNodes = [];
 
-        // Setup autocomplete for both inputs
+        // Setup autocomplete for From input (standard autocomplete)
         if (fromInput && fromSuggestions) {
             this.setupAutocompleteInput(fromInput, fromSuggestions, (nodeId) => {
                 this.pathFromNodeId = nodeId;
+                // When From node is selected, find all connected nodes
+                this.updateConnectedNodes(nodeId);
+                // Clear To input since context changed
+                if (toInput) {
+                    toInput.value = '';
+                    this.pathToNodeId = null;
+                }
             });
         }
+        
+        // Setup autocomplete for To input (with connected nodes suggestions)
         if (toInput && toSuggestions) {
-            this.setupAutocompleteInput(toInput, toSuggestions, (nodeId) => {
+            this.setupToAutocompleteInput(toInput, toSuggestions, (nodeId) => {
                 this.pathToNodeId = nodeId;
             });
         }
@@ -858,6 +970,220 @@ class lsCloudVisualization {
                 fromSuggestions?.style && (fromSuggestions.style.display = 'none');
                 toSuggestions?.style && (toSuggestions.style.display = 'none');
             }
+        });
+    }
+
+    /**
+     * Find all nodes connected to the given node via edges
+     * @param {string} nodeId - The node ID to find connections for
+     */
+    updateConnectedNodes(nodeId) {
+        if (!nodeId || !this.graphData.links) {
+            this.connectedToNodes = [];
+            return;
+        }
+
+        const connectedIds = new Set();
+        const connectionInfo = new Map(); // nodeId -> { predicates: [], direction: 'subject'|'object'|'both' }
+
+        this.graphData.links.forEach(link => {
+            const sourceId = link.source?.id || link.source;
+            const targetId = link.target?.id || link.target;
+            const predicate = link.property || link.label || '?';
+
+            if (sourceId === nodeId) {
+                // This node is the subject, connected node is object
+                if (!connectionInfo.has(targetId)) {
+                    connectionInfo.set(targetId, { predicates: [], directions: new Set() });
+                }
+                connectionInfo.get(targetId).predicates.push(predicate);
+                connectionInfo.get(targetId).directions.add('→');
+                connectedIds.add(targetId);
+            } else if (targetId === nodeId) {
+                // This node is the object, connected node is subject
+                if (!connectionInfo.has(sourceId)) {
+                    connectionInfo.set(sourceId, { predicates: [], directions: new Set() });
+                }
+                connectionInfo.get(sourceId).predicates.push(predicate);
+                connectionInfo.get(sourceId).directions.add('←');
+                connectedIds.add(sourceId);
+            }
+        });
+
+        // Build connected nodes array with metadata
+        this.connectedToNodes = Array.from(connectedIds).map(id => {
+            const node = this.graphData.nodes.find(n => n.id === id);
+            const info = connectionInfo.get(id);
+            const directions = Array.from(info.directions).join('');
+            // Get unique predicates
+            const uniquePredicates = [...new Set(info.predicates)];
+            return {
+                id,
+                label: node?.label || id,
+                node,
+                predicates: uniquePredicates,
+                direction: directions,
+                datasets: node?.datasets || []
+            };
+        }).sort((a, b) => a.label.localeCompare(b.label));
+    }
+
+    /**
+     * Setup autocomplete for To input with connected nodes suggestions
+     */
+    setupToAutocompleteInput(input, suggestionsDiv, onSelect) {
+        let activeIndex = -1;
+
+        const showSuggestions = (query = '') => {
+            const lowerQuery = query.toLowerCase().trim();
+            
+            // If there's a From node selected, prioritize connected nodes
+            let matches = [];
+            
+            if (this.connectedToNodes.length > 0) {
+                // Show connected nodes first (filtered if query exists)
+                const connectedMatches = this.connectedToNodes.filter(cn => 
+                    lowerQuery === '' || 
+                    cn.label.toLowerCase().includes(lowerQuery) || 
+                    cn.id.toLowerCase().includes(lowerQuery)
+                );
+                
+                // Add "Connected" header if we have connected matches
+                if (connectedMatches.length > 0) {
+                    matches = connectedMatches.map(cn => ({
+                        ...cn,
+                        isConnected: true
+                    }));
+                }
+                
+                // If query exists, also search all other nodes
+                if (lowerQuery.length >= 1) {
+                    const connectedIds = new Set(this.connectedToNodes.map(cn => cn.id));
+                    const otherMatches = this.graphData.nodes
+                        .filter(n => !connectedIds.has(n.id) && 
+                            (n.label.toLowerCase().includes(lowerQuery) || n.id.toLowerCase().includes(lowerQuery)))
+                        .slice(0, 10)
+                        .map(n => ({
+                            id: n.id,
+                            label: n.label,
+                            node: n,
+                            datasets: n.datasets || [],
+                            isConnected: false
+                        }));
+                    
+                    if (otherMatches.length > 0) {
+                        matches = [...matches.slice(0, 10), ...otherMatches];
+                    }
+                }
+            } else if (lowerQuery.length >= 1) {
+                // No From node selected, standard search
+                matches = this.graphData.nodes
+                    .filter(n => n.label.toLowerCase().includes(lowerQuery) || n.id.toLowerCase().includes(lowerQuery))
+                    .slice(0, 15)
+                    .map(n => ({
+                        id: n.id,
+                        label: n.label,
+                        node: n,
+                        datasets: n.datasets || [],
+                        isConnected: false
+                    }));
+            }
+
+            if (matches.length === 0) {
+                if (this.connectedToNodes.length === 0 && lowerQuery.length < 1) {
+                    suggestionsDiv.innerHTML = '<div class="suggestion-hint">Select a From node first, or start typing...</div>';
+                    suggestionsDiv.style.display = 'block';
+                } else {
+                    suggestionsDiv.style.display = 'none';
+                }
+                return;
+            }
+
+            // Render suggestions with connected indicator
+            let html = '';
+            let lastWasConnected = null;
+            
+            matches.forEach((m, i) => {
+                // Add section header when transitioning
+                if (lastWasConnected === null && m.isConnected) {
+                    html += '<div class="suggestion-header">Connected nodes</div>';
+                } else if (lastWasConnected === true && !m.isConnected) {
+                    html += '<div class="suggestion-header">Other nodes</div>';
+                }
+                lastWasConnected = m.isConnected;
+
+                const datasets = m.datasets || [];
+                const badges = datasets.slice(0, 3).map(ds => 
+                    `<span class="dataset-badge" style="background: ${this.getDatasetColor(ds)};" title="${ds}"></span>`
+                ).join('');
+                
+                // Show predicate info for connected nodes
+                let predicateHint = '';
+                if (m.isConnected && m.predicates) {
+                    const predLabels = m.predicates.slice(0, 2).map(p => {
+                        // Extract local name from URI
+                        const parts = p.split(/[#\/]/);
+                        return parts[parts.length - 1] || p;
+                    });
+                    const more = m.predicates.length > 2 ? ` +${m.predicates.length - 2}` : '';
+                    predicateHint = `<span class="predicate-hint">${m.direction} ${predLabels.join(', ')}${more}</span>`;
+                }
+                
+                html += `<div class="suggestion-item${m.isConnected ? ' connected' : ''}" data-index="${i}" data-id="${m.id}">
+                    <div class="suggestion-main">
+                        <span class="node-label">${this.highlightMatch(m.label, lowerQuery)}</span>
+                        <div class="dataset-badges">${badges}</div>
+                    </div>
+                    ${predicateHint}
+                </div>`;
+            });
+
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.style.display = 'block';
+            activeIndex = -1;
+
+            // Add click handlers to suggestions
+            suggestionsDiv.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const nodeId = item.dataset.id;
+                    const match = matches.find(m => m.id === nodeId);
+                    if (match) {
+                        input.value = match.label;
+                        onSelect(nodeId);
+                        suggestionsDiv.style.display = 'none';
+                    }
+                });
+            });
+        };
+
+        input.addEventListener('input', () => {
+            showSuggestions(input.value);
+        });
+
+        // Keyboard navigation
+        input.addEventListener('keydown', (e) => {
+            const items = suggestionsDiv.querySelectorAll('.suggestion-item');
+            if (items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                this.updateActiveItem(items, activeIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                this.updateActiveItem(items, activeIndex);
+            } else if (e.key === 'Enter' && activeIndex >= 0) {
+                e.preventDefault();
+                items[activeIndex].click();
+            } else if (e.key === 'Escape') {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        // Show connected nodes on focus (even without typing)
+        input.addEventListener('focus', () => {
+            showSuggestions(input.value);
         });
     }
 
@@ -1036,7 +1362,8 @@ class lsCloudVisualization {
             if (this.allPaths.length === 0) {
                 this.clearAllPaths();
             } else {
-                this.highlightAllPaths();
+                // Skip zoom when removing a path to avoid jarring animation
+                this.highlightAllPaths(true);
                 this.showAllPathsQueryPanel();
                 document.getElementById('ls-path-status').textContent = `${this.allPaths.length} path(s)`;
             }
@@ -1414,10 +1741,9 @@ class lsCloudVisualization {
         }
     }
 
-    // Apply highlight filter: highlight selected nodes, dim others, and zoom to last selected
+    // Apply highlight filter: highlight selected nodes, dim others, and zoom to fit all selected
     applyNodeHighlightFilter(selectedIds) {
         if (!this.svg) return;
-        const nodeWidth = 200; // must match renderDiagram
 
         if (!selectedIds || selectedIds.length === 0) {
             // Clear highlight: show all nodes/links normally
@@ -1436,41 +1762,77 @@ class lsCloudVisualization {
             return !(selectedSet.has(s) || selectedSet.has(t));
         });
 
-        // Zoom to last selected node
-        const lastId = selectedIds[selectedIds.length - 1];
-        const targetNode = this.graphData.nodes.find(n => n.id === lastId);
-        if (targetNode && this.zoom) {
-            this.zoomToNode(targetNode, nodeWidth);
+        // Zoom to fit all selected nodes
+        const selectedNodes = this.graphData.nodes.filter(n => selectedSet.has(n.id));
+        if (selectedNodes.length > 0 && this.zoom) {
+            this.zoomToNodes(selectedNodes);
         }
     }
 
-    // Zoom and center on a specific node
+    /**
+     * Zoom to fit a single node with appropriate padding
+     * @param {Object} node - Node object with x, y, width, height
+     * @param {number} nodeWidth - Default node width
+     */
     zoomToNode(node, nodeWidth = 200) {
-        if (!this.svg || !this.zoom || !node) return;
-        const container = document.getElementById('ls-diagram');
-        const containerRect = container?.getBoundingClientRect();
-        const width = containerRect?.width || 1200;
-        const height = containerRect?.height || 600;
+        if (!node) return;
+        this.zoomToNodes([node], { maxScale: 2.5 });
+    }
 
-        // Get current viewBox
-        const viewBox = this.svg.attr('viewBox')?.split(' ').map(Number) || [0, 0, width, height];
-        const [vbX, vbY, vbW, vbH] = viewBox;
+    /**
+     * Zoom to fit multiple nodes within the viewport
+     * Uses D3DiagramUtils for bounding box and transform calculation
+     * @param {Array} nodes - Array of node objects
+     * @param {Object} options - Zoom options
+     */
+    zoomToNodes(nodes, options = {}) {
+        if (!this.svg || !this.zoom || !nodes || nodes.length === 0) return;
 
-        // Node center in viewBox coordinates
-        const nodeCenterX = node.x + nodeWidth / 2;
-        const nodeCenterY = node.y + (node.height || 80) / 2;
+        // Use viewBox dimensions for zoom calculations since SVG uses viewBox coordinate system
+        const width = this.viewBox?.width || 1200;
+        const height = this.viewBox?.height || 600;
+        const viewBoxOffsetX = this.viewBox?.minX || 0;
+        const viewBoxOffsetY = this.viewBox?.minY || 0;
 
-        // Calculate scale to fit node nicely (zoom in to 2x)
-        const scale = 2;
-
-        // Translate to center the node
-        const tx = width / 2 - nodeCenterX * scale;
-        const ty = height / 2 - nodeCenterY * scale;
-
-        this.svg.transition().duration(500).call(
-            this.zoom.transform,
-            d3.zoomIdentity.translate(tx, ty).scale(scale)
+        // Use D3DiagramUtils to calculate zoom with smooth easing
+        const success = D3DiagramUtils.zoomToFitNodes(
+            this.svg,
+            this.zoom,
+            nodes,
+            width,
+            height,
+            {
+                padding: 80,          // Generous padding around nodes
+                minScale: 0.2,
+                maxScale: options.maxScale || 3,
+                defaultNodeWidth: 200,
+                defaultNodeHeight: 80,
+                viewBoxOffsetX: viewBoxOffsetX,
+                viewBoxOffsetY: viewBoxOffsetY,
+                duration: 750,        // Smooth transition duration
+                ease: d3.easeCubicInOut, // Smooth easing
+                ...options
+            }
         );
+
+        return success;
+    }
+
+    /**
+     * Zoom to fit all nodes in the current graph with smooth animation
+     */
+    zoomToFitAll() {
+        if (!this.graphData.nodes || this.graphData.nodes.length === 0) {
+            // Reset to identity if no nodes with smooth transition
+            if (this.svg && this.zoom) {
+                this.svg.transition()
+                    .duration(500)
+                    .ease(d3.easeCubicInOut)
+                    .call(this.zoom.transform, d3.zoomIdentity);
+            }
+            return;
+        }
+        this.zoomToNodes(this.graphData.nodes, { maxScale: 1.5, padding: 60, duration: 600 });
     }
 
     filterByNode(nodeId) {
@@ -1584,9 +1946,32 @@ class lsCloudVisualization {
             status.textContent = `From: ${node.label} → Click second node`;
             d3.selectAll('.node-group').classed('path-start', d => d.id === node.id);
         } else if (this.selectedNodes[0] !== node.id) {
-            const path = this.findPath(this.selectedNodes[0], node.id);
-            if (path) {
-                this.allPaths.push(path);
+            const nodePath = this.findPath(this.selectedNodes[0], node.id);
+            if (nodePath) {
+                // Expand to edge paths (same as input-based path finding)
+                const expandedPaths = this.expandPathToEdgePaths(nodePath);
+                
+                const fromNode = this.graphData.nodes.find(n => n.id === this.selectedNodes[0]);
+                const toNode = node;
+                const fromLabel = fromNode?.label || this.selectedNodes[0];
+                const toLabel = toNode?.label || node.id;
+                
+                const colorIndex = this.allPaths.length > 0 
+                    ? Math.max(...this.allPaths.map(p => p.colorIndex || 0)) + 1 
+                    : 0;
+                
+                expandedPaths.forEach((edgePath, i) => {
+                    this.allPaths.push({
+                        path: edgePath.nodes,
+                        edges: edgePath.edges,
+                        fromLabel: fromLabel,
+                        toLabel: toLabel,
+                        colorIndex: colorIndex,
+                        pathNumber: i + 1,
+                        totalPaths: expandedPaths.length
+                    });
+                });
+                
                 status.textContent = `${this.allPaths.length} path(s) found`;
                 this.highlightAllPaths();
                 this.showAllPathsQueryPanel();
@@ -1880,20 +2265,34 @@ class lsCloudVisualization {
                 }
                 return false;
             });
+        
+        // Zoom to fit the path nodes
+        const pathNodes = this.graphData.nodes.filter(n => pathSet.has(n.id));
+        if (pathNodes.length > 0) {
+            this.zoomToNodes(pathNodes, { maxScale: 2.5 });
+        }
     }
 
-    // Highlight all accumulated paths with distinct colors
-    highlightAllPaths() {
+    // Highlight all accumulated paths with distinct colors and zoom to fit
+    highlightAllPaths(skipZoom = false) {
         // Build maps of node/edge to their path colors (for multi-path, first path wins)
         const nodeColorMap = new Map(); // nodeId -> color
         const edgeColorMap = new Map(); // "source|||target|||property" -> color
         const allPathNodes = new Set();
         const allPathEdges = new Set(); // Set of "source|||target|||property" keys
+        // Also track edges without property for loose matching (when edge property unknown)
+        const allPathEdgePairs = new Set(); // Set of "source|||target" keys
+        
+        
         
         this.allPaths.forEach((pathData, pathIdx) => {
             const path = Array.isArray(pathData) ? pathData : pathData.path;
             const storedEdges = pathData.edges;
             if (!path) return;
+            
+            
+            
+            
             // Use colorIndex if available (paths between same nodes share color)
             const colorIdx = pathData.colorIndex !== undefined ? pathData.colorIndex : pathIdx;
             const color = this.getPathColor(colorIdx);
@@ -1906,19 +2305,37 @@ class lsCloudVisualization {
             });
             
             for (let i = 0; i < path.length - 1; i++) {
-                // If we have stored edges, use the specific edge property
-                const edgeProp = storedEdges && storedEdges[i] 
-                    ? (storedEdges[i].property || storedEdges[i].label || '') 
-                    : '';
+                const fromNode = path[i];
+                const toNode = path[i + 1];
                 
-                // Create edge keys that include the property for specific matching
-                const edgeKey1 = `${path[i]}|||${path[i+1]}|||${edgeProp}`;
-                const edgeKey2 = `${path[i+1]}|||${path[i]}|||${edgeProp}`;
-                allPathEdges.add(edgeKey1);
-                allPathEdges.add(edgeKey2);
-                if (!edgeColorMap.has(edgeKey1)) {
-                    edgeColorMap.set(edgeKey1, color);
-                    edgeColorMap.set(edgeKey2, color);
+                
+                
+                // Always add the node pair for loose matching
+                allPathEdgePairs.add(`${fromNode}|||${toNode}`);
+                allPathEdgePairs.add(`${toNode}|||${fromNode}`);
+                
+                // Also set colors for loose pair matching (fallback)
+                const pairKey1 = `${fromNode}|||${toNode}`;
+                const pairKey2 = `${toNode}|||${fromNode}`;
+                if (!edgeColorMap.has(pairKey1)) {
+                    edgeColorMap.set(pairKey1, color);
+                    edgeColorMap.set(pairKey2, color);
+                }
+                
+                // If we have stored edges, also add specific property keys
+                if (storedEdges && storedEdges[i]) {
+                    const edgeProp = storedEdges[i].property || storedEdges[i].label || '';
+                    if (edgeProp) {
+                        // Create edge keys that include the property for specific matching
+                        const edgeKey1 = `${fromNode}|||${toNode}|||${edgeProp}`;
+                        const edgeKey2 = `${toNode}|||${fromNode}|||${edgeProp}`;
+                        allPathEdges.add(edgeKey1);
+                        allPathEdges.add(edgeKey2);
+                        if (!edgeColorMap.has(edgeKey1)) {
+                            edgeColorMap.set(edgeKey1, color);
+                            edgeColorMap.set(edgeKey2, color);
+                        }
+                    }
                 }
             }
         });
@@ -1937,25 +2354,51 @@ class lsCloudVisualization {
                 }
             });
         
+        
+        
+        
+        // Helper function to check if link is in path (either specific property or loose pair)
+        const isLinkInPath = (source, target, prop) => {
+            // Check for specific edge match
+            if (allPathEdges.has(`${source}|||${target}|||${prop}`)) return true;
+            // Check for loose pair match (when stored edges don't have property info)
+            if (allPathEdgePairs.has(`${source}|||${target}`)) return true;
+            return false;
+        };
+        
+        // Helper function to get color for link
+        const getLinkColor = (source, target, prop) => {
+            // Try specific property match first
+            let color = edgeColorMap.get(`${source}|||${target}|||${prop}`);
+            if (color) return color;
+            // Fall back to pair match (without property)
+            color = edgeColorMap.get(`${source}|||${target}`);
+            return color;
+        };
+        
         // Apply colors to links
+        let matchedCount = 0, totalLinks = 0;
         d3.selectAll('.link-group')
             .classed('path-link', d => {
                 const s = d.source.id || d.source;
                 const t = d.target.id || d.target;
                 const prop = d.property || d.label || '';
-                return allPathEdges.has(`${s}|||${t}|||${prop}`);
+                totalLinks++;
+                const matched = isLinkInPath(s, t, prop);
+                if (matched) matchedCount++;
+                return matched;
             })
             .classed('dimmed', d => {
                 const s = d.source.id || d.source;
                 const t = d.target.id || d.target;
                 const prop = d.property || d.label || '';
-                return allPathEdges.size > 0 && !allPathEdges.has(`${s}|||${t}|||${prop}`);
+                return (allPathEdges.size > 0 || allPathEdgePairs.size > 0) && !isLinkInPath(s, t, prop);
             })
             .each(function(d) {
                 const s = d.source.id || d.source;
                 const t = d.target.id || d.target;
                 const prop = d.property || d.label || '';
-                const color = edgeColorMap.get(`${s}|||${t}|||${prop}`);
+                const color = getLinkColor(s, t, prop);
                 const path = d3.select(this).select('path');
                 if (color) {
                     path.style('stroke', color).style('stroke-width', '3px');
@@ -1963,6 +2406,19 @@ class lsCloudVisualization {
                     path.style('stroke', null).style('stroke-width', null);
                 }
             });
+        
+        // Bring highlighted elements to front (higher z-index in SVG)
+        // First raise highlighted links, then nodes (so nodes appear on top of links)
+        d3.selectAll('.link-group.path-link').raise();
+        d3.selectAll('.node-group.path-node').raise();
+
+        // Zoom to fit all path nodes (unless skipZoom is true)
+        if (!skipZoom && allPathNodes.size > 0) {
+            const pathNodes = this.graphData.nodes.filter(n => allPathNodes.has(n.id));
+            if (pathNodes.length > 0) {
+                this.zoomToNodes(pathNodes, { maxScale: 2.5, padding: 100 });
+            }
+        }
     }
 
     clearHighlights() {
@@ -2077,6 +2533,10 @@ class lsCloudVisualization {
         // Re-render diagram with new edge style immediately
         if (this.graphData && this.graphData.nodes.length > 0) {
             this.renderDiagram();
+            // Reapply path highlights if we have any paths (skip zoom to preserve view)
+            if (this.allPaths && this.allPaths.length > 0) {
+                this.highlightAllPaths(true);
+            }
         }
     }
     
@@ -2179,6 +2639,9 @@ class lsCloudVisualization {
         
         const contentWidth = maxX - minX;
         const contentHeight = maxY - minY;
+
+        // Store viewBox info for zoom calculations
+        this.viewBox = { minX, minY, width: contentWidth, height: contentHeight };
 
         // Create SVG - use 100% height so it adapts to container
         this.svg = d3.select(container)
@@ -2398,14 +2861,14 @@ class lsCloudVisualization {
             linkGroups.classed('legend-dimmed', false);
         }
 
-        // Zoom controls
+        // Zoom controls with smooth transitions
         const zoomFit = document.getElementById('ls-zoom-fit');
         const zoomIn = document.getElementById('ls-zoom-in');
         const zoomOut = document.getElementById('ls-zoom-out');
         
-        if (zoomFit) zoomFit.onclick = () => this.svg.transition().duration(300).call(this.zoom.transform, d3.zoomIdentity);
-        if (zoomIn) zoomIn.onclick = () => this.svg.transition().duration(200).call(this.zoom.scaleBy, 1.3);
-        if (zoomOut) zoomOut.onclick = () => this.svg.transition().duration(200).call(this.zoom.scaleBy, 0.7);
+        if (zoomFit) zoomFit.onclick = () => this.zoomToFitAll();
+        if (zoomIn) zoomIn.onclick = () => this.svg.transition().duration(300).ease(d3.easeCubicInOut).call(this.zoom.scaleBy, 1.3);
+        if (zoomOut) zoomOut.onclick = () => this.svg.transition().duration(300).ease(d3.easeCubicInOut).call(this.zoom.scaleBy, 0.7);
         
         // If a node is selected in the node filter, focus (center) it in the viewport
         try {
@@ -2418,12 +2881,8 @@ class lsCloudVisualization {
                 if (sel) {
                     const targetNode = nodeById.get(sel);
                     if (targetNode) {
-                        // compute translation to center the node in viewBox coordinates
-                        const nodeCenterX = targetNode.x + nodeWidth / 2;
-                        const nodeCenterY = targetNode.y + (targetNode.height || 0) / 2;
-                        const tx = (width / 2) - (nodeCenterX - minX);
-                        const ty = (height / 2) - (nodeCenterY - minY);
-                        this.svg.transition().duration(600).call(this.zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(1));
+                        // Use zoomToNodes to properly center on the node
+                        this.zoomToNodes([targetNode], { maxScale: 2.5, padding: 100 });
                     }
                 }
             }
