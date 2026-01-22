@@ -4,7 +4,7 @@
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "mesh.vocab": "http://id.nlm.nih.gov/mesh/vocab#",
     "owl": "http://www.w3.org/2002/07/owl#",
-    "sio": "http://semanticscience.org/resource/",
+    "sio": "http://semanticscience.org/resource/SIO_",
     "skos": "http://www.w3.org/2004/02/skos/core#"
   },
   "@graph": [

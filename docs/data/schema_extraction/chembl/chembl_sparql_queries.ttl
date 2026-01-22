@@ -1,0 +1,68 @@
+@prefix ex: <https://github.com/jmillanacosta/rdfsolve/sparql/chembl/chembl/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:8bf5a9a992f4 a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+CONSTRUCT {
+    ?cp void:class ?class ;
+        void:entities ?count .
+}
+WHERE {
+    {
+        SELECT ?class (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH <http://rdf.ebi.ac.uk/dataset/chembl> {
+                ?s a ?class
+            }
+        }
+        GROUP BY ?class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://rdf.ebi.ac.uk/dataset/chembl/void/class_partition_',
+                   REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
+}
+""" ;
+    schema:dateCreated "2026-01-16T13:28:52.803473+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:fe320f14b246 a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+CONSTRUCT {
+    ?dp void-ext:datatypePartition ?datatype ;
+        void:triples ?count .
+}
+WHERE {
+    {
+        SELECT ?datatype (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH <http://rdf.ebi.ac.uk/dataset/chembl> {
+                ?s ?p ?o .
+                FILTER(isLiteral(?o))
+                BIND(datatype(?o) AS ?datatype)
+            }
+        }
+        GROUP BY ?datatype
+    }
+    BIND(IRI(CONCAT('http://rdf.ebi.ac.uk/dataset/chembl/void/datatype_partition_',
+                   REPLACE(STR(?datatype), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?dp)
+}
+""" ;
+    schema:dateCreated "2026-01-16T13:36:01.240946+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .

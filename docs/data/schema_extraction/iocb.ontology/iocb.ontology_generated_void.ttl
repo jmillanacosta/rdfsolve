@@ -1,8 +1,8 @@
-@prefix ns1: <http://ldf.fi/void-ext#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix void: <http://rdfs.org/ns/void#> .
+@prefix void-ext: <http://ldf.fi/void-ext#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://bioinfo.iocb.cz/dataset/ontology/void/class_partition_> void:class rdf:Property,
@@ -14,16 +14,16 @@
         1885349,
         6123721 .
 
-<http://bioinfo.iocb.cz/dataset/ontology/void/datatype_partition_> ns1:datatypePartition rdf:langString,
+<http://bioinfo.iocb.cz/dataset/ontology/void/datatype_partition_> void-ext:datatypePartition rdf:langString,
         xsd:int ;
     void:triples 22873,
         3858115 .
 
-<http://bioinfo.iocb.cz/dataset/ontology/void/property_partition_> ns1:objectClass rdf:Property,
+<http://bioinfo.iocb.cz/dataset/ontology/void/property_partition_> void-ext:objectClass rdf:Property,
         owl:Class,
         owl:NamedIndividual,
         owl:Restriction ;
-    ns1:subjectClass rdf:Property,
+    void-ext:subjectClass rdf:Property,
         owl:Class,
         owl:NamedIndividual,
         owl:Restriction ;

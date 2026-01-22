@@ -37,7 +37,7 @@ prefixes:
     prefix_reference: http://www.w3.org/2002/07/owl#
   sio:
     prefix_prefix: sio
-    prefix_reference: http://semanticscience.org/resource/
+    prefix_reference: http://semanticscience.org/resource/SIO_
 default_prefix: pubchem.anatomy_schema
 default_range: string
 types:
@@ -60,23 +60,8 @@ slots:
     description: Property cito:isDiscussedBy
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/cito_is_Discussed_By
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/cito_is_Discussed_By
-    owner: sio_001262
-    domain_of:
-    - vocabulary_Anatomy
-    - sio_001262
-    range: mesh_vocab_Topical_Descriptor
-    inlined: true
-    inlined_as_list: true
-  rdf_type:
-    name: rdf_type
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/rdf_type
-    description: Property rdf:type
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/rdf_type
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/rdf_type
+    - http://purl.org/spar/cito/isDiscussedBy
+    slot_uri: http://purl.org/spar/cito/isDiscussedBy
     owner: sio_001262
     domain_of:
     - vocabulary_Anatomy
@@ -90,8 +75,23 @@ slots:
     description: Property rdfs:seeAlso
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/rdfs_see_Also
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/rdfs_see_Also
+    - http://www.w3.org/2000/01/rdf-schema#seeAlso
+    slot_uri: http://www.w3.org/2000/01/rdf-schema#seeAlso
+    owner: sio_001262
+    domain_of:
+    - vocabulary_Anatomy
+    - sio_001262
+    range: mesh_vocab_Topical_Descriptor
+    inlined: true
+    inlined_as_list: true
+  rdf_type:
+    name: rdf_type
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/rdf_type
+    description: Property rdf:type
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/
+    mappings:
+    - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+    slot_uri: http://www.w3.org/1999/02/22-rdf-syntax-ns#type
     owner: sio_001262
     domain_of:
     - vocabulary_Anatomy
@@ -100,37 +100,37 @@ slots:
     inlined: true
     inlined_as_list: true
 classes:
-  vocabulary_Anatomy:
-    name: vocabulary_Anatomy
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/VocabularyAnatomy
-    description: Class representing vocabulary_Anatomy
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/vocabulary_Anatomy
-    slots:
-    - cito_is_Discussed_By
-    - rdf_type
-    - rdfs_see_Also
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/vocabulary_Anatomy
   mesh_vocab_Topical_Descriptor:
     name: mesh_vocab_Topical_Descriptor
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/MeshVocabTopicalDescriptor
     description: Class representing mesh_vocab_Topical_Descriptor
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/mesh_vocab_Topical_Descriptor
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/mesh_vocab_Topical_Descriptor
+    - http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor
+    class_uri: http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor
+  vocabulary_Anatomy:
+    name: vocabulary_Anatomy
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/VocabularyAnatomy
+    description: Class representing vocabulary_Anatomy
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/
+    mappings:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy
+    slots:
+    - cito_is_Discussed_By
+    - rdf_type
+    - rdfs_see_Also
+    class_uri: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Anatomy
   sio_001262:
     name: sio_001262
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/Sio001262
     description: Class representing sio_001262
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/sio_001262
+    - http://semanticscience.org/resource/SIO_001262
     slots:
     - cito_is_Discussed_By
     - rdf_type
     - rdfs_see_Also
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.anatomy/linkml/sio_001262
+    class_uri: http://semanticscience.org/resource/SIO_001262
 metamodel_version: 1.7.0
-generation_date: '2025-12-02T10:01:08'
+generation_date: '2026-01-16T14:24:17'

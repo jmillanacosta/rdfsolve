@@ -1,6 +1,6 @@
 {
   "@context": {
-    "cheminf": "http://semanticscience.org/resource/",
+    "cheminf": "http://semanticscience.org/resource/CHEMINF_",
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "owl": "http://www.w3.org/2002/07/owl#"
   },

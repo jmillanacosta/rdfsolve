@@ -1,7 +1,7 @@
 {
   "@context": {
     "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
-    "chebi": "http://purl.obolibrary.org/obo/",
+    "chebi": "http://purl.obolibrary.org/obo/CHEBI_",
     "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#",
     "ndfrt": "http://purl.bioontology.org/ontology/NDFRT/",
     "snomedct": "http://purl.bioontology.org/ontology/SNOMEDCT/"
@@ -269,6 +269,9 @@
           "@id": "ncit:C66678"
         },
         {
+          "@id": "chebi:67559"
+        },
+        {
           "@id": "chebi:67978"
         },
         {
@@ -453,9 +456,6 @@
         },
         {
           "@id": "chebi:133917"
-        },
-        {
-          "@id": "chebi:134440"
         },
         {
           "@id": "chebi:134455"

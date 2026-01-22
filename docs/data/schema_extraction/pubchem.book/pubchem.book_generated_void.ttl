@@ -1,20 +1,21 @@
 @prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix void: <http://rdfs.org/ns/void#> .
+@prefix void-ext: <http://ldf.fi/void-ext#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/book/void/class_partition_> void:class <http://purl.org/spar/fabio/Book>,
+<http://rdf.ncbi.nlm.nih.gov/pubchem/book/void/class_partition_> void:class fabio:Book,
         <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book> ;
     void:entities 6406 .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/book/void/datatype_partition_> ns1:datatypePartition xsd:string ;
+<http://rdf.ncbi.nlm.nih.gov/pubchem/book/void/datatype_partition_> void-ext:datatypePartition xsd:string ;
     void:triples 30667 .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/book/void/property_partition_> ns1:objectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author>,
+<http://rdf.ncbi.nlm.nih.gov/pubchem/book/void/property_partition_> void-ext:objectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Author>,
         owl:Class ;
-    ns1:subjectClass <http://purl.org/spar/fabio/Book>,
+    void-ext:subjectClass fabio:Book,
         <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book> ;
     void:property dcterms:creator,
         rdf:type ;

@@ -2,17 +2,22 @@
 class RDFSolveDashboard {
     constructor() {
         this.data = null;
+        this.sourcesData = null;
         this.githubBaseUrl = 'https://github.com/jmillanacosta/rdfsolve/blob/main/docs/';
+        this.githubRawBase = 'https://raw.githubusercontent.com/jmillanacosta/rdfsolve/main/';
         this.init();
     }
 
     async init() {
         try {
-            await this.loadData();
+            await Promise.all([
+                this.loadData(),
+                this.loadSources()
+            ]);
             this.renderStats();
-            this.renderSchemaResults();
-            this.renderPydanticResults();
+            this.renderDatasets();
             this.updateLastUpdated();
+            this.initializeVisualizations();
         } catch (error) {
             console.error('Failed to initialize dashboard:', error);
             this.showError('Failed to load results data');
@@ -33,70 +38,103 @@ class RDFSolveDashboard {
         }
     }
 
+    async loadSources() {
+        try {
+            // Try fetching from GitHub raw first, then fall back to local
+            let response = await fetch(this.githubRawBase + 'data/sources.csv');
+            if (!response.ok) {
+                // Fallback to local path (for local development)
+                response = await fetch('../data/sources.csv');
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const csvText = await response.text();
+            this.sourcesData = this.parseSourcesCSV(csvText);
+            console.log('Loaded sources.csv:', Object.keys(this.sourcesData).length, 'datasets');
+        } catch (error) {
+            console.warn('Could not load sources.csv:', error);
+            this.sourcesData = {};
+        }
+    }
+
+    parseSourcesCSV(csvText) {
+        const lines = csvText.trim().split('\n');
+        const sources = {};
+        // Skip header: dataset_name,void_iri,graph_uri,endpoint_url,use_graph
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',');
+            if (cols.length >= 4) {
+                const datasetName = cols[0].trim();
+                sources[datasetName] = {
+                    voidIri: cols[1]?.trim(),
+                    graphUri: cols[2]?.trim(),
+                    endpointUrl: cols[3]?.trim(),
+                    useGraph: cols[4]?.trim() === 'True'
+                };
+            }
+        }
+        return sources;
+    }
+
     generateFallbackData() {
         // This will be populated by the workflow, but provides structure
         return {
             lastUpdated: new Date().toISOString(),
             stats: {
                 totalDatasets: 0,
-                successfulDatasets: 0,
-                failedDatasets: 0,
+                schemaSuccessful: 0,
+                schemaFailed: 0,
+                pydanticSuccessful: 0,
+                pydanticFailed: 0,
+                namespaceSuccessful: 0,
+                namespaceFailed: 0,
                 totalDataFiles: 0
             },
-            schemaResults: [],
-            pydanticResults: []
+            datasets: []
         };
     }
 
     renderStats() {
         const stats = this.data.stats || {};
         
-        document.getElementById('total-datasets').textContent = stats.totalDatasets || 0;
-        document.getElementById('successful-datasets').textContent = stats.successfulDatasets || 0;
-        document.getElementById('failed-datasets').textContent = stats.failedDatasets || 0;
-        document.getElementById('total-data-files').textContent = stats.totalDataFiles || 0;
+        const totalDatasets = stats.totalDatasets || 0;
+        const successfulDatasets = stats.schemaSuccessful || 0;
+        const failedDatasets = stats.schemaFailed || 0;
+        const totalDataFiles = stats.totalDataFiles || 0;
+        
+        document.getElementById('total-datasets').textContent = totalDatasets;
+        document.getElementById('successful-datasets').textContent = successfulDatasets;
+        document.getElementById('failed-datasets').textContent = failedDatasets;
+        document.getElementById('total-data-files').textContent = totalDataFiles;
     }
 
-    renderSchemaResults() {
+    renderDatasets() {
         const container = document.getElementById('datasets-grid');
-        const results = this.data.schemaResults || [];
+        const datasets = this.data.datasets || [];
 
-        if (results.length === 0) {
+        if (datasets.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <h3>No Schema Results</h3>
-                    <p>No schema analysis results available yet.</p>
+                    <h3>No Results</h3>
+                    <p>No dataset analysis results available yet.</p>
                 </div>
             `;
             return;
         }
 
-        container.innerHTML = results.map(dataset => this.createDatasetCard(dataset)).join('');
-    }
-
-    renderPydanticResults() {
-        const container = document.getElementById('pydantic-grid');
-        const results = this.data.pydanticResults || [];
-
-        if (results.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <h3>No Pydantic Results</h3>
-                    <p>No pydantic model results available yet.</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = results.map(dataset => this.createPydanticCard(dataset)).join('');
+        container.innerHTML = datasets.map(dataset => this.createDatasetCard(dataset)).join('');
     }
 
     createDatasetCard(dataset) {
-        const statusClass = dataset.status === 'success' ? 'success' : 'error';
-        const statusIcon = dataset.status === 'success' ? '✓' : '✗';
-        const statusText = dataset.status === 'success' ? 'Completed Successfully' : 'Analysis Failed';
+        const schemaNotebook = dataset.notebooks?.schema;
+        const statusClass = schemaNotebook?.status === 'success' ? 'success' : 'error';
+        const statusIcon = schemaNotebook?.status === 'success' ? '✓' : '✗';
+        const statusText = schemaNotebook?.status === 'success' ? 'Analysis Complete' : 'Analysis Failed';
 
         const dataFilesHTML = this.createDataFilesSection(dataset.dataFiles || {});
+        const notebooksHTML = this.createNotebooksSection(dataset.notebooks || {});
+        const endpointHTML = this.createEndpointSection(dataset.name);
 
         return `
             <div class="dataset-card">
@@ -108,41 +146,70 @@ class RDFSolveDashboard {
                 <div class="status-badge ${statusClass}">${statusText}</div>
                 
                 <div class="dataset-meta">
-                    <div>Report Size: ${dataset.reportSize || 'Unknown'}</div>
                     <div>Generated: ${this.formatDate(dataset.generated)}</div>
                 </div>
                 
+                ${endpointHTML}
+                ${notebooksHTML}
                 ${dataFilesHTML}
                 
-                <a href="${dataset.reportUrl}" class="view-link">
-                    View Analysis Report →
-                </a>
+                <div class="dataset-actions">
+                    <button class="view-schema-btn action-btn" data-dataset="${dataset.name}">
+                        Schema Diagram
+                    </button>
+                    <button class="view-coverage-btn action-btn" data-dataset="${dataset.name}">
+                        Coverage Statistics
+                    </button>
+                </div>
             </div>
         `;
     }
 
-    createPydanticCard(dataset) {
-        const statusClass = dataset.status === 'success' ? 'success' : 'error';
-        const statusIcon = dataset.status === 'success' ? '✓' : '✗';
-        const statusText = dataset.status === 'success' ? 'Models Generated' : 'Generation Failed';
+    createEndpointSection(datasetName) {
+        const source = this.sourcesData?.[datasetName];
+        if (!source?.endpointUrl) {
+            return '';
+        }
+        
+        const graphLine = source.useGraph && source.graphUri 
+            ? `<div>Graph: <code class="graph-uri">${source.graphUri}</code></div>` 
+            : '';
+        
+        return `
+            <div class="dataset-meta">
+                <div>Endpoint: <a href="${source.endpointUrl}" class="endpoint-link" target="_blank">${source.endpointUrl}</a></div>
+                ${graphLine}
+            </div>
+        `;
+    }
+
+    createNotebooksSection(notebooks) {
+        const notebookTypes = [
+            { key: 'schema', label: 'Schema Analysis' },
+            { key: 'pydantic', label: 'Pydantic Models' },
+            { key: 'namespace', label: 'Namespaces' }
+        ];
+
+        const notebookButtons = notebookTypes.map(({ key, label }) => {
+            const notebook = notebooks[key];
+            if (!notebook || notebook.status === 'missing') {
+                return `<span class="notebook-btn disabled" title="Not available">${label}</span>`;
+            }
+            
+            const statusClass = notebook.status === 'success' ? 'success' : 'error';
+            const statusIcon = notebook.status === 'success' ? '✓' : '✗';
+            
+            return `<a href="${notebook.reportUrl}" class="notebook-btn ${statusClass}" target="_blank" title="${notebook.reportSize}">
+                ${label} ${statusIcon}
+            </a>`;
+        }).join('');
 
         return `
-            <div class="dataset-card">
-                <div class="dataset-name">
-                    <span class="status-icon ${statusClass}">${statusIcon}</span>
-                    ${dataset.name}
+            <div class="notebooks-section">
+                <div class="section-label">Generated Jupyter Notebooks</div>
+                <div class="notebook-buttons">
+                    ${notebookButtons}
                 </div>
-                
-                <div class="status-badge ${statusClass}">${statusText}</div>
-                
-                <div class="dataset-meta">
-                    <div>Report Size: ${dataset.reportSize || 'Unknown'}</div>
-                    <div>Generated: ${this.formatDate(dataset.generated)}</div>
-                </div>
-                
-                <a href="${dataset.reportUrl}" class="view-link">
-                    View Pydantic Models →
-                </a>
             </div>
         `;
     }
@@ -163,19 +230,22 @@ class RDFSolveDashboard {
             nquads: 'N-Quads',
             schema_json: 'JSON',
             schema_csv: 'CSV',
-            queries: 'SPARQL Queries'
+            queries: 'SPARQL Queries',
+            //subjectIndex: 'Subject Index',
+            //objectIndex: 'Object Index'
         };
 
         const linksHTML = files.map(([type, url]) => {
-            const name = fileTypeNames[type] || type.toUpperCase();
+            const name = fileTypeNames[type];
+            if (!name) return ''; // Skip if no display name is defined
             // Convert relative path to GitHub blob URL
             const githubUrl = this.toGithubUrl(url);
             return `<a href="${githubUrl}" class="data-link" target="_blank">${name}</a>`;
-        }).join('');
+        }).filter(html => html).join('');
 
         return `
             <div class="data-files">
-                <div class="data-files-title">📁 Generated Data Files</div>
+                <div class="section-label">Generated Data Files</div>
                 <div class="data-links">
                     ${linksHTML}
                 </div>
@@ -223,22 +293,39 @@ class RDFSolveDashboard {
     }
 
     showError(message) {
-        const containers = ['datasets-grid', 'pydantic-grid'];
-        containers.forEach(containerId => {
-            const container = document.getElementById(containerId);
+        const container = document.getElementById('datasets-grid');
+        if (container) {
             container.innerHTML = `
                 <div class="empty-state">
                     <h3>Error Loading Data</h3>
                     <p>${message}</p>
                 </div>
             `;
-        });
+        }
+    }
+    
+    initializeVisualizations() {
+        const datasets = this.data.datasets || [];
+        
+        // Initialize coverage visualization
+        if (window.CoverageVisualization) {
+            this.coverageViz = new window.CoverageVisualization(datasets);
+        }
+        
+        // Initialize schema diagram
+        if (window.SchemaDiagram) {
+            this.schemaDiagram = new window.SchemaDiagram(datasets);
+            // Add schema buttons to dataset cards
+            if (window.addSchemaButtons) {
+                setTimeout(() => window.addSchemaButtons(), 100);
+            }
+        }
     }
 }
 
 // Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new RDFSolveDashboard();
+    window.rdfsolve = new RDFSolveDashboard();
 });
 
 // Add refresh functionality

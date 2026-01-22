@@ -1,17 +1,17 @@
 {
   "@context": {
     "biopaxleve": "http://www.biopax.org/release/biopax-level3.owl#",
-    "ro": "http://purl.obolibrary.org/obo/",
+    "ro": "http://purl.obolibrary.org/obo/RO_",
     "mesh.vocab": "http://id.nlm.nih.gov/mesh/vocab#",
     "patent": "http://data.epo.org/linked-data/def/patent/",
     "owl": "http://www.w3.org/2002/07/owl#",
     "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
-    "sio": "http://semanticscience.org/resource/",
+    "sio": "http://semanticscience.org/resource/SIO_",
     "cito": "http://purl.org/spar/cito/",
     "uniprot.core": "http://purl.uniprot.org/core/",
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "bao": "http://www.bioassayontology.org/bao#"
+    "bao": "http://www.bioassayontology.org/bao#BAO_"
   },
   "@graph": [
     {

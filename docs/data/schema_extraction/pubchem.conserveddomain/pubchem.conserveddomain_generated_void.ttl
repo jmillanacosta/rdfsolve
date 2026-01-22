@@ -1,21 +1,23 @@
-@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix cito: <http://purl.org/spar/cito/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix so: <http://purl.obolibrary.org/obo/SO_> .
 @prefix void: <http://rdfs.org/ns/void#> .
+@prefix void-ext: <http://ldf.fi/void-ext#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain/void/class_partition_> void:class <http://purl.obolibrary.org/obo/SO_0000417>,
+<http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain/void/class_partition_> void:class so:0000417,
         <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain> ;
     void:entities 51404 .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain/void/datatype_partition_> ns1:datatypePartition xsd:string ;
+<http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain/void/datatype_partition_> void-ext:datatypePartition xsd:string ;
     void:triples 51994 .
 
-<http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain/void/property_partition_> ns1:objectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference>,
+<http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain/void/property_partition_> void-ext:objectClass <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Reference>,
         owl:Class ;
-    ns1:subjectClass <http://purl.obolibrary.org/obo/SO_0000417>,
+    void-ext:subjectClass so:0000417,
         <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#ConservedDomain> ;
-    void:property <http://purl.org/spar/cito/isDiscussedBy>,
+    void:property cito:isDiscussedBy,
         rdf:type ;
     void:triples 51404,
         357844 .

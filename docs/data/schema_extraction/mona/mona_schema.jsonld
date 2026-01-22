@@ -1,8 +1,8 @@
 {
   "@context": {
-    "chebi": "http://purl.obolibrary.org/obo/",
-    "sio": "http://semanticscience.org/resource/",
-    "cheminf": "http://semanticscience.org/resource/"
+    "chebi": "http://purl.obolibrary.org/obo/CHEBI_",
+    "sio": "http://semanticscience.org/resource/SIO_",
+    "cheminf": "http://semanticscience.org/resource/CHEMINF_"
   },
   "@graph": [
     {

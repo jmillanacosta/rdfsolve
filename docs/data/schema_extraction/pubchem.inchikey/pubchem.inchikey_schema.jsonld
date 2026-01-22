@@ -1,8 +1,8 @@
 {
   "@context": {
-    "cheminf": "http://semanticscience.org/resource/",
+    "cheminf": "http://semanticscience.org/resource/CHEMINF_",
     "resource": "http://semanticscience.org/resource/",
-    "chebi": "http://purl.obolibrary.org/obo/",
+    "chebi": "http://purl.obolibrary.org/obo/CHEBI_",
     "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#"
   },
   "@graph": [
@@ -341,9 +341,6 @@
         },
         {
           "@id": "ncit:C212"
-        },
-        {
-          "@id": "ncit:C213"
         },
         {
           "@id": "chebi:214"
@@ -908,6 +905,9 @@
         },
         {
           "@id": "ncit:C478"
+        },
+        {
+          "@id": "chebi:479"
         }
       ]
     }

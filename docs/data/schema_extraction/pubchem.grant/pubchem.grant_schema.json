@@ -1,0 +1,299 @@
+{
+  "triples": [
+    [
+      "http://purl.org/cerif/frapo/Grant",
+      "http://purl.org/cerif/frapo/hasFundingAgency",
+      "http://purl.org/cerif/frapo/FundingAgency"
+    ],
+    [
+      "http://purl.org/cerif/frapo/Grant",
+      "http://purl.org/cerif/frapo/hasFundingAgency",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://purl.org/cerif/frapo/Grant",
+      "http://purl.org/cerif/frapo/hasFundingAgency",
+      "http://www.w3.org/2006/vcard/ns#Organization"
+    ],
+    [
+      "http://purl.org/cerif/frapo/Grant",
+      "http://purl.org/cerif/frapo/hasFundingAgency",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "http://purl.org/cerif/frapo/hasFundingAgency",
+      "http://purl.org/cerif/frapo/FundingAgency"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "http://purl.org/cerif/frapo/hasFundingAgency",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "http://purl.org/cerif/frapo/hasFundingAgency",
+      "http://www.w3.org/2006/vcard/ns#Organization"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "http://purl.org/cerif/frapo/hasFundingAgency",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization"
+    ],
+    [
+      "http://purl.org/cerif/frapo/Grant",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://purl.org/cerif/frapo/FundingAgency"
+    ],
+    [
+      "http://purl.org/cerif/frapo/Grant",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://purl.org/cerif/frapo/Grant",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2006/vcard/ns#Organization"
+    ],
+    [
+      "http://purl.org/cerif/frapo/Grant",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://purl.org/cerif/frapo/FundingAgency"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2006/vcard/ns#Organization"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 16,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "frapo": "http://purl.org/cerif/frapo/",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "vcard": "http://www.w3.org/2006/vcard/ns#",
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "frapo": "http://purl.org/cerif/frapo/",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "vcard": "http://www.w3.org/2006/vcard/ns#",
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    },
+    "@graph": [
+      {
+        "@id": "frapo:Grant",
+        "frapo:hasFundingAgency": [
+          {
+            "@id": "frapo:FundingAgency"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vcard:Organization"
+          },
+          {
+            "@id": "vocabulary:Organization"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "frapo:FundingAgency"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vcard:Organization"
+          },
+          {
+            "@id": "vocabulary:Organization"
+          }
+        ]
+      },
+      {
+        "@id": "vocabulary:Grant",
+        "frapo:hasFundingAgency": [
+          {
+            "@id": "frapo:FundingAgency"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vcard:Organization"
+          },
+          {
+            "@id": "vocabulary:Organization"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "frapo:FundingAgency"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "vcard:Organization"
+          },
+          {
+            "@id": "vocabulary:Organization"
+          }
+        ]
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "frapo:Grant",
+      "subject_uri": "http://purl.org/cerif/frapo/Grant",
+      "property": "frapo:hasFundingAgency",
+      "property_uri": "http://purl.org/cerif/frapo/hasFundingAgency",
+      "object_class": "frapo:FundingAgency",
+      "object_uri": "http://purl.org/cerif/frapo/FundingAgency"
+    },
+    {
+      "subject_class": "frapo:Grant",
+      "subject_uri": "http://purl.org/cerif/frapo/Grant",
+      "property": "frapo:hasFundingAgency",
+      "property_uri": "http://purl.org/cerif/frapo/hasFundingAgency",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "frapo:Grant",
+      "subject_uri": "http://purl.org/cerif/frapo/Grant",
+      "property": "frapo:hasFundingAgency",
+      "property_uri": "http://purl.org/cerif/frapo/hasFundingAgency",
+      "object_class": "vcard:Organization",
+      "object_uri": "http://www.w3.org/2006/vcard/ns#Organization"
+    },
+    {
+      "subject_class": "frapo:Grant",
+      "subject_uri": "http://purl.org/cerif/frapo/Grant",
+      "property": "frapo:hasFundingAgency",
+      "property_uri": "http://purl.org/cerif/frapo/hasFundingAgency",
+      "object_class": "vocabulary:Organization",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization"
+    },
+    {
+      "subject_class": "vocabulary:Grant",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "property": "frapo:hasFundingAgency",
+      "property_uri": "http://purl.org/cerif/frapo/hasFundingAgency",
+      "object_class": "frapo:FundingAgency",
+      "object_uri": "http://purl.org/cerif/frapo/FundingAgency"
+    },
+    {
+      "subject_class": "vocabulary:Grant",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "property": "frapo:hasFundingAgency",
+      "property_uri": "http://purl.org/cerif/frapo/hasFundingAgency",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Grant",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "property": "frapo:hasFundingAgency",
+      "property_uri": "http://purl.org/cerif/frapo/hasFundingAgency",
+      "object_class": "vcard:Organization",
+      "object_uri": "http://www.w3.org/2006/vcard/ns#Organization"
+    },
+    {
+      "subject_class": "vocabulary:Grant",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "property": "frapo:hasFundingAgency",
+      "property_uri": "http://purl.org/cerif/frapo/hasFundingAgency",
+      "object_class": "vocabulary:Organization",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization"
+    },
+    {
+      "subject_class": "frapo:Grant",
+      "subject_uri": "http://purl.org/cerif/frapo/Grant",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "frapo:FundingAgency",
+      "object_uri": "http://purl.org/cerif/frapo/FundingAgency"
+    },
+    {
+      "subject_class": "frapo:Grant",
+      "subject_uri": "http://purl.org/cerif/frapo/Grant",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "frapo:Grant",
+      "subject_uri": "http://purl.org/cerif/frapo/Grant",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vcard:Organization",
+      "object_uri": "http://www.w3.org/2006/vcard/ns#Organization"
+    },
+    {
+      "subject_class": "frapo:Grant",
+      "subject_uri": "http://purl.org/cerif/frapo/Grant",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Organization",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization"
+    },
+    {
+      "subject_class": "vocabulary:Grant",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "frapo:FundingAgency",
+      "object_uri": "http://purl.org/cerif/frapo/FundingAgency"
+    },
+    {
+      "subject_class": "vocabulary:Grant",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Grant",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vcard:Organization",
+      "object_uri": "http://www.w3.org/2006/vcard/ns#Organization"
+    },
+    {
+      "subject_class": "vocabulary:Grant",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Grant",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "vocabulary:Organization",
+      "object_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization"
+    }
+  ]
+}

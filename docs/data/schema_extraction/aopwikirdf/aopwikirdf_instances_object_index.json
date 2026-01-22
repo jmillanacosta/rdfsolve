@@ -35199,7 +35199,9 @@
   "https://identifiers.org/uniprot/O15520": [
     "shape_000001",
     "shape_000009",
+    "shape_000010",
     "shape_000012",
+    "shape_000019",
     "shape_000020"
   ],
   "https://identifiers.org/uniprot/P55075": [
@@ -35217,7 +35219,9 @@
   "https://identifiers.org/uniprot/P21802": [
     "shape_000001",
     "shape_000009",
+    "shape_000010",
     "shape_000012",
+    "shape_000019",
     "shape_000020"
   ],
   "https://identifiers.org/uniprot/P49789": [
@@ -37204,12 +37208,6 @@
     "shape_000012",
     "shape_000020"
   ],
-  "https://identifiers.org/uniprot/P61457": [
-    "shape_000001",
-    "shape_000009",
-    "shape_000012",
-    "shape_000020"
-  ],
   "https://identifiers.org/uniprot/P12004": [
     "shape_000001",
     "shape_000009",
@@ -38402,12 +38400,6 @@
     "shape_000012",
     "shape_000020"
   ],
-  "https://identifiers.org/uniprot/P61278": [
-    "shape_000001",
-    "shape_000009",
-    "shape_000012",
-    "shape_000020"
-  ],
   "https://identifiers.org/uniprot/P49675": [
     "shape_000001",
     "shape_000009",
@@ -39266,6 +39258,12 @@
     "shape_000012",
     "shape_000020"
   ],
+  "https://identifiers.org/uniprot/P61457": [
+    "shape_000001",
+    "shape_000009",
+    "shape_000012",
+    "shape_000020"
+  ],
   "https://identifiers.org/uniprot/P78527": [
     "shape_000001",
     "shape_000009",
@@ -39381,6 +39379,12 @@
     "shape_000020"
   ],
   "https://identifiers.org/uniprot/Q05066": [
+    "shape_000001",
+    "shape_000009",
+    "shape_000012",
+    "shape_000020"
+  ],
+  "https://identifiers.org/uniprot/P61278": [
     "shape_000001",
     "shape_000009",
     "shape_000012",
@@ -66380,6 +66384,22 @@
     "shape_000005",
     "shape_000022"
   ],
+  "https://identifiers.org/chembl.compound/CHEMBL1272": [
+    "shape_000005",
+    "shape_000022"
+  ],
+  "https://identifiers.org/chembl.compound/CHEMBL1014": [
+    "shape_000005",
+    "shape_000022"
+  ],
+  "https://identifiers.org/chembl.compound/CHEMBL787": [
+    "shape_000005",
+    "shape_000022"
+  ],
+  "https://identifiers.org/chembl.compound/CHEMBL22587": [
+    "shape_000005",
+    "shape_000022"
+  ],
   "https://identifiers.org/chembl.compound/CHEMBL1200468": [
     "shape_000005",
     "shape_000022"
@@ -68045,6 +68065,22 @@
     "shape_000014"
   ],
   "https://identifiers.org/chemspider/76943": [
+    "shape_000006",
+    "shape_000014"
+  ],
+  "https://identifiers.org/chemspider/59377": [
+    "shape_000006",
+    "shape_000014"
+  ],
+  "https://identifiers.org/chemspider/2444": [
+    "shape_000006",
+    "shape_000014"
+  ],
+  "https://identifiers.org/chemspider/4444507": [
+    "shape_000006",
+    "shape_000014"
+  ],
+  "https://identifiers.org/chemspider/49927": [
     "shape_000006",
     "shape_000014"
   ],
@@ -69900,6 +69936,34 @@
     "shape_000007",
     "shape_000023"
   ],
+  "https://identifiers.org/kegg.compound/C07670": [
+    "shape_000007",
+    "shape_000023"
+  ],
+  "https://identifiers.org/kegg.compound/D00594": [
+    "shape_000007",
+    "shape_000023"
+  ],
+  "https://identifiers.org/kegg.compound/C07709": [
+    "shape_000007",
+    "shape_000023"
+  ],
+  "https://identifiers.org/kegg.compound/D00626": [
+    "shape_000007",
+    "shape_000023"
+  ],
+  "https://identifiers.org/kegg.compound/C07482": [
+    "shape_000007",
+    "shape_000023"
+  ],
+  "https://identifiers.org/kegg.compound/D08229": [
+    "shape_000007",
+    "shape_000023"
+  ],
+  "https://identifiers.org/kegg.compound/D00350": [
+    "shape_000007",
+    "shape_000023"
+  ],
   "https://identifiers.org/kegg.compound/D00534": [
     "shape_000007",
     "shape_000023"
@@ -70817,6 +70881,22 @@
     "shape_000026"
   ],
   "https://identifiers.org/drugbank/DB12792": [
+    "shape_000008",
+    "shape_000026"
+  ],
+  "https://identifiers.org/drugbank/DB00912": [
+    "shape_000008",
+    "shape_000026"
+  ],
+  "https://identifiers.org/drugbank/DB00796": [
+    "shape_000008",
+    "shape_000026"
+  ],
+  "https://identifiers.org/drugbank/DB00471": [
+    "shape_000008",
+    "shape_000026"
+  ],
+  "https://identifiers.org/drugbank/DB01167": [
     "shape_000008",
     "shape_000026"
   ],
@@ -73212,6 +73292,62 @@
     "shape_000010",
     "shape_000019"
   ],
+  "https://identifiers.org/hgnc/3666": [
+    "shape_000010",
+    "shape_000017"
+  ],
+  "https://identifiers.org/hgnc/3676": [
+    "shape_000010",
+    "shape_000017"
+  ],
+  "https://identifiers.org/hgnc/3689": [
+    "shape_000010",
+    "shape_000017"
+  ],
+  "https://identifiers.org/ncbigene/396259": [
+    "shape_000010",
+    "shape_000025"
+  ],
+  "https://identifiers.org/uniprot/O35565": [
+    "shape_000010",
+    "shape_000019"
+  ],
+  "https://identifiers.org/uniprot/P09038": [
+    "shape_000010",
+    "shape_000019"
+  ],
+  "https://identifiers.org/uniprot/P13109": [
+    "shape_000010",
+    "shape_000019"
+  ],
+  "https://identifiers.org/uniprot/P15655": [
+    "shape_000010",
+    "shape_000019"
+  ],
+  "https://identifiers.org/uniprot/P18461": [
+    "shape_000010",
+    "shape_000019"
+  ],
+  "https://identifiers.org/uniprot/P21803": [
+    "shape_000010",
+    "shape_000019"
+  ],
+  "https://identifiers.org/uniprot/P48800": [
+    "shape_000010",
+    "shape_000019"
+  ],
+  "https://identifiers.org/uniprot/P70492": [
+    "shape_000010",
+    "shape_000019"
+  ],
+  "https://identifiers.org/uniprot/Q07407": [
+    "shape_000010",
+    "shape_000019"
+  ],
+  "https://identifiers.org/uniprot/Q8JG38": [
+    "shape_000010",
+    "shape_000019"
+  ],
   "https://identifiers.org/hgnc/5286": [
     "shape_000010",
     "shape_000017"
@@ -75024,6 +75160,30 @@
     "shape_000011",
     "shape_000024"
   ],
+  "https://identifiers.org/hmdb/HMDB0015048": [
+    "shape_000011",
+    "shape_000024"
+  ],
+  "https://identifiers.org/hmdb/HMDB15048": [
+    "shape_000011",
+    "shape_000024"
+  ],
+  "https://identifiers.org/hmdb/HMDB0014614": [
+    "shape_000011",
+    "shape_000024"
+  ],
+  "https://identifiers.org/hmdb/HMDB14614": [
+    "shape_000011",
+    "shape_000024"
+  ],
+  "https://identifiers.org/hmdb/HMDB0015298": [
+    "shape_000011",
+    "shape_000024"
+  ],
+  "https://identifiers.org/hmdb/HMDB15298": [
+    "shape_000011",
+    "shape_000024"
+  ],
   "https://identifiers.org/hmdb/HMDB0014910": [
     "shape_000011",
     "shape_000024"
@@ -76724,6 +76884,30 @@
     "shape_000016",
     "shape_000021"
   ],
+  "https://identifiers.org/chebi/348669": [
+    "shape_000016",
+    "shape_000021"
+  ],
+  "https://identifiers.org/chebi/8805": [
+    "shape_000016",
+    "shape_000021"
+  ],
+  "https://identifiers.org/chebi/3348": [
+    "shape_000016",
+    "shape_000021"
+  ],
+  "https://identifiers.org/chebi/50730": [
+    "shape_000016",
+    "shape_000021"
+  ],
+  "https://identifiers.org/chebi/6076": [
+    "shape_000016",
+    "shape_000021"
+  ],
+  "https://identifiers.org/chebi/94366": [
+    "shape_000016",
+    "shape_000021"
+  ],
   "https://identifiers.org/chebi/6651": [
     "shape_000016",
     "shape_000021"
@@ -78400,6 +78584,22 @@
     "shape_000018",
     "shape_000027"
   ],
+  "https://identifiers.org/wikidata/Q2195995": [
+    "shape_000018",
+    "shape_000027"
+  ],
+  "https://identifiers.org/wikidata/Q27075664": [
+    "shape_000018",
+    "shape_000027"
+  ],
+  "https://identifiers.org/wikidata/Q417767": [
+    "shape_000018",
+    "shape_000027"
+  ],
+  "https://identifiers.org/wikidata/Q411229": [
+    "shape_000018",
+    "shape_000027"
+  ],
   "https://identifiers.org/wikidata/Q423005": [
     "shape_000018",
     "shape_000027"
@@ -80072,6 +80272,22 @@
     "shape_000028",
     "shape_000029"
   ],
+  "https://identifiers.org/pubchem.compound/65981": [
+    "shape_000028",
+    "shape_000029"
+  ],
+  "https://identifiers.org/pubchem.compound/2540": [
+    "shape_000028",
+    "shape_000029"
+  ],
+  "https://identifiers.org/pubchem.compound/5281040": [
+    "shape_000028",
+    "shape_000029"
+  ],
+  "https://identifiers.org/pubchem.compound/55283": [
+    "shape_000028",
+    "shape_000029"
+  ],
   "https://identifiers.org/pubchem.compound/4004": [
     "shape_000028",
     "shape_000029"
@@ -81136,10 +81352,7 @@
     "shape_000076",
     "shape_000076",
     "shape_000076",
-    "shape_000076",
-    "shape_000076",
     "shape_000083",
-    "shape_000095",
     "shape_000095",
     "shape_000095",
     "shape_000095",
@@ -82715,8 +82928,7 @@
     "shape_000054",
     "shape_000083",
     "shape_000095",
-    "shape_000097",
-    "shape_000098"
+    "shape_000097"
   ],
   "https://identifiers.org/aop.events/1889": [
     "shape_000031",
@@ -83314,6 +83526,7 @@
     "shape_000095",
     "shape_000095",
     "shape_000095",
+    "shape_000097",
     "shape_000097",
     "shape_000097",
     "shape_000097",
@@ -89301,7 +89514,6 @@
     "shape_000076",
     "shape_000083",
     "shape_000094",
-    "shape_000094",
     "shape_000095",
     "shape_000095",
     "shape_000095"
@@ -89522,7 +89734,10 @@
     "shape_000054",
     "shape_000076",
     "shape_000076",
+    "shape_000076",
+    "shape_000076",
     "shape_000083",
+    "shape_000095",
     "shape_000095",
     "shape_000095",
     "shape_000095",
@@ -92925,6 +93140,8 @@
     "shape_000094",
     "shape_000094",
     "shape_000094",
+    "shape_000094",
+    "shape_000095",
     "shape_000095",
     "shape_000095",
     "shape_000095",
@@ -95889,6 +96106,22 @@
     "shape_000094",
     "shape_000095"
   ],
+  "https://identifiers.org/aop.events/2400": [
+    "shape_000031",
+    "shape_000054",
+    "shape_000076",
+    "shape_000083",
+    "shape_000095",
+    "shape_000097"
+  ],
+  "https://identifiers.org/aop.events/2401": [
+    "shape_000031",
+    "shape_000054",
+    "shape_000076",
+    "shape_000083",
+    "shape_000094",
+    "shape_000095"
+  ],
   "https://identifiers.org/aop.events/2236": [
     "shape_000031",
     "shape_000054",
@@ -96693,6 +96926,21 @@
     "shape_000094",
     "shape_000095"
   ],
+  "https://identifiers.org/aop.events/1887": [
+    "shape_000031",
+    "shape_000054",
+    "shape_000083",
+    "shape_000095",
+    "shape_000098"
+  ],
+  "https://identifiers.org/aop.events/2399": [
+    "shape_000031",
+    "shape_000054",
+    "shape_000076",
+    "shape_000083",
+    "shape_000095",
+    "shape_000097"
+  ],
   "https://identifiers.org/aop.events/2260": [
     "shape_000031",
     "shape_000054",
@@ -96820,8 +97068,10 @@
   "https://identifiers.org/aop.events/2393": [
     "shape_000031",
     "shape_000054",
+    "shape_000076",
     "shape_000083",
-    "shape_000095"
+    "shape_000095",
+    "shape_000097"
   ],
   "https://identifiers.org/aop.events/2394": [
     "shape_000031",
@@ -100312,6 +100562,38 @@
     "shape_000069",
     "shape_000070"
   ],
+  "https://identifiers.org/cas/135062-02-1": [
+    "shape_000033",
+    "shape_000042",
+    "shape_000045",
+    "shape_000047",
+    "shape_000069",
+    "shape_000070"
+  ],
+  "https://identifiers.org/cas/145040-37-5": [
+    "shape_000033",
+    "shape_000042",
+    "shape_000045",
+    "shape_000047",
+    "shape_000069",
+    "shape_000070"
+  ],
+  "https://identifiers.org/cas/158966-92-8": [
+    "shape_000033",
+    "shape_000042",
+    "shape_000045",
+    "shape_000047",
+    "shape_000069",
+    "shape_000070"
+  ],
+  "https://identifiers.org/cas/84625-61-6": [
+    "shape_000033",
+    "shape_000042",
+    "shape_000045",
+    "shape_000047",
+    "shape_000069",
+    "shape_000070"
+  ],
   "https://identifiers.org/cas/121-75-5": [
     "shape_000033",
     "shape_000042",
@@ -101214,6 +101496,32 @@
     "shape_000086",
     "shape_000087"
   ],
+  "http://purl.obolibrary.org/obo/UBERON_0001332": [
+    "shape_000034",
+    "shape_000036",
+    "shape_000044",
+    "shape_000049",
+    "shape_000057",
+    "shape_000057",
+    "shape_000058",
+    "shape_000058",
+    "shape_000078",
+    "shape_000079",
+    "shape_000086",
+    "shape_000087"
+  ],
+  "http://purl.obolibrary.org/obo/UBERON_0011374": [
+    "shape_000034",
+    "shape_000036",
+    "shape_000044",
+    "shape_000049",
+    "shape_000057",
+    "shape_000058",
+    "shape_000078",
+    "shape_000079",
+    "shape_000086",
+    "shape_000087"
+  ],
   "http://purl.obolibrary.org/obo/UBERON_0000989": [
     "shape_000034",
     "shape_000036",
@@ -101521,6 +101829,11 @@
     "shape_000036",
     "shape_000086"
   ],
+  "http://purl.obolibrary.org/obo/UBERON_0005876": [
+    "shape_000036",
+    "shape_000086",
+    "shape_000086"
+  ],
   "http://purl.obolibrary.org/obo/UBERON_0001017": [
     "shape_000036",
     "shape_000086",
@@ -101623,6 +101936,8 @@
     "shape_000092",
     "shape_000092",
     "shape_000092",
+    "shape_000092",
+    "shape_000093",
     "shape_000093",
     "shape_000093",
     "shape_000093",
@@ -107849,6 +108164,8 @@
     "shape_000066",
     "shape_000066",
     "shape_000066",
+    "shape_000066",
+    "shape_000066",
     "shape_000067",
     "shape_000081"
   ],
@@ -111586,6 +111903,16 @@
     "shape_000067",
     "shape_000081"
   ],
+  "https://identifiers.org/aop/621": [
+    "shape_000040",
+    "shape_000053",
+    "shape_000081"
+  ],
+  "https://identifiers.org/aop/622": [
+    "shape_000040",
+    "shape_000053",
+    "shape_000081"
+  ],
   "https://identifiers.org/aop/520": [
     "shape_000040",
     "shape_000053",
@@ -112420,6 +112747,13 @@
     "shape_000053",
     "shape_000066",
     "shape_000066",
+    "shape_000066",
+    "shape_000066",
+    "shape_000066",
+    "shape_000067",
+    "shape_000067",
+    "shape_000067",
+    "shape_000067",
     "shape_000081"
   ],
   "https://identifiers.org/aop/620": [
@@ -113725,6 +114059,30 @@
     "shape_000064",
     "shape_000068"
   ],
+  "https://identifiers.org/aop.stressor/690": [
+    "shape_000041",
+    "shape_000055",
+    "shape_000064",
+    "shape_000068"
+  ],
+  "https://identifiers.org/aop.stressor/691": [
+    "shape_000041",
+    "shape_000055",
+    "shape_000064",
+    "shape_000068"
+  ],
+  "https://identifiers.org/aop.stressor/692": [
+    "shape_000041",
+    "shape_000055",
+    "shape_000064",
+    "shape_000068"
+  ],
+  "https://identifiers.org/aop.stressor/693": [
+    "shape_000041",
+    "shape_000055",
+    "shape_000064",
+    "shape_000068"
+  ],
   "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C25830": [
     "shape_000043",
     "shape_000084",
@@ -113849,6 +114207,8 @@
     "shape_000043",
     "shape_000084",
     "shape_000084",
+    "shape_000084",
+    "shape_000089",
     "shape_000089"
   ],
   "http://purl.obolibrary.org/obo/GO_0000104": [
@@ -113895,6 +114255,8 @@
     "shape_000084",
     "shape_000084",
     "shape_000084",
+    "shape_000084",
+    "shape_000089",
     "shape_000089",
     "shape_000089",
     "shape_000089",
@@ -116775,6 +117137,23 @@
     "shape_000084",
     "shape_000089"
   ],
+  "http://purl.obolibrary.org/obo/GO_0035261": [
+    "shape_000043",
+    "shape_000084",
+    "shape_000089"
+  ],
+  "http://purl.obolibrary.org/obo/GO_0060638": [
+    "shape_000043",
+    "shape_000084",
+    "shape_000084",
+    "shape_000089"
+  ],
+  "http://purl.obolibrary.org/obo/MP_0008940": [
+    "shape_000043",
+    "shape_000084",
+    "shape_000084",
+    "shape_000089"
+  ],
   "http://purl.obolibrary.org/obo/GO_0055114": [
     "shape_000043",
     "shape_000084",
@@ -116965,6 +117344,11 @@
     "shape_000089"
   ],
   "http://purl.obolibrary.org/obo/GO_0004908": [
+    "shape_000043",
+    "shape_000084",
+    "shape_000089"
+  ],
+  "http://purl.obolibrary.org/obo/GO_0051101": [
     "shape_000043",
     "shape_000084",
     "shape_000089"
@@ -118378,6 +118762,8 @@
     "shape_000058",
     "shape_000058",
     "shape_000058",
+    "shape_000058",
+    "shape_000079",
     "shape_000079",
     "shape_000079",
     "shape_000079",
@@ -119503,6 +119889,27 @@
     "shape_000079"
   ],
   "http://purl.org/commons/record/mesh/D064828": [
+    "shape_000044",
+    "shape_000058",
+    "shape_000079"
+  ],
+  "http://purl.obolibrary.org/obo/CHEBI_50113": [
+    "shape_000044",
+    "shape_000058",
+    "shape_000079"
+  ],
+  "http://purl.obolibrary.org/obo/PR_000001449": [
+    "shape_000044",
+    "shape_000058",
+    "shape_000079"
+  ],
+  "http://purl.obolibrary.org/obo/PR_000007480": [
+    "shape_000044",
+    "shape_000058",
+    "shape_000058",
+    "shape_000079"
+  ],
+  "http://purl.obolibrary.org/obo/PR_000007489": [
     "shape_000044",
     "shape_000058",
     "shape_000079"
@@ -125681,7 +126088,6 @@
     "shape_000052",
     "shape_000082",
     "shape_000096",
-    "shape_000096",
     "shape_000096"
   ],
   "https://identifiers.org/aop.relationships/1670": [
@@ -126048,6 +126454,7 @@
     "shape_000048",
     "shape_000052",
     "shape_000082",
+    "shape_000096",
     "shape_000096",
     "shape_000096"
   ],
@@ -131547,12 +131954,6 @@
     "shape_000082",
     "shape_000096"
   ],
-  "https://identifiers.org/aop.relationships/3575": [
-    "shape_000048",
-    "shape_000052",
-    "shape_000082",
-    "shape_000096"
-  ],
   "https://identifiers.org/aop.relationships/3576": [
     "shape_000048",
     "shape_000052",
@@ -131578,12 +131979,6 @@
     "shape_000096"
   ],
   "https://identifiers.org/aop.relationships/3580": [
-    "shape_000048",
-    "shape_000052",
-    "shape_000082",
-    "shape_000096"
-  ],
-  "https://identifiers.org/aop.relationships/3581": [
     "shape_000048",
     "shape_000052",
     "shape_000082",
@@ -131801,6 +132196,30 @@
     "shape_000096"
   ],
   "https://identifiers.org/aop.relationships/3683": [
+    "shape_000048",
+    "shape_000052",
+    "shape_000082",
+    "shape_000096"
+  ],
+  "https://identifiers.org/aop.relationships/3705": [
+    "shape_000048",
+    "shape_000052",
+    "shape_000082",
+    "shape_000096"
+  ],
+  "https://identifiers.org/aop.relationships/3706": [
+    "shape_000048",
+    "shape_000052",
+    "shape_000082",
+    "shape_000096"
+  ],
+  "https://identifiers.org/aop.relationships/3707": [
+    "shape_000048",
+    "shape_000052",
+    "shape_000082",
+    "shape_000096"
+  ],
+  "https://identifiers.org/aop.relationships/3708": [
     "shape_000048",
     "shape_000052",
     "shape_000082",
@@ -132370,6 +132789,18 @@
     "shape_000096"
   ],
   "https://identifiers.org/aop.relationships/3541": [
+    "shape_000048",
+    "shape_000052",
+    "shape_000082",
+    "shape_000096"
+  ],
+  "https://identifiers.org/aop.relationships/3709": [
+    "shape_000048",
+    "shape_000052",
+    "shape_000082",
+    "shape_000096"
+  ],
+  "https://identifiers.org/aop.relationships/3710": [
     "shape_000048",
     "shape_000052",
     "shape_000082",
@@ -134682,6 +135113,10 @@
     "shape_000099",
     "shape_000099",
     "shape_000099",
+    "shape_000099",
+    "shape_000099",
+    "shape_000099",
+    "shape_000099",
     "shape_000099"
   ],
   "http://purl.bioontology.org/ontology/NCBITAXON/10095": [
@@ -134900,6 +135335,7 @@
     "shape_000099",
     "shape_000099",
     "shape_000099",
+    "shape_000099",
     "shape_000099"
   ],
   "http://purl.bioontology.org/ontology/NCBITAXON/10117": [
@@ -134916,6 +135352,7 @@
   ],
   "http://purl.bioontology.org/ontology/NCBITAXON/10141": [
     "shape_000051",
+    "shape_000099",
     "shape_000099",
     "shape_000099",
     "shape_000099",
@@ -135558,6 +135995,10 @@
     "shape_000099",
     "shape_000099",
     "shape_000099",
+    "shape_000099",
+    "shape_000099",
+    "shape_000099",
+    "shape_000099",
     "shape_000099"
   ],
   "http://purl.bioontology.org/ontology/NCBITAXON/9612": [
@@ -135683,6 +136124,10 @@
     "shape_000099"
   ],
   "http://purl.bioontology.org/ontology/NCBITAXON/8356": [
+    "shape_000051",
+    "shape_000099"
+  ],
+  "http://purl.bioontology.org/ontology/NCBITAXON/60556": [
     "shape_000051",
     "shape_000099"
   ],
@@ -145221,6 +145666,8 @@
     "shape_000072",
     "shape_000073",
     "shape_000073",
+    "shape_000073",
+    "shape_000074",
     "shape_000074",
     "shape_000074"
   ],
@@ -145229,6 +145676,8 @@
     "shape_000072",
     "shape_000073",
     "shape_000073",
+    "shape_000073",
+    "shape_000074",
     "shape_000074",
     "shape_000074"
   ],
@@ -145424,6 +145873,8 @@
     "shape_000072",
     "shape_000072",
     "shape_000073",
+    "shape_000073",
+    "shape_000074",
     "shape_000074"
   ],
   "https://identifiers.org/hgnc/FGF8": [
@@ -148016,6 +148467,8 @@
   ],
   "https://identifiers.org/hgnc/CYP26C1": [
     "shape_000073",
+    "shape_000073",
+    "shape_000074",
     "shape_000074"
   ],
   "https://identifiers.org/hgnc/CYP2A13": [
@@ -152579,6 +153032,33 @@
     "shape_000075"
   ],
   "2371_bioevent_1": [
+    "shape_000075"
+  ],
+  "2393_bioevent_0": [
+    "shape_000075"
+  ],
+  "2393_bioevent_1": [
+    "shape_000075"
+  ],
+  "2399_bioevent_0": [
+    "shape_000075"
+  ],
+  "2399_bioevent_1": [
+    "shape_000075"
+  ],
+  "2399_bioevent_2": [
+    "shape_000075"
+  ],
+  "2399_bioevent_3": [
+    "shape_000075"
+  ],
+  "2400_bioevent_0": [
+    "shape_000075"
+  ],
+  "2401_bioevent_0": [
+    "shape_000075"
+  ],
+  "2401_bioevent_1": [
     "shape_000075"
   ],
   "1238_bioevent_0": [

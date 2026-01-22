@@ -1,0 +1,86 @@
+{
+  "triples": [
+    [
+      "http://purl.org/cerif/frapo/FundingAgency",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2006/vcard/ns#Organization",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 3,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "frapo": "http://purl.org/cerif/frapo/",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "vcard": "http://www.w3.org/2006/vcard/ns#",
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "frapo": "http://purl.org/cerif/frapo/",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "vcard": "http://www.w3.org/2006/vcard/ns#",
+      "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#"
+    },
+    "@graph": [
+      {
+        "@id": "frapo:FundingAgency",
+        "rdf:type": {
+          "@id": "owl:Class"
+        }
+      },
+      {
+        "@id": "vcard:Organization",
+        "rdf:type": {
+          "@id": "owl:Class"
+        }
+      },
+      {
+        "@id": "vocabulary:Organization",
+        "rdf:type": {
+          "@id": "owl:Class"
+        }
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "frapo:FundingAgency",
+      "subject_uri": "http://purl.org/cerif/frapo/FundingAgency",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vcard:Organization",
+      "subject_uri": "http://www.w3.org/2006/vcard/ns#Organization",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "vocabulary:Organization",
+      "subject_uri": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Organization",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    }
+  ]
+}

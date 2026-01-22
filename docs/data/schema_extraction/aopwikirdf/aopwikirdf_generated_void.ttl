@@ -17,49 +17,49 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 ns1:class_partition_http___aopkb_org_aop_ontology_AdverseOutcomePathway void:class aopo:AdverseOutcomePathway ;
-    void:entities 565 .
+    void:entities 567 .
 
 ns1:class_partition_http___aopkb_org_aop_ontology_BiologicalEvent void:class aopo:BiologicalEvent ;
-    void:entities 1096 .
+    void:entities 1105 .
 
 ns1:class_partition_http___aopkb_org_aop_ontology_CellTypeContext void:class aopo:CellTypeContext ;
     void:entities 68 .
 
 ns1:class_partition_http___aopkb_org_aop_ontology_KeyEvent void:class aopo:KeyEvent ;
-    void:entities 1557 .
+    void:entities 1561 .
 
 ns1:class_partition_http___aopkb_org_aop_ontology_KeyEventRelationship void:class aopo:KeyEventRelationship ;
-    void:entities 2263 .
+    void:entities 2267 .
 
 ns1:class_partition_http___aopkb_org_aop_ontology_OrganContext void:class aopo:OrganContext ;
-    void:entities 95 .
+    void:entities 98 .
 
 ns1:class_partition_http___edamontology_org_data_1025 void:class edam.data:1025 ;
-    void:entities 12501 .
+    void:entities 12515 .
 
 ns1:class_partition_http___edamontology_org_data_1027 void:class edam.data:1027 ;
-    void:entities 1536 .
+    void:entities 1537 .
 
 ns1:class_partition_http___edamontology_org_data_1033 void:class edam.data:1033 ;
     void:entities 1483 .
 
 ns1:class_partition_http___edamontology_org_data_2291 void:class edam.data:2291 ;
-    void:entities 7850 .
+    void:entities 7860 .
 
 ns1:class_partition_http___edamontology_org_data_2298 void:class edam.data:2298 ;
-    void:entities 1632 .
+    void:entities 1635 .
 
 ns1:class_partition_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571 void:class nci:C54571 ;
-    void:entities 730 .
+    void:entities 734 .
 
 ns1:class_partition_http___purl_bioontology_org_ontology_NCBITAXON_131567 void:class ncbitaxon:131567 ;
-    void:entities 175 .
+    void:entities 176 .
 
 ns1:class_partition_http___purl_obolibrary_org_obo_GO_0008150 void:class go:0008150 ;
-    void:entities 547 .
+    void:entities 551 .
 
 ns1:class_partition_http___purl_obolibrary_org_obo_PATO_0001241 void:class pato:0001241 ;
-    void:entities 483 .
+    void:entities 489 .
 
 ns1:class_partition_http___rdfs_org_ns_void_Dataset void:class void:Dataset ;
     void:entities 4 .
@@ -68,37 +68,37 @@ ns1:class_partition_http___rdfs_org_ns_void_Linkset void:class void:Linkset ;
     void:entities 2 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000000 void:class cheminf:000000 ;
-    void:entities 406 .
+    void:entities 410 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000140 void:class cheminf:000140 ;
-    void:entities 417 .
+    void:entities 421 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000405 void:class cheminf:000405 ;
-    void:entities 420 .
+    void:entities 424 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000406 void:class cheminf:000406 ;
-    void:entities 215 .
+    void:entities 219 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000407 void:class cheminf:000407 ;
-    void:entities 432 .
+    void:entities 438 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000408 void:class cheminf:000408 ;
-    void:entities 420 .
+    void:entities 426 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000409 void:class cheminf:000409 ;
-    void:entities 466 .
+    void:entities 473 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000412 void:class cheminf:000412 ;
-    void:entities 344 .
+    void:entities 348 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000446 void:class cheminf:000446 ;
-    void:entities 406 .
+    void:entities 410 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000564 void:class cheminf:000564 ;
     void:entities 35 .
 
 ns1:class_partition_http___semanticscience_org_resource_CHEMINF_000567 void:class cheminf:000567 ;
-    void:entities 417 .
+    void:entities 421 .
 
 ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_anyURI ns2:datatypePartition xsd:anyURI ;
     void:triples 50 .
@@ -107,12 +107,12 @@ ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_date ns2:datatypePartiti
     void:triples 2 .
 
 ns1:datatype_partition_http___www_w3_org_2001_XMLSchema_string ns2:datatypePartition xsd:string ;
-    void:triples 96855 .
+    void:triples 97193 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_CellTypeContext_http___aopkb_org_aop_ontology_KeyEvent_http___aopkb_org_aop_ontology_CellTypeContext ns2:objectClass aopo:CellTypeContext ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property aopo:CellTypeContext ;
-    void:triples 419 .
+    void:triples 420 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_CellTypeContext_http___aopkb_org_aop_ontology_KeyEvent_http___aopkb_org_aop_ontology_OrganContext ns2:objectClass aopo:OrganContext ;
     ns2:subjectClass aopo:KeyEvent ;
@@ -122,7 +122,7 @@ ns1:property_partition_http___aopkb_org_aop_ontology_CellTypeContext_http___aopk
 ns1:property_partition_http___aopkb_org_aop_ontology_CellTypeContext_http___aopkb_org_aop_ontology_KeyEvent_http___purl_obolibrary_org_obo_PATO_0001241 ns2:objectClass pato:0001241 ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property aopo:CellTypeContext ;
-    void:triples 191 .
+    void:triples 192 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_OrganContext_http___aopkb_org_aop_ontology_KeyEvent_http___aopkb_org_aop_ontology_CellTypeContext ns2:objectClass aopo:CellTypeContext ;
     ns2:subjectClass aopo:KeyEvent ;
@@ -132,17 +132,17 @@ ns1:property_partition_http___aopkb_org_aop_ontology_OrganContext_http___aopkb_o
 ns1:property_partition_http___aopkb_org_aop_ontology_OrganContext_http___aopkb_org_aop_ontology_KeyEvent_http___aopkb_org_aop_ontology_OrganContext ns2:objectClass aopo:OrganContext ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property aopo:OrganContext ;
-    void:triples 326 .
+    void:triples 330 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_OrganContext_http___aopkb_org_aop_ontology_KeyEvent_http___purl_obolibrary_org_obo_PATO_0001241 ns2:objectClass pato:0001241 ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property aopo:OrganContext ;
-    void:triples 203 .
+    void:triples 205 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_hasBiologicalEvent_http___aopkb_org_aop_ontology_KeyEvent_http___aopkb_org_aop_ontology_BiologicalEvent ns2:objectClass aopo:BiologicalEvent ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property aopo:hasBiologicalEvent ;
-    void:triples 1096 .
+    void:triples 1105 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_hasObject_http___aopkb_org_aop_ontology_BiologicalEvent_http___aopkb_org_aop_ontology_CellTypeContext ns2:objectClass aopo:CellTypeContext ;
     ns2:subjectClass aopo:BiologicalEvent ;
@@ -152,7 +152,7 @@ ns1:property_partition_http___aopkb_org_aop_ontology_hasObject_http___aopkb_org_
 ns1:property_partition_http___aopkb_org_aop_ontology_hasObject_http___aopkb_org_aop_ontology_BiologicalEvent_http___aopkb_org_aop_ontology_OrganContext ns2:objectClass aopo:OrganContext ;
     ns2:subjectClass aopo:BiologicalEvent ;
     void:property aopo:hasObject ;
-    void:triples 46 .
+    void:triples 49 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_hasObject_http___aopkb_org_aop_ontology_BiologicalEvent_http___purl_obolibrary_org_obo_GO_0008150 ns2:objectClass go:0008150 ;
     ns2:subjectClass aopo:BiologicalEvent ;
@@ -162,12 +162,12 @@ ns1:property_partition_http___aopkb_org_aop_ontology_hasObject_http___aopkb_org_
 ns1:property_partition_http___aopkb_org_aop_ontology_hasObject_http___aopkb_org_aop_ontology_BiologicalEvent_http___purl_obolibrary_org_obo_PATO_0001241 ns2:objectClass pato:0001241 ;
     ns2:subjectClass aopo:BiologicalEvent ;
     void:property aopo:hasObject ;
-    void:triples 781 .
+    void:triples 790 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_hasProcess_http___aopkb_org_aop_ontology_BiologicalEvent_http___purl_obolibrary_org_obo_GO_0008150 ns2:objectClass go:0008150 ;
     ns2:subjectClass aopo:BiologicalEvent ;
     void:property aopo:hasProcess ;
-    void:triples 931 .
+    void:triples 939 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_hasProcess_http___aopkb_org_aop_ontology_BiologicalEvent_http___purl_obolibrary_org_obo_PATO_0001241 ns2:objectClass pato:0001241 ;
     ns2:subjectClass aopo:BiologicalEvent ;
@@ -177,32 +177,32 @@ ns1:property_partition_http___aopkb_org_aop_ontology_hasProcess_http___aopkb_org
 ns1:property_partition_http___aopkb_org_aop_ontology_has_adverse_outcome_http___aopkb_org_aop_ontology_AdverseOutcomePathway_http___aopkb_org_aop_ontology_KeyEvent ns2:objectClass aopo:KeyEvent ;
     ns2:subjectClass aopo:AdverseOutcomePathway ;
     void:property aopo:has_adverse_outcome ;
-    void:triples 608 .
+    void:triples 609 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_has_chemical_entity_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571_http___semanticscience_org_resource_CHEMINF_000000 ns2:objectClass cheminf:000000 ;
     ns2:subjectClass nci:C54571 ;
     void:property aopo:has_chemical_entity ;
-    void:triples 415 .
+    void:triples 419 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_has_chemical_entity_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571_http___semanticscience_org_resource_CHEMINF_000446 ns2:objectClass cheminf:000446 ;
     ns2:subjectClass nci:C54571 ;
     void:property aopo:has_chemical_entity ;
-    void:triples 415 .
+    void:triples 419 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_has_downstream_key_event_http___aopkb_org_aop_ontology_KeyEventRelationship_http___aopkb_org_aop_ontology_KeyEvent ns2:objectClass aopo:KeyEvent ;
     ns2:subjectClass aopo:KeyEventRelationship ;
     void:property aopo:has_downstream_key_event ;
-    void:triples 2263 .
+    void:triples 2267 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_has_key_event_http___aopkb_org_aop_ontology_AdverseOutcomePathway_http___aopkb_org_aop_ontology_KeyEvent ns2:objectClass aopo:KeyEvent ;
     ns2:subjectClass aopo:AdverseOutcomePathway ;
     void:property aopo:has_key_event ;
-    void:triples 3501 .
+    void:triples 3506 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_has_key_event_relationship_http___aopkb_org_aop_ontology_AdverseOutcomePathway_http___aopkb_org_aop_ontology_KeyEventRelationship ns2:objectClass aopo:KeyEventRelationship ;
     ns2:subjectClass aopo:AdverseOutcomePathway ;
     void:property aopo:has_key_event_relationship ;
-    void:triples 3101 .
+    void:triples 3105 .
 
 ns1:property_partition_http___aopkb_org_aop_ontology_has_molecular_initiating_event_http___aopkb_org_aop_ontology_AdverseOutcomePathway_http___aopkb_org_aop_ontology_KeyEvent ns2:objectClass aopo:KeyEvent ;
     ns2:subjectClass aopo:AdverseOutcomePathway ;
@@ -212,7 +212,7 @@ ns1:property_partition_http___aopkb_org_aop_ontology_has_molecular_initiating_ev
 ns1:property_partition_http___aopkb_org_aop_ontology_has_upstream_key_event_http___aopkb_org_aop_ontology_KeyEventRelationship_http___aopkb_org_aop_ontology_KeyEvent ns2:objectClass aopo:KeyEvent ;
     ns2:subjectClass aopo:KeyEventRelationship ;
     void:property aopo:has_upstream_key_event ;
-    void:triples 2263 .
+    void:triples 2267 .
 
 ns1:property_partition_http___edamontology_org_data_1025_http___aopkb_org_aop_ontology_KeyEventRelationship_http___edamontology_org_data_1025 ns2:objectClass edam.data:1025 ;
     ns2:subjectClass aopo:KeyEventRelationship ;
@@ -227,12 +227,12 @@ ns1:property_partition_http___edamontology_org_data_1025_http___aopkb_org_aop_on
 ns1:property_partition_http___edamontology_org_data_1025_http___aopkb_org_aop_ontology_KeyEvent_http___edamontology_org_data_1025 ns2:objectClass edam.data:1025 ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property edam.data:1025 ;
-    void:triples 1738 .
+    void:triples 1742 .
 
 ns1:property_partition_http___edamontology_org_data_1025_http___aopkb_org_aop_ontology_KeyEvent_http___edamontology_org_data_2298 ns2:objectClass edam.data:2298 ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property edam.data:1025 ;
-    void:triples 1738 .
+    void:triples 1742 .
 
 ns1:property_partition_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571_http___aopkb_org_aop_ontology_AdverseOutcomePathway_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571 ns2:objectClass nci:C54571 ;
     ns2:subjectClass aopo:AdverseOutcomePathway ;
@@ -242,12 +242,12 @@ ns1:property_partition_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571
 ns1:property_partition_http___purl_bioontology_org_ontology_NCBITAXON_131567_http___aopkb_org_aop_ontology_KeyEvent_http___purl_bioontology_org_ontology_NCBITAXON_131567 ns2:objectClass ncbitaxon:131567 ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property ncbitaxon:131567 ;
-    void:triples 759 .
+    void:triples 770 .
 
 ns1:property_partition_http___purl_obolibrary_org_obo_GO_0008150_http___aopkb_org_aop_ontology_KeyEvent_http___purl_obolibrary_org_obo_GO_0008150 ns2:objectClass go:0008150 ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property go:0008150 ;
-    void:triples 890 .
+    void:triples 896 .
 
 ns1:property_partition_http___purl_obolibrary_org_obo_GO_0008150_http___aopkb_org_aop_ontology_KeyEvent_http___purl_obolibrary_org_obo_PATO_0001241 ns2:objectClass pato:0001241 ;
     ns2:subjectClass aopo:KeyEvent ;
@@ -262,7 +262,7 @@ ns1:property_partition_http___purl_obolibrary_org_obo_PATO_0001241_http___aopkb_
 ns1:property_partition_http___purl_obolibrary_org_obo_PATO_0001241_http___aopkb_org_aop_ontology_KeyEvent_http___aopkb_org_aop_ontology_OrganContext ns2:objectClass aopo:OrganContext ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property pato:0001241 ;
-    void:triples 45 .
+    void:triples 47 .
 
 ns1:property_partition_http___purl_obolibrary_org_obo_PATO_0001241_http___aopkb_org_aop_ontology_KeyEvent_http___purl_obolibrary_org_obo_GO_0008150 ns2:objectClass go:0008150 ;
     ns2:subjectClass aopo:KeyEvent ;
@@ -272,12 +272,12 @@ ns1:property_partition_http___purl_obolibrary_org_obo_PATO_0001241_http___aopkb_
 ns1:property_partition_http___purl_obolibrary_org_obo_PATO_0001241_http___aopkb_org_aop_ontology_KeyEvent_http___purl_obolibrary_org_obo_PATO_0001241 ns2:objectClass pato:0001241 ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property pato:0001241 ;
-    void:triples 738 .
+    void:triples 745 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___aopkb_org_aop_ontology_AdverseOutcomePathway_http___aopkb_org_aop_ontology_AdverseOutcomePathway ns2:objectClass aopo:AdverseOutcomePathway ;
     ns2:subjectClass aopo:AdverseOutcomePathway ;
     void:property dc:identifier ;
-    void:triples 565 .
+    void:triples 567 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___aopkb_org_aop_ontology_CellTypeContext_http___aopkb_org_aop_ontology_CellTypeContext ns2:objectClass aopo:CellTypeContext ;
     ns2:subjectClass aopo:CellTypeContext ;
@@ -297,12 +297,12 @@ ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___aopkb_o
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___aopkb_org_aop_ontology_KeyEventRelationship_http___aopkb_org_aop_ontology_KeyEventRelationship ns2:objectClass aopo:KeyEventRelationship ;
     ns2:subjectClass aopo:KeyEventRelationship ;
     void:property dc:identifier ;
-    void:triples 2263 .
+    void:triples 2267 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___aopkb_org_aop_ontology_KeyEvent_http___aopkb_org_aop_ontology_KeyEvent ns2:objectClass aopo:KeyEvent ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property dc:identifier ;
-    void:triples 1557 .
+    void:triples 1561 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___aopkb_org_aop_ontology_OrganContext_http___aopkb_org_aop_ontology_CellTypeContext ns2:objectClass aopo:CellTypeContext ;
     ns2:subjectClass aopo:OrganContext ;
@@ -312,27 +312,27 @@ ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___aopkb_o
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___aopkb_org_aop_ontology_OrganContext_http___aopkb_org_aop_ontology_OrganContext ns2:objectClass aopo:OrganContext ;
     ns2:subjectClass aopo:OrganContext ;
     void:property dc:identifier ;
-    void:triples 95 .
+    void:triples 98 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___aopkb_org_aop_ontology_OrganContext_http___purl_obolibrary_org_obo_PATO_0001241 ns2:objectClass pato:0001241 ;
     ns2:subjectClass aopo:OrganContext ;
     void:property dc:identifier ;
-    void:triples 31 .
+    void:triples 33 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571 ns2:objectClass nci:C54571 ;
     ns2:subjectClass nci:C54571 ;
     void:property dc:identifier ;
-    void:triples 730 .
+    void:triples 734 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___purl_bioontology_org_ontology_NCBITAXON_131567_http___purl_bioontology_org_ontology_NCBITAXON_131567 ns2:objectClass ncbitaxon:131567 ;
     ns2:subjectClass ncbitaxon:131567 ;
     void:property dc:identifier ;
-    void:triples 175 .
+    void:triples 176 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___purl_obolibrary_org_obo_GO_0008150_http___purl_obolibrary_org_obo_GO_0008150 ns2:objectClass go:0008150 ;
     ns2:subjectClass go:0008150 ;
     void:property dc:identifier ;
-    void:triples 547 .
+    void:triples 551 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___purl_obolibrary_org_obo_GO_0008150_http___purl_obolibrary_org_obo_PATO_0001241 ns2:objectClass pato:0001241 ;
     ns2:subjectClass go:0008150 ;
@@ -347,7 +347,7 @@ ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___purl_ob
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___purl_obolibrary_org_obo_PATO_0001241_http___aopkb_org_aop_ontology_OrganContext ns2:objectClass aopo:OrganContext ;
     ns2:subjectClass pato:0001241 ;
     void:property dc:identifier ;
-    void:triples 31 .
+    void:triples 33 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___purl_obolibrary_org_obo_PATO_0001241_http___purl_obolibrary_org_obo_GO_0008150 ns2:objectClass go:0008150 ;
     ns2:subjectClass pato:0001241 ;
@@ -357,37 +357,37 @@ ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___purl_ob
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___purl_obolibrary_org_obo_PATO_0001241_http___purl_obolibrary_org_obo_PATO_0001241 ns2:objectClass pato:0001241 ;
     ns2:subjectClass pato:0001241 ;
     void:property dc:identifier ;
-    void:triples 483 .
+    void:triples 489 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000000 ns2:objectClass cheminf:000000 ;
     ns2:subjectClass cheminf:000000 ;
     void:property dc:identifier ;
-    void:triples 406 .
+    void:triples 410 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000446 ns2:objectClass cheminf:000446 ;
     ns2:subjectClass cheminf:000000 ;
     void:property dc:identifier ;
-    void:triples 406 .
+    void:triples 410 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000000 ns2:objectClass cheminf:000000 ;
     ns2:subjectClass cheminf:000446 ;
     void:property dc:identifier ;
-    void:triples 406 .
+    void:triples 410 .
 
 ns1:property_partition_http___purl_org_dc_elements_1_1_identifier_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000446 ns2:objectClass cheminf:000446 ;
     ns2:subjectClass cheminf:000446 ;
     void:property dc:identifier ;
-    void:triples 406 .
+    void:triples 410 .
 
 ns1:property_partition_http___purl_org_dc_terms_isPartOf_http___aopkb_org_aop_ontology_KeyEventRelationship_http___aopkb_org_aop_ontology_AdverseOutcomePathway ns2:objectClass aopo:AdverseOutcomePathway ;
     ns2:subjectClass aopo:KeyEventRelationship ;
     void:property dcterms:isPartOf ;
-    void:triples 3101 .
+    void:triples 3105 .
 
 ns1:property_partition_http___purl_org_dc_terms_isPartOf_http___aopkb_org_aop_ontology_KeyEvent_http___aopkb_org_aop_ontology_AdverseOutcomePathway ns2:objectClass aopo:AdverseOutcomePathway ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property dcterms:isPartOf ;
-    void:triples 3501 .
+    void:triples 3506 .
 
 ns1:property_partition_http___purl_org_dc_terms_isPartOf_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571_http___aopkb_org_aop_ontology_AdverseOutcomePathway ns2:objectClass aopo:AdverseOutcomePathway ;
     ns2:subjectClass nci:C54571 ;
@@ -397,27 +397,27 @@ ns1:property_partition_http___purl_org_dc_terms_isPartOf_http___ncicb_nci_nih_go
 ns1:property_partition_http___purl_org_dc_terms_isPartOf_http___semanticscience_org_resource_CHEMINF_000000_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571 ns2:objectClass nci:C54571 ;
     ns2:subjectClass cheminf:000000 ;
     void:property dcterms:isPartOf ;
-    void:triples 415 .
+    void:triples 419 .
 
 ns1:property_partition_http___purl_org_dc_terms_isPartOf_http___semanticscience_org_resource_CHEMINF_000446_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571 ns2:objectClass nci:C54571 ;
     ns2:subjectClass cheminf:000446 ;
     void:property dcterms:isPartOf ;
-    void:triples 415 .
+    void:triples 419 .
 
 ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_seeAlso_http___aopkb_org_aop_ontology_AdverseOutcomePathway_http___aopkb_org_aop_ontology_AdverseOutcomePathway ns2:objectClass aopo:AdverseOutcomePathway ;
     ns2:subjectClass aopo:AdverseOutcomePathway ;
     void:property rdfs:seeAlso ;
-    void:triples 565 .
+    void:triples 567 .
 
 ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_seeAlso_http___aopkb_org_aop_ontology_KeyEventRelationship_http___aopkb_org_aop_ontology_KeyEventRelationship ns2:objectClass aopo:KeyEventRelationship ;
     ns2:subjectClass aopo:KeyEventRelationship ;
     void:property rdfs:seeAlso ;
-    void:triples 2263 .
+    void:triples 2267 .
 
 ns1:property_partition_http___www_w3_org_2000_01_rdf_schema_seeAlso_http___aopkb_org_aop_ontology_KeyEvent_http___aopkb_org_aop_ontology_KeyEvent ns2:objectClass aopo:KeyEvent ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property rdfs:seeAlso ;
-    void:triples 1557 .
+    void:triples 1561 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___edamontology_org_data_1025_http___edamontology_org_data_1025 ns2:objectClass edam.data:1025 ;
     ns2:subjectClass edam.data:1025 ;
@@ -462,57 +462,57 @@ ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___eda
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___purl_obolibrary_org_obo_PATO_0001241_http___edamontology_org_data_1025 ns2:objectClass edam.data:1025 ;
     ns2:subjectClass pato:0001241 ;
     void:property skos:exactMatch ;
-    void:triples 726 .
+    void:triples 742 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___purl_obolibrary_org_obo_PATO_0001241_http___edamontology_org_data_1027 ns2:objectClass edam.data:1027 ;
     ns2:subjectClass pato:0001241 ;
     void:property skos:exactMatch ;
-    void:triples 43 .
+    void:triples 44 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___purl_obolibrary_org_obo_PATO_0001241_http___edamontology_org_data_2291 ns2:objectClass edam.data:2291 ;
     ns2:subjectClass pato:0001241 ;
     void:property skos:exactMatch ;
-    void:triples 560 .
+    void:triples 572 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___purl_obolibrary_org_obo_PATO_0001241_http___edamontology_org_data_2298 ns2:objectClass edam.data:2298 ;
     ns2:subjectClass pato:0001241 ;
     void:property skos:exactMatch ;
-    void:triples 123 .
+    void:triples 126 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000140 ns2:objectClass cheminf:000140 ;
     ns2:subjectClass cheminf:000000 ;
     void:property skos:exactMatch ;
-    void:triples 417 .
+    void:triples 421 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000405 ns2:objectClass cheminf:000405 ;
     ns2:subjectClass cheminf:000000 ;
     void:property skos:exactMatch ;
-    void:triples 420 .
+    void:triples 424 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000406 ns2:objectClass cheminf:000406 ;
     ns2:subjectClass cheminf:000000 ;
     void:property skos:exactMatch ;
-    void:triples 215 .
+    void:triples 219 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000407 ns2:objectClass cheminf:000407 ;
     ns2:subjectClass cheminf:000000 ;
     void:property skos:exactMatch ;
-    void:triples 432 .
+    void:triples 438 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000408 ns2:objectClass cheminf:000408 ;
     ns2:subjectClass cheminf:000000 ;
     void:property skos:exactMatch ;
-    void:triples 420 .
+    void:triples 426 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000409 ns2:objectClass cheminf:000409 ;
     ns2:subjectClass cheminf:000000 ;
     void:property skos:exactMatch ;
-    void:triples 466 .
+    void:triples 473 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000412 ns2:objectClass cheminf:000412 ;
     ns2:subjectClass cheminf:000000 ;
     void:property skos:exactMatch ;
-    void:triples 344 .
+    void:triples 348 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000564 ns2:objectClass cheminf:000564 ;
     ns2:subjectClass cheminf:000000 ;
@@ -522,42 +522,42 @@ ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___sem
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000000_http___semanticscience_org_resource_CHEMINF_000567 ns2:objectClass cheminf:000567 ;
     ns2:subjectClass cheminf:000000 ;
     void:property skos:exactMatch ;
-    void:triples 417 .
+    void:triples 421 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000140 ns2:objectClass cheminf:000140 ;
     ns2:subjectClass cheminf:000446 ;
     void:property skos:exactMatch ;
-    void:triples 417 .
+    void:triples 421 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000405 ns2:objectClass cheminf:000405 ;
     ns2:subjectClass cheminf:000446 ;
     void:property skos:exactMatch ;
-    void:triples 420 .
+    void:triples 424 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000406 ns2:objectClass cheminf:000406 ;
     ns2:subjectClass cheminf:000446 ;
     void:property skos:exactMatch ;
-    void:triples 215 .
+    void:triples 219 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000407 ns2:objectClass cheminf:000407 ;
     ns2:subjectClass cheminf:000446 ;
     void:property skos:exactMatch ;
-    void:triples 432 .
+    void:triples 438 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000408 ns2:objectClass cheminf:000408 ;
     ns2:subjectClass cheminf:000446 ;
     void:property skos:exactMatch ;
-    void:triples 420 .
+    void:triples 426 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000409 ns2:objectClass cheminf:000409 ;
     ns2:subjectClass cheminf:000446 ;
     void:property skos:exactMatch ;
-    void:triples 466 .
+    void:triples 473 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000412 ns2:objectClass cheminf:000412 ;
     ns2:subjectClass cheminf:000446 ;
     void:property skos:exactMatch ;
-    void:triples 344 .
+    void:triples 348 .
 
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000564 ns2:objectClass cheminf:000564 ;
     ns2:subjectClass cheminf:000446 ;
@@ -567,7 +567,7 @@ ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___sem
 ns1:property_partition_http___www_w3_org_2004_02_skos_core_exactMatch_http___semanticscience_org_resource_CHEMINF_000446_http___semanticscience_org_resource_CHEMINF_000567 ns2:objectClass cheminf:000567 ;
     ns2:subjectClass cheminf:000446 ;
     void:property skos:exactMatch ;
-    void:triples 417 .
+    void:triples 421 .
 
 ns1:property_partition_http___www_w3_org_ns_dcat_downloadURL_http___rdfs_org_ns_void_Dataset_http___rdfs_org_ns_void_Dataset ns2:objectClass void:Dataset ;
     ns2:subjectClass void:Dataset ;
@@ -592,20 +592,20 @@ ns1:property_partition_http___www_w3_org_ns_dcat_downloadURL_http___rdfs_org_ns_
 ns1:property_partition_http___xmlns_com_foaf_0_1_page_http___aopkb_org_aop_ontology_AdverseOutcomePathway_http___aopkb_org_aop_ontology_AdverseOutcomePathway ns2:objectClass aopo:AdverseOutcomePathway ;
     ns2:subjectClass aopo:AdverseOutcomePathway ;
     void:property foaf:page ;
-    void:triples 565 .
+    void:triples 567 .
 
 ns1:property_partition_http___xmlns_com_foaf_0_1_page_http___aopkb_org_aop_ontology_KeyEventRelationship_http___aopkb_org_aop_ontology_KeyEventRelationship ns2:objectClass aopo:KeyEventRelationship ;
     ns2:subjectClass aopo:KeyEventRelationship ;
     void:property foaf:page ;
-    void:triples 2263 .
+    void:triples 2267 .
 
 ns1:property_partition_http___xmlns_com_foaf_0_1_page_http___aopkb_org_aop_ontology_KeyEvent_http___aopkb_org_aop_ontology_KeyEvent ns2:objectClass aopo:KeyEvent ;
     ns2:subjectClass aopo:KeyEvent ;
     void:property foaf:page ;
-    void:triples 1557 .
+    void:triples 1561 .
 
 ns1:property_partition_http___xmlns_com_foaf_0_1_page_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571_http___ncicb_nci_nih_gov_xml_owl_EVS_Thesaurus_owl_C54571 ns2:objectClass nci:C54571 ;
     ns2:subjectClass nci:C54571 ;
     void:property foaf:page ;
-    void:triples 730 .
+    void:triples 734 .
 

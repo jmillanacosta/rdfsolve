@@ -5,11 +5,11 @@
     "mesh.vocab": "http://id.nlm.nih.gov/mesh/vocab#",
     "chembl": "http://rdf.ebi.ac.uk/terms/chembl#",
     "owl": "http://www.w3.org/2002/07/owl#",
-    "sio": "http://semanticscience.org/resource/",
+    "sio": "http://semanticscience.org/resource/SIO_",
     "uniprot.core": "http://purl.uniprot.org/core/",
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "ro": "http://purl.obolibrary.org/obo/"
+    "ro": "http://purl.obolibrary.org/obo/RO_"
   },
   "@graph": [
     {

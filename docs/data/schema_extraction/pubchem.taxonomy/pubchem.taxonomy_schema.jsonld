@@ -5,7 +5,7 @@
     "mesh.vocab": "http://id.nlm.nih.gov/mesh/vocab#",
     "patent": "http://data.epo.org/linked-data/def/patent/",
     "owl": "http://www.w3.org/2002/07/owl#",
-    "sio": "http://semanticscience.org/resource/",
+    "sio": "http://semanticscience.org/resource/SIO_",
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
   },

@@ -1,7 +1,7 @@
 {
   "@context": {
-    "bao": "http://www.bioassayontology.org/bao#",
-    "sio": "http://semanticscience.org/resource/",
+    "bao": "http://www.bioassayontology.org/bao#BAO_",
+    "sio": "http://semanticscience.org/resource/SIO_",
     "dcterms": "http://purl.org/dc/terms/",
     "chembl": "http://rdf.ebi.ac.uk/terms/chembl#",
     "owl": "http://www.w3.org/2002/07/owl#",

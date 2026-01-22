@@ -1,0 +1,14 @@
+{
+  "triples": [],
+  "metadata": {
+    "total_triples": 0,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {}
+  },
+  "jsonld": {
+    "@context": {},
+    "@graph": []
+  },
+  "schema_patterns": []
+}

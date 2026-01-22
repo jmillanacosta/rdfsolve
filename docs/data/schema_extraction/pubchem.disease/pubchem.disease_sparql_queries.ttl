@@ -6,6 +6,119 @@
 @prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+ex:cc558de8679a a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+CONSTRUCT {
+    ?cp void:class ?class ;
+        void:entities ?count .
+}
+WHERE {
+    {
+        SELECT ?class (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                ?s a ?class
+            }
+        }
+        GROUP BY ?class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://rdf.ncbi.nlm.nih.gov/pubchem/disease/void/class_partition_',
+                   REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
+}
+""" ;
+    schema:dateCreated "2026-01-16T13:37:29.265045+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:7ef53516c9d0 a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+CONSTRUCT {
+    ?pp void:property ?property ;
+        void:triples ?count ;
+        void-ext:subjectClass ?subject_class ;
+        void-ext:objectClass ?object_class .
+}
+WHERE {
+    {
+        SELECT ?property ?subject_class ?object_class (COUNT(*) AS ?count)
+        WHERE {
+            GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                ?subject ?property ?object .
+                ?subject rdf:type ?subject_class .
+            }
+
+            # Determine object class based on object type
+            {
+                BIND(rdfs:Literal AS ?object_class)
+                FILTER(isLiteral(?object))
+            }
+            UNION
+            {
+                ?object rdf:type ?object_class .
+                FILTER(isURI(?object))
+            }
+            UNION
+            {
+                BIND(rdfs:Resource AS ?object_class)
+                FILTER(isURI(?object))
+                FILTER NOT EXISTS { ?object rdf:type ?any_type }
+            }
+        }
+        GROUP BY ?property ?subject_class ?object_class
+        LIMIT 300
+    }
+    BIND(IRI(CONCAT('http://rdf.ncbi.nlm.nih.gov/pubchem/disease/void/property_partition_',
+                   REPLACE(CONCAT(STR(?property), '_', STR(?subject_class), '_', STR(?object_class)), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?pp)
+}
+""" ;
+    schema:dateCreated "2026-01-16T13:37:29.926667+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
+ex:3ec73e7d9bbe a sh:SPARQLExecutable,
+        sh:SPARQLConstructExecutable ;
+    sh:construct """
+PREFIX void: <http://rdfs.org/ns/void#>
+PREFIX void-ext: <http://ldf.fi/void-ext#>
+CONSTRUCT {
+    ?dp void-ext:datatypePartition ?datatype ;
+        void:triples ?count .
+}
+WHERE {
+    {
+        SELECT ?datatype (COUNT(?s) AS ?count)
+        WHERE {
+            GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                ?s ?p ?o .
+                FILTER(isLiteral(?o))
+                BIND(datatype(?o) AS ?datatype)
+            }
+        }
+        GROUP BY ?datatype
+    }
+    BIND(IRI(CONCAT('http://rdf.ncbi.nlm.nih.gov/pubchem/disease/void/datatype_partition_',
+                   REPLACE(STR(?datatype), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?dp)
+}
+""" ;
+    schema:dateCreated "2026-01-16T13:37:29.974384+00:00"^^xsd:dateTime ;
+    schema:target [
+        a sd:Service ;
+        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
+    ] .
+
 ex:e509c2b520e8 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
@@ -21,691 +134,349 @@ ex:e509c2b520e8 a sh:SPARQLExecutable,
 OFFSET 0
 LIMIT 300
 """ ;
-    schema:dateCreated "2025-12-02T10:20:20.120177+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:33.861215+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:9bc200665f06 a sh:SPARQLExecutable,
+ex:8c04b354fdbe a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                        ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:20.224731+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:33.911590+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:f009948f1037 a sh:SPARQLExecutable,
+ex:2cc134aafd01 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                        ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:20.326564+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:33.947376+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:a228f9e64f70 a sh:SPARQLExecutable,
+ex:a6ea421ec11a a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                        ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
+                        ?o a <http://www.w3.org/2002/07/owl#Class> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:20.428214+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:33.983313+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:ed9f22c52940 a sh:SPARQLExecutable,
+ex:e0060db14575 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                        ?s a <http://semanticscience.org/resource/SIO_010299> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:20.529795+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.017334+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:e937f2f68f73 a sh:SPARQLExecutable,
+ex:3c1be14406dd a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                        ?s a <http://semanticscience.org/resource/SIO_010299> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:20.631631+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.051669+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:07f4c45f7249 a sh:SPARQLExecutable,
+ex:30f2eb19680a a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
+                        ?s a <http://semanticscience.org/resource/SIO_010299> .
+                        ?o a <http://www.w3.org/2002/07/owl#Class> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:20.733525+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.093295+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:691d8dbe82ee a sh:SPARQLExecutable,
+ex:27696cfafb16 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
+                        ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:20.835302+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.132196+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:29a6cab4f2fc a sh:SPARQLExecutable,
+ex:b00c4993b1e6 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
+                        ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:20.937058+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.171711+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:234766642c4d a sh:SPARQLExecutable,
+ex:519ff5bb7259 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
+                        ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
+                        ?o a <http://www.w3.org/2002/07/owl#Class> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:21.038947+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.209088+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:8314387eb7d3 a sh:SPARQLExecutable,
+ex:dfd8307afedd a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/SIO_010299> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:21.141394+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.244115+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:cb6ad290ea1c a sh:SPARQLExecutable,
+ex:0dbac4100996 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/SIO_010299> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:21.243815+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.279108+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:701b77e82bf1 a sh:SPARQLExecutable,
+ex:c91e78b44ebf a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/SIO_010299> .
+                        ?o a <http://www.w3.org/2002/07/owl#Class> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:21.345981+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.314290+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:7ee76ead1f32 a sh:SPARQLExecutable,
+ex:57c819bbd29c a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
+                        ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:21.447635+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.349713+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:f58c9672ab1e a sh:SPARQLExecutable,
+ex:ec302124992f a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
+                        ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:21.549416+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.386173+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:3055f25abe09 a sh:SPARQLExecutable,
+ex:d87c14e4e787 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
+                        ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
+                        ?o a <http://www.w3.org/2002/07/owl#Class> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:21.650970+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.422364+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:6c33091f4fb2 a sh:SPARQLExecutable,
+ex:f6301c4408bc a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/SIO_010299> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:21.752267+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.455710+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:607fb4671645 a sh:SPARQLExecutable,
+ex:8a47ef606841 a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/SIO_010299> .
+                        ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:21.853878+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.489824+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
     ] .
 
-ex:10c59f597fca a sh:SPARQLExecutable,
+ex:a74fb7952d9b a sh:SPARQLExecutable,
         sh:SPARQLSelectExecutable ;
     sh:select """
 
-                    SELECT (COUNT(DISTINCT ?s) AS ?participating) WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
+                SELECT DISTINCT ?s ?o WHERE {
+                    GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
+                        ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
+                        ?s a <http://semanticscience.org/resource/SIO_010299> .
+                        ?o a <http://www.w3.org/2002/07/owl#Class> .
                     }
-                    
+                }
+                
 """ ;
-    schema:dateCreated "2025-12-02T10:20:21.955449+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:63aed42fbe67 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:22.626960+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:cc60a04340e5 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:22.731061+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:b6ec171e052a a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:22.835099+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:e1043f97a8f7 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:22.939519+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:696fb71baab1 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:23.043756+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:04ae35f44912 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:23.147923+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:f5c2b81bf398 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:23.252317+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:8fd5e9d86db1 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:23.356536+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:1b11e413bb01 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:23.460663+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:2d6e8f3f2f27 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:23.565289+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:7d64d6734424 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:23.669471+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:edfa5cd94288 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#closeMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:23.774195+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:dd5f851f4c91 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:23.878413+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:fccf720776e5 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:23.982729+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:146d6945ae04 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Disease> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:24.086828+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:667612c7d524 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#SCR_Disease> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:24.190884+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:38e4d8d9c670 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://id.nlm.nih.gov/mesh/vocab#TopicalDescriptor> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:24.294922+00:00"^^xsd:dateTime ;
-    schema:target [
-        a sd:Service ;
-        sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
-    ] .
-
-ex:3b57cea4f779 a sh:SPARQLExecutable,
-        sh:SPARQLSelectExecutable ;
-    sh:select """
-
-                    SELECT DISTINCT ?s ?o WHERE {
-                        GRAPH <http://rdf.ncbi.nlm.nih.gov/pubchem/disease> {
-                            ?s <http://www.w3.org/2004/02/skos/core#relatedMatch> ?o .
-                            ?s a <http://semanticscience.org/resource/SIO_010299> .
-                            ?o a <http://www.w3.org/2002/07/owl#Class> .
-                        }
-                    }
-                    
-""" ;
-    schema:dateCreated "2025-12-02T10:20:24.399118+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-16T13:37:34.525384+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>

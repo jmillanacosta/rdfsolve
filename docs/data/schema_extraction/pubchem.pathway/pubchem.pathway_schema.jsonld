@@ -3,12 +3,12 @@
     "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
     "dcterms": "http://purl.org/dc/terms/",
     "snomedct": "http://purl.bioontology.org/ontology/SNOMEDCT/",
-    "pr": "http://purl.obolibrary.org/obo/",
-    "chebi": "http://purl.obolibrary.org/obo/",
+    "pr": "http://purl.obolibrary.org/obo/PR_",
+    "chebi": "http://purl.obolibrary.org/obo/CHEBI_",
     "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#",
     "ndfrt": "http://purl.bioontology.org/ontology/NDFRT/",
     "biopaxleve": "http://www.biopax.org/release/biopax-level3.owl#",
-    "ro": "http://purl.obolibrary.org/obo/"
+    "ro": "http://purl.obolibrary.org/obo/RO_"
   },
   "@graph": [
     {
@@ -55,9 +55,6 @@
         },
         {
           "@id": "pr:000022191"
-        },
-        {
-          "@id": "snomedct:101895006"
         },
         {
           "@id": "chebi:62377"
@@ -529,6 +526,9 @@
         },
         {
           "@id": "pr:O95229"
+        },
+        {
+          "@id": "pr:000003662"
         },
         {
           "@id": "chebi:59350"
@@ -959,9 +959,6 @@
           "@id": "pr:000022191"
         },
         {
-          "@id": "snomedct:101895006"
-        },
-        {
           "@id": "chebi:62377"
         },
         {
@@ -1431,6 +1428,9 @@
         },
         {
           "@id": "pr:O95229"
+        },
+        {
+          "@id": "pr:000003662"
         },
         {
           "@id": "chebi:59350"
@@ -1861,9 +1861,6 @@
           "@id": "pr:000022191"
         },
         {
-          "@id": "snomedct:101895006"
-        },
-        {
           "@id": "chebi:62377"
         },
         {
@@ -2333,6 +2330,9 @@
         },
         {
           "@id": "pr:O95229"
+        },
+        {
+          "@id": "pr:000003662"
         },
         {
           "@id": "chebi:59350"
@@ -2766,9 +2766,6 @@
           "@id": "pr:000022191"
         },
         {
-          "@id": "snomedct:101895006"
-        },
-        {
           "@id": "chebi:62377"
         },
         {
@@ -3238,6 +3235,9 @@
         },
         {
           "@id": "pr:O95229"
+        },
+        {
+          "@id": "pr:000003662"
         },
         {
           "@id": "chebi:59350"
@@ -3668,9 +3668,6 @@
           "@id": "pr:000022191"
         },
         {
-          "@id": "snomedct:101895006"
-        },
-        {
           "@id": "chebi:62377"
         },
         {
@@ -4140,6 +4137,9 @@
         },
         {
           "@id": "pr:O95229"
+        },
+        {
+          "@id": "pr:000003662"
         },
         {
           "@id": "chebi:59350"
@@ -4570,9 +4570,6 @@
           "@id": "pr:000022191"
         },
         {
-          "@id": "snomedct:101895006"
-        },
-        {
           "@id": "chebi:62377"
         },
         {
@@ -5042,6 +5039,9 @@
         },
         {
           "@id": "pr:O95229"
+        },
+        {
+          "@id": "pr:000003662"
         },
         {
           "@id": "chebi:59350"

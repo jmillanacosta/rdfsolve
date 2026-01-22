@@ -2577,7 +2577,9 @@ WHERE {{
             output_file,
             exclude_graphs=exclude_graphs,
         )
-        return cls(void_graph)
+        # Pass graph_uris to preserve context for subsequent operations
+        parser = cls(void_graph, graph_uris=graph_uris, exclude_graphs=exclude_graphs)
+        return parser
 
     @classmethod
     def from_endpoint_with_discovery(
@@ -2695,7 +2697,9 @@ WHERE {{
                 existing_void_graph = temp_parser.void_querier(endpoint_url, valid_void_graphs)
 
                 if len(existing_void_graph) > 0:
-                    existing_parser = cls(existing_void_graph)
+                    existing_parser = cls(
+                        existing_void_graph, graph_uris=graph_uris, exclude_graphs=exclude_graphs
+                    )
                     existing_schema_df = existing_parser.to_schema(filter_void_admin_nodes=True)
 
                     # Check if existing VoID has sufficient content

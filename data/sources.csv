@@ -4,7 +4,6 @@ wikipathways,http://rdf.wikipathways.org/,http://rdf.wikipathways.org/,https://s
 pubchem.taxonomy,http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy,http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy,https://idsm.elixir-czech.cz/sparql/endpoint/idsm,True
 pubchem.endpoint,http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint,http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint,https://idsm.elixir-czech.cz/sparql/endpoint/idsm,True
 pubchem.measuregroup,http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup,http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup,https://idsm.elixir-czech.cz/sparql/endpoint/idsm,True
-idsm.void,https://idsm.elixir-czech.cz/.well-known/void,https://idsm.elixir-czech.cz/.well-known/void,https://idsm.elixir-czech.cz/sparql/endpoint/idsm,True
 iocb.ontology,http://bioinfo.iocb.cz/dataset/ontology,http://bioinfo.iocb.cz/dataset/ontology,https://idsm.elixir-czech.cz/sparql/endpoint/idsm,True
 pubchem.gene,http://rdf.ncbi.nlm.nih.gov/pubchem/gene,http://rdf.ncbi.nlm.nih.gov/pubchem/gene,https://idsm.elixir-czech.cz/sparql/endpoint/idsm,True
 pubchem.bioassay,http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay,http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay,https://idsm.elixir-czech.cz/sparql/endpoint/idsm,True

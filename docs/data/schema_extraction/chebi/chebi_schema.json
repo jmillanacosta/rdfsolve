@@ -1,0 +1,4309 @@
+{
+  "triples": [
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/SIO_000008",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/SIO_000011",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://purl.obolibrary.org/obo/IAO_0000231",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://semanticscience.org/resource/is-attribute-of",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#annotatedSource",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Axiom",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://semanticscience.org/resource/SIO_011120"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://semanticscience.org/resource/SIO_011120",
+      "http://purl.obolibrary.org/obo/IAO_0100001",
+      "http://semanticscience.org/resource/SIO_011120"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 260,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "sio": "http://semanticscience.org/resource/SIO_",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "iao": "http://purl.obolibrary.org/obo/IAO_",
+      "resource": "http://semanticscience.org/resource/",
+      "oboinowl": "http://www.geneontology.org/formats/oboInOwl#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "sio": "http://semanticscience.org/resource/SIO_",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "iao": "http://purl.obolibrary.org/obo/IAO_",
+      "resource": "http://semanticscience.org/resource/",
+      "oboinowl": "http://www.geneontology.org/formats/oboInOwl#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+    },
+    "@graph": [
+      {
+        "@id": "owl:Axiom",
+        "sio:000008": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "sio:000011": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "iao:0000231": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "resource:is-attribute-of": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "oboinowl:hasSynonymType": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "oboinowl:inSubset": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "rdfs:subClassOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:annotatedProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:annotatedSource": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:onProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:someValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "iao:0100001": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ]
+      },
+      {
+        "@id": "owl:Class",
+        "sio:000008": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "sio:000011": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "iao:0000231": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "resource:is-attribute-of": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "oboinowl:hasSynonymType": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "oboinowl:inSubset": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "rdfs:subClassOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:annotatedProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:annotatedSource": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:onProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:someValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "iao:0100001": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ]
+      },
+      {
+        "@id": "owl:Restriction",
+        "sio:000008": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "sio:000011": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "iao:0000231": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "resource:is-attribute-of": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "oboinowl:hasSynonymType": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "oboinowl:inSubset": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "rdfs:subClassOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:annotatedProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:annotatedSource": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:onProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:someValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "iao:0100001": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ]
+      },
+      {
+        "@id": "sio:011120",
+        "sio:000008": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "sio:000011": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "iao:0000231": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "resource:is-attribute-of": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "oboinowl:hasSynonymType": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "oboinowl:inSubset": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "rdf:type": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "rdfs:subClassOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:annotatedProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:annotatedSource": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:onProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "owl:someValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ],
+        "iao:0100001": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          },
+          {
+            "@id": "sio:011120"
+          }
+        ]
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "sio:000008",
+      "property_uri": "http://semanticscience.org/resource/SIO_000008",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "sio:000011",
+      "property_uri": "http://semanticscience.org/resource/SIO_000011",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "iao:0000231",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0000231",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "resource:is-attribute-of",
+      "property_uri": "http://semanticscience.org/resource/is-attribute-of",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "oboinowl:hasSynonymType",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#hasSynonymType",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "oboinowl:inSubset",
+      "property_uri": "http://www.geneontology.org/formats/oboInOwl#inSubset",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:annotatedProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedProperty",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:annotatedSource",
+      "property_uri": "http://www.w3.org/2002/07/owl#annotatedSource",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Axiom",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Axiom",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "sio:011120",
+      "subject_uri": "http://semanticscience.org/resource/SIO_011120",
+      "property": "iao:0100001",
+      "property_uri": "http://purl.obolibrary.org/obo/IAO_0100001",
+      "object_class": "sio:011120",
+      "object_uri": "http://semanticscience.org/resource/SIO_011120"
+    }
+  ]
+}

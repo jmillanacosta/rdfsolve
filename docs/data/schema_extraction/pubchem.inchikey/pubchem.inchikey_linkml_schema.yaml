@@ -22,13 +22,13 @@ prefixes:
     prefix_reference: http://www.w3.org/2001/XMLSchema#
   cheminf:
     prefix_prefix: cheminf
-    prefix_reference: http://semanticscience.org/resource/
+    prefix_reference: http://semanticscience.org/resource/CHEMINF_
   resource:
     prefix_prefix: resource
     prefix_reference: http://semanticscience.org/resource/
   chebi:
     prefix_prefix: chebi
-    prefix_reference: http://purl.obolibrary.org/obo/
+    prefix_reference: http://purl.obolibrary.org/obo/CHEBI_
   ncit:
     prefix_prefix: ncit
     prefix_reference: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#
@@ -54,8 +54,8 @@ slots:
     description: Property resource:is-attribute-of
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.inchikey/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.inchikey/linkml/resource_is_attribute_of
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.inchikey/linkml/resource_is_attribute_of
+    - http://semanticscience.org/resource/is-attribute-of
+    slot_uri: http://semanticscience.org/resource/is-attribute-of
     owner: cheminf_000399
     domain_of:
     - cheminf_000399
@@ -69,17 +69,17 @@ classes:
     description: Class representing cheminf_000399
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.inchikey/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.inchikey/linkml/cheminf_000399
+    - http://semanticscience.org/resource/CHEMINF_000399
     slots:
     - resource_is_attribute_of
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.inchikey/linkml/cheminf_000399
+    class_uri: http://semanticscience.org/resource/CHEMINF_000399
   chebi_7:
     name: chebi_7
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.inchikey/linkml/Chebi7
     description: Class representing chebi_7
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.inchikey/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/pubchem.inchikey/linkml/chebi_7
-    class_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.inchikey/linkml/chebi_7
+    - http://purl.obolibrary.org/obo/CHEBI_7
+    class_uri: http://purl.obolibrary.org/obo/CHEBI_7
 metamodel_version: 1.7.0
-generation_date: '2025-12-02T10:14:25'
+generation_date: '2026-01-16T14:40:49'
