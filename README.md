@@ -14,6 +14,7 @@
 </p>
 
 Extract RDF schemas from SPARQL endpoints and convert to multiple formats (VoID, LinkML, JSON-LD).
+A dashboard with example results and visualizations is available under jmillanacosta.github.io/rdfsolve.
 
 ## Installation
 
