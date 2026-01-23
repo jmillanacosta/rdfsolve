@@ -1,0 +1,4532 @@
+{
+  "triples": [
+    [
+      "http://vocabularies.wikipathways.org/gpml#DataNode",
+      "http://vocabularies.wikipathways.org/gpml#hasComment",
+      "http://vocabularies.wikipathways.org/gpml#Comment"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/gpml#Interaction",
+      "http://vocabularies.wikipathways.org/gpml#hasComment",
+      "http://vocabularies.wikipathways.org/gpml#Comment"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Stimulation"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Inhibition"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Catalysis"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Complex"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Catalysis"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Inhibition"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/gpml#Anchor",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/gpml#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Complex",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Complex",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Inhibition"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Complex"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Inhibition"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Inhibition"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Catalysis"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Stimulation"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Stimulation"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Stimulation"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/gpml#Comment",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/gpml#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Complex"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Stimulation"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/gpml#Comment",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/gpml#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Binding"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/gpml#Point",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/gpml#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#ComplexBinding"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Catalysis"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Catalysis"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Catalysis"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Stimulation"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Binding",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Binding",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Inhibition"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/terms/isPartOf",
+      "http://vocabularies.wikipathways.org/wp#Stimulation"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Binding",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Complex"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Complex",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Complex",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Complex"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Binding",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Binding",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Complex"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#participants",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#target",
+      "http://vocabularies.wikipathways.org/wp#Conversion"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#source",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Binding",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Group"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Pathway",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Collection",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/wp#Pathway"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Pathway",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Group"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Group"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Complex",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Group"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Interaction"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Group"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#Interaction"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Collection",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://www.w3.org/2004/02/skos/core#Collection"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://vocabularies.wikipathways.org/wp#isAbout",
+      "http://vocabularies.wikipathways.org/gpml#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Binding",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Pathway",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Complex",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Collection",
+      "http://purl.org/spar/cito/cites",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Complex",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Binding",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Interaction",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Conversion",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://www.w3.org/2004/02/skos/core#Collection",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Pathway",
+      "http://purl.org/dc/terms/references",
+      "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://vocabularies.wikipathways.org/wp#bdbInChIKey",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://vocabularies.wikipathways.org/wp#bdbInChIKey",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#bdbInChIKey",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#bdbInChIKey",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://vocabularies.wikipathways.org/wp#bdbHmdb",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#bdbHmdb",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#bdbHmdb",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://vocabularies.wikipathways.org/wp#bdbHmdb",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://xmlns.com/foaf/0.1/page",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://xmlns.com/foaf/0.1/page",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#Protein"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Protein",
+      "http://purl.org/dc/elements/1.1/identifier",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#bdbKeggCompound",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#bdbKeggCompound",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://vocabularies.wikipathways.org/wp#bdbKeggCompound",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://vocabularies.wikipathways.org/wp#bdbKeggCompound",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#bdbChEBI",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://vocabularies.wikipathways.org/wp#bdbChEBI",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#DataNode",
+      "http://vocabularies.wikipathways.org/wp#bdbChEBI",
+      "http://vocabularies.wikipathways.org/wp#DataNode"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "http://vocabularies.wikipathways.org/wp#bdbChEBI",
+      "http://vocabularies.wikipathways.org/wp#Metabolite"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/gpml#Interaction",
+      "http://vocabularies.wikipathways.org/gpml#hasPoint",
+      "http://vocabularies.wikipathways.org/gpml#Point"
+    ],
+    [
+      "https://plantmetwiki.bioinformatics.nl/vocab/BiosyntheticGeneCluster",
+      "http://purl.obolibrary.org/obo/RO_has_part",
+      "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    ],
+    [
+      "http://vocabularies.wikipathways.org/gpml#Interaction",
+      "http://vocabularies.wikipathways.org/gpml#hasAnchor",
+      "http://vocabularies.wikipathways.org/gpml#Anchor"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 269,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "gpml": "http://vocabularies.wikipathways.org/gpml#",
+      "wp": "http://vocabularies.wikipathways.org/wp#",
+      "dcterms": "http://purl.org/dc/terms/",
+      "skos": "http://www.w3.org/2004/02/skos/core#",
+      "cito": "http://purl.org/spar/cito/",
+      "foaf": "http://xmlns.com/foaf/0.1/",
+      "dc": "http://purl.org/dc/elements/1.1/",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "vocab": "https://plantmetwiki.bioinformatics.nl/vocab/",
+      "ro": "http://purl.obolibrary.org/obo/RO_"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "gpml": "http://vocabularies.wikipathways.org/gpml#",
+      "wp": "http://vocabularies.wikipathways.org/wp#",
+      "dcterms": "http://purl.org/dc/terms/",
+      "skos": "http://www.w3.org/2004/02/skos/core#",
+      "cito": "http://purl.org/spar/cito/",
+      "foaf": "http://xmlns.com/foaf/0.1/",
+      "dc": "http://purl.org/dc/elements/1.1/",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "vocab": "https://plantmetwiki.bioinformatics.nl/vocab/",
+      "ro": "http://purl.obolibrary.org/obo/RO_"
+    },
+    "@graph": [
+      {
+        "@id": "gpml:DataNode",
+        "gpml:hasComment": {
+          "@id": "gpml:Comment"
+        }
+      },
+      {
+        "@id": "gpml:Interaction",
+        "gpml:hasComment": {
+          "@id": "gpml:Comment"
+        },
+        "gpml:hasPoint": {
+          "@id": "gpml:Point"
+        },
+        "gpml:hasAnchor": {
+          "@id": "gpml:Anchor"
+        }
+      },
+      {
+        "@id": "wp:Interaction",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "wp:Stimulation"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "skos:Collection"
+          },
+          {
+            "@id": "wp:Inhibition"
+          },
+          {
+            "@id": "wp:Catalysis"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:Complex"
+          },
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          }
+        ],
+        "wp:target": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          }
+        ],
+        "wp:source": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          }
+        ],
+        "wp:isAbout": [
+          {
+            "@id": "gpml:Interaction"
+          },
+          {
+            "@id": "gpml:Group"
+          }
+        ],
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        }
+      },
+      {
+        "@id": "wp:Conversion",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:Inhibition"
+          },
+          {
+            "@id": "skos:Collection"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:Stimulation"
+          },
+          {
+            "@id": "wp:Catalysis"
+          },
+          {
+            "@id": "wp:Pathway"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ],
+        "wp:target": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Metabolite"
+          }
+        ],
+        "wp:source": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Metabolite"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:Interaction"
+        },
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        }
+      },
+      {
+        "@id": "wp:DataNode",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:TranscriptionTranslation"
+          },
+          {
+            "@id": "wp:Complex"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "skos:Collection"
+          },
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "wp:Catalysis"
+          },
+          {
+            "@id": "wp:Stimulation"
+          },
+          {
+            "@id": "wp:Inhibition"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Protein"
+          }
+        ],
+        "wp:isAbout": [
+          {
+            "@id": "gpml:Group"
+          },
+          {
+            "@id": "gpml:DataNode"
+          }
+        ],
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        },
+        "wp:bdbInChIKey": [
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ],
+        "wp:bdbHmdb": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Metabolite"
+          }
+        ],
+        "dc:identifier": [
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          }
+        ],
+        "wp:bdbKeggCompound": [
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ],
+        "rdfs:seeAlso": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Metabolite"
+          }
+        ],
+        "wp:bdbChEBI": [
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ]
+      },
+      {
+        "@id": "wp:Protein",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:Catalysis"
+          },
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:TranscriptionTranslation"
+          },
+          {
+            "@id": "skos:Collection"
+          },
+          {
+            "@id": "wp:Complex"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Stimulation"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:DataNode"
+        },
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        },
+        "dc:identifier": [
+          {
+            "@id": "wp:GeneProduct"
+          },
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ]
+      },
+      {
+        "@id": "wp:DirectedInteraction",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:Catalysis"
+          },
+          {
+            "@id": "wp:Inhibition"
+          },
+          {
+            "@id": "skos:Collection"
+          },
+          {
+            "@id": "wp:Stimulation"
+          },
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:GeneProduct"
+          },
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:Interaction"
+          }
+        ],
+        "wp:target": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          },
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:Interaction"
+          }
+        ],
+        "wp:source": [
+          {
+            "@id": "wp:GeneProduct"
+          },
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Protein"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:Interaction"
+        },
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        }
+      },
+      {
+        "@id": "wp:TranscriptionTranslation",
+        "dcterms:isPartOf": [
+          {
+            "@id": "skos:Collection"
+          },
+          {
+            "@id": "wp:Pathway"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ],
+        "wp:target": [
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ],
+        "wp:source": [
+          {
+            "@id": "wp:GeneProduct"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Protein"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:Interaction"
+        }
+      },
+      {
+        "@id": "wp:ComplexBinding",
+        "dcterms:isPartOf": [
+          {
+            "@id": "skos:Collection"
+          },
+          {
+            "@id": "wp:Pathway"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:Complex"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Protein"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:Group"
+        },
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        }
+      },
+      {
+        "@id": "wp:Metabolite",
+        "dcterms:isPartOf": [
+          {
+            "@id": "skos:Collection"
+          },
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:Inhibition"
+          },
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "wp:Stimulation"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:DataNode"
+        },
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        },
+        "wp:bdbInChIKey": [
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ],
+        "wp:bdbHmdb": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Metabolite"
+          }
+        ],
+        "dc:identifier": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Metabolite"
+          }
+        ],
+        "wp:bdbKeggCompound": [
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ],
+        "rdfs:seeAlso": [
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ],
+        "wp:bdbChEBI": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Metabolite"
+          }
+        ]
+      },
+      {
+        "@id": "gpml:Anchor",
+        "dcterms:isPartOf": {
+          "@id": "gpml:Interaction"
+        }
+      },
+      {
+        "@id": "wp:Complex",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "skos:Collection"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:Group"
+        },
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        }
+      },
+      {
+        "@id": "wp:Stimulation",
+        "dcterms:isPartOf": [
+          {
+            "@id": "skos:Collection"
+          },
+          {
+            "@id": "wp:Pathway"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          }
+        ],
+        "wp:target": [
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:Conversion"
+          }
+        ],
+        "wp:source": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:Metabolite"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:Interaction"
+        },
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        }
+      },
+      {
+        "@id": "wp:PublicationReference",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:Complex"
+          },
+          {
+            "@id": "wp:Inhibition"
+          },
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:Stimulation"
+          },
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Binding"
+          },
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          },
+          {
+            "@id": "wp:ComplexBinding"
+          },
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "skos:Collection"
+          }
+        ]
+      },
+      {
+        "@id": "wp:Inhibition",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "skos:Collection"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:Metabolite"
+          }
+        ],
+        "wp:target": [
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:Interaction"
+          }
+        ],
+        "wp:source": [
+          {
+            "@id": "wp:Metabolite"
+          },
+          {
+            "@id": "wp:DataNode"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:Interaction"
+        },
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        }
+      },
+      {
+        "@id": "wp:GeneProduct",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:TranscriptionTranslation"
+          },
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "skos:Collection"
+          },
+          {
+            "@id": "wp:Catalysis"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:DataNode"
+        },
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        },
+        "foaf:page": [
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          }
+        ],
+        "dc:identifier": [
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          }
+        ]
+      },
+      {
+        "@id": "gpml:Comment",
+        "dcterms:isPartOf": [
+          {
+            "@id": "gpml:DataNode"
+          },
+          {
+            "@id": "gpml:Interaction"
+          }
+        ]
+      },
+      {
+        "@id": "wp:Catalysis",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "skos:Collection"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:Conversion"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          }
+        ],
+        "wp:target": [
+          {
+            "@id": "wp:Interaction"
+          },
+          {
+            "@id": "wp:DirectedInteraction"
+          },
+          {
+            "@id": "wp:Conversion"
+          }
+        ],
+        "wp:source": [
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:GeneProduct"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:Interaction"
+        }
+      },
+      {
+        "@id": "gpml:Point",
+        "dcterms:isPartOf": {
+          "@id": "gpml:Interaction"
+        }
+      },
+      {
+        "@id": "wp:Binding",
+        "dcterms:isPartOf": [
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "skos:Collection"
+          }
+        ],
+        "wp:participants": [
+          {
+            "@id": "wp:Protein"
+          },
+          {
+            "@id": "wp:DataNode"
+          },
+          {
+            "@id": "wp:Complex"
+          }
+        ],
+        "wp:isAbout": {
+          "@id": "gpml:Group"
+        },
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        }
+      },
+      {
+        "@id": "wp:Pathway",
+        "wp:isAbout": [
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "skos:Collection"
+          }
+        ],
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        }
+      },
+      {
+        "@id": "skos:Collection",
+        "wp:isAbout": [
+          {
+            "@id": "wp:Pathway"
+          },
+          {
+            "@id": "skos:Collection"
+          }
+        ],
+        "cito:cites": {
+          "@id": "wp:PublicationReference"
+        },
+        "dcterms:references": {
+          "@id": "wp:PublicationReference"
+        }
+      },
+      {
+        "@id": "vocab:BiosyntheticGeneCluster",
+        "ro:has_part": {
+          "@id": "wp:GeneProduct"
+        }
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "gpml:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/gpml#DataNode",
+      "property": "gpml:hasComment",
+      "property_uri": "http://vocabularies.wikipathways.org/gpml#hasComment",
+      "object_class": "gpml:Comment",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Comment"
+    },
+    {
+      "subject_class": "gpml:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/gpml#Interaction",
+      "property": "gpml:hasComment",
+      "property_uri": "http://vocabularies.wikipathways.org/gpml#hasComment",
+      "object_class": "gpml:Comment",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Comment"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Stimulation",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Stimulation"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Inhibition",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Inhibition"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:TranscriptionTranslation",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Catalysis",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Catalysis"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Complex",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Complex"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Catalysis",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Catalysis"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:ComplexBinding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Inhibition",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Inhibition"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:TranscriptionTranslation",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation"
+    },
+    {
+      "subject_class": "gpml:Anchor",
+      "subject_uri": "http://vocabularies.wikipathways.org/gpml#Anchor",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "gpml:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Interaction"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:Complex",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Complex",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:Complex",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Complex",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Inhibition",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Inhibition"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Complex",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Complex"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Inhibition",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Inhibition"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Inhibition",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Inhibition"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Catalysis",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Catalysis"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Stimulation",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Stimulation"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Stimulation",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Stimulation"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Stimulation",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Stimulation"
+    },
+    {
+      "subject_class": "gpml:Comment",
+      "subject_uri": "http://vocabularies.wikipathways.org/gpml#Comment",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "gpml:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#DataNode"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Complex",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Complex"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Stimulation",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Stimulation"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "gpml:Comment",
+      "subject_uri": "http://vocabularies.wikipathways.org/gpml#Comment",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "gpml:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Interaction"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Binding",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Binding"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:TranscriptionTranslation",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "gpml:Point",
+      "subject_uri": "http://vocabularies.wikipathways.org/gpml#Point",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "gpml:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Interaction"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:ComplexBinding",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#ComplexBinding"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Catalysis",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Catalysis"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Catalysis",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Catalysis"
+    },
+    {
+      "subject_class": "wp:ComplexBinding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Catalysis",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Catalysis"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Stimulation",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Stimulation"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:Binding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Binding",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:Binding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Binding",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Inhibition",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Inhibition"
+    },
+    {
+      "subject_class": "wp:PublicationReference",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dcterms:isPartOf",
+      "property_uri": "http://purl.org/dc/terms/isPartOf",
+      "object_class": "wp:Stimulation",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Stimulation"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Binding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Binding",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:ComplexBinding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Complex",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Complex"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:Complex",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Complex",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:ComplexBinding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Complex",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Complex",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:ComplexBinding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Complex",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Complex"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:Binding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Binding",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:Binding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Binding",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Complex",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Complex"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:participants",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#participants",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:DirectedInteraction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Interaction"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:target",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#target",
+      "object_class": "wp:Conversion",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Conversion"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:source",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#source",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:TranscriptionTranslation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#TranscriptionTranslation",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Interaction"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#DataNode"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Interaction"
+    },
+    {
+      "subject_class": "wp:Binding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Binding",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Group",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Group"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Interaction"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Interaction"
+    },
+    {
+      "subject_class": "wp:Pathway",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Pathway",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "skos:Collection",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Collection",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "wp:Pathway",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Pathway"
+    },
+    {
+      "subject_class": "wp:Catalysis",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Catalysis",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Interaction"
+    },
+    {
+      "subject_class": "wp:Pathway",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Pathway",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Group",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Group"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Group",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Group"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#DataNode"
+    },
+    {
+      "subject_class": "wp:Complex",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Complex",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Group",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Group"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Interaction"
+    },
+    {
+      "subject_class": "wp:ComplexBinding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Group",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Group"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:Interaction",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Interaction"
+    },
+    {
+      "subject_class": "skos:Collection",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Collection",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "skos:Collection",
+      "object_uri": "http://www.w3.org/2004/02/skos/core#Collection"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#DataNode"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "wp:isAbout",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#isAbout",
+      "object_class": "gpml:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#DataNode"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Binding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Binding",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Pathway",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Pathway",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Complex",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Complex",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:ComplexBinding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "skos:Collection",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Collection",
+      "property": "cito:cites",
+      "property_uri": "http://purl.org/spar/cito/cites",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Complex",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Complex",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Binding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Binding",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Stimulation",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Stimulation",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:DirectedInteraction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DirectedInteraction",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Interaction",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:ComplexBinding",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#ComplexBinding",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Conversion",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Conversion",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Inhibition",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Inhibition",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "skos:Collection",
+      "subject_uri": "http://www.w3.org/2004/02/skos/core#Collection",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Pathway",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Pathway",
+      "property": "dcterms:references",
+      "property_uri": "http://purl.org/dc/terms/references",
+      "object_class": "wp:PublicationReference",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#PublicationReference"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "wp:bdbInChIKey",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbInChIKey",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "wp:bdbInChIKey",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbInChIKey",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:bdbInChIKey",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbInChIKey",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:bdbInChIKey",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbInChIKey",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "wp:bdbHmdb",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbHmdb",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:bdbHmdb",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbHmdb",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:bdbHmdb",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbHmdb",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "wp:bdbHmdb",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbHmdb",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "foaf:page",
+      "property_uri": "http://xmlns.com/foaf/0.1/page",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "foaf:page",
+      "property_uri": "http://xmlns.com/foaf/0.1/page",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:Protein",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Protein"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:GeneProduct",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "wp:Protein",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Protein",
+      "property": "dc:identifier",
+      "property_uri": "http://purl.org/dc/elements/1.1/identifier",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:bdbKeggCompound",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbKeggCompound",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:bdbKeggCompound",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbKeggCompound",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "wp:bdbKeggCompound",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbKeggCompound",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "wp:bdbKeggCompound",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbKeggCompound",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "rdfs:seeAlso",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:bdbChEBI",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbChEBI",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "wp:bdbChEBI",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbChEBI",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:DataNode",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#DataNode",
+      "property": "wp:bdbChEBI",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbChEBI",
+      "object_class": "wp:DataNode",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#DataNode"
+    },
+    {
+      "subject_class": "wp:Metabolite",
+      "subject_uri": "http://vocabularies.wikipathways.org/wp#Metabolite",
+      "property": "wp:bdbChEBI",
+      "property_uri": "http://vocabularies.wikipathways.org/wp#bdbChEBI",
+      "object_class": "wp:Metabolite",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#Metabolite"
+    },
+    {
+      "subject_class": "gpml:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/gpml#Interaction",
+      "property": "gpml:hasPoint",
+      "property_uri": "http://vocabularies.wikipathways.org/gpml#hasPoint",
+      "object_class": "gpml:Point",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Point"
+    },
+    {
+      "subject_class": "vocab:BiosyntheticGeneCluster",
+      "subject_uri": "https://plantmetwiki.bioinformatics.nl/vocab/BiosyntheticGeneCluster",
+      "property": "ro:has_part",
+      "property_uri": "http://purl.obolibrary.org/obo/RO_has_part",
+      "object_class": "wp:GeneProduct",
+      "object_uri": "http://vocabularies.wikipathways.org/wp#GeneProduct"
+    },
+    {
+      "subject_class": "gpml:Interaction",
+      "subject_uri": "http://vocabularies.wikipathways.org/gpml#Interaction",
+      "property": "gpml:hasAnchor",
+      "property_uri": "http://vocabularies.wikipathways.org/gpml#hasAnchor",
+      "object_class": "gpml:Anchor",
+      "object_uri": "http://vocabularies.wikipathways.org/gpml#Anchor"
+    }
+  ]
+}

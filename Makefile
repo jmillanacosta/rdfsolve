@@ -55,9 +55,9 @@ help: ## Show this help message
 all: install-deps setup ## Run complete notebook generation pipeline for DATASET or all datasets
 	@if [ -n "$(DATASET)" ]; then \
 		echo "$(COLOR_BLUE)Running pipeline for single dataset: $(DATASET)$(COLOR_RESET)"; \
-		$(MAKE) schema DATASET=$(DATASET); \
-		$(MAKE) pydantic DATASET=$(DATASET); \
-		$(MAKE) namespace DATASET=$(DATASET); \
+		$(MAKE) schema DATASET=$(DATASET) || echo "$(COLOR_YELLOW)⚠ Schema failed for $(DATASET)$(COLOR_RESET)"; \
+		$(MAKE) pydantic DATASET=$(DATASET) || echo "$(COLOR_YELLOW)⚠ Pydantic failed for $(DATASET)$(COLOR_RESET)"; \
+		$(MAKE) namespace DATASET=$(DATASET) || echo "$(COLOR_YELLOW)⚠ Namespace failed for $(DATASET)$(COLOR_RESET)"; \
 	else \
 		echo "$(COLOR_BLUE)Running pipeline for all datasets$(COLOR_RESET)"; \
 		$(MAKE) schema-all; \

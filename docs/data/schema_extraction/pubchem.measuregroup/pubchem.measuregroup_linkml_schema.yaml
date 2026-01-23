@@ -51,21 +51,6 @@ types:
     base: URIorCURIE
     uri: xsd:anyURI
 slots:
-  obi_0000299:
-    name: obi_0000299
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/obi_0000299
-    description: Property obi:0000299
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
-    mappings:
-    - http://purl.obolibrary.org/obo/OBI_0000299
-    slot_uri: http://purl.obolibrary.org/obo/OBI_0000299
-    owner: bao_0000040
-    domain_of:
-    - bao_0000040
-    - vocabulary_Measure_Group
-    range: bao_0000034
-    inlined: true
-    inlined_as_list: true
   ro_0000057:
     name: ro_0000057
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/ro_0000057
@@ -81,15 +66,22 @@ slots:
     range: bao_0000034
     inlined: true
     inlined_as_list: true
-classes:
-  bao_0000034:
-    name: bao_0000034
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/Bao0000034
-    description: Class representing bao_0000034
+  obi_0000299:
+    name: obi_0000299
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/obi_0000299
+    description: Property obi:0000299
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
     mappings:
-    - http://www.bioassayontology.org/bao#BAO_0000034
-    class_uri: http://www.bioassayontology.org/bao#BAO_0000034
+    - http://purl.obolibrary.org/obo/OBI_0000299
+    slot_uri: http://purl.obolibrary.org/obo/OBI_0000299
+    owner: bao_0000040
+    domain_of:
+    - bao_0000040
+    - vocabulary_Measure_Group
+    range: bao_0000034
+    inlined: true
+    inlined_as_list: true
+classes:
   vocabulary_Measure_Group:
     name: vocabulary_Measure_Group
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/VocabularyMeasureGroup
@@ -101,6 +93,14 @@ classes:
     - ro_0000057
     - obi_0000299
     class_uri: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#MeasureGroup
+  bao_0000034:
+    name: bao_0000034
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/Bao0000034
+    description: Class representing bao_0000034
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/
+    mappings:
+    - http://www.bioassayontology.org/bao#BAO_0000034
+    class_uri: http://www.bioassayontology.org/bao#BAO_0000034
   bao_0000040:
     name: bao_0000040
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.measuregroup/linkml/Bao0000040
@@ -113,4 +113,4 @@ classes:
     - obi_0000299
     class_uri: http://www.bioassayontology.org/bao#BAO_0000040
 metamodel_version: 1.7.0
-generation_date: '2026-01-16T13:42:26'
+generation_date: '2026-01-22T13:32:46'

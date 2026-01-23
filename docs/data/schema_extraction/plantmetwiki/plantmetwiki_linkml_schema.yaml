@@ -1,0 +1,731 @@
+name: plantmetwiki_schema
+description: LinkML schema for plantmetwiki generated from JSON-LD
+id: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+prefixes:
+  plantmetwiki_schema:
+    prefix_prefix: plantmetwiki_schema
+    prefix_reference: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+  linkml:
+    prefix_prefix: linkml
+    prefix_reference: https://w3id.org/linkml/
+  schema:
+    prefix_prefix: schema
+    prefix_reference: http://schema.org/
+  rdfs:
+    prefix_prefix: rdfs
+    prefix_reference: http://www.w3.org/2000/01/rdf-schema#
+  rdf:
+    prefix_prefix: rdf
+    prefix_reference: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd:
+    prefix_prefix: xsd
+    prefix_reference: http://www.w3.org/2001/XMLSchema#
+  gpml:
+    prefix_prefix: gpml
+    prefix_reference: http://vocabularies.wikipathways.org/gpml#
+  wp:
+    prefix_prefix: wp
+    prefix_reference: http://vocabularies.wikipathways.org/wp#
+  dcterms:
+    prefix_prefix: dcterms
+    prefix_reference: http://purl.org/dc/terms/
+  skos:
+    prefix_prefix: skos
+    prefix_reference: http://www.w3.org/2004/02/skos/core#
+  cito:
+    prefix_prefix: cito
+    prefix_reference: http://purl.org/spar/cito/
+  foaf:
+    prefix_prefix: foaf
+    prefix_reference: http://xmlns.com/foaf/0.1/
+  dc:
+    prefix_prefix: dc
+    prefix_reference: http://purl.org/dc/elements/1.1/
+  vocab:
+    prefix_prefix: vocab
+    prefix_reference: https://plantmetwiki.bioinformatics.nl/vocab/
+  ro:
+    prefix_prefix: ro
+    prefix_reference: http://purl.obolibrary.org/obo/RO_
+default_prefix: plantmetwiki_schema
+default_range: string
+types:
+  string:
+    name: string
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/String
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    base: str
+    uri: xsd:string
+  uriorcurie:
+    name: uriorcurie
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/Uriorcurie
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    base: URIorCURIE
+    uri: xsd:anyURI
+slots:
+  dcterms_is_Part_Of:
+    name: dcterms_is_Part_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/dcterms_is_Part_Of
+    description: Property dcterms:isPartOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://purl.org/dc/terms/isPartOf
+    slot_uri: http://purl.org/dc/terms/isPartOf
+    owner: wp_Binding
+    domain_of:
+    - wp_Interaction
+    - wp_Conversion
+    - wp_Data_Node
+    - wp_Protein
+    - wp_Directed_Interaction
+    - wp_Transcription_Translation
+    - wp_Complex_Binding
+    - wp_Metabolite
+    - gpml_Anchor
+    - wp_Complex
+    - wp_Stimulation
+    - wp_Publication_Reference
+    - wp_Inhibition
+    - wp_Gene_Product
+    - gpml_Comment
+    - wp_Catalysis
+    - gpml_Point
+    - wp_Binding
+    range: wp_Pathway
+    inlined: true
+    inlined_as_list: true
+  cito_cites:
+    name: cito_cites
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/cito_cites
+    description: Property cito:cites
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://purl.org/spar/cito/cites
+    slot_uri: http://purl.org/spar/cito/cites
+    owner: wp_Binding
+    domain_of:
+    - wp_Interaction
+    - wp_Conversion
+    - wp_Data_Node
+    - wp_Protein
+    - wp_Directed_Interaction
+    - wp_Complex_Binding
+    - wp_Metabolite
+    - wp_Complex
+    - wp_Stimulation
+    - wp_Inhibition
+    - wp_Gene_Product
+    - wp_Binding
+    - wp_Pathway
+    - skos_Collection
+    range: wp_Publication_Reference
+    inlined: true
+    inlined_as_list: true
+  wp_bdb_In_Ch_IKey:
+    name: wp_bdb_In_Ch_IKey
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/wp_bdb_In_Ch_IKey
+    description: Property wp:bdbInChIKey
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#bdbInChIKey
+    slot_uri: http://vocabularies.wikipathways.org/wp#bdbInChIKey
+    owner: wp_Metabolite
+    domain_of:
+    - wp_Data_Node
+    - wp_Metabolite
+    range: wp_Metabolite
+    inlined: true
+    inlined_as_list: true
+  wp_target:
+    name: wp_target
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/wp_target
+    description: Property wp:target
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#target
+    slot_uri: http://vocabularies.wikipathways.org/wp#target
+    owner: wp_Conversion
+    domain_of:
+    - wp_Interaction
+    - wp_Conversion
+    - wp_Directed_Interaction
+    - wp_Transcription_Translation
+    - wp_Stimulation
+    - wp_Inhibition
+    - wp_Catalysis
+    range: wp_Interaction
+    inlined: true
+    inlined_as_list: true
+  wp_bdb_Kegg_Compound:
+    name: wp_bdb_Kegg_Compound
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/wp_bdb_Kegg_Compound
+    description: Property wp:bdbKeggCompound
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#bdbKeggCompound
+    slot_uri: http://vocabularies.wikipathways.org/wp#bdbKeggCompound
+    owner: wp_Metabolite
+    domain_of:
+    - wp_Data_Node
+    - wp_Metabolite
+    range: wp_Metabolite
+    inlined: true
+    inlined_as_list: true
+  gpml_has_Comment:
+    name: gpml_has_Comment
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/gpml_has_Comment
+    description: Property gpml:hasComment
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/gpml#hasComment
+    slot_uri: http://vocabularies.wikipathways.org/gpml#hasComment
+    owner: gpml_Interaction
+    domain_of:
+    - gpml_Data_Node
+    - gpml_Interaction
+    range: gpml_Comment
+    inlined: true
+    inlined_as_list: true
+  dcterms_references:
+    name: dcterms_references
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/dcterms_references
+    description: Property dcterms:references
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://purl.org/dc/terms/references
+    slot_uri: http://purl.org/dc/terms/references
+    owner: wp_Binding
+    domain_of:
+    - wp_Interaction
+    - wp_Conversion
+    - wp_Data_Node
+    - wp_Protein
+    - wp_Directed_Interaction
+    - wp_Complex_Binding
+    - wp_Metabolite
+    - wp_Complex
+    - wp_Stimulation
+    - wp_Inhibition
+    - wp_Gene_Product
+    - wp_Binding
+    - wp_Pathway
+    - skos_Collection
+    range: wp_Publication_Reference
+    inlined: true
+    inlined_as_list: true
+  foaf_page:
+    name: foaf_page
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/foaf_page
+    description: Property foaf:page
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://xmlns.com/foaf/0.1/page
+    slot_uri: http://xmlns.com/foaf/0.1/page
+    owner: wp_Gene_Product
+    domain_of:
+    - wp_Gene_Product
+    range: wp_Data_Node
+    inlined: true
+    inlined_as_list: true
+  wp_participants:
+    name: wp_participants
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/wp_participants
+    description: Property wp:participants
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#participants
+    slot_uri: http://vocabularies.wikipathways.org/wp#participants
+    owner: wp_Binding
+    domain_of:
+    - wp_Interaction
+    - wp_Conversion
+    - wp_Data_Node
+    - wp_Directed_Interaction
+    - wp_Transcription_Translation
+    - wp_Complex_Binding
+    - wp_Complex
+    - wp_Stimulation
+    - wp_Inhibition
+    - wp_Catalysis
+    - wp_Binding
+    range: wp_Protein
+    inlined: true
+    inlined_as_list: true
+  wp_bdb_Hmdb:
+    name: wp_bdb_Hmdb
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/wp_bdb_Hmdb
+    description: Property wp:bdbHmdb
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#bdbHmdb
+    slot_uri: http://vocabularies.wikipathways.org/wp#bdbHmdb
+    owner: wp_Metabolite
+    domain_of:
+    - wp_Data_Node
+    - wp_Metabolite
+    range: wp_Data_Node
+    inlined: true
+    inlined_as_list: true
+  gpml_has_Anchor:
+    name: gpml_has_Anchor
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/gpml_has_Anchor
+    description: Property gpml:hasAnchor
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/gpml#hasAnchor
+    slot_uri: http://vocabularies.wikipathways.org/gpml#hasAnchor
+    owner: gpml_Interaction
+    domain_of:
+    - gpml_Interaction
+    range: gpml_Anchor
+    inlined: true
+    inlined_as_list: true
+  gpml_has_Point:
+    name: gpml_has_Point
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/gpml_has_Point
+    description: Property gpml:hasPoint
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/gpml#hasPoint
+    slot_uri: http://vocabularies.wikipathways.org/gpml#hasPoint
+    owner: gpml_Interaction
+    domain_of:
+    - gpml_Interaction
+    range: gpml_Point
+    inlined: true
+    inlined_as_list: true
+  rdfs_see_Also:
+    name: rdfs_see_Also
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/rdfs_see_Also
+    description: Property rdfs:seeAlso
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://www.w3.org/2000/01/rdf-schema#seeAlso
+    slot_uri: http://www.w3.org/2000/01/rdf-schema#seeAlso
+    owner: wp_Metabolite
+    domain_of:
+    - wp_Data_Node
+    - wp_Metabolite
+    range: wp_Metabolite
+    inlined: true
+    inlined_as_list: true
+  dc_identifier:
+    name: dc_identifier
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/dc_identifier
+    description: Property dc:identifier
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://purl.org/dc/elements/1.1/identifier
+    slot_uri: http://purl.org/dc/elements/1.1/identifier
+    owner: wp_Metabolite
+    domain_of:
+    - wp_Data_Node
+    - wp_Protein
+    - wp_Metabolite
+    - wp_Gene_Product
+    range: wp_Protein
+    inlined: true
+    inlined_as_list: true
+  wp_bdb_Ch_EBI:
+    name: wp_bdb_Ch_EBI
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/wp_bdb_Ch_EBI
+    description: Property wp:bdbChEBI
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#bdbChEBI
+    slot_uri: http://vocabularies.wikipathways.org/wp#bdbChEBI
+    owner: wp_Metabolite
+    domain_of:
+    - wp_Data_Node
+    - wp_Metabolite
+    range: wp_Data_Node
+    inlined: true
+    inlined_as_list: true
+  wp_source:
+    name: wp_source
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/wp_source
+    description: Property wp:source
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#source
+    slot_uri: http://vocabularies.wikipathways.org/wp#source
+    owner: wp_Conversion
+    domain_of:
+    - wp_Interaction
+    - wp_Conversion
+    - wp_Directed_Interaction
+    - wp_Transcription_Translation
+    - wp_Stimulation
+    - wp_Inhibition
+    - wp_Catalysis
+    range: wp_Protein
+    inlined: true
+    inlined_as_list: true
+  wp_is_About:
+    name: wp_is_About
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/wp_is_About
+    description: Property wp:isAbout
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#isAbout
+    slot_uri: http://vocabularies.wikipathways.org/wp#isAbout
+    owner: wp_Binding
+    domain_of:
+    - wp_Interaction
+    - wp_Conversion
+    - wp_Data_Node
+    - wp_Protein
+    - wp_Directed_Interaction
+    - wp_Transcription_Translation
+    - wp_Complex_Binding
+    - wp_Metabolite
+    - wp_Complex
+    - wp_Stimulation
+    - wp_Inhibition
+    - wp_Gene_Product
+    - wp_Catalysis
+    - wp_Binding
+    - wp_Pathway
+    - skos_Collection
+    range: wp_Pathway
+    inlined: true
+    inlined_as_list: true
+  ro_has_part:
+    name: ro_has_part
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/ro_has_part
+    description: Property ro:has_part
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://purl.obolibrary.org/obo/RO_has_part
+    slot_uri: http://purl.obolibrary.org/obo/RO_has_part
+    owner: vocab_Biosynthetic_Gene_Cluster
+    domain_of:
+    - vocab_Biosynthetic_Gene_Cluster
+    range: wp_Gene_Product
+    inlined: true
+    inlined_as_list: true
+classes:
+  gpml_Data_Node:
+    name: gpml_Data_Node
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/GpmlDataNode
+    description: Class representing gpml_Data_Node
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/gpml#DataNode
+    slots:
+    - gpml_has_Comment
+    class_uri: http://vocabularies.wikipathways.org/gpml#DataNode
+  wp_Complex:
+    name: wp_Complex
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpComplex
+    description: Class representing wp_Complex
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#Complex
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    class_uri: http://vocabularies.wikipathways.org/wp#Complex
+  wp_Catalysis:
+    name: wp_Catalysis
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpCatalysis
+    description: Class representing wp_Catalysis
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#Catalysis
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_target
+    - wp_source
+    - wp_is_About
+    class_uri: http://vocabularies.wikipathways.org/wp#Catalysis
+  wp_Stimulation:
+    name: wp_Stimulation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpStimulation
+    description: Class representing wp_Stimulation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#Stimulation
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_target
+    - wp_source
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    class_uri: http://vocabularies.wikipathways.org/wp#Stimulation
+  gpml_Anchor:
+    name: gpml_Anchor
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/GpmlAnchor
+    description: Class representing gpml_Anchor
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/gpml#Anchor
+    slots:
+    - dcterms_is_Part_Of
+    class_uri: http://vocabularies.wikipathways.org/gpml#Anchor
+  gpml_Point:
+    name: gpml_Point
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/GpmlPoint
+    description: Class representing gpml_Point
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/gpml#Point
+    slots:
+    - dcterms_is_Part_Of
+    class_uri: http://vocabularies.wikipathways.org/gpml#Point
+  skos_Collection:
+    name: skos_Collection
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/SkosCollection
+    description: Class representing skos_Collection
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://www.w3.org/2004/02/skos/core#Collection
+    slots:
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    class_uri: http://www.w3.org/2004/02/skos/core#Collection
+  wp_Directed_Interaction:
+    name: wp_Directed_Interaction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpDirectedInteraction
+    description: Class representing wp_Directed_Interaction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#DirectedInteraction
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_target
+    - wp_source
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    class_uri: http://vocabularies.wikipathways.org/wp#DirectedInteraction
+  gpml_Group:
+    name: gpml_Group
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/GpmlGroup
+    description: Class representing gpml_Group
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/gpml#Group
+    class_uri: http://vocabularies.wikipathways.org/gpml#Group
+  gpml_Interaction:
+    name: gpml_Interaction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/GpmlInteraction
+    description: Class representing gpml_Interaction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/gpml#Interaction
+    slots:
+    - gpml_has_Comment
+    - gpml_has_Point
+    - gpml_has_Anchor
+    class_uri: http://vocabularies.wikipathways.org/gpml#Interaction
+  wp_Publication_Reference:
+    name: wp_Publication_Reference
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpPublicationReference
+    description: Class representing wp_Publication_Reference
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#PublicationReference
+    slots:
+    - dcterms_is_Part_Of
+    class_uri: http://vocabularies.wikipathways.org/wp#PublicationReference
+  vocab_Biosynthetic_Gene_Cluster:
+    name: vocab_Biosynthetic_Gene_Cluster
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/VocabBiosyntheticGeneCluster
+    description: Class representing vocab_Biosynthetic_Gene_Cluster
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - https://plantmetwiki.bioinformatics.nl/vocab/BiosyntheticGeneCluster
+    slots:
+    - ro_has_part
+    class_uri: https://plantmetwiki.bioinformatics.nl/vocab/BiosyntheticGeneCluster
+  wp_Gene_Product:
+    name: wp_Gene_Product
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpGeneProduct
+    description: Class representing wp_Gene_Product
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#GeneProduct
+    slots:
+    - dcterms_is_Part_Of
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    - foaf_page
+    - dc_identifier
+    class_uri: http://vocabularies.wikipathways.org/wp#GeneProduct
+  wp_Pathway:
+    name: wp_Pathway
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpPathway
+    description: Class representing wp_Pathway
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#Pathway
+    slots:
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    class_uri: http://vocabularies.wikipathways.org/wp#Pathway
+  wp_Data_Node:
+    name: wp_Data_Node
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpDataNode
+    description: Class representing wp_Data_Node
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#DataNode
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    - wp_bdb_In_Ch_IKey
+    - wp_bdb_Hmdb
+    - dc_identifier
+    - wp_bdb_Kegg_Compound
+    - rdfs_see_Also
+    - wp_bdb_Ch_EBI
+    class_uri: http://vocabularies.wikipathways.org/wp#DataNode
+  wp_Protein:
+    name: wp_Protein
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpProtein
+    description: Class representing wp_Protein
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#Protein
+    slots:
+    - dcterms_is_Part_Of
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    - dc_identifier
+    class_uri: http://vocabularies.wikipathways.org/wp#Protein
+  wp_Interaction:
+    name: wp_Interaction
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpInteraction
+    description: Class representing wp_Interaction
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#Interaction
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_target
+    - wp_source
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    class_uri: http://vocabularies.wikipathways.org/wp#Interaction
+  wp_Metabolite:
+    name: wp_Metabolite
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpMetabolite
+    description: Class representing wp_Metabolite
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#Metabolite
+    slots:
+    - dcterms_is_Part_Of
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    - wp_bdb_In_Ch_IKey
+    - wp_bdb_Hmdb
+    - dc_identifier
+    - wp_bdb_Kegg_Compound
+    - rdfs_see_Also
+    - wp_bdb_Ch_EBI
+    class_uri: http://vocabularies.wikipathways.org/wp#Metabolite
+  wp_Transcription_Translation:
+    name: wp_Transcription_Translation
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpTranscriptionTranslation
+    description: Class representing wp_Transcription_Translation
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#TranscriptionTranslation
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_target
+    - wp_source
+    - wp_is_About
+    class_uri: http://vocabularies.wikipathways.org/wp#TranscriptionTranslation
+  wp_Complex_Binding:
+    name: wp_Complex_Binding
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpComplexBinding
+    description: Class representing wp_Complex_Binding
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#ComplexBinding
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    class_uri: http://vocabularies.wikipathways.org/wp#ComplexBinding
+  wp_Inhibition:
+    name: wp_Inhibition
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpInhibition
+    description: Class representing wp_Inhibition
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#Inhibition
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_target
+    - wp_source
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    class_uri: http://vocabularies.wikipathways.org/wp#Inhibition
+  wp_Conversion:
+    name: wp_Conversion
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpConversion
+    description: Class representing wp_Conversion
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#Conversion
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_target
+    - wp_source
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    class_uri: http://vocabularies.wikipathways.org/wp#Conversion
+  gpml_Comment:
+    name: gpml_Comment
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/GpmlComment
+    description: Class representing gpml_Comment
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/gpml#Comment
+    slots:
+    - dcterms_is_Part_Of
+    class_uri: http://vocabularies.wikipathways.org/gpml#Comment
+  wp_Binding:
+    name: wp_Binding
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/WpBinding
+    description: Class representing wp_Binding
+    from_schema: http://jmillanacosta.github.io/rdfsolve/plantmetwiki/linkml/
+    mappings:
+    - http://vocabularies.wikipathways.org/wp#Binding
+    slots:
+    - dcterms_is_Part_Of
+    - wp_participants
+    - wp_is_About
+    - cito_cites
+    - dcterms_references
+    class_uri: http://vocabularies.wikipathways.org/wp#Binding
+metamodel_version: 1.7.0
+generation_date: '2026-01-23T14:07:55'

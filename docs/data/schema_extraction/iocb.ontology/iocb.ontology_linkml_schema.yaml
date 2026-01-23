@@ -39,15 +39,15 @@ types:
     base: URIorCURIE
     uri: xsd:anyURI
 slots:
-  owl_some_Values_From:
-    name: owl_some_Values_From
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_some_Values_From
-    description: Property owl:someValuesFrom
+  rdfs_domain:
+    name: rdfs_domain
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_domain
+    description: Property rdfs:domain
     from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_some_Values_From
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_some_Values_From
-    owner: rdf_Property
+    - http://www.w3.org/2000/01/rdf-schema#domain
+    slot_uri: http://www.w3.org/2000/01/rdf-schema#domain
+    owner: owl_Named_Individual
     domain_of:
     - rdf_Property
     - owl_Class
@@ -56,15 +56,15 @@ slots:
     range: rdf_Property
     inlined: true
     inlined_as_list: true
-  rdfs_domain:
-    name: rdfs_domain
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_domain
-    description: Property rdfs:domain
+  owl_some_Values_From:
+    name: owl_some_Values_From
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_some_Values_From
+    description: Property owl:someValuesFrom
     from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_domain
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_domain
-    owner: rdf_Property
+    - http://www.w3.org/2002/07/owl#someValuesFrom
+    slot_uri: http://www.w3.org/2002/07/owl#someValuesFrom
+    owner: owl_Named_Individual
     domain_of:
     - rdf_Property
     - owl_Class
@@ -79,9 +79,9 @@ slots:
     description: Property owl:onProperty
     from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_on_Property
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_on_Property
-    owner: rdf_Property
+    - http://www.w3.org/2002/07/owl#onProperty
+    slot_uri: http://www.w3.org/2002/07/owl#onProperty
+    owner: owl_Named_Individual
     domain_of:
     - rdf_Property
     - owl_Class
@@ -96,43 +96,9 @@ slots:
     description: Property rdf:type
     from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdf_type
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdf_type
-    owner: rdf_Property
-    domain_of:
-    - rdf_Property
-    - owl_Class
-    - owl_Named_Individual
-    - owl_Restriction
-    range: rdf_Property
-    inlined: true
-    inlined_as_list: true
-  rdfs_range:
-    name: rdfs_range
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_range
-    description: Property rdfs:range
-    from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_range
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_range
-    owner: rdf_Property
-    domain_of:
-    - rdf_Property
-    - owl_Class
-    - owl_Named_Individual
-    - owl_Restriction
-    range: rdf_Property
-    inlined: true
-    inlined_as_list: true
-  rdfs_sub_Property_Of:
-    name: rdfs_sub_Property_Of
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_sub_Property_Of
-    description: Property rdfs:subPropertyOf
-    from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_sub_Property_Of
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_sub_Property_Of
-    owner: rdf_Property
+    - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+    slot_uri: http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+    owner: owl_Named_Individual
     domain_of:
     - rdf_Property
     - owl_Class
@@ -147,9 +113,26 @@ slots:
     description: Property rdfs:subClassOf
     from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_sub_Class_Of
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_sub_Class_Of
-    owner: rdf_Property
+    - http://www.w3.org/2000/01/rdf-schema#subClassOf
+    slot_uri: http://www.w3.org/2000/01/rdf-schema#subClassOf
+    owner: owl_Named_Individual
+    domain_of:
+    - rdf_Property
+    - owl_Class
+    - owl_Named_Individual
+    - owl_Restriction
+    range: rdf_Property
+    inlined: true
+    inlined_as_list: true
+  rdfs_sub_Property_Of:
+    name: rdfs_sub_Property_Of
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_sub_Property_Of
+    description: Property rdfs:subPropertyOf
+    from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
+    mappings:
+    - http://www.w3.org/2000/01/rdf-schema#subPropertyOf
+    slot_uri: http://www.w3.org/2000/01/rdf-schema#subPropertyOf
+    owner: owl_Named_Individual
     domain_of:
     - rdf_Property
     - owl_Class
@@ -164,9 +147,26 @@ slots:
     description: Property owl:allValuesFrom
     from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_all_Values_From
-    slot_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_all_Values_From
-    owner: rdf_Property
+    - http://www.w3.org/2002/07/owl#allValuesFrom
+    slot_uri: http://www.w3.org/2002/07/owl#allValuesFrom
+    owner: owl_Named_Individual
+    domain_of:
+    - rdf_Property
+    - owl_Class
+    - owl_Named_Individual
+    - owl_Restriction
+    range: rdf_Property
+    inlined: true
+    inlined_as_list: true
+  rdfs_range:
+    name: rdfs_range
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdfs_range
+    description: Property rdfs:range
+    from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
+    mappings:
+    - http://www.w3.org/2000/01/rdf-schema#range
+    slot_uri: http://www.w3.org/2000/01/rdf-schema#range
+    owner: owl_Named_Individual
     domain_of:
     - rdf_Property
     - owl_Class
@@ -182,7 +182,7 @@ classes:
     description: Class representing owl_Restriction
     from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_Restriction
+    - http://www.w3.org/2002/07/owl#Restriction
     slots:
     - rdf_type
     - rdfs_domain
@@ -192,14 +192,14 @@ classes:
     - owl_all_Values_From
     - owl_on_Property
     - owl_some_Values_From
-    class_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_Restriction
+    class_uri: http://www.w3.org/2002/07/owl#Restriction
   owl_Class:
     name: owl_Class
     definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/OwlClass
     description: Class representing owl_Class
     from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_Class
+    - http://www.w3.org/2002/07/owl#Class
     slots:
     - rdf_type
     - rdfs_domain
@@ -209,31 +209,14 @@ classes:
     - owl_all_Values_From
     - owl_on_Property
     - owl_some_Values_From
-    class_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_Class
-  owl_Named_Individual:
-    name: owl_Named_Individual
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/OwlNamedIndividual
-    description: Class representing owl_Named_Individual
-    from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
-    mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_Named_Individual
-    slots:
-    - rdf_type
-    - rdfs_domain
-    - rdfs_range
-    - rdfs_sub_Class_Of
-    - rdfs_sub_Property_Of
-    - owl_all_Values_From
-    - owl_on_Property
-    - owl_some_Values_From
-    class_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/owl_Named_Individual
+    class_uri: http://www.w3.org/2002/07/owl#Class
   rdf_Property:
     name: rdf_Property
     definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/RdfProperty
     description: Class representing rdf_Property
     from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
     mappings:
-    - http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdf_Property
+    - http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
     slots:
     - rdf_type
     - rdfs_domain
@@ -243,6 +226,23 @@ classes:
     - owl_all_Values_From
     - owl_on_Property
     - owl_some_Values_From
-    class_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/rdf_Property
+    class_uri: http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+  owl_Named_Individual:
+    name: owl_Named_Individual
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/OwlNamedIndividual
+    description: Class representing owl_Named_Individual
+    from_schema: http://jmillanacosta.github.io/rdfsolve/iocb.ontology/linkml/
+    mappings:
+    - http://www.w3.org/2002/07/owl#NamedIndividual
+    slots:
+    - rdf_type
+    - rdfs_domain
+    - rdfs_range
+    - rdfs_sub_Class_Of
+    - rdfs_sub_Property_Of
+    - owl_all_Values_From
+    - owl_on_Property
+    - owl_some_Values_From
+    class_uri: http://www.w3.org/2002/07/owl#NamedIndividual
 metamodel_version: 1.7.0
-generation_date: '2025-12-02T10:18:34'
+generation_date: '2026-01-22T17:20:00'

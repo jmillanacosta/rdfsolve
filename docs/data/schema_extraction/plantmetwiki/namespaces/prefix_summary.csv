@@ -1,0 +1,15 @@
+prefix,iri_count,as_subject,as_object,example_iri
+pubmed,5723,5723,5723,https://identifiers.org/pubmed/18187487
+inchikey,4110,4110,4110,https://identifiers.org/inchikey/AEYXZGCDWDUIKX-OFFAAIFBSA-K
+uniprot,1793,1793,1793,https://identifiers.org/uniprot/O65201
+araport,1251,1251,1251,https://identifiers.org/tair.name/AT3G55260
+ncbigene,1238,361,1238,https://identifiers.org/ncbigene/AF196777
+chebi,174,174,174,https://identifiers.org/chebi/CHEBI:134086
+ensembl.plant,148,0,148,http://identifiers.org/ensembl.plant:LCY1_1
+pubchem.compound,75,75,75,https://identifiers.org/pubchem.compound/24480
+kegg,43,43,43,https://identifiers.org/kegg.compound/C03879
+biocyc,10,10,10,https://identifiers.org/biocyc/CHRECP062
+ncbiprotein,5,5,5,https://identifiers.org/refseq/AY443006
+hmdb,2,2,2,https://identifiers.org/hmdb/HMDB0036081
+pdb,1,1,1,https://identifiers.org/pdb/1EAV
+ensembl,1,1,1,https://identifiers.org/ensembl/Zm00001eb048020

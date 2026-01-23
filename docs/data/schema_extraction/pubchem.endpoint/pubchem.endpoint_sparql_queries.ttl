@@ -30,7 +30,7 @@ WHERE {
                    REPLACE(STR(?class), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?cp)
 }
 """ ;
-    schema:dateCreated "2026-01-16T12:39:45.681147+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-22T12:23:51.404999+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>
@@ -61,7 +61,7 @@ WHERE {
                    REPLACE(STR(?datatype), '[^a-zA-Z0-9_]', '_', 'g'))) AS ?dp)
 }
 """ ;
-    schema:dateCreated "2026-01-16T12:45:52.720233+00:00"^^xsd:dateTime ;
+    schema:dateCreated "2026-01-22T12:29:58.479980+00:00"^^xsd:dateTime ;
     schema:target [
         a sd:Service ;
         sd:endpoint <https://idsm.elixir-czech.cz/sparql/endpoint/idsm>

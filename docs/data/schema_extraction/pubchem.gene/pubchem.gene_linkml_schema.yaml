@@ -66,24 +66,6 @@ types:
     base: URIorCURIE
     uri: xsd:anyURI
 slots:
-  ro_0001025:
-    name: ro_0001025
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/ro_0001025
-    description: Property ro:0001025
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
-    mappings:
-    - http://purl.obolibrary.org/obo/RO_0001025
-    slot_uri: http://purl.obolibrary.org/obo/RO_0001025
-    owner: biopaxleve_Gene
-    domain_of:
-    - biopaxleve_Gene
-    - vocabulary_Gene
-    - vocabulary_Gene_Symbol
-    - sio_001383
-    - sio_010035
-    range: mesh_vocab_Check_Tag
-    inlined: true
-    inlined_as_list: true
   ro_0000056:
     name: ro_0000056
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/ro_0000056
@@ -92,7 +74,7 @@ slots:
     mappings:
     - http://purl.obolibrary.org/obo/RO_0000056
     slot_uri: http://purl.obolibrary.org/obo/RO_0000056
-    owner: biopaxleve_Gene
+    owner: sio_010035
     domain_of:
     - biopaxleve_Gene
     - vocabulary_Gene
@@ -110,25 +92,7 @@ slots:
     mappings:
     - http://purl.org/spar/cito/isDiscussedBy
     slot_uri: http://purl.org/spar/cito/isDiscussedBy
-    owner: biopaxleve_Gene
-    domain_of:
-    - biopaxleve_Gene
-    - vocabulary_Gene
-    - vocabulary_Gene_Symbol
-    - sio_001383
-    - sio_010035
-    range: mesh_vocab_Check_Tag
-    inlined: true
-    inlined_as_list: true
-  bao_0002870:
-    name: bao_0002870
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/bao_0002870
-    description: Property bao:0002870
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
-    mappings:
-    - http://www.bioassayontology.org/bao#BAO_0002870
-    slot_uri: http://www.bioassayontology.org/bao#BAO_0002870
-    owner: biopaxleve_Gene
+    owner: sio_010035
     domain_of:
     - biopaxleve_Gene
     - vocabulary_Gene
@@ -146,43 +110,7 @@ slots:
     mappings:
     - http://purl.obolibrary.org/obo/RO_0000085
     slot_uri: http://purl.obolibrary.org/obo/RO_0000085
-    owner: biopaxleve_Gene
-    domain_of:
-    - biopaxleve_Gene
-    - vocabulary_Gene
-    - vocabulary_Gene_Symbol
-    - sio_001383
-    - sio_010035
-    range: mesh_vocab_Check_Tag
-    inlined: true
-    inlined_as_list: true
-  rdfs_see_Also:
-    name: rdfs_see_Also
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/rdfs_see_Also
-    description: Property rdfs:seeAlso
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
-    mappings:
-    - http://www.w3.org/2000/01/rdf-schema#seeAlso
-    slot_uri: http://www.w3.org/2000/01/rdf-schema#seeAlso
-    owner: biopaxleve_Gene
-    domain_of:
-    - biopaxleve_Gene
-    - vocabulary_Gene
-    - vocabulary_Gene_Symbol
-    - sio_001383
-    - sio_010035
-    range: mesh_vocab_Check_Tag
-    inlined: true
-    inlined_as_list: true
-  sio_000558:
-    name: sio_000558
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/sio_000558
-    description: Property sio:000558
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
-    mappings:
-    - http://semanticscience.org/resource/SIO_000558
-    slot_uri: http://semanticscience.org/resource/SIO_000558
-    owner: biopaxleve_Gene
+    owner: sio_010035
     domain_of:
     - biopaxleve_Gene
     - vocabulary_Gene
@@ -200,7 +128,7 @@ slots:
     mappings:
     - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
     slot_uri: http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-    owner: biopaxleve_Gene
+    owner: sio_010035
     domain_of:
     - biopaxleve_Gene
     - vocabulary_Gene
@@ -210,15 +138,51 @@ slots:
     range: mesh_vocab_Check_Tag
     inlined: true
     inlined_as_list: true
-  uniprot_core_organism:
-    name: uniprot_core_organism
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/uniprot_core_organism
-    description: Property uniprot.core:organism
+  sio_000558:
+    name: sio_000558
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/sio_000558
+    description: Property sio:000558
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
     mappings:
-    - http://purl.uniprot.org/core/organism
-    slot_uri: http://purl.uniprot.org/core/organism
-    owner: biopaxleve_Gene
+    - http://semanticscience.org/resource/SIO_000558
+    slot_uri: http://semanticscience.org/resource/SIO_000558
+    owner: sio_010035
+    domain_of:
+    - biopaxleve_Gene
+    - vocabulary_Gene
+    - vocabulary_Gene_Symbol
+    - sio_001383
+    - sio_010035
+    range: mesh_vocab_Check_Tag
+    inlined: true
+    inlined_as_list: true
+  bao_0002870:
+    name: bao_0002870
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/bao_0002870
+    description: Property bao:0002870
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
+    mappings:
+    - http://www.bioassayontology.org/bao#BAO_0002870
+    slot_uri: http://www.bioassayontology.org/bao#BAO_0002870
+    owner: sio_010035
+    domain_of:
+    - biopaxleve_Gene
+    - vocabulary_Gene
+    - vocabulary_Gene_Symbol
+    - sio_001383
+    - sio_010035
+    range: mesh_vocab_Check_Tag
+    inlined: true
+    inlined_as_list: true
+  rdfs_see_Also:
+    name: rdfs_see_Also
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/rdfs_see_Also
+    description: Property rdfs:seeAlso
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
+    mappings:
+    - http://www.w3.org/2000/01/rdf-schema#seeAlso
+    slot_uri: http://www.w3.org/2000/01/rdf-schema#seeAlso
+    owner: sio_010035
     domain_of:
     - biopaxleve_Gene
     - vocabulary_Gene
@@ -236,7 +200,43 @@ slots:
     mappings:
     - http://www.biopax.org/release/biopax-level3.owl#organism
     slot_uri: http://www.biopax.org/release/biopax-level3.owl#organism
-    owner: biopaxleve_Gene
+    owner: sio_010035
+    domain_of:
+    - biopaxleve_Gene
+    - vocabulary_Gene
+    - vocabulary_Gene_Symbol
+    - sio_001383
+    - sio_010035
+    range: mesh_vocab_Check_Tag
+    inlined: true
+    inlined_as_list: true
+  ro_0001025:
+    name: ro_0001025
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/ro_0001025
+    description: Property ro:0001025
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
+    mappings:
+    - http://purl.obolibrary.org/obo/RO_0001025
+    slot_uri: http://purl.obolibrary.org/obo/RO_0001025
+    owner: sio_010035
+    domain_of:
+    - biopaxleve_Gene
+    - vocabulary_Gene
+    - vocabulary_Gene_Symbol
+    - sio_001383
+    - sio_010035
+    range: mesh_vocab_Check_Tag
+    inlined: true
+    inlined_as_list: true
+  uniprot_core_organism:
+    name: uniprot_core_organism
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/uniprot_core_organism
+    description: Property uniprot.core:organism
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
+    mappings:
+    - http://purl.uniprot.org/core/organism
+    slot_uri: http://purl.uniprot.org/core/organism
+    owner: sio_010035
     domain_of:
     - biopaxleve_Gene
     - vocabulary_Gene
@@ -247,6 +247,25 @@ slots:
     inlined: true
     inlined_as_list: true
 classes:
+  biopaxleve_Gene:
+    name: biopaxleve_Gene
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/BiopaxleveGene
+    description: Class representing biopaxleve_Gene
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
+    mappings:
+    - http://www.biopax.org/release/biopax-level3.owl#Gene
+    slots:
+    - ro_0000056
+    - ro_0000085
+    - cito_is_Discussed_By
+    - uniprot_core_organism
+    - biopaxleve_organism
+    - rdf_type
+    - rdfs_see_Also
+    - sio_000558
+    - ro_0001025
+    - bao_0002870
+    class_uri: http://www.biopax.org/release/biopax-level3.owl#Gene
   vocabulary_Gene_Symbol:
     name: vocabulary_Gene_Symbol
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/VocabularyGeneSymbol
@@ -266,25 +285,6 @@ classes:
     - ro_0001025
     - bao_0002870
     class_uri: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#GeneSymbol
-  sio_010035:
-    name: sio_010035
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/Sio010035
-    description: Class representing sio_010035
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
-    mappings:
-    - http://semanticscience.org/resource/SIO_010035
-    slots:
-    - ro_0000056
-    - ro_0000085
-    - cito_is_Discussed_By
-    - uniprot_core_organism
-    - biopaxleve_organism
-    - rdf_type
-    - rdfs_see_Also
-    - sio_000558
-    - ro_0001025
-    - bao_0002870
-    class_uri: http://semanticscience.org/resource/SIO_010035
   vocabulary_Gene:
     name: vocabulary_Gene
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/VocabularyGene
@@ -331,13 +331,13 @@ classes:
     - ro_0001025
     - bao_0002870
     class_uri: http://semanticscience.org/resource/SIO_001383
-  biopaxleve_Gene:
-    name: biopaxleve_Gene
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/BiopaxleveGene
-    description: Class representing biopaxleve_Gene
+  sio_010035:
+    name: sio_010035
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/Sio010035
+    description: Class representing sio_010035
     from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.gene/linkml/
     mappings:
-    - http://www.biopax.org/release/biopax-level3.owl#Gene
+    - http://semanticscience.org/resource/SIO_010035
     slots:
     - ro_0000056
     - ro_0000085
@@ -349,6 +349,6 @@ classes:
     - sio_000558
     - ro_0001025
     - bao_0002870
-    class_uri: http://www.biopax.org/release/biopax-level3.owl#Gene
+    class_uri: http://semanticscience.org/resource/SIO_010035
 metamodel_version: 1.7.0
-generation_date: '2026-01-16T13:58:54'
+generation_date: '2026-01-22T17:35:30'

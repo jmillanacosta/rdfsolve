@@ -100,14 +100,6 @@ slots:
     inlined: true
     inlined_as_list: true
 classes:
-  mesh_vocab_Concept:
-    name: mesh_vocab_Concept
-    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/MeshVocabConcept
-    description: Class representing mesh_vocab_Concept
-    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
-    mappings:
-    - http://id.nlm.nih.gov/mesh/vocab#Concept
-    class_uri: http://id.nlm.nih.gov/mesh/vocab#Concept
   vocabulary_Taxonomy:
     name: vocabulary_Taxonomy
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/VocabularyTaxonomy
@@ -120,6 +112,14 @@ classes:
     - rdf_type
     - rdfs_see_Also
     class_uri: http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Taxonomy
+  mesh_vocab_Concept:
+    name: mesh_vocab_Concept
+    definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/MeshVocabConcept
+    description: Class representing mesh_vocab_Concept
+    from_schema: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/
+    mappings:
+    - http://id.nlm.nih.gov/mesh/vocab#Concept
+    class_uri: http://id.nlm.nih.gov/mesh/vocab#Concept
   sio_010000:
     name: sio_010000
     definition_uri: http://jmillanacosta.github.io/rdfsolve/pubchem.taxonomy/linkml/Sio010000
@@ -133,4 +133,4 @@ classes:
     - rdfs_see_Also
     class_uri: http://semanticscience.org/resource/SIO_010000
 metamodel_version: 1.7.0
-generation_date: '2026-01-16T13:39:50'
+generation_date: '2026-01-22T13:23:13'

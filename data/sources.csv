@@ -84,3 +84,5 @@ sibils,,,https://sparql.sibils.org/sparql,False
 hamap,,,,False
 metanext,,,https://rdf.metanetx.org/sparql/,False
 orthodb,,,https://sparql.orthodb.org/sparql,False
+compoundwiki,,,https://compoundcloud.wikibase.cloud/query/,False
+plantmetwiki,,http://plantmetwiki.bioinformatics.nl/,https://plantmetwiki.bioinformatics.nl/sparql,True

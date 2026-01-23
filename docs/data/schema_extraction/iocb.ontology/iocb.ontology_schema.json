@@ -1,0 +1,2149 @@
+{
+  "triples": [
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#domain",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#range",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#onProperty",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Class",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Class"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#NamedIndividual"
+    ],
+    [
+      "http://www.w3.org/2002/07/owl#Restriction",
+      "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "http://www.w3.org/2002/07/owl#Restriction"
+    ]
+  ],
+  "metadata": {
+    "total_triples": 128,
+    "classes": 0,
+    "properties": 0,
+    "prefixes": {
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+    }
+  },
+  "jsonld": {
+    "@context": {
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+    },
+    "@graph": [
+      {
+        "@id": "rdf:Property",
+        "rdf:type": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:domain": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:range": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:subClassOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:subPropertyOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:allValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:onProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:someValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ]
+      },
+      {
+        "@id": "owl:Class",
+        "rdf:type": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:domain": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:range": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:subClassOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:subPropertyOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:allValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:onProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:someValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ]
+      },
+      {
+        "@id": "owl:NamedIndividual",
+        "rdf:type": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:domain": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:range": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:subClassOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:subPropertyOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:allValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:onProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:someValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ]
+      },
+      {
+        "@id": "owl:Restriction",
+        "rdf:type": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:domain": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:range": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:subClassOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "rdfs:subPropertyOf": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:allValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:onProperty": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ],
+        "owl:someValuesFrom": [
+          {
+            "@id": "rdf:Property"
+          },
+          {
+            "@id": "owl:Class"
+          },
+          {
+            "@id": "owl:NamedIndividual"
+          },
+          {
+            "@id": "owl:Restriction"
+          }
+        ]
+      }
+    ]
+  },
+  "schema_patterns": [
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdf:type",
+      "property_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:domain",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:range",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#range",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subClassOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "rdfs:subPropertyOf",
+      "property_uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:allValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:onProperty",
+      "property_uri": "http://www.w3.org/2002/07/owl#onProperty",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "rdf:Property",
+      "subject_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Class",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Class",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:NamedIndividual",
+      "subject_uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "rdf:Property",
+      "object_uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Class",
+      "object_uri": "http://www.w3.org/2002/07/owl#Class"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:NamedIndividual",
+      "object_uri": "http://www.w3.org/2002/07/owl#NamedIndividual"
+    },
+    {
+      "subject_class": "owl:Restriction",
+      "subject_uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "property": "owl:someValuesFrom",
+      "property_uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
+      "object_class": "owl:Restriction",
+      "object_uri": "http://www.w3.org/2002/07/owl#Restriction"
+    }
+  ]
+}
