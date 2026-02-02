@@ -12,6 +12,30 @@
   },
   "datasets": [
     {
+      "name": "biodatafuse-example",
+      "generated": "2026-01-23T13:43:20Z",
+      "notebooks": {
+        "schema": {
+          "status": "success",
+          "reportSize": "692K",
+          "reportUrl": "notebooks/01_schema_extraction/biodatafuse-example_schema.html"
+        },
+        "pydantic": {
+          "status": "error",
+          "reportSize": "710",
+          "reportUrl": "notebooks/02_pydantic_models/affymetrix_pydantic.html"
+        },
+        "namespace": {
+          "status": "missing",
+          "reportSize": "N/A",
+          "reportUrl": ""
+        }
+      },
+      "dataFiles": {
+        "coverage": "../data/schema_extraction/biodatafuse-example/biodatafuse_coverage.csv"
+      }
+    },
+    {
       "name": "affymetrix",
       "generated": "2026-01-23T13:43:20Z",
       "notebooks": {
