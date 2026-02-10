@@ -1,0 +1,61 @@
+{
+  "@context": {
+    "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "bao": "http://www.bioassayontology.org/bao#BAO_",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "obi": "http://purl.obolibrary.org/obo/OBI_",
+    "ro": "http://purl.obolibrary.org/obo/RO_"
+  },
+  "@graph": [
+    {
+      "@id": "vocabulary:MeasureGroup",
+      "dcterms:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "dcterms:source": {
+        "@id": "rdfs:Resource"
+      },
+      "obi:0000299": {
+        "@id": "rdfs:Resource"
+      },
+      "ro:0000057": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000040",
+      "dcterms:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "obi:0000299": {
+        "@id": "rdfs:Resource"
+      },
+      "dcterms:source": {
+        "@id": "rdfs:Resource"
+      },
+      "ro:0000057": {
+        "@id": "rdfs:Resource"
+      }
+    }
+  ],
+  "@about": {
+    "generated_by": "rdfsolve 0.0.1",
+    "generated_at": "2026-02-09T15:09:50.618692+00:00",
+    "endpoint": "https://idsm.elixir-czech.cz/sparql/endpoint/idsm",
+    "dataset_name": "pubchem.measuregroup",
+    "graph_uris": [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup"
+    ],
+    "pattern_count": 10,
+    "strategy": "miner"
+  }
+}

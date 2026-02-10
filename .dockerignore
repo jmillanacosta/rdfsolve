@@ -1,0 +1,11 @@
+# Docker build context excludions for rdfsolve backend
+.git
+.venv
+*.egg-info
+__pycache__
+.pytest_cache
+.tox
+notebooks/
+docs/
+*.ipynb
+.mypy_cache

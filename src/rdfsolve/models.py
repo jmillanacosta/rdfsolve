@@ -1,12 +1,83 @@
 """
-Pydantic models for VoID schema representation.
+Pydantic models for RDF schema representation.
 
-Provides type-safe data structures with validation for VoID schema elements.
+Provides type-safe data structures with validation for schema elements.
+Shared by both VoidParser (VoID-based extraction) and SchemaMiner
+(direct SPARQL mining).
 """
 
+import re
+from datetime import datetime, timezone
+from hashlib import md5
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+
+
+# ---------------------------------------------------------------------------
+# Shared URI helpers
+# ---------------------------------------------------------------------------
+
+def uri_to_curie(uri: str) -> tuple[str, str, str]:
+    """Convert a URI to a CURIE using bioregistry, with fallback.
+
+    Returns:
+        (curie, prefix, namespace_uri)
+    """
+    curie = None
+    prefix = None
+    namespace_uri = None
+
+    if uri.startswith(("http://", "https://")):
+        try:
+            from bioregistry import curie_from_iri, parse_iri
+
+            parsed = parse_iri(uri)
+            if parsed:
+                prefix, local_id = parsed
+                if local_id in uri:
+                    idx = uri.rfind(local_id)
+                    namespace_uri = uri[:idx]
+                elif "#" in uri:
+                    namespace_uri = uri.rsplit("#", 1)[0] + "#"
+                else:
+                    namespace_uri = uri.rsplit("/", 1)[0] + "/"
+                curie = curie_from_iri(uri)
+                if not curie and prefix and local_id:
+                    curie = f"{prefix}:{local_id}"
+        except Exception:
+            pass
+
+    if not curie:
+        if "#" in uri:
+            ns_part, local_part = uri.rsplit("#", 1)
+            namespace_uri = ns_part + "#"
+        elif "/" in uri:
+            ns_part, local_part = uri.rsplit("/", 1)
+            namespace_uri = ns_part + "/"
+        else:
+            local_part = uri
+
+        if not prefix and namespace_uri:
+            clean = (
+                namespace_uri.replace("http://", "")
+                .replace("https://", "")
+                .replace("www.", "")
+                .strip("/")
+                .strip("#")
+            )
+            if "/" in clean:
+                parts = clean.split("/")
+                prefix = parts[-1] if parts[-1] else (
+                    parts[-2] if len(parts) > 1 else "ns"
+                )
+            else:
+                prefix = clean.split(".")[0] if "." in clean else clean
+            prefix = re.sub(r"[^a-zA-Z0-9_]", "", prefix)[:10]
+
+        curie = f"{prefix}:{local_part}" if prefix and local_part else uri
+
+    return curie or uri, prefix or "", namespace_uri or ""
 
 
 class SchemaTriple(BaseModel):
@@ -136,3 +207,297 @@ class LinkMLSchema(BaseModel):
             if slot.range in self.classes:
                 object_props.append(slot_name)
         return sorted(object_props)
+
+
+# -------------------------------------------------------------------
+# Shared models for schema mining and VoID parsing
+# -------------------------------------------------------------------
+
+class SchemaPattern(BaseModel):
+    """A single schema pattern: subject_class -[property]-> object.
+
+    Captures three kinds of relationships:
+    - typed-object: ``?s a ?sc . ?s ?p ?o . ?o a ?oc``
+    - literal:      ``?s a ?sc . ?s ?p ?o . FILTER(isLiteral(?o))``
+    - untyped-uri:  ``?s a ?sc . ?s ?p ?o . FILTER(isURI(?o))
+                      FILTER NOT EXISTS { ?o a ?any }``
+
+    This model is the shared contract between SchemaMiner (direct SPARQL)
+    and VoidParser (VoID-based extraction).
+    """
+
+    subject_class: str = Field(
+        ..., description="URI of the subject class",
+    )
+    property_uri: str = Field(
+        ..., description="URI of the property",
+    )
+    object_class: str = Field(
+        ...,
+        description=(
+            "URI of the object class, or the special sentinel "
+            "'Literal' / 'Resource'"
+        ),
+    )
+    count: Optional[int] = Field(
+        None, ge=0,
+        description="Number of triples matching this pattern",
+    )
+    datatype: Optional[str] = Field(
+        None,
+        description=(
+            "XSD datatype URI for literal objects "
+            "(only when object_class == 'Literal')"
+        ),
+    )
+
+    @field_validator("subject_class", "property_uri")
+    @classmethod
+    def _validate_uri(cls, v: str) -> str:
+        if not v.startswith(("http://", "https://", "urn:")):
+            raise ValueError(f"Invalid URI: {v}")
+        return v
+
+    @field_validator("object_class")
+    @classmethod
+    def _validate_object(cls, v: str) -> str:
+        if v in ("Literal", "Resource"):
+            return v
+        if not v.startswith(("http://", "https://", "urn:")):
+            raise ValueError(f"Invalid object class: {v}")
+        return v
+
+
+class AboutMetadata(BaseModel):
+    """Provenance metadata attached to every schema export."""
+
+    generated_by: str = Field(
+        ..., description="Tool and version string",
+    )
+    generated_at: str = Field(
+        ..., description="ISO-8601 timestamp (UTC)",
+    )
+    endpoint: Optional[str] = Field(
+        None, description="SPARQL endpoint URL",
+    )
+    dataset_name: Optional[str] = Field(
+        None, description="Human-readable dataset name",
+    )
+    graph_uris: Optional[List[str]] = Field(
+        None, description="Named graph URIs queried",
+    )
+    pattern_count: int = Field(
+        0, ge=0, description="Number of schema patterns",
+    )
+    strategy: str = Field(
+        "unknown",
+        description="Mining strategy used (e.g. 'miner', 'void')",
+    )
+
+    model_config = ConfigDict(extra="allow")
+
+    @staticmethod
+    def build(
+        endpoint: Optional[str] = None,
+        dataset_name: Optional[str] = None,
+        graph_uris: Optional[List[str]] = None,
+        pattern_count: int = 0,
+        strategy: str = "unknown",
+    ) -> "AboutMetadata":
+        """Convenience factory with auto-populated version/time."""
+        from rdfsolve.version import VERSION
+
+        return AboutMetadata(
+            generated_by=f"rdfsolve {VERSION}",
+            generated_at=(
+                datetime.now(timezone.utc).isoformat()
+            ),
+            endpoint=endpoint,
+            dataset_name=dataset_name,
+            graph_uris=graph_uris,
+            pattern_count=pattern_count,
+            strategy=strategy,
+        )
+
+
+class MinedSchema(BaseModel):
+    """Complete mined schema: patterns + provenance.
+
+    Primary export format is JSON-LD. Can also be converted to a
+    VoID RDF graph for downstream conversion to LinkML / SHACL /
+    RDF-config via VoidParser.
+    """
+
+    patterns: List[SchemaPattern] = Field(
+        default_factory=list,
+        description="Schema patterns",
+    )
+    about: AboutMetadata = Field(
+        ..., description="Provenance metadata",
+    )
+
+    # ---- Queries --------------------------------------------------
+
+    def get_classes(self) -> List[str]:
+        """Return sorted unique subject/object class URIs."""
+        classes: set[str] = set()
+        for p in self.patterns:
+            classes.add(p.subject_class)
+            if p.object_class not in ("Literal", "Resource"):
+                classes.add(p.object_class)
+        return sorted(classes)
+
+    def get_properties(self) -> List[str]:
+        """Return sorted unique property URIs."""
+        return sorted({p.property_uri for p in self.patterns})
+
+    # ---- JSON-LD export -------------------------------------------
+
+    def to_jsonld(self) -> Dict[str, Any]:
+        """Export schema as JSON-LD with @context, @graph, @about.
+
+        The @graph groups triples by subject class. Each subject node
+        lists its properties with ``{"@id": object_curie}`` or literal
+        sentinels.
+        """
+        context: Dict[str, str] = {}
+        grouped: Dict[str, Dict[str, Any]] = {}
+
+        for pat in self.patterns:
+            sc, sc_pfx, sc_ns = uri_to_curie(pat.subject_class)
+            pp, pp_pfx, pp_ns = uri_to_curie(pat.property_uri)
+
+            if sc_pfx and sc_ns:
+                context[sc_pfx] = sc_ns
+            if pp_pfx and pp_ns:
+                context[pp_pfx] = pp_ns
+
+            # Build object value
+            if pat.object_class == "Literal":
+                if pat.datatype:
+                    dt_c, dt_pfx, dt_ns = uri_to_curie(pat.datatype)
+                    if dt_pfx and dt_ns:
+                        context[dt_pfx] = dt_ns
+                    o_val: Any = {
+                        "@type": dt_c,
+                    }
+                else:
+                    o_val = "Literal"
+            elif pat.object_class == "Resource":
+                o_val = {"@id": "rdfs:Resource"}
+                context.setdefault(
+                    "rdfs",
+                    "http://www.w3.org/2000/01/rdf-schema#",
+                )
+            else:
+                oc, oc_pfx, oc_ns = uri_to_curie(pat.object_class)
+                if oc_pfx and oc_ns:
+                    context[oc_pfx] = oc_ns
+                o_val = {"@id": oc}
+
+            # Merge into grouped node
+            if sc not in grouped:
+                grouped[sc] = {"@id": sc}
+
+            existing = grouped[sc].get(pp)
+            if existing is None:
+                grouped[sc][pp] = o_val
+            else:
+                if not isinstance(existing, list):
+                    existing = [existing]
+                if o_val not in existing:
+                    existing.append(o_val)
+                grouped[sc][pp] = existing
+
+        return {
+            "@context": context,
+            "@graph": list(grouped.values()),
+            "@about": self.about.model_dump(exclude_none=True),
+        }
+
+    # ---- VoID graph export ----------------------------------------
+
+    def to_void_graph(self) -> "Graph":  # type: ignore[name-defined]  # noqa: F821
+        """Build an rdflib VoID Graph from the mined patterns.
+
+        This allows feeding the result into VoidParser for downstream
+        conversion to LinkML, SHACL, RDF-config, etc.
+        """
+        from rdflib import Graph, Literal as RdfLiteral, Namespace, URIRef
+        from rdflib.namespace import RDF, RDFS, XSD
+
+        VOID = Namespace("http://rdfs.org/ns/void#")
+        VOID_EXT = Namespace("http://ldf.fi/void-ext#")
+
+        g = Graph()
+        g.bind("void", VOID)
+        g.bind("void-ext", VOID_EXT)
+        g.bind("rdf", RDF)
+        g.bind("rdfs", RDFS)
+        g.bind("xsd", XSD)
+
+        # Determine a base URI for partition IRIs
+        endpoint = self.about.endpoint or "urn:rdfsolve"
+        base = endpoint.rstrip("/") + "/void/"
+
+        def _partition_id(s: str, p: str, o: str) -> URIRef:
+            h = md5(f"{s}|{p}|{o}".encode()).hexdigest()[:12]
+            return URIRef(f"{base}pp_{h}")
+
+        for pat in self.patterns:
+            pp_uri = _partition_id(
+                pat.subject_class, pat.property_uri, pat.object_class,
+            )
+            g.add((pp_uri, VOID.property, URIRef(pat.property_uri)))
+            g.add((
+                pp_uri, VOID_EXT.subjectClass,
+                URIRef(pat.subject_class),
+            ))
+
+            if pat.object_class == "Literal":
+                g.add((
+                    pp_uri, VOID_EXT.objectClass,
+                    RDFS.Literal,
+                ))
+                if pat.datatype:
+                    dt_node = URIRef(
+                        f"{base}dt_{md5(pat.datatype.encode()).hexdigest()[:12]}"
+                    )
+                    g.add((
+                        pp_uri, VOID_EXT.datatypePartition, dt_node,
+                    ))
+                    g.add((
+                        dt_node, VOID_EXT.datatype,
+                        URIRef(pat.datatype),
+                    ))
+            elif pat.object_class == "Resource":
+                g.add((
+                    pp_uri, VOID_EXT.objectClass, RDFS.Resource,
+                ))
+            else:
+                g.add((
+                    pp_uri, VOID_EXT.objectClass,
+                    URIRef(pat.object_class),
+                ))
+
+            if pat.count is not None:
+                g.add((
+                    pp_uri, VOID.triples,
+                    RdfLiteral(pat.count, datatype=XSD.integer),
+                ))
+
+        # Bind prefixes discovered via bioregistry
+        for pat in self.patterns:
+            for uri in (
+                pat.subject_class, pat.property_uri, pat.object_class,
+            ):
+                if uri in ("Literal", "Resource"):
+                    continue
+                _, pfx, ns = uri_to_curie(uri)
+                if pfx and ns:
+                    try:
+                        g.bind(pfx, ns, override=False)
+                    except Exception:
+                        pass
+
+        return g

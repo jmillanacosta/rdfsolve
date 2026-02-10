@@ -641,21 +641,107 @@ class VoidParser:
         )
         return df[mask].copy()
 
-    def to_jsonld(self, filter_void_admin_nodes: bool = True) -> Dict[str, Any]:
+    def _extract_about_metadata(
+        self,
+        endpoint_url: Optional[str] = None,
+        dataset_name: Optional[str] = None,
+        graph_uris: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Extract metadata from the VoID graph for the @about section.
+
+        Pulls metadata from the VoID graph (endpoint, title, graph URIs)
+        and merges with any explicitly provided values.
+
+        Args:
+            endpoint_url: SPARQL endpoint URL (overrides graph value)
+            dataset_name: Dataset name (overrides graph value)
+            graph_uris: Graph URIs (overrides graph value)
+
+        Returns:
+            Dictionary with metadata for the @about section
+        """
+        from datetime import datetime, timezone
+
+        from rdfsolve.version import VERSION
+
+        about: Dict[str, Any] = {
+            "generatedBy": f"rdfsolve {VERSION}",
+            "generatedAt": datetime.now(timezone.utc).isoformat(),
+        }
+
+        # Try to extract metadata from the VoID graph
+        void_dataset_type = URIRef("http://rdfs.org/ns/void#Dataset")
+        void_sparql_endpoint = URIRef("http://rdfs.org/ns/void#sparqlEndpoint")
+        dcterms_title = URIRef("http://purl.org/dc/terms/title")
+
+        graph_endpoint = None
+        graph_title = None
+        graph_graph_uris: List[str] = []
+
+        for s, p, o in self.graph:
+            if p == URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type") and o == void_dataset_type:
+                # Found a void:Dataset — extract its properties
+                for _, pred, obj in self.graph.triples((s, None, None)):
+                    if pred == void_sparql_endpoint:
+                        graph_endpoint = str(obj)
+                    elif pred == dcterms_title:
+                        graph_title = str(obj)
+
+        # Collect graph URIs from the parser
+        if self.graph_uris:
+            graph_graph_uris = list(self.graph_uris)
+
+        # Use explicit values, fall back to graph values
+        if endpoint_url:
+            about["endpoint"] = endpoint_url
+        elif graph_endpoint:
+            about["endpoint"] = graph_endpoint
+
+        if dataset_name:
+            about["datasetName"] = dataset_name
+        elif graph_title:
+            about["datasetName"] = graph_title
+
+        effective_graph_uris = graph_uris if graph_uris else graph_graph_uris
+        if effective_graph_uris:
+            about["graphURIs"] = effective_graph_uris
+
+        if self.void_file_path:
+            about["voidFile"] = self.void_file_path
+
+        about["tripleCount"] = len(self.schema_triples) if self.schema_triples else 0
+
+        return about
+
+    def to_jsonld(
+        self,
+        filter_void_admin_nodes: bool = True,
+        endpoint_url: Optional[str] = None,
+        dataset_name: Optional[str] = None,
+        graph_uris: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """
         Parse VoID file and return simple JSON-LD with the schema triples.
 
         Args:
             filter_void_admin_nodes: Whether to filter out VoID-specific nodes
+            endpoint_url: SPARQL endpoint URL for the @about section
+            dataset_name: Dataset name for the @about section
+            graph_uris: Graph URIs for the @about section
 
         Returns:
-            Simple JSON-LD with the schema triples as normal RDF statements
+            Simple JSON-LD with @context, @graph, and @about sections
         """
         # Extract schema triples
         self._extract_schema_triples()
 
         if not self.schema_triples:
-            return {"@context": {}, "@graph": []}
+            about = self._extract_about_metadata(
+                endpoint_url=endpoint_url,
+                dataset_name=dataset_name,
+                graph_uris=graph_uris,
+            )
+            return {"@context": {}, "@graph": [], "@about": about}
 
         # Create minimal context for the namespaces we find
         context: Dict[str, str] = {}
@@ -714,8 +800,15 @@ class VoidParser:
                     else:
                         grouped[subject_id][key] = value
 
+        # Build @about metadata section
+        about = self._extract_about_metadata(
+            endpoint_url=endpoint_url,
+            dataset_name=dataset_name,
+            graph_uris=graph_uris,
+        )
+
         # Return simple JSON-LD
-        return {"@context": context, "@graph": list(grouped.values())}
+        return {"@context": context, "@graph": list(grouped.values()), "@about": about}
 
     def _create_context(self) -> Dict[str, str]:
         """Create JSON-LD @context."""

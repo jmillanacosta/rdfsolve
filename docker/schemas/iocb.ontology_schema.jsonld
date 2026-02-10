@@ -1,0 +1,206 @@
+{
+  "@context": {
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "owl:Restriction",
+      "owl:someValuesFrom": [
+        {
+          "@id": "rdf:Property"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "owl:Restriction"
+        }
+      ],
+      "owl:onProperty": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "rdfs:subClassOf": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "owl:Restriction"
+        }
+      ],
+      "owl:allValuesFrom": [
+        {
+          "@id": "owl:Restriction"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "owl:cardinality": {
+        "@type": "xsd:int"
+      },
+      "owl:maxCardinality": {
+        "@type": "xsd:int"
+      },
+      "owl:minCardinality": {
+        "@type": "xsd:int"
+      }
+    },
+    {
+      "@id": "rdf:Property",
+      "rdfs:domain": [
+        {
+          "@id": "rdf:Property"
+        },
+        {
+          "@id": "owl:Restriction"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "rdfs:range": [
+        {
+          "@id": "owl:Restriction"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "rdfs:subClassOf": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "rdfs:subPropertyOf": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "rdfs:label": {
+        "@type": "rdf:langString"
+      }
+    },
+    {
+      "@id": "owl:Class",
+      "rdfs:subClassOf": [
+        {
+          "@id": "owl:Restriction"
+        },
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "owl:someValuesFrom": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "owl:Restriction"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        },
+        {
+          "@id": "rdf:Property"
+        }
+      ],
+      "owl:allValuesFrom": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "owl:Restriction"
+        }
+      ],
+      "owl:onProperty": [
+        {
+          "@id": "rdf:Property"
+        },
+        {
+          "@id": "owl:Class"
+        }
+      ],
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "rdfs:label": {
+        "@type": "rdf:langString"
+      },
+      "owl:cardinality": {
+        "@type": "xsd:int"
+      },
+      "owl:maxCardinality": {
+        "@type": "xsd:int"
+      },
+      "owl:minCardinality": {
+        "@type": "xsd:int"
+      }
+    },
+    {
+      "@id": "owl:NamedIndividual",
+      "rdfs:subClassOf": [
+        {
+          "@id": "owl:Class"
+        },
+        {
+          "@id": "owl:Restriction"
+        },
+        {
+          "@id": "owl:NamedIndividual"
+        }
+      ],
+      "rdf:type": {
+        "@id": "owl:Class"
+      },
+      "rdfs:label": {
+        "@type": "rdf:langString"
+      }
+    }
+  ],
+  "@about": {
+    "generated_by": "rdfsolve 0.0.1",
+    "generated_at": "2026-02-09T15:12:41.396641+00:00",
+    "endpoint": "https://idsm.elixir-czech.cz/sparql/endpoint/idsm",
+    "dataset_name": "iocb.ontology",
+    "graph_uris": [
+      "http://bioinfo.iocb.cz/dataset/ontology"
+    ],
+    "pattern_count": 49,
+    "strategy": "miner"
+  }
+}

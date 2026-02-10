@@ -304,9 +304,22 @@ def _export_csv(parser: "VoidParser", output_path: Path, dataset_name: str) -> N
     click.echo(f"OK CSV:      {schema_csv} ({len(schema_df)} triples)")
 
 
-def _export_jsonld(void_file: str, output_path: Path, dataset_name: str) -> None:
+def _export_jsonld(
+    void_file: str,
+    output_path: Path,
+    dataset_name: str,
+    endpoint_url: Optional[str] = None,
+    graph_uri: Optional[str] = None,
+) -> None:
     """Export schema to JSON-LD format."""
-    schema_jsonld = to_jsonld_from_file(void_file, filter_void_admin_nodes=True)
+    graph_uris = [graph_uri] if graph_uri else None
+    schema_jsonld = to_jsonld_from_file(
+        void_file,
+        filter_void_admin_nodes=True,
+        endpoint_url=endpoint_url,
+        dataset_name=dataset_name,
+        graph_uris=graph_uris,
+    )
     jsonld_file = output_path / f"{dataset_name}_schema.jsonld"
     with open(jsonld_file, "w") as f:
         json.dump(schema_jsonld, f, indent=2)
@@ -538,7 +551,13 @@ def export(
 
         # JSON-LD export
         if format in ["jsonld", "all"]:
-            _export_jsonld(void_file, output_path, dataset_name)
+            _export_jsonld(
+                void_file,
+                output_path,
+                dataset_name,
+                endpoint_url=endpoint_url,
+                graph_uri=graph_uri,
+            )
 
         # LinkML export
         if format in ["linkml", "all"]:
@@ -578,6 +597,221 @@ def export(
         # Pattern coverage export
         if format in ["coverage", "all"]:
             click.echo("  Coverage: Skipped (requires instance data, not available from VoID file)")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
+@main.command()
+@click.option("--endpoint", required=True, help="SPARQL endpoint URL")
+@click.option(
+    "--graph-uri",
+    multiple=True,
+    help="Specific graph URI(s) to query (optional)",
+)
+@click.option("--output-dir", default=".", help="Output directory")
+@click.option(
+    "--dataset-name",
+    help="Custom dataset name (used in output filenames)",
+)
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["jsonld", "void", "all"]),
+    default="all",
+    help="Export format (default: all)",
+)
+@click.option(
+    "--chunk-size",
+    type=int,
+    default=10_000,
+    help="Pagination page size (default: 10000)",
+)
+@click.option(
+    "--no-counts",
+    is_flag=True,
+    help="Skip triple-count queries (faster)",
+)
+def mine(
+    endpoint: str,
+    graph_uri: tuple[str, ...],
+    output_dir: str,
+    dataset_name: Optional[str],
+    fmt: str,
+    chunk_size: int,
+    no_counts: bool,
+) -> None:
+    r"""Mine RDF schema directly from a SPARQL endpoint.
+
+    Uses lightweight SELECT queries to discover schema patterns:
+    subject_class -> property -> object_class / Literal / Resource.
+
+    This is an alternative to 'extract' that avoids heavy CONSTRUCT
+    queries and VoID-on-the-endpoint overhead.  The primary export
+    is JSON-LD; a VoID Turtle file can also be generated for
+    downstream conversion (LinkML, SHACL, RDF-config) via 'export'.
+
+
+    Example:
+      >>> rdfsolve mine \
+            --endpoint https://sparql.wikipathways.org/sparql/ \
+            --dataset-name wikipathways \
+            --output-dir ./wp_schema
+    """
+    from .miner import SchemaMiner
+
+    click.echo(f"Mining schema from: {endpoint}")
+    if graph_uri:
+        click.echo(f"  Graph URIs: {', '.join(graph_uri)}")
+
+    try:
+        graph_uris = list(graph_uri) if graph_uri else None
+        name = dataset_name or "schema"
+
+        miner = SchemaMiner(
+            endpoint_url=endpoint,
+            graph_uris=graph_uris,
+            chunk_size=chunk_size,
+            counts=not no_counts,
+        )
+        schema = miner.mine(dataset_name=name)
+
+        click.echo(
+            f"OK {len(schema.patterns)} patterns "
+            f"({len(schema.get_classes())} classes, "
+            f"{len(schema.get_properties())} properties)"
+        )
+
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # JSON-LD export
+        if fmt in ("jsonld", "all"):
+            jsonld_file = output_path / f"{name}_schema.jsonld"
+            with open(jsonld_file, "w") as f:
+                json.dump(schema.to_jsonld(), f, indent=2)
+            click.echo(f"OK JSON-LD:  {jsonld_file}")
+
+        # VoID Turtle export
+        if fmt in ("void", "all"):
+            void_file = output_path / f"{name}_void.ttl"
+            void_graph = schema.to_void_graph()
+            void_graph.serialize(
+                destination=str(void_file), format="turtle",
+            )
+            click.echo(
+                f"OK VoID:     {void_file} "
+                f"({len(void_graph)} triples)"
+            )
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
+@main.command("mine-all")
+@click.option(
+    "--sources",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to sources CSV file (columns: dataset_name, endpoint_url, graph_uri, use_graph)",
+)
+@click.option("--output-dir", default=".", help="Output directory")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["jsonld", "void", "all"]),
+    default="all",
+    help="Export format (default: all)",
+)
+@click.option(
+    "--chunk-size",
+    type=int,
+    default=10_000,
+    help="Pagination page size (default: 10000)",
+)
+@click.option(
+    "--no-counts",
+    is_flag=True,
+    help="Skip triple-count queries (faster)",
+)
+@click.option(
+    "--timeout",
+    type=float,
+    default=120.0,
+    help="HTTP timeout per request in seconds (default: 120)",
+)
+def mine_all(
+    sources: str,
+    output_dir: str,
+    fmt: str,
+    chunk_size: int,
+    no_counts: bool,
+    timeout: float,
+) -> None:
+    r"""Mine schemas for all sources in a CSV file.
+
+    Reads the sources CSV and runs the miner for each endpoint.
+    Results are written to the output directory as
+    ``{dataset_name}_schema.jsonld`` and/or ``{dataset_name}_void.ttl``.
+
+    The CSV must have columns: dataset_name, endpoint_url, graph_uri,
+    use_graph. Rows without an endpoint_url are skipped.
+
+
+    Example:
+      >>> rdfsolve mine-all \
+            --sources data/sources.csv \
+            --output-dir ./mined_schemas
+    """
+    from .api import mine_all_sources
+
+    click.echo(f"Mining all sources from: {sources}")
+    click.echo(f"Output directory: {output_dir}")
+
+    def _on_progress(
+        name: str, idx: int, total: int,
+        error: str | None,
+    ) -> None:
+        if error == "skipped":
+            click.echo(
+                f"  [{idx}/{total}] SKIP {name} "
+                f"(no endpoint)"
+            )
+        elif error:
+            click.echo(
+                f"  [{idx}/{total}] FAIL {name}: {error}",
+                err=True,
+            )
+        else:
+            click.echo(
+                f"  [{idx}/{total}] OK   {name}"
+            )
+
+    try:
+        result = mine_all_sources(
+            sources_csv=sources,
+            output_dir=output_dir,
+            fmt=fmt,
+            chunk_size=chunk_size,
+            timeout=timeout,
+            counts=not no_counts,
+            on_progress=_on_progress,
+        )
+
+        click.echo("\n" + "=" * 50)
+        click.echo(f"Succeeded: {len(result['succeeded'])}")
+        click.echo(f"Failed:    {len(result['failed'])}")
+        click.echo(f"Skipped:   {len(result['skipped'])}")
+
+        if result["failed"]:
+            click.echo("\nFailed datasets:")
+            for entry in result["failed"]:
+                click.echo(
+                    f"  • {entry['dataset']}: "
+                    f"{entry['error'][:80]}"
+                )
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)

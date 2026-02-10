@@ -1,0 +1,67 @@
+{
+  "@context": {
+    "sio": "http://semanticscience.org/resource/SIO_",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "cito": "http://purl.org/spar/cito/"
+  },
+  "@graph": [
+    {
+      "@id": "sio:010000",
+      "skos:altLabel": {
+        "@type": "xsd:string"
+      },
+      "skos:prefLabel": {
+        "@type": "xsd:string"
+      },
+      "dcterms:identifier": {
+        "@type": "xsd:string"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:isDiscussedBy": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "vocabulary:Taxonomy",
+      "skos:prefLabel": {
+        "@type": "xsd:string"
+      },
+      "dcterms:identifier": {
+        "@type": "xsd:string"
+      },
+      "skos:altLabel": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:isDiscussedBy": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      }
+    }
+  ],
+  "@about": {
+    "generated_by": "rdfsolve 0.0.1",
+    "generated_at": "2026-02-09T15:08:41.473022+00:00",
+    "endpoint": "https://idsm.elixir-czech.cz/sparql/endpoint/idsm",
+    "dataset_name": "pubchem.taxonomy",
+    "graph_uris": [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy"
+    ],
+    "pattern_count": 12,
+    "strategy": "miner"
+  }
+}

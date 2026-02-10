@@ -1,0 +1,240 @@
+{
+  "@context": {
+    "sio": "http://semanticscience.org/resource/SIO_",
+    "bao": "http://www.bioassayontology.org/bao#BAO_",
+    "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+    "biopaxleve": "http://www.biopax.org/release/biopax-level3.owl#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "resource": "http://semanticscience.org/resource/",
+    "ro": "http://purl.obolibrary.org/obo/RO_",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "cito": "http://purl.org/spar/cito/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "uniprot.core": "http://purl.uniprot.org/core/"
+  },
+  "@graph": [
+    {
+      "@id": "sio:010035",
+      "bao:0002870": [
+        {
+          "@id": "sio:001383"
+        },
+        {
+          "@id": "vocabulary:GeneSymbol"
+        }
+      ],
+      "sio:000558": [
+        {
+          "@id": "vocabulary:Gene"
+        },
+        {
+          "@id": "sio:010035"
+        },
+        {
+          "@id": "biopaxleve:Gene"
+        }
+      ],
+      "skos:prefLabel": {
+        "@type": "xsd:string"
+      },
+      "dcterms:identifier": {
+        "@type": "xsd:string"
+      },
+      "dcterms:title": {
+        "@type": "xsd:string"
+      },
+      "resource:gene-symbol": {
+        "@type": "xsd:string"
+      },
+      "skos:altLabel": {
+        "@type": "xsd:string"
+      },
+      "dcterms:alternative": {
+        "@type": "xsd:string"
+      },
+      "biopaxleve:organism": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:isDiscussedBy": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      },
+      "ro:0000056": {
+        "@id": "rdfs:Resource"
+      },
+      "ro:0001025": {
+        "@id": "rdfs:Resource"
+      },
+      "uniprot.core:organism": {
+        "@id": "rdfs:Resource"
+      },
+      "ro:0000085": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "biopaxleve:Gene",
+      "sio:000558": [
+        {
+          "@id": "sio:010035"
+        },
+        {
+          "@id": "vocabulary:Gene"
+        },
+        {
+          "@id": "biopaxleve:Gene"
+        }
+      ],
+      "bao:0002870": [
+        {
+          "@id": "sio:001383"
+        },
+        {
+          "@id": "vocabulary:GeneSymbol"
+        }
+      ],
+      "skos:altLabel": {
+        "@type": "xsd:string"
+      },
+      "dcterms:identifier": {
+        "@type": "xsd:string"
+      },
+      "resource:gene-symbol": {
+        "@type": "xsd:string"
+      },
+      "skos:prefLabel": {
+        "@type": "xsd:string"
+      },
+      "dcterms:title": {
+        "@type": "xsd:string"
+      },
+      "dcterms:alternative": {
+        "@type": "xsd:string"
+      },
+      "ro:0000085": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:isDiscussedBy": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "ro:0001025": {
+        "@id": "rdfs:Resource"
+      },
+      "ro:0000056": {
+        "@id": "rdfs:Resource"
+      },
+      "uniprot.core:organism": {
+        "@id": "rdfs:Resource"
+      },
+      "biopaxleve:organism": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "vocabulary:Gene",
+      "sio:000558": [
+        {
+          "@id": "vocabulary:Gene"
+        },
+        {
+          "@id": "sio:010035"
+        },
+        {
+          "@id": "biopaxleve:Gene"
+        }
+      ],
+      "bao:0002870": [
+        {
+          "@id": "sio:001383"
+        },
+        {
+          "@id": "vocabulary:GeneSymbol"
+        }
+      ],
+      "dcterms:title": {
+        "@type": "xsd:string"
+      },
+      "dcterms:identifier": {
+        "@type": "xsd:string"
+      },
+      "resource:gene-symbol": {
+        "@type": "xsd:string"
+      },
+      "skos:prefLabel": {
+        "@type": "xsd:string"
+      },
+      "skos:altLabel": {
+        "@type": "xsd:string"
+      },
+      "dcterms:alternative": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "ro:0000085": {
+        "@id": "rdfs:Resource"
+      },
+      "ro:0001025": {
+        "@id": "rdfs:Resource"
+      },
+      "ro:0000056": {
+        "@id": "rdfs:Resource"
+      },
+      "uniprot.core:organism": {
+        "@id": "rdfs:Resource"
+      },
+      "biopaxleve:organism": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:isDiscussedBy": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "sio:001383",
+      "sio:000300": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "vocabulary:GeneSymbol",
+      "sio:000300": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    }
+  ],
+  "@about": {
+    "generated_by": "rdfsolve 0.0.1",
+    "generated_at": "2026-02-09T15:12:56.553506+00:00",
+    "endpoint": "https://idsm.elixir-czech.cz/sparql/endpoint/idsm",
+    "dataset_name": "pubchem.gene",
+    "graph_uris": [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/gene"
+    ],
+    "pattern_count": 61,
+    "strategy": "miner"
+  }
+}

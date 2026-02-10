@@ -1,0 +1,884 @@
+{
+  "@context": {
+    "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+    "resource": "http://semanticscience.org/resource/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "bao": "http://www.bioassayontology.org/bao#BAO_",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "sio": "http://semanticscience.org/resource/SIO_",
+    "cito": "http://purl.org/spar/cito/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "iao": "http://purl.obolibrary.org/obo/IAO_"
+  },
+  "@graph": [
+    {
+      "@id": "vocabulary:Endpoint",
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000034",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000186",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000187",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000188",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000189",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000190",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000192",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000194",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000349",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000477",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002117",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002144",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002145",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002146",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002162",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002862",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002877",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002878",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002879",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002880",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002881",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002882",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002883",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002884",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002886",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0002887",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0003036",
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "vocabulary:hasQualifier": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:float"
+      },
+      "resource:has-value": {
+        "@type": "xsd:float"
+      },
+      "sio:000221": {
+        "@id": "rdfs:Resource"
+      },
+      "cito:citesAsDataSource": {
+        "@id": "rdfs:Resource"
+      },
+      "vocabulary:PubChemAssayOutcome": {
+        "@id": "rdfs:Resource"
+      },
+      "resource:has-unit": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "iao:0000136": {
+        "@id": "rdfs:Resource"
+      }
+    }
+  ],
+  "@about": {
+    "generated_by": "rdfsolve 0.0.1",
+    "generated_at": "2026-02-09T15:09:42.343952+00:00",
+    "endpoint": "https://idsm.elixir-czech.cz/sparql/endpoint/idsm",
+    "dataset_name": "pubchem.endpoint",
+    "graph_uris": [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint"
+    ],
+    "pattern_count": 258,
+    "strategy": "miner"
+  }
+}

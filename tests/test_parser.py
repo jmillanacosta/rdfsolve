@@ -84,6 +84,29 @@ class TestJSONLD:
         jsonld = parser_with_graph.to_jsonld()
         assert "@context" in jsonld
         assert "@graph" in jsonld
+        assert "@about" in jsonld
+
+    def test_to_jsonld_about_section(self, parser_with_graph):
+        """Test @about section contains expected metadata."""
+        jsonld = parser_with_graph.to_jsonld()
+        about = jsonld["@about"]
+        assert "generatedBy" in about
+        assert about["generatedBy"].startswith("rdfsolve ")
+        assert "generatedAt" in about
+        assert "tripleCount" in about
+
+    def test_to_jsonld_about_with_endpoint(self, parser_with_graph):
+        """Test @about section with explicit endpoint URL."""
+        endpoint = "https://sparql.example.org/sparql"
+        jsonld = parser_with_graph.to_jsonld(
+            endpoint_url=endpoint,
+            dataset_name="test_dataset",
+            graph_uris=["http://example.org/graph1"],
+        )
+        about = jsonld["@about"]
+        assert about["endpoint"] == endpoint
+        assert about["datasetName"] == "test_dataset"
+        assert about["graphURIs"] == ["http://example.org/graph1"]
 
 
 class TestLinkML:
@@ -176,6 +199,15 @@ class TestRealDataInterconversion:
         # Check JSON-LD structure
         assert "@context" in result, "Missing @context"
         assert "@graph" in result, "Missing @graph"
+        assert "@about" in result, "Missing @about"
+
+        # Check @about metadata
+        about = result["@about"]
+        assert "generatedBy" in about, "Missing generatedBy"
+        assert about["generatedBy"].startswith("rdfsolve ")
+        assert "generatedAt" in about, "Missing generatedAt"
+        assert "tripleCount" in about, "Missing tripleCount"
+        assert about["tripleCount"] > 0, "tripleCount should be > 0"
 
         # Check context has prefixes
         assert isinstance(result["@context"], dict), "Context should be dict"
@@ -223,6 +255,7 @@ class TestRealDataInterconversion:
 
         assert "@context" in result
         assert "@graph" in result
+        assert "@about" in result
         assert len(result["@graph"]) > 0
 
     def test_api_file_to_linkml(self):

@@ -157,3 +157,56 @@ def is_example_or_metadata(key: Any, value: Any) -> bool:
         return False
 
     return False
+
+
+# ---------------------------------------------------------------------------
+# URI display helpers (used by compose, iri, and backend)
+# ---------------------------------------------------------------------------
+
+
+def get_local_name(uri: str) -> str:
+    """Extract the local name from a URI.
+
+    Examples::
+
+        >>> get_local_name("http://example.org/foo#Bar")
+        'Bar'
+        >>> get_local_name("http://example.org/foo/Bar")
+        'Bar'
+    """
+    if "#" in uri:
+        return uri.split("#")[-1]
+    return uri.rstrip("/").rsplit("/", 1)[-1] if "/" in uri else uri
+
+
+def compact_uri(uri: str, prefixes: Dict[str, str]) -> str:
+    """Compact a URI using the given prefix map.
+
+    Returns ``prefix:localName`` if a match is found, otherwise the
+    original URI.
+    """
+    for pfx, ns in prefixes.items():
+        if uri.startswith(ns):
+            return f"{pfx}:{uri[len(ns):]}"
+    return uri
+
+
+def expand_curie(curie: str, prefixes: Dict[str, str]) -> str:
+    """Expand a CURIE (prefix:local) to a full URI."""
+    if ":" not in curie or curie.startswith("http"):
+        return curie
+    pfx, local = curie.split(":", 1)
+    ns = prefixes.get(pfx)
+    return f"{ns}{local}" if ns else curie
+
+
+def shorten_for_display(
+    uri: str,
+    prefixes: Optional[Dict[str, str]] = None,
+) -> str:
+    """Shorten a URI for display — try CURIE first, then local name."""
+    if prefixes:
+        compact = compact_uri(uri, prefixes)
+        if compact != uri:
+            return compact
+    return get_local_name(uri)

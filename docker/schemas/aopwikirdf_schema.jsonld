@@ -1,0 +1,1331 @@
+{
+  "@context": {
+    "virtrdf": "http://www.openlinksw.com/schemas/virtrdf#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "aopo": "http://aopkb.org/aop_ontology#",
+    "edam.data": "http://edamontology.org/data_",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "sparqlserv": "http://www.w3.org/ns/sparql-service-description#",
+    "pato": "http://purl.obolibrary.org/obo/PATO_",
+    "go": "http://purl.obolibrary.org/obo/GO_",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "void": "http://rdfs.org/ns/void#",
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "ncit": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#",
+    "cheminf": "http://semanticscience.org/resource/CHEMINF_",
+    "dcterms": "http://purl.org/dc/terms/",
+    "ncbitaxon": "http://purl.bioontology.org/ontology/NCBITAXON/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "pav": "http://purl.org/pav/",
+    "mmo": "http://purl.obolibrary.org/obo/MMO_",
+    "edam.operation": "http://edamontology.org/operation_",
+    "owl": "http://www.w3.org/2002/07/owl#"
+  },
+  "@graph": [
+    {
+      "@id": "virtrdf:QuadMapFormat",
+      "virtrdf:qmfSuperFormats": {
+        "@id": "virtrdf:array-of-QuadMapFormat"
+      },
+      "virtrdf:inheritFrom": {
+        "@id": "virtrdf:QuadMapFormat"
+      },
+      "virtrdf:qmfSubFormatForRefs": {
+        "@id": "virtrdf:QuadMapFormat"
+      },
+      "virtrdf:qmfName": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfLongTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfSqlvalTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfBoolTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfIsrefOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfIsuriOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfIsblankOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfIslitOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmf01uriOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmf01blankOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfLongOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfSqlvalOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfDatatypeOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfLanguageOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfBoolOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfIidOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfUriOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfStrsqlvalOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfShortOfTypedsqlvalTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfShortOfSqlvalTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfShortOfLongTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfShortOfUriTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfIsBijection": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfMapsOnlyNullToNull": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfIsStable": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfIsSubformatOfLong": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfIsSubformatOfLongWhenRef": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfCmpFuncName": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfTypeminTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfTypemaxTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfColumnCount": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfOkForAnySqlvalue": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfUriIdOffset": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfSparqlEbvTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfSparqlEbvOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfExistingShortOfTypedsqlvalTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfExistingShortOfSqlvalTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfExistingShortOfLongTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfExistingShortOfUriTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfIsSubformatOfLongWhenEqToSql": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfWrapDistinct": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfIsnumericOfShortTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfShortOfNiceSqlvalTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfDtpOfNiceSqlval": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfHasCheapSqlval": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmfDatatypeTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfLanguageTmpl": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfCustomString1": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfValRange-rvrLanguage": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmfValRange-rvrDatatype": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "virtrdf:qmfValRange-rvrRestrictions": {
+        "@id": "rdfs:Resource"
+      },
+      "virtrdf:noInherit": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:QuadStorage",
+      "virtrdf:qsUserMaps": {
+        "@id": "virtrdf:array-of-QuadMap"
+      },
+      "virtrdf:qsDefaultMap": {
+        "@id": "virtrdf:QuadMap"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "virtrdf:qsMatchingFlags": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:QuadMap",
+      "virtrdf:qmGraphMap": {
+        "@id": "virtrdf:QuadMapValue"
+      },
+      "virtrdf:qmSubjectMap": {
+        "@id": "virtrdf:QuadMapValue"
+      },
+      "virtrdf:qmPredicateMap": {
+        "@id": "virtrdf:QuadMapValue"
+      },
+      "virtrdf:qmObjectMap": {
+        "@id": "virtrdf:QuadMapValue"
+      },
+      "virtrdf:qmTableName": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "virtrdf:qmMatchingFlags": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:array-of-QuadMapFormat",
+      "rdf:_1": {
+        "@id": "virtrdf:QuadMapFormat"
+      },
+      "rdf:_2": {
+        "@id": "virtrdf:QuadMapFormat"
+      },
+      "rdf:_3": {
+        "@id": "virtrdf:QuadMapFormat"
+      },
+      "rdf:_4": {
+        "@id": "virtrdf:QuadMapFormat"
+      },
+      "rdf:_5": {
+        "@id": "virtrdf:QuadMapFormat"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:QuadMapValue",
+      "virtrdf:qmvATables": {
+        "@id": "virtrdf:array-of-QuadMapATable"
+      },
+      "virtrdf:qmvColumns": {
+        "@id": "virtrdf:array-of-QuadMapColumn"
+      },
+      "virtrdf:qmvFormat": {
+        "@id": "virtrdf:QuadMapFormat"
+      },
+      "virtrdf:qmvFText": {
+        "@id": "virtrdf:QuadMapFText"
+      },
+      "virtrdf:qmvGeo": {
+        "@id": "virtrdf:QuadMapFText"
+      },
+      "virtrdf:qmvTableName": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmvColumnsFormKey": {
+        "@type": "xsd:integer"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:array-of-QuadMapATable",
+      "rdf:_1": {
+        "@id": "virtrdf:QuadMapATable"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:array-of-QuadMapColumn",
+      "rdf:_1": {
+        "@id": "virtrdf:QuadMapColumn"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:QuadMapFText",
+      "virtrdf:qmvftConds": {
+        "@id": "virtrdf:array-of-string"
+      },
+      "virtrdf:qmvftColumnName": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmvftXmlIndex": {
+        "@type": "xsd:integer"
+      },
+      "virtrdf:qmvftAlias": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmvftTableName": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "aopo:KeyEvent",
+      "aopo:hasBiologicalEvent": {
+        "@id": "aopo:BiologicalEvent"
+      },
+      "edam.data:1025": [
+        {
+          "@id": "edam.data:1025"
+        },
+        {
+          "@id": "edam.data:2298"
+        }
+      ],
+      "go:0008150": [
+        {
+          "@id": "go:0008150"
+        },
+        {
+          "@id": "pato:0001241"
+        }
+      ],
+      "pato:0001241": [
+        {
+          "@id": "go:0008150"
+        },
+        {
+          "@id": "pato:0001241"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@type": "xsd:string"
+        }
+      ],
+      "rdfs:seeAlso": {
+        "@id": "aopo:KeyEvent"
+      },
+      "dc:identifier": {
+        "@id": "aopo:KeyEvent"
+      },
+      "foaf:page": {
+        "@id": "aopo:KeyEvent"
+      },
+      "ncbitaxon:131567": [
+        {
+          "@id": "ncbitaxon:131567"
+        },
+        {
+          "@type": "xsd:string"
+        }
+      ],
+      "aopo:CellTypeContext": [
+        {
+          "@id": "pato:0001241"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@type": "xsd:string"
+        }
+      ],
+      "aopo:OrganContext": [
+        {
+          "@id": "pato:0001241"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@type": "xsd:string"
+        }
+      ],
+      "dcterms:isPartOf": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "dc:description": {
+        "@type": "xsd:string"
+      },
+      "aopo:LifeStageContext": {
+        "@type": "xsd:string"
+      },
+      "ncit:C25664": {
+        "@type": "xsd:string"
+      },
+      "mmo:0000000": {
+        "@type": "xsd:string"
+      },
+      "pato:0000001": {
+        "@type": "xsd:string"
+      },
+      "pato:0000047": {
+        "@type": "xsd:string"
+      },
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "dcterms:alternative": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "edam.data:1025",
+      "skos:exactMatch": [
+        {
+          "@id": "edam.data:1027"
+        },
+        {
+          "@id": "edam.data:1025"
+        },
+        {
+          "@id": "edam.data:1033"
+        },
+        {
+          "@id": "edam.data:2291"
+        }
+      ],
+      "edam.data:1027": {
+        "@type": "xsd:string"
+      },
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "edam.data:1033": {
+        "@type": "xsd:string"
+      },
+      "edam.data:2291": {
+        "@type": "xsd:string"
+      },
+      "edam.data:2298": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      },
+      "owl:sameAs": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "edam.data:2298",
+      "skos:exactMatch": [
+        {
+          "@id": "edam.data:1027"
+        },
+        {
+          "@id": "edam.data:1025"
+        },
+        {
+          "@id": "edam.data:1033"
+        },
+        {
+          "@id": "edam.data:2291"
+        }
+      ],
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "edam.data:2298": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "sparqlserv:Service",
+      "sparqlserv:endpoint": {
+        "@id": "sparqlserv:Service"
+      },
+      "sparqlserv:defaultDataset": {
+        "@id": "sparqlserv:Dataset"
+      },
+      "dcterms:description": {
+        "@type": "xsd:string"
+      },
+      "dcterms:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "sparqlserv:feature": {
+        "@id": "rdfs:Resource"
+      },
+      "sparqlserv:resultFormat": {
+        "@id": "rdfs:Resource"
+      },
+      "sparqlserv:supportedLanguage": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "aopo:KeyEventRelationship",
+      "edam.data:1025": [
+        {
+          "@id": "edam.data:1025"
+        },
+        {
+          "@id": "edam.data:2298"
+        }
+      ],
+      "aopo:has_downstream_key_event": {
+        "@id": "aopo:KeyEvent"
+      },
+      "aopo:has_upstream_key_event": {
+        "@id": "aopo:KeyEvent"
+      },
+      "rdfs:seeAlso": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "dc:identifier": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "dcterms:isPartOf": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "foaf:page": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "dcterms:created": {
+        "@type": "xsd:string"
+      },
+      "dcterms:modified": {
+        "@type": "xsd:string"
+      },
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "dc:description": {
+        "@type": "xsd:string"
+      },
+      "ncit:C71478": {
+        "@type": "xsd:string"
+      },
+      "ncit:C80263": {
+        "@type": "xsd:string"
+      },
+      "edam.data:2042": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "pato:0001241",
+      "skos:exactMatch": [
+        {
+          "@id": "edam.data:1027"
+        },
+        {
+          "@id": "edam.data:1025"
+        },
+        {
+          "@id": "edam.data:2291"
+        },
+        {
+          "@id": "edam.data:2298"
+        }
+      ],
+      "dc:identifier": [
+        {
+          "@id": "go:0008150"
+        },
+        {
+          "@id": "pato:0001241"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        }
+      ],
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "go:0008150",
+      "dc:identifier": [
+        {
+          "@id": "go:0008150"
+        },
+        {
+          "@id": "pato:0001241"
+        }
+      ],
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "aopo:BiologicalEvent",
+      "aopo:hasProcess": [
+        {
+          "@id": "go:0008150"
+        },
+        {
+          "@id": "pato:0001241"
+        }
+      ],
+      "aopo:hasObject": [
+        {
+          "@id": "go:0008150"
+        },
+        {
+          "@id": "pato:0001241"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        },
+        {
+          "@type": "xsd:string"
+        }
+      ],
+      "aopo:hasAction": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "void:Dataset",
+      "dcat:downloadURL": [
+        {
+          "@id": "void:Dataset"
+        },
+        {
+          "@id": "void:Linkset"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "dcterms:modified": {
+        "@type": "xsd:date"
+      },
+      "dc:description": {
+        "@type": "xsd:string"
+      },
+      "pav:importedOn": {
+        "@type": "xsd:string"
+      },
+      "pav:createdOn": [
+        {
+          "@type": "xsd:string"
+        },
+        {
+          "@type": "xsd:date"
+        }
+      ],
+      "pav:createdWith": [
+        {
+          "@type": "xsd:string"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "dcterms:accuralPeriodicity": {
+        "@id": "rdfs:Resource"
+      },
+      "pav:createdBy": {
+        "@id": "rdfs:Resource"
+      },
+      "foaf:homepage": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "void:Linkset",
+      "dcat:downloadURL": [
+        {
+          "@id": "void:Dataset"
+        },
+        {
+          "@id": "void:Linkset"
+        },
+        {
+          "@id": "rdfs:Resource"
+        }
+      ],
+      "dc:description": {
+        "@type": "xsd:string"
+      },
+      "pav:importedOn": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "aopo:AdverseOutcomePathway",
+      "aopo:has_adverse_outcome": {
+        "@id": "aopo:KeyEvent"
+      },
+      "aopo:has_key_event": {
+        "@id": "aopo:KeyEvent"
+      },
+      "aopo:has_molecular_initiating_event": {
+        "@id": "aopo:KeyEvent"
+      },
+      "ncit:C54571": {
+        "@id": "ncit:C54571"
+      },
+      "rdfs:seeAlso": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "dc:identifier": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "aopo:has_key_event_relationship": {
+        "@id": "aopo:KeyEventRelationship"
+      },
+      "foaf:page": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "dcterms:created": {
+        "@type": "xsd:string"
+      },
+      "dcterms:modified": {
+        "@type": "xsd:string"
+      },
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "dc:description": {
+        "@type": "xsd:string"
+      },
+      "aopo:AopContext": {
+        "@type": "xsd:string"
+      },
+      "aopo:LifeStageContext": {
+        "@type": "xsd:string"
+      },
+      "aopo:has_evidence": {
+        "@type": "xsd:string"
+      },
+      "ncit:C25217": {
+        "@type": "xsd:string"
+      },
+      "ncit:C48192": {
+        "@type": "xsd:string"
+      },
+      "ncit:C25688": {
+        "@type": "xsd:string"
+      },
+      "ncit:C25725": {
+        "@type": "xsd:string"
+      },
+      "pato:0000047": {
+        "@type": "xsd:string"
+      },
+      "dc:creator": {
+        "@type": "xsd:string"
+      },
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "dcterms:abstract": {
+        "@type": "xsd:string"
+      },
+      "dcterms:alternative": {
+        "@type": "xsd:string"
+      },
+      "edam.operation:3799": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "ncit:C54571",
+      "dc:identifier": {
+        "@id": "ncit:C54571"
+      },
+      "foaf:page": {
+        "@id": "ncit:C54571"
+      },
+      "dcterms:isPartOf": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "aopo:has_chemical_entity": [
+        {
+          "@id": "cheminf:000000"
+        },
+        {
+          "@id": "cheminf:000446"
+        },
+        {
+          "@type": "xsd:string"
+        }
+      ],
+      "dcterms:created": {
+        "@type": "xsd:string"
+      },
+      "dcterms:modified": {
+        "@type": "xsd:string"
+      },
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "dc:description": {
+        "@type": "xsd:string"
+      },
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000000",
+      "dcterms:isPartOf": {
+        "@id": "ncit:C54571"
+      },
+      "skos:exactMatch": [
+        {
+          "@id": "cheminf:000406"
+        },
+        {
+          "@id": "cheminf:000140"
+        },
+        {
+          "@id": "cheminf:000407"
+        },
+        {
+          "@id": "cheminf:000405"
+        },
+        {
+          "@id": "cheminf:000408"
+        },
+        {
+          "@id": "cheminf:000412"
+        },
+        {
+          "@id": "cheminf:000409"
+        },
+        {
+          "@id": "cheminf:000567"
+        },
+        {
+          "@id": "cheminf:000564"
+        }
+      ],
+      "dc:identifier": [
+        {
+          "@id": "cheminf:000000"
+        },
+        {
+          "@id": "cheminf:000446"
+        }
+      ],
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "dcterms:alternative": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000446": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "cheminf:000059": {
+        "@id": "rdfs:Resource"
+      },
+      "cheminf:000568": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000446",
+      "dcterms:isPartOf": {
+        "@id": "ncit:C54571"
+      },
+      "skos:exactMatch": [
+        {
+          "@id": "cheminf:000406"
+        },
+        {
+          "@id": "cheminf:000140"
+        },
+        {
+          "@id": "cheminf:000407"
+        },
+        {
+          "@id": "cheminf:000405"
+        },
+        {
+          "@id": "cheminf:000408"
+        },
+        {
+          "@id": "cheminf:000412"
+        },
+        {
+          "@id": "cheminf:000409"
+        },
+        {
+          "@id": "cheminf:000567"
+        },
+        {
+          "@id": "cheminf:000564"
+        }
+      ],
+      "dc:identifier": [
+        {
+          "@id": "cheminf:000000"
+        },
+        {
+          "@id": "cheminf:000446"
+        }
+      ],
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "dcterms:alternative": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000446": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "cheminf:000059": {
+        "@id": "rdfs:Resource"
+      },
+      "cheminf:000568": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "aopo:CellTypeContext",
+      "dc:identifier": [
+        {
+          "@id": "pato:0001241"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        }
+      ],
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "aopo:OrganContext",
+      "dc:identifier": [
+        {
+          "@id": "pato:0001241"
+        },
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@id": "aopo:OrganContext"
+        }
+      ],
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "ncbitaxon:131567",
+      "dc:identifier": {
+        "@id": "ncbitaxon:131567"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:QuadMapColumn",
+      "virtrdf:qmvcAlias": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmvcColumnName": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:QuadMapATable",
+      "virtrdf:qmvaAlias": {
+        "@type": "xsd:string"
+      },
+      "virtrdf:qmvaTableName": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "sparqlserv:Dataset",
+      "dcterms:modified": {
+        "@type": "xsd:dateTime"
+      },
+      "dcterms:description": {
+        "@type": "xsd:string"
+      },
+      "dcterms:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "sparqlserv:defaultGraph": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "edam.data:1027",
+      "edam.data:1027": {
+        "@type": "xsd:string"
+      },
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "edam.data:1033",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "edam.data:1033": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "edam.data:2291",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "edam.data:2291": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      },
+      "owl:sameAs": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000407",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000407": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000412",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000412": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000405",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000405": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000406",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000406": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000408",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000408": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000409",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000409": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000564",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000564": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000140",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000140": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "cheminf:000567",
+      "dc:identifier": {
+        "@type": "xsd:string"
+      },
+      "dc:source": {
+        "@type": "xsd:string"
+      },
+      "cheminf:000567": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:array-of-QuadMap",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "virtrdf:array-of-string",
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    }
+  ],
+  "@about": {
+    "generated_by": "rdfsolve 0.0.1",
+    "generated_at": "2026-02-09T15:05:04.394875+00:00",
+    "endpoint": "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/",
+    "dataset_name": "aopwikirdf",
+    "pattern_count": 373,
+    "strategy": "miner"
+  }
+}

@@ -918,3 +918,5 @@ docs/data/schema_extraction/**/*.nq
 
 *.pkl
 *.parquet
+
+deprecated_static_site/*

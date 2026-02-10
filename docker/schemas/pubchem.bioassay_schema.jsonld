@@ -1,0 +1,227 @@
+{
+  "@context": {
+    "sio": "http://semanticscience.org/resource/SIO_",
+    "bao": "http://www.bioassayontology.org/bao#BAO_",
+    "resource": "http://semanticscience.org/resource/",
+    "vocabulary": "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  },
+  "@graph": [
+    {
+      "@id": "sio:001041",
+      "sio:000011": [
+        {
+          "@id": "bao:0000015"
+        },
+        {
+          "@id": "vocabulary:BioAssay"
+        }
+      ],
+      "resource:is-attribute-of": [
+        {
+          "@id": "vocabulary:BioAssay"
+        },
+        {
+          "@id": "bao:0000015"
+        }
+      ],
+      "resource:has-value": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "sio:001167",
+      "resource:is-attribute-of": [
+        {
+          "@id": "bao:0000015"
+        },
+        {
+          "@id": "vocabulary:BioAssay"
+        }
+      ],
+      "sio:000011": [
+        {
+          "@id": "bao:0000015"
+        },
+        {
+          "@id": "vocabulary:BioAssay"
+        }
+      ],
+      "resource:has-value": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "sio:000136",
+      "resource:is-attribute-of": [
+        {
+          "@id": "bao:0000015"
+        },
+        {
+          "@id": "vocabulary:BioAssay"
+        }
+      ],
+      "sio:000011": [
+        {
+          "@id": "bao:0000015"
+        },
+        {
+          "@id": "vocabulary:BioAssay"
+        }
+      ],
+      "resource:has-value": {
+        "@type": "xsd:string"
+      },
+      "sio:000300": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "bao:0000015",
+      "sio:000008": [
+        {
+          "@id": "sio:001041"
+        },
+        {
+          "@id": "sio:000136"
+        },
+        {
+          "@id": "sio:001167"
+        }
+      ],
+      "bao:0001094": [
+        {
+          "@id": "bao:0000015"
+        },
+        {
+          "@id": "vocabulary:BioAssay"
+        }
+      ],
+      "bao:0000540": [
+        {
+          "@id": "bao:0000015"
+        },
+        {
+          "@id": "vocabulary:BioAssay"
+        }
+      ],
+      "bao:0001067": [
+        {
+          "@id": "vocabulary:BioAssay"
+        },
+        {
+          "@id": "bao:0000015"
+        }
+      ],
+      "dcterms:identifier": {
+        "@type": "xsd:string"
+      },
+      "dcterms:title": {
+        "@type": "xsd:string"
+      },
+      "bao:0000209": {
+        "@id": "rdfs:Resource"
+      },
+      "bao:0000210": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "dcterms:source": {
+        "@id": "rdfs:Resource"
+      }
+    },
+    {
+      "@id": "vocabulary:BioAssay",
+      "sio:000008": [
+        {
+          "@id": "sio:001167"
+        },
+        {
+          "@id": "sio:001041"
+        },
+        {
+          "@id": "sio:000136"
+        }
+      ],
+      "bao:0001067": [
+        {
+          "@id": "bao:0000015"
+        },
+        {
+          "@id": "vocabulary:BioAssay"
+        }
+      ],
+      "bao:0001094": [
+        {
+          "@id": "vocabulary:BioAssay"
+        },
+        {
+          "@id": "bao:0000015"
+        }
+      ],
+      "bao:0000540": [
+        {
+          "@id": "bao:0000015"
+        },
+        {
+          "@id": "vocabulary:BioAssay"
+        }
+      ],
+      "dcterms:identifier": {
+        "@type": "xsd:string"
+      },
+      "dcterms:title": {
+        "@type": "xsd:string"
+      },
+      "rdf:type": {
+        "@id": "rdfs:Resource"
+      },
+      "dcterms:source": {
+        "@id": "rdfs:Resource"
+      },
+      "rdfs:seeAlso": {
+        "@id": "rdfs:Resource"
+      },
+      "bao:0000209": {
+        "@id": "rdfs:Resource"
+      },
+      "bao:0000210": {
+        "@id": "rdfs:Resource"
+      }
+    }
+  ],
+  "@about": {
+    "generated_by": "rdfsolve 0.0.1",
+    "generated_at": "2026-02-09T15:13:23.279408+00:00",
+    "endpoint": "https://idsm.elixir-czech.cz/sparql/endpoint/idsm",
+    "dataset_name": "pubchem.bioassay",
+    "graph_uris": [
+      "http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay"
+    ],
+    "pattern_count": 53,
+    "strategy": "miner"
+  }
+}

@@ -1,0 +1,3 @@
+[submodule "frontend"]
+	path = frontend
+	url = /home/javi/rdfsolve_visualization_component/proof-of-concept-js/schema-diagram-ts
