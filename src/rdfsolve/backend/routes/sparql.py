@@ -5,6 +5,7 @@ from __future__ import annotations
 from flask import Blueprint, current_app, jsonify, request
 
 from rdfsolve.backend.services.sparql_service import SparqlService
+from rdfsolve.codegen import execute_sparql_snippet
 
 sparql_bp = Blueprint("sparql", __name__)
 
@@ -37,4 +38,12 @@ def proxy_query():
         variable_map=variable_map,
     )
 
-    return jsonify(result.model_dump())
+    payload = result.model_dump()
+    payload["rdfsolve_code"] = execute_sparql_snippet(
+        query=query,
+        endpoint=endpoint,
+        method=method,
+        timeout=timeout,
+    )
+
+    return jsonify(payload)

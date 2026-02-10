@@ -6,8 +6,8 @@ response caching via :mod:`~rdfsolve.backend.services.cache_service`.
 
 from __future__ import annotations
 
-from rdfsolve.query import QueryResult, execute_sparql
 from rdfsolve.backend.services.cache_service import cache, cache_key
+from rdfsolve.query import QueryResult, execute_sparql
 
 
 class SparqlService:

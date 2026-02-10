@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
 
+from rdfsolve.codegen import export_query_snippet
+
 export_bp = Blueprint("export", __name__)
 
 
@@ -50,6 +52,13 @@ def export_query_jsonld():
             "@type": "sd:Service",
             "sd:endpoint": endpoint,
         }
+
+    result["rdfsolve_code"] = export_query_snippet(
+        query=query,
+        query_type=query_type,
+        prefixes=prefixes,
+        endpoint=endpoint,
+    )
 
     return jsonify(result)
 

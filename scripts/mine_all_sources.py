@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Mine JSON-LD schemas for every source in ``data/sources.csv``.
+r"""Mine JSON-LD schemas for every source in ``data/sources.csv``.
 
 Usage::
 
@@ -83,12 +83,11 @@ def _on_progress(
     name: str, idx: int, total: int, error: str | None,
 ) -> None:
     if error == "skipped":
-        print(f"  [{idx}/{total}] SKIP {name} (no endpoint)")
+        pass
     elif error:
-        print(f"  [{idx}/{total}] FAIL {name}: {error}",
-              file=sys.stderr)
+        pass
     else:
-        print(f"  [{idx}/{total}] OK   {name}")
+        pass
 
 
 def main() -> None:
@@ -101,10 +100,6 @@ def main() -> None:
         force=True,
     )
 
-    print(f"Sources:    {args.sources}")
-    print(f"Output dir: {args.output_dir}")
-    print(f"Format:     {args.format}")
-    print()
 
     result = mine_all_sources(
         sources_csv=args.sources,
@@ -116,16 +111,10 @@ def main() -> None:
         on_progress=_on_progress,
     )
 
-    print()
-    print("=" * 50)
-    print(f"Succeeded: {len(result['succeeded'])}")
-    print(f"Failed:    {len(result['failed'])}")
-    print(f"Skipped:   {len(result['skipped'])}")
 
     if result["failed"]:
-        print("\nFailed datasets:")
-        for entry in result["failed"]:
-            print(f"  • {entry['dataset']}: {entry['error'][:120]}")
+        for _entry in result["failed"]:
+            pass
 
     # Exit with non-zero if anything failed
     if result["failed"]:

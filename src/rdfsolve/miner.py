@@ -37,7 +37,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from rdfsolve.models import (
     AboutMetadata,
@@ -59,7 +59,7 @@ __all__ = [
 # -------------------------------------------------------------------
 
 def _graph_clause(
-    graph_uris: Optional[List[str]],
+    graph_uris: list[str] | None,
 ) -> tuple[str, str]:
     """Return (open, close) strings for an optional GRAPH clause.
 
@@ -78,7 +78,7 @@ def _graph_clause(
 
 
 def _build_typed_object_query(
-    graph_uris: Optional[List[str]],
+    graph_uris: list[str] | None,
 ) -> str:
     """Query 1: typed-object patterns (``?o a ?oc``)."""
     g_open, g_close = _graph_clause(graph_uris)
@@ -95,7 +95,7 @@ WHERE {{
 
 
 def _build_literal_query(
-    graph_uris: Optional[List[str]],
+    graph_uris: list[str] | None,
 ) -> str:
     """Query 2: literal patterns with datatype."""
     g_open, g_close = _graph_clause(graph_uris)
@@ -113,7 +113,7 @@ WHERE {{
 
 
 def _build_untyped_uri_query(
-    graph_uris: Optional[List[str]],
+    graph_uris: list[str] | None,
 ) -> str:
     """Query 3: URI objects that lack an explicit ``rdf:type``."""
     g_open, g_close = _graph_clause(graph_uris)
@@ -131,7 +131,7 @@ WHERE {{
 
 
 def _build_typed_count_query(
-    graph_uris: Optional[List[str]],
+    graph_uris: list[str] | None,
 ) -> str:
     """Count query for typed-object patterns."""
     g_open, g_close = _graph_clause(graph_uris)
@@ -149,7 +149,7 @@ GROUP BY ?sc ?p ?oc"""
 
 
 def _build_literal_count_query(
-    graph_uris: Optional[List[str]],
+    graph_uris: list[str] | None,
 ) -> str:
     """Count query for literal patterns."""
     g_open, g_close = _graph_clause(graph_uris)
@@ -168,7 +168,7 @@ GROUP BY ?sc ?p ?dt"""
 
 
 def _build_untyped_count_query(
-    graph_uris: Optional[List[str]],
+    graph_uris: list[str] | None,
 ) -> str:
     """Count query for untyped-URI patterns."""
     g_open, g_close = _graph_clause(graph_uris)
@@ -212,14 +212,14 @@ class SchemaMiner:
     def __init__(
         self,
         endpoint_url: str,
-        graph_uris: Optional[Union[str, List[str]]] = None,
+        graph_uris: str | list[str] | None = None,
         chunk_size: int = 10_000,
         delay: float = 0.5,
         timeout: float = 120.0,
         counts: bool = True,
     ) -> None:
         self.endpoint_url = endpoint_url
-        self.graph_uris: Optional[List[str]] = (
+        self.graph_uris: list[str] | None = (
             [graph_uris] if isinstance(graph_uris, str)
             else graph_uris
         )
@@ -235,7 +235,7 @@ class SchemaMiner:
 
     def mine(
         self,
-        dataset_name: Optional[str] = None,
+        dataset_name: str | None = None,
     ) -> MinedSchema:
         """Run all queries and return a :class:`MinedSchema`.
 
@@ -244,7 +244,7 @@ class SchemaMiner:
         dataset_name:
             Optional human-readable name attached to the metadata.
         """
-        patterns: List[SchemaPattern] = []
+        patterns: list[SchemaPattern] = []
         t0 = time.monotonic()
 
         # 1. Typed-object patterns
@@ -290,9 +290,9 @@ class SchemaMiner:
 
     def _collect_bindings(
         self, query_template: str,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Paginate through a SELECT query and collect all bindings."""
-        all_bindings: List[Dict[str, Any]] = []
+        all_bindings: list[dict[str, Any]] = []
         for chunk in self._helper.select_chunked(
             query_template,
             chunk_size=self.chunk_size,
@@ -301,11 +301,11 @@ class SchemaMiner:
             all_bindings.extend(chunk)
         return all_bindings
 
-    def _run_typed_object(self) -> List[SchemaPattern]:
+    def _run_typed_object(self) -> list[SchemaPattern]:
         """Run the typed-object SELECT query."""
         q = _build_typed_object_query(self.graph_uris)
         bindings = self._collect_bindings(q)
-        results: List[SchemaPattern] = []
+        results: list[SchemaPattern] = []
         for b in bindings:
             sc = b.get("sc", {}).get("value", "")
             p = b.get("p", {}).get("value", "")
@@ -318,11 +318,11 @@ class SchemaMiner:
                 ))
         return results
 
-    def _run_literal(self) -> List[SchemaPattern]:
+    def _run_literal(self) -> list[SchemaPattern]:
         """Run the literal-property SELECT query."""
         q = _build_literal_query(self.graph_uris)
         bindings = self._collect_bindings(q)
-        results: List[SchemaPattern] = []
+        results: list[SchemaPattern] = []
         for b in bindings:
             sc = b.get("sc", {}).get("value", "")
             p = b.get("p", {}).get("value", "")
@@ -336,11 +336,11 @@ class SchemaMiner:
                 ))
         return results
 
-    def _run_untyped_uri(self) -> List[SchemaPattern]:
+    def _run_untyped_uri(self) -> list[SchemaPattern]:
         """Run the untyped-URI SELECT query."""
         q = _build_untyped_uri_query(self.graph_uris)
         bindings = self._collect_bindings(q)
-        results: List[SchemaPattern] = []
+        results: list[SchemaPattern] = []
         for b in bindings:
             sc = b.get("sc", {}).get("value", "")
             p = b.get("p", {}).get("value", "")
@@ -353,11 +353,11 @@ class SchemaMiner:
         return results
 
     def _enrich_counts(
-        self, patterns: List[SchemaPattern],
-    ) -> List[SchemaPattern]:
+        self, patterns: list[SchemaPattern],
+    ) -> list[SchemaPattern]:
         """Run COUNT queries and merge counts into patterns."""
         # Build lookup: (sc, p, oc) → count
-        counts: Dict[tuple[str, str, str], int] = {}
+        counts: dict[tuple[str, str, str], int] = {}
 
         # Typed-object counts
         try:
@@ -406,7 +406,7 @@ class SchemaMiner:
             logger.warning(f"Untyped-URI count query failed: {e}")
 
         # Merge counts into patterns
-        enriched: List[SchemaPattern] = []
+        enriched: list[SchemaPattern] = []
         for pat in patterns:
             # Try exact key
             if pat.object_class == "Literal":
@@ -436,8 +436,8 @@ class SchemaMiner:
 
 def mine_schema(
     endpoint_url: str,
-    graph_uris: Optional[Union[str, List[str]]] = None,
-    dataset_name: Optional[str] = None,
+    graph_uris: str | list[str] | None = None,
+    dataset_name: str | None = None,
     chunk_size: int = 10_000,
     delay: float = 0.5,
     timeout: float = 120.0,

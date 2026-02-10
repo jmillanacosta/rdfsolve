@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Type
 
 from flask import Flask, jsonify, send_from_directory
 
@@ -18,31 +17,31 @@ def register_error_handlers(app: Flask) -> None:
     """Register consistent JSON error handlers."""
 
     @app.errorhandler(400)
-    def bad_request(exc):  # noqa: WPS430
+    def bad_request(exc):
         return jsonify({"error": str(exc.description)}), 400
 
     @app.errorhandler(404)
-    def not_found(exc):  # noqa: WPS430
+    def not_found(exc):
         return jsonify({"error": "Resource not found"}), 404
 
     @app.errorhandler(502)
-    def bad_gateway(exc):  # noqa: WPS430
+    def bad_gateway(exc):
         return jsonify({
             "error": "Upstream SPARQL endpoint error",
             "details": str(exc.description),
         }), 502
 
     @app.errorhandler(504)
-    def gateway_timeout(exc):  # noqa: WPS430
+    def gateway_timeout(exc):
         return jsonify({"error": "SPARQL endpoint timeout"}), 504
 
     @app.errorhandler(Exception)
-    def unhandled(exc):  # noqa: WPS430
+    def unhandled(exc):
         app.logger.exception("Unhandled exception")
         return jsonify({"error": "Internal server error"}), 500
 
 
-def create_app(config_class: Type[Config] = Config) -> Flask:
+def create_app(config_class: type[Config] = Config) -> Flask:
     """Create and configure the Flask application.
 
     Parameters
@@ -78,16 +77,16 @@ def create_app(config_class: Type[Config] = Config) -> Flask:
     app.config["DB"] = db
 
     @app.teardown_appcontext
-    def _close_db(exc):  # noqa: WPS430
+    def _close_db(exc):
         db.close()
 
     # ── Blueprints ────────────────────────────────────────────────────
-    from rdfsolve.backend.routes.schemas import schemas_bp
-    from rdfsolve.backend.routes.sparql import sparql_bp
-    from rdfsolve.backend.routes.iri import iri_bp
     from rdfsolve.backend.routes.compose import compose_bp
     from rdfsolve.backend.routes.endpoints import endpoints_bp
     from rdfsolve.backend.routes.export import export_bp
+    from rdfsolve.backend.routes.iri import iri_bp
+    from rdfsolve.backend.routes.schemas import schemas_bp
+    from rdfsolve.backend.routes.sparql import sparql_bp
 
     app.register_blueprint(schemas_bp, url_prefix="/api/schemas")
     app.register_blueprint(sparql_bp, url_prefix="/api/sparql")
@@ -101,7 +100,7 @@ def create_app(config_class: Type[Config] = Config) -> Flask:
 
     # ── Health check ──────────────────────────────────────────────────
     @app.route("/api/health")
-    def health():  # noqa: WPS430
+    def health():
         return jsonify({"status": "ok"})
 
     # ── Frontend serving ──────────────────────────────────────────────
@@ -112,11 +111,11 @@ def create_app(config_class: Type[Config] = Config) -> Flask:
             logger.info("Serving frontend from %s", dist)
 
             @app.route("/")
-            def serve_index():  # noqa: WPS430
+            def serve_index():
                 return send_from_directory(str(dist), "index.html")
 
             @app.route("/<path:filename>")
-            def serve_static(filename):  # noqa: WPS430
+            def serve_static(filename):
                 return send_from_directory(str(dist), filename)
         else:
             logger.warning(

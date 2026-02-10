@@ -32,6 +32,7 @@ from .query import QueryResult, ResultCell, execute_sparql
 from .version import VERSION
 
 __all__ = [
+    "VERSION",
     "AboutMetadata",
     "LinkMLSchema",
     "MinedSchema",
@@ -40,7 +41,6 @@ __all__ = [
     "SchemaMiner",
     "SchemaPattern",
     "SchemaTriple",
-    "VERSION",
     "VoidParser",
     "VoidSchema",
     "compose_query_from_paths",

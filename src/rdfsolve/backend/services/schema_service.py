@@ -76,7 +76,7 @@ class SchemaService:
 
         Calls into the ``rdfsolve`` package's :func:`mine_schema` API.
         """
-        from rdfsolve.api import mine_schema  # noqa: WPS433
+        from rdfsolve.api import mine_schema
 
         graph_uris = [graph] if graph else None
 

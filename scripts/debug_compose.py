@@ -38,9 +38,6 @@ prefixes = {
 # SCENARIO 1 — Correct chain: 3 hops, each edge has distinct
 #              source/target pairs (how path-finder SHOULD emit)
 # ══════════════════════════════════════════════════════════════════
-print("=" * 72)
-print("SCENARIO 1: Correct 3-hop chain (distinct source/target per edge)")
-print("=" * 72)
 
 chain_path = {
     "edges": [
@@ -74,23 +71,12 @@ result1 = compose_query_from_paths(
         "limit": 100,
     },
 )
-print(result1["query"])
-print()
-print(f"variable_map: {result1['variable_map']}")
-print()
 
 
 # ══════════════════════════════════════════════════════════════════
 # SCENARIO 2 — Fan/star: same ?interaction and ?pathway, multiple
 #              predicates between them (NOT a chain)
 # ══════════════════════════════════════════════════════════════════
-print("=" * 72)
-print("SCENARIO 2: Fan pattern — same two vars, multiple predicates")
-print("=" * 72)
-print("  Expected: ?interaction pred1 ?pathway .")
-print("            ?interaction pred2 ?pathway .")
-print("  (reuse same variables, different predicates)")
-print()
 
 # If we model this as separate single-edge paths we get fresh vars
 # each time — that's the current (broken) behavior for fan patterns
@@ -118,19 +104,12 @@ result2 = compose_query_from_paths(
         "limit": 100,
     },
 )
-print(result2["query"])
-print()
-print(f"variable_map: {result2['variable_map']}")
-print()
 
 # ══════════════════════════════════════════════════════════════════
 # ANALYSIS
 # ══════════════════════════════════════════════════════════════════
-print("=" * 72)
-print("ANALYSIS")
-print("=" * 72)
 
-for label, result in [("1 (chain)", result1), ("2 (fan)", result2)]:
+for _label, result in [("1 (chain)", result1), ("2 (fan)", result2)]:
     lines = result["query"].split("\n")
     pats = [
         ln for ln in lines
@@ -140,14 +119,4 @@ for label, result in [("1 (chain)", result1), ("2 (fan)", result2)]:
         ln for ln in lines
         if " a " in ln and ln.strip().startswith("?")
     ]
-    print(
-        f"Scenario {label}: "
-        f"{len(pats)} triple patterns, "
-        f"{len(types)} type assertions, "
-        f"{len(result['variable_map'])} variables"
-    )
 
-print()
-print("BUG in Scenario 2: each single-edge path creates FRESH vars")
-print("  ?interaction + ?pathway  vs  ?interaction_1 + ?pathway_1")
-print("  They should be the SAME vars since source/target URIs match.")

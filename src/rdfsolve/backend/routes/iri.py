@@ -6,6 +6,7 @@ from flask import Blueprint, current_app, jsonify, request
 
 from rdfsolve.backend.services.endpoint_service import EndpointService
 from rdfsolve.backend.services.iri_service import IriService
+from rdfsolve.codegen import resolve_iris_snippet
 
 iri_bp = Blueprint("iri", __name__)
 
@@ -27,6 +28,10 @@ def resolve_iris():
 
     svc = IriService()
     result = svc.resolve(
+        iris=iris, endpoints=endpoints, timeout=timeout,
+    )
+
+    result["rdfsolve_code"] = resolve_iris_snippet(
         iris=iris, endpoints=endpoints, timeout=timeout,
     )
 

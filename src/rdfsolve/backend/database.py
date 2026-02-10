@@ -13,7 +13,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 _DB_INIT_SQL = """
 CREATE TABLE IF NOT EXISTS schemas (
     id          TEXT PRIMARY KEY,

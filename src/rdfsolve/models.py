@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
-
 # ---------------------------------------------------------------------------
 # Shared URI helpers
 # ---------------------------------------------------------------------------
@@ -423,7 +422,8 @@ class MinedSchema(BaseModel):
         This allows feeding the result into VoidParser for downstream
         conversion to LinkML, SHACL, RDF-config, etc.
         """
-        from rdflib import Graph, Literal as RdfLiteral, Namespace, URIRef
+        from rdflib import Graph, Namespace, URIRef
+        from rdflib import Literal as RdfLiteral
         from rdflib.namespace import RDF, RDFS, XSD
 
         VOID = Namespace("http://rdfs.org/ns/void#")

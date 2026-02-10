@@ -1,6 +1,6 @@
 """SPARQL query composition from diagram paths — pure-library module.
 
-Mirrors the frontend ``SPARQLComposer.generateFromPaths()`` logic:
+Canonical implementation of query composition from diagram paths:
 
 * Each node position gets a fresh variable named after its URI local name.
 * Duplicate variables get suffixed: ``protein``, ``protein_1``, ``protein_2``.
@@ -93,32 +93,43 @@ def compose_query_from_paths(
 
         for ei, edge in enumerate(edges):
             is_forward = edge.get("is_forward", True)
-            real_subject = (
-                edge["source"] if is_forward else edge["target"]
-            )
-            real_object = (
-                edge["target"] if is_forward else edge["source"]
-            )
+
+            # In the diagram, edge["source"] is always the node the
+            # user dragged FROM and edge["target"] is always the node
+            # the user dragged TO.  ``is_forward`` tells us whether
+            # the RDF predicate runs in the same direction.
+            #
+            # Chain logic: position_vars tracks the *diagram*
+            # positions (source → target → target → …).  The first
+            # edge contributes both source and target; subsequent
+            # edges only contribute a new target (their source is the
+            # previous edge's target — already in position_vars).
 
             if ei == 0:
-                # First node of the path: reuse if we've seen this
-                # URI before (fan pattern); otherwise create fresh.
-                position_vars.append(reuse_or_fresh(real_subject))
+                # First position: the source node of the first edge.
+                position_vars.append(
+                    reuse_or_fresh(edge["source"])
+                )
 
-            # For intermediate / tail nodes inside a chain we always
-            # create fresh variables so that reflexive edges
-            # (e.g. Protein → Protein) get distinct vars.
-            # HOWEVER, for the very last node of a single-edge path
-            # we also try to reuse — this is the other half of the
-            # fan pattern (both source AND target should match).
+            # Second position of this edge = the target node.
             if len(edges) == 1:
-                # Single-edge path → reuse target too
-                position_vars.append(reuse_or_fresh(real_object))
+                # Single-edge path → reuse target too (fan pattern).
+                position_vars.append(
+                    reuse_or_fresh(edge["target"])
+                )
             else:
-                position_vars.append(fresh_var(real_object))
+                position_vars.append(fresh_var(edge["target"]))
 
-            subj_var = position_vars[ei]
-            obj_var = position_vars[ei + 1]
+            # Now build the triple.  The *SPARQL* subject/object
+            # depend on is_forward:
+            #   forward  →  ?source  pred  ?target .
+            #   reverse  →  ?target  pred  ?source .
+            src_var = position_vars[ei]
+            tgt_var = position_vars[ei + 1]
+            if is_forward:
+                subj_var, obj_var = src_var, tgt_var
+            else:
+                subj_var, obj_var = tgt_var, src_var
 
             pred = edge.get("predicate", "")
             pred_sparql = (
@@ -135,20 +146,12 @@ def compose_query_from_paths(
         # rdf:type assertions
         if include_types:
             for pi, v in enumerate(position_vars):
+                # position 0 → source of the first edge
+                # position N → target of edge N-1
                 if pi == 0 and edges:
-                    e = edges[0]
-                    uri = (
-                        e["source"]
-                        if e.get("is_forward", True)
-                        else e["target"]
-                    )
+                    uri = edges[0]["source"]
                 elif pi > 0 and pi - 1 < len(edges):
-                    e = edges[pi - 1]
-                    uri = (
-                        e["target"]
-                        if e.get("is_forward", True)
-                        else e["source"]
-                    )
+                    uri = edges[pi - 1]["target"]
                 else:
                     continue
                 tc = compact_uri(uri, prefixes)

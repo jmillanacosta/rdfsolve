@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -28,7 +27,6 @@ def mine_one(row: dict) -> dict | None:
     endpoint = row["endpoint_url"]
     graph = row["graph_uri"] if row.get("use_graph", "").lower() == "true" else None
 
-    print(f"  Mining {name} from {endpoint} ...")
     try:
         result = mine_schema(
             endpoint=endpoint,
@@ -36,8 +34,7 @@ def mine_one(row: dict) -> dict | None:
             graph=graph,
         )
         return result
-    except Exception as exc:
-        print(f"  ✗ Failed: {exc}", file=sys.stderr)
+    except Exception:
         return None
 
 
@@ -58,7 +55,6 @@ def main() -> None:
     if args.limit:
         rows = rows[: args.limit]
 
-    print(f"Mining {len(rows)} sources → {OUTPUT_DIR}")
 
     success = 0
     for row in rows:
@@ -67,7 +63,6 @@ def main() -> None:
 
         # Skip if already exists
         if outfile.exists():
-            print(f"  Skipping {name} (already exists)")
             success += 1
             continue
 
@@ -75,10 +70,8 @@ def main() -> None:
         if result:
             with open(outfile, "w") as fp:
                 json.dump(result, fp, indent=2)
-            print(f"  ✓ Saved {outfile.name}")
             success += 1
 
-    print(f"\nDone: {success}/{len(rows)} schemas saved to {OUTPUT_DIR}")
 
 
 if __name__ == "__main__":

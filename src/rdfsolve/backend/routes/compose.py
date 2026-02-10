@@ -5,6 +5,7 @@ from __future__ import annotations
 from flask import Blueprint, jsonify, request
 
 from rdfsolve.backend.services.compose_service import ComposeService
+from rdfsolve.codegen import compose_snippet
 
 compose_bp = Blueprint("compose", __name__)
 
@@ -19,5 +20,7 @@ def compose_from_paths():
 
     svc = ComposeService()
     result = svc.compose_from_paths(paths, prefixes, options)
+
+    result["rdfsolve_code"] = compose_snippet(paths, prefixes, options)
 
     return jsonify(result)

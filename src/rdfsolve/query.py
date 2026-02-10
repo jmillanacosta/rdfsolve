@@ -20,7 +20,6 @@ from pydantic import BaseModel, Field
 
 from rdfsolve.sparql_helper import SparqlHelper
 
-
 # ── Result models ─────────────────────────────────────────────────
 
 
