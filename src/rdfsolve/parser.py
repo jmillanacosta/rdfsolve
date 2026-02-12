@@ -980,6 +980,7 @@ class VoidParser:
         schema_name: Optional[str] = None,
         schema_description: Optional[str] = None,
         schema_base_uri: Optional[str] = None,
+        jsonld_override: Optional[Dict[str, Any]] = None,
     ) -> SchemaDefinition:
         """
         Generate LinkML schema directly from JSON-LD representation.
@@ -992,6 +993,9 @@ class VoidParser:
             schema_name: Name for the LinkML schema (used as prefix and default prefix)
             schema_description: Description for the LinkML schema
             schema_base_uri: Base URI for the schema (default: https://w3id.org/{schema_name}/)
+            jsonld_override: If provided, use this JSON-LD dict instead of
+                calling ``to_jsonld()``.  Useful when the caller already has
+                the JSON-LD (e.g. the shapes subset workflow). TODO separate into JSONLD model; new base
 
         Returns:
             LinkML SchemaDefinition with classes based on subjects
@@ -999,7 +1003,7 @@ class VoidParser:
         import re
 
         # Get JSON-LD as source of truth
-        jsonld = self.to_jsonld(filter_void_nodes)
+        jsonld = jsonld_override if jsonld_override is not None else self.to_jsonld(filter_void_nodes)
 
         # Generate schema name from dataset if not provided
         if not schema_name:

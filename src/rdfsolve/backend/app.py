@@ -86,6 +86,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     from rdfsolve.backend.routes.export import export_bp
     from rdfsolve.backend.routes.iri import iri_bp
     from rdfsolve.backend.routes.schemas import schemas_bp
+    from rdfsolve.backend.routes.shapes import shapes_bp
     from rdfsolve.backend.routes.sparql import sparql_bp
 
     app.register_blueprint(schemas_bp, url_prefix="/api/schemas")
@@ -94,6 +95,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.register_blueprint(compose_bp, url_prefix="/api/compose")
     app.register_blueprint(endpoints_bp, url_prefix="/api/endpoints")
     app.register_blueprint(export_bp, url_prefix="/api/export")
+    app.register_blueprint(shapes_bp, url_prefix="/api/shapes")
 
     # ── Error handlers ────────────────────────────────────────────────
     register_error_handlers(app)
