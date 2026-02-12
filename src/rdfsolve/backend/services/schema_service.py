@@ -109,6 +109,7 @@ class SchemaService:
 
         Returns the number of schemas imported.
         """
+        imported_ids: set[str] = set()
         count = 0
         for path in sorted(Path(directory).glob("*.jsonld")):
             try:
@@ -118,6 +119,15 @@ class SchemaService:
                 continue
             about = data.get("@about", data.get("@metadata", {}))
             name = about.get("dataset_name", path.stem)
-            self.save_schema(name, data)
+            sid = self.save_schema(name, data)
+            imported_ids.add(sid)
             count += 1
+
+        # Remove DB entries whose source files no longer exist
+        existing = {s["id"] for s in self.list_schemas()}
+        stale = existing - imported_ids
+        for sid in sorted(stale):
+            logger.info("Removing stale schema %s (no file on disk)", sid)
+            self.delete_schema(sid)
+
         return count

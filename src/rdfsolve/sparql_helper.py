@@ -78,6 +78,16 @@ class EndpointTimeoutError(EndpointError):
     pass
 
 
+class EndpointUnhealthyError(EndpointError):
+    """Raised when the endpoint returns a 200/400 with a non-SPARQL body.
+
+    Typical examples: database in recovery mode, backend proxy errors,
+    maintenance pages returned as ``text/plain`` or ``text/html``.
+    """
+
+    pass
+
+
 class QueryError(SparqlHelperError):
     """Raised when the query itself is invalid."""
 
@@ -558,6 +568,55 @@ class SparqlHelper:
         # Catch anything else?
         raise EndpointError("Query failed unexpectedly {purpose}")
 
+    # Known database / backend error fragments that indicate the
+    # endpoint is alive but its backing store is broken.
+    _UNHEALTHY_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "recovery mode",
+        "database system is",
+        "connection refused",
+        "service unavailable",
+        "backend is not available",
+        "server is starting",
+        "too many connections",
+        "out of memory",
+        "psqlexception",
+    )
+
+    def _check_response_health(
+        self,
+        response: requests.Response,
+    ) -> None:
+        """Raise :class:`EndpointUnhealthyError` for deceptive responses.
+
+        Some endpoints return HTTP 200 (or 400) with a plain-text or
+        HTML body that is actually a database / proxy error — not a
+        valid SPARQL result.  Detecting these early prevents silent
+        empty-result bugs and allows callers to handle them
+        gracefully.
+        """
+        ct = (
+            response.headers
+            .get("Content-Type", "")
+            .lower()
+        )
+        body = response.text.strip()
+
+        # If the response is proper SPARQL JSON, nothing to do.
+        if "sparql-results+json" in ct or "application/json" in ct:
+            return
+
+        # Check for known unhealthy body signatures.
+        body_lower = body[:2000].lower()
+        for pat in self._UNHEALTHY_PATTERNS:
+            if pat in body_lower:
+                short = body[:300].replace("\n", " ")
+                raise EndpointUnhealthyError(
+                    f"Endpoint returned unhealthy response "
+                    f"(HTTP {response.status_code}, "
+                    f"{ct or 'no content-type'}): "
+                    f"{short}"
+                )
+
     def _get_query(self, query: str, accept: str) -> str:
         """
         Execute SPARQL query using HTTP GET.
@@ -586,6 +645,7 @@ class SparqlHelper:
             timeout=self.timeout,
         )
         response.raise_for_status()
+        self._check_response_health(response)
 
         return response.text
 
@@ -620,6 +680,7 @@ class SparqlHelper:
             timeout=self.timeout,
         )
         response.raise_for_status()
+        self._check_response_health(response)
 
         return response.text
 
@@ -779,11 +840,21 @@ class SparqlHelper:
                         current_offset,
                         effective_limit,
                     )
+                    t0 = time.monotonic()
                     results = self.select(query, purpose=purpose)
+                    elapsed = time.monotonic() - t0
 
                     bindings = results.get(
                         "results", {},
                     ).get("bindings", [])
+                    logger.debug(
+                        "Chunked %s: offset=%d returned %d "
+                        "rows in %.1fs",
+                        purpose or "query",
+                        current_offset,
+                        len(bindings),
+                        elapsed,
+                    )
                     success = True
                     break  # out of the while
 
@@ -847,9 +918,13 @@ class SparqlHelper:
             total_fetched += chunk_count
             current_offset += chunk_count
 
-            logger.debug(
-                "Fetched chunk: %d results (total: %d, limit: %d)",
-                chunk_count, total_fetched, effective_limit,
+            logger.info(
+                "Chunked %s: fetched %d rows "
+                "(total so far: %d, limit: %d)",
+                purpose or "query",
+                chunk_count,
+                total_fetched,
+                effective_limit,
             )
 
             if chunk_count < effective_limit:

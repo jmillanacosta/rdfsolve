@@ -448,6 +448,13 @@ class MiningReport(BaseModel):
     )
 
     # ── Results summary ────────────────────────────────────────────
+    abort_reason: Optional[str] = Field(
+        None,
+        description=(
+            "If mining was cut short (e.g. endpoint unhealthy), "
+            "the reason is recorded here."
+        ),
+    )
     pattern_count: int = Field(
         0, ge=0, description="Number of schema patterns extracted",
     )

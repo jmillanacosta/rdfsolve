@@ -316,14 +316,19 @@ def _build_batched_typed_object_query(
     class_uris: list[str],
     graph_uris: list[str] | None,
 ) -> str:
-    """Typed-object patterns for a batch of classes."""
+    """Typed-object patterns for a batch of classes.
+
+    The ``VALUES`` clause is placed **inside** the ``GRAPH``
+    block so that the binding is visible to the triple patterns
+    on endpoints that enforce strict scoping (IDSM, QLever, …).
+    """
     g_open, g_close = _graph_clause(graph_uris)
     values = _values_block(class_uris)
     return f"""\
 SELECT DISTINCT ?class ?p ?oc
 WHERE {{
-  {values}
   {g_open}
+    {values}
     ?s a ?class .
     ?s ?p ?o .
     ?o a ?oc .
@@ -335,14 +340,18 @@ def _build_batched_literal_query(
     class_uris: list[str],
     graph_uris: list[str] | None,
 ) -> str:
-    """Literal patterns for a batch of classes."""
+    """Literal patterns for a batch of classes.
+
+    ``VALUES`` is inside the ``GRAPH`` block — see
+    :func:`_build_batched_typed_object_query` for rationale.
+    """
     g_open, g_close = _graph_clause(graph_uris)
     values = _values_block(class_uris)
     return f"""\
 SELECT DISTINCT ?class ?p (DATATYPE(?o) AS ?dt)
 WHERE {{
-  {values}
   {g_open}
+    {values}
     ?s a ?class .
     ?s ?p ?o .
     FILTER(isLiteral(?o))
@@ -354,14 +363,18 @@ def _build_batched_untyped_uri_query(
     class_uris: list[str],
     graph_uris: list[str] | None,
 ) -> str:
-    """Untyped-URI patterns for a batch of classes."""
+    """Untyped-URI patterns for a batch of classes.
+
+    ``VALUES`` is inside the ``GRAPH`` block — see
+    :func:`_build_batched_typed_object_query` for rationale.
+    """
     g_open, g_close = _graph_clause(graph_uris)
     values = _values_block(class_uris)
     return f"""\
 SELECT DISTINCT ?class ?p
 WHERE {{
-  {values}
   {g_open}
+    {values}
     ?s a ?class .
     ?s ?p ?o .
     FILTER(isURI(?o))
@@ -436,6 +449,11 @@ class _ReportCollector:
             )
         phase.items_discovered = items
         phase.error = error
+        self.flush()
+
+    def set_abort_reason(self, reason: str) -> None:
+        """Record why mining was cut short and flush."""
+        self._report.abort_reason = reason
         self.flush()
 
     # ── Finalisation ───────────────────────────────────────────────
@@ -782,19 +800,88 @@ class SchemaMiner:
 
         # Phase 2 — batched per-class pattern discovery
         p2 = self._rc.start_phase("per-class-patterns")
+        patterns, abort_reason = self._run_phase2_batches(
+            classes, self.graph_uris,
+        )
+
+        # ── Ontology-graph fallback ───────────────────────────
+        # If the GRAPH-scoped pass found 0 patterns but Phase 1
+        # discovered classes, the graph is probably an *ontology*
+        # (class definitions only) while instances live in the
+        # default graph or other named graphs.  Retry without the
+        # GRAPH restriction so the instance triple patterns are
+        # visible.
+        if (
+            not patterns
+            and classes
+            and self.graph_uris
+            and abort_reason is None
+        ):
+            logger.warning(
+                "Phase 2 returned 0 patterns with GRAPH <%s> "
+                "— retrying without GRAPH restriction "
+                "(ontology-graph fallback)",
+                ", ".join(self.graph_uris),
+            )
+            patterns, abort_reason = self._run_phase2_batches(
+                classes, None,
+            )
+
+        logger.info(
+            f"  → {len(patterns)} total patterns "
+            f"from {len(classes)} classes"
+        )
+        self._rc.finish_phase(p2, items=len(patterns))
+        if abort_reason:
+            self._rc.set_abort_reason(abort_reason)
+        return patterns
+
+    # ---- Phase 2 batch runner -------------------------------------
+
+    def _run_phase2_batches(
+        self,
+        classes: list[str],
+        graph_uris: list[str] | None,
+    ) -> tuple[list[SchemaPattern], str | None]:
+        """Execute Phase 2 batched queries for *classes*.
+
+        Parameters
+        ----------
+        classes:
+            Class URIs discovered in Phase 1.
+        graph_uris:
+            Graph URIs to wrap queries in a ``GRAPH`` clause.
+            Pass ``None`` to query without graph restriction
+            (needed when the discovery graph is an ontology
+            that contains no instance data).
+
+        Returns
+        -------
+        (patterns, abort_reason)
+            *abort_reason* is ``None`` when all batches succeed.
+        """
         bs = self.class_batch_size
-        n_batches = (len(classes) + bs - 1) // bs
+        total = len(classes)
+        n_batches = (total + bs - 1) // bs
+
+        scope = (
+            f"GRAPH <{', '.join(graph_uris)}>"
+            if graph_uris else "default graph"
+        )
         logger.info(
             "Phase 2: mining patterns in %d batches of "
-            "≤%d classes (%d classes total) …",
-            n_batches, bs, len(classes),
+            "≤%d classes (%d classes total, scope: %s) …",
+            n_batches, bs, total, scope,
         )
+
         patterns: list[SchemaPattern] = []
-        total = len(classes)
+        _MAX_CONSECUTIVE_FAILURES = 5
+        consecutive_failures = 0
+        abort_reason: str | None = None
 
         for batch_idx in range(n_batches):
             batch_start = batch_idx * bs
-            batch = classes[batch_start : batch_start + bs]
+            batch = classes[batch_start:batch_start + bs]
             batch_label = (
                 f"batch {batch_idx + 1}/{n_batches} "
                 f"(classes {batch_start + 1}"
@@ -802,11 +889,13 @@ class SchemaMiner:
             )
             logger.info("  %s", batch_label)
 
+            batch_ok = True  # all 3 queries succeeded
+
             # 2a. Typed-object patterns for this batch
             t0 = time.monotonic()
             try:
                 q = _build_batched_typed_object_query(
-                    batch, self.graph_uris,
+                    batch, graph_uris,
                 )
                 result = self._helper.select(
                     q, purpose="two-phase/typed-object",
@@ -830,6 +919,7 @@ class SchemaMiner:
                             object_class=oc,
                         ))
             except Exception as e:
+                batch_ok = False
                 self._rc.record_query(
                     "two-phase/typed-object",
                     time.monotonic() - t0,
@@ -844,7 +934,7 @@ class SchemaMiner:
             t0 = time.monotonic()
             try:
                 q = _build_batched_literal_query(
-                    batch, self.graph_uris,
+                    batch, graph_uris,
                 )
                 result = self._helper.select(
                     q, purpose="two-phase/literal",
@@ -869,6 +959,7 @@ class SchemaMiner:
                             datatype=dt if dt else None,
                         ))
             except Exception as e:
+                batch_ok = False
                 self._rc.record_query(
                     "two-phase/literal",
                     time.monotonic() - t0,
@@ -883,7 +974,7 @@ class SchemaMiner:
             t0 = time.monotonic()
             try:
                 q = _build_batched_untyped_uri_query(
-                    batch, self.graph_uris,
+                    batch, graph_uris,
                 )
                 result = self._helper.select(
                     q, purpose="two-phase/untyped-uri",
@@ -906,6 +997,7 @@ class SchemaMiner:
                             object_class="Resource",
                         ))
             except Exception as e:
+                batch_ok = False
                 self._rc.record_query(
                     "two-phase/untyped-uri",
                     time.monotonic() - t0,
@@ -916,16 +1008,35 @@ class SchemaMiner:
                     batch_label, e,
                 )
 
+            # ── Consecutive-failure tracking ───────────────────
+            if batch_ok:
+                consecutive_failures = 0
+            else:
+                consecutive_failures += 1
+                logger.warning(
+                    "  ⚠ %d consecutive batch failure(s)",
+                    consecutive_failures,
+                )
+                if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+                    abort_reason = (
+                        f"Endpoint unhealthy: "
+                        f"{_MAX_CONSECUTIVE_FAILURES} "
+                        f"consecutive batch failures "
+                        f"(stopped at {batch_label})"
+                    )
+                    logger.warning(
+                        "Aborting Phase 2: %s — returning "
+                        "%d patterns collected so far",
+                        abort_reason,
+                        len(patterns),
+                    )
+                    break
+
             # Polite delay between batches
             if self.delay > 0:
                 time.sleep(self.delay)
 
-        logger.info(
-            f"  → {len(patterns)} total patterns "
-            f"from {total} classes"
-        )
-        self._rc.finish_phase(p2, items=len(patterns))
-        return patterns
+        return patterns, abort_reason
 
     # ---- private query runners ------------------------------------
 
@@ -950,16 +1061,21 @@ class SchemaMiner:
         effective = chunk_size if chunk_size is not None else self.chunk_size
         all_bindings: list[dict[str, Any]] = []
         has_rc = hasattr(self, "_rc")
+        page = 0
         for chunk in self._helper.select_chunked(
             query_template,
             chunk_size=effective,
             delay_between_chunks=self.delay,
             purpose=purpose,
         ):
+            page += 1
             all_bindings.extend(chunk)
-            # Each chunk is one HTTP round-trip; record it.
             if has_rc:
                 self._rc.record_query(purpose, 0.0)
+            logger.info(
+                "  %s page %d: +%d rows (%d total)",
+                purpose, page, len(chunk), len(all_bindings),
+            )
         return all_bindings
 
     def _run_typed_object(self) -> list[SchemaPattern]:
