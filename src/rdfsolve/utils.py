@@ -5,7 +5,7 @@ This module contains shared utility functions used across the RDFSolve
 library to avoid code duplication between different parsers and processors.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 def resolve_curie(curie: str, prefixes: Dict[str, str]) -> Optional[str]:
@@ -209,4 +209,78 @@ def shorten_for_display(
         compact = compact_uri(uri, prefixes)
         if compact != uri:
             return compact
+    return get_local_name(uri)
+
+
+# ---------------------------------------------------------------------------
+# Label normalization and selection
+# ---------------------------------------------------------------------------
+
+
+def normalize_label(label: str) -> List[str]:
+    """Generate normalized variants of a label for fuzzy SPARQL matching.
+
+    Returns a list of unique variants (case-folded, stripped, title-cased,
+    etc.) that can be used in a ``FILTER`` or ``VALUES`` clause to
+    increase the chance of matching an ``rdfs:label`` / ``dc:title``.
+
+    The function is intentionally modular — add more normalization
+    strategies here and all callers benefit.
+
+    Examples::
+
+        >>> normalize_label("  Homo sapiens  ")
+        ['homo sapiens', 'Homo sapiens', 'Homo Sapiens',
+         'HOMO SAPIENS', 'homo_sapiens']
+    """
+    stripped = label.strip()
+    if not stripped:
+        return []
+
+    variants: list[str] = []
+
+    # 1. Lower-case (canonical form)
+    lower = stripped.lower()
+    variants.append(lower)
+
+    # 2. Original (after stripping whitespace)
+    if stripped != lower:
+        variants.append(stripped)
+
+    # 3. Title-case
+    title = stripped.title()
+    if title not in variants:
+        variants.append(title)
+
+    # 4. Upper-case
+    upper = stripped.upper()
+    if upper not in variants:
+        variants.append(upper)
+
+    # 5. Underscore variant (spaces → underscores, lowered)
+    underscored = lower.replace(" ", "_")
+    if underscored not in variants:
+        variants.append(underscored)
+
+    # 6. CamelCase variant (no spaces)
+    camel = stripped.title().replace(" ", "")
+    if camel not in variants:
+        variants.append(camel)
+
+    return variants
+
+
+def pick_label(
+    rdfs_label: Optional[str],
+    dc_title: Optional[str],
+    uri: str,
+) -> str:
+    """Choose the best human-readable label.
+
+    Priority: ``rdfs:label`` > ``dc:title`` > local name from URI.
+    """
+    if rdfs_label and rdfs_label.strip():
+        return rdfs_label.strip()
+    if dc_title and dc_title.strip():
+        return dc_title.strip()
     return get_local_name(uri)

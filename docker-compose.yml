@@ -7,7 +7,10 @@
 # Usage:
 #   git submodule update --init          # ensure frontend code is present
 #   docker compose up --build            # build & start
-#   open http://localhost:5000           # app is served here
+#   open http://localhost:8000           # app is served here
+#
+# Override the port:
+#   PORT=9000 docker compose up --build
 #
 # To mine more schemas into docker/schemas/:
 #   python scripts/seed_schemas.py --names chembl drugbank
@@ -30,10 +33,11 @@ services:
       - CORS_ORIGINS=*
       - SPARQL_TIMEOUT=60
       - FLASK_DEBUG=0
+      - PORT=${PORT:-8000}
     ports:
-      - "5000:5000"
+      - "${PORT:-8000}:${PORT:-8000}"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')"]
+      test: ["CMD", "python", "-c", "import os,urllib.request; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\",\"8000\")}/api/health')"]
       interval: 10s
       timeout: 5s
       retries: 3

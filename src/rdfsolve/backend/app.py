@@ -137,4 +137,6 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
 
 if __name__ == "__main__":
-    create_app().run(host="0.0.0.0", port=5000, debug=True)
+    app = create_app()
+    port = app.config.get("PORT", Config.PORT)
+    app.run(host="0.0.0.0", port=port, debug=True)

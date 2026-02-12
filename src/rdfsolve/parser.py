@@ -228,7 +228,7 @@ class VoidParser:
 
             # Use SparqlHelper - automatic GET-->POST fallback
             helper = SparqlHelper(endpoint_url)
-            results = helper.select(partition_discovery_query)
+            results = helper.select(partition_discovery_query, purpose="void/partition-discovery")
 
             # Group results by graph URI and collect partition data
             found_graphs: List[str] = []
@@ -452,7 +452,7 @@ class VoidParser:
                 logger.debug("Executing partition query...")
 
                 # SparqlHelper handles GET-->POST fallback automatically
-                results = helper.select(partition_query)
+                results = helper.select(partition_query, purpose="void/partition-detail")
 
                 bindings = results.get("results", {}).get("bindings", [])
                 logger.debug(f"Retrieved {len(bindings)} partition records from {graph_uri}")
@@ -1059,6 +1059,9 @@ class VoidParser:
             logger.warning("No schema triples found in JSON-LD @graph")
             return schema
 
+        # Label map (CURIE → human label) from miner
+        label_map: Dict[str, str] = jsonld.get("_labels", {})
+
         # Collect all classes and properties from the JSON-LD triples
         all_class_names: set[str] = set()
         all_slot_names: set[str] = set()
@@ -1123,9 +1126,15 @@ class VoidParser:
                     # Default to string
                     property_ranges[prop_clean] = "string"
 
-                # Store property description
+                # Store property description (prefer label)
                 if prop_clean not in property_descriptions:
-                    property_descriptions[prop_clean] = f"Property {prop}"
+                    lbl = label_map.get(prop)
+                    if lbl:
+                        property_descriptions[prop_clean] = lbl
+                    else:
+                        property_descriptions[prop_clean] = (
+                            f"Property {prop}"
+                        )
 
         # Detect naming conflicts between classes and slots
         conflicts = all_class_names.intersection(all_slot_names)
@@ -1164,7 +1173,10 @@ class VoidParser:
 
             class_def = ClassDefinition(
                 name=class_name,
-                description=f"Class representing {class_name}",
+                description=label_map.get(
+                    original_class_uris.get(class_name, ""),
+                    f"Class representing {class_name}",
+                ),
                 slots=class_slots,
                 class_uri=class_uri,
             )
@@ -2923,7 +2935,7 @@ WHERE {{
         query = self._replace_graph_clause_placeholder(query_template)
 
         try:
-            results = helper.select(query)
+            results = helper.select(query, purpose="coverage/class")
 
             if streaming:
                 # Return generator for single query case
@@ -3010,7 +3022,7 @@ WHERE {{
 
             try:
                 # Use SparqlHelper - handles GET-->POST fallback automatically
-                results = helper.select(query)
+                results = helper.select(query, purpose="coverage/class-chunked")
                 chunk_results = results["results"]["bindings"]
 
                 # If no results, we've reached the end
@@ -3093,7 +3105,7 @@ WHERE {{
                     current_chunk_size,
                 )
                 # SparqlHelper handles GET-->POST fallback and retries
-                results = helper.select(query)
+                results = helper.select(query, purpose="coverage/property-chunked")
 
                 # Extract bindings
                 bindings = results.get("results", {}).get("bindings", [])
@@ -3446,7 +3458,7 @@ WHERE {{
             query = self._replace_graph_clause_placeholder(pattern_query)
 
             try:
-                results = helper.select(query)
+                results = helper.select(query, purpose="coverage/pattern")
                 if track_queries:
                     total_queries_sent += 1
 
@@ -3699,7 +3711,7 @@ WHERE {{
             query = self._replace_graph_clause_placeholder(count_query)
 
             try:
-                results = helper.select(query)
+                results = helper.select(query, purpose="coverage/entity-count")
 
                 # Initialize all classes in this batch to 0 first
                 for class_uri in batch_uris:
@@ -4116,7 +4128,7 @@ WHERE {{
         query = self._replace_graph_clause_placeholder(literal_props_query)
 
         try:
-            results = helper.select(query)
+            results = helper.select(query, purpose="coverage/literal-props")
             literal_props = []
             for result in results["results"]["bindings"]:
                 prop_uri = result["property"]["value"]
@@ -4147,7 +4159,7 @@ WHERE {{
         query = self._replace_graph_clause_placeholder(untyped_resource_query)
 
         try:
-            results = helper.select(query)
+            results = helper.select(query, purpose="coverage/untyped-resource-props")
             untyped_props = []
             for result in results["results"]["bindings"]:
                 prop_uri = result["property"]["value"]

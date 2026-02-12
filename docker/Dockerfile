@@ -45,8 +45,17 @@ COPY pyproject.toml README.md CITATION.cff LICENSE ./
 COPY src/ src/
 RUN uv pip install --system --no-cache ".[web]"
 
-# Copy seed schemas (pre-mined JSON-LD files)
+# Copy pre-mined seed schemas
+# To refresh these, run locally BEFORE building:
+#   python scripts/mine_all_sources.py \
+#       --output-dir docker/schemas --format jsonld --no-counts
 COPY docker/schemas/ /app/schemas/
+
+# Copy sources CSVs + mining script (available inside container for
+# on-demand re-mining, but NOT run during build)
+COPY data/sources.csv /app/data/sources.csv
+COPY data/qlever.csv /app/data/qlever.csv
+COPY scripts/mine_all_sources.py /app/scripts/mine_all_sources.py
 
 # Copy built frontend from stage 1
 COPY --from=frontend-builder /build/out/ /app/frontend/
@@ -57,15 +66,16 @@ ENV DATABASE_PATH=/app/data/rdfsolve.db \
     FRONTEND_DIST=/app/frontend \
     FLASK_DEBUG=0 \
     CORS_ORIGINS=* \
+    PORT=8000 \
     PYTHONUNBUFFERED=1
 
 # Create data directory for SQLite persistence
 RUN mkdir -p /app/data
 
-EXPOSE 5000
+EXPOSE ${PORT}
 
-CMD ["gunicorn", \
-     "--bind", "0.0.0.0:5000", \
-     "--workers", "2", \
-     "--timeout", "120", \
-     "rdfsolve.backend.app:create_app()"]
+CMD gunicorn \
+    --bind "0.0.0.0:${PORT}" \
+    --workers 2 \
+    --timeout 120 \
+    "rdfsolve.backend.app:create_app()"

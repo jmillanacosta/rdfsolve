@@ -11,6 +11,9 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-key-change-in-prod")
     DEBUG = os.getenv("FLASK_DEBUG", "0") == "1"
 
+    # Server port — single source of truth for all runners.
+    PORT = int(os.getenv("PORT", "8000"))
+
     # CORS — origins allowed to call this API
     CORS_ORIGINS = os.getenv(
         "CORS_ORIGINS", "http://localhost:*",

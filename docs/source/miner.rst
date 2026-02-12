@@ -1,7 +1,7 @@
-Models
-======
+Miner
+=====
 
-.. automodule:: rdfsolve.models
+.. automodule:: rdfsolve.miner
    :members:
    :undoc-members:
    :show-inheritance:

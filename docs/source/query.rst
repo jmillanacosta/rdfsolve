@@ -1,7 +1,7 @@
-Models
-======
+Query
+=====
 
-.. automodule:: rdfsolve.models
+.. automodule:: rdfsolve.query
    :members:
    :undoc-members:
    :show-inheritance:

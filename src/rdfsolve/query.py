@@ -88,7 +88,7 @@ def execute_sparql(
             use_post=(method.upper() == "POST"),
             timeout=float(timeout),
         )
-        json_result = helper.select(query)
+        json_result = helper.select(query, purpose="user-query")
     except Exception as exc:
         return QueryResult(
             query=query,

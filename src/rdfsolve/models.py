@@ -213,13 +213,16 @@ class LinkMLSchema(BaseModel):
 # -------------------------------------------------------------------
 
 class SchemaPattern(BaseModel):
-    """A single schema pattern: subject_class -[property]-> object.
+    """A single schema pattern: subject_class → property → object.
 
     Captures three kinds of relationships:
-    - typed-object: ``?s a ?sc . ?s ?p ?o . ?o a ?oc``
-    - literal:      ``?s a ?sc . ?s ?p ?o . FILTER(isLiteral(?o))``
-    - untyped-uri:  ``?s a ?sc . ?s ?p ?o . FILTER(isURI(?o))
-                      FILTER NOT EXISTS { ?o a ?any }``
+
+    - **typed-object**:
+      ``?s a ?sc . ?s ?p ?o . ?o a ?oc``
+    - **literal**:
+      ``?s a ?sc . ?s ?p ?o . FILTER(isLiteral(?o))``
+    - **untyped-uri**:
+      ``?s a ?sc . ?s ?p ?o . FILTER(isURI(?o)) FILTER NOT EXISTS { ?o a ?any }``
 
     This model is the shared contract between SchemaMiner (direct SPARQL)
     and VoidParser (VoID-based extraction).
@@ -247,6 +250,27 @@ class SchemaPattern(BaseModel):
         description=(
             "XSD datatype URI for literal objects "
             "(only when object_class == 'Literal')"
+        ),
+    )
+    subject_label: Optional[str] = Field(
+        None,
+        description=(
+            "Human-readable label for the subject class "
+            "(rdfs:label > dc:title > local name)"
+        ),
+    )
+    property_label: Optional[str] = Field(
+        None,
+        description=(
+            "Human-readable label for the property "
+            "(rdfs:label > dc:title > local name)"
+        ),
+    )
+    object_label: Optional[str] = Field(
+        None,
+        description=(
+            "Human-readable label for the object class "
+            "(rdfs:label > dc:title > local name)"
         ),
     )
 
@@ -319,6 +343,137 @@ class AboutMetadata(BaseModel):
         )
 
 
+# -------------------------------------------------------------------
+# Mining analytics report
+# -------------------------------------------------------------------
+
+
+class QueryStats(BaseModel):
+    """Cumulative statistics for one query category."""
+
+    sent: int = Field(0, ge=0, description="Queries sent")
+    failed: int = Field(0, ge=0, description="Queries that failed")
+    total_time_s: float = Field(
+        0.0, ge=0, description="Wall-clock seconds for this category",
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class PhaseReport(BaseModel):
+    """Timing and outcome for one mining phase."""
+
+    name: str = Field(..., description="Phase identifier")
+    started_at: Optional[str] = Field(
+        None, description="ISO-8601 start time",
+    )
+    finished_at: Optional[str] = Field(
+        None, description="ISO-8601 finish time",
+    )
+    duration_s: Optional[float] = Field(
+        None, ge=0, description="Wall-clock seconds",
+    )
+    items_discovered: int = Field(
+        0, ge=0,
+        description="Number of items produced by this phase",
+    )
+    error: Optional[str] = Field(
+        None, description="Error message if the phase failed",
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class MiningReport(BaseModel):
+    """Analytical metadata collected during a mining run.
+
+    Designed to be written to disk incrementally (after each phase
+    completes) so that partial data is preserved even if mining
+    crashes midway.
+    """
+
+    # ── Identification ─────────────────────────────────────────────
+    dataset_name: Optional[str] = Field(
+        None, description="Human-readable name of the mined dataset",
+    )
+    endpoint_url: str = Field(
+        ..., description="SPARQL endpoint URL",
+    )
+    graph_uris: Optional[List[str]] = Field(
+        None, description="Named-graph URIs (if any)",
+    )
+    strategy: str = Field(
+        "unknown",
+        description="Mining strategy: 'miner' or 'miner/two-phase'",
+    )
+
+    # ── Versions & environment ─────────────────────────────────────
+    rdfsolve_version: str = Field(
+        ..., description="Package version string",
+    )
+    python_version: str = Field(
+        ..., description="Python interpreter version",
+    )
+
+    # ── Timing ─────────────────────────────────────────────────────
+    started_at: str = Field(
+        ..., description="ISO-8601 timestamp when mining started",
+    )
+    finished_at: Optional[str] = Field(
+        None, description="ISO-8601 timestamp when mining finished",
+    )
+    total_duration_s: Optional[float] = Field(
+        None, ge=0, description="Total wall-clock seconds",
+    )
+
+    # ── Query statistics (by purpose tag) ──────────────────────────
+    query_stats: Dict[str, QueryStats] = Field(
+        default_factory=dict,
+        description=(
+            "Per-purpose query statistics.  Keys are purpose tags "
+            "such as 'mining/typed-object', 'labels', etc."
+        ),
+    )
+    total_queries_sent: int = Field(
+        0, ge=0, description="Grand total of queries sent",
+    )
+    total_queries_failed: int = Field(
+        0, ge=0, description="Grand total of failed queries",
+    )
+
+    # ── Phase breakdown ────────────────────────────────────────────
+    phases: List[PhaseReport] = Field(
+        default_factory=list,
+        description="Ordered list of mining phases with timing",
+    )
+
+    # ── Results summary ────────────────────────────────────────────
+    pattern_count: int = Field(
+        0, ge=0, description="Number of schema patterns extracted",
+    )
+    class_count: int = Field(
+        0, ge=0, description="Number of unique classes",
+    )
+    property_count: int = Field(
+        0, ge=0, description="Number of unique properties",
+    )
+    unique_uris_labelled: int = Field(
+        0, ge=0,
+        description="Number of URIs for which labels were fetched",
+    )
+
+    # ── Configuration snapshot ─────────────────────────────────────
+    config: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "SchemaMiner configuration: chunk_size, delay, "
+            "timeout, counts, two_phase"
+        ),
+    )
+
+    model_config = ConfigDict(extra="allow")
+
+
 class MinedSchema(BaseModel):
     """Complete mined schema: patterns + provenance.
 
@@ -358,9 +513,21 @@ class MinedSchema(BaseModel):
         The @graph groups triples by subject class. Each subject node
         lists its properties with ``{"@id": object_curie}`` or literal
         sentinels.
+
+        Labels are exported in a top-level ``_labels`` map keyed by
+        CURIE, so the frontend can display human-readable names.
+
+        When triple counts are available they are stored per class
+        node in a ``_counts`` dict keyed by
+        ``"property_curie|object_key"`` → count, where *object_key*
+        is the object CURIE, ``"Literal"`` / ``"Literal:datatype"``,
+        or ``"Resource"``.  This preserves full (s, p, o) granularity.
         """
         context: Dict[str, str] = {}
         grouped: Dict[str, Dict[str, Any]] = {}
+        # Per-class count maps: sc → {pp → {o_key → count}}
+        node_counts: Dict[str, Dict[str, Dict[str, int]]] = {}
+        labels: Dict[str, str] = {}
 
         for pat in self.patterns:
             sc, sc_pfx, sc_ns = uri_to_curie(pat.subject_class)
@@ -371,28 +538,53 @@ class MinedSchema(BaseModel):
             if pp_pfx and pp_ns:
                 context[pp_pfx] = pp_ns
 
+            # Collect labels (CURIE → human label)
+            if pat.subject_label:
+                labels[sc] = pat.subject_label
+            if pat.property_label:
+                labels[pp] = pat.property_label
+
             # Build object value
             if pat.object_class == "Literal":
                 if pat.datatype:
                     dt_c, dt_pfx, dt_ns = uri_to_curie(pat.datatype)
                     if dt_pfx and dt_ns:
                         context[dt_pfx] = dt_ns
-                    o_val: Any = {
-                        "@type": dt_c,
-                    }
+                    o_val: Any = {"@type": dt_c}
+                    o_key = f"Literal:{dt_c}"
                 else:
-                    o_val = "Literal"
+                    # Untyped literal → xsd:string per RDF 1.1
+                    context.setdefault(
+                        "xsd",
+                        "http://www.w3.org/2001/XMLSchema#",
+                    )
+                    o_val = {"@type": "xsd:string"}
+                    o_key = "Literal:xsd:string"
             elif pat.object_class == "Resource":
                 o_val = {"@id": "rdfs:Resource"}
                 context.setdefault(
                     "rdfs",
                     "http://www.w3.org/2000/01/rdf-schema#",
                 )
+                o_key = "Resource"
             else:
-                oc, oc_pfx, oc_ns = uri_to_curie(pat.object_class)
+                oc, oc_pfx, oc_ns = uri_to_curie(
+                    pat.object_class,
+                )
                 if oc_pfx and oc_ns:
                     context[oc_pfx] = oc_ns
                 o_val = {"@id": oc}
+                o_key = oc
+                if pat.object_label:
+                    labels[oc] = pat.object_label
+
+            # Record count nested: sc → pp → o_key → count
+            if pat.count is not None:
+                node_counts.setdefault(
+                    sc, {},
+                ).setdefault(
+                    pp, {},
+                )[o_key] = pat.count
 
             # Merge into grouped node
             if sc not in grouped:
@@ -408,11 +600,19 @@ class MinedSchema(BaseModel):
                     existing.append(o_val)
                 grouped[sc][pp] = existing
 
-        return {
+        # Attach _counts to each class node that has them
+        for sc_curie, cmap in node_counts.items():
+            if sc_curie in grouped:
+                grouped[sc_curie]["_counts"] = cmap
+
+        result: Dict[str, Any] = {
             "@context": context,
             "@graph": list(grouped.values()),
             "@about": self.about.model_dump(exclude_none=True),
         }
+        if labels:
+            result["_labels"] = labels
+        return result
 
     # ---- VoID graph export ----------------------------------------
 
@@ -484,6 +684,28 @@ class MinedSchema(BaseModel):
                 g.add((
                     pp_uri, VOID.triples,
                     RdfLiteral(pat.count, datatype=XSD.integer),
+                ))
+
+            # Add labels as rdfs:label triples
+            if pat.subject_label:
+                g.add((
+                    URIRef(pat.subject_class),
+                    RDFS.label,
+                    RdfLiteral(pat.subject_label),
+                ))
+            if pat.property_label:
+                g.add((
+                    URIRef(pat.property_uri),
+                    RDFS.label,
+                    RdfLiteral(pat.property_label),
+                ))
+            if pat.object_label and pat.object_class not in (
+                "Literal", "Resource",
+            ):
+                g.add((
+                    URIRef(pat.object_class),
+                    RDFS.label,
+                    RdfLiteral(pat.object_label),
                 ))
 
         # Bind prefixes discovered via bioregistry

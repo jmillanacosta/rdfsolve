@@ -6,6 +6,12 @@ Usage::
     # From the repository root (with the venv activated):
     python scripts/mine_all_sources.py
 
+    # Mine only QLever-hosted sources:
+    python scripts/mine_all_sources.py --qlever
+
+    # Mine everything (default CSV + QLever):
+    python scripts/mine_all_sources.py --all-sources
+
     # Customise output directory and format:
     python scripts/mine_all_sources.py \\
         --sources data/sources.csv \\
@@ -31,6 +37,9 @@ _src = _repo_root / "src"
 if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
+_DEFAULT_CSV = _repo_root / "data" / "sources.csv"
+_QLEVER_CSV = _repo_root / "data" / "qlever.csv"
+
 from rdfsolve.api import mine_all_sources  # noqa: E402
 
 
@@ -38,11 +47,25 @@ def _cli() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Mine RDF schemas for all sources in a CSV file.",
     )
-    p.add_argument(
+
+    # ── Source selection (mutually exclusive) ─────────────────────
+    src = p.add_mutually_exclusive_group()
+    src.add_argument(
         "--sources",
-        default=str(_repo_root / "data" / "sources.csv"),
+        default=None,
         help="Path to sources CSV (default: data/sources.csv)",
     )
+    src.add_argument(
+        "--qlever",
+        action="store_true",
+        help="Mine only QLever-hosted sources (data/qlever.csv)",
+    )
+    src.add_argument(
+        "--all-sources",
+        action="store_true",
+        help="Mine both default and QLever sources",
+    )
+
     p.add_argument(
         "--output-dir",
         default=str(_repo_root / "mined_schemas"),
@@ -100,24 +123,40 @@ def main() -> None:
         force=True,
     )
 
+    # Resolve which CSV file(s) to mine
+    if args.qlever:
+        csv_files = [str(_QLEVER_CSV)]
+    elif args.all_sources:
+        csv_files = [str(_DEFAULT_CSV), str(_QLEVER_CSV)]
+    elif args.sources:
+        csv_files = [args.sources]
+    else:
+        csv_files = [str(_DEFAULT_CSV)]
 
-    result = mine_all_sources(
-        sources_csv=args.sources,
-        output_dir=args.output_dir,
-        fmt=args.format,
-        chunk_size=args.chunk_size,
-        timeout=args.timeout,
-        counts=not args.no_counts,
-        on_progress=_on_progress,
+    all_succeeded: list[str] = []
+    all_failed: list[dict[str, str]] = []
+
+    for csv_file in csv_files:
+        logging.info("Mining sources from %s", csv_file)
+        result = mine_all_sources(
+            sources_csv=csv_file,
+            output_dir=args.output_dir,
+            fmt=args.format,
+            chunk_size=args.chunk_size,
+            timeout=args.timeout,
+            counts=not args.no_counts,
+            on_progress=_on_progress,
+        )
+        all_succeeded.extend(result["succeeded"])
+        all_failed.extend(result["failed"])
+
+    logging.info(
+        "Done: %d succeeded, %d failed",
+        len(all_succeeded), len(all_failed),
     )
 
-
-    if result["failed"]:
-        for _entry in result["failed"]:
-            pass
-
     # Exit with non-zero if anything failed
-    if result["failed"]:
+    if all_failed:
         sys.exit(1)
 
 

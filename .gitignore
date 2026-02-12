@@ -920,3 +920,7 @@ docs/data/schema_extraction/**/*.nq
 *.parquet
 
 deprecated_static_site/*
+
+notes/*
+
+docker/schemas/*

@@ -558,9 +558,13 @@ def mine_schema(
     graph_uris: Optional[Union[str, List[str]]] = None,
     dataset_name: Optional[str] = None,
     chunk_size: int = 10_000,
+    class_chunk_size: Optional[int] = None,
+    class_batch_size: int = 15,
     delay: float = 0.5,
     timeout: float = 120.0,
     counts: bool = True,
+    two_phase: bool = False,
+    report_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Mine RDF schema from a SPARQL endpoint using SELECT queries.
 
@@ -573,9 +577,15 @@ def mine_schema(
         graph_uris: Graph URI(s) to restrict queries
         dataset_name: Human-readable dataset name
         chunk_size: Pagination page size
+        class_chunk_size: Page size for Phase-1 class discovery
+            (``None`` = single query, no pagination)
+        class_batch_size: Number of classes to group into one
+            VALUES query in Phase-2 (default 15)
         delay: Delay between pages (seconds)
         timeout: HTTP timeout per request
         counts: Whether to fetch triple counts
+        two_phase: Use two-phase mining for large endpoints
+        report_path: If given, write analytics JSON to this path
 
     Returns:
         JSON-LD dict with @context, @graph, and @about
@@ -587,9 +597,13 @@ def mine_schema(
         graph_uris=graph_uris,
         dataset_name=dataset_name,
         chunk_size=chunk_size,
+        class_chunk_size=class_chunk_size,
+        class_batch_size=class_batch_size,
         delay=delay,
         timeout=timeout,
         counts=counts,
+        two_phase=two_phase,
+        report_path=report_path,
     )
     return schema.to_jsonld()
 
@@ -599,9 +613,12 @@ def mine_all_sources(
     output_dir: str = ".",
     fmt: str = "all",
     chunk_size: int = 10_000,
+    class_chunk_size: Optional[int] = None,
+    class_batch_size: int = 15,
     delay: float = 0.5,
     timeout: float = 120.0,
     counts: bool = True,
+    reports: bool = True,
     on_progress: Optional[
         Callable[[str, int, int, Optional[str]], None]
     ] = None,
@@ -617,15 +634,24 @@ def mine_all_sources(
     Args:
         sources_csv: Path to the CSV file with data sources.
         output_dir: Directory where outputs are written.
-        fmt: Export format – ``"jsonld"``, ``"void"``, or ``"all"``.
+        fmt: Export format – ``"jsonld"``, ``"void"``, or
+            ``"all"``.
         chunk_size: Pagination page size for SPARQL queries.
+        class_chunk_size: Page size for Phase-1 class discovery
+            in two-phase mode.  ``None`` = no pagination.
+            Ignored for rows that are not two-phase.
+        class_batch_size: Number of classes per VALUES query in
+            Phase-2 of two-phase mining (default 15).
         delay: Delay between paginated pages (seconds).
         timeout: HTTP timeout per request (seconds).
         counts: Whether to fetch triple-count queries.
-        on_progress: Optional callback
-            ``(dataset_name, index, total, status_or_error)``
-            invoked after each source is processed.  *status_or_error*
-            is ``None`` on success, or an error message string.
+        reports: Write per-source analytics JSON reports.
+        on_progress:
+            Optional callback invoked after each source is
+            processed.  Signature:
+            ``(dataset_name, index, total, status_or_error)``.
+            *status_or_error* is ``None`` on success, or an
+            error message string.
 
     Returns:
         Summary dict with keys ``"succeeded"``, ``"failed"``, and
@@ -654,6 +680,10 @@ def mine_all_sources(
             row.get("use_graph", "").strip().lower()
             in ("true", "1", "yes")
         )
+        row_two_phase = (
+            row.get("two_phase", "").strip().lower()
+            in ("true", "1", "yes")
+        )
 
         if not endpoint:
             logger.info(
@@ -674,15 +704,34 @@ def mine_all_sources(
             f"({endpoint})"
         )
 
+        # class_chunk_size only applies to two-phase rows
+        effective_ccs: Optional[int] = None
+        if row_two_phase:
+            effective_ccs = class_chunk_size
+        elif class_chunk_size is not None:
+            logger.info(
+                "[%d/%d] --class-chunk-size ignored for "
+                "%r (not two-phase)",
+                idx, total, name,
+            )
+
         try:
+            rpt_path = (
+                out / f"{name}_report.json"
+                if reports else None
+            )
             schema = _mine(
                 endpoint_url=endpoint,
                 graph_uris=graph_uris_arg,
                 dataset_name=name,
                 chunk_size=chunk_size,
+                class_chunk_size=effective_ccs,
+                class_batch_size=class_batch_size,
                 delay=delay,
                 timeout=timeout,
                 counts=counts,
+                two_phase=row_two_phase,
+                report_path=rpt_path,
             )
 
             if fmt in ("jsonld", "all"):
@@ -786,10 +835,10 @@ def resolve_iris(
     :func:`rdfsolve.iri.resolve_iris`.
 
     Args:
-        iris:      List of IRI strings to resolve.
+        iris: List of IRI strings to resolve.
         endpoints: List of endpoint dicts, each with keys
-                   ``name``, ``endpoint``, and optionally ``graph``.
-        timeout:   Per-endpoint timeout in seconds.
+            ``name``, ``endpoint``, and optionally ``graph``.
+        timeout: Per-endpoint timeout in seconds.
 
     Returns:
         Dict with keys ``resolved``, ``not_found``, ``errors``.
@@ -826,18 +875,21 @@ def compose_query_from_paths(
     :func:`rdfsolve.compose.compose_query_from_paths`.
 
     Args:
-        paths:          List of path dicts, each with an ``edges`` list.
-                        Each edge has ``source``, ``target``, ``predicate``,
-                        and ``is_forward``.
-        prefixes:       Namespace prefix map (e.g. ``{"wp": "http://..."}``).
-        include_types:  Add ``rdf:type`` assertions.
+        paths: List of path dicts, each with an ``edges`` list.
+            Each edge has ``source``, ``target``, ``predicate``,
+            and ``is_forward``.
+        prefixes: Namespace prefix map
+            (e.g. ``{"wp": "http://..."}``).
+        include_types: Add ``rdf:type`` assertions.
         include_labels: Add ``OPTIONAL rdfs:label`` clauses.
-        limit:          LIMIT for the generated query.
-        value_bindings: VALUES clause bindings ``{var: [uri, ...]}``.
+        limit: LIMIT for the generated query.
+        value_bindings: VALUES clause bindings
+            ``{var: [uri, ...]}``.
 
     Returns:
         Dict with ``query`` (SPARQL string), ``variable_map``
-        (var → schema URI), and ``jsonld`` (SPARQLExecutable JSON-LD).
+        (var → schema URI), and ``jsonld``
+        (SPARQLExecutable JSON-LD).
 
     Example::
 

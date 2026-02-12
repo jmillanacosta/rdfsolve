@@ -626,12 +626,49 @@ def export(
     "--chunk-size",
     type=int,
     default=10_000,
-    help="Pagination page size (default: 10000)",
+    help="Pagination page size for pattern queries (default: 10000)",
+)
+@click.option(
+    "--class-chunk-size",
+    type=int,
+    default=None,
+    help=(
+        "Page size for Phase-1 class discovery in --two-phase mode. "
+        "Default (None) = no pagination (single query). "
+        "Set to e.g. 50000 for endpoints with very many classes."
+    ),
+)
+@click.option(
+    "--class-batch-size",
+    type=int,
+    default=15,
+    help=(
+        "Number of classes per VALUES query in Phase-2 of "
+        "--two-phase mode (default: 15). Higher = fewer queries "
+        "but each query is heavier."
+    ),
 )
 @click.option(
     "--no-counts",
     is_flag=True,
     help="Skip triple-count queries (faster)",
+)
+@click.option(
+    "--timeout",
+    type=float,
+    default=120.0,
+    help="HTTP timeout per request in seconds (default: 120)",
+)
+@click.option(
+    "--two-phase",
+    is_flag=True,
+    help="Use two-phase mining (discover classes first, then per-class queries). Gentler on large endpoints.",
+)
+@click.option(
+    "--report-path",
+    type=click.Path(),
+    default=None,
+    help="Write analytics JSON report to this path (updated incrementally).",
 )
 def mine(
     endpoint: str,
@@ -640,7 +677,12 @@ def mine(
     dataset_name: Optional[str],
     fmt: str,
     chunk_size: int,
+    class_chunk_size: Optional[int],
+    class_batch_size: int,
     no_counts: bool,
+    timeout: float,
+    two_phase: bool,
+    report_path: Optional[str],
 ) -> None:
     r"""Mine RDF schema directly from a SPARQL endpoint.
 
@@ -673,7 +715,12 @@ def mine(
             endpoint_url=endpoint,
             graph_uris=graph_uris,
             chunk_size=chunk_size,
+            class_chunk_size=class_chunk_size,
+            class_batch_size=class_batch_size,
+            timeout=timeout,
             counts=not no_counts,
+            two_phase=two_phase,
+            report_path=report_path,
         )
         schema = miner.mine(dataset_name=name)
 
@@ -704,6 +751,17 @@ def mine(
                 f"OK VoID:     {void_file} "
                 f"({len(void_graph)} triples)"
             )
+
+        # Report summary
+        if miner.last_report:
+            rpt = miner.last_report
+            click.echo(
+                f"OK Report:   {rpt.total_queries_sent} queries "
+                f"({rpt.total_queries_failed} failed), "
+                f"{rpt.total_duration_s:.1f}s total"
+            )
+            if report_path:
+                click.echo(f"   Written:  {report_path}")
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
@@ -742,6 +800,31 @@ def mine(
     default=120.0,
     help="HTTP timeout per request in seconds (default: 120)",
 )
+@click.option(
+    "--class-chunk-size",
+    type=int,
+    default=None,
+    help=(
+        "Page size for Phase-1 class discovery in two-phase "
+        "rows. Default: None (single query, no pagination). "
+        "Ignored for rows that are not two-phase."
+    ),
+)
+@click.option(
+    "--class-batch-size",
+    type=int,
+    default=15,
+    help=(
+        "Number of classes per VALUES query in Phase-2 of "
+        "two-phase mode (default: 15). Higher = fewer queries "
+        "but each query is heavier."
+    ),
+)
+@click.option(
+    "--no-reports",
+    is_flag=True,
+    help="Skip writing per-source analytics JSON reports.",
+)
 def mine_all(
     sources: str,
     output_dir: str,
@@ -749,6 +832,9 @@ def mine_all(
     chunk_size: int,
     no_counts: bool,
     timeout: float,
+    class_chunk_size: int | None,
+    class_batch_size: int,
+    no_reports: bool,
 ) -> None:
     r"""Mine schemas for all sources in a CSV file.
 
@@ -795,8 +881,11 @@ def mine_all(
             output_dir=output_dir,
             fmt=fmt,
             chunk_size=chunk_size,
+            class_chunk_size=class_chunk_size,
+            class_batch_size=class_batch_size,
             timeout=timeout,
             counts=not no_counts,
+            reports=not no_reports,
             on_progress=_on_progress,
         )
 

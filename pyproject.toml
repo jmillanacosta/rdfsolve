@@ -201,6 +201,7 @@ exclude_lines = [
 [tool.ruff]
 line-length = 100
 extend-include = ["*.ipynb"]
+extend-exclude = ["tests/"]
 
 [tool.ruff.lint]
 # See https://docs.astral.sh/ruff/rules
