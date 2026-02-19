@@ -92,12 +92,23 @@ class Database:
 
     # -- schema operations ----------------------------------------------
 
-    def list_schemas(self) -> list[dict[str, Any]]:
-        """Return lightweight metadata for every stored schema."""
-        rows = self._conn.execute(
-            "SELECT id, name, endpoint, pattern_count, "
-            "generated_at, strategy FROM schemas ORDER BY name"
-        ).fetchall()
+    def list_schemas(self, strategy: str | None = None) -> list[dict[str, Any]]:
+        """Return lightweight metadata for every stored schema.
+
+        If *strategy* is provided, only rows with that strategy are returned.
+        """
+        if strategy:
+            rows = self._conn.execute(
+                "SELECT id, name, endpoint, pattern_count, "
+                "generated_at, strategy FROM schemas "
+                "WHERE strategy = ? ORDER BY name",
+                (strategy,),
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT id, name, endpoint, pattern_count, "
+                "generated_at, strategy FROM schemas ORDER BY name"
+            ).fetchall()
         return [dict(r) for r in rows]
 
     def get_schema(self, schema_id: str) -> dict[str, Any] | None:

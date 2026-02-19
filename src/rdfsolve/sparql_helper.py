@@ -426,6 +426,41 @@ class SparqlHelper:
         )
         return bool(result.get("boolean", False))
 
+    def find_classes_for_uri_pattern(self, uri_prefix: str) -> list[str]:
+        """Find all ``rdf:type`` classes whose instances start with *uri_prefix*.
+
+        Executes::
+
+            SELECT DISTINCT ?c WHERE {
+                ?s a ?c .
+                FILTER(STRSTARTS(STR(?s), "<uri_prefix>"))
+            }
+
+        ``STRSTARTS`` is used in preference to ``regex`` because it is
+        evaluated as a string comparison and is optimised by most SPARQL
+        engines; ``regex`` triggers a full-scan on many endpoints.
+
+        Args:
+            uri_prefix: URI prefix string, e.g.
+                ``"https://identifiers.org/ensembl/"``.
+
+        Returns:
+            Deduplicated list of class URIs (may be empty).
+        """
+        escaped = uri_prefix.replace("\\", "\\\\").replace('"', '\\"')
+        query = (
+            "SELECT DISTINCT ?c WHERE { "
+            "?s a ?c . "
+            f'FILTER(STRSTARTS(STR(?s), "{escaped}")) '
+            "}"
+        )
+        try:
+            out = self.select(query)
+        except Exception:
+            return []
+        bindings = out.get("results", {}).get("bindings", [])
+        return [b["c"]["value"] for b in bindings if "c" in b]
+
     def _execute(
         self,
         query: str,

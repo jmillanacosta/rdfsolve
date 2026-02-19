@@ -29,8 +29,10 @@ __all__ = [
     "load_parser_from_graph",
     "mine_all_sources",
     "mine_schema",
+    "probe_instance_mapping",
     "resolve_iris",
     "retrieve_void_from_graphs",
+    "seed_instance_mappings",
     "to_jsonld_from_file",
     "to_linkml_from_file",
     "to_rdfconfig_from_file",
@@ -919,3 +921,117 @@ def compose_query_from_paths(
             "value_bindings": value_bindings or {},
         },
     )
+
+
+def probe_instance_mapping(
+    prefix: str,
+    sources_csv: str = "data/sources.csv",
+    predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
+    dataset_names: Optional[List[str]] = None,
+    timeout: float = 60.0,
+) -> Dict[str, Any]:
+    """Probe SPARQL endpoints for a bioregistry resource and return JSON-LD.
+
+    For every dataset in *sources_csv* (or the subset in *dataset_names*),
+    queries the endpoint for RDF classes whose instances match the resource's
+    known URI prefixes.  Generates pairwise ``skos:narrowMatch`` edges (or
+    *predicate* override) between classes across different datasets and
+    returns the result as a JSON-LD mapping document.
+
+    The returned dict has the same structure as a mined schema JSON-LD
+    (``@context`` + ``@graph`` + ``@about``) and can be saved directly
+    to ``docker/schemas/`` for auto-import on Flask startup.
+
+    Args:
+        prefix: Bioregistry prefix, e.g. ``"ensembl"``.
+        sources_csv: Path to the sources CSV
+            (columns: ``dataset_name``, ``endpoint_url``).
+        predicate: Mapping predicate URI.  Defaults to
+            ``skos:narrowMatch``.
+        dataset_names: Restrict probing to these dataset names.
+        timeout: SPARQL request timeout in seconds.
+
+    Returns:
+        JSON-LD ``dict`` with ``@context``, ``@graph``, ``@about``.
+
+    Raises:
+        ValueError: If *prefix* is unknown to bioregistry.
+    """
+    from rdfsolve.instance_matcher import probe_resource
+
+    datasources = pd.read_csv(sources_csv)
+    mapping = probe_resource(
+        prefix=prefix,
+        datasources=datasources,
+        predicate=predicate,
+        dataset_names=dataset_names,
+        timeout=timeout,
+    )
+    return mapping.to_jsonld()
+
+
+def seed_instance_mappings(
+    prefixes: List[str],
+    sources_csv: str = "data/sources.csv",
+    output_dir: str = "docker/schemas",
+    predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
+    dataset_names: Optional[List[str]] = None,
+    timeout: float = 60.0,
+    skip_existing: bool = True,
+) -> Dict[str, Any]:
+    """Probe multiple bioregistry resources and write mapping JSON-LD files.
+
+    Iterates over *prefixes*, runs :func:`probe_instance_mapping` for each,
+    and writes the result to
+    ``{output_dir}/{prefix}_instance_mapping.jsonld``.  Mirrors the pattern
+    of :func:`mine_all_sources`.
+
+    Args:
+        prefixes: List of bioregistry prefixes to process.
+        sources_csv: Path to the sources CSV.
+        output_dir: Directory where JSON-LD files are written
+            (created if absent).
+        predicate: Mapping predicate URI.
+        dataset_names: Restrict probing to these dataset names.
+        timeout: SPARQL request timeout per request.
+        skip_existing: If ``True`` (default), skip prefixes that already
+            have a ``{prefix}_instance_mapping.jsonld`` in *output_dir*.
+
+    Returns:
+        Summary dict: ``{"succeeded": [...], "failed": [...]}``.
+    """
+    import json as _json
+
+    from rdfsolve.instance_matcher import probe_resource
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    datasources = pd.read_csv(sources_csv)
+
+    succeeded: List[str] = []
+    failed: List[Dict[str, str]] = []
+
+    for prefix in prefixes:
+        outfile = out / f"{prefix}_instance_mapping.jsonld"
+        if skip_existing and outfile.exists():
+            logger.info("Skipping %s: already exists at %s", prefix, outfile)
+            succeeded.append(prefix)
+            continue
+
+        try:
+            mapping = probe_resource(
+                prefix=prefix,
+                datasources=datasources,
+                predicate=predicate,
+                dataset_names=dataset_names,
+                timeout=timeout,
+            )
+            jsonld = mapping.to_jsonld()
+            outfile.write_text(_json.dumps(jsonld, indent=2))
+            logger.info("Written: %s", outfile)
+            succeeded.append(prefix)
+        except Exception as exc:
+            logger.error("Failed %s: %s", prefix, exc)
+            failed.append({"prefix": prefix, "error": str(exc)})
+
+    return {"succeeded": succeeded, "failed": failed}

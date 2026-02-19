@@ -17,8 +17,15 @@ def _get_svc() -> SchemaService:
 
 @schemas_bp.route("/", methods=["GET"])
 def list_schemas():
-    """Return a list of all available schema IDs and metadata."""
-    schemas = _get_svc().list_schemas()
+    """Return a list of available schema IDs and metadata.
+
+    Optional query parameter:
+      ?strategy=miner           — only source schemas (miner-produced)
+      ?strategy=instance_matcher — only instance-mapping results
+      (omit for all)
+    """
+    strategy = request.args.get("strategy")
+    schemas = _get_svc().list_schemas(strategy=strategy)
     return jsonify(schemas)
 
 

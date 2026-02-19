@@ -21,9 +21,12 @@ class SchemaService:
 
     # ── listing / retrieval ───────────────────────────────────────────
 
-    def list_schemas(self) -> list[dict[str, Any]]:
-        """Return lightweight metadata for all stored schemas."""
-        return self.db.list_schemas()
+    def list_schemas(self, strategy: str | None = None) -> list[dict[str, Any]]:
+        """Return lightweight metadata for all stored schemas.
+
+        Pass *strategy* to filter (e.g. ``"miner"`` or ``"instance_matcher"``).
+        """
+        return self.db.list_schemas(strategy=strategy)
 
     def get_schema(self, schema_id: str) -> dict[str, Any] | None:
         """Load a full JSON-LD schema by *schema_id*."""

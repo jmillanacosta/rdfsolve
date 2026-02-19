@@ -976,5 +976,160 @@ def count(
         raise click.Abort()
 
 
+# ---------------------------------------------------------------------------
+# instance-match command group
+# ---------------------------------------------------------------------------
+
+@main.group("instance-match")
+def instance_match_group() -> None:
+    """Instance-based matching: discover cross-dataset class links.
+
+    Probes SPARQL endpoints for classes whose instances match bioregistry
+    URI patterns and writes skos:narrowMatch mapping JSON-LD files.
+
+    \b
+    Typical workflow:
+        rdfsolve instance-match probe --prefix ensembl -o ensembl_mapping.jsonld
+        rdfsolve instance-match seed  --prefixes ensembl uniprot chebi
+    """
+
+
+@instance_match_group.command("probe")
+@click.option(
+    "--prefix", "-p", required=True,
+    help="Bioregistry prefix to probe (e.g. 'ensembl').",
+)
+@click.option(
+    "--sources-csv", default="data/sources.csv", show_default=True,
+    help="Path to data sources CSV.",
+)
+@click.option(
+    "--predicate",
+    default="http://www.w3.org/2004/02/skos/core#narrowMatch",
+    show_default=True,
+    help="Mapping predicate URI.",
+)
+@click.option(
+    "--dataset", "-d", "datasets", multiple=True,
+    help="Restrict to this dataset name (repeatable).",
+)
+@click.option(
+    "--timeout", default=60.0, show_default=True, type=float,
+    help="SPARQL request timeout in seconds.",
+)
+@click.option(
+    "--output", "-o", default=None,
+    help="Write JSON-LD to this file (default: stdout).",
+)
+def probe_cmd(
+    prefix: str,
+    sources_csv: str,
+    predicate: str,
+    datasets: tuple[str, ...],
+    timeout: float,
+    output: Optional[str],
+) -> None:
+    """Probe endpoints for a single bioregistry resource.
+
+    Queries every endpoint in SOURCES_CSV for RDF classes whose instances
+    match the URI patterns registered in bioregistry for PREFIX and emits
+    a JSON-LD mapping document.
+    """
+    import json
+
+    from rdfsolve.api import probe_instance_mapping
+
+    try:
+        result = probe_instance_mapping(
+            prefix=prefix,
+            sources_csv=sources_csv,
+            predicate=predicate,
+            dataset_names=list(datasets) if datasets else None,
+            timeout=timeout,
+        )
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    text = json.dumps(result, indent=2)
+    if output:
+        Path(output).write_text(text)
+        edge_count = len(result.get("@graph", []))
+        click.echo(f"Written to {output} ({edge_count} source nodes)")
+    else:
+        click.echo(text)
+
+
+@instance_match_group.command("seed")
+@click.option(
+    "--prefixes", "-p", "prefix_list", required=True, multiple=True,
+    help="Bioregistry prefix (repeatable).",
+)
+@click.option(
+    "--sources-csv", default="data/sources.csv", show_default=True,
+    help="Path to data sources CSV.",
+)
+@click.option(
+    "--output-dir", default="docker/schemas", show_default=True,
+    help="Directory to write JSON-LD mapping files.",
+)
+@click.option(
+    "--predicate",
+    default="http://www.w3.org/2004/02/skos/core#narrowMatch",
+    show_default=True,
+    help="Mapping predicate URI.",
+)
+@click.option(
+    "--dataset", "-d", "datasets", multiple=True,
+    help="Restrict to this dataset name (repeatable).",
+)
+@click.option(
+    "--timeout", default=60.0, show_default=True, type=float,
+    help="SPARQL request timeout in seconds.",
+)
+@click.option(
+    "--no-skip-existing", is_flag=True, default=False,
+    help="Re-probe even if the output file already exists.",
+)
+def seed_cmd(
+    prefix_list: tuple[str, ...],
+    sources_csv: str,
+    output_dir: str,
+    predicate: str,
+    datasets: tuple[str, ...],
+    timeout: float,
+    no_skip_existing: bool,
+) -> None:
+    """Seed mapping files for multiple bioregistry resources.
+
+    Writes {PREFIX}_instance_mapping.jsonld to OUTPUT_DIR for each
+    supplied PREFIX.  Existing files are skipped unless --no-skip-existing
+    is passed.
+    """
+    from rdfsolve.api import seed_instance_mappings
+
+    try:
+        result = seed_instance_mappings(
+            prefixes=list(prefix_list),
+            sources_csv=sources_csv,
+            output_dir=output_dir,
+            predicate=predicate,
+            dataset_names=list(datasets) if datasets else None,
+            timeout=timeout,
+            skip_existing=not no_skip_existing,
+        )
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    for p in result["succeeded"]:
+        click.echo(f"  ✓ {p}")
+    for f in result["failed"]:
+        click.echo(f"  ✗ {f['prefix']}: {f['error']}", err=True)
+
+    if result["failed"]:
+        raise SystemExit(1)
+
+
 if __name__ == "__main__":
     main()

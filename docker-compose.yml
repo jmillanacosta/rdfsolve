@@ -1,47 +1,189 @@
-# docker-compose.yml — rdfsolve full-stack (Flask API + frontend)
+# =============================================================================
+# docker-compose.yml — rdfsolve full-stack
+# =============================================================================
 #
-# The frontend (TypeScript web components) lives as a git submodule
-# at ./frontend/ and is built inside a multi-stage Docker image
-# alongside the Python/Flask backend.
+# This file tells Docker how to build, configure, and run the rdfsolve
+# application.  It is the single command you need for day-to-day use.
 #
-# Usage:
-#   git submodule update --init          # ensure frontend code is present
-#   docker compose up --build            # build & start
-#   open http://localhost:8000           # app is served here
+# QUICK START
+# -----------
+#   docker compose up --build        # build the image and start (foreground)
+#   docker compose up --build -d     # same, but in the background (detached)
+#   open http://localhost:8000        # the app is now running here
+#   docker compose down              # stop and remove the container
 #
-# Override the port:
-#   PORT=9000 docker compose up --build
+# Override the port (e.g. if 8000 is already in use on your machine):
+#   PORT=9000 docker compose up --build -d
 #
-# To mine more schemas into docker/schemas/:
-#   python scripts/seed_schemas.py --names chembl drugbank
+# See what's running:
+#   docker compose ps
+#   docker compose logs -f           # follow live logs
+#
+# =============================================================================
+# HOW THE DATABASE WORKS
+# =============================================================================
+#
+# rdfsolve uses a single SQLite file as its database.  SQLite is file-based —
+# the whole database is one file: rdfsolve.db.
+#
+# WHERE THE FILE LIVES
+# --------------------
+# Inside the container: /app/data/rdfsolve.db
+# On your host machine: stored in the Docker named volume "db-data" (see the
+#   `volumes:` section at the bottom of this file).  Docker manages the volume
+#   location on your host; you don't need to know the exact path.
+#
+# WHY A NAMED VOLUME (not a bind mount)?
+# ---------------------------------------
+# A named volume (db-data:/app/data) keeps the database file alive across
+# container restarts and image rebuilds.  Without it, every `docker compose
+# down` would delete the database.  A named volume is managed by Docker and
+# is not directly tied to a folder in your repo — that prevents accidental
+# commits of the binary .db file.
+#
+# WHAT'S IN THE DATABASE?
+# -----------------------
+# The database has two tables:
+#
+#   schemas   — one row per imported schema or mapping.  Key columns:
+#                 id            unique identifier (e.g. "aopwikirdf_schema")
+#                 name          human-readable name
+#                 endpoint      SPARQL endpoint URL the schema was mined from
+#                 pattern_count number of class→property→class triples
+#                 generated_at  ISO-8601 timestamp
+#                 strategy      "miner" for schemas, "instance_matcher" for mappings
+#                 data          full JSON-LD document (stored as a JSON string)
+#
+#   endpoints — manually registered SPARQL endpoints (name, URL, optional graph)
+#
+# HOW THE DATABASE GETS POPULATED
+# --------------------------------
+# 1. On every container start, Flask calls SchemaService.import_from_directory()
+#    which reads every *.jsonld file from /app/schemas/ (the bind mount below)
+#    and upserts it into the `schemas` table.  This is how the pre-mined
+#    curated schemas from docker/schemas/ in the git repo make it into the DB.
+#
+# 2. Instance mappings are added at runtime via POST /api/mappings/probe or
+#    by running seed_instance_mappings() from the notebook.  They are also
+#    stored in the `schemas` table (strategy="instance_matcher").
+#
+# GIT & THE DATABASE
+# ------------------
+# Neither the .db file nor the *.jsonld schema files are tracked in git.
+# Both are generated artefacts:
+#   - .db  → runtime state created on first boot (.gitignore: *.db)
+#   - *.jsonld → produced locally by the mining scripts (.gitignore: *.jsonld)
+#
+# On a fresh clone, populate docker/schemas/ before starting the container:
+#   python scripts/mine_all_sources.py --output-dir docker/schemas
+#   python scripts/seed_instance_mappings.py --output-dir docker/schemas
+#
+# The docker/schemas/ directory is bind-mounted into the container (see the
+# volumes block below), so new files are picked up without a rebuild:
+#   docker compose restart
+#
+# To add a single new schema to a running corpus:
+#   python scripts/mine_all_sources.py --output-dir docker/schemas --names mydb
+#   docker compose restart  # container re-imports from docker/schemas/ on boot
+#
+# INSPECTING THE DATABASE
+# -----------------------
+# Open an interactive SQLite shell inside the running container:
+#   docker exec -it rdfsolve sqlite3 /app/data/rdfsolve.db
+#   > SELECT id, strategy, pattern_count FROM schemas;
+#   > SELECT * FROM endpoints;
+#   > .quit
+#
+# BACKING UP THE DATABASE
+# -----------------------
+# Copy the file to your host:
+#   docker cp rdfsolve:/app/data/rdfsolve.db ./rdfsolve_backup.db
+#
+# WIPING THE DATABASE (start fresh)
+# ----------------------------------
+# Stop the container AND delete the named volume:
+#   docker compose down -v
+# On the next `docker compose up` the database is recreated and repopulated
+# from the *.jsonld files in docker/schemas/ automatically.
+#
+# WARNING: `docker compose down` without -v keeps the volume (and the data).
+#          `docker compose down -v` permanently deletes all runtime data
+#          (schemas added via the API, instance mappings, custom endpoints).
+#          Back up first if you care about that data.
+#
+# =============================================================================
 
 services:
   rdfsolve:
     build:
+      # Build context is the repo root so the Dockerfile can COPY from anywhere
+      # in the repo (src/, frontend/, docker/schemas/, data/, etc.)
       context: .
       dockerfile: docker/Dockerfile
-    container_name: rdfsolve
-    volumes:
-      # Persist SQLite database across container restarts
-      - db-data:/app/data
-      # Mount schemas directory — add .jsonld files here without rebuilding
-      - ./docker/schemas:/app/schemas:ro
-    environment:
-      - DATABASE_PATH=/app/data/rdfsolve.db
-      - SCHEMA_IMPORT_DIR=/app/schemas
-      - FRONTEND_DIST=/app/frontend
-      - CORS_ORIGINS=*
-      - SPARQL_TIMEOUT=60
-      - FLASK_DEBUG=0
-      - PORT=${PORT:-8000}
-    ports:
-      - "${PORT:-8000}:${PORT:-8000}"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import os,urllib.request; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\",\"8000\")}/api/health')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
 
+    # Fixed container name so you can reference it easily in docker exec, logs, cp
+    container_name: rdfsolve
+
+    volumes:
+      # --- Database persistence ---
+      # Named volume: survives container restarts and image rebuilds.
+      # /app/data/ contains only rdfsolve.db (the SQLite database file).
+      # To wipe and start over: docker compose down -v
+      - db-data:/app/data
+
+      # --- Schema hot-reload ---
+      # Bind mount: maps docker/schemas/ from your host directly into the
+      # container as a read-only directory.  Any *.jsonld file you drop into
+      # docker/schemas/ on your host is immediately visible to the container
+      # without a rebuild.  Flask re-imports on the next restart:
+      #   docker compose restart
+      - ./docker/schemas:/app/schemas:ro
+
+    environment:
+      # Path inside the container where SQLite stores the database file.
+      # Must stay inside /app/data/ (the named volume) or data won't persist.
+      - DATABASE_PATH=/app/data/rdfsolve.db
+
+      # Directory Flask scans for *.jsonld files to import on startup.
+      # Matches the bind mount target above.
+      - SCHEMA_IMPORT_DIR=/app/schemas
+
+      # Directory containing the compiled frontend (index.html + bundle.js).
+      - FRONTEND_DIST=/app/frontend
+
+      # CORS: which browser origins are allowed to call the API.
+      # "*" = any origin.  Restrict in production, e.g. "https://yourapp.com".
+      - CORS_ORIGINS=*
+
+      # How long (seconds) to wait for a SPARQL endpoint before giving up.
+      - SPARQL_TIMEOUT=60
+
+      # Set to "1" to enable Flask debug mode (auto-reload on code changes).
+      # Never use "1" in production — it exposes an interactive debugger.
+      - FLASK_DEBUG=0
+
+      # Port the server listens on.  Defaults to 8000; override with PORT=9000.
+      - PORT=${PORT:-8000}
+
+    ports:
+      # Map host port → container port.  Both sides use the same PORT value
+      # so `curl http://localhost:8000` reaches Gunicorn inside the container.
+      - "${PORT:-8000}:${PORT:-8000}"
+
+    healthcheck:
+      # Docker polls this command periodically.  If it fails 3 times in a row
+      # the container is marked "unhealthy".  `docker compose ps` shows status.
+      # The check just does an HTTP GET to /api/health and succeeds on 200.
+      test: ["CMD", "python", "-c", "import os,urllib.request; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\",\"8000\")}/api/health')"]
+      interval: 10s      # check every 10 seconds
+      timeout: 5s        # fail the check if no response within 5 seconds
+      retries: 3         # mark unhealthy after 3 consecutive failures
+      start_period: 10s  # give the app 10 seconds to start before checking
+
+# Named volume declaration.
+# Docker creates and manages this volume automatically on first `docker compose up`.
+# The data lives on your host in Docker's internal storage (not in the repo).
+# List all volumes: docker volume ls
+# Inspect this volume: docker volume inspect rdfsolve-2_db-data
 volumes:
   db-data:

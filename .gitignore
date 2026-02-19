@@ -923,4 +923,24 @@ deprecated_static_site/*
 
 notes/*
 
-docker/schemas/*
+docker/*
+
+# ---------------------------------------------------------------------------
+# JSON-LD schema and mapping files
+# ---------------------------------------------------------------------------
+# All *.jsonld files are generated artefacts — output of the schema miner or
+# the instance matcher.  They are NOT committed to git because:
+#   - They can be large and change frequently as endpoints evolve.
+#   - They are regenerated on demand with the mining/seeding scripts.
+#   - The Docker container loads them from disk at runtime (bind mount).
+#
+# To regenerate all schemas locally:
+#   python scripts/mine_all_sources.py --output-dir docker/schemas
+#
+# To regenerate instance mappings:
+#   python scripts/seed_instance_mappings.py --output-dir docker/schemas
+#
+# Exception: tests/test_data/ contains small fixture files that ARE committed
+# because the test suite needs them and they are stable hand-curated files.
+*.jsonld
+!tests/test_data/*.jsonld

@@ -3,7 +3,7 @@ Pydantic models for RDF schema representation.
 
 Provides type-safe data structures with validation for schema elements.
 Shared by both VoidParser (VoID-based extraction) and SchemaMiner
-(direct SPARQL mining).
+(direct SPARQL mining), and the instance-based matcher.
 """
 
 import re
@@ -730,3 +730,248 @@ class MinedSchema(BaseModel):
                         pass
 
         return g
+
+
+# ---------------------------------------------------------------------------
+# Instance-based mapping models
+# ---------------------------------------------------------------------------
+
+SKOS_NARROW_MATCH = "http://www.w3.org/2004/02/skos/core#narrowMatch"
+
+
+class MappingEdge(BaseModel):
+    """A single mapping edge asserting a relationship between two classes.
+
+    Used by :class:`Mapping` and its subclasses to represent cross-dataset
+    links discovered by the instance matcher.
+    """
+
+    source_class: str = Field(
+        ..., description="URI of the source class",
+    )
+    target_class: str = Field(
+        ..., description="URI of the target class",
+    )
+    predicate: str = Field(
+        SKOS_NARROW_MATCH,
+        description="Mapping predicate URI (default: skos:narrowMatch)",
+    )
+    source_dataset: str = Field(
+        ..., description="Dataset name where source_class lives",
+    )
+    target_dataset: str = Field(
+        ..., description="Dataset name where target_class lives",
+    )
+    source_endpoint: Optional[str] = Field(
+        None, description="SPARQL endpoint URL for the source dataset",
+    )
+    target_endpoint: Optional[str] = Field(
+        None, description="SPARQL endpoint URL for the target dataset",
+    )
+    confidence: Optional[float] = Field(
+        None, ge=0, le=1,
+        description="Optional match confidence score 0–1",
+    )
+
+
+class InstanceMatchResult(BaseModel):
+    """Raw result of probing one URI format against one dataset endpoint."""
+
+    dataset_name: str = Field(..., description="Dataset name")
+    endpoint_url: str = Field(..., description="SPARQL endpoint URL")
+    uri_format: str = Field(
+        ..., description="URI prefix that was probed",
+    )
+    matched_class: Optional[str] = Field(
+        None,
+        description=(
+            "Class URI returned by the endpoint for this pattern; "
+            "None if no match"
+        ),
+    )
+
+
+class Mapping(BaseModel):
+    """Container for a set of mapping edges with provenance.
+
+    Base class for all mapping types.  Mirrors :class:`MinedSchema`:
+    stores edges + ``about`` metadata and serialises to JSON-LD via
+    :meth:`to_jsonld`.
+    """
+
+    edges: List[MappingEdge] = Field(default_factory=list)
+    about: AboutMetadata = Field(...)
+    mapping_type: str = Field(
+        "unknown", description="Mapping strategy identifier",
+    )
+
+    def to_jsonld(self) -> Dict[str, Any]:
+        """Export as JSON-LD with ``@context``, ``@graph``, ``@about``.
+
+        Each edge becomes a node in ``@graph``::
+
+            {
+              "@id": "<source_curie>",
+              "void:inDataset": {
+                "@id": "rdfsolve:dataset/<source_name>",
+                "dcterms:title": "<source_name>",
+                "void:sparqlEndpoint": {"@id": "<endpoint_url>"}
+              },
+              "<predicate_curie>": {
+                "@id": "<target_curie>",
+                "void:inDataset": {
+                  "@id": "rdfsolve:dataset/<target_name>",
+                  "dcterms:title": "<target_name>",
+                  "void:sparqlEndpoint": {"@id": "<endpoint_url>"}
+                }
+              },
+              "dcterms:created": "<generated_at>"
+            }
+
+        Edges are grouped by source_class so that a class with multiple
+        mappings is represented as a single node with a list value for
+        the predicate.
+
+        The output is deliberately compatible with the existing frontend
+        ``parseJSONLD()`` → ``CanonicalSchema`` pipeline so that mapping
+        edges are walkable in the diagram without any frontend changes.
+        """
+        context: Dict[str, str] = {
+            "skos": "http://www.w3.org/2004/02/skos/core#",
+            "rdfsolve": "https://w3id.org/rdfsolve/",
+            "void": "http://rdfs.org/ns/void#",
+            "dcterms": "http://purl.org/dc/terms/",
+            "sd": "http://www.w3.org/ns/sparql-service-description#",
+        }
+        grouped: Dict[str, Dict[str, Any]] = {}
+        labels: Dict[str, str] = {}
+        created_at = self.about.generated_at
+
+        def _dataset_node(name: str, endpoint: Optional[str]) -> Dict[str, Any]:
+            node: Dict[str, Any] = {
+                "@id": f"rdfsolve:dataset/{name}",
+                "dcterms:title": name,
+            }
+            if endpoint:
+                node["void:sparqlEndpoint"] = {"@id": endpoint}
+            return node
+
+        for edge in self.edges:
+            sc, sc_pfx, sc_ns = uri_to_curie(edge.source_class)
+            tc, tc_pfx, tc_ns = uri_to_curie(edge.target_class)
+            pp, pp_pfx, pp_ns = uri_to_curie(edge.predicate)
+
+            for pfx, ns in (
+                (sc_pfx, sc_ns),
+                (tc_pfx, tc_ns),
+                (pp_pfx, pp_ns),
+            ):
+                if pfx and ns:
+                    context.setdefault(pfx, ns)
+
+            # Build the target object — carries its own dataset node
+            target_obj: Dict[str, Any] = {
+                "@id": tc,
+                "void:inDataset": _dataset_node(
+                    edge.target_dataset, edge.target_endpoint
+                ),
+            }
+            if edge.confidence is not None:
+                target_obj["rdfsolve:confidence"] = edge.confidence
+
+            if sc not in grouped:
+                grouped[sc] = {
+                    "@id": sc,
+                    "void:inDataset": _dataset_node(
+                        edge.source_dataset, edge.source_endpoint
+                    ),
+                    "dcterms:created": created_at,
+                }
+
+            existing = grouped[sc].get(pp)
+            if existing is None:
+                grouped[sc][pp] = target_obj
+            else:
+                if not isinstance(existing, list):
+                    existing = [existing]
+                if target_obj not in existing:
+                    existing.append(target_obj)
+                grouped[sc][pp] = existing
+
+        result: Dict[str, Any] = {
+            "@context": context,
+            "@graph": list(grouped.values()),
+            "@about": self.about.model_dump(exclude_none=True),
+        }
+        if labels:
+            result["_labels"] = labels
+        return result
+
+
+class InstanceMapping(Mapping):
+    """Mapping generated by instance-based matching.
+
+    Probes SPARQL endpoints for instances matching bioregistry URI patterns
+    to discover which classes across different datasets represent the same
+    kind of entity, then creates mapping edges between them.
+
+    Preferred construction via :meth:`from_bioregistry_resource`.
+    """
+
+    mapping_type: str = Field(default="instance_matcher")
+    resource_prefix: str = Field(
+        ..., description="Bioregistry prefix, e.g. 'ensembl'",
+    )
+    uri_formats: List[str] = Field(
+        default_factory=list,
+        description="URI format prefixes that were probed",
+    )
+    match_results: List[InstanceMatchResult] = Field(
+        default_factory=list,
+        description="Raw probe results before edge generation",
+    )
+
+    def to_jsonld(self) -> Dict[str, Any]:
+        """Extend base JSON-LD with instance-matcher provenance."""
+        doc = super().to_jsonld()
+        about = doc.get("@about", {})
+        about["resource"] = self.resource_prefix
+        about["uri_formats_queried"] = self.uri_formats
+        about["strategy"] = "instance_matcher"
+        doc["@about"] = about
+        return doc
+
+    @classmethod
+    def from_bioregistry_resource(
+        cls,
+        prefix: str,
+        datasources: "pd.DataFrame",
+        predicate: str = SKOS_NARROW_MATCH,
+        dataset_names: Optional[List[str]] = None,
+        timeout: float = 60.0,
+    ) -> "InstanceMapping":
+        """Probe all endpoints for a bioregistry resource.
+
+        Convenience constructor that drives the full probe workflow
+        without importing :mod:`rdfsolve.instance_matcher` directly.
+
+        Args:
+            prefix: Bioregistry prefix (e.g. ``"ensembl"``).
+            datasources: DataFrame with columns
+                ``[dataset_name, endpoint_url]``.
+            predicate: Mapping predicate URI.
+            dataset_names: Optional subset of datasets to query.
+            timeout: SPARQL request timeout in seconds.
+
+        Returns:
+            :class:`InstanceMapping` ready for :meth:`to_jsonld` export.
+        """
+        from rdfsolve.instance_matcher import probe_resource
+
+        return probe_resource(
+            prefix=prefix,
+            datasources=datasources,
+            predicate=predicate,
+            dataset_names=dataset_names,
+            timeout=timeout,
+        )
