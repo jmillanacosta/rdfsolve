@@ -1,7 +1,7 @@
-Parser
-======
+Query
+=====
 
-.. automodule:: rdfsolve.parser
+.. automodule:: rdfsolve.query
    :members:
    :undoc-members:
    :show-inheritance:
