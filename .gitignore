@@ -944,3 +944,4 @@ docker/*
 # because the test suite needs them and they are stable hand-curated files.
 *.jsonld
 !tests/test_data/*.jsonld
+docs/notes/*

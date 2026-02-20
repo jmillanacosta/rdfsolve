@@ -1070,7 +1070,9 @@ def probe_cmd(
     help="Path to data sources CSV.",
 )
 @click.option(
-    "--output-dir", default="docker/schemas", show_default=True,
+    "--output-dir",
+    default="docker/mappings/instance_matching",
+    show_default=True,
     help="Directory to write JSON-LD mapping files.",
 )
 @click.option(
@@ -1123,12 +1125,279 @@ def seed_cmd(
         raise click.Abort()
 
     for p in result["succeeded"]:
-        click.echo(f"  ✓ {p}")
+        click.echo(f"  OK {p}")
     for f in result["failed"]:
-        click.echo(f"  ✗ {f['prefix']}: {f['error']}", err=True)
+        click.echo(f"  FAIL {f['prefix']}: {f['error']}", err=True)
 
     if result["failed"]:
         raise SystemExit(1)
+
+
+# ── semra command group ──────────────────────────────────────────
+
+
+@main.group("semra")
+def semra_group() -> None:
+    """SeMRA integration: import external mappings from semra sources.
+
+    Downloads mappings from community sources (biomappings, Gilda, etc.)
+    and writes one JSON-LD file per (source, bioregistry-prefix) pair.
+
+    \b
+    Typical workflow:
+        rdfsolve semra import --source biomappings
+        rdfsolve semra seed --sources biomappings gilda
+    """
+
+
+@semra_group.command("import")
+@click.option(
+    "--source", "-s", required=True,
+    help="SeMRA source key (e.g. 'biomappings', 'gilda').",
+)
+@click.option(
+    "--prefix", "-p", "prefixes", multiple=True,
+    help=(
+        "Keep only these bioregistry prefixes (repeatable). "
+        "Default: keep all."
+    ),
+)
+@click.option(
+    "--output-dir",
+    default="docker/mappings/semra",
+    show_default=True,
+    help="Directory to write JSON-LD files.",
+)
+def semra_import_cmd(
+    source: str,
+    prefixes: tuple[str, ...],
+    output_dir: str,
+) -> None:
+    """Import mappings from a single SeMRA source.
+
+    Writes {source}_{prefix}.jsonld for each unique subject prefix
+    found in the downloaded mappings.
+    """
+    from rdfsolve.api import import_semra_source
+
+    try:
+        result = import_semra_source(
+            source=source,
+            keep_prefixes=list(prefixes) if prefixes else None,
+            output_dir=output_dir,
+        )
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    for s in result["succeeded"]:
+        click.echo(f"  OK {s}")
+    for f in result["failed"]:
+        click.echo(
+            f"  FAIL {f.get('source')}/{f.get('prefix')}: "
+            f"{f.get('error')}",
+            err=True,
+        )
+    if result["failed"]:
+        raise SystemExit(1)
+
+
+@semra_group.command("seed")
+@click.option(
+    "--sources", "-s", "source_list", required=True, multiple=True,
+    help="SeMRA source key (repeatable).",
+)
+@click.option(
+    "--prefix", "-p", "prefixes", multiple=True,
+    help=(
+        "Keep only these bioregistry prefixes (repeatable)."
+    ),
+)
+@click.option(
+    "--output-dir",
+    default="docker/mappings/semra",
+    show_default=True,
+    help="Directory to write JSON-LD files.",
+)
+def semra_seed_cmd(
+    source_list: tuple[str, ...],
+    prefixes: tuple[str, ...],
+    output_dir: str,
+) -> None:
+    """Seed mapping files from multiple SeMRA sources."""
+    from rdfsolve.api import seed_semra_mappings
+
+    try:
+        result = seed_semra_mappings(
+            sources=list(source_list),
+            keep_prefixes=list(prefixes) if prefixes else None,
+            output_dir=output_dir,
+        )
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    for s in result["succeeded"]:
+        click.echo(f"  OK {s}")
+    for f in result["failed"]:
+        click.echo(
+            f"  FAIL {f.get('source')}/{f.get('prefix')}: "
+            f"{f.get('error')}",
+            err=True,
+        )
+    if result["failed"]:
+        raise SystemExit(1)
+
+
+# ── inference command group ──────────────────────────────────────
+
+
+@main.group("inference")
+def inference_group() -> None:
+    """Mapping inference: derive new mappings from existing ones.
+
+    Uses SeMRA inference operations (inversion, transitivity,
+    generalisation) to expand a set of mapping JSON-LD files.
+
+    \b
+    Typical workflow:
+        rdfsolve inference run --input file1.jsonld file2.jsonld \\
+            --output docker/mappings/inferenced/inferred.jsonld
+        rdfsolve inference seed
+    """
+
+
+@inference_group.command("run")
+@click.option(
+    "--input", "-i", "input_paths", required=True, multiple=True,
+    help="Input mapping JSON-LD file (repeatable).",
+)
+@click.option(
+    "--output", "-o", "output_path", required=True,
+    help="Output JSON-LD file path.",
+)
+@click.option(
+    "--no-inversion", is_flag=True, default=False,
+    help="Disable inversion inference.",
+)
+@click.option(
+    "--no-transitivity", is_flag=True, default=False,
+    help="Disable transitivity (chain) inference.",
+)
+@click.option(
+    "--generalisation", is_flag=True, default=False,
+    help="Enable generalisation inference (off by default).",
+)
+@click.option(
+    "--chain-cutoff", default=3, show_default=True, type=int,
+    help="Maximum chain length for transitivity.",
+)
+@click.option(
+    "--name", "dataset_name", default=None,
+    help="Override @about.dataset_name in the output.",
+)
+def inference_run_cmd(
+    input_paths: tuple[str, ...],
+    output_path: str,
+    no_inversion: bool,
+    no_transitivity: bool,
+    generalisation: bool,
+    chain_cutoff: int,
+    dataset_name: Optional[str],
+) -> None:
+    """Infer new mappings from the given input files."""
+    from rdfsolve.api import infer_mappings
+
+    try:
+        result = infer_mappings(
+            input_paths=list(input_paths),
+            output_path=output_path,
+            inversion=not no_inversion,
+            transitivity=not no_transitivity,
+            generalisation=generalisation,
+            chain_cutoff=chain_cutoff,
+            dataset_name=dataset_name,
+        )
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    click.echo(
+        f"  OK {result['output_edges']} edges written to "
+        f"{result['output_path']} "
+        f"(from {result['input_edges']} inputs, "
+        f"ops: {result['inference_types']})"
+    )
+
+
+@inference_group.command("seed")
+@click.option(
+    "--input-dir",
+    default="docker/mappings",
+    show_default=True,
+    help="Directory containing instance_matching/ and semra/ subdirs.",
+)
+@click.option(
+    "--output-dir",
+    default="docker/mappings/inferenced",
+    show_default=True,
+    help="Directory for the inferenced output.",
+)
+@click.option(
+    "--name", "output_name",
+    default="inferenced_mappings",
+    show_default=True,
+    help="Output file stem (without .jsonld).",
+)
+@click.option(
+    "--no-inversion", is_flag=True, default=False,
+    help="Disable inversion inference.",
+)
+@click.option(
+    "--no-transitivity", is_flag=True, default=False,
+    help="Disable transitivity inference.",
+)
+@click.option(
+    "--generalisation", is_flag=True, default=False,
+    help="Enable generalisation inference.",
+)
+@click.option(
+    "--chain-cutoff", default=3, show_default=True, type=int,
+    help="Maximum chain length for transitivity.",
+)
+def inference_seed_cmd(
+    input_dir: str,
+    output_dir: str,
+    output_name: str,
+    no_inversion: bool,
+    no_transitivity: bool,
+    generalisation: bool,
+    chain_cutoff: int,
+) -> None:
+    """Infer over all mappings found under INPUT_DIR."""
+    from rdfsolve.api import seed_inferenced_mappings
+
+    try:
+        result = seed_inferenced_mappings(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            output_name=output_name,
+            inversion=not no_inversion,
+            transitivity=not no_transitivity,
+            generalisation=generalisation,
+            chain_cutoff=chain_cutoff,
+        )
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    if result["output_path"]:
+        click.echo(
+            f"  OK {result['output_edges']} edges → "
+            f"{result['output_path']}"
+        )
+    else:
+        click.echo("  ⚠ No input files found.", err=True)
 
 
 if __name__ == "__main__":

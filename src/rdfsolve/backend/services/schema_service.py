@@ -108,13 +108,26 @@ class SchemaService:
     # ── bulk import from existing JSON-LD files on disk ───────────────
 
     def import_from_directory(self, directory: str | Path) -> int:
-        """Scan a directory for ``*.jsonld`` files and import them.
+        """Scan a directory tree for ``*.jsonld`` files and import them.
+
+        Scans *directory* directly, then also any immediate subdirectories
+        (one level deep) — this covers the ``docker/mappings/*/`` layout
+        where schemas, instance-matching mappings, semra imports, and
+        inferenced mappings live in separate subdirectories.
 
         Returns the number of schemas imported.
         """
+        root = Path(directory)
         imported_ids: set[str] = set()
         count = 0
-        for path in sorted(Path(directory).glob("*.jsonld")):
+
+        # Collect all paths: root level + one level of subdirectories
+        paths_to_scan: list[Path] = sorted(root.glob("*.jsonld"))
+        for subdir in sorted(root.iterdir()):
+            if subdir.is_dir():
+                paths_to_scan.extend(sorted(subdir.glob("*.jsonld")))
+
+        for path in paths_to_scan:
             try:
                 data = json.loads(path.read_text())
             except (json.JSONDecodeError, OSError) as exc:

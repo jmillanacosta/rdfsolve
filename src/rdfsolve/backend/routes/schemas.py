@@ -19,12 +19,21 @@ def _get_svc() -> SchemaService:
 def list_schemas():
     """Return a list of available schema IDs and metadata.
 
-    Optional query parameter:
+    Optional query parameters:
       ?strategy=miner           — only source schemas (miner-produced)
       ?strategy=instance_matcher — only instance-mapping results
+      ?strategy=instance_matcher,semra_import,inferenced — multiple (comma-sep)
+      ?type=mapping             — shorthand for all mapping strategies
       (omit for all)
+
+    Each item in the response includes an ``about`` dict with the
+    ``@about`` metadata from the stored JSON-LD (useful for tooltips).
     """
+    _MAPPING_STRATEGIES = "instance_matcher,semra_import,inferenced"
     strategy = request.args.get("strategy")
+    schema_type = request.args.get("type")
+    if schema_type == "mapping" and not strategy:
+        strategy = _MAPPING_STRATEGIES
     schemas = _get_svc().list_schemas(strategy=strategy)
     return jsonify(schemas)
 

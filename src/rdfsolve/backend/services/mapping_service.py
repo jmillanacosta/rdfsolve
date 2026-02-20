@@ -1,7 +1,12 @@
 """Instance mapping service — thin Flask wrapper around the probe API.
 
 Mappings are stored in the **existing** ``schemas`` table with
-``strategy = 'instance_matcher'``.  No schema migration is required.
+``strategy`` set to one of:
+  - ``'instance_matcher'`` — probed from SPARQL endpoints
+  - ``'semra_import'``     — imported from a SeMRA source
+  - ``'inferenced'``       — produced by the inference pipeline
+
+No schema migration is required.
 """
 
 from __future__ import annotations
@@ -13,7 +18,8 @@ from rdfsolve.backend.database import Database
 
 logger = logging.getLogger(__name__)
 
-_STRATEGY = "instance_matcher"
+# All strategy values that identify a mapping (not a schema)
+_MAPPING_STRATEGIES = {"instance_matcher", "semra_import", "inferenced"}
 
 
 class MappingService:
@@ -34,7 +40,10 @@ class MappingService:
     def list_mappings(self) -> list[dict[str, Any]]:
         """Return lightweight metadata for every stored mapping."""
         all_schemas = self.db.list_schemas()
-        return [s for s in all_schemas if s.get("strategy") == _STRATEGY]
+        return [
+            s for s in all_schemas
+            if s.get("strategy") in _MAPPING_STRATEGIES
+        ]
 
     def get_mapping(self, mapping_id: str) -> dict[str, Any] | None:
         """Return the full JSON-LD for a mapping, or ``None``."""
@@ -46,10 +55,12 @@ class MappingService:
         self,
         prefix: str,
         data: dict[str, Any],
+        strategy: str = "instance_matcher",
     ) -> str:
         """Persist a mapping JSON-LD document.  Returns the mapping id."""
-        mapping_id = f"{prefix}_instance_mapping"
         about = data.get("@about", {})
+        detected_strategy = about.get("strategy", strategy)
+        mapping_id = about.get("dataset_name", f"{prefix}_mapping")
         self.db.save_schema(
             schema_id=mapping_id,
             name=about.get("dataset_name", mapping_id),
@@ -57,7 +68,7 @@ class MappingService:
             endpoint="",
             pattern_count=about.get("pattern_count", 0),
             generated_at=about.get("generated_at", ""),
-            strategy=_STRATEGY,
+            strategy=detected_strategy,
         )
         return mapping_id
 

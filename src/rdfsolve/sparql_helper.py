@@ -426,19 +426,40 @@ class SparqlHelper:
         )
         return bool(result.get("boolean", False))
 
+    # Characters that are illegal inside a SPARQL IRI literal <...>.
+    # If the incremented upper-bound character is one of these the range
+    # query would produce a syntax error, so we fall back to STRSTARTS.
+    _IRI_UNSAFE_CHARS = frozenset('<>"{}|^`\\ \t\n\r')
+
     def find_classes_for_uri_pattern(self, uri_prefix: str) -> list[str]:
-        """Find all ``rdf:type`` classes whose instances start with *uri_prefix*.
+        """Find all ``rdf:type`` classes whose instances match *uri_prefix*.
 
-        Executes::
+        Tries an IRI-range filter first (index-friendly on most engines)::
 
-            SELECT DISTINCT ?c WHERE {
-                ?s a ?c .
-                FILTER(STRSTARTS(STR(?s), "<uri_prefix>"))
+            SELECT DISTINCT ?c
+            WHERE {
+              ?s a ?c .
+              FILTER(
+                ?s >= <uri_prefix> &&
+                ?s <  <uri_prefix_next>
+              )
             }
 
-        ``STRSTARTS`` is used in preference to ``regex`` because it is
-        evaluated as a string comparison and is optimised by most SPARQL
-        engines; ``regex`` triggers a full-scan on many endpoints.
+        The upper-bound ``uri_prefix_next`` is derived by incrementing the
+        last character of *uri_prefix* by one code-point (e.g.
+        ``"https://bioregistry.io/faldo/"``
+        → ``"https://bioregistry.io/faldo0"``
+        because ``ord('/') + 1 == ord('0')``).
+
+        If the incremented character would be illegal inside a SPARQL
+        ``<…>`` IRI literal (e.g. ``=`` → ``>``, which closes the IRI),
+        falls back to the safer ``STRSTARTS`` filter::
+
+            SELECT DISTINCT ?c
+            WHERE {
+              ?s a ?c .
+              FILTER(STRSTARTS(STR(?s), "uri_prefix"))
+            }
 
         Args:
             uri_prefix: URI prefix string, e.g.
@@ -447,13 +468,34 @@ class SparqlHelper:
         Returns:
             Deduplicated list of class URIs (may be empty).
         """
-        escaped = uri_prefix.replace("\\", "\\\\").replace('"', '\\"')
-        query = (
-            "SELECT DISTINCT ?c WHERE { "
-            "?s a ?c . "
-            f'FILTER(STRSTARTS(STR(?s), "{escaped}")) '
-            "}"
-        )
+        if not uri_prefix:
+            return []
+
+        # Build the exclusive upper bound by bumping the last char's codepoint.
+        next_char = chr(ord(uri_prefix[-1]) + 1)
+        if next_char in self._IRI_UNSAFE_CHARS:
+            # Upper-bound IRI would be malformed — use STRSTARTS fallback.
+            escaped = uri_prefix.replace(
+                "\\", "\\\\"
+            ).replace('"', '\\"')
+            query = (
+                "SELECT DISTINCT ?c WHERE { "
+                "?s a ?c . "
+                f'FILTER(STRSTARTS(STR(?s), "{escaped}")) '
+                "}"
+            )
+        else:
+            uri_prefix_next = uri_prefix[:-1] + next_char
+            query = (
+                "SELECT DISTINCT ?c\n"
+                "WHERE {\n"
+                "  ?s a ?c .\n"
+                "  FILTER(\n"
+                f"    ?s >= <{uri_prefix}> &&\n"
+                f"    ?s <  <{uri_prefix_next}>\n"
+                "  )\n"
+                "}"
+            )
         try:
             out = self.select(query)
         except Exception:

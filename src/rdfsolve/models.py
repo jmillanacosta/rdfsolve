@@ -815,14 +815,14 @@ class Mapping(BaseModel):
               "void:inDataset": {
                 "@id": "rdfsolve:dataset/<source_name>",
                 "dcterms:title": "<source_name>",
-                "void:sparqlEndpoint": {"@id": "<endpoint_url>"}
+                "foaf:homepage": {"@id": "<homepage_url>"}
               },
               "<predicate_curie>": {
                 "@id": "<target_curie>",
                 "void:inDataset": {
                   "@id": "rdfsolve:dataset/<target_name>",
                   "dcterms:title": "<target_name>",
-                  "void:sparqlEndpoint": {"@id": "<endpoint_url>"}
+                  "foaf:homepage": {"@id": "<homepage_url>"}
                 }
               },
               "dcterms:created": "<generated_at>"
@@ -841,19 +841,20 @@ class Mapping(BaseModel):
             "rdfsolve": "https://w3id.org/rdfsolve/",
             "void": "http://rdfs.org/ns/void#",
             "dcterms": "http://purl.org/dc/terms/",
+            "foaf": "http://xmlns.com/foaf/0.1/",
             "sd": "http://www.w3.org/ns/sparql-service-description#",
         }
         grouped: Dict[str, Dict[str, Any]] = {}
         labels: Dict[str, str] = {}
         created_at = self.about.generated_at
 
-        def _dataset_node(name: str, endpoint: Optional[str]) -> Dict[str, Any]:
+        def _dataset_node(name: str, homepage: Optional[str]) -> Dict[str, Any]:
             node: Dict[str, Any] = {
                 "@id": f"rdfsolve:dataset/{name}",
                 "dcterms:title": name,
             }
-            if endpoint:
-                node["void:sparqlEndpoint"] = {"@id": endpoint}
+            if homepage:
+                node["foaf:homepage"] = {"@id": homepage}
             return node
 
         for edge in self.edges:
@@ -975,3 +976,89 @@ class InstanceMapping(Mapping):
             dataset_names=dataset_names,
             timeout=timeout,
         )
+
+
+# ---------------------------------------------------------------------------
+# SeMRA-derived mapping models
+# ---------------------------------------------------------------------------
+
+
+class SemraMapping(Mapping):
+    """Mapping imported from a SeMRA external source.
+
+    Carries the semra source key (e.g. ``"biomappings"``) and, for
+    per-prefix sources such as pyobo or Wikidata, the bioregistry prefix.
+    The evidence chain is a list of serialisable dicts produced by
+    :func:`rdfsolve.semra_converter.semra_evidence_to_jsonld_about`.
+    """
+
+    mapping_type: str = Field(default="semra_import")
+    source_name: str = Field(
+        ..., description="SeMRA source key, e.g. 'biomappings'",
+    )
+    source_prefix: Optional[str] = Field(
+        None,
+        description="Bioregistry prefix for per-prefix sources",
+    )
+    evidence_chain: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Serialised semra evidence objects",
+    )
+
+    def to_jsonld(self) -> Dict[str, Any]:
+        """Extend base JSON-LD with SeMRA provenance in ``@about``."""
+        doc = super().to_jsonld()
+        about = doc.get("@about", {})
+        about["strategy"] = self.mapping_type
+        about["semra_source"] = self.source_name
+        if self.source_prefix:
+            about["semra_prefix"] = self.source_prefix
+        if self.evidence_chain:
+            about["evidence"] = self.evidence_chain
+        doc["@about"] = about
+        return doc
+
+
+class InferencedMapping(Mapping):
+    """Mapping produced by the rdfsolve/SeMRA inference pipeline.
+
+    Carries the set of inference types applied (``"inversion"``,
+    ``"transitivity"``, ``"generalisation"``), the source mapping files
+    that were combined, an evidence chain for the inferred edges, and
+    optional aggregate stats.
+    """
+
+    mapping_type: str = Field(default="inferenced")
+    inference_types: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Inference operations applied, e.g. "
+            "['inversion', 'transitivity']"
+        ),
+    )
+    source_mapping_files: List[str] = Field(
+        default_factory=list,
+        description="Paths to the input mapping JSON-LD files",
+    )
+    evidence_chain: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Serialised semra evidence objects for inferred edges",
+    )
+    stats: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Aggregate inference stats (edge counts, etc.)",
+    )
+
+    def to_jsonld(self) -> Dict[str, Any]:
+        """Extend base JSON-LD with inference provenance in ``@about``."""
+        doc = super().to_jsonld()
+        about = doc.get("@about", {})
+        about["strategy"] = self.mapping_type
+        about["inference_types"] = self.inference_types
+        about["source_files"] = self.source_mapping_files
+        if self.evidence_chain:
+            about["evidence"] = self.evidence_chain
+        if self.stats:
+            about["stats"] = self.stats
+        doc["@about"] = about
+        return doc

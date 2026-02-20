@@ -44,10 +44,12 @@ __all__ = ["probe_resource"]
 
 
 def _get_uri_formats(prefix: str) -> list[str]:
-    """Return deduplicated URI format prefixes for a bioregistry resource.
+    """Return deduplicated URI prefix strings for a bioregistry resource.
 
-    Strips the ``$1`` placeholder that bioregistry appends to every format
-    string, then deduplicates and removes empty strings.
+    Delegates to :meth:`bioregistry.Resource.get_uri_prefixes`, which
+    already handles clipping the ``$1`` placeholder and skipping formats
+    where ``$1`` does not appear at the end (e.g. CGI-style URLs like
+    ``mesh.2012``'s ``…index=$1&view=expanded``).
 
     Args:
         prefix: Bioregistry prefix (e.g. ``"ensembl"``).
@@ -67,14 +69,15 @@ def _get_uri_formats(prefix: str) -> list[str]:
             f"Unknown bioregistry prefix: {prefix!r}. "
             "Check https://bioregistry.io/ for valid prefixes."
         )
-    raw = resource.get_uri_formats() or []
+    # get_uri_prefixes() already clips the trailing $1 and skips formats
+    # where $1 is not at the end (e.g. mesh.2012's CGI-style URLs).
+    raw = resource.get_uri_prefixes() or set()
     seen: set[str] = set()
     formats: list[str] = []
-    for fmt in raw:
-        stripped = fmt.rstrip("$1")
-        if stripped and stripped not in seen:
-            seen.add(stripped)
-            formats.append(stripped)
+    for prefix_str in sorted(raw):  # sorted for deterministic order
+        if prefix_str and prefix_str not in seen:
+            seen.add(prefix_str)
+            formats.append(prefix_str)
     return formats
 
 
@@ -107,6 +110,10 @@ def _probe_dataset(
         return results
 
     for uri_format in uri_formats:
+        logger.info(
+            "Probing  dataset=%-20s  endpoint=%s  pattern=%s",
+            dataset_name, endpoint_url, uri_format,
+        )
         try:
             classes = sparql.find_classes_for_uri_pattern(uri_format)
         except Exception as exc:
@@ -116,6 +123,14 @@ def _probe_dataset(
             )
             continue
 
+        if classes:
+            logger.info(
+                "  → %d hit(s): %s",
+                len(classes), ", ".join(classes),
+            )
+        else:
+            logger.debug("  → no hits")
+
         for cls_uri in classes:
             results.append(InstanceMatchResult(
                 dataset_name=dataset_name,
@@ -123,10 +138,6 @@ def _probe_dataset(
                 uri_format=uri_format,
                 matched_class=cls_uri,
             ))
-            logger.debug(
-                "Hit: %s  class=%s  via=%s",
-                dataset_name, cls_uri, uri_format,
-            )
 
     return results
 
@@ -264,9 +275,13 @@ def probe_resource(
             logger.info("Skipping %s: no endpoint_url", dataset)
             continue
         logger.info(
-            "Probing %s (%d uri formats) ...", dataset, len(uri_formats),
+            "── Probing dataset=%s  endpoint=%s  (%d uri formats)",
+            dataset, endpoint, len(uri_formats),
         )
         results = _probe_dataset(dataset, endpoint, uri_formats, timeout)
+        logger.info(
+            "   dataset=%s  total hits=%d", dataset, len(results),
+        )
         all_results.extend(results)
 
     # Build cross-dataset edges

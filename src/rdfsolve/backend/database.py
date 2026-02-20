@@ -95,21 +95,37 @@ class Database:
     def list_schemas(self, strategy: str | None = None) -> list[dict[str, Any]]:
         """Return lightweight metadata for every stored schema.
 
-        If *strategy* is provided, only rows with that strategy are returned.
+        If *strategy* is provided, only rows with that strategy value are
+        returned.  *strategy* may be a comma-separated list of values, in
+        which case rows matching any of the values are returned.
         """
         if strategy:
+            values = [s.strip() for s in strategy.split(",") if s.strip()]
+            placeholders = ",".join("?" * len(values))
             rows = self._conn.execute(
                 "SELECT id, name, endpoint, pattern_count, "
-                "generated_at, strategy FROM schemas "
-                "WHERE strategy = ? ORDER BY name",
-                (strategy,),
+                "generated_at, strategy, data FROM schemas "
+                f"WHERE strategy IN ({placeholders}) ORDER BY name",
+                values,
             ).fetchall()
         else:
             rows = self._conn.execute(
                 "SELECT id, name, endpoint, pattern_count, "
-                "generated_at, strategy FROM schemas ORDER BY name"
+                "generated_at, strategy, data FROM schemas ORDER BY name"
             ).fetchall()
-        return [dict(r) for r in rows]
+        results = []
+        for r in rows:
+            item = dict(r)
+            # Extract @about from the data blob without loading the full graph
+            data_blob = item.pop("data", None)
+            if data_blob:
+                try:
+                    doc = json.loads(data_blob)
+                    item["about"] = doc.get("@about", {})
+                except Exception:
+                    item["about"] = {}
+            results.append(item)
+        return results
 
     def get_schema(self, schema_id: str) -> dict[str, Any] | None:
         """Load a full JSON-LD schema by *schema_id*."""

@@ -25,6 +25,9 @@ __all__ = [
     "graph_to_linkml",
     "graph_to_schema",
     "graph_to_shacl",
+    "import_semra_source",
+    "infer_mappings",
+    "load_mapping_jsonld",
     "load_parser_from_file",
     "load_parser_from_graph",
     "mine_all_sources",
@@ -32,7 +35,9 @@ __all__ = [
     "probe_instance_mapping",
     "resolve_iris",
     "retrieve_void_from_graphs",
+    "seed_inferenced_mappings",
     "seed_instance_mappings",
+    "seed_semra_mappings",
     "to_jsonld_from_file",
     "to_linkml_from_file",
     "to_rdfconfig_from_file",
@@ -763,7 +768,7 @@ def mine_all_sources(
         except Exception as exc:
             msg = str(exc)
             logger.warning(
-                f"  ✗ {name}: {msg}"
+                f"  FAIL {name}: {msg}"
             )
             failed.append({"dataset": name, "error": msg})
             if on_progress:
@@ -970,21 +975,124 @@ def probe_instance_mapping(
     return mapping.to_jsonld()
 
 
+def _merge_instance_mapping_jsonld(
+    existing: Dict[str, Any],
+    new: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Merge *new* instance-mapping JSON-LD into *existing* in-place.
+
+    Merges:
+    * ``@context`` — union of all prefix→namespace entries.
+    * ``@graph``   — nodes are keyed by ``@id``; for each source node the
+      predicate targets are merged (duplicates skipped).
+    * ``@about``   — ``uri_formats_queried`` is unioned;
+      ``pattern_count`` is recomputed from the merged graph size;
+      ``generated_at`` is refreshed to *now*.
+
+    Args:
+        existing: The JSON-LD dict loaded from the file on disk.
+        new: The JSON-LD dict produced by the latest probe run.
+
+    Returns:
+        The mutated *existing* dict (also returned for convenience).
+    """
+    import copy
+
+    # ── context ──────────────────────────────────────────────────────────────
+    existing.setdefault("@context", {})
+    for k, v in new.get("@context", {}).items():
+        existing["@context"].setdefault(k, v)
+
+    # ── graph — merge by @id ─────────────────────────────────────────────────
+    # Build an index of existing nodes keyed by @id
+    existing_nodes: Dict[str, Dict[str, Any]] = {}
+    for node in existing.get("@graph", []):
+        nid = node.get("@id")
+        if nid:
+            existing_nodes[nid] = node
+
+    for new_node in new.get("@graph", []):
+        nid = new_node.get("@id")
+        if nid not in existing_nodes:
+            # Completely new source class — just append a deep copy
+            existing_nodes[nid] = copy.deepcopy(new_node)
+        else:
+            # Merge predicate targets into existing node
+            ex_node = existing_nodes[nid]
+            for key, value in new_node.items():
+                if key in ("@id", "void:inDataset", "dcterms:created"):
+                    continue  # structural fields — keep original
+                if key not in ex_node:
+                    ex_node[key] = copy.deepcopy(value)
+                else:
+                    # Normalise both sides to lists and merge unique entries
+                    existing_vals = ex_node[key]
+                    if not isinstance(existing_vals, list):
+                        existing_vals = [existing_vals]
+                    new_vals = value if isinstance(value, list) else [value]
+                    for v in new_vals:
+                        if v not in existing_vals:
+                            existing_vals.append(v)
+                    ex_node[key] = (
+                        existing_vals[0]
+                        if len(existing_vals) == 1
+                        else existing_vals
+                    )
+
+    existing["@graph"] = list(existing_nodes.values())
+
+    # ── @about ───────────────────────────────────────────────────────────────
+    from datetime import datetime, timezone
+
+    about_ex = existing.setdefault("@about", {})
+    about_new = new.get("@about", {})
+
+    # Union uri_formats_queried
+    seen: List[str] = list(about_ex.get("uri_formats_queried", []))
+    for fmt in about_new.get("uri_formats_queried", []):
+        if fmt not in seen:
+            seen.append(fmt)
+    about_ex["uri_formats_queried"] = seen
+
+    # Recount edges (each non-structural predicate entry on each node = 1 edge)
+    structural = {"@id", "void:inDataset", "dcterms:created"}
+    edge_count = sum(
+        len(node) - len(structural & node.keys())
+        for node in existing["@graph"]
+    )
+    about_ex["pattern_count"] = edge_count
+    about_ex["generated_at"] = datetime.now(timezone.utc).isoformat()
+
+    return existing
+
+
 def seed_instance_mappings(
     prefixes: List[str],
     sources_csv: str = "data/sources.csv",
-    output_dir: str = "docker/schemas",
+    output_dir: str = "docker/mappings/instance_matching",
     predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
     dataset_names: Optional[List[str]] = None,
     timeout: float = 60.0,
-    skip_existing: bool = True,
+    skip_existing: bool = False,
 ) -> Dict[str, Any]:
     """Probe multiple bioregistry resources and write mapping JSON-LD files.
 
     Iterates over *prefixes*, runs :func:`probe_instance_mapping` for each,
     and writes the result to
-    ``{output_dir}/{prefix}_instance_mapping.jsonld``.  Mirrors the pattern
-    of :func:`mine_all_sources`.
+    ``{output_dir}/{prefix}_instance_mapping.jsonld``.
+
+    When a file already exists on disk the new probe results are **merged**
+    into it rather than overwriting it:
+
+    * New ``@graph`` nodes (source classes not yet in the file) are appended.
+    * For existing source nodes, new predicate→target entries are added;
+      duplicates are silently skipped.
+    * ``uri_formats_queried`` in ``@about`` is unioned.
+    * ``pattern_count`` and ``generated_at`` are refreshed.
+
+    The default behaviour (``skip_existing=False``) is to always probe and
+    merge.  Pass ``skip_existing=True`` only when you explicitly want to skip
+    prefixes whose output file already exists without re-probing.
 
     Args:
         prefixes: List of bioregistry prefixes to process.
@@ -994,8 +1102,9 @@ def seed_instance_mappings(
         predicate: Mapping predicate URI.
         dataset_names: Restrict probing to these dataset names.
         timeout: SPARQL request timeout per request.
-        skip_existing: If ``True`` (default), skip prefixes that already
-            have a ``{prefix}_instance_mapping.jsonld`` in *output_dir*.
+        skip_existing: If ``True``, skip prefixes whose output file
+            already exists without re-probing.  Defaults to ``False``
+            (always probe and merge).
 
     Returns:
         Summary dict: ``{"succeeded": [...], "failed": [...]}``.
@@ -1003,7 +1112,6 @@ def seed_instance_mappings(
     import json as _json
 
     from rdfsolve.instance_matcher import probe_resource
-
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     datasources = pd.read_csv(sources_csv)
@@ -1012,9 +1120,14 @@ def seed_instance_mappings(
     failed: List[Dict[str, str]] = []
 
     for prefix in prefixes:
+        logger.info("Querying prefix: %s", prefix)
         outfile = out / f"{prefix}_instance_mapping.jsonld"
+
         if skip_existing and outfile.exists():
-            logger.info("Skipping %s: already exists at %s", prefix, outfile)
+            logger.info(
+                "Skipping %s: already exists at %s (skip_existing=True)",
+                prefix, outfile,
+            )
             succeeded.append(prefix)
             continue
 
@@ -1026,12 +1139,350 @@ def seed_instance_mappings(
                 dataset_names=dataset_names,
                 timeout=timeout,
             )
-            jsonld = mapping.to_jsonld()
-            outfile.write_text(_json.dumps(jsonld, indent=2))
-            logger.info("Written: %s", outfile)
+            new_jsonld = mapping.to_jsonld()
+
+            if outfile.exists():
+                try:
+                    existing_jsonld = _json.loads(outfile.read_text())
+                    merged = _merge_instance_mapping_jsonld(
+                        existing_jsonld, new_jsonld
+                    )
+                    outfile.write_text(_json.dumps(merged, indent=2))
+                    logger.info("Merged into existing: %s", outfile)
+                except Exception as merge_exc:
+                    logger.warning(
+                        "Could not merge into %s (%s); overwriting.",
+                        outfile, merge_exc,
+                    )
+                    outfile.write_text(_json.dumps(new_jsonld, indent=2))
+                    logger.info("Overwritten: %s", outfile)
+            else:
+                outfile.write_text(_json.dumps(new_jsonld, indent=2))
+                logger.info("Written: %s", outfile)
+
             succeeded.append(prefix)
         except Exception as exc:
             logger.error("Failed %s: %s", prefix, exc)
             failed.append({"prefix": prefix, "error": str(exc)})
 
     return {"succeeded": succeeded, "failed": failed}
+
+
+# ── SeMRA import API ─────────────────────────────────────────────
+
+
+def import_semra_source(
+    source: str,
+    keep_prefixes: Optional[List[str]] = None,
+    output_dir: str = "docker/mappings/semra",
+) -> Dict[str, Any]:
+    """Import mappings from a SeMRA source and write one JSON-LD per prefix.
+
+    Fetches all ``semra.Mapping`` objects from the named source (e.g.
+    ``"biomappings"``), optionally filters to *keep_prefixes*, groups by
+    the *source* prefix of each mapping, and writes one JSON-LD file per
+    unique prefix: ``{output_dir}/{source}_{prefix}.jsonld``.
+
+    The files use the :class:`~rdfsolve.models.SemraMapping` format and
+    are importable directly by :func:`rdfsolve.backend.services.schema_service
+    .SchemaService.import_from_directory`.
+
+    Args:
+        source: SeMRA source key registered in
+            ``semra.sources.SOURCE_RESOLVER``
+            (e.g. ``"biomappings"``, ``"gilda"``).
+        keep_prefixes: Optional list of bioregistry prefixes to retain;
+            all others are discarded.
+        output_dir: Directory for output files.
+
+    Returns:
+        Summary dict with keys ``"succeeded"``, ``"failed"``,
+        ``"skipped"``.
+    """
+    from collections import defaultdict
+
+    from semra.api import keep_prefixes as _keep_prefixes
+    from semra.sources import SOURCE_RESOLVER
+
+    from rdfsolve.models import AboutMetadata, SemraMapping
+    from rdfsolve.semra_converter import (
+        semra_evidence_to_jsonld_about,
+        semra_to_rdfsolve_edges,
+    )
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    succeeded: List[str] = []
+    failed: List[Dict[str, str]] = []
+
+    # Fetch all mappings from the source
+    try:
+        logger.info("Fetching semra source: %s", source)
+
+        # ── Wikidata special case ────────────────────────────────────────
+        # get_wikidata_mappings() requires a `prop` keyword; the friendlier
+        # get_wikidata_mappings_by_prefix(prefix) takes a bioregistry prefix.
+        # We fetch one prefix at a time so partial failures don't abort all.
+        if source.lower() in ("wikidata", "getwikidatamappings"):
+            import bioregistry
+            from semra.sources.wikidata import get_wikidata_mappings_by_prefix
+
+            available = set(bioregistry.get_registry_map("wikidata").keys())
+            targets = (
+                [p for p in keep_prefixes if p in available]
+                if keep_prefixes
+                else sorted(available)
+            )
+            if not targets:
+                logger.warning(
+                    "wikidata: none of the requested prefixes have a "
+                    "Wikidata property mapping. Available: %s",
+                    sorted(available)[:20],
+                )
+                return {"succeeded": [], "failed": [], "skipped": [source]}
+
+            for wd_prefix in targets:
+                wp_filename = f"wikidata_{wd_prefix}.jsonld"
+                wp_outfile = out / wp_filename
+                try:
+                    logger.info(
+                        "wikidata: fetching prefix %r", wd_prefix
+                    )
+                    grp = get_wikidata_mappings_by_prefix(wd_prefix)
+                    edges = semra_to_rdfsolve_edges(grp, dataset_hint="wikidata")
+                    evidence_chain: List[Dict[str, Any]] = []
+                    for m in grp:
+                        evidence_chain.extend(
+                            semra_evidence_to_jsonld_about(m.evidence)
+                        )
+                    dataset_name = f"wikidata_{wd_prefix}_mapping"
+                    about = AboutMetadata.build(
+                        dataset_name=dataset_name,
+                        pattern_count=len(edges),
+                        strategy="semra_import",
+                    )
+                    mapping = SemraMapping(
+                        edges=edges,
+                        about=about,
+                        source_name="wikidata",
+                        source_prefix=wd_prefix,
+                        evidence_chain=evidence_chain,
+                    )
+                    wp_outfile.write_text(
+                        json.dumps(
+                            mapping.to_jsonld(), indent=2, ensure_ascii=False
+                        ),
+                        encoding="utf-8",
+                    )
+                    logger.info(
+                        "Written: %s (%d edges)", wp_outfile, len(edges)
+                    )
+                    succeeded.append(f"wikidata_{wd_prefix}")
+                except Exception as exc:
+                    logger.error(
+                        "Failed wikidata/%s: %s", wd_prefix, exc
+                    )
+                    failed.append(
+                        {"source": "wikidata", "prefix": wd_prefix,
+                         "error": str(exc)}
+                    )
+            return {"succeeded": succeeded, "failed": failed, "skipped": []}
+        # ── End Wikidata special case ────────────────────────────────────
+
+        fn = SOURCE_RESOLVER.lookup(source)
+        semra_mappings = fn()
+    except Exception as exc:
+        logger.error("Failed to load semra source %r: %s", source, exc)
+        return {"succeeded": [], "failed": [
+            {"source": source, "error": str(exc)}
+        ], "skipped": []}
+
+    # Optional prefix filter
+    if keep_prefixes:
+        semra_mappings = _keep_prefixes(semra_mappings, keep_prefixes)
+
+    # Group by subject prefix
+    by_prefix: dict[str, list] = defaultdict(list)
+    for m in semra_mappings:
+        prefix = getattr(m.subject, "prefix", None) or "unknown"
+        by_prefix[prefix].append(m)
+
+    logger.info(
+        "Source %r: %d mappings across %d prefixes",
+        source, len(semra_mappings), len(by_prefix),
+    )
+
+    for prefix, group in sorted(by_prefix.items()):
+        filename = f"{source}_{prefix}.jsonld"
+        outfile = out / filename
+        try:
+            edges = semra_to_rdfsolve_edges(
+                group,
+                dataset_hint=source,
+            )
+            evidence_chain = []
+            for m in group:
+                evidence_chain.extend(
+                    semra_evidence_to_jsonld_about(m.evidence)
+                )
+
+            dataset_name = f"{source}_{prefix}_mapping"
+            about = AboutMetadata.build(
+                dataset_name=dataset_name,
+                pattern_count=len(edges),
+                strategy="semra_import",
+            )
+            mapping = SemraMapping(
+                edges=edges,
+                about=about,
+                source_name=source,
+                source_prefix=prefix,
+                evidence_chain=evidence_chain,
+            )
+            outfile.write_text(
+                json.dumps(mapping.to_jsonld(), indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            logger.info("Written: %s (%d edges)", outfile, len(edges))
+            succeeded.append(f"{source}_{prefix}")
+        except Exception as exc:
+            logger.error(
+                "Failed %s/%s: %s", source, prefix, exc
+            )
+            failed.append({
+                "source": source, "prefix": prefix, "error": str(exc),
+            })
+
+    return {"succeeded": succeeded, "failed": failed, "skipped": []}
+
+
+def seed_semra_mappings(
+    sources: List[str],
+    keep_prefixes: Optional[List[str]] = None,
+    output_dir: str = "docker/mappings/semra",
+) -> Dict[str, Any]:
+    """Seed semra mapping files for multiple sources.
+
+    Calls :func:`import_semra_source` for each entry in *sources* and
+    aggregates the results.
+
+    Args:
+        sources: List of SeMRA source keys
+            (e.g. ``["biomappings", "gilda"]``).
+        keep_prefixes: Optional shared prefix filter applied to all sources.
+        output_dir: Directory for output files.
+
+    Returns:
+        Aggregated summary with keys ``"succeeded"``, ``"failed"``,
+        ``"skipped"``.
+    """
+    succeeded: List[str] = []
+    failed: List[Dict[str, str]] = []
+    skipped: List[str] = []
+
+    for source in sources:
+        result = import_semra_source(
+            source=source,
+            keep_prefixes=keep_prefixes,
+            output_dir=output_dir,
+        )
+        succeeded.extend(result.get("succeeded", []))
+        failed.extend(result.get("failed", []))
+        skipped.extend(result.get("skipped", []))
+
+    return {"succeeded": succeeded, "failed": failed, "skipped": skipped}
+
+
+def load_mapping_jsonld(path: str) -> Dict[str, Any]:
+    """Load a mapping JSON-LD file from disk.
+
+    Args:
+        path: Path to a ``.jsonld`` file.
+
+    Returns:
+        Parsed JSON dict.
+    """
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def infer_mappings(
+    input_paths: List[str],
+    output_path: str,
+    *,
+    inversion: bool = True,
+    transitivity: bool = True,
+    generalisation: bool = False,
+    chain_cutoff: int = 3,
+    dataset_name: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Run the SeMRA inference pipeline over mapping JSON-LD files.
+
+    Thin wrapper around :func:`rdfsolve.inference.infer_mappings`.
+    See that function for full documentation.
+
+    Args:
+        input_paths: Paths to input mapping JSON-LD files.
+        output_path: Path to write the inferenced mapping JSON-LD.
+        inversion: Apply symmetric inversion.
+        transitivity: Apply transitive chain inference.
+        generalisation: Apply generalisation.
+        chain_cutoff: Max chain length for transitivity.
+        dataset_name: Override for ``@about.dataset_name``.
+
+    Returns:
+        Summary dict with ``"input_edges"``, ``"output_edges"``,
+        ``"inference_types"``, ``"output_path"``.
+    """
+    from rdfsolve.inference import infer_mappings as _infer
+
+    return _infer(
+        input_paths=input_paths,
+        output_path=output_path,
+        inversion=inversion,
+        transitivity=transitivity,
+        generalisation=generalisation,
+        chain_cutoff=chain_cutoff,
+        dataset_name=dataset_name,
+    )
+
+
+def seed_inferenced_mappings(
+    input_dir: str = "docker/mappings",
+    output_dir: str = "docker/mappings/inferenced",
+    output_name: str = "inferenced_mappings",
+    inversion: bool = True,
+    transitivity: bool = True,
+    generalisation: bool = False,
+    chain_cutoff: int = 3,
+) -> Dict[str, Any]:
+    """Infer over all mappings in *input_dir* and write to *output_dir*.
+
+    Thin wrapper around
+    :func:`rdfsolve.inference.seed_inferenced_mappings`.
+
+    Args:
+        input_dir: Directory containing mapping subdirs.
+        output_dir: Directory for output.
+        output_name: Stem for the output file.
+        inversion: Apply inversion inference.
+        transitivity: Apply transitivity inference.
+        generalisation: Apply generalisation.
+        chain_cutoff: Max chain length.
+
+    Returns:
+        Summary dict from :func:`infer_mappings`.
+    """
+    from rdfsolve.inference import (
+        seed_inferenced_mappings as _seed,
+    )
+
+    return _seed(
+        input_dir=input_dir,
+        output_dir=output_dir,
+        output_name=output_name,
+        inversion=inversion,
+        transitivity=transitivity,
+        generalisation=generalisation,
+        chain_cutoff=chain_cutoff,
+    )

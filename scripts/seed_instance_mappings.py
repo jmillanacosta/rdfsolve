@@ -4,22 +4,32 @@
 Writes ``{prefix}_instance_mapping.jsonld`` to ``docker/schemas/`` for
 every supplied prefix, using all endpoints in ``data/sources.csv``.
 
+When an output file already exists the new probe results are **merged**
+into it: new graph nodes are appended, existing nodes get new predicate
+targets added, and ``uri_formats_queried`` / ``pattern_count`` are
+updated.
+
 Usage
 -----
 Probe a single resource against all endpoints::
 
     python scripts/seed_instance_mappings.py --prefixes ensembl
 
-Probe several resources, restrict to two datasets::
+Probe several resources, restrict to two datasets (always merges)::
 
     python scripts/seed_instance_mappings.py \\
         --prefixes ensembl uniprot chebi \\
         --datasets aopwikirdf wikipathways
 
-Re-probe even if the output file already exists::
+Re-probe all datasets even if the output file already exists::
 
     python scripts/seed_instance_mappings.py \\
-        --prefixes ensembl --no-skip-existing
+        --prefixes ensembl
+
+Skip prefixes whose output file already exists without re-probing::
+
+    python scripts/seed_instance_mappings.py \\
+        --prefixes ensembl --skip-existing
 
 Write to a custom directory::
 
@@ -38,13 +48,22 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+import logging
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CSV = ROOT / "data" / "sources.csv"
-DEFAULT_OUTPUT_DIR = ROOT / "docker" / "schemas"
+DEFAULT_OUTPUT_DIR = ROOT / "docker" / "mappings" / "instance_matching"
 
 
 def main() -> None:
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        force=True,
+    )
+    # Also set the rdfsolve logger specifically
+    logging.getLogger("rdfsolve").setLevel(logging.DEBUG)
+
     parser = argparse.ArgumentParser(
         description="Seed instance mapping JSON-LD files to docker/schemas/",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -70,15 +89,23 @@ def main() -> None:
     )
     parser.add_argument(
         "--datasets", nargs="*", default=None, metavar="DATASET",
-        help="Restrict probing to these dataset names.",
+        help=(
+            "Restrict probing to these dataset names. "
+            "When set, the existing file is always re-probed for the "
+            "given datasets and new results are merged in."
+        ),
     )
     parser.add_argument(
         "--timeout", type=float, default=60.0,
         help="SPARQL request timeout in seconds (default: 60).",
     )
     parser.add_argument(
-        "--no-skip-existing", action="store_true", default=False,
-        help="Re-probe even if the output file already exists.",
+        "--skip-existing", action="store_true", default=False,
+        help=(
+            "Skip prefixes whose output file already exists without "
+            "re-probing. By default, existing files are always "
+            "re-probed and new results are merged in."
+        ),
     )
     args = parser.parse_args()
 
@@ -94,7 +121,7 @@ def main() -> None:
         predicate=args.predicate,
         dataset_names=args.datasets,
         timeout=args.timeout,
-        skip_existing=not args.no_skip_existing,
+        skip_existing=args.skip_existing,
     )
 
     print(f"\nDone — {len(result['succeeded'])} succeeded, "
@@ -102,10 +129,10 @@ def main() -> None:
 
     for prefix in result["succeeded"]:
         outfile = Path(args.output_dir) / f"{prefix}_instance_mapping.jsonld"
-        print(f"  ✓  {prefix}  →  {outfile}")
+        print(f"  OK  {prefix}  →  {outfile}")
 
     for item in result["failed"]:
-        print(f"  ✗  {item['prefix']}: {item['error']}", file=sys.stderr)
+        print(f"  FAIL  {item['prefix']}: {item['error']}", file=sys.stderr)
 
     if result["failed"]:
         sys.exit(1)
