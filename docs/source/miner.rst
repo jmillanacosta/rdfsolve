@@ -1,7 +1,7 @@
-Parser
-======
+Miner
+=====
 
-.. automodule:: rdfsolve.parser
+.. automodule:: rdfsolve.miner
    :members:
    :undoc-members:
    :show-inheritance:
