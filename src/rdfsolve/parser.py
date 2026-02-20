@@ -228,7 +228,7 @@ class VoidParser:
 
             # Use SparqlHelper - automatic GET-->POST fallback
             helper = SparqlHelper(endpoint_url)
-            results = helper.select(partition_discovery_query)
+            results = helper.select(partition_discovery_query, purpose="void/partition-discovery")
 
             # Group results by graph URI and collect partition data
             found_graphs: List[str] = []
@@ -452,7 +452,7 @@ class VoidParser:
                 logger.debug("Executing partition query...")
 
                 # SparqlHelper handles GET-->POST fallback automatically
-                results = helper.select(partition_query)
+                results = helper.select(partition_query, purpose="void/partition-detail")
 
                 bindings = results.get("results", {}).get("bindings", [])
                 logger.debug(f"Retrieved {len(bindings)} partition records from {graph_uri}")
@@ -641,21 +641,107 @@ class VoidParser:
         )
         return df[mask].copy()
 
-    def to_jsonld(self, filter_void_admin_nodes: bool = True) -> Dict[str, Any]:
+    def _extract_about_metadata(
+        self,
+        endpoint_url: Optional[str] = None,
+        dataset_name: Optional[str] = None,
+        graph_uris: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Extract metadata from the VoID graph for the @about section.
+
+        Pulls metadata from the VoID graph (endpoint, title, graph URIs)
+        and merges with any explicitly provided values.
+
+        Args:
+            endpoint_url: SPARQL endpoint URL (overrides graph value)
+            dataset_name: Dataset name (overrides graph value)
+            graph_uris: Graph URIs (overrides graph value)
+
+        Returns:
+            Dictionary with metadata for the @about section
+        """
+        from datetime import datetime, timezone
+
+        from rdfsolve.version import VERSION
+
+        about: Dict[str, Any] = {
+            "generatedBy": f"rdfsolve {VERSION}",
+            "generatedAt": datetime.now(timezone.utc).isoformat(),
+        }
+
+        # Try to extract metadata from the VoID graph
+        void_dataset_type = URIRef("http://rdfs.org/ns/void#Dataset")
+        void_sparql_endpoint = URIRef("http://rdfs.org/ns/void#sparqlEndpoint")
+        dcterms_title = URIRef("http://purl.org/dc/terms/title")
+
+        graph_endpoint = None
+        graph_title = None
+        graph_graph_uris: List[str] = []
+
+        for s, p, o in self.graph:
+            if p == URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type") and o == void_dataset_type:
+                # Found a void:Dataset — extract its properties
+                for _, pred, obj in self.graph.triples((s, None, None)):
+                    if pred == void_sparql_endpoint:
+                        graph_endpoint = str(obj)
+                    elif pred == dcterms_title:
+                        graph_title = str(obj)
+
+        # Collect graph URIs from the parser
+        if self.graph_uris:
+            graph_graph_uris = list(self.graph_uris)
+
+        # Use explicit values, fall back to graph values
+        if endpoint_url:
+            about["endpoint"] = endpoint_url
+        elif graph_endpoint:
+            about["endpoint"] = graph_endpoint
+
+        if dataset_name:
+            about["datasetName"] = dataset_name
+        elif graph_title:
+            about["datasetName"] = graph_title
+
+        effective_graph_uris = graph_uris if graph_uris else graph_graph_uris
+        if effective_graph_uris:
+            about["graphURIs"] = effective_graph_uris
+
+        if self.void_file_path:
+            about["voidFile"] = self.void_file_path
+
+        about["tripleCount"] = len(self.schema_triples) if self.schema_triples else 0
+
+        return about
+
+    def to_jsonld(
+        self,
+        filter_void_admin_nodes: bool = True,
+        endpoint_url: Optional[str] = None,
+        dataset_name: Optional[str] = None,
+        graph_uris: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """
         Parse VoID file and return simple JSON-LD with the schema triples.
 
         Args:
             filter_void_admin_nodes: Whether to filter out VoID-specific nodes
+            endpoint_url: SPARQL endpoint URL for the @about section
+            dataset_name: Dataset name for the @about section
+            graph_uris: Graph URIs for the @about section
 
         Returns:
-            Simple JSON-LD with the schema triples as normal RDF statements
+            Simple JSON-LD with @context, @graph, and @about sections
         """
         # Extract schema triples
         self._extract_schema_triples()
 
         if not self.schema_triples:
-            return {"@context": {}, "@graph": []}
+            about = self._extract_about_metadata(
+                endpoint_url=endpoint_url,
+                dataset_name=dataset_name,
+                graph_uris=graph_uris,
+            )
+            return {"@context": {}, "@graph": [], "@about": about}
 
         # Create minimal context for the namespaces we find
         context: Dict[str, str] = {}
@@ -714,8 +800,15 @@ class VoidParser:
                     else:
                         grouped[subject_id][key] = value
 
+        # Build @about metadata section
+        about = self._extract_about_metadata(
+            endpoint_url=endpoint_url,
+            dataset_name=dataset_name,
+            graph_uris=graph_uris,
+        )
+
         # Return simple JSON-LD
-        return {"@context": context, "@graph": list(grouped.values())}
+        return {"@context": context, "@graph": list(grouped.values()), "@about": about}
 
     def _create_context(self) -> Dict[str, str]:
         """Create JSON-LD @context."""
@@ -887,6 +980,7 @@ class VoidParser:
         schema_name: Optional[str] = None,
         schema_description: Optional[str] = None,
         schema_base_uri: Optional[str] = None,
+        jsonld_override: Optional[Dict[str, Any]] = None,
     ) -> SchemaDefinition:
         """
         Generate LinkML schema directly from JSON-LD representation.
@@ -899,6 +993,9 @@ class VoidParser:
             schema_name: Name for the LinkML schema (used as prefix and default prefix)
             schema_description: Description for the LinkML schema
             schema_base_uri: Base URI for the schema (default: https://w3id.org/{schema_name}/)
+            jsonld_override: If provided, use this JSON-LD dict instead of
+                calling ``to_jsonld()``.  Useful when the caller already has
+                the JSON-LD (e.g. the shapes subset workflow). TODO separate into JSONLD model; new base
 
         Returns:
             LinkML SchemaDefinition with classes based on subjects
@@ -906,7 +1003,7 @@ class VoidParser:
         import re
 
         # Get JSON-LD as source of truth
-        jsonld = self.to_jsonld(filter_void_nodes)
+        jsonld = jsonld_override if jsonld_override is not None else self.to_jsonld(filter_void_nodes)
 
         # Generate schema name from dataset if not provided
         if not schema_name:
@@ -965,6 +1062,9 @@ class VoidParser:
         if not schema_items:
             logger.warning("No schema triples found in JSON-LD @graph")
             return schema
+
+        # Label map (CURIE → human label) from miner
+        label_map: Dict[str, str] = jsonld.get("_labels", {})
 
         # Collect all classes and properties from the JSON-LD triples
         all_class_names: set[str] = set()
@@ -1030,9 +1130,15 @@ class VoidParser:
                     # Default to string
                     property_ranges[prop_clean] = "string"
 
-                # Store property description
+                # Store property description (prefer label)
                 if prop_clean not in property_descriptions:
-                    property_descriptions[prop_clean] = f"Property {prop}"
+                    lbl = label_map.get(prop)
+                    if lbl:
+                        property_descriptions[prop_clean] = lbl
+                    else:
+                        property_descriptions[prop_clean] = (
+                            f"Property {prop}"
+                        )
 
         # Detect naming conflicts between classes and slots
         conflicts = all_class_names.intersection(all_slot_names)
@@ -1071,7 +1177,10 @@ class VoidParser:
 
             class_def = ClassDefinition(
                 name=class_name,
-                description=f"Class representing {class_name}",
+                description=label_map.get(
+                    original_class_uris.get(class_name, ""),
+                    f"Class representing {class_name}",
+                ),
                 slots=class_slots,
                 class_uri=class_uri,
             )
@@ -2830,7 +2939,7 @@ WHERE {{
         query = self._replace_graph_clause_placeholder(query_template)
 
         try:
-            results = helper.select(query)
+            results = helper.select(query, purpose="coverage/class")
 
             if streaming:
                 # Return generator for single query case
@@ -2917,7 +3026,7 @@ WHERE {{
 
             try:
                 # Use SparqlHelper - handles GET-->POST fallback automatically
-                results = helper.select(query)
+                results = helper.select(query, purpose="coverage/class-chunked")
                 chunk_results = results["results"]["bindings"]
 
                 # If no results, we've reached the end
@@ -3000,7 +3109,7 @@ WHERE {{
                     current_chunk_size,
                 )
                 # SparqlHelper handles GET-->POST fallback and retries
-                results = helper.select(query)
+                results = helper.select(query, purpose="coverage/property-chunked")
 
                 # Extract bindings
                 bindings = results.get("results", {}).get("bindings", [])
@@ -3353,7 +3462,7 @@ WHERE {{
             query = self._replace_graph_clause_placeholder(pattern_query)
 
             try:
-                results = helper.select(query)
+                results = helper.select(query, purpose="coverage/pattern")
                 if track_queries:
                     total_queries_sent += 1
 
@@ -3606,7 +3715,7 @@ WHERE {{
             query = self._replace_graph_clause_placeholder(count_query)
 
             try:
-                results = helper.select(query)
+                results = helper.select(query, purpose="coverage/entity-count")
 
                 # Initialize all classes in this batch to 0 first
                 for class_uri in batch_uris:
@@ -4023,7 +4132,7 @@ WHERE {{
         query = self._replace_graph_clause_placeholder(literal_props_query)
 
         try:
-            results = helper.select(query)
+            results = helper.select(query, purpose="coverage/literal-props")
             literal_props = []
             for result in results["results"]["bindings"]:
                 prop_uri = result["property"]["value"]
@@ -4054,7 +4163,7 @@ WHERE {{
         query = self._replace_graph_clause_placeholder(untyped_resource_query)
 
         try:
-            results = helper.select(query)
+            results = helper.select(query, purpose="coverage/untyped-resource-props")
             untyped_props = []
             for result in results["results"]["bindings"]:
                 prop_uri = result["property"]["value"]

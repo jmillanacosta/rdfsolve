@@ -304,9 +304,22 @@ def _export_csv(parser: "VoidParser", output_path: Path, dataset_name: str) -> N
     click.echo(f"OK CSV:      {schema_csv} ({len(schema_df)} triples)")
 
 
-def _export_jsonld(void_file: str, output_path: Path, dataset_name: str) -> None:
+def _export_jsonld(
+    void_file: str,
+    output_path: Path,
+    dataset_name: str,
+    endpoint_url: Optional[str] = None,
+    graph_uri: Optional[str] = None,
+) -> None:
     """Export schema to JSON-LD format."""
-    schema_jsonld = to_jsonld_from_file(void_file, filter_void_admin_nodes=True)
+    graph_uris = [graph_uri] if graph_uri else None
+    schema_jsonld = to_jsonld_from_file(
+        void_file,
+        filter_void_admin_nodes=True,
+        endpoint_url=endpoint_url,
+        dataset_name=dataset_name,
+        graph_uris=graph_uris,
+    )
     jsonld_file = output_path / f"{dataset_name}_schema.jsonld"
     with open(jsonld_file, "w") as f:
         json.dump(schema_jsonld, f, indent=2)
@@ -538,7 +551,13 @@ def export(
 
         # JSON-LD export
         if format in ["jsonld", "all"]:
-            _export_jsonld(void_file, output_path, dataset_name)
+            _export_jsonld(
+                void_file,
+                output_path,
+                dataset_name,
+                endpoint_url=endpoint_url,
+                graph_uri=graph_uri,
+            )
 
         # LinkML export
         if format in ["linkml", "all"]:
@@ -578,6 +597,310 @@ def export(
         # Pattern coverage export
         if format in ["coverage", "all"]:
             click.echo("  Coverage: Skipped (requires instance data, not available from VoID file)")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
+@main.command()
+@click.option("--endpoint", required=True, help="SPARQL endpoint URL")
+@click.option(
+    "--graph-uri",
+    multiple=True,
+    help="Specific graph URI(s) to query (optional)",
+)
+@click.option("--output-dir", default=".", help="Output directory")
+@click.option(
+    "--dataset-name",
+    help="Custom dataset name (used in output filenames)",
+)
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["jsonld", "void", "all"]),
+    default="all",
+    help="Export format (default: all)",
+)
+@click.option(
+    "--chunk-size",
+    type=int,
+    default=10_000,
+    help="Pagination page size for pattern queries (default: 10000)",
+)
+@click.option(
+    "--class-chunk-size",
+    type=int,
+    default=None,
+    help=(
+        "Page size for Phase-1 class discovery in --two-phase mode. "
+        "Default (None) = no pagination (single query). "
+        "Set to e.g. 50000 for endpoints with very many classes."
+    ),
+)
+@click.option(
+    "--class-batch-size",
+    type=int,
+    default=15,
+    help=(
+        "Number of classes per VALUES query in Phase-2 of "
+        "--two-phase mode (default: 15). Higher = fewer queries "
+        "but each query is heavier."
+    ),
+)
+@click.option(
+    "--no-counts",
+    is_flag=True,
+    help="Skip triple-count queries (faster)",
+)
+@click.option(
+    "--timeout",
+    type=float,
+    default=120.0,
+    help="HTTP timeout per request in seconds (default: 120)",
+)
+@click.option(
+    "--two-phase",
+    is_flag=True,
+    help="Use two-phase mining (discover classes first, then per-class queries). Gentler on large endpoints.",
+)
+@click.option(
+    "--report-path",
+    type=click.Path(),
+    default=None,
+    help="Write analytics JSON report to this path (updated incrementally).",
+)
+def mine(
+    endpoint: str,
+    graph_uri: tuple[str, ...],
+    output_dir: str,
+    dataset_name: Optional[str],
+    fmt: str,
+    chunk_size: int,
+    class_chunk_size: Optional[int],
+    class_batch_size: int,
+    no_counts: bool,
+    timeout: float,
+    two_phase: bool,
+    report_path: Optional[str],
+) -> None:
+    r"""Mine RDF schema directly from a SPARQL endpoint.
+
+    Uses lightweight SELECT queries to discover schema patterns:
+    subject_class -> property -> object_class / Literal / Resource.
+
+    This is an alternative to 'extract' that avoids heavy CONSTRUCT
+    queries and VoID-on-the-endpoint overhead.  The primary export
+    is JSON-LD; a VoID Turtle file can also be generated for
+    downstream conversion (LinkML, SHACL, RDF-config) via 'export'.
+
+
+    Example:
+      >>> rdfsolve mine \
+            --endpoint https://sparql.wikipathways.org/sparql/ \
+            --dataset-name wikipathways \
+            --output-dir ./wp_schema
+    """
+    from .miner import SchemaMiner
+
+    click.echo(f"Mining schema from: {endpoint}")
+    if graph_uri:
+        click.echo(f"  Graph URIs: {', '.join(graph_uri)}")
+
+    try:
+        graph_uris = list(graph_uri) if graph_uri else None
+        name = dataset_name or "schema"
+
+        miner = SchemaMiner(
+            endpoint_url=endpoint,
+            graph_uris=graph_uris,
+            chunk_size=chunk_size,
+            class_chunk_size=class_chunk_size,
+            class_batch_size=class_batch_size,
+            timeout=timeout,
+            counts=not no_counts,
+            two_phase=two_phase,
+            report_path=report_path,
+        )
+        schema = miner.mine(dataset_name=name)
+
+        click.echo(
+            f"OK {len(schema.patterns)} patterns "
+            f"({len(schema.get_classes())} classes, "
+            f"{len(schema.get_properties())} properties)"
+        )
+
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # JSON-LD export
+        if fmt in ("jsonld", "all"):
+            jsonld_file = output_path / f"{name}_schema.jsonld"
+            with open(jsonld_file, "w") as f:
+                json.dump(schema.to_jsonld(), f, indent=2)
+            click.echo(f"OK JSON-LD:  {jsonld_file}")
+
+        # VoID Turtle export
+        if fmt in ("void", "all"):
+            void_file = output_path / f"{name}_void.ttl"
+            void_graph = schema.to_void_graph()
+            void_graph.serialize(
+                destination=str(void_file), format="turtle",
+            )
+            click.echo(
+                f"OK VoID:     {void_file} "
+                f"({len(void_graph)} triples)"
+            )
+
+        # Report summary
+        if miner.last_report:
+            rpt = miner.last_report
+            click.echo(
+                f"OK Report:   {rpt.total_queries_sent} queries "
+                f"({rpt.total_queries_failed} failed), "
+                f"{rpt.total_duration_s:.1f}s total"
+            )
+            if report_path:
+                click.echo(f"   Written:  {report_path}")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
+@main.command("mine-all")
+@click.option(
+    "--sources",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to sources CSV file (columns: dataset_name, endpoint_url, graph_uri, use_graph)",
+)
+@click.option("--output-dir", default=".", help="Output directory")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["jsonld", "void", "all"]),
+    default="all",
+    help="Export format (default: all)",
+)
+@click.option(
+    "--chunk-size",
+    type=int,
+    default=10_000,
+    help="Pagination page size (default: 10000)",
+)
+@click.option(
+    "--no-counts",
+    is_flag=True,
+    help="Skip triple-count queries (faster)",
+)
+@click.option(
+    "--timeout",
+    type=float,
+    default=120.0,
+    help="HTTP timeout per request in seconds (default: 120)",
+)
+@click.option(
+    "--class-chunk-size",
+    type=int,
+    default=None,
+    help=(
+        "Page size for Phase-1 class discovery in two-phase "
+        "rows. Default: None (single query, no pagination). "
+        "Ignored for rows that are not two-phase."
+    ),
+)
+@click.option(
+    "--class-batch-size",
+    type=int,
+    default=15,
+    help=(
+        "Number of classes per VALUES query in Phase-2 of "
+        "two-phase mode (default: 15). Higher = fewer queries "
+        "but each query is heavier."
+    ),
+)
+@click.option(
+    "--no-reports",
+    is_flag=True,
+    help="Skip writing per-source analytics JSON reports.",
+)
+def mine_all(
+    sources: str,
+    output_dir: str,
+    fmt: str,
+    chunk_size: int,
+    no_counts: bool,
+    timeout: float,
+    class_chunk_size: int | None,
+    class_batch_size: int,
+    no_reports: bool,
+) -> None:
+    r"""Mine schemas for all sources in a CSV file.
+
+    Reads the sources CSV and runs the miner for each endpoint.
+    Results are written to the output directory as
+    ``{dataset_name}_schema.jsonld`` and/or ``{dataset_name}_void.ttl``.
+
+    The CSV must have columns: dataset_name, endpoint_url, graph_uri,
+    use_graph. Rows without an endpoint_url are skipped.
+
+
+    Example:
+      >>> rdfsolve mine-all \
+            --sources data/sources.csv \
+            --output-dir ./mined_schemas
+    """
+    from .api import mine_all_sources
+
+    click.echo(f"Mining all sources from: {sources}")
+    click.echo(f"Output directory: {output_dir}")
+
+    def _on_progress(
+        name: str, idx: int, total: int,
+        error: str | None,
+    ) -> None:
+        if error == "skipped":
+            click.echo(
+                f"  [{idx}/{total}] SKIP {name} "
+                f"(no endpoint)"
+            )
+        elif error:
+            click.echo(
+                f"  [{idx}/{total}] FAIL {name}: {error}",
+                err=True,
+            )
+        else:
+            click.echo(
+                f"  [{idx}/{total}] OK   {name}"
+            )
+
+    try:
+        result = mine_all_sources(
+            sources_csv=sources,
+            output_dir=output_dir,
+            fmt=fmt,
+            chunk_size=chunk_size,
+            class_chunk_size=class_chunk_size,
+            class_batch_size=class_batch_size,
+            timeout=timeout,
+            counts=not no_counts,
+            reports=not no_reports,
+            on_progress=_on_progress,
+        )
+
+        click.echo("\n" + "=" * 50)
+        click.echo(f"Succeeded: {len(result['succeeded'])}")
+        click.echo(f"Failed:    {len(result['failed'])}")
+        click.echo(f"Skipped:   {len(result['skipped'])}")
+
+        if result["failed"]:
+            click.echo("\nFailed datasets:")
+            for entry in result["failed"]:
+                click.echo(
+                    f"  • {entry['dataset']}: "
+                    f"{entry['error'][:80]}"
+                )
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
@@ -651,6 +974,430 @@ def count(
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise click.Abort()
+
+
+# ---------------------------------------------------------------------------
+# instance-match command group
+# ---------------------------------------------------------------------------
+
+@main.group("instance-match")
+def instance_match_group() -> None:
+    """Instance-based matching: discover cross-dataset class links.
+
+    Probes SPARQL endpoints for classes whose instances match bioregistry
+    URI patterns and writes skos:narrowMatch mapping JSON-LD files.
+
+    \b
+    Typical workflow:
+        rdfsolve instance-match probe --prefix ensembl -o ensembl_mapping.jsonld
+        rdfsolve instance-match seed  --prefixes ensembl uniprot chebi
+    """
+
+
+@instance_match_group.command("probe")
+@click.option(
+    "--prefix", "-p", required=True,
+    help="Bioregistry prefix to probe (e.g. 'ensembl').",
+)
+@click.option(
+    "--sources-csv", default="data/sources.csv", show_default=True,
+    help="Path to data sources CSV.",
+)
+@click.option(
+    "--predicate",
+    default="http://www.w3.org/2004/02/skos/core#narrowMatch",
+    show_default=True,
+    help="Mapping predicate URI.",
+)
+@click.option(
+    "--dataset", "-d", "datasets", multiple=True,
+    help="Restrict to this dataset name (repeatable).",
+)
+@click.option(
+    "--timeout", default=60.0, show_default=True, type=float,
+    help="SPARQL request timeout in seconds.",
+)
+@click.option(
+    "--output", "-o", default=None,
+    help="Write JSON-LD to this file (default: stdout).",
+)
+def probe_cmd(
+    prefix: str,
+    sources_csv: str,
+    predicate: str,
+    datasets: tuple[str, ...],
+    timeout: float,
+    output: Optional[str],
+) -> None:
+    """Probe endpoints for a single bioregistry resource.
+
+    Queries every endpoint in SOURCES_CSV for RDF classes whose instances
+    match the URI patterns registered in bioregistry for PREFIX and emits
+    a JSON-LD mapping document.
+    """
+    import json
+
+    from rdfsolve.api import probe_instance_mapping
+
+    try:
+        result = probe_instance_mapping(
+            prefix=prefix,
+            sources_csv=sources_csv,
+            predicate=predicate,
+            dataset_names=list(datasets) if datasets else None,
+            timeout=timeout,
+        )
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    text = json.dumps(result, indent=2)
+    if output:
+        Path(output).write_text(text)
+        edge_count = len(result.get("@graph", []))
+        click.echo(f"Written to {output} ({edge_count} source nodes)")
+    else:
+        click.echo(text)
+
+
+@instance_match_group.command("seed")
+@click.option(
+    "--prefixes", "-p", "prefix_list", required=True, multiple=True,
+    help="Bioregistry prefix (repeatable).",
+)
+@click.option(
+    "--sources-csv", default="data/sources.csv", show_default=True,
+    help="Path to data sources CSV.",
+)
+@click.option(
+    "--output-dir",
+    default="docker/mappings/instance_matching",
+    show_default=True,
+    help="Directory to write JSON-LD mapping files.",
+)
+@click.option(
+    "--predicate",
+    default="http://www.w3.org/2004/02/skos/core#narrowMatch",
+    show_default=True,
+    help="Mapping predicate URI.",
+)
+@click.option(
+    "--dataset", "-d", "datasets", multiple=True,
+    help="Restrict to this dataset name (repeatable).",
+)
+@click.option(
+    "--timeout", default=60.0, show_default=True, type=float,
+    help="SPARQL request timeout in seconds.",
+)
+@click.option(
+    "--no-skip-existing", is_flag=True, default=False,
+    help="Re-probe even if the output file already exists.",
+)
+def seed_cmd(
+    prefix_list: tuple[str, ...],
+    sources_csv: str,
+    output_dir: str,
+    predicate: str,
+    datasets: tuple[str, ...],
+    timeout: float,
+    no_skip_existing: bool,
+) -> None:
+    """Seed mapping files for multiple bioregistry resources.
+
+    Writes {PREFIX}_instance_mapping.jsonld to OUTPUT_DIR for each
+    supplied PREFIX.  Existing files are skipped unless --no-skip-existing
+    is passed.
+    """
+    from rdfsolve.api import seed_instance_mappings
+
+    try:
+        result = seed_instance_mappings(
+            prefixes=list(prefix_list),
+            sources_csv=sources_csv,
+            output_dir=output_dir,
+            predicate=predicate,
+            dataset_names=list(datasets) if datasets else None,
+            timeout=timeout,
+            skip_existing=not no_skip_existing,
+        )
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    for p in result["succeeded"]:
+        click.echo(f"  OK {p}")
+    for f in result["failed"]:
+        click.echo(f"  FAIL {f['prefix']}: {f['error']}", err=True)
+
+    if result["failed"]:
+        raise SystemExit(1)
+
+
+# ── semra command group ──────────────────────────────────────────
+
+
+@main.group("semra")
+def semra_group() -> None:
+    """SeMRA integration: import external mappings from semra sources.
+
+    Downloads mappings from community sources (biomappings, Gilda, etc.)
+    and writes one JSON-LD file per (source, bioregistry-prefix) pair.
+
+    \b
+    Typical workflow:
+        rdfsolve semra import --source biomappings
+        rdfsolve semra seed --sources biomappings gilda
+    """
+
+
+@semra_group.command("import")
+@click.option(
+    "--source", "-s", required=True,
+    help="SeMRA source key (e.g. 'biomappings', 'gilda').",
+)
+@click.option(
+    "--prefix", "-p", "prefixes", multiple=True,
+    help=(
+        "Keep only these bioregistry prefixes (repeatable). "
+        "Default: keep all."
+    ),
+)
+@click.option(
+    "--output-dir",
+    default="docker/mappings/semra",
+    show_default=True,
+    help="Directory to write JSON-LD files.",
+)
+def semra_import_cmd(
+    source: str,
+    prefixes: tuple[str, ...],
+    output_dir: str,
+) -> None:
+    """Import mappings from a single SeMRA source.
+
+    Writes {source}_{prefix}.jsonld for each unique subject prefix
+    found in the downloaded mappings.
+    """
+    from rdfsolve.api import import_semra_source
+
+    try:
+        result = import_semra_source(
+            source=source,
+            keep_prefixes=list(prefixes) if prefixes else None,
+            output_dir=output_dir,
+        )
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    for s in result["succeeded"]:
+        click.echo(f"  OK {s}")
+    for f in result["failed"]:
+        click.echo(
+            f"  FAIL {f.get('source')}/{f.get('prefix')}: "
+            f"{f.get('error')}",
+            err=True,
+        )
+    if result["failed"]:
+        raise SystemExit(1)
+
+
+@semra_group.command("seed")
+@click.option(
+    "--sources", "-s", "source_list", required=True, multiple=True,
+    help="SeMRA source key (repeatable).",
+)
+@click.option(
+    "--prefix", "-p", "prefixes", multiple=True,
+    help=(
+        "Keep only these bioregistry prefixes (repeatable)."
+    ),
+)
+@click.option(
+    "--output-dir",
+    default="docker/mappings/semra",
+    show_default=True,
+    help="Directory to write JSON-LD files.",
+)
+def semra_seed_cmd(
+    source_list: tuple[str, ...],
+    prefixes: tuple[str, ...],
+    output_dir: str,
+) -> None:
+    """Seed mapping files from multiple SeMRA sources."""
+    from rdfsolve.api import seed_semra_mappings
+
+    try:
+        result = seed_semra_mappings(
+            sources=list(source_list),
+            keep_prefixes=list(prefixes) if prefixes else None,
+            output_dir=output_dir,
+        )
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    for s in result["succeeded"]:
+        click.echo(f"  OK {s}")
+    for f in result["failed"]:
+        click.echo(
+            f"  FAIL {f.get('source')}/{f.get('prefix')}: "
+            f"{f.get('error')}",
+            err=True,
+        )
+    if result["failed"]:
+        raise SystemExit(1)
+
+
+# ── inference command group ──────────────────────────────────────
+
+
+@main.group("inference")
+def inference_group() -> None:
+    """Mapping inference: derive new mappings from existing ones.
+
+    Uses SeMRA inference operations (inversion, transitivity,
+    generalisation) to expand a set of mapping JSON-LD files.
+
+    \b
+    Typical workflow:
+        rdfsolve inference run --input file1.jsonld file2.jsonld \\
+            --output docker/mappings/inferenced/inferred.jsonld
+        rdfsolve inference seed
+    """
+
+
+@inference_group.command("run")
+@click.option(
+    "--input", "-i", "input_paths", required=True, multiple=True,
+    help="Input mapping JSON-LD file (repeatable).",
+)
+@click.option(
+    "--output", "-o", "output_path", required=True,
+    help="Output JSON-LD file path.",
+)
+@click.option(
+    "--no-inversion", is_flag=True, default=False,
+    help="Disable inversion inference.",
+)
+@click.option(
+    "--no-transitivity", is_flag=True, default=False,
+    help="Disable transitivity (chain) inference.",
+)
+@click.option(
+    "--generalisation", is_flag=True, default=False,
+    help="Enable generalisation inference (off by default).",
+)
+@click.option(
+    "--chain-cutoff", default=3, show_default=True, type=int,
+    help="Maximum chain length for transitivity.",
+)
+@click.option(
+    "--name", "dataset_name", default=None,
+    help="Override @about.dataset_name in the output.",
+)
+def inference_run_cmd(
+    input_paths: tuple[str, ...],
+    output_path: str,
+    no_inversion: bool,
+    no_transitivity: bool,
+    generalisation: bool,
+    chain_cutoff: int,
+    dataset_name: Optional[str],
+) -> None:
+    """Infer new mappings from the given input files."""
+    from rdfsolve.api import infer_mappings
+
+    try:
+        result = infer_mappings(
+            input_paths=list(input_paths),
+            output_path=output_path,
+            inversion=not no_inversion,
+            transitivity=not no_transitivity,
+            generalisation=generalisation,
+            chain_cutoff=chain_cutoff,
+            dataset_name=dataset_name,
+        )
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    click.echo(
+        f"  OK {result['output_edges']} edges written to "
+        f"{result['output_path']} "
+        f"(from {result['input_edges']} inputs, "
+        f"ops: {result['inference_types']})"
+    )
+
+
+@inference_group.command("seed")
+@click.option(
+    "--input-dir",
+    default="docker/mappings",
+    show_default=True,
+    help="Directory containing instance_matching/ and semra/ subdirs.",
+)
+@click.option(
+    "--output-dir",
+    default="docker/mappings/inferenced",
+    show_default=True,
+    help="Directory for the inferenced output.",
+)
+@click.option(
+    "--name", "output_name",
+    default="inferenced_mappings",
+    show_default=True,
+    help="Output file stem (without .jsonld).",
+)
+@click.option(
+    "--no-inversion", is_flag=True, default=False,
+    help="Disable inversion inference.",
+)
+@click.option(
+    "--no-transitivity", is_flag=True, default=False,
+    help="Disable transitivity inference.",
+)
+@click.option(
+    "--generalisation", is_flag=True, default=False,
+    help="Enable generalisation inference.",
+)
+@click.option(
+    "--chain-cutoff", default=3, show_default=True, type=int,
+    help="Maximum chain length for transitivity.",
+)
+def inference_seed_cmd(
+    input_dir: str,
+    output_dir: str,
+    output_name: str,
+    no_inversion: bool,
+    no_transitivity: bool,
+    generalisation: bool,
+    chain_cutoff: int,
+) -> None:
+    """Infer over all mappings found under INPUT_DIR."""
+    from rdfsolve.api import seed_inferenced_mappings
+
+    try:
+        result = seed_inferenced_mappings(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            output_name=output_name,
+            inversion=not no_inversion,
+            transitivity=not no_transitivity,
+            generalisation=generalisation,
+            chain_cutoff=chain_cutoff,
+        )
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    if result["output_path"]:
+        click.echo(
+            f"  OK {result['output_edges']} edges → "
+            f"{result['output_path']}"
+        )
+    else:
+        click.echo("  ⚠ No input files found.", err=True)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
-Models
-======
+IRI Resolver
+============
 
-.. automodule:: rdfsolve.models
+.. automodule:: rdfsolve.iri
    :members:
    :undoc-members:
    :show-inheritance:

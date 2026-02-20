@@ -1,0 +1,3 @@
+dataset_name,void_iri,graph_uri,endpoint_url,use_graph,two_phase
+pubchem.qlever,,,https://qlever.dev/api/pubchem,False,True
+uniprot.qlever,,,https://qlever.dev/api/uniprot,False,True

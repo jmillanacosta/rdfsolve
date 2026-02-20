@@ -1,7 +1,7 @@
-Models
-======
+Compose
+=======
 
-.. automodule:: rdfsolve.models
+.. automodule:: rdfsolve.compose
    :members:
    :undoc-members:
    :show-inheritance:
