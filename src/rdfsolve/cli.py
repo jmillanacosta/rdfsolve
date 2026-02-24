@@ -12,6 +12,7 @@ from .api import (
     generate_void_from_endpoint,
     graph_to_schema,
     load_parser_from_file,
+    load_parser_from_jsonld,
     to_jsonld_from_file,
     to_linkml_from_file,
     to_rdfconfig_from_file,
@@ -430,11 +431,113 @@ def _export_rdfconfig(
         click.echo("              (endpoint.yaml not created: use --endpoint-url)")
 
 
+def _export_linkml_from_parser(
+    parser: "VoidParser",
+    output_path: Path,
+    dataset_name: str,
+    schema_name: Optional[str],
+    schema_description: Optional[str],
+    schema_uri: Optional[str],
+) -> None:
+    """Export schema to LinkML format from a pre-built parser."""
+    linkml_schema_name = schema_name or dataset_name
+    linkml_yaml = parser.to_linkml_yaml(
+        filter_void_nodes=True,
+        schema_name=linkml_schema_name,
+        schema_description=schema_description,
+        schema_base_uri=schema_uri,
+    )
+    linkml_file = output_path / f"{dataset_name}_linkml_schema.yaml"
+    with open(linkml_file, "w") as f:
+        f.write(linkml_yaml)
+    click.echo(f"OK LinkML:   {linkml_file}")
+    if schema_uri:
+        click.echo(f"            Schema URI: {schema_uri}")
+
+
+def _export_shacl_from_parser(
+    parser: "VoidParser",
+    output_path: Path,
+    dataset_name: str,
+    schema_name: Optional[str],
+    schema_description: Optional[str],
+    schema_uri: Optional[str],
+    shacl_closed: bool,
+    shacl_suffix: Optional[str],
+) -> None:
+    """Export schema to SHACL format from a pre-built parser."""
+    shacl_schema_name = schema_name or dataset_name
+    shacl_ttl = parser.to_shacl(
+        filter_void_nodes=True,
+        schema_name=shacl_schema_name,
+        schema_description=schema_description,
+        schema_base_uri=schema_uri,
+        closed=shacl_closed,
+        suffix=shacl_suffix,
+    )
+    shacl_file = output_path / f"{dataset_name}_schema.shacl.ttl"
+    with open(shacl_file, "w") as f:
+        f.write(shacl_ttl)
+    shape_type = "closed" if shacl_closed else "open"
+    click.echo(f"OK SHACL:    {shacl_file} ({shape_type} shapes)")
+    if shacl_suffix:
+        click.echo(f"            Shape suffix: {shacl_suffix}")
+
+
+def _export_rdfconfig_from_parser(
+    parser: "VoidParser",
+    output_path: Path,
+    dataset_name: str,
+    endpoint_url: Optional[str],
+    endpoint_name: str,
+    graph_uri: Optional[str],
+) -> None:
+    """Export schema to RDF-config format from a pre-built parser."""
+    rdfconfig = parser.to_rdfconfig(
+        filter_void_nodes=True,
+        endpoint_url=endpoint_url,
+        endpoint_name=endpoint_name,
+        graph_uri=graph_uri,
+    )
+    config_dir = output_path / f"{dataset_name}_config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    model_file = config_dir / "model.yaml"
+    with open(model_file, "w") as f:
+        f.write(rdfconfig["model"])
+
+    prefix_file = config_dir / "prefix.yaml"
+    with open(prefix_file, "w") as f:
+        f.write(rdfconfig["prefix"])
+
+    if endpoint_url:
+        endpoint_file = config_dir / "endpoint.yaml"
+        with open(endpoint_file, "w") as f:
+            f.write(rdfconfig["endpoint"])
+        click.echo(f"OK RDF-config: {config_dir}/")
+        click.echo("              model.yaml")
+        click.echo("              prefix.yaml")
+        click.echo("              endpoint.yaml")
+    else:
+        click.echo(f"OK RDF-config: {config_dir}/")
+        click.echo("              model.yaml")
+        click.echo("              prefix.yaml")
+        click.echo(
+            "              (endpoint.yaml not created:"
+            " use --endpoint-url)"
+        )
+
+
 @main.command()
 @click.option(
     "--void-file",
-    required=True,
+    default=None,
     help="Path to VoID file (Turtle format)",
+)
+@click.option(
+    "--schema-file",
+    default=None,
+    help="Path to mined-schema JSON-LD file (alternative to --void-file)",
 )
 @click.option("--output-dir", default=".", help="Output directory for exports")
 @click.option(
@@ -478,7 +581,8 @@ def _export_rdfconfig(
     help="Named graph URI for RDF-config export",
 )
 def export(
-    void_file: str,
+    void_file: Optional[str],
+    schema_file: Optional[str],
     output_dir: str,
     format: str,
     schema_name: Optional[str],
@@ -492,11 +596,13 @@ def export(
 ) -> None:
     r"""Export RDF schema to various formats.
 
-    Takes a VoID description file and exports the schema in multiple
+    Takes a VoID description file (--void-file) or a mined-schema
+    JSON-LD file (--schema-file) and exports the schema in multiple
     formats for different use cases: analysis (CSV), semantic web
     (JSON-LD), data modeling (LinkML), validation (SHACL), RDF-config
     schema standard, and coverage analysis.
 
+    Exactly one of --void-file or --schema-file must be provided.
 
     Formats:
       - csv:       Schema patterns as CSV table
@@ -526,22 +632,41 @@ def export(
       This directory structure is required by the rdf-config tool to
       read the configuration files.
 
-    Example:
+    Example using a VoID file:
         >>> rdfsolve export --void-file void_description.ttl \\
             --format rdfconfig \\
             --endpoint-url https://example.org/sparql \\
-            --graph-uri http://example.org/graph \\
             --output-dir ./exports
 
-        # Creates: ./exports/{dataset}_config/model.yaml
-        #          ./exports/{dataset}_config/prefix.yaml
-        #          ./exports/{dataset}_config/endpoint.yaml
+    Example using a mined-schema JSON-LD file:
+        >>> rdfsolve export --schema-file dataset_schema.jsonld \\
+            --format all \\
+            --output-dir ./exports
     """
-    click.echo(f"Exporting schema from: {void_file}")
+    if not void_file and not schema_file:
+        raise click.UsageError(
+            "One of --void-file or --schema-file is required."
+        )
+    if void_file and schema_file:
+        raise click.UsageError(
+            "Provide only one of --void-file or --schema-file, not both."
+        )
+
+    input_file: str = void_file or schema_file  # type: ignore[assignment]
+    click.echo(f"Exporting schema from: {input_file}")
 
     try:
-        parser = load_parser_from_file(void_file)
-        dataset_name = Path(void_file).stem.replace("_void", "")
+        if schema_file:
+            parser = load_parser_from_jsonld(schema_file)
+            dataset_name = (
+                Path(schema_file).stem.replace("_schema", "")
+            )
+        else:
+            parser = load_parser_from_file(void_file)  # type: ignore[arg-type]
+            dataset_name = (
+                Path(void_file).stem.replace("_void", "")  # type: ignore[arg-type]
+            )
+
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
@@ -549,54 +674,96 @@ def export(
         if format in ["csv", "all"]:
             _export_csv(parser, output_path, dataset_name)
 
-        # JSON-LD export
+        # JSON-LD export — only meaningful when input is a VoID file;
+        # skip when the input is already a JSON-LD schema file.
         if format in ["jsonld", "all"]:
-            _export_jsonld(
-                void_file,
-                output_path,
-                dataset_name,
-                endpoint_url=endpoint_url,
-                graph_uri=graph_uri,
-            )
+            if void_file:
+                _export_jsonld(
+                    void_file,
+                    output_path,
+                    dataset_name,
+                    endpoint_url=endpoint_url,
+                    graph_uri=graph_uri,
+                )
+            else:
+                click.echo(
+                    "OK JSON-LD:  skipped "
+                    "(input is already a JSON-LD schema file)"
+                )
 
         # LinkML export
         if format in ["linkml", "all"]:
-            _export_linkml(
-                void_file,
-                output_path,
-                dataset_name,
-                schema_name,
-                schema_description,
-                schema_uri,
-            )
+            if void_file:
+                _export_linkml(
+                    void_file,
+                    output_path,
+                    dataset_name,
+                    schema_name,
+                    schema_description,
+                    schema_uri,
+                )
+            else:
+                _export_linkml_from_parser(
+                    parser,
+                    output_path,
+                    dataset_name,
+                    schema_name,
+                    schema_description,
+                    schema_uri,
+                )
 
         # SHACL export
         if format in ["shacl", "all"]:
-            _export_shacl(
-                void_file,
-                output_path,
-                dataset_name,
-                schema_name,
-                schema_description,
-                schema_uri,
-                shacl_closed,
-                shacl_suffix,
-            )
+            if void_file:
+                _export_shacl(
+                    void_file,
+                    output_path,
+                    dataset_name,
+                    schema_name,
+                    schema_description,
+                    schema_uri,
+                    shacl_closed,
+                    shacl_suffix,
+                )
+            else:
+                _export_shacl_from_parser(
+                    parser,
+                    output_path,
+                    dataset_name,
+                    schema_name,
+                    schema_description,
+                    schema_uri,
+                    shacl_closed,
+                    shacl_suffix,
+                )
 
         # RDF-config export
         if format in ["rdfconfig", "all"]:
-            _export_rdfconfig(
-                void_file,
-                output_path,
-                dataset_name,
-                endpoint_url,
-                endpoint_name,
-                graph_uri,
-            )
+            if void_file:
+                _export_rdfconfig(
+                    void_file,
+                    output_path,
+                    dataset_name,
+                    endpoint_url,
+                    endpoint_name,
+                    graph_uri,
+                )
+            else:
+                _export_rdfconfig_from_parser(
+                    parser,
+                    output_path,
+                    dataset_name,
+                    endpoint_url,
+                    endpoint_name,
+                    graph_uri,
+                )
 
         # Pattern coverage export
         if format in ["coverage", "all"]:
-            click.echo("  Coverage: Skipped (requires instance data, not available from VoID file)")
+            click.echo(
+                "  Coverage: Skipped (requires instance data, "
+                "not available from schema file)"
+            )
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
@@ -618,7 +785,7 @@ def export(
 @click.option(
     "--format",
     "fmt",
-    type=click.Choice(["jsonld", "void", "all"]),
+    type=click.Choice(["jsonld", "void", "linkml", "shacl", "all"]),
     default="all",
     help="Export format (default: all)",
 )
@@ -660,6 +827,31 @@ def export(
     help="HTTP timeout per request in seconds (default: 120)",
 )
 @click.option(
+    "--schema-name",
+    default=None,
+    help="Custom name for LinkML/SHACL schema (default: dataset name)",
+)
+@click.option(
+    "--schema-description",
+    default=None,
+    help="Description for LinkML/SHACL schema",
+)
+@click.option(
+    "--schema-uri",
+    default=None,
+    help="Base URI for LinkML/SHACL schema",
+)
+@click.option(
+    "--shacl-closed/--shacl-open",
+    default=True,
+    help="Generate closed SHACL shapes (default: closed)",
+)
+@click.option(
+    "--shacl-suffix",
+    default=None,
+    help="Suffix for SHACL shape names (e.g. 'Shape' → PersonShape)",
+)
+@click.option(
     "--two-phase",
     is_flag=True,
     help="Use two-phase mining (discover classes first, then per-class queries). Gentler on large endpoints.",
@@ -681,6 +873,11 @@ def mine(
     class_batch_size: int,
     no_counts: bool,
     timeout: float,
+    schema_name: Optional[str],
+    schema_description: Optional[str],
+    schema_uri: Optional[str],
+    shacl_closed: bool,
+    shacl_suffix: Optional[str],
     two_phase: bool,
     report_path: Optional[str],
 ) -> None:
@@ -694,6 +891,12 @@ def mine(
     is JSON-LD; a VoID Turtle file can also be generated for
     downstream conversion (LinkML, SHACL, RDF-config) via 'export'.
 
+    Formats:
+      - jsonld:  Mined-schema JSON-LD file (always generated with 'all')
+      - void:    VoID Turtle for use with 'rdfsolve export'
+      - linkml:  LinkML YAML schema
+      - shacl:   SHACL shapes Turtle file
+      - all:     All of the above (default)
 
     Example:
       >>> rdfsolve mine \
@@ -742,8 +945,8 @@ def mine(
 
         # VoID Turtle export
         if fmt in ("void", "all"):
-            void_file = output_path / f"{name}_void.ttl"
             void_graph = schema.to_void_graph()
+            void_file = output_path / f"{name}_void.ttl"
             void_graph.serialize(
                 destination=str(void_file), format="turtle",
             )
@@ -751,6 +954,33 @@ def mine(
                 f"OK VoID:     {void_file} "
                 f"({len(void_graph)} triples)"
             )
+
+        # LinkML / SHACL — build a VoidParser from the mined graph once
+        if fmt in ("linkml", "shacl", "all"):
+            from rdfsolve.parser import VoidParser as _VP
+            _lp = _VP(void_source=schema.to_void_graph())
+
+            if fmt in ("linkml", "all"):
+                _export_linkml_from_parser(
+                    _lp,
+                    output_path,
+                    name,
+                    schema_name,
+                    schema_description,
+                    schema_uri,
+                )
+
+            if fmt in ("shacl", "all"):
+                _export_shacl_from_parser(
+                    _lp,
+                    output_path,
+                    name,
+                    schema_name,
+                    schema_description,
+                    schema_uri,
+                    shacl_closed,
+                    shacl_suffix,
+                )
 
         # Report summary
         if miner.last_report:

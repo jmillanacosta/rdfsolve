@@ -30,6 +30,7 @@ __all__ = [
     "load_mapping_jsonld",
     "load_parser_from_file",
     "load_parser_from_graph",
+    "load_parser_from_jsonld",
     "mine_all_sources",
     "mine_schema",
     "probe_instance_mapping",
@@ -81,6 +82,119 @@ def load_parser_from_graph(
         VoidParser instance
     """
     return VoidParser(void_source=graph, graph_uris=graph_uris, exclude_graphs=exclude_graphs)
+
+
+def load_parser_from_jsonld(
+    jsonld_path: str,
+    graph_uris: Optional[Union[str, List[str]]] = None,
+    exclude_graphs: bool = True,
+) -> VoidParser:
+    """Load a mined-schema JSON-LD file and return a VoidParser.
+
+    Reads the JSON-LD produced by ``rdfsolve mine``, reconstructs a
+    :class:`~rdfsolve.models.MinedSchema` via its Pydantic fields,
+    converts it to an in-memory VoID RDF graph with
+    :meth:`~rdfsolve.models.MinedSchema.to_void_graph`, and wraps it
+    in a :class:`~rdfsolve.parser.VoidParser` ready for export to CSV /
+    LinkML / SHACL / RDF-config.
+
+    Args:
+        jsonld_path: Path to a ``*_schema.jsonld`` file produced by
+            ``rdfsolve mine``.
+        graph_uris: Graph URIs to filter (passed through to VoidParser).
+        exclude_graphs: Exclude system graphs.
+
+    Returns:
+        VoidParser instance backed by the converted VoID graph.
+    """
+    from .models import AboutMetadata, MinedSchema, SchemaPattern
+
+    raw = json.loads(Path(jsonld_path).read_text(encoding="utf-8"))
+
+    # Rebuild flat SchemaPattern list from the grouped @graph
+    context: Dict[str, str] = raw.get("@context", {})
+    about_data = raw.get("@about", {})
+    labels: Dict[str, str] = raw.get("_labels", {})
+
+    def _expand_curie(curie: str) -> str:
+        """Expand a CURIE to a full URI using the @context."""
+        if curie.startswith(("http://", "https://", "urn:")):
+            return curie
+        if ":" in curie:
+            prefix, local = curie.split(":", 1)
+            ns = context.get(prefix)
+            if ns:
+                return ns + local
+        return curie
+
+    patterns: List[SchemaPattern] = []
+    for node in raw.get("@graph", []):
+        sc_curie = node.get("@id", "")
+        sc_uri = _expand_curie(sc_curie)
+        counts_map: Dict[str, Dict[str, int]] = node.get(
+            "_counts", {},
+        )
+        for key, val in node.items():
+            if key.startswith("@") or key == "_counts":
+                continue
+            p_uri = _expand_curie(key)
+            entries = val if isinstance(val, list) else [val]
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                obj_id = entry.get("@id")
+                obj_type = entry.get("@type")
+                count = (
+                    counts_map.get(key, {}).get(
+                        obj_id or obj_type or "", None,
+                    )
+                )
+                if obj_id is not None:
+                    # typed-object or Resource sentinel
+                    oc_uri = _expand_curie(obj_id)
+                    if oc_uri in (
+                        "http://www.w3.org/2000/01/rdf-schema#Resource",
+                        "rdfs:Resource",
+                    ):
+                        patterns.append(SchemaPattern(
+                            subject_class=sc_uri,
+                            property_uri=p_uri,
+                            object_class="Resource",
+                            count=count,
+                            subject_label=labels.get(sc_curie),
+                            property_label=labels.get(key),
+                        ))
+                    else:
+                        patterns.append(SchemaPattern(
+                            subject_class=sc_uri,
+                            property_uri=p_uri,
+                            object_class=oc_uri,
+                            count=count,
+                            subject_label=labels.get(sc_curie),
+                            property_label=labels.get(key),
+                            object_label=labels.get(obj_id),
+                        ))
+                elif obj_type is not None:
+                    # Literal with datatype
+                    dt_uri = _expand_curie(obj_type)
+                    patterns.append(SchemaPattern(
+                        subject_class=sc_uri,
+                        property_uri=p_uri,
+                        object_class="Literal",
+                        datatype=dt_uri,
+                        count=count,
+                        subject_label=labels.get(sc_curie),
+                        property_label=labels.get(key),
+                    ))
+
+    about = AboutMetadata.model_validate(about_data)
+    schema = MinedSchema(patterns=patterns, about=about)
+    void_graph = schema.to_void_graph()
+    return VoidParser(
+        void_source=void_graph,
+        graph_uris=graph_uris,
+        exclude_graphs=exclude_graphs,
+    )
 
 
 def to_linkml_from_file(

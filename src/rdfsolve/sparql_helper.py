@@ -150,6 +150,20 @@ class SparqlHelper:
     # HTTP status codes that warrant a retry
     RETRY_STATUS_CODES = (500, 502, 503, 504, 429)
 
+    # Response body fragments that indicate a query-cost / timeout
+    # rejection from the endpoint (not a transient server error).
+    # These 500s should NOT be retried — raise EndpointTimeoutError
+    # immediately so callers can fall back to pagination.
+    COST_LIMIT_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "estimated execution time",
+        "exceeds the limit",
+        "query timed out",
+        "timeout expired",
+        "execution time limit",
+        "statement timeout",
+        "cost limit exceeded",
+    )
+
     # Class-level query registry to collect all executed queries
     _query_registry: ClassVar[list[QueryRecord]] = []
     _collect_queries: ClassVar[bool] = False
@@ -582,6 +596,37 @@ class SparqlHelper:
 
                 # Check for retryable status codes
                 if status_code in self.RETRY_STATUS_CODES:
+                    # A 500/504 whose body signals "query too expensive"
+                    # (Virtuoso cost limit, statement timeout, gateway
+                    # timeout, etc.) is not a transient server error —
+                    # retrying the identical query will always fail.
+                    # Raise as EndpointTimeoutError so callers (e.g.
+                    # the two-phase miner) can fall back to pagination.
+                    if status_code in (500, 504):
+                        body = (
+                            e.response.text.lower()
+                            if e.response is not None else ""
+                        )
+                        is_cost_limit = (
+                            status_code == 504
+                            or any(
+                                pat in body
+                                for pat in self.COST_LIMIT_PATTERNS
+                            )
+                        )
+                        if is_cost_limit:
+                            tag = (
+                                f"{query_type}[{purpose}]"
+                                if purpose else query_type
+                            )
+                            logger.warning(
+                                "%s query cost/time limit on %s "
+                                "— not retrying",
+                                tag, self.endpoint_url,
+                            )
+                            raise EndpointTimeoutError(
+                                f"Query cost/time limit: {e}"
+                            ) from e
                     self._handle_retry(
                         attempt, query_type, e, purpose,
                     )

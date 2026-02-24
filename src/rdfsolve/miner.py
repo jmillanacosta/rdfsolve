@@ -315,16 +315,24 @@ def _values_block(class_uris: list[str]) -> str:
 def _build_batched_typed_object_query(
     class_uris: list[str],
     graph_uris: list[str] | None,
+    paginated: bool = False,
 ) -> str:
     """Typed-object patterns for a batch of classes.
 
     The ``VALUES`` clause is placed **inside** the ``GRAPH``
     block so that the binding is visible to the triple patterns
     on endpoints that enforce strict scoping (IDSM, QLever, …).
+
+    Parameters
+    ----------
+    paginated:
+        When ``True`` the returned string is a template with
+        ``{offset}`` / ``{limit}`` placeholders suitable for
+        :meth:`~rdfsolve.sparql_helper.SparqlHelper.select_chunked`.
     """
     g_open, g_close = _graph_clause(graph_uris)
     values = _values_block(class_uris)
-    return f"""\
+    q = f"""\
 SELECT DISTINCT ?class ?p ?oc
 WHERE {{
   {g_open}
@@ -334,20 +342,31 @@ WHERE {{
     ?o a ?oc .
   {g_close}
 }}"""
+    if paginated:
+        return SparqlHelper.prepare_paginated_query(q)
+    return q
 
 
 def _build_batched_literal_query(
     class_uris: list[str],
     graph_uris: list[str] | None,
+    paginated: bool = False,
 ) -> str:
     """Literal patterns for a batch of classes.
 
     ``VALUES`` is inside the ``GRAPH`` block — see
     :func:`_build_batched_typed_object_query` for rationale.
+
+    Parameters
+    ----------
+    paginated:
+        When ``True`` returns a template with ``{offset}`` /
+        ``{limit}`` placeholders for
+        :meth:`~rdfsolve.sparql_helper.SparqlHelper.select_chunked`.
     """
     g_open, g_close = _graph_clause(graph_uris)
     values = _values_block(class_uris)
-    return f"""\
+    q = f"""\
 SELECT DISTINCT ?class ?p (DATATYPE(?o) AS ?dt)
 WHERE {{
   {g_open}
@@ -357,20 +376,31 @@ WHERE {{
     FILTER(isLiteral(?o))
   {g_close}
 }}"""
+    if paginated:
+        return SparqlHelper.prepare_paginated_query(q)
+    return q
 
 
 def _build_batched_untyped_uri_query(
     class_uris: list[str],
     graph_uris: list[str] | None,
+    paginated: bool = False,
 ) -> str:
     """Untyped-URI patterns for a batch of classes.
 
     ``VALUES`` is inside the ``GRAPH`` block — see
     :func:`_build_batched_typed_object_query` for rationale.
+
+    Parameters
+    ----------
+    paginated:
+        When ``True`` returns a template with ``{offset}`` /
+        ``{limit}`` placeholders for
+        :meth:`~rdfsolve.sparql_helper.SparqlHelper.select_chunked`.
     """
     g_open, g_close = _graph_clause(graph_uris)
     values = _values_block(class_uris)
-    return f"""\
+    q = f"""\
 SELECT DISTINCT ?class ?p
 WHERE {{
   {g_open}
@@ -381,6 +411,9 @@ WHERE {{
     FILTER NOT EXISTS {{ ?o a ?any }}
   {g_close}
 }}"""
+    if paginated:
+        return SparqlHelper.prepare_paginated_query(q)
+    return q
 
 
 # -------------------------------------------------------------------
@@ -919,16 +952,51 @@ class SchemaMiner:
                             object_class=oc,
                         ))
             except Exception as e:
-                batch_ok = False
                 self._rc.record_query(
                     "two-phase/typed-object",
                     time.monotonic() - t0,
                     success=False,
                 )
                 logger.warning(
-                    "  typed-object failed for %s: %s",
-                    batch_label, e,
+                    "  typed-object failed for %s: %s — "
+                    "retrying with pagination (chunk_size=%d)",
+                    batch_label, e, self.chunk_size,
                 )
+                # Fall back to paginated SELECT so the endpoint
+                # can answer in smaller, cheaper bites.
+                try:
+                    qt = _build_batched_typed_object_query(
+                        batch, graph_uris, paginated=True,
+                    )
+                    paginated_bindings = self._collect_bindings(
+                        qt,
+                        purpose="two-phase/typed-object",
+                        chunk_size=self.chunk_size,
+                    )
+                    for b in paginated_bindings:
+                        cls = b.get(
+                            "class", {},
+                        ).get("value", "")
+                        p = b.get("p", {}).get("value", "")
+                        oc = b.get("oc", {}).get("value", "")
+                        if cls and p and oc:
+                            patterns.append(SchemaPattern(
+                                subject_class=cls,
+                                property_uri=p,
+                                object_class=oc,
+                            ))
+                    logger.info(
+                        "  typed-object paginated fallback "
+                        "for %s succeeded",
+                        batch_label,
+                    )
+                except Exception as e2:
+                    batch_ok = False
+                    logger.warning(
+                        "  typed-object paginated fallback "
+                        "also failed for %s: %s",
+                        batch_label, e2,
+                    )
 
             # 2b. Literal patterns for this batch
             t0 = time.monotonic()
@@ -959,16 +1027,50 @@ class SchemaMiner:
                             datatype=dt if dt else None,
                         ))
             except Exception as e:
-                batch_ok = False
                 self._rc.record_query(
                     "two-phase/literal",
                     time.monotonic() - t0,
                     success=False,
                 )
                 logger.warning(
-                    "  literal failed for %s: %s",
-                    batch_label, e,
+                    "  literal failed for %s: %s — "
+                    "retrying with pagination (chunk_size=%d)",
+                    batch_label, e, self.chunk_size,
                 )
+                try:
+                    qt = _build_batched_literal_query(
+                        batch, graph_uris, paginated=True,
+                    )
+                    paginated_bindings = self._collect_bindings(
+                        qt,
+                        purpose="two-phase/literal",
+                        chunk_size=self.chunk_size,
+                    )
+                    for b in paginated_bindings:
+                        cls = b.get(
+                            "class", {},
+                        ).get("value", "")
+                        p = b.get("p", {}).get("value", "")
+                        dt = b.get("dt", {}).get("value")
+                        if cls and p:
+                            patterns.append(SchemaPattern(
+                                subject_class=cls,
+                                property_uri=p,
+                                object_class="Literal",
+                                datatype=dt if dt else None,
+                            ))
+                    logger.info(
+                        "  literal paginated fallback "
+                        "for %s succeeded",
+                        batch_label,
+                    )
+                except Exception as e2:
+                    batch_ok = False
+                    logger.warning(
+                        "  literal paginated fallback "
+                        "also failed for %s: %s",
+                        batch_label, e2,
+                    )
 
             # 2c. Untyped-URI patterns for this batch
             t0 = time.monotonic()
@@ -997,16 +1099,48 @@ class SchemaMiner:
                             object_class="Resource",
                         ))
             except Exception as e:
-                batch_ok = False
                 self._rc.record_query(
                     "two-phase/untyped-uri",
                     time.monotonic() - t0,
                     success=False,
                 )
                 logger.warning(
-                    "  untyped-uri failed for %s: %s",
-                    batch_label, e,
+                    "  untyped-uri failed for %s: %s — "
+                    "retrying with pagination (chunk_size=%d)",
+                    batch_label, e, self.chunk_size,
                 )
+                try:
+                    qt = _build_batched_untyped_uri_query(
+                        batch, graph_uris, paginated=True,
+                    )
+                    paginated_bindings = self._collect_bindings(
+                        qt,
+                        purpose="two-phase/untyped-uri",
+                        chunk_size=self.chunk_size,
+                    )
+                    for b in paginated_bindings:
+                        cls = b.get(
+                            "class", {},
+                        ).get("value", "")
+                        p = b.get("p", {}).get("value", "")
+                        if cls and p:
+                            patterns.append(SchemaPattern(
+                                subject_class=cls,
+                                property_uri=p,
+                                object_class="Resource",
+                            ))
+                    logger.info(
+                        "  untyped-uri paginated fallback "
+                        "for %s succeeded",
+                        batch_label,
+                    )
+                except Exception as e2:
+                    batch_ok = False
+                    logger.warning(
+                        "  untyped-uri paginated fallback "
+                        "also failed for %s: %s",
+                        batch_label, e2,
+                    )
 
             # ── Consecutive-failure tracking ───────────────────
             if batch_ok:
