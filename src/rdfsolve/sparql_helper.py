@@ -88,6 +88,19 @@ class EndpointUnhealthyError(EndpointError):
     pass
 
 
+class PaginationTruncatedError(EndpointTimeoutError):
+    """Raised by select_chunked when pagination is abandoned mid-stream.
+
+    This means some rows were already yielded before the error, so the
+    caller received a partial result set.  The ``offset`` attribute
+    records where pagination stopped.
+    """
+
+    def __init__(self, msg: str, offset: int = 0) -> None:
+        super().__init__(msg)
+        self.offset = offset
+
+
 class QueryError(SparqlHelperError):
     """Raised when the query itself is invalid."""
 
@@ -149,6 +162,20 @@ class SparqlHelper:
 
     # HTTP status codes that warrant a retry
     RETRY_STATUS_CODES = (500, 502, 503, 504, 429)
+
+    # Response body fragments that indicate a query-cost / timeout
+    # rejection from the endpoint (not a transient server error).
+    # These 500s should NOT be retried — raise EndpointTimeoutError
+    # immediately so callers can fall back to pagination.
+    COST_LIMIT_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "estimated execution time",
+        "exceeds the limit",
+        "query timed out",
+        "timeout expired",
+        "execution time limit",
+        "statement timeout",
+        "cost limit exceeded",
+    )
 
     # Class-level query registry to collect all executed queries
     _query_registry: ClassVar[list[QueryRecord]] = []
@@ -582,6 +609,37 @@ class SparqlHelper:
 
                 # Check for retryable status codes
                 if status_code in self.RETRY_STATUS_CODES:
+                    # A 500/504 whose body signals "query too expensive"
+                    # (Virtuoso cost limit, statement timeout, gateway
+                    # timeout, etc.) is not a transient server error —
+                    # retrying the identical query will always fail.
+                    # Raise as EndpointTimeoutError so callers (e.g.
+                    # the two-phase miner) can fall back to pagination.
+                    if status_code in (500, 504):
+                        body = (
+                            e.response.text.lower()
+                            if e.response is not None else ""
+                        )
+                        is_cost_limit = (
+                            status_code == 504
+                            or any(
+                                pat in body
+                                for pat in self.COST_LIMIT_PATTERNS
+                            )
+                        )
+                        if is_cost_limit:
+                            tag = (
+                                f"{query_type}[{purpose}]"
+                                if purpose else query_type
+                            )
+                            logger.warning(
+                                "%s query cost/time limit on %s "
+                                "— not retrying",
+                                tag, self.endpoint_url,
+                            )
+                            raise EndpointTimeoutError(
+                                f"Query cost/time limit: {e}"
+                            ) from e
                     self._handle_retry(
                         attempt, query_type, e, purpose,
                     )
@@ -609,6 +667,22 @@ class SparqlHelper:
 
             except requests.exceptions.RequestException as e:
                 error_msg = str(e).lower()
+
+                # ── Permanent failures: fail fast, don't retry ────
+                # DNS resolution failure or connection refused are not
+                # transient — the host doesn't exist or isn't listening.
+                if self._is_permanent_failure(e):
+                    tag = (
+                        f"{query_type}[{purpose}]"
+                        if purpose else query_type
+                    )
+                    logger.warning(
+                        "%s endpoint unreachable (%s) — not retrying",
+                        tag, self.endpoint_url,
+                    )
+                    raise EndpointError(
+                        f"Endpoint unreachable: {e}"
+                    ) from e
 
                 # Check if this looks like a POST-required error
                 if not use_post and self._should_retry_with_post(error_msg):
@@ -807,6 +881,38 @@ class SparqlHelper:
         """Check if error indicates POST method should be tried."""
         return any(pattern in error_msg for pattern in self.POST_RETRY_PATTERNS)
 
+    # Patterns in the stringified exception chain that indicate the
+    # endpoint is permanently unreachable (DNS, refused, no route).
+    _PERMANENT_FAILURE_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "name or service not known",      # DNS resolution failure
+        "nameresolutionerror",             # urllib3 wrapper
+        "nodename nor servname provided",  # macOS DNS failure
+        "getaddrinfo failed",             # generic DNS failure
+        "no address associated",           # DNS NXDOMAIN
+        "[errno 111]",                     # connection refused (Linux)
+        "[errno 61]",                      # connection refused (macOS)
+        "[winerror 10061]",                # connection refused (Windows)
+        "no route to host",                # network unreachable
+        "[errno 113]",                     # no route to host (Linux)
+    )
+
+    @classmethod
+    def _is_permanent_failure(cls, exc: Exception) -> bool:
+        """Return True if the exception indicates a permanent failure.
+
+        DNS resolution errors and connection-refused are not transient —
+        retrying will always produce the same result.
+        """
+        # Walk the full exception chain (cause, context, args)
+        msg = str(exc).lower()
+        cause = exc.__cause__ or exc.__context__
+        if cause:
+            msg += " " + str(cause).lower()
+            inner = getattr(cause, "reason", None)
+            if inner:
+                msg += " " + str(inner).lower()
+        return any(pat in msg for pat in cls._PERMANENT_FAILURE_PATTERNS)
+
     def _is_html_response(self, content: str) -> bool:
         """Check if content appears to be HTML (error page) instead of RDF."""
         if not content:
@@ -977,12 +1083,14 @@ class SparqlHelper:
                     break  # non-timeout error → stop paging
 
             if not success:
-                # Could not fetch this page even with reduced size
-                logger.warning(
-                    "Giving up pagination at offset %d",
-                    current_offset,
+                # Could not fetch this page even with reduced size.
+                # Raise so callers know the result set is incomplete.
+                raise PaginationTruncatedError(
+                    f"Pagination abandoned at offset {current_offset}"
+                    f" after {max_shrinks_per_offset} chunk-size"
+                    " reductions — results are incomplete",
+                    offset=current_offset,
                 )
-                break
 
             if not bindings:
                 logger.debug("No more results, pagination complete")
