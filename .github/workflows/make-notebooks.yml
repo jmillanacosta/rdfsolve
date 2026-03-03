@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'data/sources.csv'
+      - 'data/sources.jsonld'
       - 'notebooks/make_notebooks.py'
       - 'notebooks/01_schema_extraction/_schema_template.ipynb'
       - 'notebooks/02_pydantic_models/_pydantic_template.ipynb'
@@ -52,8 +53,12 @@ jobs:
     - name: Generate dataset matrix
       id: set-matrix
       run: |
-        # Extract dataset names from sources.csv and create proper JSON
-        datasets=$(tail -n +2 data/sources.csv | cut -d',' -f1 | grep -v '^$' | jq -R . | jq -s . | jq -c .)
+        # Extract dataset names from sources.jsonld (fall back to CSV)
+        if [ -f data/sources.jsonld ]; then
+          datasets=$(jq -c '[.["@graph"][].name]' data/sources.jsonld)
+        else
+          datasets=$(tail -n +2 data/sources.csv | cut -d',' -f1 | grep -v '^$' | jq -R . | jq -s . | jq -c .)
+        fi
         
         # Create matrices for different notebook types
         echo "schema-matrix={\"dataset\":$datasets}" >> $GITHUB_OUTPUT

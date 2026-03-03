@@ -1,53 +1,69 @@
 #!/usr/bin/env python3
-"""Mine JSON-LD schemas from data/sources.csv and save to docker/schemas/.
+"""Mine JSON-LD schemas from a sources file and save to docker/schemas/.
+
+Reads the source registry via ``rdfsolve.sources.load_sources()`` which
+auto-detects YAML, JSON-LD, or CSV by file extension.
 
 Usage:
-    python scripts/seed_schemas.py                    # mine all sources
-    python scripts/seed_schemas.py --qlever            # mine QLever sources only
-    python scripts/seed_schemas.py --all-sources       # mine both CSVs
-    python scripts/seed_schemas.py --limit 5          # mine first 5 only
+    python scripts/seed_schemas.py                              # default sources.yaml
+    python scripts/seed_schemas.py -s data/sources_all.yaml     # whole-db entries
+    python scripts/seed_schemas.py --limit 5                    # first 5 only
     python scripts/seed_schemas.py --names aopwikirdf wikipathways
+    python scripts/seed_schemas.py --no-filter-service          # keep service namespaces
 """
 
 from __future__ import annotations
 
 import argparse
-import csv
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_CSV = ROOT / "data" / "sources.csv"
-QLEVER_CSV = ROOT / "data" / "qlever.csv"
+sys.path.insert(0, str(ROOT / "src"))
+
 OUTPUT_DIR = ROOT / "docker" / "schemas"
 
 
-def mine_one(row: dict) -> dict | None:
+def mine_one(
+    entry: dict,
+    filter_service: bool = True,
+) -> dict | None:
     """Mine a single source and return the JSON-LD dict, or None on failure."""
     from rdfsolve.api import mine_schema
 
-    name = row["dataset_name"]
-    endpoint = row["endpoint_url"]
-    graph = row["graph_uri"] if row.get("use_graph", "").lower() == "true" else None
-    two_phase = row.get("two_phase", "").strip().lower() in (
-        "true", "1", "yes",
-    )
+    name = entry["name"]
+    endpoint = entry.get("endpoint", "")
+    if not endpoint:
+        return None
+
+    use_graph = entry.get("use_graph", False)
+    graph_uris = entry.get("graph_uris", []) if use_graph else None
+    two_phase = entry.get("two_phase", True)
 
     try:
         result = mine_schema(
             endpoint_url=endpoint,
             dataset_name=name,
-            graph_uris=[graph] if graph else None,
+            graph_uris=graph_uris if graph_uris else None,
             two_phase=two_phase,
+            filter_service_namespaces=filter_service,
         )
         return result
-    except Exception:
+    except Exception as exc:
+        print(f"  ERROR mining {name}: {exc}", file=sys.stderr)
         return None
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Mine schemas → docker/schemas/",
+    )
+    parser.add_argument(
+        "-s", "--sources",
+        type=str,
+        default=None,
+        help="Path to sources file (YAML/JSON-LD/CSV). Default: data/sources.yaml",
     )
     parser.add_argument(
         "--limit", type=int, default=0,
@@ -57,57 +73,52 @@ def main() -> None:
         "--names", nargs="*",
         help="Mine only these dataset names",
     )
-
-    src = parser.add_mutually_exclusive_group()
-    src.add_argument(
-        "--qlever", action="store_true",
-        help="Mine only QLever-hosted sources",
-    )
-    src.add_argument(
-        "--all-sources", action="store_true",
-        help="Mine both default and QLever sources",
+    parser.add_argument(
+        "--no-filter-service", action="store_true",
+        help="Keep service/system namespace patterns in output",
     )
 
     args = parser.parse_args()
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Resolve which CSV file(s) to read
-    if args.qlever:
-        csv_files = [QLEVER_CSV]
-    elif args.all_sources:
-        csv_files = [DEFAULT_CSV, QLEVER_CSV]
-    else:
-        csv_files = [DEFAULT_CSV]
+    # ── load sources via rdfsolve.sources ─────────────────────────
+    from rdfsolve.sources import load_sources
 
-    rows: list[dict[str, str]] = []
-    for csv_file in csv_files:
-        with open(csv_file, newline="") as f:
-            reader = csv.DictReader(f)
-            rows.extend(reader)
+    entries = load_sources(args.sources)
 
     if args.names:
-        rows = [r for r in rows if r["dataset_name"] in args.names]
+        entries = [e for e in entries if e["name"] in args.names]
     if args.limit:
-        rows = rows[: args.limit]
+        entries = entries[: args.limit]
 
+    print(f"Mining {len(entries)} source(s)…")
 
     success = 0
-    for row in rows:
-        name = row["dataset_name"]
+    for entry in entries:
+        name = entry["name"]
         outfile = OUTPUT_DIR / f"{name}_schema.jsonld"
 
         # Skip if already exists
         if outfile.exists():
+            print(f"  [SKIP] {name} — already exists")
             success += 1
             continue
 
-        result = mine_one(row)
+        print(f"  [MINE] {name} …", end=" ", flush=True)
+        result = mine_one(
+            entry,
+            filter_service=not args.no_filter_service,
+        )
         if result:
             with open(outfile, "w") as fp:
                 json.dump(result, fp, indent=2)
+            print("OK")
             success += 1
+        else:
+            print("FAIL")
 
+    print(f"\nDone: {success}/{len(entries)} succeeded.")
 
 
 if __name__ == "__main__":
