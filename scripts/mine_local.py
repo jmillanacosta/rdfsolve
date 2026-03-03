@@ -67,7 +67,7 @@ _DEFAULT_SOURCES = _repo_root / "data" / "sources.yaml"
 # Default base URI template for VoID partition IRIs.
 # ``{name}`` is replaced by the dataset name.
 _VOID_URI_DEFAULT = (
-    "https://jmillanacosta.com/rdfsolve/{name}/void/"
+    "https://jmillanacosta.com/rdfsolve/{name}/mined/"
 )
 
 logger = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ def _resolve_void_uri_base(
       1. Explicit CLI ``--void-uri-base`` value.
       2. ``void_uri_base`` field in the sources.yaml entry.
       3. Default template
-         ``https://jmillanacosta.com/rdfsolve/{name}/void/``.
+         ``https://jmillanacosta.com/rdfsolve/{name}/mined/``.
     """
     if cli_override:
         return cli_override.rstrip("/") + "/"
@@ -359,7 +359,8 @@ def _route_discover(args: argparse.Namespace) -> dict[str, Any]:
                 )
 
                 # ── Export: VoID (Turtle) ────────────────────────
-                void_path = out / f"{name}_discovered_void.ttl"
+                _tag = "discovered"
+                void_path = out / f"{name}_{_tag}_void.ttl"
                 void_graph.serialize(
                     destination=str(void_path), format="turtle",
                 )
@@ -371,7 +372,7 @@ def _route_discover(args: argparse.Namespace) -> dict[str, Any]:
                     endpoint_url=endpoint,
                     dataset_name=name,
                 )
-                jsonld_path = out / f"{name}_schema.jsonld"
+                jsonld_path = out / f"{name}_{_tag}_schema.jsonld"
                 with open(jsonld_path, "w", encoding="utf-8") as jf:
                     json.dump(jsonld_doc, jf, indent=2)
 
@@ -382,7 +383,7 @@ def _route_discover(args: argparse.Namespace) -> dict[str, Any]:
                         filter_void_nodes=True,
                         schema_name=name,
                     )
-                    linkml_path = out / f"{name}_linkml_schema.yaml"
+                    linkml_path = out / f"{name}_{_tag}_linkml.yaml"
                     with open(linkml_path, "w", encoding="utf-8") as lf:
                         lf.write(linkml_yaml)
                 except Exception as exc:
@@ -394,7 +395,7 @@ def _route_discover(args: argparse.Namespace) -> dict[str, Any]:
                         filter_void_nodes=True,
                         schema_name=name,
                     )
-                    shacl_path = out / f"{name}_schema.shacl.ttl"
+                    shacl_path = out / f"{name}_{_tag}_shacl.ttl"
                     with open(shacl_path, "w", encoding="utf-8") as sf:
                         sf.write(shacl_ttl)
                 except Exception as exc:
@@ -407,7 +408,7 @@ def _route_discover(args: argparse.Namespace) -> dict[str, Any]:
                         endpoint_url=endpoint,
                         endpoint_name=name,
                     )
-                    config_dir = out / f"{name}_config"
+                    config_dir = out / f"{name}_{_tag}_config"
                     config_dir.mkdir(parents=True, exist_ok=True)
                     for fname, content in rdfconfig.items():
                         with open(config_dir / f"{fname}.yaml", "w") as rf:
@@ -416,7 +417,7 @@ def _route_discover(args: argparse.Namespace) -> dict[str, Any]:
                     logger.debug("RDF-config export failed for %s: %s", name, exc)
 
                 meta_path = (
-                    out / f"{name}_discovered_report.json"
+                    out / f"{name}_{_tag}_report.json"
                 )
                 from dataclasses import asdict
                 meta = {
@@ -599,7 +600,8 @@ def _discover_void_for_local(
     )
 
     # ── Export: VoID (Turtle) ────────────────────────────
-    void_path = out / f"{name}_discovered_void.ttl"
+    _tag = "discovered_qlever"
+    void_path = out / f"{name}_{_tag}_void.ttl"
     void_graph.serialize(destination=str(void_path), format="turtle")
 
     # ── Export: JSON-LD ──────────────────────────────────
@@ -607,7 +609,7 @@ def _discover_void_for_local(
     jsonld_doc = graph_to_jsonld(
         void_graph, endpoint_url=endpoint, dataset_name=name,
     )
-    jsonld_path = out / f"{name}_schema.jsonld"
+    jsonld_path = out / f"{name}_{_tag}_schema.jsonld"
     with open(jsonld_path, "w", encoding="utf-8") as jf:
         json.dump(jsonld_doc, jf, indent=2)
 
@@ -617,7 +619,7 @@ def _discover_void_for_local(
         linkml_yaml = export_parser.to_linkml_yaml(
             filter_void_nodes=True, schema_name=name,
         )
-        linkml_path = out / f"{name}_linkml_schema.yaml"
+        linkml_path = out / f"{name}_{_tag}_linkml.yaml"
         with open(linkml_path, "w", encoding="utf-8") as lf:
             lf.write(linkml_yaml)
     except Exception:
@@ -628,7 +630,7 @@ def _discover_void_for_local(
         shacl_ttl = export_parser.to_shacl(
             filter_void_nodes=True, schema_name=name,
         )
-        shacl_path = out / f"{name}_schema.shacl.ttl"
+        shacl_path = out / f"{name}_{_tag}_shacl.ttl"
         with open(shacl_path, "w", encoding="utf-8") as sf:
             sf.write(shacl_ttl)
     except Exception:
@@ -640,7 +642,7 @@ def _discover_void_for_local(
             filter_void_nodes=True,
             endpoint_url=endpoint, endpoint_name=name,
         )
-        config_dir = out / f"{name}_config"
+        config_dir = out / f"{name}_{_tag}_config"
         config_dir.mkdir(parents=True, exist_ok=True)
         for fname, content in rdfconfig.items():
             with open(config_dir / f"{fname}.yaml", "w") as rf:
@@ -648,7 +650,7 @@ def _discover_void_for_local(
     except Exception:
         pass
 
-    meta_path = out / f"{name}_discovered_report.json"
+    meta_path = out / f"{name}_{_tag}_report.json"
     meta = {
         "dataset": name,
         "endpoint": endpoint,
@@ -681,7 +683,8 @@ def _mine_single_local(
     """
     from rdfsolve.miner import mine_schema as _mine
 
-    rpt_path = out / f"{name}_report.json"
+    _tag = "mined_qlever"
+    rpt_path = out / f"{name}_{_tag}_report.json"
 
     schema = _mine(
         endpoint_url=endpoint,
@@ -709,14 +712,14 @@ def _mine_single_local(
     }
 
     if args.fmt in ("jsonld", "all"):
-        jsonld_path = out / f"{name}_schema.jsonld"
+        jsonld_path = out / f"{name}_{_tag}_schema.jsonld"
         with open(jsonld_path, "w", encoding="utf-8") as f:
             json.dump(schema.to_jsonld(), f, indent=2)
         logger.info("  → %s", jsonld_path)
         result_files["schema_jsonld"] = str(jsonld_path)
 
     if args.fmt in ("void", "all"):
-        void_path = out / f"{name}_void.ttl"
+        void_path = out / f"{name}_{_tag}_void.ttl"
         void_g = schema.to_void_graph()
         void_g.serialize(
             destination=str(void_path), format="turtle",
@@ -794,7 +797,7 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
                     run.classes_found = mr["classes"]
                     run.properties_found = mr["properties"]
                     run.output_files = mr["files"]
-                rpt = out / f"{name}_report.json"
+                rpt = out / f"{name}_mined_qlever_report.json"
                 _embed_benchmark_in_report(run, bench, rpt)
             else:
                 _do_mine_one(name, endpoint, 1, 1)
@@ -862,7 +865,7 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
                     run.classes_found = mr["classes"]
                     run.properties_found = mr["properties"]
                     run.output_files = mr["files"]
-                rpt = out / f"{name}_report.json"
+                rpt = out / f"{name}_mined_qlever_report.json"
                 _embed_benchmark_in_report(run, bench, rpt)
             else:
                 _do_mine_one(
@@ -934,20 +937,61 @@ UI_CONFIG = default
 
 
 def _detect_data_format(entry: Any) -> str | None:
-    """Determine the RDF data format category for a source entry.
+    """Return ``True``-ish format string if the entry has any download field.
 
-    Returns one of: ``"nq_gz"``, ``"rdf_xz"``, ``"zip_ttl"``,
-    ``"ttl_gz"``, or ``None`` if the source has no download fields.
+    The return value is a short label used for logging only.  The actual
+    Qleverfile construction is handled generically by
+    ``_build_qleverfile``.
+
+    Returns ``None`` when the entry has no ``download_*`` fields at all.
     """
-    if entry.get("download_nq"):
-        return "nq_gz"
-    if entry.get("download_rdf"):
-        return "rdf_xz"
-    if entry.get("download_zip"):
-        return "zip_ttl"
-    if entry.get("download_ttl"):
-        return "ttl_gz"
-    return None
+    dl_keys = [k for k in entry if k.startswith("download_") and entry.get(k)]
+    if not dl_keys:
+        return None
+    # Return the most descriptive key (prefer data over schema files)
+    _PRIORITY = [
+        "download_nq", "download_nquads", "download_nt", "download_n3",
+        "download_ttl", "download_rdf", "download_rdfxml", "download_owl",
+        "download_jsonld", "download_zip", "download_tar_gz", "download_tgz",
+        "download_ftp",
+    ]
+    for k in _PRIORITY:
+        if k in dl_keys:
+            return k.removeprefix("download_")
+    return dl_keys[0].removeprefix("download_")
+
+
+# ── Generic download helpers ─────────────────────────────────────
+
+def _urls_from_field(entry: dict, field: str) -> list[str]:
+    """Extract a flat URL list from a YAML field (string or list)."""
+    raw = entry.get(field, "")
+    if not raw:
+        return []
+    urls = raw if isinstance(raw, list) else [raw]
+    return [u for u in urls if u]
+
+
+# Map download_* suffix → (QLever FORMAT, input glob, cat command)
+# for formats that QLever can consume directly.
+_DIRECT_FORMATS: dict[str, tuple[str, str, str]] = {
+    # N-Quads
+    "nq":      ("nq",  "*.nq.gz *.nq",    "zcat *.nq.gz 2>/dev/null; cat *.nq 2>/dev/null"),
+    "nquads":  ("nq",  "*.nq.gz *.nq",    "zcat *.nq.gz 2>/dev/null; cat *.nq 2>/dev/null"),
+    # Turtle
+    "ttl":     ("ttl", "*.ttl",            "cat *.ttl"),
+    # N-Triples
+    "nt":      ("nt",  "*.nt.gz *.nt",     "zcat *.nt.gz 2>/dev/null; cat *.nt 2>/dev/null"),
+    # N3 (QLever reads as turtle superset)
+    "n3":      ("ttl", "*.n3",             "cat *.n3"),
+    # OWL (typically RDF/XML)
+    "owl":     ("ttl", "*.ttl",            "cat *.ttl"),
+    # RDF/XML (.rdf, .rdf.xz)
+    "rdf":     ("ttl", "*.ttl",            "cat *.ttl"),
+    "rdfxml":  ("ttl", "*.ttl",            "cat *.ttl"),
+    # JSON-LD
+    "jsonld":  ("ttl", "*.ttl",            "cat *.ttl"),
+}
 
 
 def _build_qleverfile(
@@ -956,144 +1000,236 @@ def _build_qleverfile(
     port: int,
     runtime: str,
 ) -> str:
-    """Build Qleverfile content string for one source entry."""
-    name = entry.get("name", "unknown")
-    fmt = _detect_data_format(entry)
+    """Build Qleverfile content string for one source entry.
 
-    # The qlever workdir is  {data_dir}/qlever_workdirs/{name}/
-    # Data is downloaded into a "rdf" subdirectory of the workdir
-    # so that INPUT_FILES can use a relative glob pattern (required
-    # by QLever / Python 3.13 pathlib).
+    Handles ALL ``download_*`` fields generically:
+      - Collects URLs from every ``download_*`` field
+      - Downloads with ``wget -c -q``
+      - Decompresses ``.gz`` / ``.xz`` archives
+      - Extracts ``.tar.gz`` / ``.tgz`` / ``.zip`` archives
+      - Converts RDF/XML and OWL → Turtle (via rapper)
+      - Converts JSON-LD → Turtle (via Python rdflib)
+    """
+    name = entry.get("name", "unknown")
+
     workdir = (data_dir / "qlever_workdirs" / name).resolve()
     rdf_subdir = "rdf"  # relative to workdir
     src_data_dir = f"{workdir}/{rdf_subdir}"  # absolute, for cmds
 
-    # Default settings JSON — suitable for most Bio-ontology data.
     settings_json = (
         '{ "ascii-prefixes-only": false, '
         '"num-triples-per-batch": 1000000 }'
     )
 
-    if fmt == "nq_gz":
-        # ── Bio2RDF style: .nq.gz files ──────────────────────────
+    # ── Collect ALL download URLs, grouped by type ────────────────
+    dl_keys = sorted(k for k in entry if k.startswith("download_") and entry.get(k))
+    if not dl_keys:
+        raise ValueError(f"Source '{name}' has no download_* fields")
+
+    all_urls: list[str] = []
+    has_gz = False          # any .gz files to decompress
+    has_xz = False          # any .xz files to decompress
+    has_archive = False     # any .zip / .tar.gz / .tgz to extract
+    has_rdfxml = False      # need RDF/XML → Turtle conversion
+    has_jsonld = False      # need JSON-LD → Turtle conversion
+    has_nq = False          # primary format is N-Quads
+    has_nt = False          # primary format is N-Triples
+    has_n3 = False          # primary format is N3
+
+    for dk in dl_keys:
+        suffix = dk.removeprefix("download_")
+        urls = _urls_from_field(entry, dk)
+        all_urls.extend(urls)
+
+        for u in urls:
+            low = u.lower()
+            if low.endswith(".gz") and not low.endswith(".tar.gz"):
+                has_gz = True
+            if low.endswith(".xz"):
+                has_xz = True
+
+        if suffix in ("tar_gz", "tgz", "zip"):
+            has_archive = True
+        if suffix in ("rdf", "rdfxml", "owl"):
+            has_rdfxml = True
+        if suffix == "jsonld":
+            has_jsonld = True
+        if suffix in ("nq", "nquads"):
+            has_nq = True
+        if suffix == "nt":
+            has_nt = True
+        if suffix == "n3":
+            has_n3 = True
+
+    # ── Decide QLever FORMAT and INPUT_FILES / CAT_INPUT_FILES ────
+    if has_nq:
         rdf_format = "nq"
-        input_files = f"{rdf_subdir}/*.nq.gz"
-        cat_input_files = "zcat ${INPUT_FILES}"
-
-        # Build wget commands for each .nq.gz URL
-        raw = entry.get("download_nq", "")
-        urls = raw if isinstance(raw, list) else [raw]
-        urls = [u for u in urls if u]  # drop empty strings
-        wget_lines = " && ".join(
-            f'wget -c -q "{u}"' for u in urls
+        input_files = f"{rdf_subdir}/*.nq*"
+        cat_input_files = (
+            "( zcat ${INPUT_FILES} 2>/dev/null || "
+            "cat ${INPUT_FILES} 2>/dev/null ) | "
+            "grep -v '^$$' || true"
         )
-        # Also download .owl schema if present
-        owl_url = entry.get("download_owl", "")
-        if owl_url:
-            wget_lines += f' && wget -c -q "{owl_url}"'
-
-        get_data_cmd = (
-            f"mkdir -p {src_data_dir} "
-            f"&& cd {src_data_dir} "
-            f"&& {wget_lines}"
+    elif has_nt:
+        rdf_format = "nt"
+        input_files = f"{rdf_subdir}/*.nt*"
+        cat_input_files = (
+            "( zcat ${INPUT_FILES} 2>/dev/null || "
+            "cat ${INPUT_FILES} 2>/dev/null ) | "
+            "grep -v '^$$' || true"
         )
-
-    elif fmt == "rdf_xz":
-        # ── UniProt style: .rdf.xz / .owl.xz ────────────────────
-        # 1. Download all .rdf.xz / .owl.xz / .owl / .rdf files
-        # 2. Decompress .xz files
-        # 3. Convert RDF/XML → Turtle (QLever needs TTL)
+    elif has_n3:
+        rdf_format = "ttl"
+        input_files = f"{rdf_subdir}/*.n3"
+        cat_input_files = "cat ${INPUT_FILES}"
+    else:
+        # Everything else is converted / decompressed to .ttl
         rdf_format = "ttl"
         input_files = f"{rdf_subdir}/*.ttl"
         cat_input_files = "cat ${INPUT_FILES}"
 
-        raw = entry.get("download_rdf", [])
-        urls = raw if isinstance(raw, list) else [raw]
-        urls = [u for u in urls if u]
-        wget_lines = " && ".join(
-            f'wget -c -q "{u}"' for u in urls
+    # ── Build GET_DATA_CMD ────────────────────────────────────────
+    # Build wget commands.  For URLs that don't end with a
+    # recognisable RDF filename (e.g. Zenodo API "/content"
+    # endpoints) we use --content-disposition so wget saves
+    # the file under the server-suggested name, or fall back
+    # to -O with a name derived from the URL path.
+    wget_parts: list[str] = []
+    _RDF_EXTS = (
+        ".ttl", ".ttl.gz", ".nt", ".nt.gz", ".nq", ".nq.gz",
+        ".n3", ".owl", ".rdf", ".rdf.gz", ".rdf.xz", ".owl.xz",
+        ".xml.gz", ".jsonld", ".tar.gz", ".tgz", ".zip",
+    )
+    for u in all_urls:
+        fname = u.rsplit("/", 1)[-1]
+        if any(fname.lower().endswith(ext) for ext in _RDF_EXTS):
+            wget_parts.append(f'wget -c -q "{u}"')
+        else:
+            # Try to derive a filename from the URL path
+            # e.g. .../files/Hsa-u.c4-0.n3/content → Hsa-u.c4-0.n3
+            parts = u.rstrip("/").split("/")
+            derived = next(
+                (p for p in reversed(parts)
+                 if any(p.lower().endswith(e) for e in _RDF_EXTS)),
+                None,
+            )
+            if derived:
+                wget_parts.append(f'wget -c -q -O "{derived}" "{u}"')
+            else:
+                wget_parts.append(
+                    f'wget -c -q --content-disposition "{u}"'
+                )
+
+    wget_lines = " && ".join(wget_parts)
+    steps: list[str] = [
+        f"mkdir -p {src_data_dir}",
+        f"cd {src_data_dir}",
+        wget_lines,
+    ]
+
+    # Extract archives (.zip / .tar.gz / .tgz)
+    if has_archive:
+        steps.append("echo 'Extracting archives …'")
+        # tar.gz / tgz
+        steps.append(
+            'for f in *.tar.gz *.tgz; do '
+            '[ -f "$f" ] || continue; '
+            'echo "  extracting $f"; '
+            'tar xzf "$f"; '
+            'done'
+        )
+        # zip
+        steps.append(
+            'for f in *.zip; do '
+            '[ -f "$f" ] || continue; '
+            'echo "  extracting $f"; '
+            'python3 -c "import zipfile; z=zipfile.ZipFile(\'$f\'); z.extractall(\'.\'); '
+            "print(f'Extracted {len(z.namelist())} files'); z.close()\"; "
+            'done'
+        )
+        # After extraction, find RDF files in subdirectories and move them up
+        steps.append(
+            "echo 'Collecting RDF files from subdirectories …' "
+            "&& find . -mindepth 2 \\( "
+            '-name "*.ttl" -o -name "*.ttl.gz" -o -name "*.nt" -o '
+            '-name "*.nt.gz" -o -name "*.nq" -o -name "*.nq.gz" -o '
+            '-name "*.n3" -o -name "*.owl" -o -name "*.rdf" -o '
+            '-name "*.rdf.gz" -o -name "*.jsonld" '
+            "\\) -exec mv -n {} . \\; 2>/dev/null || true"
         )
 
-        get_data_cmd = (
-            f"mkdir -p {src_data_dir} "
-            f"&& cd {src_data_dir} "
-            f"&& {wget_lines} "
-            "&& echo 'Decompressing .xz files …' "
-            "&& for f in *.xz; do "
+    # Decompress .xz files
+    if has_xz:
+        steps.append("echo 'Decompressing .xz files …'")
+        steps.append(
+            'for f in *.xz; do '
             '[ -f "$f" ] || continue; '
             'xz -dk "$f" 2>/dev/null || true; '
-            "done "
-            "&& echo 'Converting RDF/XML → Turtle …' "
-            "&& for f in *.rdf *.owl; do "
+            'done'
+        )
+
+    # Decompress .gz files (but not .tar.gz)
+    if has_gz:
+        steps.append("echo 'Decompressing .gz files …'")
+        # For N-Quads and N-Triples, QLever can read .gz directly,
+        # so only decompress TTL/OWL/RDF/N3/JSONLD .gz files.
+        if has_nq or has_nt:
+            # Leave .nq.gz / .nt.gz compressed — QLever reads them.
+            # Only decompress other .gz files (ttl, owl, rdf, etc.)
+            steps.append(
+                'for f in *.ttl.gz *.owl.gz *.rdf.gz *.n3.gz *.jsonld.gz; do '
+                '[ -f "$f" ] || continue; '
+                'gunzip -fk "$f" 2>/dev/null || true; '
+                'done'
+            )
+        else:
+            steps.append(
+                'for f in *.gz; do '
+                '[ -f "$f" ] || continue; '
+                'case "$f" in *.tar.gz) continue;; esac; '
+                'gunzip -fk "$f" 2>/dev/null || true; '
+                'done'
+            )
+
+    # Convert RDF/XML and OWL → Turtle
+    if has_rdfxml:
+        steps.append("echo 'Converting RDF/XML → Turtle …'")
+        steps.append(
+            'for f in *.rdf *.owl *.xml; do '
             '[ -f "$f" ] || continue; '
             'out="${f%.*}.ttl"; '
             '[ -f "$out" ] && continue; '
             'echo "  $f → $out"; '
-            'rapper -i rdfxml -o turtle "$f" > "$out"; '
-            "done"
+            'rapper -i rdfxml -o turtle "$f" > "$out" 2>/dev/null || '
+            'echo "  WARNING: rapper failed on $f"; '
+            'done'
         )
 
-    elif fmt == "zip_ttl":
-        # ── Bgee style: download zip, extract .ttl ───────────────
-        rdf_format = "ttl"
-        input_files = f"{rdf_subdir}/*.ttl"
-        cat_input_files = "cat ${INPUT_FILES}"
-
-        zip_url = entry.get("download_zip", "")
-        zip_name = zip_url.rsplit("/", 1)[-1] if zip_url else "data.zip"
-
-        get_data_cmd = (
-            f"mkdir -p {src_data_dir} "
-            f"&& cd {src_data_dir} "
-            f'&& wget -c -q "{zip_url}" '
-            f"&& echo 'Extracting {zip_name} …' "
-            f'&& python3 -c "'
-            f"import zipfile, sys; "
-            f"z = zipfile.ZipFile('{zip_name}'); "
-            f"z.extractall('.'); "
-            f"z.close(); "
-            f"print(f'Extracted {{len(z.namelist())}} files')"
-            f'"'
-        )
-
-    elif fmt == "ttl_gz":
-        # ── RDFPortal style: .ttl.gz / .ttl files ────────────────
-        rdf_format = "ttl"
-        input_files = f"{rdf_subdir}/*.ttl"
-        cat_input_files = "cat ${INPUT_FILES}"
-
-        raw = entry.get("download_ttl", "")
-        urls = raw if isinstance(raw, list) else [raw]
-        urls = [u for u in urls if u]
-        wget_lines = " && ".join(
-            f'wget -c -q "{u}"' for u in urls
-        )
-
-        get_data_cmd = (
-            f"mkdir -p {src_data_dir} "
-            f"&& cd {src_data_dir} "
-            f"&& {wget_lines} "
-            "&& echo 'Decompressing .gz files …' "
-            "&& for f in *.ttl.gz; do "
+    # Convert JSON-LD → Turtle
+    if has_jsonld:
+        steps.append("echo 'Converting JSON-LD → Turtle …'")
+        steps.append(
+            'for f in *.jsonld; do '
             '[ -f "$f" ] || continue; '
-            'gunzip -fk "$f" 2>/dev/null || true; '
-            "done"
+            'out="${f%.*}.ttl"; '
+            '[ -f "$out" ] && continue; '
+            'echo "  $f → $out"; '
+            "python3 -c \""
+            "from rdflib import Graph; "
+            "g = Graph(); "
+            "g.parse('$f', format='json-ld'); "
+            "g.serialize('$out', format='turtle')"
+            '" 2>/dev/null || '
+            'echo "  WARNING: rdflib conversion failed on $f"; '
+            'done'
         )
 
-    else:
-        raise ValueError(
-            f"Source '{name}' has no recognised download fields "
-            f"(download_nq / download_rdf / download_zip / "
-            f"download_ttl)"
-        )
+    get_data_cmd = " && ".join(steps)
 
     # QLever's INI parser treats $ as variable reference.
     # Escape bare $ (but not ${...} which are QLever variables)
     # by replacing $X with $$X where X is not '{'.
-    import re as _re
-    get_data_cmd = _re.sub(
-        r'\$(?!\{)', '$$', get_data_cmd,
-    )
+    get_data_cmd = re.sub(r'\$(?!\{)', '$$', get_data_cmd)
 
     return _QLEVERFILE_TEMPLATE.format(
         name=name,
