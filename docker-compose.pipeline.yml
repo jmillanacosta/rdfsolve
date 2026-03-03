@@ -1,0 +1,112 @@
+# =============================================================================
+# docker-compose.pipeline.yml — RDFSolve Mining Pipeline
+# =============================================================================
+#
+# Separate from the main docker-compose.yml (which runs the Flask UI).
+# This compose file is for the schema mining pipeline only.
+#
+name: rdfsolve-pipeline
+#
+# QUICK START
+# -----------
+#   # Build the pipeline image
+#   docker compose -f docker-compose.pipeline.yml build
+#
+#   # See available commands
+#   docker compose -f docker-compose.pipeline.yml run --rm pipeline \
+#       rdfsolve --help
+#
+#   # Remote discovery (fast, no downloads needed)
+#   docker compose -f docker-compose.pipeline.yml run --rm pipeline \
+#       rdfsolve pipeline discover --filter "drugbank"
+#
+#   # Remote mining
+#   docker compose -f docker-compose.pipeline.yml run --rm pipeline \
+#       rdfsolve pipeline mine --filter "drugbank" --benchmark
+#
+#   # Generate Qleverfiles (test mode = 3 smallest datasets)
+#   docker compose -f docker-compose.pipeline.yml run --rm pipeline \
+#       rdfsolve pipeline qleverfile --data-dir /data --test
+#
+#   # Full local-mine workflow (interactive shell)
+#   docker compose -f docker-compose.pipeline.yml run --rm pipeline bash
+#   # Then inside the container:
+#   #   cd /data/qlever_workdirs/drugbank
+#   #   qlever get-data && qlever index && qlever start
+#   #   rdfsolve pipeline local-mine --name drugbank \
+#   #       --endpoint http://localhost:7019 --benchmark
+#   #   qlever stop
+#
+# VOLUMES
+# -------
+# - pipeline-data:/data     RDF dumps, QLever workdirs/indexes (persistent)
+# - pipeline-output:/output Mined schemas, reports, benchmarks (persistent)
+# - ./data:/app/data:ro     Source registry (sources.yaml) from the host repo
+#
+# DOCKER SOCKET
+# -------------
+# The Docker socket is mounted so QLever can spawn its own Docker containers
+# (for indexing and serving).  This is required for local-mine workflows.
+# If you only do remote discover/mine, you can remove the socket mount.
+#
+# OVERRIDING DATA DIRECTORY
+# -------------------------
+# To use a host directory for RDF data (faster I/O, inspect files directly):
+#   DATA_DIR=/mnt/bigdisk/rdf docker compose -f docker-compose.pipeline.yml run --rm pipeline \
+#       rdfsolve pipeline qleverfile --data-dir /data --test
+#
+# =============================================================================
+
+services:
+  pipeline:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.pipeline
+
+    container_name: rdfsolve-pipeline
+
+    volumes:
+      # ── Persistent data volume ──
+      # RDF dumps, QLever indexes, QLever workdirs.
+      # Override with DATA_DIR env var for bind-mount to host filesystem.
+      - ${DATA_DIR:-pipeline-data}:/data
+
+      # ── Persistent output volume ──
+      # Mined schemas, VoID files, reports, benchmarks.
+      - ${OUTPUT_DIR:-pipeline-output}:/output
+
+      # ── Source registry (read-only from host) ──
+      - ./data:/app/data:ro
+
+      # ── Docker socket for QLever ──
+      # Required for `qlever index` / `qlever start` which spawn Docker
+      # containers.  Remove this line if you only use remote mining.
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    environment:
+      - RDFSOLVE_OUTPUT_DIR=/output
+      - RDFSOLVE_DATA_DIR=/data
+      - PYTHONUNBUFFERED=1
+
+    # Use host networking so that the pipeline container can reach QLever
+    # server containers, which publish their ports on the host.
+    network_mode: host
+
+    # No restart policy — pipeline runs are one-shot.
+    restart: "no"
+
+    # Allow long-running batch jobs
+    stop_grace_period: 30s
+
+    # QLever indexing can be memory-hungry. Uncomment to set limits:
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 32G
+
+# Named volumes — Docker manages storage location.
+# Use `docker volume ls` and `docker volume inspect` to find them.
+# Use `docker compose -f docker-compose.pipeline.yml down -v` to delete.
+volumes:
+  pipeline-data:
+  pipeline-output:

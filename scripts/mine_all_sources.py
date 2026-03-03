@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-r"""Mine JSON-LD schemas for every source in ``data/sources.csv``.
+r"""Mine JSON-LD schemas for every source in ``data/sources.yaml``.
 
 Usage::
 
@@ -9,12 +9,12 @@ Usage::
     # Mine only QLever-hosted sources:
     python scripts/mine_all_sources.py --qlever
 
-    # Mine everything (default CSV + QLever):
+    # Mine everything (default + QLever):
     python scripts/mine_all_sources.py --all-sources
 
     # Customise output directory and format:
     python scripts/mine_all_sources.py \\
-        --sources data/sources.csv \\
+        --sources data/sources.yaml \\
         --output-dir mined_schemas \\
         --format jsonld \\
         --no-counts
@@ -37,6 +37,7 @@ _src = _repo_root / "src"
 if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
+_DEFAULT_SOURCES = _repo_root / "data" / "sources.yaml"
 _DEFAULT_CSV = _repo_root / "data" / "sources.csv"
 _QLEVER_CSV = _repo_root / "data" / "qlever.csv"
 
@@ -45,7 +46,10 @@ from rdfsolve.api import mine_all_sources  # noqa: E402
 
 def _cli() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="Mine RDF schemas for all sources in a CSV file.",
+        description=(
+            "Mine RDF schemas for all sources in a "
+            "YAML, JSON-LD, or CSV file."
+        ),
     )
 
     # ── Source selection (mutually exclusive) ─────────────────────
@@ -53,7 +57,10 @@ def _cli() -> argparse.Namespace:
     src.add_argument(
         "--sources",
         default=None,
-        help="Path to sources CSV (default: data/sources.csv)",
+        help=(
+            "Path to sources file (YAML, JSON-LD, or CSV). "
+            "Default: data/sources.yaml"
+        ),
     )
     src.add_argument(
         "--qlever",
@@ -123,23 +130,32 @@ def main() -> None:
         force=True,
     )
 
-    # Resolve which CSV file(s) to mine
+    # Resolve which source file(s) to mine
     if args.qlever:
-        csv_files = [str(_QLEVER_CSV)]
+        src_files = [str(_QLEVER_CSV)]
     elif args.all_sources:
-        csv_files = [str(_DEFAULT_CSV), str(_QLEVER_CSV)]
+        default = (
+            str(_DEFAULT_SOURCES)
+            if _DEFAULT_SOURCES.exists()
+            else str(_DEFAULT_CSV)
+        )
+        src_files = [default, str(_QLEVER_CSV)]
     elif args.sources:
-        csv_files = [args.sources]
+        src_files = [args.sources]
     else:
-        csv_files = [str(_DEFAULT_CSV)]
+        src_files = [
+            str(_DEFAULT_SOURCES)
+            if _DEFAULT_SOURCES.exists()
+            else str(_DEFAULT_CSV)
+        ]
 
     all_succeeded: list[str] = []
     all_failed: list[dict[str, str]] = []
 
-    for csv_file in csv_files:
-        logging.info("Mining sources from %s", csv_file)
+    for src_file in src_files:
+        logging.info("Mining sources from %s", src_file)
         result = mine_all_sources(
-            sources_csv=csv_file,
+            sources=src_file,
             output_dir=args.output_dir,
             fmt=args.format,
             chunk_size=args.chunk_size,

@@ -14,8 +14,35 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 # ---------------------------------------------------------------------------
+# Service / system namespace prefixes
+# ---------------------------------------------------------------------------
+# URIs starting with any of these prefixes are considered internal to the
+# triple-store infrastructure (Virtuoso, OpenLink, SPARQL service graphs)
+# and are excluded from mined schemas when ``filter_service_namespaces``
+# is active.  The list is intentionally conservative – only namespaces
+# that are unambiguously infrastructure are included.
+
+SERVICE_NAMESPACE_PREFIXES: tuple[str, ...] = (
+    "http://www.openlinksw.com/",
+    "http://www.w3.org/ns/sparql-service-description",
+    "urn:virtuoso:",
+    "http://localhost:8890/",
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "http://www.w3.org/2000/01/rdf-schema#",
+    "http://www.w3.org/ns/sparql-service-description#",
+)
+"""Namespace prefixes for service / system IRIs.
+
+A URI is considered a "service" URI when it starts with any of
+these strings.  Used by
+:meth:`MinedSchema.filter_service_namespaces`.
+"""
+
+
+# ---------------------------------------------------------------------------
 # Shared URI helpers
 # ---------------------------------------------------------------------------
+
 
 def uri_to_curie(uri: str) -> tuple[str, str, str]:
     """Convert a URI to a CURIE using bioregistry, with fallback.
@@ -478,6 +505,22 @@ class MiningReport(BaseModel):
         ),
     )
 
+    # ── Benchmark / resource usage (populated at finalise) ─────────
+    machine: Optional[Dict[str, Any]] = Field(
+        None,
+        description=(
+            "Machine info: hostname, OS, CPU model, logical/physical "
+            "cores, RAM, Python version"
+        ),
+    )
+    benchmark: Optional[Dict[str, Any]] = Field(
+        None,
+        description=(
+            "Resource usage: wall_time_s, cpu_user_s, cpu_system_s, "
+            "peak_rss_mb, read_bytes, write_bytes"
+        ),
+    )
+
     model_config = ConfigDict(extra="allow")
 
 
@@ -496,6 +539,56 @@ class MinedSchema(BaseModel):
     about: AboutMetadata = Field(
         ..., description="Provenance metadata",
     )
+
+    # ---- Service-namespace filtering ------------------------------
+
+    def filter_service_namespaces(
+        self,
+        extra_prefixes: Optional[List[str]] = None,
+    ) -> "MinedSchema":
+        """Return a copy with service/system namespace patterns removed.
+
+        A pattern is removed when **any** of its ``subject_class``,
+        ``property_uri``, or ``object_class`` starts with a prefix
+        listed in :data:`SERVICE_NAMESPACE_PREFIXES` (or in
+        *extra_prefixes*).
+
+        This is intended as a **post-mining** clean-up step so the
+        actual SPARQL queries remain simple (no per-namespace
+        ``FILTER``).  The filtering is cheap because it operates on
+        the already-collected in-memory list of
+        :class:`SchemaPattern` objects.
+
+        Parameters
+        ----------
+        extra_prefixes:
+            Additional URI prefixes to treat as service
+            namespaces, on top of the built-in list.
+
+        Returns
+        -------
+        MinedSchema
+            A new schema with the offending patterns stripped.
+        """
+        prefixes = SERVICE_NAMESPACE_PREFIXES
+        if extra_prefixes:
+            prefixes = tuple(prefixes) + tuple(extra_prefixes)
+
+        def _is_service(uri: str) -> bool:
+            return uri.startswith(prefixes)
+
+        kept = [
+            p for p in self.patterns
+            if not (
+                _is_service(p.subject_class)
+                or _is_service(p.property_uri)
+                or (
+                    p.object_class not in ("Literal", "Resource")
+                    and _is_service(p.object_class)
+                )
+            )
+        ]
+        return self.model_copy(update={"patterns": kept})
 
     # ---- Queries --------------------------------------------------
 

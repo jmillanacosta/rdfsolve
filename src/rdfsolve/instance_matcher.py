@@ -14,10 +14,10 @@ the frontend ``parseJSONLD`` pipeline works without any changes —
 
 Typical usage::
 
-    import pandas as pd
+    from rdfsolve.sources import load_sources_dataframe
     from rdfsolve.instance_matcher import probe_resource
 
-    datasources = pd.read_csv("data/sources.csv")
+    datasources = load_sources_dataframe()
     mapping = probe_resource("ensembl", datasources)
     jsonld = mapping.to_jsonld()
 """

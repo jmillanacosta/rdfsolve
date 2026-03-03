@@ -1,6 +1,7 @@
 """Command line interface for :mod:`rdfsolve`."""
 
 import json
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -27,273 +28,317 @@ __all__ = [
 ]
 
 
+# ═══════════════════════════════════════════════════════════════════
+# Top-level group
+# ═══════════════════════════════════════════════════════════════════
+
+
 @click.group()
 @click.version_option()
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
 @click.pass_context
 def main(ctx: click.Context, verbose: bool) -> None:
-    r"""RDFSolve - RDF Schema Extraction and Analysis Toolkit.
+    r"""RDFSolve — RDF Schema Extraction and Analysis Toolkit.
 
-    Extract, analyze, and export RDF schemas from SPARQL endpoints.
+    \b
+    Pipeline commands (schema mining):
+        rdfsolve pipeline discover     Discover VoID from remote endpoints
+        rdfsolve pipeline mine         Mine schemas from remote endpoints
+        rdfsolve pipeline local-mine   Mine from a local QLever endpoint
+        rdfsolve pipeline qleverfile   Generate Qleverfiles for QLever
 
+    \b
+    Analysis commands:
+        rdfsolve export    Convert schemas to LinkML / SHACL / CSV / …
+        rdfsolve count     Count instances per class
 
-    Typical workflow: discover > extract > export
-
-    Additionally, you can use rdfsolve count to count instances per class
+    \b
+    Mapping commands:
+        rdfsolve instance-match   Cross-dataset class matching
+        rdfsolve semra            Import external SeMRA mappings
+        rdfsolve inference        Derive new mappings from existing ones
     """
     import logging
 
-    # Ensure context object exists
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
 
     if verbose:
         logging.basicConfig(
             level=logging.DEBUG,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            format="%(asctime)s %(name)s %(levelname)s: %(message)s",
             force=True,
         )
-        # Also set the rdfsolve logger specifically
         logging.getLogger("rdfsolve").setLevel(logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s", force=True)
-
-
-@main.command()
-@click.option("--endpoint", required=True, help="SPARQL endpoint URL")
-@click.option(
-    "--graph-uri",
-    multiple=True,
-    help="Specific graph URI(s) to search (optional)",
-)
-@click.option("--output-dir", default=".", help="Output directory")
-def discover(endpoint: str, graph_uri: tuple[str, ...], output_dir: str) -> None:
-    """Discover existing VoID descriptions in a SPARQL endpoint.
-
-    Searches the endpoint for graphs containing VoID (Vocabulary of
-    Interlinked Datasets) partitions for class, property, and datatype.
-
-    Use this command first to check if the endpoint already has VoID
-    descriptions before extracting a new schema. Saves discovered
-    partitions to a Turtle file.
-
-    Discovery always searches well-known and VoID graphs, as these
-    commonly contain partition descriptions.
-
-
-    Example:
-      >>> rdfsolve discover --endpoint https://sparql.uniprot.org/sparql
-    """
-    from pathlib import Path
-
-    click.echo(f"Discovering VoID graphs at: {endpoint}")
-
-    try:
-        graph_uris = list(graph_uri) if graph_uri else None
-        # Discovery always includes all graphs (exclude_graphs=False)
-        result = discover_void_graphs(
-            endpoint,
-            graph_uris=graph_uris,
-            exclude_graphs=False,
+        logging.basicConfig(
+            level=logging.WARNING,
+            format="%(levelname)s: %(message)s",
+            force=True,
         )
 
-        click.echo("\nDiscovery Results:")
-        click.echo("=" * 60)
-        click.echo(f"Total candidate graphs: {result.get('total_graphs', 0)}")
-        void_graphs = len(result.get("void_graphs", []))
-        click.echo(f"Graphs with VoID content: {void_graphs}")
 
-        void_content = result.get("void_content", {})
-        if void_content:
-            click.echo("\nGraphs with VoID partitions:")
-            for graph_uri_item, info in void_content.items():
-                if info.get("has_any_partitions"):
-                    click.echo(f"\n  {graph_uri_item}")
-                    part_count = info.get("partition_count", 0)
-                    click.echo(f"     Partition count: {part_count}")
+# ═══════════════════════════════════════════════════════════════════
+# Pipeline group — wraps scripts/mine_local.py routes
+# ═══════════════════════════════════════════════════════════════════
 
-        # Build and save VoID graph from discovered partitions
-        partitions = result.get("partitions", [])
-        if partitions:
-            from rdfsolve.parser import VoidParser
-
-            found_graphs = result.get("found_graphs", [])
-            base_uri = found_graphs[0] if found_graphs else None
-            parser = VoidParser(graph_uris=graph_uris)
-            void_graph = parser.build_void_graph_from_partitions(partitions, base_uri=base_uri)
-
-            # Save to file
-            output_path = Path(output_dir)
-            output_path.mkdir(parents=True, exist_ok=True)
-            void_file = output_path / "discovered_void.ttl"
-            void_graph.serialize(destination=str(void_file), format="turtle")
-            click.echo(f"\nOK Discovered VoID saved: {void_file}")
-            click.echo(f"   Total triples: {len(void_graph)}")
-        else:
-            click.echo("\nNo VoID partitions found to save")
-
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise click.Abort()
+# We add mine_local.py's ``src/`` dir to sys.path lazily so the
+# helper functions can be imported.  The script already does this
+# internally, but we repeat for safety.
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_SCRIPTS = _REPO_ROOT / "scripts"
 
 
-@main.command()
-@click.option("--endpoint", required=True, help="SPARQL endpoint URL")
-@click.option(
-    "--graph-uri",
-    multiple=True,
-    help="Specific graph URI(s) to analyze (optional)",
-)
-@click.option("--output-dir", default=".", help="Output directory")
-@click.option(
-    "--no-counts",
-    is_flag=True,
-    help="Skip instance counting (faster)",
-)
-@click.option("--sample-limit", type=int, help="Limit results when sampling")
-@click.option(
-    "--offset-limit-steps",
-    type=int,
-    help="Use pagination with this step size",
-)
-@click.option(
-    "--exclude-service-graphs/--include-service-graphs",
-    default=True,
-    help="Exclude service/system graphs (default: excluded)",
-)
-@click.option(
-    "--force-generate",
-    is_flag=True,
-    help="Force fresh generation even if VoID exists (no prompt)",
-)
-@click.option(
-    "--dataset-name",
-    help="Custom name for the dataset (used in output filenames)",
-)
-@click.option(
-    "--void-base-uri",
-    help="Custom base URI for VoID partition IRIs",
-)
-def extract(
-    endpoint: str,
-    graph_uri: tuple[str, ...],
-    output_dir: str,
-    no_counts: bool,
-    sample_limit: Optional[int],
-    offset_limit_steps: Optional[int],
-    exclude_service_graphs: bool,
-    force_generate: bool,
-    dataset_name: Optional[str],
-    void_base_uri: Optional[str],
-) -> None:
-    r"""Extract RDF schema from a SPARQL endpoint.
-
-    Queries the endpoint to discover schema patterns and generates
-    a VoID description with class and property partitions. This
-    creates a complete schema representation of the RDF data.
-
-    By default, service and system graphs (Virtuoso, well-known URIs,
-    OWL ontology) are excluded from extraction. Use
-    --include-service-graphs to include them.
+def _ensure_scripts_importable() -> None:
+    """Make ``scripts/`` importable so we can call mine_local helpers."""
+    s = str(_SCRIPTS)
+    if s not in sys.path:
+        sys.path.insert(0, s)
 
 
-    Outputs:
-      - void_description.ttl - VoID metadata in Turtle format
-      - schema.csv           - Schema patterns in CSV
+@main.group()
+def pipeline() -> None:
+    """Schema-mining pipeline: discover, mine, local-mine, qleverfile.
 
+    These commands replace the old ``rdfsolve discover``, ``mine``, and
+    ``mine-all`` top-level commands.  Each route can target remote SPARQL
+    endpoints or a local QLever instance.
 
-    Example:
-      >>> rdfsolve extract --endpoint https://sparql.uniprot.org/sparql \
-        --output-dir ./uniprot_schema
+    \b
+    Quick-start:
+        # Discover VoID from all registered endpoints
+        rdfsolve pipeline discover
+
+        # Mine schemas from all remote endpoints
+        rdfsolve pipeline mine
+
+        # Generate Qleverfiles then mine locally
+        rdfsolve pipeline qleverfile --data-dir /data/rdf
+        rdfsolve pipeline local-mine --name drugbank \\
+            --endpoint http://localhost:7026
+
+    All pipeline commands accept --sources, --output-dir, --filter,
+    --timeout, and --benchmark.  Use ``rdfsolve pipeline <cmd> --help``
+    for full details.
     """
-    click.echo(f"Extracting schema from endpoint: {endpoint}")
-    if graph_uri:
-        click.echo(f"Graph URIs: {', '.join(graph_uri)}")
-    if not exclude_service_graphs:
-        click.echo("  Including service/system graphs in extraction")
+    _ensure_scripts_importable()
 
-    try:
-        graph_uris = list(graph_uri) if graph_uri else None
-        output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
 
-        # First, try to discover existing VoID descriptions
-        click.echo("Checking for existing VoID descriptions...")
-        discovery = discover_void_graphs(endpoint, graph_uris=graph_uris, exclude_graphs=False)
+# ── Shared option decorators ─────────────────────────────────────
 
-        void_graph = None
-        partitions = discovery.get("partitions", [])
+_DEFAULT_SOURCES = str(_REPO_ROOT / "data" / "sources.yaml")
+_DEFAULT_OUTPUT = str(_REPO_ROOT / "mined_schemas")
 
-        if partitions and not force_generate:
-            # Found existing VoID - use it or prompt
-            found_graphs = discovery.get("found_graphs", [])
-            click.echo(
-                f"\nOK: Found existing VoID: {len(partitions)} partitions "
-                f"in {len(found_graphs)} graph(s)"
-            )
-            for graph_uri_item in found_graphs:
-                click.echo(f"  • {graph_uri_item}")
 
-            click.echo("Using discovered VoID (use --force-generate to extract fresh schema)")
-            click.echo("Building VoID from discovered partitions...")
+def _common_options(fn):
+    """Shared options for all pipeline subcommands."""
+    fn = click.option(
+        "--sources", default=_DEFAULT_SOURCES,
+        help="Path to sources YAML/JSON-LD/CSV.",
+    )(fn)
+    fn = click.option(
+        "--output-dir", default=_DEFAULT_OUTPUT,
+        help="Output directory for schemas/reports.",
+    )(fn)
+    fn = click.option(
+        "--format", "fmt",
+        type=click.Choice(["jsonld", "void", "all"]),
+        default="all", help="Export format.",
+    )(fn)
+    fn = click.option(
+        "--timeout", type=float, default=120.0,
+        help="HTTP timeout per SPARQL request (seconds).",
+    )(fn)
+    fn = click.option(
+        "--filter", "name_filter", default=None,
+        help="Regex to select sources by name.",
+    )(fn)
+    fn = click.option(
+        "--benchmark", is_flag=True,
+        help="Collect per-run benchmarks (timing, memory, CPU).",
+    )(fn)
+    return fn
 
-            from rdfsolve.parser import VoidParser
 
-            base_uri = found_graphs[0] if found_graphs else None
-            parser = VoidParser(graph_uris=graph_uris)
-            void_graph = parser.build_void_graph_from_partitions(partitions, base_uri=base_uri)
-        else:
-            # No existing VoID or force generate requested
-            if partitions and force_generate:
-                click.echo(
-                    f"\nOK: Found existing VoID: {len(partitions)} partitions "
-                    f"but --force-generate specified"
-                )
-                click.echo("Generating fresh schema from endpoint (may take a while)...")
-            else:
-                click.echo("No existing VoID found.")
-                if not force_generate:
-                    # Prompt user for confirmation
-                    click.echo(
-                        "\nThis will extract schema from the endpoint, "
-                        "which may take several minutes."
+def _mining_options(fn):
+    """Options shared by mine + local-mine."""
+    fn = click.option(
+        "--chunk-size", type=int, default=10_000,
+        help="SPARQL pagination page size.",
+    )(fn)
+    fn = click.option(
+        "--class-batch-size", type=int, default=15,
+        help="Classes per VALUES query in two-phase mining.",
+    )(fn)
+    fn = click.option(
+        "--no-counts", is_flag=True,
+        help="Skip triple-count queries (faster).",
+    )(fn)
+    return fn
+
+
+def _build_namespace(ctx, **overrides):
+    """Build an argparse.Namespace from Click params + overrides.
+
+    This bridges Click → argparse so we can call mine_local.py's
+    route functions directly.
+    """
+    import argparse
+    params = dict(ctx.params)
+    params.update(overrides)
+    return argparse.Namespace(**params)
+
+
+def _print_result(result: dict) -> None:
+    """Pretty-print a route result dict."""
+    click.echo(f"\n{'═' * 60}")
+    for key in (
+        "succeeded", "generated", "discovered",
+        "empty", "failed", "skipped",
+    ):
+        val = result.get(key)
+        if val is not None:
+            label = key.capitalize()
+            click.echo(f"  {label:12s}: {len(val)}")
+            if key == "failed" and val:
+                for entry in val[:10]:
+                    ds = (
+                        entry["dataset"]
+                        if isinstance(entry, dict) else entry
                     )
-                    if not click.confirm("Continue with schema extraction?", default=True):
-                        click.echo("Extraction cancelled.")
-                        return
-                click.echo("Generating schema from endpoint (may take a while)...")
+                    err = (
+                        entry.get("error", "")[:80]
+                        if isinstance(entry, dict) else ""
+                    )
+                    click.echo(f"    • {ds}: {err}")
+    click.echo(f"{'═' * 60}")
 
-            void_graph = generate_void_from_endpoint(
-                endpoint_url=endpoint,
-                graph_uris=graph_uris,
-                output_file=None,
-                counts=not no_counts,
-                offset_limit_steps=offset_limit_steps,
-                exclude_graphs=exclude_service_graphs,
-                void_base_uri=void_base_uri,
-            )
 
-        # Save VoID description with custom or default name
-        if dataset_name:
-            void_filename = f"{dataset_name}_void.ttl"
-            schema_filename = f"{dataset_name}_schema.csv"
-        else:
-            void_filename = "void_description.ttl"
-            schema_filename = "schema.csv"
+# ── pipeline discover ────────────────────────────────────────────
 
-        void_file = output_path / void_filename
-        void_graph.serialize(destination=str(void_file), format="turtle")
-        click.echo(f"OK VoID description saved: {void_file}")
+@pipeline.command("discover")
+@_common_options
+@click.pass_context
+def pipeline_discover(ctx, **kwargs) -> None:
+    """Discover VoID descriptions from remote SPARQL endpoints.
 
-        schema_df = graph_to_schema(void_graph, graph_uris=graph_uris)
-        schema_csv = output_path / schema_filename
-        schema_df.to_csv(schema_csv, index=False)
-        click.echo(f"OK Schema CSV saved: {schema_csv}")
-        click.echo(f"  Total schema patterns: {len(schema_df)}")
+    Iterates all sources in the registry and queries each endpoint
+    for existing VoID partitions.  Fast and non-invasive.
 
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise click.Abort()
+    \b
+    Example:
+        rdfsolve pipeline discover
+        rdfsolve pipeline discover --filter "uniprot|chembl"
+    """
+    from mine_local import _route_discover
+    args = _build_namespace(ctx)
+    result = _route_discover(args)
+    _print_result(result)
+
+
+# ── pipeline mine ─────────────────────────────────────────────────
+
+@pipeline.command("mine")
+@_common_options
+@_mining_options
+@click.pass_context
+def pipeline_mine(ctx, **kwargs) -> None:
+    """Mine schemas from remote SPARQL endpoints.
+
+    Standard mining workflow: iterate endpoints, extract schema
+    patterns, write JSON-LD schemas, VoID turtle, and analytics
+    reports.  Reports are always written.
+
+    \b
+    Example:
+        rdfsolve pipeline mine
+        rdfsolve pipeline mine --filter "drugbank"
+        rdfsolve pipeline mine --benchmark
+    """
+    from mine_local import _route_mine
+    args = _build_namespace(ctx)
+    result = _route_mine(args)
+    _print_result(result)
+
+
+# ── pipeline local-mine ──────────────────────────────────────────
+
+@pipeline.command("local-mine")
+@_common_options
+@_mining_options
+@click.option(
+    "--endpoint", default="http://localhost:7001",
+    help="Local QLever SPARQL endpoint URL.",
+)
+@click.option(
+    "--name", default=None,
+    help="Dataset name (required for single-dataset mode).",
+)
+@click.option(
+    "--discover-first", is_flag=True,
+    help="Run VoID discovery before mining.",
+)
+@click.option(
+    "--test", is_flag=True,
+    help="Process only the 3 smallest downloadable sources.",
+)
+@click.pass_context
+def pipeline_local_mine(ctx, **kwargs) -> None:
+    """Mine schemas from a local QLever endpoint.
+
+    Use after downloading data and running ``qlever index && qlever
+    start`` for a dataset.  Connects to the local endpoint and runs
+    the full mining pipeline.
+
+    \b
+    Example:
+        rdfsolve pipeline local-mine \\
+            --endpoint http://localhost:7026 \\
+            --name drugbank --discover-first --benchmark
+    """
+    from mine_local import _route_local_mine
+    args = _build_namespace(ctx)
+    result = _route_local_mine(args)
+    _print_result(result)
+
+
+# ── pipeline qleverfile ──────────────────────────────────────────
+
+@pipeline.command("qleverfile")
+@_common_options
+@click.option(
+    "--data-dir", required=True,
+    help="Root directory where RDF dumps live (required).",
+)
+@click.option(
+    "--base-port", type=int, default=7019,
+    help="First port number for allocation.",
+)
+@click.option(
+    "--test", is_flag=True,
+    help="Generate only for 3 smallest downloadable sources.",
+)
+@click.option(
+    "--runtime", type=click.Choice(["docker", "native"]),
+    default="docker", help="QLever runtime.",
+)
+@click.pass_context
+def pipeline_qleverfile(ctx, **kwargs) -> None:
+    """Generate Qleverfiles for local QLever mining.
+
+    Creates a Qleverfile for each source that has download URLs
+    in the sources registry.  Each Qleverfile includes a GET_DATA_CMD
+    that downloads and preprocesses the data.
+
+    \b
+    Example:
+        rdfsolve pipeline qleverfile --data-dir /data/rdf
+        rdfsolve pipeline qleverfile --data-dir /data/rdf --test
+    """
+    from mine_local import _route_generate_qleverfile
+    args = _build_namespace(ctx)
+    result = _route_generate_qleverfile(args)
+    _print_result(result)
 
 
 # Export helper functions
@@ -770,371 +815,11 @@ def export(
         raise click.Abort()
 
 
-@main.command()
-@click.option("--endpoint", required=True, help="SPARQL endpoint URL")
-@click.option(
-    "--graph-uri",
-    multiple=True,
-    help="Specific graph URI(s) to query (optional)",
-)
-@click.option("--output-dir", default=".", help="Output directory")
-@click.option(
-    "--dataset-name",
-    help="Custom dataset name (used in output filenames)",
-)
-@click.option(
-    "--format",
-    "fmt",
-    type=click.Choice(["jsonld", "void", "linkml", "shacl", "all"]),
-    default="all",
-    help="Export format (default: all)",
-)
-@click.option(
-    "--chunk-size",
-    type=int,
-    default=10_000,
-    help="Pagination page size for pattern queries (default: 10000)",
-)
-@click.option(
-    "--class-chunk-size",
-    type=int,
-    default=None,
-    help=(
-        "Page size for Phase-1 class discovery in --two-phase mode. "
-        "Default (None) = no pagination (single query). "
-        "Set to e.g. 50000 for endpoints with very many classes."
-    ),
-)
-@click.option(
-    "--class-batch-size",
-    type=int,
-    default=15,
-    help=(
-        "Number of classes per VALUES query in Phase-2 of "
-        "--two-phase mode (default: 15). Higher = fewer queries "
-        "but each query is heavier."
-    ),
-)
-@click.option(
-    "--no-counts",
-    is_flag=True,
-    help="Skip triple-count queries (faster)",
-)
-@click.option(
-    "--timeout",
-    type=float,
-    default=120.0,
-    help="HTTP timeout per request in seconds (default: 120)",
-)
-@click.option(
-    "--schema-name",
-    default=None,
-    help="Custom name for LinkML/SHACL schema (default: dataset name)",
-)
-@click.option(
-    "--schema-description",
-    default=None,
-    help="Description for LinkML/SHACL schema",
-)
-@click.option(
-    "--schema-uri",
-    default=None,
-    help="Base URI for LinkML/SHACL schema",
-)
-@click.option(
-    "--shacl-closed/--shacl-open",
-    default=True,
-    help="Generate closed SHACL shapes (default: closed)",
-)
-@click.option(
-    "--shacl-suffix",
-    default=None,
-    help="Suffix for SHACL shape names (e.g. 'Shape' → PersonShape)",
-)
-@click.option(
-    "--two-phase",
-    is_flag=True,
-    help="Use two-phase mining (discover classes first, then per-class queries). Gentler on large endpoints.",
-)
-@click.option(
-    "--report-path",
-    type=click.Path(),
-    default=None,
-    help="Write analytics JSON report to this path (updated incrementally).",
-)
-def mine(
-    endpoint: str,
-    graph_uri: tuple[str, ...],
-    output_dir: str,
-    dataset_name: Optional[str],
-    fmt: str,
-    chunk_size: int,
-    class_chunk_size: Optional[int],
-    class_batch_size: int,
-    no_counts: bool,
-    timeout: float,
-    schema_name: Optional[str],
-    schema_description: Optional[str],
-    schema_uri: Optional[str],
-    shacl_closed: bool,
-    shacl_suffix: Optional[str],
-    two_phase: bool,
-    report_path: Optional[str],
-) -> None:
-    r"""Mine RDF schema directly from a SPARQL endpoint.
-
-    Uses lightweight SELECT queries to discover schema patterns:
-    subject_class -> property -> object_class / Literal / Resource.
-
-    This is an alternative to 'extract' that avoids heavy CONSTRUCT
-    queries and VoID-on-the-endpoint overhead.  The primary export
-    is JSON-LD; a VoID Turtle file can also be generated for
-    downstream conversion (LinkML, SHACL, RDF-config) via 'export'.
-
-    Formats:
-      - jsonld:  Mined-schema JSON-LD file (always generated with 'all')
-      - void:    VoID Turtle for use with 'rdfsolve export'
-      - linkml:  LinkML YAML schema
-      - shacl:   SHACL shapes Turtle file
-      - all:     All of the above (default)
-
-    Example:
-      >>> rdfsolve mine \
-            --endpoint https://sparql.wikipathways.org/sparql/ \
-            --dataset-name wikipathways \
-            --output-dir ./wp_schema
-    """
-    from .miner import SchemaMiner
-
-    click.echo(f"Mining schema from: {endpoint}")
-    if graph_uri:
-        click.echo(f"  Graph URIs: {', '.join(graph_uri)}")
-
-    try:
-        graph_uris = list(graph_uri) if graph_uri else None
-        name = dataset_name or "schema"
-
-        miner = SchemaMiner(
-            endpoint_url=endpoint,
-            graph_uris=graph_uris,
-            chunk_size=chunk_size,
-            class_chunk_size=class_chunk_size,
-            class_batch_size=class_batch_size,
-            timeout=timeout,
-            counts=not no_counts,
-            two_phase=two_phase,
-            report_path=report_path,
-        )
-        schema = miner.mine(dataset_name=name)
-
-        click.echo(
-            f"OK {len(schema.patterns)} patterns "
-            f"({len(schema.get_classes())} classes, "
-            f"{len(schema.get_properties())} properties)"
-        )
-
-        output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
-
-        # JSON-LD export
-        if fmt in ("jsonld", "all"):
-            jsonld_file = output_path / f"{name}_schema.jsonld"
-            with open(jsonld_file, "w") as f:
-                json.dump(schema.to_jsonld(), f, indent=2)
-            click.echo(f"OK JSON-LD:  {jsonld_file}")
-
-        # VoID Turtle export
-        if fmt in ("void", "all"):
-            void_graph = schema.to_void_graph()
-            void_file = output_path / f"{name}_void.ttl"
-            void_graph.serialize(
-                destination=str(void_file), format="turtle",
-            )
-            click.echo(
-                f"OK VoID:     {void_file} "
-                f"({len(void_graph)} triples)"
-            )
-
-        # LinkML / SHACL — build a VoidParser from the mined graph once
-        if fmt in ("linkml", "shacl", "all"):
-            from rdfsolve.parser import VoidParser as _VP
-            _lp = _VP(void_source=schema.to_void_graph())
-
-            if fmt in ("linkml", "all"):
-                _export_linkml_from_parser(
-                    _lp,
-                    output_path,
-                    name,
-                    schema_name,
-                    schema_description,
-                    schema_uri,
-                )
-
-            if fmt in ("shacl", "all"):
-                _export_shacl_from_parser(
-                    _lp,
-                    output_path,
-                    name,
-                    schema_name,
-                    schema_description,
-                    schema_uri,
-                    shacl_closed,
-                    shacl_suffix,
-                )
-
-        # Report summary
-        if miner.last_report:
-            rpt = miner.last_report
-            click.echo(
-                f"OK Report:   {rpt.total_queries_sent} queries "
-                f"({rpt.total_queries_failed} failed), "
-                f"{rpt.total_duration_s:.1f}s total"
-            )
-            if report_path:
-                click.echo(f"   Written:  {report_path}")
-
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise click.Abort()
-
-
-@main.command("mine-all")
-@click.option(
-    "--sources",
-    required=True,
-    type=click.Path(exists=True),
-    help="Path to sources CSV file (columns: dataset_name, endpoint_url, graph_uri, use_graph)",
-)
-@click.option("--output-dir", default=".", help="Output directory")
-@click.option(
-    "--format",
-    "fmt",
-    type=click.Choice(["jsonld", "void", "all"]),
-    default="all",
-    help="Export format (default: all)",
-)
-@click.option(
-    "--chunk-size",
-    type=int,
-    default=10_000,
-    help="Pagination page size (default: 10000)",
-)
-@click.option(
-    "--no-counts",
-    is_flag=True,
-    help="Skip triple-count queries (faster)",
-)
-@click.option(
-    "--timeout",
-    type=float,
-    default=120.0,
-    help="HTTP timeout per request in seconds (default: 120)",
-)
-@click.option(
-    "--class-chunk-size",
-    type=int,
-    default=None,
-    help=(
-        "Page size for Phase-1 class discovery in two-phase "
-        "rows. Default: None (single query, no pagination). "
-        "Ignored for rows that are not two-phase."
-    ),
-)
-@click.option(
-    "--class-batch-size",
-    type=int,
-    default=15,
-    help=(
-        "Number of classes per VALUES query in Phase-2 of "
-        "two-phase mode (default: 15). Higher = fewer queries "
-        "but each query is heavier."
-    ),
-)
-@click.option(
-    "--no-reports",
-    is_flag=True,
-    help="Skip writing per-source analytics JSON reports.",
-)
-def mine_all(
-    sources: str,
-    output_dir: str,
-    fmt: str,
-    chunk_size: int,
-    no_counts: bool,
-    timeout: float,
-    class_chunk_size: int | None,
-    class_batch_size: int,
-    no_reports: bool,
-) -> None:
-    r"""Mine schemas for all sources in a CSV file.
-
-    Reads the sources CSV and runs the miner for each endpoint.
-    Results are written to the output directory as
-    ``{dataset_name}_schema.jsonld`` and/or ``{dataset_name}_void.ttl``.
-
-    The CSV must have columns: dataset_name, endpoint_url, graph_uri,
-    use_graph. Rows without an endpoint_url are skipped.
-
-
-    Example:
-      >>> rdfsolve mine-all \
-            --sources data/sources.csv \
-            --output-dir ./mined_schemas
-    """
-    from .api import mine_all_sources
-
-    click.echo(f"Mining all sources from: {sources}")
-    click.echo(f"Output directory: {output_dir}")
-
-    def _on_progress(
-        name: str, idx: int, total: int,
-        error: str | None,
-    ) -> None:
-        if error == "skipped":
-            click.echo(
-                f"  [{idx}/{total}] SKIP {name} "
-                f"(no endpoint)"
-            )
-        elif error:
-            click.echo(
-                f"  [{idx}/{total}] FAIL {name}: {error}",
-                err=True,
-            )
-        else:
-            click.echo(
-                f"  [{idx}/{total}] OK   {name}"
-            )
-
-    try:
-        result = mine_all_sources(
-            sources_csv=sources,
-            output_dir=output_dir,
-            fmt=fmt,
-            chunk_size=chunk_size,
-            class_chunk_size=class_chunk_size,
-            class_batch_size=class_batch_size,
-            timeout=timeout,
-            counts=not no_counts,
-            reports=not no_reports,
-            on_progress=_on_progress,
-        )
-
-        click.echo("\n" + "=" * 50)
-        click.echo(f"Succeeded: {len(result['succeeded'])}")
-        click.echo(f"Failed:    {len(result['failed'])}")
-        click.echo(f"Skipped:   {len(result['skipped'])}")
-
-        if result["failed"]:
-            click.echo("\nFailed datasets:")
-            for entry in result["failed"]:
-                click.echo(
-                    f"  • {entry['dataset']}: "
-                    f"{entry['error'][:80]}"
-                )
-
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise click.Abort()
+# -------------------------------------------------------------------
+# NOTE: The old standalone ``mine`` and ``mine-all`` commands have been
+# removed.  Their functionality is now available under the ``pipeline``
+# sub-group  (``rdfsolve pipeline mine``, ``rdfsolve pipeline local-mine``).
+# -------------------------------------------------------------------
 
 
 @main.command()
@@ -1230,8 +915,15 @@ def instance_match_group() -> None:
     help="Bioregistry prefix to probe (e.g. 'ensembl').",
 )
 @click.option(
-    "--sources-csv", default="data/sources.csv", show_default=True,
-    help="Path to data sources CSV.",
+    "--sources", default=None, show_default=False,
+    help=(
+        "Path to sources file (JSON-LD or CSV). "
+        "Default: auto-detect data/sources.jsonld."
+    ),
+)
+@click.option(
+    "--sources-csv", default=None, hidden=True,
+    help="Deprecated alias for --sources.",
 )
 @click.option(
     "--predicate",
@@ -1253,7 +945,8 @@ def instance_match_group() -> None:
 )
 def probe_cmd(
     prefix: str,
-    sources_csv: str,
+    sources: Optional[str],
+    sources_csv: Optional[str],
     predicate: str,
     datasets: tuple[str, ...],
     timeout: float,
@@ -1261,7 +954,7 @@ def probe_cmd(
 ) -> None:
     """Probe endpoints for a single bioregistry resource.
 
-    Queries every endpoint in SOURCES_CSV for RDF classes whose instances
+    Queries every endpoint in SOURCES for RDF classes whose instances
     match the URI patterns registered in bioregistry for PREFIX and emits
     a JSON-LD mapping document.
     """
@@ -1272,7 +965,7 @@ def probe_cmd(
     try:
         result = probe_instance_mapping(
             prefix=prefix,
-            sources_csv=sources_csv,
+            sources=sources or sources_csv,
             predicate=predicate,
             dataset_names=list(datasets) if datasets else None,
             timeout=timeout,
@@ -1296,8 +989,15 @@ def probe_cmd(
     help="Bioregistry prefix (repeatable).",
 )
 @click.option(
-    "--sources-csv", default="data/sources.csv", show_default=True,
-    help="Path to data sources CSV.",
+    "--sources", default=None, show_default=False,
+    help=(
+        "Path to sources file (JSON-LD or CSV). "
+        "Default: auto-detect data/sources.jsonld."
+    ),
+)
+@click.option(
+    "--sources-csv", default=None, hidden=True,
+    help="Deprecated alias for --sources.",
 )
 @click.option(
     "--output-dir",
@@ -1325,7 +1025,8 @@ def probe_cmd(
 )
 def seed_cmd(
     prefix_list: tuple[str, ...],
-    sources_csv: str,
+    sources: Optional[str],
+    sources_csv: Optional[str],
     output_dir: str,
     predicate: str,
     datasets: tuple[str, ...],
@@ -1343,7 +1044,7 @@ def seed_cmd(
     try:
         result = seed_instance_mappings(
             prefixes=list(prefix_list),
-            sources_csv=sources_csv,
+            sources=sources or sources_csv,
             output_dir=output_dir,
             predicate=predicate,
             dataset_names=list(datasets) if datasets else None,

@@ -69,6 +69,7 @@ dependencies = [
     # Utility libraries
     "more_itertools", # missing from itertools in stdlib
     "tqdm", # progress bars
+    "pyyaml>=6.0", # YAML source registry
     "pyarrow==22.0.0", # Parquet support for DataFrames
     # CLI and web framework
     "click",

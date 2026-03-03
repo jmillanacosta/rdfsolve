@@ -5,6 +5,8 @@
 # This file tells Docker how to build, configure, and run the rdfsolve
 # application.  It is the single command you need for day-to-day use.
 #
+name: rdfsolve-ui
+#
 # QUICK START
 # -----------
 #   docker compose up --build        # build the image and start (foreground)

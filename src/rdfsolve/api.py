@@ -1,6 +1,5 @@
 """Main RDFSolve functionalities for VoID extraction and conversion."""
 
-import csv
 import json
 import logging
 from pathlib import Path
@@ -597,6 +596,11 @@ def generate_void_from_endpoint(
 ) -> Graph:
     """Generate VoID description from a SPARQL endpoint.
 
+    .. deprecated::
+        Use :func:`mine_schema` instead.  It uses lightweight SELECT
+        queries, supports two-phase mining, pagination bisection, and
+        per-source tuning.
+
     Args:
         endpoint_url: SPARQL endpoint URL
         graph_uris: Graph URI(s) to analyze
@@ -604,12 +608,21 @@ def generate_void_from_endpoint(
         counts: Include instance counts
         offset_limit_steps: Chunk size for pagination
         exclude_graphs: Exclude system graphs
-        dataset_uri: Custom URI for the VoID dataset (default: uses first graph_uri or endpoint URL)
+        dataset_uri: Custom URI for the VoID dataset
+            (default: uses first graph_uri or endpoint URL)
         void_base_uri: Custom base URI for VoID partition IRIs
 
     Returns:
         RDF graph with VoID description
     """
+    import warnings
+
+    warnings.warn(
+        "generate_void_from_endpoint is deprecated. "
+        "Use mine_schema() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     # Determine dataset_uri if not provided
     if dataset_uri is None:
         if graph_uris:
@@ -684,8 +697,9 @@ def mine_schema(
     delay: float = 0.5,
     timeout: float = 120.0,
     counts: bool = True,
-    two_phase: bool = False,
+    two_phase: bool = True,
     report_path: Optional[str] = None,
+    filter_service_namespaces: bool = True,
 ) -> Dict[str, Any]:
     """Mine RDF schema from a SPARQL endpoint using SELECT queries.
 
@@ -705,8 +719,11 @@ def mine_schema(
         delay: Delay between pages (seconds)
         timeout: HTTP timeout per request
         counts: Whether to fetch triple counts
-        two_phase: Use two-phase mining for large endpoints
+        two_phase: Use two-phase mining (default ``True``).
+            Pass ``False`` for the legacy single-pass strategy.
         report_path: If given, write analytics JSON to this path
+        filter_service_namespaces: Strip service/system namespace
+            patterns from the result (default ``True``)
 
     Returns:
         JSON-LD dict with @context, @graph, and @about
@@ -725,12 +742,15 @@ def mine_schema(
         counts=counts,
         two_phase=two_phase,
         report_path=report_path,
+        filter_service_namespaces=filter_service_namespaces,
     )
     return schema.to_jsonld()
 
 
 def mine_all_sources(
-    sources_csv: str,
+    sources_csv: Optional[str] = None,
+    *,
+    sources: Optional[str] = None,
     output_dir: str = ".",
     fmt: str = "all",
     chunk_size: int = 10_000,
@@ -740,20 +760,30 @@ def mine_all_sources(
     timeout: float = 120.0,
     counts: bool = True,
     reports: bool = True,
+    filter_service_namespaces: bool = True,
     on_progress: Optional[
         Callable[[str, int, int, Optional[str]], None]
     ] = None,
 ) -> Dict[str, Any]:
-    """Mine schemas for all sources listed in a CSV file.
+    """Mine schemas for all sources in a JSON-LD or CSV file.
 
-    Reads a sources CSV (columns: ``dataset_name``, ``endpoint_url``,
-    ``graph_uri``, ``use_graph``) and runs :func:`mine_schema` for each
-    row whose ``endpoint_url`` is non-empty.  Results are written to
-    *output_dir* as ``{dataset_name}_schema.jsonld`` and / or
-    ``{dataset_name}_void.ttl``.
+    Reads a sources file (JSON-LD preferred, CSV still accepted)
+    and runs :func:`mine_schema` for each entry whose *endpoint*
+    is non-empty.  Results are written to *output_dir* as
+    ``{name}_schema.jsonld`` and / or ``{name}_void.ttl``.
+
+    Per-source overrides (``chunk_size``, ``class_batch_size``,
+    ``timeout``, etc.) in the JSON-LD file take precedence over
+    the function-level defaults.
 
     Args:
-        sources_csv: Path to the CSV file with data sources.
+        sources_csv: **Deprecated** — use *sources* instead.
+            Path to a CSV file with data sources.  Kept for
+            backwards compatibility; ignored when *sources* is
+            given.
+        sources: Path to the sources file (JSON-LD or CSV).
+            When ``None``, the default ``data/sources.jsonld``
+            (or ``.csv`` fallback) is used.
         output_dir: Directory where outputs are written.
         fmt: Export format – ``"jsonld"``, ``"void"``, or
             ``"all"``.
@@ -767,6 +797,8 @@ def mine_all_sources(
         timeout: HTTP timeout per request (seconds).
         counts: Whether to fetch triple-count queries.
         reports: Write per-source analytics JSON reports.
+        filter_service_namespaces: Strip service/system namespace
+            patterns from each mined schema (default ``True``).
         on_progress:
             Optional callback invoked after each source is
             processed.  Signature:
@@ -779,56 +811,63 @@ def mine_all_sources(
         ``"skipped"`` mapping to lists of dataset names.
     """
     from .miner import mine_schema as _mine
+    from .sources import load_sources
+
+    # Resolve the path: new kwarg > legacy positional > auto-detect
+    src_path: Optional[str] = sources or sources_csv or None
 
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    # Read the sources CSV
-    with open(sources_csv, newline="") as fh:
-        reader = csv.DictReader(fh)
-        rows = list(reader)
+    entries = load_sources(src_path)
 
     succeeded: List[str] = []
     failed: List[Dict[str, str]] = []
     skipped: List[str] = []
 
-    total = len(rows)
-    for idx, row in enumerate(rows, 1):
-        name = row.get("dataset_name", "").strip()
-        endpoint = row.get("endpoint_url", "").strip()
-        graph_uri = row.get("graph_uri", "").strip()
-        use_graph = (
-            row.get("use_graph", "").strip().lower()
-            in ("true", "1", "yes")
-        )
-        row_two_phase = (
-            row.get("two_phase", "").strip().lower()
-            in ("true", "1", "yes")
-        )
+    total = len(entries)
+    for idx, entry in enumerate(entries, 1):
+        name = entry.get("name", "")
+        endpoint = entry.get("endpoint", "")
+        use_graph = entry.get("use_graph", False)
+        row_two_phase = entry.get("two_phase", True)
 
         if not endpoint:
             logger.info(
                 f"[{idx}/{total}] Skipping {name!r}: "
-                f"no endpoint_url"
+                f"no endpoint"
             )
             skipped.append(name)
             if on_progress:
                 on_progress(name, idx, total, "skipped")
             continue
 
+        # Build graph_uris argument
         graph_uris_arg: Optional[List[str]] = None
-        if use_graph and graph_uri:
-            graph_uris_arg = [graph_uri]
+        entry_graphs = entry.get("graph_uris", [])
+        if use_graph and entry_graphs:
+            graph_uris_arg = list(entry_graphs)
 
         logger.info(
             f"[{idx}/{total}] Mining {name!r} "
             f"({endpoint})"
         )
 
+        # Per-source overrides (JSON-LD values win over CLI defaults)
+        eff_chunk = entry.get("chunk_size", chunk_size)
+        eff_batch = entry.get(
+            "class_batch_size", class_batch_size,
+        )
+        eff_delay = entry.get("delay", delay)
+        eff_timeout = entry.get("timeout", timeout)
+        eff_counts = entry.get("counts", counts)
+
         # class_chunk_size only applies to two-phase rows
         effective_ccs: Optional[int] = None
         if row_two_phase:
-            effective_ccs = class_chunk_size
+            effective_ccs = entry.get(
+                "class_chunk_size", class_chunk_size,
+            )
         elif class_chunk_size is not None:
             logger.info(
                 "[%d/%d] --class-chunk-size ignored for "
@@ -845,14 +884,15 @@ def mine_all_sources(
                 endpoint_url=endpoint,
                 graph_uris=graph_uris_arg,
                 dataset_name=name,
-                chunk_size=chunk_size,
+                chunk_size=eff_chunk,
                 class_chunk_size=effective_ccs,
-                class_batch_size=class_batch_size,
-                delay=delay,
-                timeout=timeout,
-                counts=counts,
+                class_batch_size=eff_batch,
+                delay=eff_delay,
+                timeout=eff_timeout,
+                counts=eff_counts,
                 two_phase=row_two_phase,
                 report_path=rpt_path,
+                filter_service_namespaces=filter_service_namespaces,
             )
 
             if fmt in ("jsonld", "all"):
@@ -1044,14 +1084,16 @@ def compose_query_from_paths(
 
 def probe_instance_mapping(
     prefix: str,
-    sources_csv: str = "data/sources.csv",
+    sources_csv: Optional[str] = None,
+    *,
+    sources: Optional[str] = None,
     predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
     dataset_names: Optional[List[str]] = None,
     timeout: float = 60.0,
 ) -> Dict[str, Any]:
     """Probe SPARQL endpoints for a bioregistry resource and return JSON-LD.
 
-    For every dataset in *sources_csv* (or the subset in *dataset_names*),
+    For every dataset in *sources* (or the subset in *dataset_names*),
     queries the endpoint for RDF classes whose instances match the resource's
     known URI prefixes.  Generates pairwise ``skos:narrowMatch`` edges (or
     *predicate* override) between classes across different datasets and
@@ -1063,8 +1105,9 @@ def probe_instance_mapping(
 
     Args:
         prefix: Bioregistry prefix, e.g. ``"ensembl"``.
-        sources_csv: Path to the sources CSV
-            (columns: ``dataset_name``, ``endpoint_url``).
+        sources_csv: **Deprecated** — use *sources* instead.
+        sources: Path to the sources file (JSON-LD or CSV).
+            When ``None``, auto-detects the default file.
         predicate: Mapping predicate URI.  Defaults to
             ``skos:narrowMatch``.
         dataset_names: Restrict probing to these dataset names.
@@ -1077,8 +1120,10 @@ def probe_instance_mapping(
         ValueError: If *prefix* is unknown to bioregistry.
     """
     from rdfsolve.instance_matcher import probe_resource
+    from rdfsolve.sources import load_sources_dataframe
 
-    datasources = pd.read_csv(sources_csv)
+    src_path = sources or sources_csv or None
+    datasources = load_sources_dataframe(src_path)
     mapping = probe_resource(
         prefix=prefix,
         datasources=datasources,
@@ -1182,7 +1227,9 @@ def _merge_instance_mapping_jsonld(
 
 def seed_instance_mappings(
     prefixes: List[str],
-    sources_csv: str = "data/sources.csv",
+    sources_csv: Optional[str] = None,
+    *,
+    sources: Optional[str] = None,
     output_dir: str = "docker/mappings/instance_matching",
     predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
     dataset_names: Optional[List[str]] = None,
@@ -1210,7 +1257,9 @@ def seed_instance_mappings(
 
     Args:
         prefixes: List of bioregistry prefixes to process.
-        sources_csv: Path to the sources CSV.
+        sources_csv: **Deprecated** — use *sources* instead.
+        sources: Path to the sources file (JSON-LD or CSV).
+            When ``None``, auto-detects the default file.
         output_dir: Directory where JSON-LD files are written
             (created if absent).
         predicate: Mapping predicate URI.
@@ -1226,9 +1275,13 @@ def seed_instance_mappings(
     import json as _json
 
     from rdfsolve.instance_matcher import probe_resource
+    from rdfsolve.sources import load_sources_dataframe
+
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
-    datasources = pd.read_csv(sources_csv)
+
+    src_path = sources or sources_csv or None
+    datasources = load_sources_dataframe(src_path)
 
     succeeded: List[str] = []
     failed: List[Dict[str, str]] = []

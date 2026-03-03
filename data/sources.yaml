@@ -1,0 +1,1538 @@
+# ─── RDFSolve source registry ────────────────────────────────────
+#
+# Each entry defines a SPARQL data source for schema mining.
+#
+# Fields
+# ------
+# name           : unique identifier (required)
+# endpoint       : SPARQL endpoint URL (omit if unavailable)
+# void_iri       : VoID root resource IRI
+# graph_uris     : list of named-graph IRIs to query
+# use_graph      : wrap queries in GRAPH clause (default false)
+# two_phase      : use two-phase mining      (default true)
+#
+# Optional tuning overrides (only set when non-default):
+#   chunk_size, class_batch_size, class_chunk_size,
+#   timeout, delay, counts, unsafe_paging
+#
+# notes          : free-text annotation
+# in_kamdar      : true if also mined in Kamdar & Musen (2021)
+#
+# Whole-database entries (``*.all``) live in ``sources_all.yaml``.
+# ─────────────────────────────────────────────────────────────────
+
+# ═══════════════════════════════════════════════════════════════════
+# Standalone endpoints
+# ═══════════════════════════════════════════════════════════════════
+
+- name: aopwikirdf
+  endpoint: https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
+  void_iri: http://aopwiki.org/
+  graph_uris:
+    - http://aopwiki.org/
+
+- name: wikipathways
+  endpoint: https://sparql.wikipathways.org/sparql/
+  void_iri: http://rdf.wikipathways.org/
+  graph_uris:
+    - http://rdf.wikipathways.org/
+  in_kamdar: true
+  download_owl: https://download.bio2rdf.org/files/release/3/wikipathways/wikipathways.schema.owl
+
+# ═══════════════════════════════════════════════════════════════════
+# IDSM  (idsm.elixir-czech.cz)
+# ═══════════════════════════════════════════════════════════════════
+
+- name: pubchem.taxonomy
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.endpoint
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.measuregroup
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup
+  use_graph: true
+  in_kamdar: true
+
+- name: iocb.ontology
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://bioinfo.iocb.cz/dataset/ontology
+  graph_uris:
+    - http://bioinfo.iocb.cz/dataset/ontology
+  use_graph: true
+
+- name: pubchem.gene
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/gene
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/gene
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.bioassay
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.substance
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/substance
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/substance
+  use_graph: true
+  in_kamdar: true
+
+- name: drugbank.drugs
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/
+  graph_uris:
+    - http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.descriptor.substance
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance
+  use_graph: true
+  in_kamdar: true
+
+- name: chebi
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ebi.ac.uk/dataset/chebi
+  graph_uris:
+    - http://rdf.ebi.ac.uk/dataset/chebi
+  use_graph: true
+  in_kamdar: true
+  download_owl: https://rdfportal.org/download/chebi/latest/chebi.owl.gz
+
+- name: pubchem.pathway
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/pathway
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/pathway
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.cell
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cell
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/cell
+  use_graph: true
+  in_kamdar: true
+
+- name: isdb
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: https://idsm.elixir-czech.cz/rdf/isdb/
+  graph_uris:
+    - https://idsm.elixir-czech.cz/rdf/isdb/
+  use_graph: true
+
+- name: pubchem.anatomy
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.conserveddomain
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.organization
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/organization
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/organization
+  use_graph: true
+  in_kamdar: true
+
+- name: mona
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: https://idsm.elixir-czech.cz/rdf/mona/
+  graph_uris:
+    - https://idsm.elixir-czech.cz/rdf/mona/
+  use_graph: true
+
+- name: chembl
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ebi.ac.uk/dataset/chembl
+  graph_uris:
+    - http://rdf.ebi.ac.uk/dataset/chembl
+  use_graph: true
+  in_kamdar: true
+  download_owl: https://download.bio2rdf.org/files/release/3/chembl/chembl.schema.owl
+
+- name: pubchem.journal
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/journal
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/journal
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.author
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/author
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/author
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.disease
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/disease
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/disease
+  use_graph: true
+  in_kamdar: true
+
+- name: wikidata.idsm.entity
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://www.wikidata.org/entity/
+  graph_uris:
+    - http://www.wikidata.org/entity/
+  use_graph: true
+
+- name: pubchem.book
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/book
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/book
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.inchikey
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.descriptor.compound
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/compound
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/compound
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.grant
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/grant
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/grant
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.concept
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/concept
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/concept
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.source
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/source
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/source
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.protein
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/protein
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/protein
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.reference
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/reference
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/reference
+  use_graph: true
+  in_kamdar: true
+
+- name: mesh.heading
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://id.nlm.nih.gov/mesh/heading
+  graph_uris:
+    - http://id.nlm.nih.gov/mesh/heading
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.synonym
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/synonym
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/synonym
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.compound
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/compound
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/compound
+  use_graph: true
+  in_kamdar: true
+  chunk_size: 20000
+
+- name: pubchem.cooccurrence
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence
+  use_graph: true
+  in_kamdar: true
+
+- name: pubchem.patent
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/patent
+  graph_uris:
+    - http://rdf.ncbi.nlm.nih.gov/pubchem/patent
+  use_graph: true
+  in_kamdar: true
+
+# ═══════════════════════════════════════════════════════════════════
+# Nanosafety
+# ═══════════════════════════════════════════════════════════════════
+
+- name: nanosafetyrdf
+  endpoint: https://nanosafety.rdf.bigcat-bioinformatics.org/sparql//
+  void_iri: http://localhost:8890/DAV
+  graph_uris:
+    - https://nanosafety.rdf.bigcat-bioinformatics.org
+  use_graph: true
+
+# ═══════════════════════════════════════════════════════════════════
+# UniProt  (sparql.uniprot.org)
+# ═══════════════════════════════════════════════════════════════════
+
+- name: uniprot
+  endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: https://sparql.uniprot.org/
+  notes: "CSV had only 4 fields; no graph_uri column"
+  download_rdf:
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/citation_mapping.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/citations.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/core.owl
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/databases.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/diseases.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/enzyme-hierarchy.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/enzyme.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/go-hierarchy.owl.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/go.owl.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/journals.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/keywords-hierarchy.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/keywords.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/locations-hierarchy.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/locations.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/pathways-hierarchy.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/pathways.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/proteomes.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/taxonomy-hierarchy.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/taxonomy.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/tissues.rdf.xz
+    - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/void.rdf
+  download_owl: https://rdfportal.org/download/uniprot/latest/core.owl
+
+- name: uniprot.chebi
+  endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: http://sparql.uniprot.org/chebi
+  graph_uris:
+    - http://sparql.uniprot.org/chebi
+  use_graph: true
+
+- name: uniprot.citationmapping
+  endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: http://sparql.uniprot.org/citationmapping
+  graph_uris:
+    - http://sparql.uniprot.org/citationmapping
+  use_graph: true
+
+- name: uniprot.citations
+  endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: http://sparql.uniprot.org/citations
+  graph_uris:
+    - http://sparql.uniprot.org/citations
+  use_graph: true
+
+- name: uniprot.database
+  endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: http://sparql.uniprot.org/database
+  graph_uris:
+    - http://sparql.uniprot.org/database
+  use_graph: true
+
+- name: uniprot.diseases
+  endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: http://sparql.uniprot.org/diseases
+  graph_uris:
+    - http://sparql.uniprot.org/diseases
+  use_graph: true
+
+- name: uniprot.enzymes
+  endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: http://sparql.uniprot.org/enzymes
+  graph_uris:
+    - http://sparql.uniprot.org/enzymes
+  use_graph: true
+
+- name: uniprot.go
+  endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: http://sparql.uniprot.org/go
+  graph_uris:
+    - http://sparql.uniprot.org/go
+  use_graph: true
+
+- name: uniprot.core
+  endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: http://purl.uniprot.org/core
+  graph_uris:
+    - http://purl.uniprot.org/core
+  use_graph: true
+
+- name: uniprot.uniparc
+  endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: http://sparql.uniprot.org/uniparc
+  graph_uris:
+    - http://sparql.uniprot.org/uniparc
+  use_graph: true
+
+# ═══════════════════════════════════════════════════════════════════
+# Bgee / Rhea
+# ═══════════════════════════════════════════════════════════════════
+
+- name: bgee
+  endpoint: https://www.bgee.org/sparql/
+  void_iri: https://bgee.org/rdf_v15_2
+  graph_uris:
+    - https://bgee.org/rdf_v15_2
+  use_graph: true
+  download_zip: https://www.bgee.org/ftp/current/rdf_easybgee.zip
+
+- name: rhea
+  endpoint: https://sparql.rhea-db.org/sparql/
+  void_iri: https://sparql.rhea-db.org/
+  use_graph: true
+
+# ═══════════════════════════════════════════════════════════════════
+# RDFPortal  (rdfportal.org)
+# ═══════════════════════════════════════════════════════════════════
+
+- name: pdb
+  endpoint: http://rdfportal.org/pdb/sparql
+  void_iri: http://rdfportal.org/dataset/pdbj
+  graph_uris:
+    - http://rdfportal.org/dataset/pdbj
+  use_graph: true
+  download_owl: https://rdfportal.org/download/pdb/latest/pdbx-v50.owl
+
+- name: pubcasefinder
+  endpoint: http://rdfportal.org/pdb/sparql
+  void_iri: https://pubcasefinder.dbcls.jp/rdf
+  graph_uris:
+    - https://pubcasefinder.dbcls.jp/rdf
+  use_graph: true
+
+- name: medgen
+  endpoint: http://rdfportal.org/pdb/sparql
+  void_iri: http://rdfportal.org/dataset/medgen
+  graph_uris:
+    - http://rdfportal.org/dataset/medgen
+  use_graph: true
+  download_ttl:
+    - https://rdfportal.org/download/medgen/latest/MGCONSO.ttl.gz
+    - https://rdfportal.org/download/medgen/latest/MGDEF.ttl.gz
+    - https://rdfportal.org/download/medgen/latest/MGREL_1.ttl.gz
+    - https://rdfportal.org/download/medgen/latest/MGREL_2.ttl.gz
+    - https://rdfportal.org/download/medgen/latest/MGSAT_1.ttl.gz
+    - https://rdfportal.org/download/medgen/latest/MGSAT_2.ttl.gz
+    - https://rdfportal.org/download/medgen/latest/MGSTY.ttl.gz
+    - https://rdfportal.org/download/medgen/latest/MedGen_HPO_OMIM_Mapping.ttl.gz
+    - https://rdfportal.org/download/medgen/latest/NAMES.ttl.gz
+    - https://rdfportal.org/download/medgen/latest/medgen_pubmed_lnk_rdf.ttl.gz
+    - https://rdfportal.org/download/medgen/latest/mim2gene_medgen.ttl.gz
+
+- name: jpost
+  endpoint: http://rdfportal.org/pdb/sparql
+  void_iri: http://jpost.org/graph/database
+  graph_uris:
+    - http://jpost.org/graph/database
+  use_graph: true
+
+# ═══════════════════════════════════════════════════════════════════
+# Bio2RDF  (bio2rdf.org)
+# ═══════════════════════════════════════════════════════════════════
+
+- name: affymetrix
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/affymetrix_resource:bio2rdf.dataset.affymetrix.R3"
+  graph_uris:
+    - "http://bio2rdf.org/affymetrix_resource:bio2rdf.dataset.affymetrix.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/affymetrix/affymetrix.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/affymetrix/affymetrix.schema.owl
+
+- name: clinicaltrials
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/clinicaltrials_resource:bio2rdf.dataset.clinicaltrials.R3"
+  graph_uris:
+    - "http://bio2rdf.org/clinicaltrials_resource:bio2rdf.dataset.clinicaltrials.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/clinicaltrials/clinicaltrials.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/clinicaltrials/clinicaltrials.schema.owl
+
+- name: ctd
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/ctd_resource:bio2rdf.dataset.ctd.R3"
+  graph_uris:
+    - "http://bio2rdf.org/ctd_resource:bio2rdf.dataset.ctd.R3"
+  use_graph: true
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_chem_gene_ixn_types.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_chem_gene_ixns.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_chem_go_enriched.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_chem_pathways_enriched.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_chemicals.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_chemicals_diseases.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_diseases.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_diseases_pathways.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_genes.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_genes_diseases.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_genes_pathways.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ctd/ctd_pathways.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/ctd/ctd.schema.owl
+
+- name: kegg
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/kegg_resource:bio2rdf.dataset.kegg.R3"
+  graph_uris:
+    - "http://bio2rdf.org/kegg_resource:bio2rdf.dataset.kegg.R3"
+  use_graph: true
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-compound.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-disease.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-drug.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-environ.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-enzyme.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-genes.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-genome.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-glycan.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-ko.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-module.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-pathway.nq.gz
+    - https://download.bio2rdf.org/files/release/3/kegg/kegg-rclass.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/kegg/kegg.schema.owl
+
+- name: irefindex
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/irefindex_resource:bio2rdf.dataset.irefindex.R3"
+  graph_uris:
+    - "http://bio2rdf.org/irefindex_resource:bio2rdf.dataset.irefindex.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/irefindex/irefindex-all.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/irefindex/irefindex.schema.owl
+
+- name: drugbank
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/drugbank_resource:bio2rdf.dataset.drugbank.R3"
+  graph_uris:
+    - "http://bio2rdf.org/drugbank_resource:bio2rdf.dataset.drugbank.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/drugbank/drugbank.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/drugbank/drugbank.schema.owl
+
+- name: homologene
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/homologene_resource:bio2rdf.dataset.homologene.R3"
+  graph_uris:
+    - "http://bio2rdf.org/homologene_resource:bio2rdf.dataset.homologene.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/homologene/homologene.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/homologene/homologene.schema.owl
+
+- name: ncbigene
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/ncbigene_resource:bio2rdf.dataset.ncbigene.R3"
+  graph_uris:
+    - "http://bio2rdf.org/ncbigene_resource:bio2rdf.dataset.ncbigene.R3"
+  use_graph: true
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/ncbigene/gene2accession.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ncbigene/gene2ensembl.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ncbigene/gene2go.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ncbigene/gene2pubmed.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ncbigene/gene2refseq.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ncbigene/gene2sts.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ncbigene/gene2unigene.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ncbigene/gene2vega.nq.gz
+    - https://download.bio2rdf.org/files/release/3/ncbigene/geneinfo.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/ncbigene/ncbigene.schema.owl
+
+- name: goa
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/goa_resource:bio2rdf.dataset.goa.R3"
+  graph_uris:
+    - "http://bio2rdf.org/goa_resource:bio2rdf.dataset.goa.R3"
+  use_graph: true
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/goa/goa_arabidopsis.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_chicken.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_cow.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_dicty.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_dog.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_fly.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_human.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_mouse.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_pdb.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_pig.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_rat.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_worm.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_yeast.nq.gz
+    - https://download.bio2rdf.org/files/release/3/goa/goa_zebrafish.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/goa/goa.schema.owl
+
+- name: hgnc
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3"
+  graph_uris:
+    - "http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/hgnc/hgnc_complete_set.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/hgnc/hgnc.schema.owl
+
+- name: interpro
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/interpro_resource:bio2rdf.dataset.interpro.R3"
+  graph_uris:
+    - "http://bio2rdf.org/interpro_resource:bio2rdf.dataset.interpro.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/interpro/interpro.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/interpro/interpro.schema.owl
+
+- name: lsr
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3"
+  graph_uris:
+    - "http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/lsr/lsr.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/lsr/lsr.schema.owl
+
+- name: mgi
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/mgi_resource:bio2rdf.dataset.mgi.R3"
+  graph_uris:
+    - "http://bio2rdf.org/mgi_resource:bio2rdf.dataset.mgi.R3"
+  use_graph: true
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/mgi/MGI_GenePheno.nq.gz
+    - https://download.bio2rdf.org/files/release/3/mgi/MGI_PhenotypicAllele.nq.gz
+    - https://download.bio2rdf.org/files/release/3/mgi/MGI_Strain.nq.gz
+    - https://download.bio2rdf.org/files/release/3/mgi/MRK_Sequence.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/mgi/mgi.schema.owl
+
+- name: mesh
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/mesh_resource:bio2rdf.dataset.mesh.R3"
+  graph_uris:
+    - "http://bio2rdf.org/mesh_resource:bio2rdf.dataset.mesh.R3"
+  use_graph: true
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/mesh/mesh_descriptors.nq.gz
+    - https://download.bio2rdf.org/files/release/3/mesh/mesh_qualifiers.nq.gz
+    - https://download.bio2rdf.org/files/release/3/mesh/mesh_supplementary.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/mesh/mesh.schema.owl
+
+- name: ndc
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/ndc_resource:bio2rdf.dataset.ndc.R3"
+  graph_uris:
+    - "http://bio2rdf.org/ndc_resource:bio2rdf.dataset.ndc.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/ndc/ndc.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/ndc/ndc.schema.owl
+
+- name: omim
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/omim_resource:bio2rdf.dataset.omim.R3"
+  graph_uris:
+    - "http://bio2rdf.org/omim_resource:bio2rdf.dataset.omim.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/omim/omim.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/omim/omim.schema.owl
+
+- name: pharmgkb
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/pharmgkb_resource:bio2rdf.dataset.pharmgkb.R3"
+  graph_uris:
+    - "http://bio2rdf.org/pharmgkb_resource:bio2rdf.dataset.pharmgkb.R3"
+  use_graph: true
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/pharmgkb/diseases.nq.gz
+    - https://download.bio2rdf.org/files/release/3/pharmgkb/drugs.nq.gz
+    - https://download.bio2rdf.org/files/release/3/pharmgkb/genes.nq.gz
+    - https://download.bio2rdf.org/files/release/3/pharmgkb/offsides.nq.gz
+    - https://download.bio2rdf.org/files/release/3/pharmgkb/rsid.nq.gz
+    - https://download.bio2rdf.org/files/release/3/pharmgkb/twosides.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/pharmgkb/pharmgkb.schema.owl
+
+- name: bio2rdf.uniprot
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: http://sparql.uniprot.org/
+  graph_uris:
+    - http://sparql.uniprot.org/
+  use_graph: true
+
+- name: sgd
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/sgd_resource:bio2rdf.dataset.sgd.R3"
+  graph_uris:
+    - "http://bio2rdf.org/sgd_resource:bio2rdf.dataset.sgd.R3"
+  use_graph: true
+  download_nq: https://download.bio2rdf.org/files/release/3/sgd/sgd.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/sgd/sgd.schema.owl
+
+- name: hp
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/hp_resource:bio2rdf.dataset.hp.R3"
+  graph_uris:
+    - "http://bio2rdf.org/hp_resource:bio2rdf.dataset.hp.R3"
+  use_graph: true
+
+- name: eco
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/eco_resource:bio2rdf.dataset.eco.R3"
+  graph_uris:
+    - "http://bio2rdf.org/eco_resource:bio2rdf.dataset.eco.R3"
+  use_graph: true
+
+- name: apo
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/apo_resource:bio2rdf.dataset.apo.R3"
+  graph_uris:
+    - "http://bio2rdf.org/apo_resource:bio2rdf.dataset.apo.R3"
+  use_graph: true
+
+- name: taxonomy
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3"
+  graph_uris:
+    - "http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3"
+  use_graph: true
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/taxonomy/taxonomy-citations.nq.gz
+    - https://download.bio2rdf.org/files/release/3/taxonomy/taxonomy-division.nq.gz
+    - https://download.bio2rdf.org/files/release/3/taxonomy/taxonomy-gencode.nq.gz
+    - https://download.bio2rdf.org/files/release/3/taxonomy/taxonomy-names.nq.gz
+    - https://download.bio2rdf.org/files/release/3/taxonomy/taxonomy-nodes.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/taxonomy/taxonomy.schema.owl
+
+- name: sider
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3"
+  graph_uris:
+    - "http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3"
+  use_graph: true
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/sider/sider-adverse_effects_raw.nq.gz
+    - https://download.bio2rdf.org/files/release/3/sider/sider-indications_raw.nq.gz
+    - https://download.bio2rdf.org/files/release/3/sider/sider-label_mapping.nq.gz
+    - https://download.bio2rdf.org/files/release/3/sider/sider-meddra_freq_parsed.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/sider/sider.schema.owl
+
+- name: wormbase
+  endpoint: https://bio2rdf.org/sparql
+  void_iri: "http://bio2rdf.org/wormbase_resource:bio2rdf.dataset.wormbase.R3"
+  graph_uris:
+    - "http://bio2rdf.org/wormbase_resource:bio2rdf.dataset.wormbase.R3"
+  use_graph: true
+
+# ── Bio2RDF dataset-specific mirrors (cu.*.bio2rdf.org) ──────────
+# These expose per-dataset SPARQL endpoints in addition to the
+# central https://bio2rdf.org/sparql endpoint above.
+# Source: https://download.bio2rdf.org/files/release/3/release.html
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/wormbase/wormbase.functional_descriptions.nq.gz
+    - https://download.bio2rdf.org/files/release/3/wormbase/wormbase.geneIDs.nq.gz
+    - https://download.bio2rdf.org/files/release/3/wormbase/wormbase.gene_associations.nq.gz
+    - https://download.bio2rdf.org/files/release/3/wormbase/wormbase.gene_interactions.nq.gz
+    - https://download.bio2rdf.org/files/release/3/wormbase/wormbase.phenotype_associations.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/wormbase/wormbase.schema.owl
+
+- name: bio2rdf.biomodels
+  endpoint: http://cu.biomodels.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — BioModels"
+  download_nq: https://download.bio2rdf.org/files/release/3/biomodels/biomodels.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/biomodels/biomodels.schema.owl
+
+- name: bio2rdf.bioportal
+  endpoint: http://cu.bioportal.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — BioPortal"
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/bioportal/aao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/aba-amb.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/acgt-mo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ado.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/adw.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/aeo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/aero.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/amino-acid.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/apo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/asdpto.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/atmo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ato.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bao-gpcr.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bcgo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bco.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bcteo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bdo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bfo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bho.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/birnlex.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bno.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bof.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bp-metadata.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bp.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bridg.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bro.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bsao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bspo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/bt.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cabro.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/canco.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/canont.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/carelex.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/caro.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cbo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ccon.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ccont.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cdao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/chebi.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/chembio.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cheminf.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/chmo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cl.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/clo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cmo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cmpo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cno.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/co-wheat.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cogat.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cogpo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cpro.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cptac.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/cseo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/csso.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ctcae.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ctont.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/dco.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ddanat.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ddi.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/dermlex.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/dermo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/diagont.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/dikb.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/doid.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/dpo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/dron.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ecg.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/eco.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/edam.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/edda.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/efo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ehda.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ehdaa.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ehdaa2.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/elig.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/emap.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/envo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ep.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/epilont.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ero.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/fao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/fb-bt.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/fb-cv.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/fb-dv.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/fb-sp.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/fbbi.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/fhho.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/fire.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/fix.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/flopo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/fypo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/galen.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/geospecies.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/gfo-bio.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/gfo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/gfvo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/glyco.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/go-ext.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/go.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/gro-cpd.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/gro-cpga.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/gro.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/hao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/hino.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/hivo004.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/hl7.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/hom.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/hp.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/hpio.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/hrdo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/hugo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/hupson.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/iao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/icd11-bodysystem.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/iceci.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/icf.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ico.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ido.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/idobru.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/idoden.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/idomal.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ifar.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/imgt-ontology.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/immdis.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ino.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/internano.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ixno.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/jerm.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/kisao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/lda.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/lipro.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ma.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mamo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mat.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mcbcc.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mccl.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mccv.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/medo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mego.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/meo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mf.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mfo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mfoem.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mhc.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/miro.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mixs.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mixscv.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mmo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mp.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/mpath.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ms.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/msv.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/natpro.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/nbo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/neomark3.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/neomark4.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/neumore.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ngsonto.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/nifcell.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/nifdys.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/nifstd.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/nifsubcell.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/nigo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/nihss.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/nmosp.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/nmr.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/nonrcto.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/npo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ntdo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/oae.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/obcs.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/obi.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/obi_bcgo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/obiws.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/oboe-sbc.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/oborel.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ogdi.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ogi.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ogmd.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ogms.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ogr.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ogsf.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/omit.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/omrse.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/onl-dp.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/onl-mr-da.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/onl-msa.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/onstr.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ontodm-core.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ontodm-kdd.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ontodt.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ontokbcf.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ontoma.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ontopneumo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ontovip.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ooevv.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/opb.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ope.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/opl.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ordo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ovae.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pae.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pathlex.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pato.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pco.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pdo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/peco.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pedterm.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/peo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/phare.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/phenx.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/phylont.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pma.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pmr.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/po.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/poro.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ppio.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pr.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/propreo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/provo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/psds.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pseudo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/psimod.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pto.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/ptrans.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pvonto.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/pw.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/qibo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/radlex.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/rctont.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/repo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/reto.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/rex.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/rexo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/rnao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/rnprio.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/rnrmu.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/roleo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/rpo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/rs.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/rxno.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sbo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sbol.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sdo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sedi.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sep.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/shr.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sio.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sitbac.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/snpo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/so.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sopharm.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/soy.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/spd.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/spo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/spto.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sse.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sso.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/stato.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/suicideo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/suicido.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/sweet.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/symp.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/syn.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tads.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/taxrank.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/teddy.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/teo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/testonto.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tgma.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tm-const.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tm-mer.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tm-other-factors.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tm-signs-and-sympts.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tma.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tmo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tok.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/top-menelas.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/trak.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tron.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/tto.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/typon.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/uberon.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/unitsont.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/uo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/vario.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/vhog.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/vivo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/vo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/vsao.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/vso.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/vt.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/wb-bt.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/wb-ls.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/wb-phenotype.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/wsio.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/xco.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/xeo.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/zea.nq.gz
+    - https://download.bio2rdf.org/files/release/3/bioportal/zfa.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/bioportal/bioportal.schema.owl
+
+- name: bio2rdf.chembl
+  endpoint: http://cu.chembl.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — ChEMBL"
+  download_owl: https://download.bio2rdf.org/files/release/3/chembl/chembl.schema.owl
+
+- name: bio2rdf.dbsnp
+  endpoint: http://cu.dbsnp.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — dbSNP"
+  download_nq: https://download.bio2rdf.org/files/release/3/dbsnp/dbsnp.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/dbsnp/dbsnp.schema.owl
+
+- name: bio2rdf.genage
+  endpoint: http://cu.genage.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — GenAge"
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/genage/genage_human.nq.gz
+    - https://download.bio2rdf.org/files/release/3/genage/genage_models.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/genage/genage.schema.owl
+
+- name: bio2rdf.gendr
+  endpoint: http://cu.gendr.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — GenDR"
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/gendr/gendr_gene_expression.nq.gz
+    - https://download.bio2rdf.org/files/release/3/gendr/gendr_gene_manipulations.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/gendr/gendr.schema.owl
+
+- name: bio2rdf.iproclass
+  endpoint: http://cu.iproclass.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — iProClass"
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.1.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.10.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.11.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.12.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.13.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.14.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.15.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.16.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.17.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.18.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.19.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.2.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.20.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.21.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.22.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.23.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.24.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.25.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.26.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.27.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.28.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.29.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.3.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.30.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.31.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.32.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.33.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.34.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.35.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.36.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.37.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.38.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.39.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.4.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.40.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.41.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.42.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.43.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.44.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.45.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.46.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.47.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.48.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.49.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.5.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.50.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.51.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.52.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.53.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.54.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.55.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.56.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.57.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.58.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.59.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.6.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.60.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.61.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.62.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.63.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.64.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.65.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.66.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.67.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.68.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.69.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.7.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.70.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.71.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.72.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.73.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.74.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.75.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.8.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.9.nq.gz
+    - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.nq.gz
+
+- name: bio2rdf.linkedspl
+  endpoint: http://cu.linkedspl.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — LinkedSPL"
+  download_owl: https://download.bio2rdf.org/files/release/3/linkedspl/linkedspl.schema.owl
+
+- name: bio2rdf.orphanet
+  endpoint: http://cu.orphanet.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — Orphanet"
+  download_nq:
+    - https://download.bio2rdf.org/files/release/3/orphanet/orphanet-d2s.nq.gz
+    - https://download.bio2rdf.org/files/release/3/orphanet/orphanet-disease.nq.gz
+    - https://download.bio2rdf.org/files/release/3/orphanet/orphanet-epi.nq.gz
+    - https://download.bio2rdf.org/files/release/3/orphanet/orphanet-genes.nq.gz
+    - https://download.bio2rdf.org/files/release/3/orphanet/orphanet-signs.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/orphanet/orphanet.schema.owl
+
+- name: bio2rdf.pathwaycommons
+  endpoint: http://cu.pathwaycommons.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — Pathway Commons"
+  download_owl: https://download.bio2rdf.org/files/release/3/pathwaycommons/pathwaycommons.schema.owl
+
+- name: bio2rdf.pubmed
+  endpoint: http://cu.pubmed.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — PubMed"
+  download_owl: https://download.bio2rdf.org/files/release/3/pubmed/pubmed.schema.owl
+
+- name: bio2rdf.reactome
+  endpoint: http://cu.reactome.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — Reactome"
+  download_owl: https://download.bio2rdf.org/files/release/3/reactome/reactome.schema.owl
+
+- name: bio2rdf.sabiork
+  endpoint: http://cu.sabiork.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — SABIO-RK"
+  download_nq: https://download.bio2rdf.org/files/release/3/sabiork/sabiork.nq.gz
+  download_owl: https://download.bio2rdf.org/files/release/3/sabiork/sabiork.schema.owl
+
+- name: bio2rdf.wikipathways
+  endpoint: http://cu.wikipathways.bio2rdf.org/sparql
+  notes: "Bio2RDF mirror — WikiPathways"
+  download_owl: https://download.bio2rdf.org/files/release/3/wikipathways/wikipathways.schema.owl
+
+# ═══════════════════════════════════════════════════════════════════
+# Other standalone endpoints
+# ═══════════════════════════════════════════════════════════════════
+
+- name: omabrowser
+  endpoint: https://sparql.omabrowser.org/sparql/
+  void_iri: https://sparql.omabrowser.org/
+
+- name: swisslipids
+  endpoint: https://beta.sparql.swisslipids.org/
+
+- name: earthmetabolome
+  endpoint: https://kg.earthmetabolome.org/metrin/api/
+
+- name: cellosaurus
+  endpoint: https://sparql.cellosaurus.org/sparql
+  download_ttl:
+    - https://rdfportal.org/download/cellosaurus/latest/materialized_transitive_more_specific_than.ttl
+    - https://rdfportal.org/download/cellosaurus/latest/materialized_transitive_subclasses.ttl
+    - https://rdfportal.org/download/cellosaurus/latest/materialized_transitive_subproperties.ttl
+
+- name: sibils
+  endpoint: https://sparql.sibils.org/sparql
+
+- name: metanext
+  endpoint: https://rdf.metanetx.org/sparql/
+
+- name: orthodb
+  endpoint: https://sparql.orthodb.org/sparql
+
+- name: compoundwiki
+  endpoint: https://compoundcloud.wikibase.cloud/query/
+
+- name: plantmetwiki
+  endpoint: https://plantmetwiki.bioinformatics.nl/sparql
+  graph_uris:
+    - http://plantmetwiki.bioinformatics.nl/
+  use_graph: true
+
+- name: chembl.bigcat
+  endpoint: https://chemblmirror.rdf.bigcat-bioinformatics.org/sparql/
+  void_iri: https://chemblmirror.rdf.bigcat-bioinformatics.org/
+  graph_uris:
+    - https://www.ebi.ac.uk/chembl
+  use_graph: true
+
+# ═════════════════════
+# Additional endpoints 
+# ═════════════════════
+
+- name: allie
+  endpoint: http://data.allie.dbcls.jp/sparql
+
+- name: hamap
+  endpoint: https://hamap.expasy.org/sparql/
+
+- name: polyadenylation.magnaporthe
+  endpoint: https://dydra.com/markw/polyadenylation-sites-in-magnaporthe-oryza/sparql
+
+- name: lifesciencedict
+  endpoint: http://lsd.dbcls.jp/sparql
+
+- name: rdfportal.pubchem
+  endpoint: https://rdfportal.org/pubchem/sparql
+  download_ttl: https://rdfportal.org/download/pubchem/latest/void.ttl
+
+- name: rdfportal.primary
+  endpoint: https://rdfportal.org/primary/sparql
+
+- name: mesh.nlm
+  endpoint: https://id.nlm.nih.gov/mesh/sparql
+
+- name: glycosmos
+  endpoint: https://ts.glycosmos.org/sparql
+
+- name: firstauthor
+  endpoint: http://navi.first.lifesciencedb.jp/fanavi/sparql
+
+- name: rdfportal.sib
+  endpoint: https://rdfportal.org/sib/sparql
+
+- name: colil
+  endpoint: http://colil.dbcls.jp/sparql
+
+- name: agrold
+  endpoint: http://sparql.southgreen.fr/
+
+- name: biogateway
+  endpoint: https://2407.biogateway.eu/sparql/
+
+- name: ideal
+  endpoint: https://ideal-rdf.dbcls.jp/sparql
+
+- name: rdfportal.kero
+  endpoint: https://rdfportal.org/kero/sparql
+
+- name: rdfportal.wikidata
+  endpoint: https://rdfportal.org/wikidata/sparql
+  download_ttl: https://rdfportal.org/download/wikidata/latest/latest-all.ttl.gz
+
+- name: rdfportal.pdb
+  endpoint: https://rdfportal.org/pdb/sparql
+  download_owl: https://rdfportal.org/download/pdb/latest/pdbx-v50.owl
+
+- name: rdfportal.ebi
+  endpoint: https://rdfportal.org/ebi/sparql
+
+- name: rdfportal.ncbi
+  endpoint: https://rdfportal.org/ncbi/sparql
+
+- name: linkdb
+  endpoint: http://www.genome.jp/sparql/linkdb
+
+- name: rdfportal.ddbj
+  endpoint: https://rdfportal.org/ddbj/sparql
+
+- name: rdfportal.bioportal
+  endpoint: https://rdfportal.org/bioportal/sparql
+
+- name: regulatorycircuits
+  endpoint: https://regulatorycircuits-lod.genouest.org/sparql/
+
+- name: forum
+  endpoint: https://forum.semantic-metabolomics.fr/sparql/
+
+- name: glyconavi
+  endpoint: https://sparql.glyconavi.org/sparql
+
+- name: coxpresdb
+  endpoint: https://coxpresdb.jp/sparql
+
+- name: lipidmaps
+  endpoint: https://lipidmaps.org/sparql
+
+- name: imgtkg
+  endpoint: https://www.imgt.org/fuseki/ImgtKg/sparql
+
+- name: brenda
+  endpoint: https://sparql.dsmz.de/api/brenda
+  download_ttl: https://rdfportal.org/download/brenda/latest/rdf-mod-r.ttl
+
+- name: bioresource.riken
+  endpoint: https://knowledge.brc.riken.jp/sparql
+
+- name: riken.metadb
+  endpoint: http://metadb.riken.jp/sparql
+
+- name: agrovoc
+  endpoint: https://agrovoc.fao.org/sparql
+
+- name: chebi.standalone
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/chebi
+
+- name: mediadive
+  endpoint: https://sparql.dsmz.de/api/mediadive
+  download_ttl: https://rdfportal.org/download/mediadive/latest/rdf-mod-r.ttl
+
+- name: glytoucan
+  endpoint: https://ts.glytoucan.org/sparql
+
+- name: glyconnect
+  endpoint: https://glyconnect.expasy.org/sparql
+
+- name: string
+  endpoint: https://sparql.string-db.org/
+
+- name: attedii
+  endpoint: https://atted.jp/sparql
+
+- name: bacdive
+  endpoint: https://sparql.dsmz.de/api/bacdive
+  download_ttl: https://rdfportal.org/download/bacdive/latest/rdf-mod-r.ttl
+
+- name: rdfportal.proteinatlas
+  endpoint: https://rdfportal.org/proteinatlas/sparql
+
+- name: nextprot
+  endpoint: https://sparql.nextprot.org/
+  download_ttl:
+    - https://rdfportal.org/download/nextprot/latest/experimentalcontext.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/expression_high.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/expression_low.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/expression_medium.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/inferredChildOf-a.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/inferredChildOf-b.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/inferredSubClassOf-a.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/inferredSubClassOf-b.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_01.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_02.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_03.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_04.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_05.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_06.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_07.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_08.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_09.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_10.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_11.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_12.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_13.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_14.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_15.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_16.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_17.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_18.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_19.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_20.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_21.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_22.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_MT.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_X.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_Y.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_unknown.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/publication.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/schema.ttl.gz
+    - https://rdfportal.org/download/nextprot/latest/terminology.ttl.gz
+
+- name: obo.ontobee
+  endpoint: http://sparql.hegroup.org/sparql/
+
+- name: proteinontology
+  endpoint: https://sparql.proconsortium.org/virtuoso/sparql
+
+- name: hitontology
+  endpoint: https://hitontology.eu/sparql
+
+- name: glygen
+  endpoint: http://sparql.glygen.org:8880/sparql
+
+- name: prokino
+  endpoint: http://vulcan.cs.uga.edu/sparql
+
+- name: linkeddrugs
+  endpoint: http://linkeddata.finki.ukim.mk/sparql
+
+- name: pdbj.bmrb
+  endpoint: https://bmrbpub.pdbj.org/search/rdf
+
+- name: glic
+  endpoint: https://sparql.glycoinfo.org/sparql
+
+- name: metabobank
+  endpoint: https://mb2.ddbj.nig.ac.jp/sparql
+
+- name: linkedlifedata
+  endpoint: http://linkedlifedata.com/sparql
+
+- name: microbedb
+  endpoint: http://genome.microbedb.jp/sparql
+
+- name: mbgd
+  endpoint: http://sparql.nibb.ac.jp/sparql
+
+- name: gocam
+  endpoint: http://rdf.geneontology.org/blazegraph/sparql
+
+- name: chemdb
+  endpoint: http://chemdb.semweb.csdb.cn/sparql
+  notes: "ChemDB — phase transition dataset"
+
+- name: covidontheweb
+  endpoint: https://covidontheweb.inria.fr/sparql
+  notes: "COVID on the Web — INRIA"
+
+# Bio2RDF dataset-specific endpoint (mirror/search host)
+# Some Bio2RDF datasets expose dataset-specific SPARQL endpoints
+# in addition to the central https://bio2rdf.org/sparql endpoint.
+# Example (KEGG mirror): http://cu.kegg.bio2rdf.org/sparql
+- name: bio2rdf.kegg.cu
+  endpoint: http://cu.kegg.bio2rdf.org/sparql
+  notes: "Bio2RDF KEGG mirror (cu.kegg.bio2rdf.org)"
+
+- name: nadd
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+    - http://purl.jp/bio/18/nadd/
+  use_graph: true
+  download_ttl: https://rdfportal.org/download/nadd/latest/rdf/graph-1/NucleicAcidDrug.ttl.gz
+  notes: "Nucleic Acid Drug Database (NADD) — RDFPortal"
