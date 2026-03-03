@@ -945,3 +945,4 @@ docker/*
 *.jsonld
 !tests/test_data/*.jsonld
 docs/notes/*
+results/*

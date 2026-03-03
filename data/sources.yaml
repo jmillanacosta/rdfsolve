@@ -18,6 +18,10 @@
   void_iri: http://aopwiki.org/
   graph_uris:
     - http://aopwiki.org/
+  download_ttl: 
+   - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF-Genes.ttl
+   - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF-Void.ttl
+   - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF.ttl
 
 - name: wikipathways
   endpoint: https://sparql.wikipathways.org/sparql/
@@ -1379,6 +1383,11 @@
 - name: cellosaurus
   endpoint: https://sparql.cellosaurus.org/sparql
   download_ttl:
+    - https://ftp.expasy.org/databases/cellosaurus/cellosaurus.obo
+
+- name: rdfportal.cellosaurus
+  endpoint: https://sparql.cellosaurus.org/sparql
+  download_ttl:
     - https://rdfportal.org/download/cellosaurus/latest/materialized_transitive_more_specific_than.ttl
     - https://rdfportal.org/download/cellosaurus/latest/materialized_transitive_subclasses.ttl
     - https://rdfportal.org/download/cellosaurus/latest/materialized_transitive_subproperties.ttl
@@ -1428,9 +1437,9 @@
     - https://ftp.dbcls.jp/allie/allie_rdf/lsd_rdf_nt_latest.gz
     - https://ftp.dbcls.jp/allie/allie_rdf/japanese_species_names_rdf_nt_latest.gz
 
-- name: hamap
-  endpoint: https://hamap.expasy.org/sparql/
-  download_ttl: https://ftp.expasy.org/databases/hamap/sparql/hamap.ttl  # verified 2026-03-03 (226MB)
+#- name: hamap
+#  endpoint: https://hamap.expasy.org/sparql/
+#  download_ttl: https://ftp.expasy.org/databases/hamap/sparql/hamap.ttl  # Just sparql executables!
 
 - name: polyadenylation.magnaporthe
   endpoint: https://dydra.com/markw/polyadenylation-sites-in-magnaporthe-oryza/sparql

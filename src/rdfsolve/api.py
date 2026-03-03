@@ -761,6 +761,7 @@ def mine_all_sources(
     counts: bool = True,
     reports: bool = True,
     filter_service_namespaces: bool = True,
+    untyped_as_classes: bool = False,
     on_progress: Optional[
         Callable[[str, int, int, Optional[str]], None]
     ] = None,
@@ -799,6 +800,9 @@ def mine_all_sources(
         reports: Write per-source analytics JSON reports.
         filter_service_namespaces: Strip service/system namespace
             patterns from each mined schema (default ``True``).
+        untyped_as_classes: Treat untyped URI objects as
+            ``owl:Class`` references instead of the generic
+            ``rdfs:Resource`` sentinel (default ``False``).
         on_progress:
             Optional callback invoked after each source is
             processed.  Signature:
@@ -893,6 +897,7 @@ def mine_all_sources(
                 two_phase=row_two_phase,
                 report_path=rpt_path,
                 filter_service_namespaces=filter_service_namespaces,
+                untyped_as_classes=untyped_as_classes,
             )
 
             if fmt in ("jsonld", "all"):

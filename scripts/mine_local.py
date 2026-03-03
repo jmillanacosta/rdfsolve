@@ -156,6 +156,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "--no-counts", action="store_true",
         help="Skip triple-count queries (faster)",
     )
+    mining.add_argument(
+        "--untyped-as-classes", action="store_true",
+        help=(
+            "Treat untyped URI objects as owl:Class "
+            "references instead of rdfs:Resource"
+        ),
+    )
 
     # ── Route: discover ───────────────────────────────────────────
     sub.add_parser(
@@ -523,6 +530,9 @@ def _route_mine(args: argparse.Namespace) -> dict[str, Any]:
         timeout=args.timeout,
         counts=not args.no_counts,
         reports=True,
+        untyped_as_classes=getattr(
+            args, "untyped_as_classes", False,
+        ),
         on_progress=_on_progress,
     )
     return result
@@ -696,6 +706,9 @@ def _mine_single_local(
         two_phase=True,
         report_path=rpt_path,
         filter_service_namespaces=True,
+        untyped_as_classes=getattr(
+            args, "untyped_as_classes", False,
+        ),
     )
 
     # Override the endpoint used for VoID / JSON-LD export URIs
@@ -1194,42 +1207,45 @@ def _build_qleverfile(
     # Convert RDF/XML and OWL → Turtle
     if has_rdfxml:
         steps.append("echo 'Converting RDF/XML → Turtle …'")
+        # Avoid ${f%.*} bash syntax — configparser can't handle %.
+        # Use Python one-liner for the conversion instead.
         steps.append(
-            'for f in *.rdf *.owl *.xml; do '
-            '[ -f "$f" ] || continue; '
-            'out="${f%.*}.ttl"; '
-            '[ -f "$out" ] && continue; '
-            'echo "  $f → $out"; '
-            'rapper -i rdfxml -o turtle "$f" > "$out" 2>/dev/null || '
-            'echo "  WARNING: rapper failed on $f"; '
-            'done'
+            "python3 -c \""
+            "import glob, subprocess, os; "
+            "[subprocess.run("
+            "['rapper','-i','rdfxml','-o','turtle',f],"
+            "stdout=open(os.path.splitext(f)[0]+'.ttl','w'),"
+            "stderr=subprocess.DEVNULL"
+            ") for f in glob.glob('*.rdf')+glob.glob('*.owl')"
+            "+glob.glob('*.xml') "
+            "if not os.path.exists(os.path.splitext(f)[0]+'.ttl')]"
+            '"'
         )
 
     # Convert JSON-LD → Turtle
     if has_jsonld:
         steps.append("echo 'Converting JSON-LD → Turtle …'")
         steps.append(
-            'for f in *.jsonld; do '
-            '[ -f "$f" ] || continue; '
-            'out="${f%.*}.ttl"; '
-            '[ -f "$out" ] && continue; '
-            'echo "  $f → $out"; '
             "python3 -c \""
+            "import glob, os; "
             "from rdflib import Graph; "
-            "g = Graph(); "
-            "g.parse('$f', format='json-ld'); "
-            "g.serialize('$out', format='turtle')"
-            '" 2>/dev/null || '
-            'echo "  WARNING: rdflib conversion failed on $f"; '
-            'done'
+            "[Graph().parse(f,format='json-ld')"
+            ".serialize(os.path.splitext(f)[0]+'.ttl',format='turtle') "
+            "for f in glob.glob('*.jsonld') "
+            "if not os.path.exists(os.path.splitext(f)[0]+'.ttl')]"
+            '"'
         )
 
     get_data_cmd = " && ".join(steps)
 
-    # QLever's INI parser treats $ as variable reference.
-    # Escape bare $ (but not ${...} which are QLever variables)
-    # by replacing $X with $$X where X is not '{'.
+    # QLever uses Python's configparser (ExtendedInterpolation) to
+    # parse Qleverfiles.  Both ``$`` and ``%`` are special:
+    #   - ``${section:key}`` is an interpolation reference
+    #   - ``%`` triggers BasicInterpolation-style errors
+    # Escape bare ``$`` (but not ``${...}`` which QLever uses for
+    # its own variables like ``${INPUT_FILES}``) and all ``%``.
     get_data_cmd = re.sub(r'\$(?!\{)', '$$', get_data_cmd)
+    get_data_cmd = get_data_cmd.replace('%', '%%')
 
     return _QLEVERFILE_TEMPLATE.format(
         name=name,

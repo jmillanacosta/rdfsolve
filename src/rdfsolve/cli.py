@@ -174,6 +174,13 @@ def _mining_options(fn):
         "--no-counts", is_flag=True,
         help="Skip triple-count queries (faster).",
     )(fn)
+    fn = click.option(
+        "--untyped-as-classes", is_flag=True,
+        help=(
+            "Treat untyped URI objects as owl:Class "
+            "references instead of rdfs:Resource."
+        ),
+    )(fn)
     return fn
 
 

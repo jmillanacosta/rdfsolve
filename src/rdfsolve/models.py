@@ -251,7 +251,7 @@ class SchemaPattern(BaseModel):
     - **untyped-uri**:
       ``?s a ?sc . ?s ?p ?o . FILTER(isURI(?o)) FILTER NOT EXISTS { ?o a ?any }``
 
-    This model is the shared contract between SchemaMiner (direct SPARQL)
+    This model is shared contract between SchemaMiner (direct SPARQL)
     and VoidParser (VoID-based extraction).
     """
 

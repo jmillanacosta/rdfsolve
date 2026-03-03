@@ -37,6 +37,7 @@ OUTPUT_DIR=""            # bind-mount host dir for /output (optional)
 BENCHMARK=true           # collect benchmarks by default
 BASE_PORT=7019           # first QLever port
 TIMEOUT=120              # SPARQL timeout (seconds)
+UNTYPED_AS_CLASSES=false # treat untyped URIs as owl:Class
 
 # ── Compose shorthand ────────────────────────────────────────────
 DC="docker compose -f docker-compose.pipeline.yml"
@@ -62,6 +63,7 @@ while [[ $# -gt 0 ]]; do
         --data-dir)     DATA_DIR="$2"; shift 2 ;;
         --output-dir)   OUTPUT_DIR="$2"; shift 2 ;;
         --no-benchmark) BENCHMARK=false; shift ;;
+        --untyped-as-classes) UNTYPED_AS_CLASSES=true; shift ;;
         --base-port)    BASE_PORT="$2"; shift 2 ;;
         --timeout)      TIMEOUT="$2"; shift 2 ;;
         --help|-h)
@@ -86,6 +88,9 @@ if [[ "${BENCHMARK}" == true ]]; then
 fi
 
 MINE_FLAGS="${COMMON_FLAGS}"
+if [[ "${UNTYPED_AS_CLASSES}" == true ]]; then
+    MINE_FLAGS="${MINE_FLAGS} --untyped-as-classes"
+fi
 
 TEST_FLAG=""
 if [[ "${MODE}" == "test" ]]; then
@@ -118,6 +123,7 @@ else
 fi
 
 # Append output-dir now that CONTAINER_OUTPUT_DIR is known.
+DISCOVER_FLAGS="${COMMON_FLAGS} --output-dir ${CONTAINER_OUTPUT_DIR}"
 MINE_FLAGS="${MINE_FLAGS} --output-dir ${CONTAINER_OUTPUT_DIR}"
 
 # Build the RUN command.  When using host bind-mounts, override the
@@ -174,6 +180,7 @@ fi
 echo -e "  Mode:         ${BOLD}${MODE}${NC}"
 echo -e "  Filter:       ${FILTER:-<all sources>}"
 echo -e "  Benchmark:    ${BENCHMARK}"
+echo -e "  Untyped→cls:  ${UNTYPED_AS_CLASSES}"
 echo -e "  Results dir:  ${RESULTS_DIR}"
 echo -e "  Skip remote:  ${SKIP_REMOTE}"
 echo -e "  Skip local:   ${SKIP_LOCAL}"
@@ -197,7 +204,7 @@ if [[ "${SKIP_REMOTE}" == false ]]; then
     step "Discovering VoID descriptions from remote SPARQL endpoints …"
     DISC_START=$(date +%s)
 
-    eval "${RUN} rdfsolve pipeline discover ${MINE_FLAGS}" || {
+    eval "${RUN} rdfsolve pipeline discover ${DISCOVER_FLAGS}" || {
         warn "Some discover tasks failed (continuing)."
     }
 
@@ -318,6 +325,9 @@ for name, port in d.items():
             LOCAL_MINE_FLAGS="${LOCAL_MINE_FLAGS} --output-dir ${CONTAINER_OUTPUT_DIR}"
             if [[ "${BENCHMARK}" == true ]]; then
                 LOCAL_MINE_FLAGS="${LOCAL_MINE_FLAGS} --benchmark"
+            fi
+            if [[ "${UNTYPED_AS_CLASSES}" == true ]]; then
+                LOCAL_MINE_FLAGS="${LOCAL_MINE_FLAGS} --untyped-as-classes"
             fi
 
             eval "${RUN} rdfsolve pipeline local-mine ${LOCAL_MINE_FLAGS}" || {

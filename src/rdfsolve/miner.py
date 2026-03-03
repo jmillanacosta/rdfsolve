@@ -833,6 +833,11 @@ class SchemaMiner:
         subject, property, or object URI belongs to a
         service/system namespace (Virtuoso, OpenLink, etc.)
         from the final result.
+    untyped_as_classes:
+        When ``True``, treat untyped URI objects (those without
+        an explicit ``rdf:type``) as ``owl:Class`` references
+        instead of the generic ``rdfs:Resource`` sentinel.
+        Default ``False``.
     """
 
     def __init__(
@@ -849,6 +854,7 @@ class SchemaMiner:
         unsafe_paging: bool = False,
         report_path: str | Path | None = None,
         filter_service_namespaces: bool = True,
+        untyped_as_classes: bool = False,
     ) -> None:
         self.endpoint_url = endpoint_url
         self.graph_uris: list[str] | None = (
@@ -864,6 +870,7 @@ class SchemaMiner:
         self.two_phase = two_phase
         self.unsafe_paging = unsafe_paging
         self.filter_service_namespaces = filter_service_namespaces
+        self.untyped_as_classes = untyped_as_classes
         self._helper = SparqlHelper(
             endpoint_url, timeout=timeout,
         )
@@ -922,6 +929,7 @@ class SchemaMiner:
                 "timeout": self.timeout,
                 "counts": self.counts,
                 "two_phase": self.two_phase,
+                "untyped_as_classes": self.untyped_as_classes,
             },
         )
         self._rc = _ReportCollector(
@@ -1526,6 +1534,11 @@ class SchemaMiner:
                 "two-phase/untyped-uri",
                 time.monotonic() - t0,
             )
+            untyped_oc = (
+                "http://www.w3.org/2002/07/owl#Class"
+                if self.untyped_as_classes
+                else "Resource"
+            )
             for b in untyped_bindings:
                 cls = b.get("class", {}).get("value", "")
                 p = b.get("p", {}).get("value", "")
@@ -1533,7 +1546,7 @@ class SchemaMiner:
                     patterns.append(SchemaPattern(
                         subject_class=cls,
                         property_uri=p,
-                        object_class="Resource",
+                        object_class=untyped_oc,
                     ))
 
             # Polite delay between batches
@@ -1627,6 +1640,11 @@ class SchemaMiner:
         bindings = self._collect_bindings(
             q, purpose="mining/untyped-uri",
         )
+        oc = (
+            "http://www.w3.org/2002/07/owl#Class"
+            if self.untyped_as_classes
+            else "Resource"
+        )
         results: list[SchemaPattern] = []
         for b in bindings:
             sc = b.get("sc", {}).get("value", "")
@@ -1635,7 +1653,7 @@ class SchemaMiner:
                 results.append(SchemaPattern(
                     subject_class=sc,
                     property_uri=p,
-                    object_class="Resource",
+                    object_class=oc,
                 ))
         return results
 
@@ -1901,6 +1919,7 @@ def mine_schema(
     two_phase: bool = True,
     report_path: str | Path | None = None,
     filter_service_namespaces: bool = True,
+    untyped_as_classes: bool = False,
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`.
 
@@ -1940,6 +1959,10 @@ def mine_schema(
         Strip patterns whose URIs belong to service / system
         namespaces (Virtuoso, OpenLink, etc.) from the
         result.  Default ``True``.
+    untyped_as_classes:
+        Treat untyped URI objects as ``owl:Class`` references
+        instead of the generic ``rdfs:Resource`` sentinel.
+        Default ``False``.
 
     Returns
     -------
@@ -1958,5 +1981,6 @@ def mine_schema(
         two_phase=two_phase,
         report_path=report_path,
         filter_service_namespaces=filter_service_namespaces,
+        untyped_as_classes=untyped_as_classes,
     )
     return miner.mine(dataset_name=dataset_name)
