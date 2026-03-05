@@ -2070,6 +2070,14 @@
   notes: "KG Registry: Wildlife-KN"
   kg_registry_id: wildlifekn
 
+# Ontologies
+
+- name: diseaseontology
+  endpoint: https://sparql.disease-ontology.org
+  download_owl:
+   - https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/refs/heads/main/src/ontology/doid.owl
+   - http://purl.obolibrary.org/obo/doid/obo/ext.owl
+   - https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/refs/heads/main/src/ontology/HumanDO.owl
 #- name: wikidata
 #  endpoint: https://query.wikidata.org/sparql
 #  download_ttl:
