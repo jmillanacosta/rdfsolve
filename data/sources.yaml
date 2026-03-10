@@ -16,8 +16,7 @@
 - name: aopwikirdf
   endpoint: https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
   void_iri: http://aopwiki.org/
-  graph_uris:
-    - http://aopwiki.org/
+  #graph_uris: http://aopwiki.org/
   download_ttl: 
    - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF-Genes.ttl
    - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF-Void.ttl
@@ -26,10 +25,15 @@
 - name: wikipathways
   endpoint: https://sparql.wikipathways.org/sparql/
   void_iri: http://rdf.wikipathways.org/
-  graph_uris:
-    - http://rdf.wikipathways.org/
+  #graph_uris:
+  #  - http://rdf.wikipathways.org/
   in_kamdar: true
-  download_owl: https://download.bio2rdf.org/files/release/3/wikipathways/wikipathways.schema.owl
+  #download_owl: https://download.bio2rdf.org/files/release/3/wikipathways/wikipathways.schema.owl
+  download_ttl:
+   - https://data.wikipathways.org/current/rdf/wikipathways-20260210-rdf-wp.zip
+   - https://data.wikipathways.org/current/rdf/wikipathways-rdf-void.ttl
+   - https://data.wikipathways.org/current/rdf/wikipathways-20260210-rdf-gpml.zip
+   - https://data.wikipathways.org/current/rdf/wikipathways-20260210-rdf-authors.zip
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -179,7 +183,31 @@
     - http://rdf.ebi.ac.uk/dataset/chembl
   use_graph: true
   in_kamdar: true
-  download_owl: https://download.bio2rdf.org/files/release/3/chembl/chembl.schema.owl
+  #download_owl: https://download.bio2rdf.org/files/release/3/chembl/chembl.schema.owl
+  download_ttl:
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/cco.ttl.gz 
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_activity.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_assay.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_bindingsite.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_biocmpt.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_cellline.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_complextarget_targetcmpt_ls.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_document.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_grouptarget_targetcmpt_ls.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_indication.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_journal.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_moa.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_molecule.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_molhierarchy.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_protclass.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_singletarget_targetcmpt_ls.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_source.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_target.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_targetcmpt.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_targetcmpt_uniprot_ls.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_targetrel.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/chembl_36.0_unichem.ttl.gz
+    - https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBL-RDF/latest/void.ttl.gz
 
 - name: pubchem.journal
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm

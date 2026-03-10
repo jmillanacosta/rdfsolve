@@ -167,6 +167,13 @@ def _mining_options(fn):
         help="SPARQL pagination page size.",
     )(fn)
     fn = click.option(
+        "--class-chunk-size", type=int, default=None,
+        help=(
+            "Page size for Phase-1 class discovery "
+            "(two-phase mode only). Default: no pagination."
+        ),
+    )(fn)
+    fn = click.option(
         "--class-batch-size", type=int, default=15,
         help="Classes per VALUES query in two-phase mining.",
     )(fn)
@@ -181,6 +188,26 @@ def _mining_options(fn):
             "references instead of rdfs:Resource."
         ),
     )(fn)
+    fn = click.option(
+        "--author", "authors_raw",
+        multiple=True,
+        metavar="NAME|ORCID",
+        help=(
+            "Credit an author in provenance metadata. "
+            "Format: 'Full Name|0000-0000-0000-0000'. "
+            "ORCID is optional. Repeat for multiple authors."
+        ),
+    )(fn)
+    fn = click.option(
+        "--one-shot", "one_shot", is_flag=True,
+        help=(
+            "Mine using a single unbounded SELECT per pattern "
+            "type (no LIMIT/OFFSET, no fallback chain). "
+            "Recommended for local QLever endpoints. "
+            "Records per-query timing and row count in the "
+            "report for comparison with the fallback-chain run."
+        ),
+    )(fn)
     return fn
 
 
@@ -189,11 +216,20 @@ def _build_namespace(ctx, **overrides):
 
     This bridges Click → argparse so we can call mine_local.py's
     route functions directly.
+
+    Safe defaults are injected for attributes that route functions
+    access directly (not via getattr) but that Click never sets
+    (e.g. ``verbose``, ``route``).
     """
     import argparse
-    params = dict(ctx.params)
-    params.update(overrides)
-    return argparse.Namespace(**params)
+    # Safe defaults for attributes only the argparse __main__ sets.
+    defaults = {
+        "verbose": False,
+        "route": None,
+    }
+    defaults.update(ctx.params)
+    defaults.update(overrides)
+    return argparse.Namespace(**defaults)
 
 
 def _print_result(result: dict) -> None:
@@ -284,6 +320,13 @@ def pipeline_mine(ctx, **kwargs) -> None:
 @click.option(
     "--discover-first", is_flag=True,
     help="Run VoID discovery before mining.",
+)
+@click.option(
+    "--void-uri-base", default=None,
+    help=(
+        "Base URI for generated VoID partition IRIs "
+        "(default: sources.yaml value or built-in template)."
+    ),
 )
 @click.option(
     "--test", is_flag=True,

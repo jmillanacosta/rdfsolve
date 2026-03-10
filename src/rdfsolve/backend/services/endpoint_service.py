@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-import requests
+import warnings
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=Warning, module="requests")
+    import requests
 
 from rdfsolve.backend.database import Database
 

@@ -1,0 +1,50 @@
+# ─── RDFSolve SSSOM source registry ─────────────────────────────────────────
+#
+# Each entry defines an SSSOM mapping bundle for import into the rdfsolve
+# database.  The seeding script (scripts/seed_sssom_mappings.py) reads this
+# file, downloads the archive, extracts every *.sssom.tsv file inside it,
+# converts each one to a SsomMapping JSON-LD file, and writes the results to
+# docker/mappings/sssom/.
+#
+# Fields
+# ──────
+#   name        – unique identifier; used as the output file prefix and as the
+#                 source_name recorded in every mapping edge
+#   provider    – human-readable provider / organisation name
+#   url         – direct download URL; may be a .tgz, .tar.gz, .zip, or a
+#                 plain .sssom.tsv file
+#   description – optional free-text description
+#   license     – SPDX expression or URL (optional)
+#   homepage    – upstream homepage (optional)
+#   type        – optional, one of {class_mappings, property_mappings}; if
+
+- name: ols_mappings
+  provider: "EMBL-EBI (UK)"
+  url: "https://ftp.ebi.ac.uk/pub/databases/spot/ols/latest/mappings_sssom.tgz"
+  description: >-
+    OLS (Ontology Lookup Service) cross-ontology mappings exported in SSSOM
+    format by EMBL-EBI.  Each .sssom.tsv file inside the archive covers one
+    source ontology and maps its terms to equivalent or related terms in other
+    ontologies.
+  license: "https://www.ebi.ac.uk/about/terms-of-use"
+  homepage: "https://www.ebi.ac.uk/ols4"
+
+
+
+### PROPERTY MAPPINGS (a few only, for now)
+
+- name: ro_to_biotop
+  provider: "oborel"  # Fix with proper metadata
+  type: property_mappings
+  url: "https://raw.githubusercontent.com/oborel/obo-relations/refs/heads/master/src/mappings/ro-to-biotop.sssom.tsv"
+
+- name: ro_to_sio
+  provider: "oborel"
+  type: property_mappings
+  url: "https://raw.githubusercontent.com/oborel/obo-relations/refs/heads/master/src/mappings/ro-to-sio.sssom.tsv"
+  description: "RO to SIO mappings, see https://github.com/oborel/obo-relations/issues/426"
+
+- name: ro_to_wikidata
+  provider: "oborel"
+  type: property_mappings
+  url: "https://raw.githubusercontent.com/oborel/obo-relations/refs/heads/master/src/mappings/ro-to-wikidata.sssom.tsv"

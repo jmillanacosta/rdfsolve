@@ -19,7 +19,7 @@ from rdfsolve.backend.database import Database
 logger = logging.getLogger(__name__)
 
 # All strategy values that identify a mapping (not a schema)
-_MAPPING_STRATEGIES = {"instance_matcher", "semra_import", "inferenced"}
+_MAPPING_STRATEGIES = {"instance_matcher", "semra_import", "inferenced", "sssom_import"}
 
 
 class MappingService:

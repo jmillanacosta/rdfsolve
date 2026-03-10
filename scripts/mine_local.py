@@ -163,6 +163,27 @@ def _build_parser() -> argparse.ArgumentParser:
             "references instead of rdfs:Resource"
         ),
     )
+    mining.add_argument(
+        "--author", action="append", dest="authors_raw",
+        metavar="NAME|ORCID",
+        help=(
+            "Credit an author in output provenance metadata. "
+            "Format: 'Full Name|0000-0000-0000-0000'. "
+            "The ORCID part is optional. "
+            "Repeat the flag for multiple authors."
+        ),
+    )
+    mining.add_argument(
+        "--one-shot", action="store_true", dest="one_shot",
+        help=(
+            "Mine using a single unbounded SELECT per pattern "
+            "type (no LIMIT/OFFSET, no fallback chain). "
+            "Recommended for local QLever endpoints where the "
+            "engine can return the full result in one response. "
+            "Records per-query wall time and row count in the "
+            "report for comparison against the fallback-chain run."
+        ),
+    )
 
     # ── Route: discover ───────────────────────────────────────────
     sub.add_parser(
@@ -252,6 +273,62 @@ def _get_bench(args: argparse.Namespace):
         return None
     from rdfsolve.tools.benchmark import BenchmarkCollector
     return BenchmarkCollector(output_dir=Path(args.output_dir))
+
+
+def _fetch_qlever_stats(
+    endpoint: str,
+    timeout: float = 10.0,
+) -> dict[str, str] | None:
+    """Fetch QLever build info from ``{endpoint}?cmd=stats``.
+
+    Returns a dict with ``git_hash_server`` and ``git_hash_index``
+    keys, or ``None`` if the endpoint does not expose stats or the
+    request fails.
+    """
+    import urllib.request
+    import urllib.error
+
+    url = endpoint.rstrip("/") + "?cmd=stats"
+    try:
+        req = urllib.request.Request(
+            url, headers={"Accept": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        result: dict[str, str] = {}
+        if "git-hash-server" in data:
+            result["git_hash_server"] = str(data["git-hash-server"])
+        if "git-hash-index" in data:
+            result["git_hash_index"] = str(data["git-hash-index"])
+        return result or None
+    except Exception as exc:
+        logger.debug(
+            "Could not fetch QLever stats from %s: %s", url, exc,
+        )
+        return None
+
+
+def _parse_authors(
+    args: argparse.Namespace,
+) -> list[dict[str, str]] | None:
+    """Parse ``--author`` CLI values into the ``[{name, orcid}]`` format.
+
+    Each ``--author`` value should be ``"Full Name|0000-0000-0000-0000"``.
+    The ORCID part is optional; ``"Full Name"`` alone is also accepted.
+
+    Returns ``None`` when no ``--author`` flags were given.
+    """
+    raw: list[str] = getattr(args, "authors_raw", None) or []
+    if not raw:
+        return None
+    result: list[dict[str, str]] = []
+    for item in raw:
+        if "|" in item:
+            name, orcid = item.split("|", 1)
+            result.append({"name": name.strip(), "orcid": orcid.strip()})
+        else:
+            result.append({"name": item.strip()})
+    return result or None
 
 
 def _embed_benchmark_in_report(
@@ -366,7 +443,7 @@ def _route_discover(args: argparse.Namespace) -> dict[str, Any]:
                 )
 
                 # ── Export: VoID (Turtle) ────────────────────────
-                _tag = "discovered"
+                _tag = "discovered_remote"
                 void_path = out / f"{name}_{_tag}_void.ttl"
                 void_graph.serialize(
                     destination=str(void_path), format="turtle",
@@ -488,19 +565,9 @@ def _route_mine(args: argparse.Namespace) -> dict[str, Any]:
     """Mine schemas from remote endpoints (wraps mine_all_sources)."""
     from rdfsolve.api import mine_all_sources
 
-    def _on_progress(
-        name: str, idx: int, total: int, error: str | None,
-    ) -> None:
-        if error == "skipped":
-            _progress(name, idx, total, "SKIP: no endpoint")
-        elif error:
-            _progress(name, idx, total, f"FAIL: {error[:120]}")
-        else:
-            _progress(name, idx, total, "OK")
+    bench = _get_bench(args)
 
-    # If a name filter is given, we need to create a filtered sources
-    # file. mine_all_sources accepts a path, not entries, so we write
-    # a temp YAML when filtering.
+    # Build (or filter) the sources path once.
     sources_path = args.sources
     if args.name_filter:
         entries = _load_entries(args.sources, args.name_filter)
@@ -512,7 +579,8 @@ def _route_mine(args: argparse.Namespace) -> dict[str, Any]:
         import yaml
 
         tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", delete=False, prefix="rdfsolve_filtered_",
+            mode="w", suffix=".yaml", delete=False,
+            prefix="rdfsolve_filtered_",
         )
         yaml.dump(
             [dict(e) for e in entries], tmp,
@@ -520,6 +588,107 @@ def _route_mine(args: argparse.Namespace) -> dict[str, Any]:
         )
         tmp.close()
         sources_path = tmp.name
+
+    untyped = getattr(args, "untyped_as_classes", False)
+
+    if bench:
+        # Per-dataset bench tracking: mine one source at a time so
+        # each RunMetrics covers exactly one dataset.
+        entries = _load_entries(sources_path, None)
+        total = len(entries)
+        all_succeeded: list[str] = []
+        all_failed: list[dict] = []
+        all_skipped: list[str] = []
+
+        for idx, entry in enumerate(entries, 1):
+            name = entry.get("name", "")
+            endpoint = entry.get("endpoint", "")
+            if not endpoint:
+                all_skipped.append(name)
+                _progress(name, idx, total, "SKIP: no endpoint")
+                continue
+
+            def _on_progress_one(
+                n: str, _i: int, _t: int, error: str | None,
+            ) -> None:
+                if error == "skipped":
+                    _progress(n, idx, total, "SKIP: no endpoint")
+                elif error:
+                    _progress(n, idx, total, f"FAIL: {error[:120]}")
+                else:
+                    _progress(n, idx, total, "OK")
+
+            import tempfile as _tmp
+            import yaml as _yaml
+            _tf = _tmp.NamedTemporaryFile(
+                mode="w", suffix=".yaml", delete=False,
+                prefix="rdfsolve_one_",
+            )
+            _yaml.dump(
+                [dict(entry)], _tf,
+                default_flow_style=False, allow_unicode=True,
+            )
+            _tf.close()
+
+            try:
+                _tag = (
+                    "mined_remote_untyped" if untyped
+                    else "mined_remote"
+                )
+                rpt_path = (
+                    Path(args.output_dir)
+                    / f"{name}_{_tag}_report.json"
+                )
+                with bench.track(
+                    name, method="mine", endpoint=endpoint,
+                ) as run:
+                    res = mine_all_sources(
+                        sources=_tf.name,
+                        output_dir=args.output_dir,
+                        fmt=args.fmt,
+                        chunk_size=args.chunk_size,
+                        class_batch_size=args.class_batch_size,
+                        timeout=args.timeout,
+                        counts=not args.no_counts,
+                        reports=True,
+                        untyped_as_classes=untyped,
+                        authors=_parse_authors(args),
+                        on_progress=_on_progress_one,
+                    )
+                    succeeded_one = res.get("succeeded", [])
+                    run.classes_found = 0  # filled from report below
+                    run.output_files = {
+                        "report": str(rpt_path),
+                    }
+                _embed_benchmark_in_report(run, bench, rpt_path)
+                if succeeded_one:
+                    all_succeeded.extend(succeeded_one)
+                else:
+                    all_failed.extend(res.get("failed", []))
+            except Exception as exc:
+                msg = str(exc)[:120]
+                _progress(name, idx, total, f"FAIL: {msg}")
+                all_failed.append({"dataset": name, "error": str(exc)})
+
+        if bench:
+            bench.write_summary_csv()
+
+        return {
+            "succeeded": all_succeeded,
+            "failed": all_failed,
+            "skipped": all_skipped,
+        }
+
+    # No benchmarking — single bulk call.
+    def _on_progress(
+        name: str, idx: int, total: int, error: str | None,
+    ) -> None:
+        if error == "skipped":
+            _progress(name, idx, total, "SKIP: no endpoint")
+        elif error:
+            _progress(name, idx, total, f"FAIL: {error[:120]}")
+        else:
+            _progress(name, idx, total, "OK")
 
     result = mine_all_sources(
         sources=sources_path,
@@ -530,9 +699,8 @@ def _route_mine(args: argparse.Namespace) -> dict[str, Any]:
         timeout=args.timeout,
         counts=not args.no_counts,
         reports=True,
-        untyped_as_classes=getattr(
-            args, "untyped_as_classes", False,
-        ),
+        untyped_as_classes=untyped,
+        authors=_parse_authors(args),
         on_progress=_on_progress,
     )
     return result
@@ -610,7 +778,7 @@ def _discover_void_for_local(
     )
 
     # ── Export: VoID (Turtle) ────────────────────────────
-    _tag = "discovered_qlever"
+    _tag = "discovered_local"
     void_path = out / f"{name}_{_tag}_void.ttl"
     void_graph.serialize(destination=str(void_path), format="turtle")
 
@@ -693,8 +861,14 @@ def _mine_single_local(
     """
     from rdfsolve.miner import mine_schema as _mine
 
-    _tag = "mined_qlever"
+    _tag = "mined_local"
+    if getattr(args, "untyped_as_classes", False):
+        _tag = "mined_local_untyped"
     rpt_path = out / f"{name}_{_tag}_report.json"
+
+    qlever_stats = _fetch_qlever_stats(
+        endpoint, timeout=args.timeout,
+    )
 
     schema = _mine(
         endpoint_url=endpoint,
@@ -709,6 +883,9 @@ def _mine_single_local(
         untyped_as_classes=getattr(
             args, "untyped_as_classes", False,
         ),
+        authors=_parse_authors(args),
+        qlever_version=qlever_stats,
+        one_shot=getattr(args, "one_shot", False),
     )
 
     # Override the endpoint used for VoID / JSON-LD export URIs
@@ -746,6 +923,7 @@ def _mine_single_local(
         "classes": len(schema.get_classes()),
         "properties": len(schema.get_properties()),
         "files": result_files,
+        "report_path": str(rpt_path),
     }
 
 
@@ -781,7 +959,7 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
             else:
                 _progress(
                     name, idx, total,
-                    "DISCOVER: no VoID found",
+                    "DISCOVER: no VoID partitions found",
                 )
 
         mine_result = _mine_single_local(
@@ -810,7 +988,7 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
                     run.classes_found = mr["classes"]
                     run.properties_found = mr["properties"]
                     run.output_files = mr["files"]
-                rpt = out / f"{name}_mined_qlever_report.json"
+                rpt = Path(mr["report_path"])
                 _embed_benchmark_in_report(run, bench, rpt)
             else:
                 _do_mine_one(name, endpoint, 1, 1)
@@ -878,7 +1056,7 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
                     run.classes_found = mr["classes"]
                     run.properties_found = mr["properties"]
                     run.output_files = mr["files"]
-                rpt = out / f"{name}_mined_qlever_report.json"
+                rpt = Path(mr["report_path"])
                 _embed_benchmark_in_report(run, bench, rpt)
             else:
                 _do_mine_one(
@@ -908,6 +1086,70 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
 # Route: generate-qleverfile
 # ═══════════════════════════════════════════════════════════════════
 
+
+def _nq_encode_cmd() -> str:
+    """Return a ``python3 -c "..."`` command that:
+
+    1. **Joins continuation lines** — some bio2rdf NQ files contain IRIs that
+       are wrapped across two lines (e.g. the IRI opens with ``<`` on one
+       line and the closing ``>`` appears at the start of the next).  QLever
+       requires every quad to be on a single line, so we re-join such pairs
+       before any other processing.
+
+    2. **Percent-encodes spaces** inside angle-bracket IRIs, but *only*
+       outside quoted string literals (tracking ``"..."`` state so that
+       ``"value < 10"`` is never touched).
+
+    The base64 payload avoids all shell-quoting issues — the b64 alphabet
+    ([A-Za-z0-9+/=]) is safe inside both single and double quotes with no
+    escaping needed.
+    """
+    import base64
+
+    code = (
+        "import sys\n"
+        # ── enc(): encode spaces in IRIs, quote-aware ──────────────────
+        "def enc(ln):\n"
+        "    out=[]; i=0; n=len(ln); q=False; esc=False\n"
+        "    while i<n:\n"
+        "        c=ln[i]\n"
+        "        if q:\n"
+        "            out.append(c)\n"
+        "            if esc: esc=False\n"
+        "            elif c=='\\\\': esc=True\n"
+        "            elif c=='\"': q=False\n"
+        "        elif c=='\"': out.append(c); q=True\n"
+        "        elif c=='<':\n"
+        "            j=i+1\n"
+        "            while j<n and ln[j]!='>' : j+=1\n"
+        "            if j<n:\n"
+        "                out.append('<'+ln[i+1:j].replace(' ','%20')+'>'); i=j\n"
+        "            else: out.append(c)\n"
+        "        else: out.append(c)\n"
+        "        i+=1\n"
+        "    return ''.join(out)\n"
+        # ── main loop: join lines whose IRI was split across a newline ──
+        # Detect a split by counting raw '<' and '>' characters.  We do NOT
+        # track quoting here: a '"' inside an angle-bracket IRI is just
+        # content and must not suppress the '>' counter.  A well-formed
+        # complete NQ line always has balanced '<'/'>' counts.
+        "inp=sys.stdin.buffer; out=sys.stdout\n"
+        "pending=''\n"
+        "for raw in inp:\n"
+        "    ln=pending+raw.decode('utf-8','replace')\n"
+        "    pending=''\n"
+        "    if ln.count('<')>ln.count('>'):\n"
+        "        pending=ln.rstrip('\\n')\n"
+        "        continue\n"
+        "    out.write(enc(ln))\n"
+        "if pending:\n"
+        "    out.write(enc(pending+'\\n'))\n"
+        "out.flush()\n"
+    )
+    b64 = base64.b64encode(code.encode()).decode()
+    return f'python3 -u -c "import base64,sys; exec(base64.b64decode(\\"{b64}\\").decode())"'
+
+
 # Qleverfile template — INI-style config consumed by `qlever` CLI.
 _QLEVERFILE_TEMPLATE = """\
 # Qleverfile for {name}
@@ -929,16 +1171,17 @@ FORMAT            = {rdf_format}
 DESCRIPTION       = {name} — local RDF dataset for rdfsolve schema mining
 
 [index]
-INPUT_FILES       = {input_files}
-CAT_INPUT_FILES   = {cat_input_files}
-SETTINGS_JSON     = {settings_json}
-PARALLEL_PARSING  = false
+INPUT_FILES          = {input_files}
+CAT_INPUT_FILES      = {cat_input_files}
+SETTINGS_JSON        = {settings_json}
+PARALLEL_PARSING     = true
+PARSER_BUFFER_SIZE   = 15MB
 
 [server]
 PORT              = {port}
 ACCESS_TOKEN      = {access_token}
-MEMORY_FOR_QUERIES = 5G
-TIMEOUT           = 120s
+MEMORY_FOR_QUERIES = 10G
+TIMEOUT           = 1000s
 
 [runtime]
 SYSTEM = {runtime}
@@ -950,7 +1193,7 @@ UI_CONFIG = default
 
 
 def _detect_data_format(entry: Any) -> str | None:
-    """Return ``True``-ish format string if the entry has any download field.
+    """Return format string if the entry has any download field.
 
     The return value is a short label used for logging only.  The actual
     Qleverfile construction is handled generically by
@@ -1060,6 +1303,8 @@ def _build_qleverfile(
                 has_gz = True
             if low.endswith(".xz"):
                 has_xz = True
+            if low.endswith(".zip") or low.endswith(".tar.gz") or low.endswith(".tgz"):
+                has_archive = True
 
         if suffix in ("tar_gz", "tgz", "zip"):
             has_archive = True
@@ -1081,7 +1326,8 @@ def _build_qleverfile(
         cat_input_files = (
             "( zcat ${INPUT_FILES} 2>/dev/null || "
             "cat ${INPUT_FILES} 2>/dev/null ) | "
-            "grep -v '^$$' || true"
+            "grep -v '^$' | "
+            + _nq_encode_cmd()
         )
     elif has_nt:
         rdf_format = "nt"
@@ -1089,7 +1335,8 @@ def _build_qleverfile(
         cat_input_files = (
             "( zcat ${INPUT_FILES} 2>/dev/null || "
             "cat ${INPUT_FILES} 2>/dev/null ) | "
-            "grep -v '^$$' || true"
+            "grep -v '^$' | "
+            + _nq_encode_cmd()
         )
     elif has_n3:
         rdf_format = "ttl"
@@ -1160,7 +1407,10 @@ def _build_qleverfile(
             "print(f'Extracted {len(z.namelist())} files'); z.close()\"; "
             'done'
         )
-        # After extraction, find RDF files in subdirectories and move them up
+        # After extraction, find RDF files in subdirectories and move them up.
+        # If a file with the same name already exists in the target dir,
+        # prefix it with its parent directory name to avoid overwrites
+        # (e.g. subdir/WP9.ttl → subdir__WP9.ttl).
         steps.append(
             "echo 'Collecting RDF files from subdirectories …' "
             "&& find . -mindepth 2 \\( "
@@ -1168,7 +1418,20 @@ def _build_qleverfile(
             '-name "*.nt.gz" -o -name "*.nq" -o -name "*.nq.gz" -o '
             '-name "*.n3" -o -name "*.owl" -o -name "*.rdf" -o '
             '-name "*.rdf.gz" -o -name "*.jsonld" '
-            "\\) -exec mv -n {} . \\; 2>/dev/null || true"
+            "\\) -print0 | while IFS= read -r -d '' fp; do "
+            'bn=$(basename "$fp"); '
+            'dest=$bn; '
+            'if [ -e "./$dest" ]; then '
+            'dn=$(dirname "$fp" | tr "/" "_" | sed "s/^\\._//"); '
+            'dest=$dn"__"$bn; '
+            'fi; '
+            'n=1; '
+            'while [ -e "./$dest" ]; do '
+            'dest=$n"__"$bn; '
+            'n=$((n+1)); '
+            'done; '
+            'mv "$fp" "./$dest"; '
+            "done 2>/dev/null || true"
         )
 
     # Decompress .xz files
@@ -1239,13 +1502,29 @@ def _build_qleverfile(
     get_data_cmd = " && ".join(steps)
 
     # QLever uses Python's configparser (ExtendedInterpolation) to
-    # parse Qleverfiles.  Both ``$`` and ``%`` are special:
-    #   - ``${section:key}`` is an interpolation reference
-    #   - ``%`` triggers BasicInterpolation-style errors
-    # Escape bare ``$`` (but not ``${...}`` which QLever uses for
-    # its own variables like ``${INPUT_FILES}``) and all ``%``.
+    # parse Qleverfiles.
+    #
+    # Under ExtendedInterpolation:
+    #   - ``${section:key}``  →  variable interpolation (QLever uses this
+    #     for its own variables like ``${INPUT_FILES}``)
+    #   - bare ``$x``         →  triggers "$ must be followed by $ or {"
+    #     so bare ``$`` must be escaped as ``$$``
+    #   - ``%``               →  passed through unchanged (ExtendedInterpolation
+    #     does NOT treat % as special; only BasicInterpolation does)
+    #
+    # Therefore: escape bare ``$`` → ``$$`` only.  Do NOT touch ``%``.
+    # If cat_input_files contains a placeholder for {workdir}, expand it
+    # now so the resulting command contains the absolute helper path.
+    try:
+        cat_input_files = cat_input_files.format(workdir=workdir)
+    except Exception:
+        # If format fails for any reason, fall back to the raw string.
+        pass
+
+    # Apply escaping for bare $ (but not ${...}) so ExtendedInterpolation
+    # in configparser doesn't raise errors when parsing the Qleverfile.
     get_data_cmd = re.sub(r'\$(?!\{)', '$$', get_data_cmd)
-    get_data_cmd = get_data_cmd.replace('%', '%%')
+    cat_input_files = re.sub(r'\$(?!\{)', '$$', cat_input_files)
 
     return _QLEVERFILE_TEMPLATE.format(
         name=name,

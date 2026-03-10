@@ -274,13 +274,27 @@ def pick_label(
     rdfs_label: Optional[str],
     dc_title: Optional[str],
     uri: str,
+    iao_label: Optional[str] = None,
+    skos_pref_label: Optional[str] = None,
+    skos_alt_label: Optional[str] = None,
 ) -> str:
     """Choose the best human-readable label.
 
-    Priority: ``rdfs:label`` > ``dc:title`` > local name from URI.
+    Priority:
+    1. ``rdfs:label`` / ``skos:prefLabel`` (most standard)
+    2. ``dc:title`` / ``dcterms:title`` (title fallback)
+    3. ``IAO_0000118`` alternate term (OBO ontologies)
+    4. ``skos:altLabel`` (synonym)
+    5. Local name from URI
     """
     if rdfs_label and rdfs_label.strip():
         return rdfs_label.strip()
+    if skos_pref_label and skos_pref_label.strip():
+        return skos_pref_label.strip()
     if dc_title and dc_title.strip():
         return dc_title.strip()
+    if iao_label and iao_label.strip():
+        return iao_label.strip()
+    if skos_alt_label and skos_alt_label.strip():
+        return skos_alt_label.strip()
     return get_local_name(uri)

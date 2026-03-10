@@ -32,11 +32,14 @@ import json
 import logging
 import secrets
 import time
+import warnings
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, ClassVar, Literal
 
-import requests
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=Warning, module="requests")
+    import requests
 from rdflib import Graph
 
 logger = logging.getLogger(__name__)

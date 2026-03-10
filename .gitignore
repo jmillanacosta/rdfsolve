@@ -926,6 +926,26 @@ notes/*
 docker/*
 
 # ---------------------------------------------------------------------------
+# QLever workdirs and generated index data — never commit
+# ---------------------------------------------------------------------------
+# These are large, machine-generated files produced by `qlever get-data`,
+# `qlever index`, and the pipeline.  They are regenerated on demand and must
+# never be pushed to GitHub.
+data/rdf/
+results/
+
+# Individual QLever artefacts (belt-and-suspenders, in case paths change)
+Qleverfile
+*.index-log.txt
+*.server-log.txt
+*.index-warn-summary.txt
+*.settings.json
+*.meta-data.json
+*.index.done
+.index.done
+*.partial-vocab.*
+
+# ---------------------------------------------------------------------------
 # JSON-LD schema and mapping files
 # ---------------------------------------------------------------------------
 # All *.jsonld files are generated artefacts — output of the schema miner or

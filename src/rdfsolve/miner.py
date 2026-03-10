@@ -47,6 +47,7 @@ from rdfsolve.models import (
     AboutMetadata,
     MinedSchema,
     MiningReport,
+    OneShotQueryResult,
     PhaseReport,
     QueryStats,
     SchemaPattern,
@@ -139,25 +140,83 @@ WHERE {{
     return SparqlHelper.prepare_paginated_query(q)
 
 
+def _build_typed_object_query_plain(
+    graph_uris: list[str] | None,
+) -> str:
+    """Query 1 — typed-object patterns, no LIMIT/OFFSET placeholders.
+
+    Intended for one-shot execution against engines (e.g. QLever)
+    that can return an unbounded result set in a single response.
+    """
+    g_open, g_close = _graph_clause(graph_uris)
+    return f"""\
+SELECT DISTINCT ?sc ?p ?oc
+WHERE {{
+  {g_open}
+    ?s ?p ?o .
+    ?s a ?sc .
+    ?o a ?oc .
+  {g_close}
+}}"""
+
+
+def _build_literal_query_plain(
+    graph_uris: list[str] | None,
+) -> str:
+    """Query 2 — literal patterns, no LIMIT/OFFSET placeholders."""
+    g_open, g_close = _graph_clause(graph_uris)
+    return f"""\
+SELECT DISTINCT ?sc ?p ?dt
+WHERE {{
+  {g_open}
+    ?s ?p ?o .
+    ?s a ?sc .
+    FILTER(isLiteral(?o))
+    BIND(DATATYPE(?o) AS ?dt)
+  {g_close}
+}}"""
+
+
+def _build_untyped_uri_query_plain(
+    graph_uris: list[str] | None,
+) -> str:
+    """Query 3 — untyped-URI patterns, no LIMIT/OFFSET placeholders."""
+    g_open, g_close = _graph_clause(graph_uris)
+    return f"""\
+SELECT DISTINCT ?sc ?p
+WHERE {{
+  {g_open}
+    ?s ?p ?o .
+    ?s a ?sc .
+    FILTER(isURI(?o))
+    FILTER NOT EXISTS {{ ?o a ?any }}
+  {g_close}
+}}"""
+
+
 def _build_label_query(
     uris: list[str],
     graph_uris: list[str] | None,
 ) -> str:
-    """Fetch rdfs:label and dc:title for a set of URIs.
+    """Fetch labels for a set of URIs.
 
-    Returns bindings with ``?uri``, ``?rdfsLabel``, ``?dcTitle``.
+    Returns bindings with ``?uri``, ``?rdfsLabel``, ``?dcTitle``,
+    ``?iaoLabel``, ``?skosPrefLabel``, ``?skosAltLabel``.
     Priority is resolved in Python via :func:`pick_label`.
     """
     values = " ".join(f"(<{u}>)" for u in uris)
     g_open, g_close = _graph_clause(graph_uris)
     q = f"""\
-SELECT ?uri ?rdfsLabel ?dcTitle
+SELECT ?uri ?rdfsLabel ?dcTitle ?iaoLabel ?skosPrefLabel ?skosAltLabel
 WHERE {{
   VALUES (?uri) {{ {values} }}
   {g_open}
     OPTIONAL {{ ?uri <http://www.w3.org/2000/01/rdf-schema#label> ?rdfsLabel . }}
     OPTIONAL {{ ?uri <http://purl.org/dc/elements/1.1/title> ?dcTitle . }}
     OPTIONAL {{ ?uri <http://purl.org/dc/terms/title> ?dcTitle . }}
+    OPTIONAL {{ ?uri <http://purl.obolibrary.org/obo/IAO_0000118> ?iaoLabel . }}
+    OPTIONAL {{ ?uri <http://www.w3.org/2004/02/skos/core#prefLabel> ?skosPrefLabel . }}
+    OPTIONAL {{ ?uri <http://www.w3.org/2004/02/skos/core#altLabel> ?skosAltLabel . }}
   {g_close}
 }}"""
     return q
@@ -855,6 +914,9 @@ class SchemaMiner:
         report_path: str | Path | None = None,
         filter_service_namespaces: bool = True,
         untyped_as_classes: bool = False,
+        authors: list[dict[str, str]] | None = None,
+        qlever_version: dict[str, str] | None = None,
+        one_shot: bool = False,
     ) -> None:
         self.endpoint_url = endpoint_url
         self.graph_uris: list[str] | None = (
@@ -871,6 +933,9 @@ class SchemaMiner:
         self.unsafe_paging = unsafe_paging
         self.filter_service_namespaces = filter_service_namespaces
         self.untyped_as_classes = untyped_as_classes
+        self.authors = authors
+        self.qlever_version = qlever_version
+        self.one_shot = one_shot
         self._helper = SparqlHelper(
             endpoint_url, timeout=timeout,
         )
@@ -898,10 +963,22 @@ class SchemaMiner:
         *report_path* was given at construction time, the JSON is
         flushed to disk after each phase completes.
         """
-        strategy = (
-            "miner/two-phase" if self.two_phase
-            else "miner"
-        )
+        # Build strategy string with all active flags
+        if self.two_phase:
+            strategy = "miner/two-phase"
+            if self.counts:
+                strategy += "+counts"
+            if self.untyped_as_classes:
+                strategy += "+untyped-as-classes"
+        else:
+            strategy = "miner"
+            if self.counts:
+                strategy += "+counts"
+            if self.untyped_as_classes:
+                strategy += "+untyped-as-classes"
+
+        started_at = datetime.now(timezone.utc).isoformat()
+
         # Initialise analytics collector
         report = MiningReport(
             dataset_name=dataset_name,
@@ -910,9 +987,7 @@ class SchemaMiner:
             strategy=strategy,
             rdfsolve_version=VERSION,
             python_version=sys.version,
-            started_at=datetime.now(
-                timezone.utc,
-            ).isoformat(),
+            started_at=started_at,
             finished_at=None,
             total_duration_s=0.0,
             total_queries_sent=0,
@@ -922,6 +997,8 @@ class SchemaMiner:
             class_count=0,
             property_count=0,
             unique_uris_labelled=0,
+            authors=self.authors,
+            qlever_version=self.qlever_version,
             config={
                 "chunk_size": self.chunk_size,
                 "class_chunk_size": self.class_chunk_size,
@@ -929,6 +1006,7 @@ class SchemaMiner:
                 "timeout": self.timeout,
                 "counts": self.counts,
                 "two_phase": self.two_phase,
+                "one_shot": self.one_shot,
                 "untyped_as_classes": self.untyped_as_classes,
             },
         )
@@ -938,7 +1016,10 @@ class SchemaMiner:
 
         t0 = time.monotonic()
 
-        if self.two_phase:
+        one_shot_results: list[OneShotQueryResult] | None = None
+        if self.one_shot:
+            patterns, one_shot_results = self._mine_one_shot()
+        elif self.two_phase:
             patterns = self._mine_two_phase()
         else:
             patterns = self._mine_single_pass()
@@ -988,7 +1069,12 @@ class SchemaMiner:
             property_count=len(properties),
             uris_labelled=len(uris_before),
         )
+        if one_shot_results is not None:
+            self._rc.report.one_shot_results = one_shot_results
+            self._rc.flush()
         self.last_report = self._rc.report
+
+        finished_at = self._rc.report.finished_at
 
         about = AboutMetadata.build(
             endpoint=self.endpoint_url,
@@ -996,6 +1082,11 @@ class SchemaMiner:
             graph_uris=self.graph_uris,
             pattern_count=len(patterns),
             strategy=strategy,
+            started_at=started_at,
+            finished_at=finished_at,
+            total_duration_s=self._rc.report.total_duration_s,
+            authors=self.authors,
+            qlever_version=self.qlever_version,
         )
 
         schema = MinedSchema(patterns=patterns, about=about)
@@ -1057,6 +1148,130 @@ class SchemaMiner:
         self._rc.finish_phase(phase, items=len(untyped))
 
         return patterns
+
+    # ---- one-shot mining (baseline for QLever comparison) ---------
+
+    def _mine_one_shot(
+        self,
+    ) -> tuple[list[SchemaPattern], list[OneShotQueryResult]]:
+        """Run each pattern query as a single unbounded SELECT.
+
+        No LIMIT/OFFSET, no bisection, no pagination fallback.
+        Intended for local QLever endpoints that can return an
+        unlimited result set in one HTTP response.
+
+        Returns
+        -------
+        patterns:
+            All patterns extracted from successful queries.
+            Patterns from failed queries are absent (not recovered).
+        results:
+            One :class:`OneShotQueryResult` per query type,
+            recording wall-clock time, row count, and any error.
+            These are stored in :attr:`MiningReport.one_shot_results`
+            so they can be compared against the fallback-chain run.
+        """
+        oc_default = (
+            "http://www.w3.org/2002/07/owl#Class"
+            if self.untyped_as_classes
+            else "Resource"
+        )
+
+        _specs: list[tuple[str, str]] = [
+            ("typed-object",
+             _build_typed_object_query_plain(self.graph_uris)),
+            ("literal",
+             _build_literal_query_plain(self.graph_uris)),
+            ("untyped-uri",
+             _build_untyped_uri_query_plain(self.graph_uris)),
+        ]
+
+        patterns: list[SchemaPattern] = []
+        results: list[OneShotQueryResult] = []
+
+        for qtype, query in _specs:
+            phase = self._rc.start_phase(f"one-shot/{qtype}")
+            t0 = time.monotonic()
+            try:
+                raw = self._helper.select(
+                    query,
+                    purpose=f"one-shot/{qtype}",
+                )
+                duration = time.monotonic() - t0
+                bindings = (
+                    raw.get("results", {}).get("bindings", [])
+                )
+                row_count = len(bindings)
+                logger.info(
+                    "One-shot %s: %d rows in %.1fs",
+                    qtype, row_count, duration,
+                )
+                self._rc.record_query(
+                    f"one-shot/{qtype}", duration,
+                )
+                self._rc.finish_phase(phase, items=row_count)
+                results.append(OneShotQueryResult(
+                    query_type=qtype,
+                    success=True,
+                    duration_s=round(duration, 3),
+                    row_count=row_count,
+                ))
+
+                if qtype == "typed-object":
+                    for b in bindings:
+                        sc = b.get("sc", {}).get("value", "")
+                        p = b.get("p", {}).get("value", "")
+                        oc = b.get("oc", {}).get("value", "")
+                        if sc and p and oc:
+                            patterns.append(SchemaPattern(
+                                subject_class=sc,
+                                property_uri=p,
+                                object_class=oc,
+                            ))
+                elif qtype == "literal":
+                    for b in bindings:
+                        sc = b.get("sc", {}).get("value", "")
+                        p = b.get("p", {}).get("value", "")
+                        dt = b.get("dt", {}).get("value")
+                        if sc and p:
+                            patterns.append(SchemaPattern(
+                                subject_class=sc,
+                                property_uri=p,
+                                object_class="Literal",
+                                datatype=dt if dt else None,
+                            ))
+                else:  # untyped-uri
+                    for b in bindings:
+                        sc = b.get("sc", {}).get("value", "")
+                        p = b.get("p", {}).get("value", "")
+                        if sc and p:
+                            patterns.append(SchemaPattern(
+                                subject_class=sc,
+                                property_uri=p,
+                                object_class=oc_default,
+                            ))
+
+            except Exception as exc:
+                duration = time.monotonic() - t0
+                logger.warning(
+                    "One-shot %s failed after %.1fs: %s",
+                    qtype, duration, exc,
+                )
+                self._rc.record_query(
+                    f"one-shot/{qtype}", duration, success=False,
+                )
+                self._rc.finish_phase(
+                    phase, items=0, error=str(exc),
+                )
+                results.append(OneShotQueryResult(
+                    query_type=qtype,
+                    success=False,
+                    duration_s=round(duration, 3),
+                    row_count=None,
+                    error=str(exc),
+                ))
+
+        return patterns, results
 
     # ---- two-phase mining (for large endpoints) -------------------
 
@@ -1865,8 +2080,20 @@ class SchemaMiner:
                     dc_lbl = b.get(
                         "dcTitle", {},
                     ).get("value")
+                    iao_lbl = b.get(
+                        "iaoLabel", {},
+                    ).get("value")
+                    skos_pref = b.get(
+                        "skosPrefLabel", {},
+                    ).get("value")
+                    skos_alt = b.get(
+                        "skosAltLabel", {},
+                    ).get("value")
                     label_map[uri] = pick_label(
                         rdfs_lbl, dc_lbl, uri,
+                        iao_label=iao_lbl,
+                        skos_pref_label=skos_pref,
+                        skos_alt_label=skos_alt,
                     )
             except Exception as e:
                 if hasattr(self, "_rc"):
@@ -1920,6 +2147,9 @@ def mine_schema(
     report_path: str | Path | None = None,
     filter_service_namespaces: bool = True,
     untyped_as_classes: bool = False,
+    authors: list[dict[str, str]] | None = None,
+    qlever_version: dict[str, str] | None = None,
+    one_shot: bool = False,
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`.
 
@@ -1952,6 +2182,10 @@ def mine_schema(
     two_phase:
         Use two-phase mining (default ``True``).  Pass ``False``
         for the legacy single-pass strategy.
+    one_shot:
+        Run each pattern query as a single unbounded SELECT with no
+        LIMIT/OFFSET and no fallback chain.  Intended for local
+        QLever endpoints.  When ``True``, ``two_phase`` is ignored.
     report_path:
         If given, write an analytics JSON report to this path.
         The file is updated incrementally after each mining phase.
@@ -1982,5 +2216,8 @@ def mine_schema(
         report_path=report_path,
         filter_service_namespaces=filter_service_namespaces,
         untyped_as_classes=untyped_as_classes,
+        authors=authors,
+        qlever_version=qlever_version,
+        one_shot=one_shot,
     )
     return miner.mine(dataset_name=dataset_name)

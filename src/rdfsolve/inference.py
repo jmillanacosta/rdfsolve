@@ -242,7 +242,7 @@ def seed_inferenced_mappings(
     """Infer over all mappings in *input_dir* and write to *output_dir*.
 
     Collects all ``*.jsonld`` files under *input_dir*
-    (``instance_matching/`` and ``semra/`` subdirs), runs
+    (``instance_matching/``, ``semra/``, and ``sssom/`` subdirs), runs
     :func:`infer_mappings`, and writes
     ``{output_dir}/{output_name}.jsonld``.
 
@@ -263,7 +263,7 @@ def seed_inferenced_mappings(
     root = Path(input_dir)
     input_paths: list[str] = []
 
-    for subdir_name in ("instance_matching", "semra"):
+    for subdir_name in ("instance_matching", "semra", "sssom"):
         subdir = root / subdir_name
         if subdir.exists():
             for f in sorted(subdir.glob("*.jsonld")):

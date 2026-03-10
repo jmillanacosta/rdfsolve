@@ -25,6 +25,7 @@ __all__ = [
     "graph_to_schema",
     "graph_to_shacl",
     "import_semra_source",
+    "import_sssom_source",
     "infer_mappings",
     "load_mapping_jsonld",
     "load_parser_from_file",
@@ -38,6 +39,7 @@ __all__ = [
     "seed_inferenced_mappings",
     "seed_instance_mappings",
     "seed_semra_mappings",
+    "seed_sssom_mappings",
     "to_jsonld_from_file",
     "to_linkml_from_file",
     "to_rdfconfig_from_file",
@@ -700,6 +702,7 @@ def mine_schema(
     two_phase: bool = True,
     report_path: Optional[str] = None,
     filter_service_namespaces: bool = True,
+    authors: Optional[List[Dict[str, str]]] = None,
 ) -> Dict[str, Any]:
     """Mine RDF schema from a SPARQL endpoint using SELECT queries.
 
@@ -743,6 +746,7 @@ def mine_schema(
         two_phase=two_phase,
         report_path=report_path,
         filter_service_namespaces=filter_service_namespaces,
+        authors=authors,
     )
     return schema.to_jsonld()
 
@@ -762,6 +766,7 @@ def mine_all_sources(
     reports: bool = True,
     filter_service_namespaces: bool = True,
     untyped_as_classes: bool = False,
+    authors: Optional[List[Dict[str, str]]] = None,
     on_progress: Optional[
         Callable[[str, int, int, Optional[str]], None]
     ] = None,
@@ -880,8 +885,13 @@ def mine_all_sources(
             )
 
         try:
+            _tag = (
+                "mined_remote_untyped"
+                if untyped_as_classes
+                else "mined_remote"
+            )
             rpt_path = (
-                out / f"{name}_report.json"
+                out / f"{name}_{_tag}_report.json"
                 if reports else None
             )
             schema = _mine(
@@ -898,10 +908,11 @@ def mine_all_sources(
                 report_path=rpt_path,
                 filter_service_namespaces=filter_service_namespaces,
                 untyped_as_classes=untyped_as_classes,
+                authors=authors,
             )
 
             if fmt in ("jsonld", "all"):
-                jsonld_path = out / f"{name}_schema.jsonld"
+                jsonld_path = out / f"{name}_{_tag}_schema.jsonld"
                 with open(jsonld_path, "w") as f:
                     json.dump(
                         schema.to_jsonld(), f, indent=2,
@@ -909,7 +920,7 @@ def mine_all_sources(
                 logger.info(f"  → {jsonld_path}")
 
             if fmt in ("void", "all"):
-                void_path = out / f"{name}_void.ttl"
+                void_path = out / f"{name}_{_tag}_void.ttl"
                 void_g = schema.to_void_graph()
                 void_g.serialize(
                     destination=str(void_path),
@@ -1657,4 +1668,66 @@ def seed_inferenced_mappings(
         transitivity=transitivity,
         generalisation=generalisation,
         chain_cutoff=chain_cutoff,
+    )
+
+
+def import_sssom_source(
+    entry: Dict[str, Any],
+    output_dir: str = "docker/mappings/sssom",
+) -> Dict[str, Any]:
+    """Download and convert one SSSOM source entry to JSON-LD files.
+
+    Thin wrapper around
+    :func:`rdfsolve.sssom_importer.import_sssom_source`.
+
+    For each ``.sssom.tsv`` file found inside the archive at
+    ``entry["url"]``, one JSON-LD file is written to *output_dir*::
+
+        {source_name}__{sssom_file_stem}.jsonld
+
+    Args:
+        entry: Dict with at least ``"name"`` and ``"url"`` keys, as found
+               in ``data/sssom_sources.yaml``.
+        output_dir: Directory to write output JSON-LD files.
+
+    Returns:
+        Summary dict with keys ``"succeeded"``, ``"failed"``,
+        ``"skipped"``.
+    """
+    from rdfsolve.sssom_importer import import_sssom_source as _import
+
+    return _import(entry=entry, output_dir=output_dir)
+
+
+def seed_sssom_mappings(
+    sssom_sources_yaml: str = "data/sssom_sources.yaml",
+    output_dir: str = "docker/mappings/sssom",
+    names: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Seed SSSOM mapping files for all (or selected) sources.
+
+    Thin wrapper around
+    :func:`rdfsolve.sssom_importer.seed_sssom_mappings`.
+
+    Reads *sssom_sources_yaml*, optionally filters to *names*, and calls
+    :func:`import_sssom_source` for each entry.
+
+    Args:
+        sssom_sources_yaml: Path to the SSSOM sources YAML file
+            (default: ``data/sssom_sources.yaml``).
+        output_dir: Directory for output JSON-LD files
+            (default: ``docker/mappings/sssom``).
+        names: Optional list of source names to restrict processing;
+               if ``None`` (default), all entries are processed.
+
+    Returns:
+        Aggregated summary with keys ``"succeeded"``, ``"failed"``,
+        ``"skipped"``.
+    """
+    from rdfsolve.sssom_importer import seed_sssom_mappings as _seed
+
+    return _seed(
+        sssom_sources_yaml=sssom_sources_yaml,
+        output_dir=output_dir,
+        names=names,
     )

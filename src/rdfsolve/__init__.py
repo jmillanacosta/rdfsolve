@@ -19,6 +19,8 @@ from .miner import SchemaMiner
 from .models import (
     AboutMetadata,
     LinkMLSchema,
+    Mapping,
+    MappingEdge,
     MinedSchema,
     SchemaPattern,
     SchemaTriple,
@@ -35,6 +37,8 @@ __all__ = [
     "VERSION",
     "AboutMetadata",
     "LinkMLSchema",
+    "Mapping",
+    "MappingEdge",
     "MinedSchema",
     "QueryResult",
     "ResultCell",

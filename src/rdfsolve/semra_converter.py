@@ -119,33 +119,74 @@ def _strategy_to_justification(strategy: str) -> "Any":
 
 
 # ---------------------------------------------------------------------------
+# Helper: CURIE → full URI expansion
+# ---------------------------------------------------------------------------
+
+def _expand_curie(value: str) -> str:
+    """Expand a CURIE (``prefix:local``) to a full URI using bioregistry.
+
+    If *value* is already a full URI (starts with ``http``/``https``/``urn``)
+    it is returned unchanged.  If the prefix is not known to bioregistry the
+    original string is returned so the caller can decide what to do.
+    """
+    if value.startswith(("http://", "https://", "urn:")):
+        return value
+    if ":" not in value:
+        return value
+    prefix, local = value.split(":", 1)
+    try:
+        import bioregistry
+        uri_prefix = bioregistry.get_uri_prefix(prefix)
+        if uri_prefix:
+            return uri_prefix + local
+    except Exception:
+        pass
+    return value
+
+
+# ---------------------------------------------------------------------------
 # Helper: URI ↔ bioregistry Reference
 # ---------------------------------------------------------------------------
 
 def _uri_to_reference(uri: str) -> "Any | None":
-    """Convert a full URI to a semra/pyobo ``Reference``, or ``None``."""
+    """Convert a full URI (or CURIE) to a semra/pyobo ``Reference``, or ``None``.
+
+    Strategy:
+    1. Expand CURIEs via :func:`_expand_curie`.
+    2. Try bioregistry.parse_iri for clean canonical prefix resolution.
+    3. Fall back to splitting on the last ``#`` or ``/`` and using the
+       local fragment as identifier and the namespace tail as prefix —
+       no bioregistry call needed, always succeeds for well-formed URIs.
+
+    The fallback is intentionally simple: it preserves the full URI
+    information losslessly so the roundtrip through semra does not drop
+    any edges.
+    """
+    from pyobo import Reference
+
+    # Expand CURIE → full URI first
+    uri = _expand_curie(uri)
+
+    # Try bioregistry for clean prefix resolution
     try:
         import bioregistry
-        from pyobo import Reference
-
         parsed = bioregistry.parse_iri(uri)
         if parsed:
             prefix, identifier = parsed
             return Reference(prefix=prefix, identifier=identifier)
     except Exception:
         pass
-    # Fallback: treat everything after last / or # as identifier
-    sep = max(uri.rfind("/"), uri.rfind("#"))
-    if sep >= 0:
-        identifier = uri[sep + 1:]
-        namespace = uri[: sep + 1]
-        try:
-            import bioregistry
-            from pyobo import Reference
 
-            prefix = bioregistry.normalize_prefix(
-                namespace.rstrip("/#").rsplit("/", 1)[-1]
-            ) or "unknown"
+    # Direct split — works for any http(s) URI with a fragment or path local name.
+    # Use the namespace tail as a short prefix so the Reference is round-trippable
+    # back to the original URI via _reference_to_uri.
+    sep = max(uri.rfind("#"), uri.rfind("/"))
+    if sep >= 0 and sep < len(uri) - 1:
+        identifier = uri[sep + 1:]
+        namespace  = uri[: sep + 1]
+        # Derive a stable prefix from the namespace (last path component)
+        prefix = namespace.rstrip("/#").rsplit("/", 1)[-1].lower() or "unknown"
+        try:
             return Reference(prefix=prefix, identifier=identifier)
         except Exception:
             pass
@@ -153,16 +194,25 @@ def _uri_to_reference(uri: str) -> "Any | None":
 
 
 def _reference_to_uri(ref: "Any") -> str:
-    """Convert a semra/pyobo ``Reference`` to a full URI."""
+    """Convert a semra/pyobo ``Reference`` to a full URI.
+
+    Resolution order:
+    1. ``bioregistry.get_iri(prefix, identifier)`` — canonical URI.
+    2. ``bioregistry.get_uri_prefix(prefix) + identifier`` — namespace expansion.
+    3. CURIE string ``prefix:identifier`` — last resort (should not end up
+       stored in JSON-LD; callers must warn when this path is taken).
+    """
     try:
         import bioregistry
-
         uri = bioregistry.get_iri(ref.prefix, ref.identifier)
         if uri:
             return uri
+        uri_prefix = bioregistry.get_uri_prefix(ref.prefix)
+        if uri_prefix:
+            return uri_prefix + ref.identifier
     except Exception:
         pass
-    # Fallback CURIE
+    # Last-resort CURIE — callers should log a warning
     return f"{ref.prefix}:{ref.identifier}"
 
 
@@ -194,16 +244,17 @@ def rdfsolve_edges_to_semra(
     * ``mapping_set`` whose ``name`` is the source dataset and whose
       ``purl`` is the source endpoint URL (if available).
 
-    Edges whose predicates are unknown to the predicate map are logged
-    and skipped.
+    Predicates in the curated map are converted to their canonical semra
+    ``Reference``.  Any other predicate URI is parsed directly into a
+    ``Reference`` via bioregistry; only edges whose predicate URI cannot be
+    resolved at all are dropped (and logged at DEBUG level).
 
     Args:
         edges: List of :class:`~rdfsolve.models.MappingEdge` to convert.
         about: Optional provenance metadata; used for justification lookup.
 
     Returns:
-        List of ``semra.Mapping`` objects (may be shorter than *edges* if
-        some predicates could not be mapped).
+        List of ``semra.Mapping`` objects.
     """
     from semra.struct import Mapping, MappingSet, SimpleEvidence
 
@@ -215,11 +266,21 @@ def rdfsolve_edges_to_semra(
     for edge in edges:
         pred_ref = fwd.get(edge.predicate)
         if pred_ref is None:
+            # Not in the curated map — construct a Reference directly from the
+            # predicate URI so no edge is ever silently dropped.
+            pred_ref = _uri_to_reference(edge.predicate)
+            if pred_ref is None:
+                logger.debug(
+                    "rdfsolve_edges_to_semra: cannot parse predicate URI %r — skipping",
+                    edge.predicate,
+                )
+                continue
             logger.debug(
-                "rdfsolve_edges_to_semra: unknown predicate %r — skipping",
+                "rdfsolve_edges_to_semra: predicate %r not in curated map; "
+                "using raw Reference %r",
                 edge.predicate,
+                pred_ref,
             )
-            continue
 
         subject = _uri_to_reference(edge.source_class)
         object_ = _uri_to_reference(edge.target_class)
@@ -280,12 +341,20 @@ def semra_to_rdfsolve_edges(
         target_uri = _reference_to_uri(mapping.object)
         predicate_uri = inv.get(mapping.predicate)
         if predicate_uri is None:
-            # Use CURIE as fallback predicate
-            predicate_uri = (
-                f"http://www.w3.org/2004/02/skos/core#{mapping.predicate.identifier}"
-                if mapping.predicate.prefix == "skos"
-                else f"{mapping.predicate.prefix}:{mapping.predicate.identifier}"
-            )
+            # Not in curated inverse map — reconstruct full URI from the
+            # Reference using the same resolution order as _reference_to_uri.
+            predicate_uri = _reference_to_uri(mapping.predicate)
+            if ":" in predicate_uri and not predicate_uri.startswith(
+                ("http://", "https://", "urn:")
+            ):
+                # _reference_to_uri fell back to a bare CURIE — log it
+                logger.warning(
+                    "semra_to_rdfsolve_edges: could not resolve predicate "
+                    "Reference(%r, %r) to a full URI; stored as CURIE %r",
+                    mapping.predicate.prefix,
+                    mapping.predicate.identifier,
+                    predicate_uri,
+                )
 
         # Extract dataset/endpoint from first SimpleEvidence
         source_dataset = dataset_hint

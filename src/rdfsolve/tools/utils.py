@@ -1,8 +1,11 @@
 """Utility functions for RDFSolve."""
 
+import warnings
 from typing import List
 
-import requests
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=Warning, module="requests")
+    import requests
 
 __all__ = [
     "IGNORE_graph_uris",

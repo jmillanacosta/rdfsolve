@@ -318,6 +318,9 @@ class SchemaPattern(BaseModel):
         return v
 
 
+_BASE_URI = "https://jmillanacosta.com/rdfsolve"
+
+
 class AboutMetadata(BaseModel):
     """Provenance metadata attached to every schema export."""
 
@@ -344,6 +347,53 @@ class AboutMetadata(BaseModel):
         description="Mining strategy used (e.g. 'miner', 'void')",
     )
 
+    # Versions
+    rdfsolve_version: Optional[str] = Field(
+        None, description="rdfsolve version string",
+    )
+    qlever_version: Optional[Dict[str, str]] = Field(
+        None,
+        description=(
+            "QLever build info fetched from the endpoint's ?cmd=stats: "
+            '{"git_hash_server": str, "git_hash_index": str}'
+        ),
+    )
+
+    # Timing
+    started_at: Optional[str] = Field(
+        None, description="ISO-8601 timestamp when mining started",
+    )
+    finished_at: Optional[str] = Field(
+        None, description="ISO-8601 timestamp when mining finished",
+    )
+    total_duration_s: Optional[float] = Field(
+        None, ge=0, description="Total wall-clock seconds",
+    )
+
+    # Provenance
+    authors: Optional[List[Dict[str, str]]] = Field(
+        None,
+        description='List of {"name": str, "orcid": str} dicts',
+    )
+
+    # Canonical URIs (auto-populated from dataset_name)
+    schema_uri: Optional[str] = Field(
+        None,
+        description="Canonical URI where this schema is served",
+    )
+    void_uri: Optional[str] = Field(
+        None,
+        description="Canonical URI where the VoID catalog is served",
+    )
+    report_uri: Optional[str] = Field(
+        None,
+        description="Canonical URI where the run report is served",
+    )
+    linkml_uri: Optional[str] = Field(
+        None,
+        description="Canonical URI where the LinkML schema is served",
+    )
+
     model_config = ConfigDict(extra="allow")
 
     @staticmethod
@@ -353,20 +403,50 @@ class AboutMetadata(BaseModel):
         graph_uris: Optional[List[str]] = None,
         pattern_count: int = 0,
         strategy: str = "unknown",
+        started_at: Optional[str] = None,
+        finished_at: Optional[str] = None,
+        total_duration_s: Optional[float] = None,
+        authors: Optional[List[Dict[str, str]]] = None,
+        qlever_version: Optional[Dict[str, str]] = None,
     ) -> "AboutMetadata":
         """Convenience factory with auto-populated version/time."""
         from rdfsolve.version import VERSION
 
+        schema_uri = (
+            f"{_BASE_URI}/api/schemas/{dataset_name}"
+            if dataset_name else None
+        )
+        void_uri = (
+            f"{_BASE_URI}/api/void/{dataset_name}"
+            if dataset_name else None
+        )
+        report_uri = (
+            f"{_BASE_URI}/api/reports/{dataset_name}"
+            if dataset_name else None
+        )
+        linkml_uri = (
+            f"{_BASE_URI}/api/linkml/{dataset_name}"
+            if dataset_name else None
+        )
+
         return AboutMetadata(
             generated_by=f"rdfsolve {VERSION}",
-            generated_at=(
-                datetime.now(timezone.utc).isoformat()
-            ),
+            generated_at=datetime.now(timezone.utc).isoformat(),
             endpoint=endpoint,
             dataset_name=dataset_name,
             graph_uris=graph_uris,
             pattern_count=pattern_count,
             strategy=strategy,
+            rdfsolve_version=VERSION,
+            started_at=started_at,
+            finished_at=finished_at,
+            total_duration_s=total_duration_s,
+            authors=authors,
+            qlever_version=qlever_version,
+            schema_uri=schema_uri,
+            void_uri=void_uri,
+            report_uri=report_uri,
+            linkml_uri=linkml_uri,
         )
 
 
@@ -382,6 +462,43 @@ class QueryStats(BaseModel):
     failed: int = Field(0, ge=0, description="Queries that failed")
     total_time_s: float = Field(
         0.0, ge=0, description="Wall-clock seconds for this category",
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class OneShotQueryResult(BaseModel):
+    """Outcome of a single unbounded SELECT against a SPARQL endpoint.
+
+    Used to record the raw performance of an unguarded one-shot query
+    so it can be compared against the fallback-chain result in the
+    same report.
+    """
+
+    query_type: str = Field(
+        ...,
+        description=(
+            "Pattern type queried: 'typed-object', 'literal', "
+            "or 'untyped-uri'"
+        ),
+    )
+    success: bool = Field(
+        ...,
+        description="True if the endpoint returned a result set",
+    )
+    duration_s: Optional[float] = Field(
+        None, ge=0,
+        description="Wall-clock seconds for the single HTTP call",
+    )
+    row_count: Optional[int] = Field(
+        None, ge=0,
+        description=(
+            "Number of result rows returned (None on failure)"
+        ),
+    )
+    error: Optional[str] = Field(
+        None,
+        description="Exception message if the query failed",
     )
 
     model_config = ConfigDict(extra="forbid")
@@ -440,6 +557,13 @@ class MiningReport(BaseModel):
     )
     python_version: str = Field(
         ..., description="Python interpreter version",
+    )
+    qlever_version: Optional[Dict[str, str]] = Field(
+        None,
+        description=(
+            "QLever build info fetched from the endpoint's ?cmd=stats: "
+            '{"git_hash_server": str, "git_hash_index": str}'
+        ),
     )
 
     # ── Timing ─────────────────────────────────────────────────────
@@ -521,7 +645,142 @@ class MiningReport(BaseModel):
         ),
     )
 
+    # ── One-shot baseline (for comparison against fallback chain) ──
+    one_shot_results: Optional[List[OneShotQueryResult]] = Field(
+        None,
+        description=(
+            "Results of running each pattern query as a single "
+            "unbounded SELECT (no LIMIT/OFFSET/fallback). "
+            "Populated when mining is run in one-shot mode or when "
+            "a one-shot baseline pass is requested alongside the "
+            "standard fallback-chain pass. Null when not requested."
+        ),
+    )
+
+    # ── Author provenance ──────────────────────────────────────────
+    authors: Optional[List[Dict[str, str]]] = Field(
+        None,
+        description='List of {"name": str, "orcid": str} dicts',
+    )
+
+    # ── Captured endpoint metadata (DC / VoID / DCAT) ─────────────
+    dataset_metadata: Optional[Dict[str, Any]] = Field(
+        None,
+        description=(
+            "Self-describing metadata captured from the endpoint's "
+            "VoID/DC/DCAT declarations (may be null if the endpoint "
+            "does not publish any)."
+        ),
+    )
+
+    # ── Canonical URI ──────────────────────────────────────────────
+    report_uri: Optional[str] = Field(
+        None,
+        description=(
+            "Canonical URI where this report is served, "
+            "e.g. https://jmillanacosta.com/rdfsolve/api/reports/{dataset}"
+        ),
+    )
+
     model_config = ConfigDict(extra="allow")
+
+
+# -------------------------------------------------------------------
+# Shared base for all run reports
+# -------------------------------------------------------------------
+
+
+class BaseReport(BaseModel):
+    """Fields common to both mined and discovered schema reports."""
+
+    dataset_name: Optional[str] = Field(
+        None, description="Human-readable name of the dataset",
+    )
+    endpoint_url: str = Field(
+        "", description="SPARQL endpoint URL",
+    )
+    graph_uris: Optional[List[str]] = Field(
+        None, description="Named-graph URIs (if any)",
+    )
+    strategy: str = Field(
+        "unknown", description="Strategy string",
+    )
+
+    # Versions
+    rdfsolve_version: str = Field(
+        "", description="Package version string",
+    )
+    python_version: str = Field(
+        "", description="Python interpreter version",
+    )
+    qlever_version: Optional[Dict[str, str]] = Field(
+        None,
+        description=(
+            "QLever build info fetched from the endpoint's ?cmd=stats: "
+            '{"git_hash_server": str, "git_hash_index": str}'
+        ),
+    )
+
+    # Timing
+    started_at: str = Field(
+        "", description="ISO-8601 timestamp when run started",
+    )
+    finished_at: Optional[str] = Field(
+        None, description="ISO-8601 timestamp when run finished",
+    )
+    total_duration_s: Optional[float] = Field(
+        None, ge=0, description="Total wall-clock seconds",
+    )
+
+    # Provenance
+    authors: Optional[List[Dict[str, str]]] = Field(
+        None,
+        description='List of {"name": str, "orcid": str} dicts',
+    )
+
+    # Machine & benchmark
+    machine: Optional[Dict[str, Any]] = Field(None)
+    benchmark: Optional[Dict[str, Any]] = Field(None)
+
+    # Captured endpoint metadata
+    dataset_metadata: Optional[Dict[str, Any]] = Field(
+        None,
+        description=(
+            "Self-describing metadata captured from the endpoint's "
+            "VoID/DC/DCAT declarations."
+        ),
+    )
+
+    # Canonical URI
+    report_uri: Optional[str] = Field(
+        None,
+        description=(
+            "Canonical URI where this report is served"
+        ),
+    )
+
+    model_config = ConfigDict(extra="allow")
+
+
+class DiscoveryReport(BaseReport):
+    """Report for a VoID discovery run."""
+
+    strategy: str = Field(
+        "discovery/void",
+        description="Strategy string (always 'discovery/void')",
+    )
+
+    graphs_found: int = Field(
+        0, ge=0, description="Named graphs found",
+    )
+    partitions_found: int = Field(
+        0, ge=0, description="VoID partitions found",
+    )
+    void_file: Optional[str] = Field(
+        None, description="Path to the generated VoID Turtle file",
+    )
+
+
 
 
 class MinedSchema(BaseModel):
@@ -604,6 +863,189 @@ class MinedSchema(BaseModel):
     def get_properties(self) -> List[str]:
         """Return sorted unique property URIs."""
         return sorted({p.property_uri for p in self.patterns})
+
+    # ---- JSON-LD import -------------------------------------------
+
+    @classmethod
+    def from_jsonld(cls, path: "str | Path") -> "MinedSchema":
+        """Reconstruct a :class:`MinedSchema` from a schema JSON-LD file.
+
+        Inverse of :meth:`to_jsonld`.  Expands CURIEs using the file's
+        own ``@context`` block, so no external resolver is required.
+
+        Args:
+            path: Path to a ``*_schema.jsonld`` file produced by
+                ``rdfsolve mine``.
+
+        Returns:
+            :class:`MinedSchema` with fully-expanded URIs in all patterns.
+        """
+        import json as _json
+        from pathlib import Path as _Path
+
+        raw = _json.loads(_Path(path).read_text(encoding="utf-8"))
+        context: Dict[str, str] = raw.get("@context", {})
+        about_data = raw.get("@about", {})
+        labels: Dict[str, str] = raw.get("_labels", {})
+
+        def _expand(curie: str) -> str:
+            if curie.startswith(("http://", "https://", "urn:")):
+                return curie
+            if ":" in curie:
+                prefix, local = curie.split(":", 1)
+                ns = context.get(prefix)
+                if ns and isinstance(ns, str):
+                    return ns + local
+            return curie
+
+        patterns: List[SchemaPattern] = []
+        for node in raw.get("@graph", []):
+            sc_curie = node.get("@id", "")
+            if not sc_curie:
+                continue
+            sc_uri = _expand(sc_curie)
+            if not sc_uri.startswith(("http://", "https://", "urn:")):
+                continue
+            counts_map: Dict[str, Dict[str, int]] = node.get("_counts", {})
+            for key, val in node.items():
+                if key.startswith("@") or key.startswith("_"):
+                    continue
+                if key in ("void:inDataset", "dcterms:created", "dcterms:title"):
+                    continue
+                p_uri = _expand(key)
+                if not p_uri.startswith(("http://", "https://", "urn:")):
+                    continue
+                entries = val if isinstance(val, list) else [val]
+                for entry in entries:
+                    if not isinstance(entry, dict):
+                        continue
+                    obj_id = entry.get("@id")
+                    obj_type = entry.get("@type")
+                    if obj_id is not None:
+                        oc_uri = _expand(obj_id)
+                        if oc_uri in (
+                            "http://www.w3.org/2000/01/rdf-schema#Resource",
+                            "rdfs:Resource",
+                            "Resource",
+                        ):
+                            try:
+                                patterns.append(SchemaPattern(
+                                    subject_class=sc_uri,
+                                    property_uri=p_uri,
+                                    object_class="Resource",
+                                    count=counts_map.get(key, {}).get(
+                                        obj_id or "", None
+                                    ),
+                                    subject_label=labels.get(sc_curie),
+                                    property_label=labels.get(key),
+                                ))
+                            except Exception:
+                                pass
+                        elif oc_uri.startswith(("http://", "https://", "urn:")):
+                            try:
+                                patterns.append(SchemaPattern(
+                                    subject_class=sc_uri,
+                                    property_uri=p_uri,
+                                    object_class=oc_uri,
+                                    count=counts_map.get(key, {}).get(
+                                        obj_id or "", None
+                                    ),
+                                    subject_label=labels.get(sc_curie),
+                                    property_label=labels.get(key),
+                                    object_label=labels.get(obj_id),
+                                ))
+                            except Exception:
+                                pass
+                    elif obj_type is not None:
+                        dt_uri = _expand(obj_type)
+                        try:
+                            patterns.append(SchemaPattern(
+                                subject_class=sc_uri,
+                                property_uri=p_uri,
+                                object_class="Literal",
+                                datatype=dt_uri,
+                                count=counts_map.get(key, {}).get(
+                                    obj_type or "", None
+                                ),
+                                subject_label=labels.get(sc_curie),
+                                property_label=labels.get(key),
+                            ))
+                        except Exception:
+                            pass
+
+        # Normalise camelCase @about keys produced by older pipeline versions
+        _camel_map = {
+            "generatedBy":   "generated_by",
+            "generatedAt":   "generated_at",
+            "datasetName":   "dataset_name",
+            "graphUris":     "graph_uris",
+            "patternCount":  "pattern_count",
+            "tripleCount":   "pattern_count",
+            "rdfsolveVersion": "rdfsolve_version",
+            "qleverVersion": "qlever_version",
+        }
+        about_data = {
+            _camel_map.get(k, k): v for k, v in about_data.items()
+        }
+        # Inject sentinel values for required fields missing in old files
+        about_data.setdefault("generated_by", "rdfsolve (legacy)")
+        about_data.setdefault("generated_at", "1970-01-01T00:00:00+00:00")
+
+        about = AboutMetadata.model_validate(about_data)
+        return cls(patterns=patterns, about=about)
+
+    # ---- NetworkX export ------------------------------------------
+
+    def to_networkx(self) -> "Any":
+        """Export the schema as a typed-object ``nx.MultiDiGraph``.
+
+        Nodes are class URIs.  Each typed-object pattern
+        ``(subject_class, property_uri, object_class)`` becomes a
+        directed edge with attributes:
+
+        * ``predicate`` — property URI
+        * ``dataset`` — ``about.dataset_name``
+        * ``count`` — co-occurrence count (may be ``None``)
+
+        Literal and Resource sentinel patterns are **excluded**; they
+        do not contribute edges between named classes.
+
+        Node attributes:
+
+        * ``dataset`` — ``about.dataset_name``
+        * ``label`` — ``subject_label`` / ``object_label`` if present
+
+        Returns:
+            ``networkx.MultiDiGraph``
+        """
+        try:
+            import networkx as _nx
+        except ImportError as exc:
+            raise ImportError(
+                "networkx is required for to_networkx(); "
+                "install it with: pip install networkx"
+            ) from exc
+
+        G: "Any" = _nx.MultiDiGraph()
+        dataset = self.about.dataset_name or ""
+
+        for pat in self.patterns:
+            if pat.object_class in ("Literal", "Resource"):
+                continue
+            for uri, label in (
+                (pat.subject_class, pat.subject_label),
+                (pat.object_class,  pat.object_label),
+            ):
+                if uri not in G:
+                    G.add_node(uri, dataset=dataset, label=label or "")
+            G.add_edge(
+                pat.subject_class,
+                pat.object_class,
+                predicate=pat.property_uri,
+                dataset=dataset,
+                count=pat.count,
+            )
+        return G
 
     # ---- JSON-LD export -------------------------------------------
 
@@ -898,6 +1340,388 @@ class Mapping(BaseModel):
         "unknown", description="Mapping strategy identifier",
     )
 
+    # ---- JSON-LD import -------------------------------------------
+
+    @classmethod
+    def from_jsonld(cls, path: "str | Path") -> "Mapping":
+        """Reconstruct a :class:`Mapping` from a mapping JSON-LD file.
+
+        Inverse of :meth:`to_jsonld`.  Expands CURIEs using the file's
+        own ``@context`` block.  All predicates found in the file are
+        accepted — no allowlist is applied.
+
+        Args:
+            path: Path to a mapping ``*.jsonld`` file produced by any
+                rdfsolve mapping strategy.
+
+        Returns:
+            :class:`Mapping` with fully-expanded URIs in all edges.
+        """
+        import json as _json
+        from pathlib import Path as _Path
+
+        # Build a global prefix→namespace lookup from bioregistry once.
+        # Replaces the slow get_iri() path (which calls model_dump() per edge).
+        _br_prefix_ns: Dict[str, str] = {}
+        try:
+            from bioregistry import manager as _br_manager
+            for _pfx, _res in _br_manager.registry.items():
+                _fmt = _res.get_uri_format()
+                if _fmt and "$1" in _fmt:
+                    _ns = _fmt.replace("$1", "")
+                    _br_prefix_ns[_pfx] = _ns
+                    # Synonyms cover case variants like CHEBI, NCBITaxon, UniProtKB
+                    for _syn in (_res.get_synonyms() or []):
+                        _br_prefix_ns.setdefault(_syn, _ns)
+        except Exception:
+            pass  # bioregistry not available
+
+        raw = _json.loads(_Path(path).read_text(encoding="utf-8"))
+        context: Dict[str, str] = raw.get("@context", {})
+        about_data = raw.get("@about", {})
+
+        # For SSSOM files the curie_map lives in @about (legacy files written
+        # before the curie_map→@context fix).  Merge it so _expand can use it.
+        curie_map_fallback: Dict[str, str] = about_data.get("curie_map") or {}
+        if curie_map_fallback:
+            merged_context: Dict[str, str] = {**curie_map_fallback, **context}
+        else:
+            merged_context = context
+
+        # Per-file cache: CURIE string → expanded URI.  Most files contain
+        # thousands of edges with the same ~dozens of distinct CURIEs, so a
+        # dict cache converts O(N * bioregistry_lookup) → O(unique_prefixes).
+        _expand_cache: Dict[str, str] = {}
+
+        def _expand(curie: str) -> str:
+            cached = _expand_cache.get(curie)
+            if cached is not None:
+                return cached
+            result = curie
+            if curie.startswith(("http://", "https://", "urn:")):
+                result = curie
+            elif ":" in curie:
+                prefix, local = curie.split(":", 1)
+                # 1. Try explicit context / curie_map first (fastest, exact)
+                ns = merged_context.get(prefix)
+                if ns and isinstance(ns, str):
+                    result = ns + local
+                else:
+                    # 2. Fast dict lookup from bioregistry prefix map
+                    ns2 = _br_prefix_ns.get(prefix)
+                    if ns2:
+                        result = ns2 + local
+            _expand_cache[curie] = result
+            return result
+
+        edges: List[MappingEdge] = []
+        for node in raw.get("@graph", []):
+            source_id = node.get("@id", "")
+            if not source_id:
+                continue
+            src_uri = _expand(source_id)
+            src_ds_node = node.get("void:inDataset", {}) or {}
+            src_ds = src_ds_node.get("dcterms:title", "") or ""
+            src_ep_node = src_ds_node.get("void:sparqlEndpoint") or {}
+            src_ep = src_ep_node.get("@id") if isinstance(src_ep_node, dict) else None
+
+            for key, val in node.items():
+                if key.startswith("@") or key in (
+                    "void:inDataset", "dcterms:created",
+                ):
+                    continue
+                pred_uri = _expand(key)
+                targets = val if isinstance(val, list) else [val]
+                for tgt in targets:
+                    if not isinstance(tgt, dict):
+                        continue
+                    tgt_id = tgt.get("@id", "")
+                    if not tgt_id:
+                        continue
+                    tgt_uri = _expand(tgt_id)
+                    tgt_ds_node = tgt.get("void:inDataset", {}) or {}
+                    tgt_ds = tgt_ds_node.get("dcterms:title", "") or src_ds
+                    tgt_ep_node = tgt_ds_node.get("void:sparqlEndpoint") or {}
+                    tgt_ep = (
+                        tgt_ep_node.get("@id")
+                        if isinstance(tgt_ep_node, dict)
+                        else None
+                    )
+                    confidence = tgt.get("rdfsolve:confidence")
+                    try:
+                        edges.append(MappingEdge(
+                            source_class=src_uri,
+                            target_class=tgt_uri,
+                            predicate=pred_uri,
+                            source_dataset=src_ds,
+                            target_dataset=tgt_ds,
+                            source_endpoint=src_ep,
+                            target_endpoint=tgt_ep,
+                            confidence=float(confidence)
+                            if confidence is not None
+                            else None,
+                        ))
+                    except Exception:
+                        pass
+
+        about = AboutMetadata.model_validate(about_data)
+        strategy = about_data.get("strategy", "unknown")
+        return cls(edges=edges, about=about, mapping_type=strategy)
+
+    # ---- NetworkX export ------------------------------------------
+
+    def to_networkx(self) -> "Any":
+        """Export the mapping as an ``nx.MultiDiGraph``.
+
+        Nodes are class URIs.  Each :class:`MappingEdge` becomes a
+        directed edge with attributes:
+
+        * ``predicate`` — mapping predicate URI
+        * ``source_dataset`` — source dataset name
+        * ``target_dataset`` — target dataset name
+        * ``strategy`` — ``mapping_type``
+        * ``confidence`` — float or ``None``
+
+        Node attributes:
+
+        * ``dataset`` — dataset name for this node's side
+
+        Returns:
+            ``networkx.MultiDiGraph``
+        """
+        try:
+            import networkx as _nx
+        except ImportError as exc:
+            raise ImportError(
+                "networkx is required for to_networkx(); "
+                "install it with: pip install networkx"
+            ) from exc
+
+        G: "Any" = _nx.MultiDiGraph()
+
+        for edge in self.edges:
+            for uri, ds in (
+                (edge.source_class, edge.source_dataset),
+                (edge.target_class, edge.target_dataset),
+            ):
+                if uri not in G:
+                    G.add_node(uri, dataset=ds)
+            G.add_edge(
+                edge.source_class,
+                edge.target_class,
+                predicate=edge.predicate,
+                source_dataset=edge.source_dataset,
+                target_dataset=edge.target_dataset,
+                strategy=self.mapping_type,
+                confidence=edge.confidence,
+            )
+        return G
+
+    # ---- Dataset-level graph export --------------------------------
+
+    @classmethod
+    def dataset_graph(
+        cls,
+        paths: "Iterable[str | Path]",
+        class_to_datasets: "Dict[str, set]",
+        *,
+        base_graph: "Any | None" = None,
+        strategies: "Collection[str] | None" = None,
+    ) -> "Any":
+        """Stream mapping files into a weighted dataset-pair ``nx.Graph``.
+
+        Algorithm (single pass per file):
+
+        1. Parse the JSON-LD with ``ujson`` (falls back to stdlib ``json``).
+        2. Build a per-file CURIE→URI expansion cache using the file's own
+           ``@context`` / ``@about.curie_map``, with bioregistry as fallback.
+        3. For every mapping edge whose both endpoint classes appear in
+           *class_to_datasets*, increment the weight of the
+           ``(dataset_a, dataset_b)`` pair in the output graph.
+        4. Assemble the ``nx.Graph`` from the accumulated ``Counter`` at the
+           end.
+
+        Args:
+            paths:
+                Iterable of paths to mapping ``*.jsonld`` files.
+            class_to_datasets:
+                Mapping from class URI (fully expanded) to the set of
+                dataset names that contain it as a subject class.  Typically
+                built from the :attr:`MinedSchema.patterns` of all loaded
+                schemas::
+
+                    from collections import defaultdict
+                    c2d = defaultdict(set)
+                    for ms in schemas:
+                        ds = ms.about.dataset_name or ""
+                        for pat in ms.patterns:
+                            if pat.subject_class not in ("Literal", "Resource"):
+                                c2d[pat.subject_class].add(ds)
+
+            base_graph:
+                Optional ``nx.Graph`` to augment in-place (e.g. *G_schema*).
+                If *None* a fresh empty ``nx.Graph`` is created.
+            strategies:
+                Optional allowlist of strategy strings (``@about.strategy``).
+                When given, files whose strategy is **not** in this set are
+                skipped entirely.  Pass ``None`` (default) to include all
+                files.
+
+        Returns:
+            A ``networkx.Graph`` (undirected, weighted) whose nodes are
+            dataset names and whose edge attribute ``weight`` counts the
+            number of distinct class-pair bridges between each dataset pair.
+
+        Raises:
+            ImportError: if ``networkx`` is not installed.
+
+        Example::
+
+            from collections import defaultdict
+            from rdfsolve.models import MinedSchema, Mapping
+
+            # Build the class→dataset index from schema files
+            c2d = defaultdict(set)
+            for ms in schemas:
+                ds = ms.about.dataset_name or ""
+                for pat in ms.patterns:
+                    if pat.subject_class not in ("Literal", "Resource"):
+                        c2d[pat.subject_class].add(ds)
+
+            # Build G_raw (sssom + semra only)
+            G_raw = Mapping.dataset_graph(
+                paths=sorted(MAPPINGS_SSSOM.glob("*.jsonld"))
+                    + sorted(MAPPINGS_SEMRA.glob("*.jsonld")),
+                class_to_datasets=c2d,
+                base_graph=G_schema.copy(),
+                strategies={"sssom_import", "semra_import", "instance_matcher"},
+            )
+
+            # Extend to G_inferred
+            G_inferred = Mapping.dataset_graph(
+                paths=sorted(MAPPINGS_INF.glob("*.jsonld")),
+                class_to_datasets=c2d,
+                base_graph=G_raw.copy(),
+            )
+        """
+        from collections import Counter as _Counter
+        from pathlib import Path as _Path
+
+        try:
+            import networkx as _nx
+        except ImportError as exc:
+            raise ImportError(
+                "networkx is required for dataset_graph(); "
+                "install it with: pip install networkx"
+            ) from exc
+
+        # ujson is ~3-5× faster than stdlib json for large files
+        try:
+            import ujson as _json  # type: ignore[import]
+        except ImportError:
+            import json as _json  # type: ignore[assignment]
+
+        # Build a global prefix→namespace dict from bioregistry **once**.
+        # This replaces calling get_iri(pfx, local) per edge — which is
+        # catastrophically slow on multi-million-edge files because it calls
+        # model_dump() internally.  A plain dict lookup is O(1).
+        _br_prefix_ns: Dict[str, str] = {}
+        try:
+            from bioregistry import manager as _br_manager
+            for _pfx, _res in _br_manager.registry.items():
+                _fmt = _res.get_uri_format()
+                if _fmt and "$1" in _fmt:
+                    _ns = _fmt.replace("$1", "")
+                    _br_prefix_ns[_pfx] = _ns
+                    # Synonyms cover case variants: CHEBI, NCBITaxon, UniProtKB…
+                    for _syn in (_res.get_synonyms() or []):
+                        _br_prefix_ns.setdefault(_syn, _ns)
+        except Exception:
+            pass  # bioregistry not available; expansion will be best-effort
+
+        _SKIP_KEYS: frozenset = frozenset({"void:inDataset", "dcterms:created"})
+
+        weights: "_Counter[tuple]" = _Counter()
+
+        for path in paths:
+            try:
+                raw = _json.loads(_Path(path).read_bytes())
+            except Exception:
+                continue
+
+            about: Dict[str, Any] = raw.get("@about", {})
+            strategy: str = about.get("strategy", "unknown")
+            if strategies is not None and strategy not in strategies:
+                continue
+
+            context: Dict[str, str] = raw.get("@context", {})
+            curie_map: Dict[str, str] = about.get("curie_map") or {}
+            merged: Dict[str, str] = {**curie_map, **context}
+            _cache: Dict[str, str] = {}
+
+            def _expand(curie: str, _c: Dict = _cache, _m: Dict = merged, _b: Dict = _br_prefix_ns) -> str:  # type: ignore[type-arg]
+                v = _c.get(curie)
+                if v is not None:
+                    return v
+                result = curie
+                if not curie.startswith(("http://", "https://", "urn:")):
+                    if ":" in curie:
+                        pfx, local = curie.split(":", 1)
+                        ns = _m.get(pfx)
+                        if ns and isinstance(ns, str):
+                            result = ns + local
+                        else:
+                            # fast dict lookup — no model_dump() overhead
+                            ns2 = _b.get(pfx)
+                            if ns2:
+                                result = ns2 + local
+                _c[curie] = result
+                return result
+
+            for node in raw.get("@graph", ()):
+                src_id: str = node.get("@id", "")
+                if not src_id:
+                    continue
+                src_cls = _expand(src_id)
+                src_datasets = class_to_datasets.get(src_cls)
+                if not src_datasets:
+                    continue
+
+                for key, val in node.items():
+                    if key[0] == "@" or key in _SKIP_KEYS:
+                        continue
+                    targets = val if isinstance(val, list) else (val,)
+                    for tgt in targets:
+                        if not isinstance(tgt, dict):
+                            continue
+                        tgt_id: str = tgt.get("@id", "")
+                        if not tgt_id:
+                            continue
+                        tgt_cls = _expand(tgt_id)
+                        tgt_datasets = class_to_datasets.get(tgt_cls)
+                        if not tgt_datasets:
+                            continue
+
+                        for src_ds in src_datasets:
+                            for tgt_ds in tgt_datasets:
+                                if src_ds != tgt_ds:
+                                    pair = (
+                                        (src_ds, tgt_ds)
+                                        if src_ds < tgt_ds
+                                        else (tgt_ds, src_ds)
+                                    )
+                                    weights[pair] += 1
+
+        G: "Any" = base_graph if base_graph is not None else _nx.Graph()
+        for (a, b), w in weights.items():
+            if G.has_edge(a, b):
+                G[a][b]["weight"] += w
+            else:
+                G.add_edge(a, b, weight=w)
+        return G
+
+    # ---- JSON-LD export -------------------------------------------
+
     def to_jsonld(self) -> Dict[str, Any]:
         """Export as JSON-LD with ``@context``, ``@graph``, ``@about``.
 
@@ -1153,5 +1977,69 @@ class InferencedMapping(Mapping):
             about["evidence"] = self.evidence_chain
         if self.stats:
             about["stats"] = self.stats
+        doc["@about"] = about
+        return doc
+
+
+# ---------------------------------------------------------------------------
+# SSSOM-derived mapping models
+# ---------------------------------------------------------------------------
+
+
+class SsomMapping(Mapping):
+    """Mapping imported from an SSSOM (Simple Standard for Sharing Ontology
+    Mappings) source.
+
+    Each instance corresponds to one ``.sssom.tsv`` file extracted from
+    an SSSOM bundle (e.g. the EBI OLS SSSOM archive).  The ``source_name``
+    records the logical name of the bundle (from ``sssom_sources.yaml``) and
+    ``sssom_file`` records the original filename inside the archive.
+
+    The ``mapping_set_id``, ``mapping_set_title``, and ``license`` fields are
+    taken directly from the SSSOM file header, when present.
+    """
+
+    mapping_type: str = Field(default="sssom_import")
+    source_name: str = Field(
+        ..., description="Name of the SSSOM source bundle, e.g. 'ols_mappings'",
+    )
+    sssom_file: str = Field(
+        ..., description="Original filename of the .sssom.tsv file",
+    )
+    mapping_set_id: Optional[str] = Field(
+        None,
+        description="SSSOM mapping_set_id from the file header (URI)",
+    )
+    mapping_set_title: Optional[str] = Field(
+        None,
+        description="SSSOM mapping_set_title from the file header",
+    )
+    license: Optional[str] = Field(
+        None,
+        description="License URI from the SSSOM file header",
+    )
+    curie_map: Dict[str, str] = Field(
+        default_factory=dict,
+        description="CURIE prefix map extracted from the SSSOM file header",
+    )
+
+    def to_jsonld(self) -> Dict[str, Any]:
+        """Extend base JSON-LD with SSSOM provenance in ``@about``."""
+        doc = super().to_jsonld()
+        about = doc.get("@about", {})
+        about["strategy"] = self.mapping_type
+        about["sssom_source"] = self.source_name
+        about["sssom_file"] = self.sssom_file
+        if self.mapping_set_id:
+            about["mapping_set_id"] = self.mapping_set_id
+        if self.mapping_set_title:
+            about["mapping_set_title"] = self.mapping_set_title
+        if self.license:
+            about["license"] = self.license
+        if self.curie_map:
+            about["curie_map"] = self.curie_map
+            # Merge curie_map into @context so that Mapping.from_jsonld()
+            # can expand CURIEs back to full URIs on round-trip.
+            doc["@context"].update(self.curie_map)
         doc["@about"] = about
         return doc
