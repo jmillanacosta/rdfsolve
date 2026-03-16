@@ -1,0 +1,36 @@
+- endpoint: https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
+  name: aopwikirdf.all
+  notes: Whole-database mining (no named-graph restriction)
+  void_iri: http://aopwiki.org/
+- endpoint: https://sparql.wikipathways.org/sparql/
+  in_kamdar: true
+  name: wikipathways.all
+  notes: Whole-database mining (no named-graph restriction)
+  void_iri: http://rdf.wikipathways.org/
+- endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  name: idsm.all
+  notes: Whole-database mining (no named-graph restriction)
+  void_iri: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+- endpoint: https://nanosafety.rdf.bigcat-bioinformatics.org/sparql//
+  name: nanosafetyrdf.all
+  notes: Whole-database mining (no named-graph restriction)
+  void_iri: http://localhost:8890/DAV
+- endpoint: https://www.bgee.org/sparql/
+  name: bgee.all
+  notes: Whole-database mining (no named-graph restriction)
+  void_iri: https://bgee.org/rdf_v15_2
+- endpoint: http://rdfportal.org/pdb/sparql
+  name: rdfportal.all
+  notes: Whole-database mining (no named-graph restriction)
+  void_iri: http://rdfportal.org/
+- endpoint: https://bio2rdf.org/sparql
+  name: bio2rdf.all
+  notes: Whole-database mining (no named-graph restriction)
+  void_iri: https://bio2rdf.org/
+- endpoint: https://plantmetwiki.bioinformatics.nl/sparql
+  name: plantmetwiki.all
+  notes: Whole-database mining (no named-graph restriction)
+- endpoint: https://chemblmirror.rdf.bigcat-bioinformatics.org/sparql/
+  name: chembl.bigcat.all
+  notes: Whole-database mining (no named-graph restriction)
+  void_iri: https://chemblmirror.rdf.bigcat-bioinformatics.org/

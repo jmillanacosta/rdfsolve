@@ -1,13 +1,48 @@
+# =============================================================================
+# MANIFEST.in - controls what goes into the Python source distribution (sdist)
+# =============================================================================
+# Only ship the installable Python package, its tests, and essential metadata.
+# Docker images, generated data, notebooks, and docs are NOT part of the sdist.
+# =============================================================================
+
+# ── Python package source and tests ──────────────────────────────
 graft src
 graft tests
-prune scripts
-prune notebooks
+
+# ── Essential top-level metadata ─────────────────────────────────
+include README.md LICENSE CITATION.cff
+
+# ── Source registry (needed at runtime by the package) ───────────
+include data/sources.yaml
+include data/sources_all.yaml
+include data/sssom_sources.yaml
+
+# ── Exclude everything that is not part of the installable package ──
 prune tests/.pytest_cache
 prune docs
+prune notebooks
+prune scripts
+prune data/rdf
+prune results
+prune paper
+prune frontend
+prune docker
+# ── Git submodules are tracked as files, prune alone won't catch them ──
+exclude frontend
+exclude paper
 
-global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle .idea/**
+# ── Dev / infra files — tracked by git but not shipped in sdist ──
+exclude .cruft.json
+exclude .check-manifest-ignore
+exclude .dockerignore
+exclude .gitmodules
+exclude .readthedocs.yml
+exclude docker-compose.yml
+exclude docker-compose.pipeline.yml
+exclude tox.ini
+exclude rdfsolve.db
 
-include README.md LICENSE Makefile *.md
-recursive-include data *.csv
-recursive-include scripts *.sh
-exclude tox.ini .readthedocs.yml .cruft.json CITATION.cff docker-compose.yml Dockerfile noxfile.py
+# ── Always exclude generated / cache artefacts ───────────────────
+global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
+global-exclude *.jsonld *.parquet *.pkl *.nq *.nq.gz *.ttl.gz
+global-exclude Qleverfile *.index-log.txt *.settings.json *.meta-data.json

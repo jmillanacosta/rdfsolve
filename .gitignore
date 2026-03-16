@@ -918,3 +918,53 @@ docs/data/schema_extraction/**/*.nq
 
 *.pkl
 *.parquet
+
+deprecated_static_site/*
+
+notes/*
+
+docker/*
+
+# ---------------------------------------------------------------------------
+# QLever workdirs and generated index data - never commit
+# ---------------------------------------------------------------------------
+# These are large, machine-generated files produced by `qlever get-data`,
+# `qlever index`, and the pipeline.  They are regenerated on demand and must
+# never be pushed to GitHub.
+data/rdf/
+results/
+
+# Individual QLever artefacts (belt-and-suspenders, in case paths change)
+Qleverfile
+*.index-log.txt
+*.server-log.txt
+*.index-warn-summary.txt
+*.settings.json
+*.meta-data.json
+*.index.done
+.index.done
+*.partial-vocab.*
+
+# ---------------------------------------------------------------------------
+# JSON-LD schema and mapping files
+# ---------------------------------------------------------------------------
+# All *.jsonld files are generated artefacts - output of the schema miner or
+# the instance matcher.  They are NOT committed to git because:
+#   - They can be large and change frequently as endpoints evolve.
+#   - They are regenerated on demand with the mining/seeding scripts.
+#   - The Docker container loads them from disk at runtime (bind mount).
+#
+# To regenerate all schemas locally:
+#   python scripts/mine_all_sources.py --output-dir docker/schemas
+#
+# To regenerate instance mappings:
+#   python scripts/seed_instance_mappings.py --output-dir docker/schemas
+#
+# Exception: tests/test_data/ contains small fixture files that ARE committed
+# because the test suite needs them and they are stable hand-curated files.
+*.jsonld
+!tests/test_data/*.jsonld
+docs/notes/*
+results/*
+
+rdfsolve.db

@@ -72,6 +72,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
@@ -86,6 +87,10 @@ extensions.append("sphinx_click.ext")
 
 # generate autosummary pages
 autosummary_generate = True
+
+autodoc_mock_imports = [
+    "semra",
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -244,10 +249,7 @@ texinfo_documents = [
 # Note: don't add trailing slashes, since sphinx adds "/objects.inv" to the end
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "pandas": ("https://pandas.pydata.org/docs", None),
-    "sklearn": ("https://scikit-learn.org/stable", None),
-    "numpy": ("https://numpy.org/doc/stable", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy", None),
+    "rdflib": ("https://rdflib.readthedocs.io/en/stable", None),
 }
 
 autoclass_content = "both"

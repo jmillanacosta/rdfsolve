@@ -2,7 +2,7 @@
 SPARQL Helper, Centralized SPARQL query execution with automatic fallback.
 
 This module is a SPARQL client that handles:
-- Automatic GET → POST fallback for endpoints that require POST
+- Automatic GET -> POST fallback for endpoints that require POST
 - Exponential backoff retry logic for transient failures
 - Support for SELECT (JSON) and CONSTRUCT (Turtle/N3) queries
 - HTML error detection in responses
@@ -32,11 +32,14 @@ import json
 import logging
 import secrets
 import time
+import warnings
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, ClassVar, Literal
 
-import requests
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=Warning, module="requests")
+    import requests
 from rdflib import Graph
 
 logger = logging.getLogger(__name__)
@@ -70,6 +73,41 @@ class EndpointError(SparqlHelperError):
     """Raised when the endpoint returns an error."""
 
     pass
+
+
+class EndpointTimeoutError(EndpointError):
+    """Raised when the endpoint times out (read / connect)."""
+
+    pass
+
+
+class EndpointUnhealthyError(EndpointError):
+    """Raised when the endpoint returns a 200/400 with a non-SPARQL body.
+
+    Typical examples: database in recovery mode, backend proxy errors,
+    maintenance pages returned as ``text/plain`` or ``text/html``.
+    """
+
+    pass
+
+
+class PaginationTruncatedError(EndpointTimeoutError):
+    """Raised by select_chunked when pagination is abandoned mid-stream.
+
+    This means some rows were already yielded before the error, so the
+    caller received a partial result set.  The ``offset`` attribute
+    records where pagination stopped.
+    """
+
+    def __init__(self, msg: str, offset: int = 0) -> None:
+        """Initialize a pagination truncation error.
+
+        Args:
+            msg: Error message.
+            offset: Offset at which pagination stopped.
+        """
+        super().__init__(msg)
+        self.offset = offset
 
 
 class QueryError(SparqlHelperError):
@@ -133,6 +171,20 @@ class SparqlHelper:
 
     # HTTP status codes that warrant a retry
     RETRY_STATUS_CODES = (500, 502, 503, 504, 429)
+
+    # Response body fragments that indicate a query-cost / timeout
+    # rejection from the endpoint (not a transient server error).
+    # These 500s should NOT be retried - raise EndpointTimeoutError
+    # immediately so callers can fall back to pagination.
+    COST_LIMIT_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "estimated execution time",
+        "exceeds the limit",
+        "query timed out",
+        "timeout expired",
+        "execution time limit",
+        "statement timeout",
+        "cost limit exceeded",
+    )
 
     # Class-level query registry to collect all executed queries
     _query_registry: ClassVar[list[QueryRecord]] = []
@@ -275,10 +327,10 @@ class SparqlHelper:
         endpoint_url: str,
         *,
         use_post: bool = False,
-        max_retries: int = 3,
+        max_retries: int = 10,
         initial_backoff: float = 1.0,
         max_backoff: float = 30.0,
-        timeout: float = 60.0,
+        timeout: float = 10000.0,
     ) -> None:
         """
         Initialize the SPARQL helper.
@@ -306,26 +358,33 @@ class SparqlHelper:
 
         logger.debug(f"SparqlHelper initialized for {self.endpoint_url}")
 
-    def select(self, query: str) -> dict[str, Any]:
-        """
-        Execute a SELECT query and return JSON results.
+    def select(
+        self,
+        query: str,
+        purpose: str = "",
+    ) -> dict[str, Any]:
+        """Execute a SELECT query and return JSON results.
 
         Args:
-            query: SPARQL SELECT query string
+            query: SPARQL SELECT query string.
+            purpose: Caller context for logs, e.g.
+                ``"mining/typed-object"``.
 
         Returns:
-            Dictionary with SPARQL JSON results format:
-            {
-                "head": {"vars": ["s", "p", "o"]},
-                "results": {"bindings": [...]}
-            }
+            Dictionary with SPARQL JSON results format containing
+            ``"head"`` and ``"results"`` keys.
 
         Raises:
-            EndpointError: If the endpoint returns an error after all retries
-            QueryError: If the query is malformed
+            EndpointError: If the endpoint returns an error after
+                all retries.
+            QueryError: If the query is malformed.
         """
         result: dict[str, Any] = self._execute(
-            query, accept=MimeTypes.SELECT_ACCEPT, query_type="SELECT", parse_json=True
+            query,
+            accept=MimeTypes.SELECT_ACCEPT,
+            query_type="SELECT",
+            parse_json=True,
+            purpose=purpose,
         )
         return result
 
@@ -356,7 +415,7 @@ class SparqlHelper:
         Execute a CONSTRUCT query and return an RDFLib Graph.
 
         The CONSTRUCT method internally uses _execute which handles
-        GET→POST fallback automatically when HTML is detected in the
+        GET->POST fallback automatically when HTML is detected in the
         response string.
 
         Args:
@@ -369,7 +428,7 @@ class SparqlHelper:
             EndpointError: If the endpoint returns an error after all retries
             QueryError: If the query is malformed
         """
-        # construct() calls _execute which handles GET→POST fallback
+        # construct() calls _execute which handles GET->POST fallback
         turtle_data = self.construct(query)
 
         graph = Graph()
@@ -403,7 +462,84 @@ class SparqlHelper:
         result: dict[str, Any] = self._execute(
             query, accept=MimeTypes.SELECT_ACCEPT, query_type="ASK", parse_json=True
         )
-        return bool(result.get("boolean", False))
+        raw = result.get("boolean", False)
+        # JSON parser already gives us a bool; guard against endpoints
+        # that return the string "true"/"false" instead.
+        if isinstance(raw, str):
+            return raw.strip().lower() == "true"
+        return bool(raw)
+
+    # Characters that are illegal inside a SPARQL IRI literal <...>.
+    # If the incremented upper-bound character is one of these the range
+    # query would produce a syntax error, so we fall back to STRSTARTS.
+    _IRI_UNSAFE_CHARS = frozenset('<>"{}|^`\\ \t\n\r')
+
+    def find_classes_for_uri_pattern(self, uri_prefix: str) -> list[str]:
+        """Find all ``rdf:type`` classes whose instances match *uri_prefix*.
+
+        Tries an IRI-range filter first (index-friendly on most engines)::
+
+            SELECT DISTINCT ?c
+            WHERE {
+              ?s a ?c .
+              FILTER(
+                ?s >= <uri_prefix> &&
+                ?s <  <uri_prefix_next>
+              )
+            }
+
+        The upper-bound ``uri_prefix_next`` is derived by incrementing the
+        last character of *uri_prefix* by one code-point (e.g.
+        ``"https://bioregistry.io/faldo/"``
+        -> ``"https://bioregistry.io/faldo0"``
+        because ``ord('/') + 1 == ord('0')``).
+
+        If the incremented character would be illegal inside a SPARQL
+        ``<…>`` IRI literal (e.g. ``=`` -> ``>``, which closes the IRI),
+        falls back to the safer ``STRSTARTS`` filter::
+
+            SELECT DISTINCT ?c
+            WHERE {
+              ?s a ?c .
+              FILTER(STRSTARTS(STR(?s), "uri_prefix"))
+            }
+
+        Args:
+            uri_prefix: URI prefix string, e.g.
+                ``"https://identifiers.org/ensembl/"``.
+
+        Returns:
+            Deduplicated list of class URIs (may be empty).
+        """
+        if not uri_prefix:
+            return []
+
+        # Build the exclusive upper bound by bumping the last char's codepoint.
+        next_char = chr(ord(uri_prefix[-1]) + 1)
+        if next_char in self._IRI_UNSAFE_CHARS:
+            # Upper-bound IRI would be malformed - use STRSTARTS fallback.
+            escaped = uri_prefix.replace("\\", "\\\\").replace('"', '\\"')
+            query = (
+                f'SELECT DISTINCT ?c WHERE {{ ?s a ?c . FILTER(STRSTARTS(STR(?s), "{escaped}")) }}'
+            )
+        else:
+            uri_prefix_next = uri_prefix[:-1] + next_char
+            query = (
+                "SELECT DISTINCT ?c\n"
+                "WHERE {\n"
+                "  ?s a ?c .\n"
+                "  FILTER(\n"
+                f"    ?s >= <{uri_prefix}> &&\n"
+                f"    ?s <  <{uri_prefix_next}>\n"
+                "  )\n"
+                "}"
+            )
+        try:
+            out = self.select(query)
+        except Exception:
+            return []
+        bindings = out.get("results", {}).get("bindings", [])
+        return [b["c"]["value"] for b in bindings if "c" in b]
 
     def _execute(
         self,
@@ -411,6 +547,7 @@ class SparqlHelper:
         accept: str,
         query_type: Literal["SELECT", "CONSTRUCT", "ASK"] = "SELECT",
         parse_json: bool = True,
+        purpose: str = "",
     ) -> Any:
         """
         Execute a SPARQL query with automatic GET/POST fallback and retry.
@@ -420,6 +557,8 @@ class SparqlHelper:
             accept: Accept header value for content negotiation
             query_type: Type of query for logging
             parse_json: Whether to parse response as JSON
+            purpose: Human-readable context, e.g. "mining/typed-object",
+                     "label-enrichment", "coverage".  Included in logs.
 
         Returns:
             Query results (dict for JSON, str for RDF formats)
@@ -434,20 +573,22 @@ class SparqlHelper:
             try:
                 if use_post:
                     result = self._post_query(query, accept)
-                    logger.debug(f"Executing {query_type} with POST")
+                    logger.debug(f"Executing {query_type} with POST for {purpose}")
                 else:
                     result = self._get_query(query, accept)
-                    logger.debug(f"Executing {query_type} with GET")
+                    logger.debug(f"Executing {query_type} with GET for {purpose}")
 
                 # Check if we got HTML instead of expected format
                 if self._is_html_response(result):
                     if not use_post:
-                        logger.debug("GET returned HTML, switching to POST")
+                        logger.debug(f"{purpose} | GET returned HTML, switching to POST")
                         self._requires_post = True
                         use_post = True
                         continue
                     else:
-                        raise EndpointError("Endpoint returned HTML error even with POST")
+                        raise EndpointError(
+                            "{purpose} | Endpoint returned HTML error even with POST"
+                        )
 
                 # Record successful query
                 SparqlHelper._record_query(
@@ -466,23 +607,77 @@ class SparqlHelper:
             except requests.exceptions.HTTPError as e:
                 status_code = e.response.status_code if e.response is not None else 0
 
-                # Check if this looks like a POST-required error (405 Method Not Allowed)
-                if not use_post and status_code == 405:
-                    logger.debug("GET returned 405, switching to POST")
+                # Check if this looks like a POST-required error
+                # 405 = Method Not Allowed, 414 = URI Too Long
+                if not use_post and status_code in (405, 414):
+                    logger.debug(
+                        "GET returned %d, switching to POST",
+                        status_code,
+                    )
                     self._requires_post = True
                     use_post = True
                     continue
 
                 # Check for retryable status codes
                 if status_code in self.RETRY_STATUS_CODES:
-                    self._handle_retry(attempt, query_type, e)
+                    # A 500/504 whose body signals "query too expensive"
+                    # (Virtuoso cost limit, statement timeout, gateway
+                    # timeout, etc.) is not a transient server error -
+                    # retrying the identical query will always fail.
+                    # Raise as EndpointTimeoutError so callers (e.g.
+                    # the two-phase miner) can fall back to pagination.
+                    if status_code in (500, 504):
+                        body = e.response.text.lower() if e.response is not None else ""
+                        is_cost_limit = status_code == 504 or any(
+                            pat in body for pat in self.COST_LIMIT_PATTERNS
+                        )
+                        if is_cost_limit:
+                            tag = f"{query_type}[{purpose}]" if purpose else query_type
+                            logger.warning(
+                                "%s query cost/time limit on %s - not retrying",
+                                tag,
+                                self.endpoint_url,
+                            )
+                            raise EndpointTimeoutError(f"Query cost/time limit: {e}") from e
+                    self._handle_retry(
+                        attempt,
+                        query_type,
+                        e,
+                        purpose,
+                    )
                     continue
 
                 # Non-retryable HTTP error
                 raise EndpointError(f"HTTP {status_code}: {e}") from e
 
+            except requests.exceptions.Timeout as e:
+                # Timeouts are surfaced immediately so that callers
+                # (e.g. select_chunked) can apply adaptive strategies
+                # such as reducing the page size, rather than blindly
+                # retrying the same expensive query.
+                tag = f"{query_type}[{purpose}]" if purpose else query_type
+                logger.warning(
+                    "%s timed out against %s: %s",
+                    tag,
+                    self.endpoint_url,
+                    e,
+                )
+                raise EndpointTimeoutError(f"Timeout: {e}") from e
+
             except requests.exceptions.RequestException as e:
                 error_msg = str(e).lower()
+
+                # ── Permanent failures: fail fast, don't retry ────
+                # DNS resolution failure or connection refused are not
+                # transient - the host doesn't exist or isn't listening.
+                if self._is_permanent_failure(e):
+                    tag = f"{query_type}[{purpose}]" if purpose else query_type
+                    logger.warning(
+                        "%s endpoint unreachable (%s)- not retrying",
+                        tag,
+                        self.endpoint_url,
+                    )
+                    raise EndpointError(f"Endpoint unreachable: {e}") from e
 
                 # Check if this looks like a POST-required error
                 if not use_post and self._should_retry_with_post(error_msg):
@@ -492,26 +687,86 @@ class SparqlHelper:
                     continue
 
                 # Handle transient network errors with retry
-                self._handle_retry(attempt, query_type, e)
+                self._handle_retry(
+                    attempt,
+                    query_type,
+                    e,
+                    purpose,
+                )
 
             except json.JSONDecodeError as e:
                 # JSON parse error, might be HTML response
-                self._handle_retry(attempt, query_type, e)
+                self._handle_retry(
+                    attempt,
+                    query_type,
+                    e,
+                    purpose,
+                )
 
             except Exception as e:
                 error_msg = str(e).lower()
 
                 # Check if this looks like a POST-required error
                 if not use_post and self._should_retry_with_post(error_msg):
-                    logger.debug(f"GET failed, switching to POST: {e}")
+                    logger.debug(f"GET failed for {purpose}, switching to POST: {e}")
                     self._requires_post = True
                     use_post = True
                     continue
 
-                self._handle_retry(attempt, query_type, e)
+                self._handle_retry(
+                    attempt,
+                    query_type,
+                    e,
+                    purpose,
+                )
 
-        # Should not reach here, but just in case
-        raise EndpointError("Query failed unexpectedly")
+        # Catch anything else?
+        raise EndpointError("Query failed unexpectedly {purpose}")
+
+    # Known database / backend error fragments that indicate the
+    # endpoint is alive but its backing store is broken.
+    _UNHEALTHY_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "recovery mode",
+        "database system is",
+        "connection refused",
+        "service unavailable",
+        "backend is not available",
+        "server is starting",
+        "too many connections",
+        "out of memory",
+        "psqlexception",
+    )
+
+    def _check_response_health(
+        self,
+        response: requests.Response,
+    ) -> None:
+        """Raise :class:`EndpointUnhealthyError` for deceptive responses.
+
+        Some endpoints return HTTP 200 (or 400) with a plain-text or
+        HTML body that is actually a database / proxy error- not a
+        valid SPARQL result.  Detecting these early prevents silent
+        empty-result bugs and allows callers to handle them
+        gracefully.
+        """
+        ct = response.headers.get("Content-Type", "").lower()
+        body = response.text.strip()
+
+        # If the response is proper SPARQL JSON, nothing to do.
+        if "sparql-results+json" in ct or "application/json" in ct:
+            return
+
+        # Check for known unhealthy body signatures.
+        body_lower = body[:2000].lower()
+        for pat in self._UNHEALTHY_PATTERNS:
+            if pat in body_lower:
+                short = body[:300].replace("\n", " ")
+                raise EndpointUnhealthyError(
+                    f"Endpoint returned unhealthy response "
+                    f"(HTTP {response.status_code}, "
+                    f"{ct or 'no content-type'}): "
+                    f"{short}"
+                )
 
     def _get_query(self, query: str, accept: str) -> str:
         """
@@ -541,6 +796,7 @@ class SparqlHelper:
             timeout=self.timeout,
         )
         response.raise_for_status()
+        self._check_response_health(response)
 
         return response.text
 
@@ -575,10 +831,17 @@ class SparqlHelper:
             timeout=self.timeout,
         )
         response.raise_for_status()
+        self._check_response_health(response)
 
         return response.text
 
-    def _handle_retry(self, attempt: int, query_type: str, error: Exception) -> None:
+    def _handle_retry(
+        self,
+        attempt: int,
+        query_type: str,
+        error: Exception,
+        purpose: str = "",
+    ) -> None:
         """
         Handle retry logic with exponential backoff.
 
@@ -586,14 +849,19 @@ class SparqlHelper:
             attempt: Current attempt number
             query_type: Type of query for logging
             error: The exception that caused the failure
+            purpose: Caller-provided context (e.g. "mining/typed-object")
 
         Raises:
             EndpointError: If max retries exceeded
         """
-        logger.warning(f"Query attempt {attempt}/{self.max_retries} failed: {error}")
+        tag = f"{query_type}[{purpose}]" if purpose else query_type
+        logger.warning(
+            f"{tag} attempt {attempt}/{self.max_retries} "
+            f"against {self.endpoint_url} failed: {error}"
+        )
 
         if attempt >= self.max_retries:
-            logger.error(f"{query_type} failed after {self.max_retries} tries")
+            logger.error(f"{tag} failed after {self.max_retries} tries")
             raise EndpointError(
                 f"Query failed after {self.max_retries} attempts: {error}"
             ) from error
@@ -611,6 +879,38 @@ class SparqlHelper:
         """Check if error indicates POST method should be tried."""
         return any(pattern in error_msg for pattern in self.POST_RETRY_PATTERNS)
 
+    # Patterns in the stringified exception chain that indicate the
+    # endpoint is permanently unreachable (DNS, refused, no route).
+    _PERMANENT_FAILURE_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "name or service not known",  # DNS resolution failure
+        "nameresolutionerror",  # urllib3 wrapper
+        "nodename nor servname provided",  # macOS DNS failure
+        "getaddrinfo failed",  # generic DNS failure
+        "no address associated",  # DNS NXDOMAIN
+        "[errno 111]",  # connection refused (Linux)
+        "[errno 61]",  # connection refused (macOS)
+        "[winerror 10061]",  # connection refused (Windows)
+        "no route to host",  # network unreachable
+        "[errno 113]",  # no route to host (Linux)
+    )
+
+    @classmethod
+    def _is_permanent_failure(cls, exc: Exception) -> bool:
+        """Return True if the exception indicates a permanent failure.
+
+        DNS resolution errors and connection-refused are not transient -
+        retrying will always produce the same result.
+        """
+        # Walk the full exception chain (cause, context, args)
+        msg = str(exc).lower()
+        cause = exc.__cause__ or exc.__context__
+        if cause:
+            msg += " " + str(cause).lower()
+            inner = getattr(cause, "reason", None)
+            if inner:
+                msg += " " + str(inner).lower()
+        return any(pat in msg for pat in cls._PERMANENT_FAILURE_PATTERNS)
+
     def _is_html_response(self, content: str) -> bool:
         """Check if content appears to be HTML (error page) instead of RDF."""
         if not content:
@@ -618,7 +918,7 @@ class SparqlHelper:
         stripped = content.strip()
         return any(stripped.startswith(marker) for marker in self.HTML_MARKERS)
 
-    def get_bindings(self, query: str) -> list[dict[str, str]]:
+    def get_bindings(self, query: str, purpose: str = "") -> list[dict[str, str]]:
         """
         Execute SELECT query and return simplified bindings list.
 
@@ -626,6 +926,7 @@ class SparqlHelper:
 
         Args:
             query: SPARQL SELECT query string
+            purpose: Optional tag for log identification
 
         Returns:
             List of dicts mapping variable names to their values
@@ -635,7 +936,7 @@ class SparqlHelper:
             >>> for row in bindings:
             ...     print(row["s"], row["p"])
         """
-        results = self.select(query)
+        results = self.select(query, purpose=purpose)
         bindings = results.get("results", {}).get("bindings", [])
 
         simplified = []
@@ -653,83 +954,180 @@ class SparqlHelper:
         chunk_size: int = 100,
         max_total_results: int | None = None,
         delay_between_chunks: float = 0.5,
+        purpose: str = "",
     ) -> Any:
-        """
-        Execute a SELECT query in chunks using OFFSET/LIMIT pagination.
+        """Execute a SELECT query in chunks using OFFSET/LIMIT pagination.
 
-        This is useful for large result sets that might timeout or overwhelm
-        the endpoint if requested all at once.
+        Uses **adaptive pagination**: when the endpoint times out, the
+        chunk (LIMIT) is reduced by ~15 % and the *same* offset is
+        retried after a cooldown pause.  The chunk size will never
+        shrink below 60 % of the original value (i.e. a maximum
+        cumulative reduction of ~40 %).  Up to 3 consecutive shrinks
+        are attempted per offset before giving up on that page.
+
+        After a successful fetch with a reduced chunk size, the smaller
+        size is kept for subsequent pages (the endpoint is consistently
+        slow).
 
         Args:
-            query_template: SPARQL query with {offset} and {limit} placeholders
-            chunk_size: Number of results per chunk (default: 100)
-            max_total_results: Maximum total results to fetch (None = all)
-            delay_between_chunks: Sleep time between chunks in seconds
+            query_template: SPARQL query with ``{offset}`` and
+                ``{limit}`` placeholders.
+            chunk_size: Initial number of results per chunk.
+            max_total_results: Cap on total results (``None`` = all).
+            delay_between_chunks:
+                Polite pause between pages (seconds).
+            purpose: Caller context for log messages.
 
         Yields:
-            List of bindings from each chunk
-
-        Example:
-            >>> query = "SELECT ?s WHERE {{ ?s a ?class }} OFFSET {offset} LIMIT {limit}"
-            >>> for bindings in helper.select_chunked(query, chunk_size=1000):
-            ...     for binding in bindings:
-            ...         print(binding["s"]["value"])
+            List of bindings (dicts) from each chunk.
         """
+        # ---- adaptive-pagination tunables -------------------------
+        shrink_factor = 0.85  # reduce LIMIT by 15 % each time
+        min_chunk_size = max(  # never go below 60 % of original
+            int(chunk_size * 0.60),
+            1,
+        )
+        max_shrinks_per_offset = 3  # give up after 3 reductions
+        cooldown_after_timeout = 5.0  # seconds to wait after a timeout
+        # -----------------------------------------------------------
+
         current_offset = 0
         total_fetched = 0
-        max_iterations = 10000  # Safety limit
+        current_chunk_size = chunk_size
+        max_iterations = 10_000  # safety limit
 
         for _ in range(max_iterations):
-            # Calculate chunk size for this iteration
+            # Honour max_total_results cap
             if max_total_results is not None:
                 remaining = max_total_results - total_fetched
                 if remaining <= 0:
                     break
-                current_chunk_size = min(chunk_size, remaining)
+                effective_limit = min(current_chunk_size, remaining)
             else:
-                current_chunk_size = chunk_size
+                effective_limit = current_chunk_size
 
-            # Format query with current pagination
-            query = query_template.format(offset=current_offset, limit=current_chunk_size)
+            query = query_template.format(
+                offset=current_offset,
+                limit=effective_limit,
+            )
 
-            try:
-                logger.debug(
-                    f"Executing chunked query: offset={current_offset}, limit={current_chunk_size}"
+            # --- attempt this page (with adaptive retries) ---------
+            shrink_attempts = 0
+            success = False
+
+            while shrink_attempts <= max_shrinks_per_offset:
+                try:
+                    logger.debug(
+                        "Chunked %s: offset=%d limit=%d",
+                        purpose or "query",
+                        current_offset,
+                        effective_limit,
+                    )
+                    t0 = time.monotonic()
+                    results = self.select(query, purpose=purpose)
+                    elapsed = time.monotonic() - t0
+
+                    bindings = results.get(
+                        "results",
+                        {},
+                    ).get("bindings", [])
+                    logger.debug(
+                        "Chunked %s: offset=%d returned %d rows in %.1fs",
+                        purpose or "query",
+                        current_offset,
+                        len(bindings),
+                        elapsed,
+                    )
+                    success = True
+                    break  # out of the while
+
+                except EndpointTimeoutError:
+                    # --- adaptive reduction -----------------------
+                    new_limit = max(
+                        int(effective_limit * shrink_factor),
+                        min_chunk_size,
+                    )
+
+                    if new_limit >= effective_limit:
+                        # Already at floor - cannot shrink further
+                        logger.warning(
+                            "Timeout at offset %d; chunk size already at minimum (%d) - skipping",
+                            current_offset,
+                            effective_limit,
+                        )
+                        break
+
+                    shrink_attempts += 1
+                    logger.warning(
+                        "Timeout at offset %d - reducing chunk "
+                        "%d -> %d (attempt %d/%d, cooling %ds)",
+                        current_offset,
+                        effective_limit,
+                        new_limit,
+                        shrink_attempts,
+                        max_shrinks_per_offset,
+                        int(cooldown_after_timeout),
+                    )
+                    effective_limit = new_limit
+                    current_chunk_size = new_limit  # sticky
+                    query = query_template.format(
+                        offset=current_offset,
+                        limit=effective_limit,
+                    )
+                    time.sleep(cooldown_after_timeout)
+
+                except Exception as e:
+                    logger.warning(
+                        "Chunk query failed at offset %d: %s",
+                        current_offset,
+                        e,
+                    )
+                    break  # non-timeout error -> stop paging
+
+            if not success:
+                # Could not fetch this page even with reduced size.
+                # Raise so callers know the result set is incomplete.
+                raise PaginationTruncatedError(
+                    f"Pagination abandoned at offset {current_offset}"
+                    f" after {max_shrinks_per_offset} chunk-size"
+                    " reductions - results are incomplete",
+                    offset=current_offset,
                 )
-                results = self.select(query)
 
-                # Extract bindings
-                bindings = results.get("results", {}).get("bindings", [])
-
-                if not bindings:
-                    logger.debug("No more results, pagination complete")
-                    break
-
-                # Yield this chunk's results
-                yield bindings
-
-                # Update counters
-                chunk_count = len(bindings)
-                total_fetched += chunk_count
-                current_offset += chunk_count
-
-                logger.debug(f"Fetched chunk: {chunk_count} results (total: {total_fetched})")
-
-                # If chunk was smaller than requested, we've reached the end
-                if chunk_count < current_chunk_size:
-                    logger.debug("Partial chunk received, pagination complete")
-                    break
-
-                # Respectful delay between chunks
-                if delay_between_chunks > 0:
-                    time.sleep(delay_between_chunks)
-
-            except Exception as e:
-                logger.warning(f"Chunk query failed at offset {current_offset}: {e}")
+            if not bindings:
+                logger.debug("No more results, pagination complete")
                 break
 
+            # Yield this chunk's results
+            yield bindings
+
+            chunk_count = len(bindings)
+            total_fetched += chunk_count
+            current_offset += chunk_count
+
+            logger.info(
+                "Chunked %s: fetched %d rows (total so far: %d, limit: %d)",
+                purpose or "query",
+                chunk_count,
+                total_fetched,
+                effective_limit,
+            )
+
+            if chunk_count < effective_limit:
+                logger.debug(
+                    "Partial chunk received, pagination complete",
+                )
+                break
+
+            # Polite delay between pages
+            if delay_between_chunks > 0:
+                time.sleep(delay_between_chunks)
+
         else:
-            logger.warning(f"Chunked query hit max iterations ({max_iterations})")
+            logger.warning(
+                "Chunked query hit max iterations (%d)",
+                max_iterations,
+            )
 
     @staticmethod
     def prepare_paginated_query(base_query: str) -> str:
@@ -806,6 +1204,7 @@ def sparql_select(
     endpoint_url: str,
     query: str,
     use_post: bool = False,
+    purpose: str = "",
 ) -> dict[str, Any]:
     """
     Execute a one-off SELECT query.
@@ -816,12 +1215,13 @@ def sparql_select(
         endpoint_url: SPARQL endpoint URL
         query: SPARQL SELECT query
         use_post: Force POST method
+        purpose: Optional tag for log identification
 
     Returns:
         SPARQL JSON results
     """
     with SparqlHelper(endpoint_url, use_post=use_post) as helper:
-        return helper.select(query)
+        return helper.select(query, purpose=purpose)
 
 
 def sparql_construct(

@@ -1,0 +1,32 @@
+# =============================================================================
+# .dockerignore - applies to both Docker images (UI + pipeline)
+# Each image is built separately and pushed to DockerHub independently:
+#   docker/Dockerfile          -> rdfsolve/ui
+#   docker/Dockerfile.pipeline -> rdfsolve/pipeline
+# =============================================================================
+
+# ── Version control ──────────────────────────────────────────────
+.git
+
+# ── Python build/cache artefacts ─────────────────────────────────
+.venv
+*.egg-info
+__pycache__
+.pytest_cache
+.tox
+.mypy_cache
+*.py[cod]
+
+# ── Dev/docs (not needed in any image) ───────────────────────────
+docs/
+notebooks/
+*.ipynb
+
+# ── Generated RDF data and QLever workdirs (never in an image) ───
+data/rdf/
+results/
+
+# ── Frontend build artefacts (built separately) ──────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/build/
