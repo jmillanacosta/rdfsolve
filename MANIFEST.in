@@ -24,12 +24,13 @@ prune notebooks
 prune scripts
 prune data/rdf
 prune results
-exclude paper
-exclude frontend
+prune paper
+prune frontend
 prune docker
 
 # ── Dev / infra files — tracked by git but not shipped in sdist ──
 exclude .cruft.json
+exclude .check-manifest-ignore
 exclude .dockerignore
 exclude .gitmodules
 exclude .readthedocs.yml

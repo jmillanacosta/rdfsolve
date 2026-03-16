@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib
-from typing import TYPE_CHECKING
 
 from rdfsolve.schema_models._constants import (
     _BASE_URI,
@@ -32,23 +31,6 @@ from rdfsolve.schema_models.report import (
     QueryStats,
 )
 
-# LinkML-dependent modules (linkml.py, shacl.py) are loaded lazily because
-# `linkml.__init__` can crash on certain Python / linkml version combinations
-# (e.g. ``AttributeError: JSON`` on Python 3.10).  The symbols are still
-# importable via ``from rdfsolve.schema_models import to_linkml`` etc.,
-# they are resolved on first access through ``__getattr__``.
-
-if TYPE_CHECKING:
-    from rdfsolve.schema_models.linkml import (
-        make_valid_linkml_name as make_valid_linkml_name,
-    )
-    from rdfsolve.schema_models.linkml import (
-        to_linkml as to_linkml,
-    )
-    from rdfsolve.schema_models.linkml import (
-        to_linkml_yaml as to_linkml_yaml,
-    )
-    from rdfsolve.schema_models.shacl import to_shacl as to_shacl
 
 # Names that should be resolved lazily via __getattr__
 _LAZY_LINKML = {
@@ -89,9 +71,5 @@ __all__ = [
     "_parse_schema_entry",
     "_parse_schema_graph",
     # conversions
-    "make_valid_linkml_name",
-    "to_linkml",
-    "to_linkml_yaml",
     "to_rdfconfig",
-    "to_shacl",
 ]
