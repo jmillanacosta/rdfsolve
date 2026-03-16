@@ -1,5 +1,5 @@
 # =============================================================================
-# docker-compose.yml — rdfsolve full-stack
+# docker-compose.yml - rdfsolve full-stack
 # =============================================================================
 #
 # This file tells Docker how to build, configure, and run the rdfsolve
@@ -25,7 +25,7 @@ name: rdfsolve-ui
 # HOW THE DATABASE WORKS
 # =============================================================================
 #
-# rdfsolve uses a single SQLite file as its database.  SQLite is file-based —
+# rdfsolve uses a single SQLite file as its database.  SQLite is file-based -
 # the whole database is one file: rdfsolve.db.
 #
 # WHERE THE FILE LIVES
@@ -40,23 +40,23 @@ name: rdfsolve-ui
 # A named volume (db-data:/app/data) keeps the database file alive across
 # container restarts and image rebuilds.  Without it, every `docker compose
 # down` would delete the database.  A named volume is managed by Docker and
-# is not directly tied to a folder in your repo — that prevents accidental
+# is not directly tied to a folder in your repo - that prevents accidental
 # commits of the binary .db file.
 #
 # WHAT'S IN THE DATABASE?
 # -----------------------
 # The database has two tables:
 #
-#   schemas   — one row per imported schema or mapping.  Key columns:
+#   schemas   - one row per imported schema or mapping.  Key columns:
 #                 id            unique identifier (e.g. "aopwikirdf_schema")
 #                 name          human-readable name
 #                 endpoint      SPARQL endpoint URL the schema was mined from
-#                 pattern_count number of class→property→class triples
+#                 pattern_count number of class->property->class triples
 #                 generated_at  ISO-8601 timestamp
 #                 strategy      "miner" for schemas, "instance_matcher" for mappings
 #                 data          full JSON-LD document (stored as a JSON string)
 #
-#   endpoints — manually registered SPARQL endpoints (name, URL, optional graph)
+#   endpoints - manually registered SPARQL endpoints (name, URL, optional graph)
 #
 # HOW THE DATABASE GETS POPULATED
 # --------------------------------
@@ -73,8 +73,8 @@ name: rdfsolve-ui
 # ------------------
 # Neither the .db file nor the *.jsonld schema files are tracked in git.
 # Both are generated artefacts:
-#   - .db  → runtime state created on first boot (.gitignore: *.db)
-#   - *.jsonld → produced locally by the mining scripts (.gitignore: *.jsonld)
+#   - .db  -> runtime state created on first boot (.gitignore: *.db)
+#   - *.jsonld -> produced locally by the mining scripts (.gitignore: *.jsonld)
 #
 # On a fresh clone, populate docker/schemas/ before starting the container:
 #   python scripts/mine_all_sources.py --output-dir docker/schemas
@@ -161,14 +161,14 @@ services:
       - SPARQL_TIMEOUT=60
 
       # Set to "1" to enable Flask debug mode (auto-reload on code changes).
-      # Never use "1" in production — it exposes an interactive debugger.
+      # Never use "1" in production - it exposes an interactive debugger.
       - FLASK_DEBUG=0
 
       # Port the server listens on.  Defaults to 8000; override with PORT=9000.
       - PORT=${PORT:-8000}
 
     ports:
-      # Map host port → container port.  Both sides use the same PORT value
+      # Map host port -> container port.  Both sides use the same PORT value
       # so `curl http://localhost:8000` reaches Gunicorn inside the container.
       - "${PORT:-8000}:${PORT:-8000}"
 

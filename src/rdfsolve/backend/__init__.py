@@ -1,1 +1,1 @@
-"""Flask backend for rdfsolve — REST API for schema management, SPARQL proxying, and more."""
+"""Flask backend for rdfsolve - REST API for schema management, SPARQL proxying, and more."""

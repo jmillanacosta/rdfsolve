@@ -1,4 +1,4 @@
-"""SPARQL query execution — pure-library module (no Flask dependency).
+"""SPARQL query execution - pure-library module (no Flask dependency).
 
 This module provides structured SPARQL query execution built on top of
 :class:`~rdfsolve.sparql_helper.SparqlHelper`.  It adds:
@@ -8,7 +8,7 @@ This module provides structured SPARQL query execution built on top of
 * A single :func:`execute_sparql` convenience function with a clean
   dict-return signature suitable for the public API.
 
-All HTTP / retry / GET→POST logic is delegated to ``SparqlHelper``.
+All HTTP / retry / GET->POST logic is delegated to ``SparqlHelper``.
 """
 
 from __future__ import annotations
@@ -102,9 +102,7 @@ def execute_sparql(
         )
 
     variables: list[str] = json_result.get("head", {}).get("vars", [])
-    bindings: list[dict[str, Any]] = (
-        json_result.get("results", {}).get("bindings", [])
-    )
+    bindings: list[dict[str, Any]] = json_result.get("results", {}).get("bindings", [])
 
     rows: list[dict[str, ResultCell]] = []
     for binding in bindings:

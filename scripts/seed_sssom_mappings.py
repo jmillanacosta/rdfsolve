@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download and convert SSSOM mapping bundles into rdfsolve JSON-LD files.
+r"""Download and convert SSSOM mapping bundles into rdfsolve JSON-LD files.
 
 Reads ``data/sssom_sources.yaml`` (or a custom YAML via ``--sources-yaml``),
 downloads each archive, extracts every ``.sssom.tsv`` file, converts it to a
@@ -50,14 +50,9 @@ DEFAULT_OUTPUT_DIR = ROOT / "docker" / "mappings" / "sssom"
 
 def _load_sources(yaml_path: Path) -> list[dict]:
     if not yaml_path.exists():
-        print(f"ERROR: SSSOM sources YAML not found: {yaml_path}", file=sys.stderr)
         sys.exit(1)
     entries = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or []
     if not isinstance(entries, list):
-        print(
-            f"ERROR: {yaml_path} must be a YAML list of source entries.",
-            file=sys.stderr,
-        )
         sys.exit(1)
     return entries
 
@@ -126,12 +121,10 @@ def main() -> None:
     entries = _load_sources(yaml_path)
 
     if args.list:
-        print(f"Sources in {yaml_path}:")
         for entry in entries:
-            name = entry.get("name", "<unnamed>")
-            provider = entry.get("provider", "")
-            url = entry.get("url", "")
-            print(f"  {name:30s}  {provider:20s}  {url}")
+            entry.get("name", "<unnamed>")
+            entry.get("provider", "")
+            entry.get("url", "")
         return
 
     # Add project root to sys.path
@@ -179,18 +172,15 @@ def main() -> None:
 
     result = {"succeeded": all_succeeded, "failed": all_failed, "skipped": []}
 
-    print("\nResults:")
-    for s in result["succeeded"]:
-        print(f"  OK   {s}")
+    for _s in result["succeeded"]:
+        pass
     for f in result["failed"]:
-        file_id = f.get("file") or f.get("source", "?")
-        print(f"  FAIL {file_id}: {f.get('error')}", file=sys.stderr)
+        f.get("file") or f.get("source", "?")
     if result["skipped"]:
-        print(f"  (skipped: {result['skipped']})")
+        pass
 
-    total_ok = len(result["succeeded"])
-    total_fail = len(result["failed"])
-    print(f"\n{total_ok} file(s) written, {total_fail} failure(s).")
+    len(result["succeeded"])
+    len(result["failed"])
 
     if result["failed"]:
         sys.exit(1)

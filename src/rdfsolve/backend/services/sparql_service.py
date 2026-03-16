@@ -1,4 +1,4 @@
-"""SPARQL query execution service — thin Flask wrapper with caching.
+"""SPARQL query execution service - thin Flask wrapper with caching.
 
 All core logic lives in :mod:`rdfsolve.query`.  This service adds
 response caching via :mod:`~rdfsolve.backend.services.cache_service`.
@@ -11,7 +11,7 @@ from rdfsolve.query import QueryResult, execute_sparql
 
 
 class SparqlService:
-    """Execute SPARQL queries — delegates to :func:`rdfsolve.query.execute_sparql`."""
+    """Execute SPARQL queries - delegates to :func:`rdfsolve.query.execute_sparql`."""
 
     def execute(
         self,
@@ -25,7 +25,7 @@ class SparqlService:
         key = f"sparql:{cache_key(query, endpoint)}"
         cached = cache.get(key)
         if cached is not None:
-            return cached
+            return cached  # type: ignore[no-any-return]
 
         result = execute_sparql(
             query=query,

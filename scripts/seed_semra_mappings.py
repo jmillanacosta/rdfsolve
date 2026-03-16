@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import SeMRA external mappings and write one JSON-LD per (source, prefix).
+r"""Import SeMRA external mappings and write one JSON-LD per (source, prefix).
 
 Writes ``{source}_{prefix}.jsonld`` to ``docker/mappings/semra/`` for
 each unique subject prefix found in the downloaded mappings.
@@ -143,16 +143,13 @@ def main() -> None:
         output_dir=args.output_dir,
     )
 
-    print("\nResults:")
     for s in result["succeeded"]:
-        print(f"  OK {s}")
+        pass
     for f in result["failed"]:
-        src = f.get("source", "?")
-        pfx = f.get("prefix")
-        loc = f"{src}/{pfx}" if pfx else src
-        print(f"  FAIL {loc}: {f.get('error')}", file=sys.stderr)
+        f.get("source", "?")
+        f.get("prefix")
     if result["skipped"]:
-        print(f"  (skipped: {result['skipped']})")
+        pass
 
     if result["failed"]:
         sys.exit(1)

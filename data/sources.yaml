@@ -815,13 +815,13 @@
 
 - name: bio2rdf.biomodels
   endpoint: http://cu.biomodels.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — BioModels"
+  notes: "Bio2RDF mirror - BioModels"
   download_nq: https://download.bio2rdf.org/files/release/3/biomodels/biomodels.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/biomodels/biomodels.schema.owl
 
 - name: bio2rdf.bioportal
   endpoint: http://cu.bioportal.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — BioPortal"
+  notes: "Bio2RDF mirror - BioPortal"
   download_nq:
     - https://download.bio2rdf.org/files/release/3/bioportal/aao.nq.gz
     - https://download.bio2rdf.org/files/release/3/bioportal/aba-amb.nq.gz
@@ -1132,7 +1132,7 @@
 
 - name: bio2rdf.chembl
   endpoint: http://cu.chembl.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — ChEMBL"
+  notes: "Bio2RDF mirror - ChEMBL"
   download_owl: https://download.bio2rdf.org/files/release/3/chembl/chembl.schema.owl
   download_ttl:
     - https://download.bio2rdf.org/files/release/3/chembl/cco.ttl.gz
@@ -1161,13 +1161,13 @@
 
 - name: bio2rdf.dbsnp
   endpoint: http://cu.dbsnp.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — dbSNP"
+  notes: "Bio2RDF mirror - dbSNP"
   download_nq: https://download.bio2rdf.org/files/release/3/dbsnp/dbsnp.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/dbsnp/dbsnp.schema.owl
 
 - name: bio2rdf.genage
   endpoint: http://cu.genage.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — GenAge"
+  notes: "Bio2RDF mirror - GenAge"
   download_nq:
     - https://download.bio2rdf.org/files/release/3/genage/genage_human.nq.gz
     - https://download.bio2rdf.org/files/release/3/genage/genage_models.nq.gz
@@ -1175,7 +1175,7 @@
 
 - name: bio2rdf.gendr
   endpoint: http://cu.gendr.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — GenDR"
+  notes: "Bio2RDF mirror - GenDR"
   download_nq:
     - https://download.bio2rdf.org/files/release/3/gendr/gendr_gene_expression.nq.gz
     - https://download.bio2rdf.org/files/release/3/gendr/gendr_gene_manipulations.nq.gz
@@ -1183,7 +1183,7 @@
 
 - name: bio2rdf.iproclass
   endpoint: http://cu.iproclass.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — iProClass"
+  notes: "Bio2RDF mirror - iProClass"
   download_nq:
     - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.1.nq.gz
     - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.10.nq.gz
@@ -1264,14 +1264,14 @@
 
 - name: bio2rdf.linkedspl
   endpoint: http://cu.linkedspl.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — LinkedSPL"
+  notes: "Bio2RDF mirror - LinkedSPL"
   download_owl: https://download.bio2rdf.org/files/release/3/linkedspl/linkedspl.schema.owl
   download_nq: https://download.bio2rdf.org/files/release/3/linkedspl/linkedspl.nt.gz
 
 
 - name: bio2rdf.orphanet
   endpoint: http://cu.orphanet.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — Orphanet"
+  notes: "Bio2RDF mirror - Orphanet"
   download_nq:
     - https://download.bio2rdf.org/files/release/3/orphanet/orphanet-d2s.nq.gz
     - https://download.bio2rdf.org/files/release/3/orphanet/orphanet-disease.nq.gz
@@ -1282,18 +1282,18 @@
 
 - name: bio2rdf.pathwaycommons
   endpoint: http://cu.pathwaycommons.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — Pathway Commons"
+  notes: "Bio2RDF mirror - Pathway Commons"
   download_owl: https://download.bio2rdf.org/files/release/3/pathwaycommons/pathwaycommons.schema.owl
   download_rdfxml: https://download.bio2rdf.org/files/release/3/pathwaycommons/pathwaycommons.xml.gz
 
 - name: bio2rdf.pubmed
   endpoint: http://cu.pubmed.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — PubMed"
+  notes: "Bio2RDF mirror - PubMed"
   download_owl: https://download.bio2rdf.org/files/release/3/pubmed/pubmed.schema.owl
 
 - name: bio2rdf.reactome
   endpoint: http://cu.reactome.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — Reactome"
+  notes: "Bio2RDF mirror - Reactome"
   download_owl:
     - https://download.bio2rdf.org/files/release/3/reactome/reactome.schema.owl
     - https://download.bio2rdf.org/files/release/3/reactome/biopax-level3.owl
@@ -1351,13 +1351,13 @@
   download_ttl: https://download.bio2rdf.org/files/release/3/reactome/dataset-void.ttl
 - name: bio2rdf.sabiork
   endpoint: http://cu.sabiork.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — SABIO-RK"
+  notes: "Bio2RDF mirror - SABIO-RK"
   download_nq: https://download.bio2rdf.org/files/release/3/sabiork/sabiork.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/sabiork/sabiork.schema.owl
 
 - name: bio2rdf.wikipathways
   endpoint: http://cu.wikipathways.bio2rdf.org/sparql
-  notes: "Bio2RDF mirror — WikiPathways"
+  notes: "Bio2RDF mirror - WikiPathways"
   download_owl:
     - https://download.bio2rdf.org/files/release/3/wikipathways/wikipathways.schema.owl
     - https://download.bio2rdf.org/files/release/3/wikipathways/human.owl.xml.gz
@@ -1829,11 +1829,11 @@
 
 - name: chemdb
   endpoint: http://chemdb.semweb.csdb.cn/sparql
-  notes: "ChemDB — phase transition dataset"
+  notes: "ChemDB - phase transition dataset"
 
 - name: covidontheweb
   endpoint: https://covidontheweb.inria.fr/sparql
-  notes: "COVID on the Web — INRIA"
+  notes: "COVID on the Web - INRIA"
 
 # Bio2RDF dataset-specific endpoint
 # Some Bio2RDF datasets expose dataset-specific SPARQL endpoints
@@ -1849,7 +1849,7 @@
     - http://purl.jp/bio/18/nadd/
   use_graph: true
   download_ttl: https://rdfportal.org/download/nadd/latest/rdf/graph-1/NucleicAcidDrug.ttl.gz
-  notes: "Nucleic Acid Drug Database (NADD) — RDFPortal"
+  notes: "Nucleic Acid Drug Database (NADD) - RDFPortal"
 
 # ═══════════════════════════════════════════════════════════════════
 # KG Registry (kghub.org/kg-registry)

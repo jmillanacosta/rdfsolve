@@ -17,9 +17,15 @@ class SchemaService:
     """Manages JSON-LD schemas: list, get, generate, upload, delete."""
 
     def __init__(self, db: Database) -> None:
+        """
+        Initialize a SchemaService.
+
+        :param db: an rdfsolve db.
+        :type db: Database
+        """
         self.db = db
 
-    # ── listing / retrieval ───────────────────────────────────────────
+    # listing / retrieval
 
     def list_schemas(self, strategy: str | None = None) -> list[dict[str, Any]]:
         """Return lightweight metadata for all stored schemas.
@@ -32,7 +38,7 @@ class SchemaService:
         """Load a full JSON-LD schema by *schema_id*."""
         return self.db.get_schema(schema_id)
 
-    # ── persistence ───────────────────────────────────────────────────
+    #  persistence
 
     def save_schema(
         self,
@@ -43,12 +49,7 @@ class SchemaService:
 
         Returns the schema_id.
         """
-        safe = (
-            dataset_name
-            .lower()
-            .replace(" ", "_")
-            .replace("-", "_")
-        )
+        safe = dataset_name.lower().replace(" ", "_").replace("-", "_")
         schema_id = f"{safe}_schema"
         about = schema.get("@about", schema.get("@metadata", {}))
         self.db.save_schema(
@@ -66,7 +67,7 @@ class SchemaService:
         """Delete a schema by id."""
         return self.db.delete_schema(schema_id)
 
-    # ── generation via rdfsolve ───────────────────────────────────────
+    #  generation via rdfsolve
 
     def generate_schema(
         self,
@@ -105,13 +106,13 @@ class SchemaService:
 
         return schema_jsonld
 
-    # ── bulk import from existing JSON-LD files on disk ───────────────
+    #  bulk import from existing JSON-LD files on disk
 
     def import_from_directory(self, directory: str | Path) -> int:
         """Scan a directory tree for ``*.jsonld`` files and import them.
 
         Scans *directory* directly, then also any immediate subdirectories
-        (one level deep) — this covers the ``docker/mappings/*/`` layout
+        (one level deep) - this covers the ``docker/mappings/*/`` layout
         where schemas, instance-matching mappings, semra imports, and
         inferenced mappings live in separate subdirectories.
 

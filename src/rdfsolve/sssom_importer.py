@@ -2,7 +2,8 @@
 
 Downloads SSSOM bundles listed in ``data/sssom_sources.yaml``, extracts
 every ``.sssom.tsv`` file, converts each one to a
-:class:`~rdfsolve.models.SsomMapping` JSON-LD file, and writes the results
+:class:`~rdfsolve.mapping_models.sssom.SsomMapping` JSON-LD file, and
+writes the results
 to a configurable output directory (default: ``docker/mappings/sssom/``).
 
 Typical usage
@@ -47,7 +48,7 @@ Optional columns used when present:
     mapping_set_title  subject_source  object_source
 
 The front-matter may also carry ``mapping_set_id``, ``mapping_set_title``,
-``license``, and a ``curie_map`` (prefix → namespace) block.
+``license``, and a ``curie_map`` (prefix -> namespace) block.
 """
 
 from __future__ import annotations
@@ -57,15 +58,17 @@ import io
 import json
 import logging
 import os
-import re
 import tarfile
 import tempfile
 import urllib.request
 import zipfile
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any
 
 import yaml
+
+from rdfsolve._uri import expand_curie
 
 logger = logging.getLogger(__name__)
 
@@ -76,18 +79,18 @@ logger = logging.getLogger(__name__)
 # Map common SSSOM / OWL predicates to their full URIs.
 # The importer resolves short-forms via the file's own curie_map first; this
 # table serves as a fallback for the most common cases.
-_PREDICATE_FALLBACK: Dict[str, str] = {
+_PREDICATE_FALLBACK: dict[str, str] = {
     # SKOS
-    "skos:exactMatch":       "http://www.w3.org/2004/02/skos/core#exactMatch",
-    "skos:closeMatch":       "http://www.w3.org/2004/02/skos/core#closeMatch",
-    "skos:broadMatch":       "http://www.w3.org/2004/02/skos/core#broadMatch",
-    "skos:narrowMatch":      "http://www.w3.org/2004/02/skos/core#narrowMatch",
-    "skos:relatedMatch":     "http://www.w3.org/2004/02/skos/core#relatedMatch",
+    "skos:exactMatch": "http://www.w3.org/2004/02/skos/core#exactMatch",
+    "skos:closeMatch": "http://www.w3.org/2004/02/skos/core#closeMatch",
+    "skos:broadMatch": "http://www.w3.org/2004/02/skos/core#broadMatch",
+    "skos:narrowMatch": "http://www.w3.org/2004/02/skos/core#narrowMatch",
+    "skos:relatedMatch": "http://www.w3.org/2004/02/skos/core#relatedMatch",
     # OWL
-    "owl:equivalentClass":   "http://www.w3.org/2002/07/owl#equivalentClass",
-    "owl:sameAs":            "http://www.w3.org/2002/07/owl#sameAs",
+    "owl:equivalentClass": "http://www.w3.org/2002/07/owl#equivalentClass",
+    "owl:sameAs": "http://www.w3.org/2002/07/owl#sameAs",
     # SSSOM
-    "sssom:NoTermFound":     "https://w3id.org/sssom/NoTermFound",
+    "sssom:NoTermFound": "https://w3id.org/sssom/NoTermFound",
 }
 
 # Default predicate when none is provided
@@ -98,24 +101,12 @@ _DEFAULT_PREDICATE = "http://www.w3.org/2004/02/skos/core#exactMatch"
 # SSSOM TSV parsing helpers
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _resolve_curie(curie: str, curie_map: Dict[str, str]) -> str:
-    """Expand a CURIE to a full URI using *curie_map*, or return as-is."""
-    if curie.startswith("http://") or curie.startswith("https://"):
-        return curie
-    if ":" in curie:
-        prefix, local = curie.split(":", 1)
-        namespace = curie_map.get(prefix)
-        if namespace:
-            return namespace + local
-    # Look up known fallback predicates verbatim
-    return curie
 
-
-def _parse_sssom_header(lines: List[str]) -> Tuple[Dict[str, Any], Dict[str, str]]:
+def _parse_sssom_header(lines: list[str]) -> tuple[dict[str, Any], dict[str, str]]:
     """Parse the YAML front-matter from a list of comment lines.
 
     Returns ``(metadata_dict, curie_map)`` where *metadata_dict* contains
-    the scalar key→value pairs from the SSSOM header and *curie_map* is the
+    the scalar key->value pairs from the SSSOM header and *curie_map* is the
     ``curie_map`` sub-dictionary (or an empty dict if absent).
     """
     # Strip leading '#' and collect only lines before the TSV header
@@ -127,22 +118,22 @@ def _parse_sssom_header(lines: List[str]) -> Tuple[Dict[str, Any], Dict[str, str
     if not isinstance(raw, dict):
         return {}, {}
 
-    curie_map: Dict[str, str] = raw.pop("curie_map", {}) or {}
+    curie_map: dict[str, str] = raw.pop("curie_map", {}) or {}
     if not isinstance(curie_map, dict):
         curie_map = {}
 
     return raw, curie_map
 
 
-def _parse_sssom_tsv(content: str) -> Tuple[Dict[str, Any], Dict[str, str], List[Dict[str, str]]]:
+def _parse_sssom_tsv(content: str) -> tuple[dict[str, Any], dict[str, str], list[dict[str, str]]]:
     """Parse a complete SSSOM TSV string.
 
     Returns ``(header_meta, curie_map, rows)`` where *rows* is a list of
     dicts (one per data row) keyed by column name.
     """
     lines = content.splitlines()
-    comment_lines: List[str] = []
-    data_lines: List[str] = []
+    comment_lines: list[str] = []
+    data_lines: list[str] = []
 
     for line in lines:
         if line.startswith("#"):
@@ -153,7 +144,7 @@ def _parse_sssom_tsv(content: str) -> Tuple[Dict[str, Any], Dict[str, str], List
     header_meta, curie_map = _parse_sssom_header(comment_lines)
 
     # Parse the TSV section
-    rows: List[Dict[str, str]] = []
+    rows: list[dict[str, str]] = []
     if data_lines:
         reader = csv.DictReader(io.StringIO("\n".join(data_lines)), delimiter="\t")
         rows = [row for row in reader if any(v.strip() for v in row.values())]
@@ -165,19 +156,21 @@ def _parse_sssom_tsv(content: str) -> Tuple[Dict[str, Any], Dict[str, str], List
 # MappingEdge conversion
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 def _rows_to_edges(
-    rows: List[Dict[str, str]],
-    curie_map: Dict[str, str],
+    rows: list[dict[str, str]],
+    curie_map: dict[str, str],
     source_name: str,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Convert TSV rows to a list of MappingEdge-compatible dicts.
 
-    Each dict has the same keys as :class:`~rdfsolve.models.MappingEdge`.
+    Each dict has the same keys as
+    :class:`~rdfsolve.mapping_models.core.MappingEdge`.
     We defer importing the Pydantic model to avoid circular import issues at
     module load time; callers that need actual ``MappingEdge`` objects can
     do ``MappingEdge(**d)`` on each dict.
     """
-    edges: List[Dict[str, Any]] = []
+    edges: list[dict[str, Any]] = []
     skipped = 0
 
     for row in rows:
@@ -189,14 +182,13 @@ def _rows_to_edges(
             skipped += 1
             continue
 
-        # Resolve CURIEs → full URIs
-        src_uri = _resolve_curie(subject_id, curie_map)
-        tgt_uri = _resolve_curie(object_id, curie_map)
+        # Resolve CURIEs -> full URIs
+        src_uri = expand_curie(subject_id, curie_map)
+        tgt_uri = expand_curie(object_id, curie_map)
 
         if predicate_id:
-            pred_uri = (
-                _PREDICATE_FALLBACK.get(predicate_id)
-                or _resolve_curie(predicate_id, curie_map)
+            pred_uri = _PREDICATE_FALLBACK.get(predicate_id) or expand_curie(
+                predicate_id, curie_map
             )
         else:
             pred_uri = _DEFAULT_PREDICATE
@@ -213,14 +205,14 @@ def _rows_to_edges(
 
         # Optional confidence
         conf_str = row.get("confidence", "").strip()
-        confidence: Optional[float] = None
+        confidence: float | None = None
         if conf_str:
             try:
                 confidence = float(conf_str)
             except ValueError:
                 pass
 
-        edge: Dict[str, Any] = {
+        edge: dict[str, Any] = {
             "source_class": src_uri,
             "target_class": tgt_uri,
             "predicate": pred_uri,
@@ -242,6 +234,7 @@ def _rows_to_edges(
 # Archive download + extraction
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 def _download_to_tempfile(url: str) -> Path:
     """Download *url* to a temporary file and return its path.
 
@@ -262,11 +255,9 @@ def _download_to_tempfile(url: str) -> Path:
                 for chunk in resp.iter_content(chunk_size=1 << 20):
                     fh.write(chunk)
     except ImportError:
-        # Fall back to urllib with a browser-like User-Agent so servers
-        # don't block the request
-        req = urllib.request.Request(
+        # Fall back to urllib
+        req = urllib.request.Request(  # noqa: S310
             url,
-            headers={"User-Agent": "Mozilla/5.0 rdfsolve-sssom-importer/1.0"},
         )
         with urllib.request.urlopen(req, timeout=120) as resp:  # noqa: S310
             with open(tmp_path, "wb") as fh:
@@ -276,11 +267,11 @@ def _download_to_tempfile(url: str) -> Path:
                         break
                     fh.write(chunk)
 
-    logger.info("Download complete → %s", tmp_path)
+    logger.info("Download complete -> %s", tmp_path)
     return Path(tmp_path)
 
 
-def _iter_sssom_tsv_from_archive(archive_path: Path) -> Iterator[Tuple[str, str]]:
+def _iter_sssom_tsv_from_archive(archive_path: Path) -> Iterator[tuple[str, str]]:
     """Yield ``(filename, content)`` for every ``.sssom.tsv`` in an archive.
 
     Supports ``.tgz``, ``.tar.gz``, ``.tar.bz2``, ``.zip``.  For plain
@@ -318,10 +309,11 @@ def _iter_sssom_tsv_from_archive(archive_path: Path) -> Iterator[Tuple[str, str]
 # Public API
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 def import_sssom_source(
-    entry: Dict[str, Any],
+    entry: dict[str, Any],
     output_dir: str = "docker/mappings/sssom",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Download and convert one SSSOM source entry to JSON-LD files.
 
     For each ``.sssom.tsv`` file found in the archive at ``entry["url"]``,
@@ -339,11 +331,13 @@ def import_sssom_source(
 
             {
                 "succeeded": ["ols_mappings__hp.sssom.tsv", ...],
-                "failed":    [{"file": "...", "error": "..."}],
-                "skipped":   [],
+                "failed": [{"file": "...", "error": "..."}],
+                "skipped": [],
             }
     """
-    from rdfsolve.models import AboutMetadata, MappingEdge, SsomMapping
+    from rdfsolve.mapping_models.core import MappingEdge
+    from rdfsolve.mapping_models.sssom import SsomMapping
+    from rdfsolve.schema_models.core import AboutMetadata
 
     source_name: str = entry["name"]
     url: str = entry["url"]
@@ -351,8 +345,8 @@ def import_sssom_source(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    succeeded: List[str] = []
-    failed: List[Dict[str, str]] = []
+    succeeded: list[str] = []
+    failed: list[dict[str, str]] = []
 
     # Download the archive
     try:
@@ -374,7 +368,7 @@ def import_sssom_source(
                 edge_dicts = _rows_to_edges(rows, curie_map, source_name)
                 edges = [MappingEdge(**d) for d in edge_dicts]
 
-                stem = Path(sssom_filename).stem  # strip .sssom.tsv → stem
+                stem = Path(sssom_filename).stem  # strip .sssom.tsv -> stem
                 dataset_name = f"{source_name}__{stem}"
 
                 about = AboutMetadata.build(
@@ -399,9 +393,7 @@ def import_sssom_source(
                     json.dumps(mapping.to_jsonld(), indent=2, ensure_ascii=False),
                     encoding="utf-8",
                 )
-                logger.info(
-                    "Wrote %s  (%d edges)", out_path.name, len(edges)
-                )
+                logger.info("Wrote %s  (%d edges)", out_path.name, len(edges))
                 succeeded.append(label)
 
             except Exception as exc:
@@ -419,8 +411,8 @@ def import_sssom_source(
 def seed_sssom_mappings(
     sssom_sources_yaml: str = "data/sssom_sources.yaml",
     output_dir: str = "docker/mappings/sssom",
-    names: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    names: list[str] | None = None,
+) -> dict[str, Any]:
     """Seed SSSOM mapping files for all (or selected) sources.
 
     Reads *sssom_sources_yaml*, optionally filters to *names*, and calls
@@ -439,11 +431,10 @@ def seed_sssom_mappings(
     yaml_path = Path(sssom_sources_yaml)
     if not yaml_path.exists():
         raise FileNotFoundError(
-            f"SSSOM sources YAML not found: {yaml_path}. "
-            "Create data/sssom_sources.yaml first."
+            f"SSSOM sources YAML not found: {yaml_path}. Create data/sssom_sources.yaml first."
         )
 
-    entries: List[Dict[str, Any]] = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or []
+    entries: list[dict[str, Any]] = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or []
 
     if names:
         name_set = set(names)
@@ -456,9 +447,9 @@ def seed_sssom_mappings(
         logger.warning("No SSSOM sources to process.")
         return {"succeeded": [], "failed": [], "skipped": []}
 
-    all_succeeded: List[str] = []
-    all_failed: List[Dict[str, str]] = []
-    all_skipped: List[str] = []
+    all_succeeded: list[str] = []
+    all_failed: list[dict[str, str]] = []
+    all_skipped: list[str] = []
 
     for entry in entries:
         logger.info("Processing SSSOM source: %s", entry["name"])

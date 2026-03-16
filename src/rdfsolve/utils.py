@@ -1,166 +1,34 @@
-"""
-Common utility functions for RDF processing.
+"""Common utility functions for RDF processing."""
 
-This module contains shared utility functions used across the RDFSolve
-library to avoid code duplication between different parsers and processors.
-"""
-
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
 
 
-def resolve_curie(curie: str, prefixes: Dict[str, str]) -> Optional[str]:
+def resolve_curie(curie: str, prefixes: dict[str, str]) -> str | None:
+    """Convert CURIE to full IRI using given prefixes.
+
+    Returns full IRI wrapped in angle brackets, or ``None`` if not resolvable.
     """
-    Convert CURIE to full IRI using given prefixes.
-
-    Args:
-        curie: CURIE string to resolve (e.g., "foaf:name")
-        prefixes: Dictionary of prefix mappings
-
-    Returns:
-        Full IRI string wrapped in angle brackets, or None if not resolvable
-    """
-    if not curie or curie in ["BN", "null", "", "[]"]:
+    if not curie or curie in ("BN", "null", "", "[]"):
         return None
 
     curie = str(curie).strip()
 
-    # Already full IRI
     if curie.startswith("<") and curie.endswith(">"):
         return curie
     if curie.startswith("http"):
         return f"<{curie}>"
-
-    # Handle 'a' as rdf:type
     if curie == "a":
         return "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
-
-    # Handle CURIE
     if ":" in curie:
         prefix, localname = curie.split(":", 1)
         if prefix in prefixes:
             base_uri = prefixes[prefix].strip("<>")
             return f"<{base_uri}{localname}>"
-
     return None
 
 
-def normalize_uri(
-    uri_string: str, prefixes: Dict[str, str], source: str, remove_qualifiers: bool = True
-) -> Optional[str]:
-    """
-    Normalize URI strings to full URIs.
-
-    Args:
-        uri_string: URI string to normalize
-        prefixes: Dictionary of prefix mappings
-        source: Source namespace for relative URIs
-        remove_qualifiers: Whether to remove qualifiers (* and ?)
-
-    Returns:
-        Normalized URI string or None if invalid
-    """
-    if not uri_string or uri_string in ["BN", "null", ""]:
-        return None
-
-    uri_string = str(uri_string).strip()
-
-    # Remove qualifiers (* and ?) if flag is set
-    if remove_qualifiers:
-        uri_string = uri_string.rstrip("*?")
-
-    # Already a full URI
-    if uri_string.startswith("<") and uri_string.endswith(">"):
-        return uri_string
-    if uri_string.startswith("http"):
-        return f"<{uri_string}>"
-
-    # Handle prefix:suffix format
-    if ":" in uri_string and not uri_string.startswith("http"):
-        prefix, suffix = uri_string.split(":", 1)
-        if prefix in prefixes:
-            base_uri = prefixes[prefix].rstrip(">")
-            if base_uri.startswith("<"):
-                base_uri = base_uri[1:]
-            return f"<{base_uri}{suffix}>"
-
-    # Handle relative URIs - assume they belong to the source namespace
-    if source in prefixes:
-        base_uri = prefixes[source].rstrip(">")
-        if base_uri.startswith("<"):
-            base_uri = base_uri[1:]
-        return f"<{base_uri}{uri_string}>"
-
-    return f"<{uri_string}>"
-
-
-def clean_predicate(predicate: str) -> str:
-    """
-    Remove cardinality markers from predicate.
-
-    Args:
-        predicate: Predicate string potentially with cardinality markers
-
-    Returns:
-        Cleaned predicate string
-    """
-    cleaned = predicate.rstrip("*+?")
-    brace_pos = cleaned.rfind("{")
-    if brace_pos > 0 and cleaned.endswith("}"):
-        cleaned = cleaned[:brace_pos]
-    return cleaned.strip()
-
-
-def is_blank_node(value: Any) -> bool:
-    """
-    Check if value represents a blank node.
-
-    Args:
-        value: Value to check for blank node representation
-
-    Returns:
-        True if value represents a blank node
-    """
-    if isinstance(value, dict):
-        keys = list(value.keys())
-        if len(keys) == 1 and keys[0] == "[]":
-            return True
-        # Also check for array key (blank node in Ruby logic)
-        if len(keys) == 1 and isinstance(keys[0], list):
-            return True
-    elif isinstance(value, list):
-        if len(value) == 1 and value[0] == "[]":
-            return True
-        # Empty list after key like "core:range:" indicates blank node
-        if len(value) == 1 and isinstance(value[0], dict):
-            keys = list(value[0].keys())
-            if len(keys) == 1 and keys[0] == "[]":
-                return True
-    elif value == "[]":
-        return True
-    return False
-
-
-def is_example_or_metadata(key: Any, value: Any) -> bool:
-    """
-    Identify and filter out examples, comments, and metadata.
-
-    Args:
-        key: Key to check
-        value: Value to check
-
-    Returns:
-        True if key/value pair should be filtered out
-    """
-    if key and isinstance(key, str) and "http" in key:
-        return False
-    if value and isinstance(value, str) and "http" in value:
-        return False
-
-    return False
-
-
 # ---------------------------------------------------------------------------
-# URI display helpers (used by compose, iri, and backend)
+# URI display helpers
 # ---------------------------------------------------------------------------
 
 
@@ -179,7 +47,7 @@ def get_local_name(uri: str) -> str:
     return uri.rstrip("/").rsplit("/", 1)[-1] if "/" in uri else uri
 
 
-def compact_uri(uri: str, prefixes: Dict[str, str]) -> str:
+def compact_uri(uri: str, prefixes: dict[str, str]) -> str:
     """Compact a URI using the given prefix map.
 
     Returns ``prefix:localName`` if a match is found, otherwise the
@@ -187,11 +55,11 @@ def compact_uri(uri: str, prefixes: Dict[str, str]) -> str:
     """
     for pfx, ns in prefixes.items():
         if uri.startswith(ns):
-            return f"{pfx}:{uri[len(ns):]}"
+            return f"{pfx}:{uri[len(ns) :]}"
     return uri
 
 
-def expand_curie(curie: str, prefixes: Dict[str, str]) -> str:
+def expand_curie(curie: str, prefixes: dict[str, str]) -> str:
     """Expand a CURIE (prefix:local) to a full URI."""
     if ":" not in curie or curie.startswith("http"):
         return curie
@@ -200,91 +68,26 @@ def expand_curie(curie: str, prefixes: Dict[str, str]) -> str:
     return f"{ns}{local}" if ns else curie
 
 
-def shorten_for_display(
-    uri: str,
-    prefixes: Optional[Dict[str, str]] = None,
-) -> str:
-    """Shorten a URI for display — try CURIE first, then local name."""
-    if prefixes:
-        compact = compact_uri(uri, prefixes)
-        if compact != uri:
-            return compact
-    return get_local_name(uri)
-
-
 # ---------------------------------------------------------------------------
-# Label normalization and selection
+# Label selection
 # ---------------------------------------------------------------------------
-
-
-def normalize_label(label: str) -> List[str]:
-    """Generate normalized variants of a label for fuzzy SPARQL matching.
-
-    Returns a list of unique variants (case-folded, stripped, title-cased,
-    etc.) that can be used in a ``FILTER`` or ``VALUES`` clause to
-    increase the chance of matching an ``rdfs:label`` / ``dc:title``.
-
-    The function is intentionally modular — add more normalization
-    strategies here and all callers benefit.
-
-    Examples::
-
-        >>> normalize_label("  Homo sapiens  ")
-        ['homo sapiens', 'Homo sapiens', 'Homo Sapiens',
-         'HOMO SAPIENS', 'homo_sapiens']
-    """
-    stripped = label.strip()
-    if not stripped:
-        return []
-
-    variants: list[str] = []
-
-    # 1. Lower-case (canonical form)
-    lower = stripped.lower()
-    variants.append(lower)
-
-    # 2. Original (after stripping whitespace)
-    if stripped != lower:
-        variants.append(stripped)
-
-    # 3. Title-case
-    title = stripped.title()
-    if title not in variants:
-        variants.append(title)
-
-    # 4. Upper-case
-    upper = stripped.upper()
-    if upper not in variants:
-        variants.append(upper)
-
-    # 5. Underscore variant (spaces → underscores, lowered)
-    underscored = lower.replace(" ", "_")
-    if underscored not in variants:
-        variants.append(underscored)
-
-    # 6. CamelCase variant (no spaces)
-    camel = stripped.title().replace(" ", "")
-    if camel not in variants:
-        variants.append(camel)
-
-    return variants
 
 
 def pick_label(
-    rdfs_label: Optional[str],
-    dc_title: Optional[str],
+    rdfs_label: str | None,
+    dc_title: str | None,
     uri: str,
-    iao_label: Optional[str] = None,
-    skos_pref_label: Optional[str] = None,
-    skos_alt_label: Optional[str] = None,
+    iao_label: str | None = None,
+    skos_pref_label: str | None = None,
+    skos_alt_label: str | None = None,
 ) -> str:
     """Choose the best human-readable label.
 
     Priority:
-    1. ``rdfs:label`` / ``skos:prefLabel`` (most standard)
-    2. ``dc:title`` / ``dcterms:title`` (title fallback)
+    1. ``rdfs:label`` / ``skos:prefLabel``
+    2. ``dc:title`` / ``dcterms:title``
     3. ``IAO_0000118`` alternate term (OBO ontologies)
-    4. ``skos:altLabel`` (synonym)
+    4. ``skos:altLabel``
     5. Local name from URI
     """
     if rdfs_label and rdfs_label.strip():

@@ -18,7 +18,9 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+from rdfsolve._uri import expand_curie
 
 if TYPE_CHECKING:
     pass  # semra types only needed at runtime
@@ -51,8 +53,7 @@ def _find_mappings_dir() -> Path:
         here = here.parent
 
     logger.warning(
-        "rdfsolve_instance source: mapping directory not found, "
-        "using CWD-relative path %s",
+        "rdfsolve_instance source: mapping directory not found, using CWD-relative path %s",
         cwd_path,
     )
     return cwd_path
@@ -60,7 +61,7 @@ def _find_mappings_dir() -> Path:
 
 def get_rdfsolve_instance_mappings(
     directory: str | None = None,
-) -> "list":
+) -> list[Any]:
     """Return rdfsolve instance-matcher mappings as semra Mappings.
 
     Reads every ``*.jsonld`` file from *directory* (defaults to
@@ -76,19 +77,18 @@ def get_rdfsolve_instance_mappings(
     """
     import json
 
-    from rdfsolve.models import MappingEdge
+    from rdfsolve.mapping_models.core import MappingEdge
     from rdfsolve.semra_converter import rdfsolve_edges_to_semra
 
     dir_path = Path(directory) if directory else _find_mappings_dir()
     if not dir_path.exists():
         logger.warning(
-            "rdfsolve_instance: directory %s does not exist; "
-            "returning empty list",
+            "rdfsolve_instance: directory %s does not exist; returning empty list",
             dir_path,
         )
         return []
 
-    all_mappings: list = []
+    all_mappings: list[Any] = []
     for jsonld_file in sorted(dir_path.glob("*.jsonld")):
         try:
             data = json.loads(jsonld_file.read_text(encoding="utf-8"))
@@ -100,12 +100,11 @@ def get_rdfsolve_instance_mappings(
                 source_id = node.get("@id", "")
                 src_ds_node = node.get("void:inDataset", {})
                 src_ds = src_ds_node.get("dcterms:title", "")
-                src_ep = (
-                    (src_ds_node.get("void:sparqlEndpoint") or {}).get("@id")
-                )
+                src_ep = (src_ds_node.get("void:sparqlEndpoint") or {}).get("@id")
                 for key, val in node.items():
                     if key.startswith("@") or key in (
-                        "void:inDataset", "dcterms:created",
+                        "void:inDataset",
+                        "dcterms:created",
                     ):
                         continue
                     targets = val if isinstance(val, list) else [val]
@@ -115,66 +114,57 @@ def get_rdfsolve_instance_mappings(
                         tgt_id = tgt.get("@id", "")
                         tgt_ds_node = tgt.get("void:inDataset", {})
                         tgt_ds = tgt_ds_node.get("dcterms:title", "")
-                        tgt_ep = (
-                            (tgt_ds_node.get("void:sparqlEndpoint") or {})
-                            .get("@id")
-                        )
-                        # Expand CURIE → URI via context
+                        tgt_ep = (tgt_ds_node.get("void:sparqlEndpoint") or {}).get("@id")
+                        # Expand CURIE -> URI via context
                         context = data.get("@context", {})
-                        pred_uri = _expand_curie(key, context)
-                        src_uri = _expand_curie(source_id, context)
-                        tgt_uri = _expand_curie(tgt_id, context)
+                        pred_uri = expand_curie(key, context)
+                        src_uri = expand_curie(source_id, context)
+                        tgt_uri = expand_curie(tgt_id, context)
 
-                        edges.append(MappingEdge(
-                            source_class=src_uri,
-                            target_class=tgt_uri,
-                            predicate=pred_uri,
-                            source_dataset=src_ds,
-                            target_dataset=tgt_ds,
-                            source_endpoint=src_ep,
-                            target_endpoint=tgt_ep,
-                        ))
+                        edges.append(
+                            MappingEdge(
+                                source_class=src_uri,
+                                target_class=tgt_uri,
+                                predicate=pred_uri,
+                                source_dataset=src_ds,
+                                target_dataset=tgt_ds,
+                                source_endpoint=src_ep,
+                                target_endpoint=tgt_ep,
+                            )
+                        )
 
             semra_mappings = rdfsolve_edges_to_semra(edges, about=None)
             all_mappings.extend(semra_mappings)
             logger.debug(
                 "Loaded %d mappings from %s",
-                len(semra_mappings), jsonld_file.name,
+                len(semra_mappings),
+                jsonld_file.name,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
-                "Skipping %s: %s", jsonld_file.name, exc,
+                "Skipping %s: %s",
+                jsonld_file.name,
+                exc,
             )
 
     logger.info(
         "rdfsolve_instance: returning %d mappings from %s",
-        len(all_mappings), dir_path,
+        len(all_mappings),
+        dir_path,
     )
     return all_mappings
-
-
-def _expand_curie(curie: str, context: dict) -> str:
-    """Expand a CURIE using the JSON-LD @context, returning URI."""
-    if curie.startswith(("http://", "https://", "urn:")):
-        return curie
-    if ":" in curie:
-        prefix, local = curie.split(":", 1)
-        ns = context.get(prefix)
-        if ns and isinstance(ns, str):
-            return ns + local
-    return curie
 
 
 def register(force: bool = False) -> None:
     """Register the rdfsolve_instance source with SeMRA's resolver.
 
-    Safe to call multiple times — subsequent calls are no-ops unless
+    Safe to call multiple times - subsequent calls are no-ops unless
     *force* is ``True``.
 
     Args:
         force: Re-register even if already registered.
     """
-    global _registered  # noqa: PLW0603
+    global _registered
     if _registered and not force:
         return
     try:
@@ -187,11 +177,13 @@ def register(force: bool = False) -> None:
         )
         _registered = True
         logger.debug(
-            "Registered rdfsolve as SeMRA source %r", _SOURCE_KEY,
+            "Registered rdfsolve as SeMRA source %r",
+            _SOURCE_KEY,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning(
-            "Could not register rdfsolve as SeMRA source: %s", exc,
+            "Could not register rdfsolve as SeMRA source: %s",
+            exc,
         )
 
 

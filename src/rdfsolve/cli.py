@@ -3,21 +3,13 @@
 import json
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any
 
 import click
 
 from .api import (
-    count_instances_per_class,
-    discover_void_graphs,
-    generate_void_from_endpoint,
-    graph_to_schema,
     load_parser_from_file,
     load_parser_from_jsonld,
-    to_jsonld_from_file,
-    to_linkml_from_file,
-    to_rdfconfig_from_file,
-    to_shacl_from_file,
 )
 
 if TYPE_CHECKING:
@@ -38,22 +30,20 @@ __all__ = [
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
 @click.pass_context
 def main(ctx: click.Context, verbose: bool) -> None:
-    r"""RDFSolve — RDF Schema Extraction and Analysis Toolkit.
+    r"""RDFSolve - RDF Schema Extraction, Export and Analysis Toolkit.
 
-    \b
-    Pipeline commands (schema mining):
-        rdfsolve pipeline discover     Discover VoID from remote endpoints
+    Pipeline commands (schema mining)::
+
         rdfsolve pipeline mine         Mine schemas from remote endpoints
         rdfsolve pipeline local-mine   Mine from a local QLever endpoint
         rdfsolve pipeline qleverfile   Generate Qleverfiles for QLever
 
-    \b
-    Analysis commands:
-        rdfsolve export    Convert schemas to LinkML / SHACL / CSV / …
-        rdfsolve count     Count instances per class
+    Analysis commands::
 
-    \b
-    Mapping commands:
+        rdfsolve export    Interconvert schemas between JSON-LD, LinkML, SHACL, CSV, ...
+
+    Mapping commands::
+
         rdfsolve instance-match   Cross-dataset class matching
         rdfsolve semra            Import external SeMRA mappings
         rdfsolve inference        Derive new mappings from existing ones
@@ -79,7 +69,7 @@ def main(ctx: click.Context, verbose: bool) -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Pipeline group — wraps scripts/mine_local.py routes
+# Pipeline group - wraps scripts/mine_local.py routes
 # ═══════════════════════════════════════════════════════════════════
 
 # We add mine_local.py's ``src/`` dir to sys.path lazily so the
@@ -98,28 +88,25 @@ def _ensure_scripts_importable() -> None:
 
 @main.group()
 def pipeline() -> None:
-    """Schema-mining pipeline: discover, mine, local-mine, qleverfile.
+    r"""Schema-mining pipeline: mine, local-mine, qleverfile.
 
     These commands replace the old ``rdfsolve discover``, ``mine``, and
     ``mine-all`` top-level commands.  Each route can target remote SPARQL
     endpoints or a local QLever instance.
 
-    \b
-    Quick-start:
-        # Discover VoID from all registered endpoints
-        rdfsolve pipeline discover
+    Quick-start examples::
 
         # Mine schemas from all remote endpoints
         rdfsolve pipeline mine
 
         # Generate Qleverfiles then mine locally
         rdfsolve pipeline qleverfile --data-dir /data/rdf
-        rdfsolve pipeline local-mine --name drugbank \\
+        rdfsolve pipeline local-mine --name drugbank \
             --endpoint http://localhost:7026
 
-    All pipeline commands accept --sources, --output-dir, --filter,
-    --timeout, and --benchmark.  Use ``rdfsolve pipeline <cmd> --help``
-    for full details.
+    All pipeline commands accept ``--sources``, ``--output-dir``,
+    ``--filter``, ``--timeout``, and ``--benchmark``.
+    Use ``rdfsolve pipeline <cmd> --help`` for full details.
     """
     _ensure_scripts_importable()
 
@@ -130,66 +117,80 @@ _DEFAULT_SOURCES = str(_REPO_ROOT / "data" / "sources.yaml")
 _DEFAULT_OUTPUT = str(_REPO_ROOT / "mined_schemas")
 
 
-def _common_options(fn):
+def _common_options(fn: Any) -> Any:
     """Shared options for all pipeline subcommands."""
     fn = click.option(
-        "--sources", default=_DEFAULT_SOURCES,
+        "--sources",
+        default=_DEFAULT_SOURCES,
         help="Path to sources YAML/JSON-LD/CSV.",
     )(fn)
     fn = click.option(
-        "--output-dir", default=_DEFAULT_OUTPUT,
+        "--output-dir",
+        default=_DEFAULT_OUTPUT,
         help="Output directory for schemas/reports.",
     )(fn)
     fn = click.option(
-        "--format", "fmt",
+        "--format",
+        "fmt",
         type=click.Choice(["jsonld", "void", "all"]),
-        default="all", help="Export format.",
+        default="all",
+        help="Export format.",
     )(fn)
     fn = click.option(
-        "--timeout", type=float, default=120.0,
+        "--timeout",
+        type=float,
+        default=120.0,
         help="HTTP timeout per SPARQL request (seconds).",
     )(fn)
     fn = click.option(
-        "--filter", "name_filter", default=None,
+        "--filter",
+        "name_filter",
+        default=None,
         help="Regex to select sources by name.",
     )(fn)
     fn = click.option(
-        "--benchmark", is_flag=True,
+        "--benchmark",
+        is_flag=True,
         help="Collect per-run benchmarks (timing, memory, CPU).",
     )(fn)
     return fn
 
 
-def _mining_options(fn):
+def _mining_options(fn: Any) -> Any:
     """Options shared by mine + local-mine."""
     fn = click.option(
-        "--chunk-size", type=int, default=10_000,
+        "--chunk-size",
+        type=int,
+        default=10_000,
         help="SPARQL pagination page size.",
     )(fn)
     fn = click.option(
-        "--class-chunk-size", type=int, default=None,
+        "--class-chunk-size",
+        type=int,
+        default=None,
         help=(
-            "Page size for Phase-1 class discovery "
-            "(two-phase mode only). Default: no pagination."
+            "Page size for Phase-1 class discovery (two-phase mode only). Default: no pagination."
         ),
     )(fn)
     fn = click.option(
-        "--class-batch-size", type=int, default=15,
+        "--class-batch-size",
+        type=int,
+        default=15,
         help="Classes per VALUES query in two-phase mining.",
     )(fn)
     fn = click.option(
-        "--no-counts", is_flag=True,
+        "--no-counts",
+        is_flag=True,
         help="Skip triple-count queries (faster).",
     )(fn)
     fn = click.option(
-        "--untyped-as-classes", is_flag=True,
-        help=(
-            "Treat untyped URI objects as owl:Class "
-            "references instead of rdfs:Resource."
-        ),
+        "--untyped-as-classes",
+        is_flag=True,
+        help=("Treat untyped URI objects as owl:Class references instead of rdfs:Resource."),
     )(fn)
     fn = click.option(
-        "--author", "authors_raw",
+        "--author",
+        "authors_raw",
         multiple=True,
         metavar="NAME|ORCID",
         help=(
@@ -199,7 +200,9 @@ def _mining_options(fn):
         ),
     )(fn)
     fn = click.option(
-        "--one-shot", "one_shot", is_flag=True,
+        "--one-shot",
+        "one_shot",
+        is_flag=True,
         help=(
             "Mine using a single unbounded SELECT per pattern "
             "type (no LIMIT/OFFSET, no fallback chain). "
@@ -211,10 +214,10 @@ def _mining_options(fn):
     return fn
 
 
-def _build_namespace(ctx, **overrides):
+def _build_namespace(ctx: click.Context, **overrides: Any) -> Any:
     """Build an argparse.Namespace from Click params + overrides.
 
-    This bridges Click → argparse so we can call mine_local.py's
+    This bridges Click -> argparse so we can call mine_local.py's
     route functions directly.
 
     Safe defaults are injected for attributes that route functions
@@ -222,6 +225,7 @@ def _build_namespace(ctx, **overrides):
     (e.g. ``verbose``, ``route``).
     """
     import argparse
+
     # Safe defaults for attributes only the argparse __main__ sets.
     defaults = {
         "verbose": False,
@@ -232,12 +236,16 @@ def _build_namespace(ctx, **overrides):
     return argparse.Namespace(**defaults)
 
 
-def _print_result(result: dict) -> None:
+def _print_result(result: dict[str, Any]) -> None:
     """Pretty-print a route result dict."""
     click.echo(f"\n{'═' * 60}")
     for key in (
-        "succeeded", "generated", "discovered",
-        "empty", "failed", "skipped",
+        "succeeded",
+        "generated",
+        "discovered",
+        "empty",
+        "failed",
+        "skipped",
     ):
         val = result.get(key)
         if val is not None:
@@ -245,60 +253,34 @@ def _print_result(result: dict) -> None:
             click.echo(f"  {label:12s}: {len(val)}")
             if key == "failed" and val:
                 for entry in val[:10]:
-                    ds = (
-                        entry["dataset"]
-                        if isinstance(entry, dict) else entry
-                    )
-                    err = (
-                        entry.get("error", "")[:80]
-                        if isinstance(entry, dict) else ""
-                    )
+                    ds = entry["dataset"] if isinstance(entry, dict) else entry
+                    err = entry.get("error", "")[:80] if isinstance(entry, dict) else ""
                     click.echo(f"    • {ds}: {err}")
     click.echo(f"{'═' * 60}")
 
 
-# ── pipeline discover ────────────────────────────────────────────
-
-@pipeline.command("discover")
-@_common_options
-@click.pass_context
-def pipeline_discover(ctx, **kwargs) -> None:
-    """Discover VoID descriptions from remote SPARQL endpoints.
-
-    Iterates all sources in the registry and queries each endpoint
-    for existing VoID partitions.  Fast and non-invasive.
-
-    \b
-    Example:
-        rdfsolve pipeline discover
-        rdfsolve pipeline discover --filter "uniprot|chembl"
-    """
-    from mine_local import _route_discover
-    args = _build_namespace(ctx)
-    result = _route_discover(args)
-    _print_result(result)
-
-
 # ── pipeline mine ─────────────────────────────────────────────────
+
 
 @pipeline.command("mine")
 @_common_options
 @_mining_options
 @click.pass_context
-def pipeline_mine(ctx, **kwargs) -> None:
-    """Mine schemas from remote SPARQL endpoints.
+def pipeline_mine(ctx: click.Context, **kwargs: Any) -> None:
+    r"""Mine schemas from remote SPARQL endpoints.
 
     Standard mining workflow: iterate endpoints, extract schema
     patterns, write JSON-LD schemas, VoID turtle, and analytics
     reports.  Reports are always written.
 
-    \b
-    Example:
+    Examples::
+
         rdfsolve pipeline mine
         rdfsolve pipeline mine --filter "drugbank"
         rdfsolve pipeline mine --benchmark
     """
     from mine_local import _route_mine
+
     args = _build_namespace(ctx)
     result = _route_mine(args)
     _print_result(result)
@@ -306,47 +288,54 @@ def pipeline_mine(ctx, **kwargs) -> None:
 
 # ── pipeline local-mine ──────────────────────────────────────────
 
+
 @pipeline.command("local-mine")
 @_common_options
 @_mining_options
 @click.option(
-    "--endpoint", default="http://localhost:7001",
+    "--endpoint",
+    default="http://localhost:7001",
     help="Local QLever SPARQL endpoint URL.",
 )
 @click.option(
-    "--name", default=None,
+    "--name",
+    default=None,
     help="Dataset name (required for single-dataset mode).",
 )
 @click.option(
-    "--discover-first", is_flag=True,
+    "--discover-first",
+    is_flag=True,
     help="Run VoID discovery before mining.",
 )
 @click.option(
-    "--void-uri-base", default=None,
+    "--void-uri-base",
+    default=None,
     help=(
         "Base URI for generated VoID partition IRIs "
         "(default: sources.yaml value or built-in template)."
     ),
 )
 @click.option(
-    "--test", is_flag=True,
+    "--test",
+    is_flag=True,
     help="Process only the 3 smallest downloadable sources.",
 )
 @click.pass_context
-def pipeline_local_mine(ctx, **kwargs) -> None:
-    """Mine schemas from a local QLever endpoint.
+def pipeline_local_mine(ctx: click.Context, **kwargs: Any) -> None:
+    r"""Mine schemas from a local QLever endpoint.
 
     Use after downloading data and running ``qlever index && qlever
     start`` for a dataset.  Connects to the local endpoint and runs
     the full mining pipeline.
 
-    \b
-    Example:
-        rdfsolve pipeline local-mine \\
-            --endpoint http://localhost:7026 \\
+    Example::
+
+        rdfsolve pipeline local-mine \
+            --endpoint http://localhost:7026 \
             --name drugbank --discover-first --benchmark
     """
     from mine_local import _route_local_mine
+
     args = _build_namespace(ctx)
     result = _route_local_mine(args)
     _print_result(result)
@@ -354,590 +343,406 @@ def pipeline_local_mine(ctx, **kwargs) -> None:
 
 # ── pipeline qleverfile ──────────────────────────────────────────
 
+
 @pipeline.command("qleverfile")
 @_common_options
 @click.option(
-    "--data-dir", required=True,
+    "--data-dir",
+    required=True,
     help="Root directory where RDF dumps live (required).",
 )
 @click.option(
-    "--base-port", type=int, default=7019,
+    "--base-port",
+    type=int,
+    default=7019,
     help="First port number for allocation.",
 )
 @click.option(
-    "--test", is_flag=True,
+    "--test",
+    is_flag=True,
     help="Generate only for 3 smallest downloadable sources.",
 )
 @click.option(
-    "--runtime", type=click.Choice(["docker", "native"]),
-    default="docker", help="QLever runtime.",
+    "--runtime",
+    type=click.Choice(["docker", "native"]),
+    default="docker",
+    help="QLever runtime.",
 )
 @click.pass_context
-def pipeline_qleverfile(ctx, **kwargs) -> None:
-    """Generate Qleverfiles for local QLever mining.
+def pipeline_qleverfile(ctx: click.Context, **kwargs: Any) -> None:
+    r"""Generate Qleverfiles for local QLever mining.
 
     Creates a Qleverfile for each source that has download URLs
     in the sources registry.  Each Qleverfile includes a GET_DATA_CMD
     that downloads and preprocesses the data.
 
-    \b
-    Example:
+    Examples::
+
         rdfsolve pipeline qleverfile --data-dir /data/rdf
         rdfsolve pipeline qleverfile --data-dir /data/rdf --test
     """
     from mine_local import _route_generate_qleverfile
+
     args = _build_namespace(ctx)
     result = _route_generate_qleverfile(args)
     _print_result(result)
 
 
-# Export helper functions
-def _export_csv(parser: "VoidParser", output_path: Path, dataset_name: str) -> None:
-    """Export schema to CSV format."""
-    schema_df = parser.to_schema(filter_void_admin_nodes=True)
-    schema_csv = output_path / f"{dataset_name}_schema.csv"
-    schema_df.to_csv(schema_csv, index=False)
-    click.echo(f"OK CSV:      {schema_csv} ({len(schema_df)} triples)")
+# ═══════════════════════════════════════════════════════════════════
+# Export group - interconvert between schema formats
+# ═══════════════════════════════════════════════════════════════════
+
+# Supported formats (input -> model -> output):
+#   VoID (.ttl)    ─┐
+#                    ├-> VoidParser -> JSON-LD dict ─┬-> csv
+#   JSON-LD (.jsonld)┘                             ├-> jsonld
+#                                                  ├-> void (.ttl)
+#                                                  ├-> linkml (.yaml)
+#                                                  ├-> shacl  (.shacl.ttl)
+#                                                  └-> rdfconfig (dir/)
+
+_INPUT_HELP = (
+    "Input schema file. Accepts VoID Turtle (.ttl) or "
+    "rdfsolve JSON-LD (.jsonld).  Format is auto-detected "
+    "from the file extension."
+)
 
 
-def _export_jsonld(
-    void_file: str,
-    output_path: Path,
-    dataset_name: str,
-    endpoint_url: Optional[str] = None,
-    graph_uri: Optional[str] = None,
-) -> None:
-    """Export schema to JSON-LD format."""
-    graph_uris = [graph_uri] if graph_uri else None
-    schema_jsonld = to_jsonld_from_file(
-        void_file,
-        filter_void_admin_nodes=True,
-        endpoint_url=endpoint_url,
-        dataset_name=dataset_name,
-        graph_uris=graph_uris,
-    )
-    jsonld_file = output_path / f"{dataset_name}_schema.jsonld"
-    with open(jsonld_file, "w") as f:
-        json.dump(schema_jsonld, f, indent=2)
-    click.echo(f"OK JSON-LD:  {jsonld_file}")
+def _load_input(input_file: str) -> tuple["VoidParser", str]:
+    """Load *input_file*, return ``(parser, dataset_name)``.
 
+    Auto-detects the format from the file extension:
+    - ``.jsonld`` / ``.json`` -> mined-schema JSON-LD
+    - anything else (typically ``.ttl``) -> VoID Turtle
+    """
+    path = Path(input_file)
+    if not path.exists():
+        raise click.BadParameter(f"File not found: {input_file}", param_hint="INPUT")
 
-def _export_linkml(
-    void_file: str,
-    output_path: Path,
-    dataset_name: str,
-    schema_name: Optional[str],
-    schema_description: Optional[str],
-    schema_uri: Optional[str],
-) -> None:
-    """Export schema to LinkML format."""
-    linkml_schema_name = schema_name or dataset_name
-    linkml_yaml = to_linkml_from_file(
-        void_file,
-        filter_void_nodes=True,
-        schema_name=linkml_schema_name,
-        schema_description=schema_description,
-        schema_base_uri=schema_uri,
-    )
-    linkml_file = output_path / f"{dataset_name}_linkml_schema.yaml"
-    with open(linkml_file, "w") as f:
-        f.write(linkml_yaml)
-    click.echo(f"OK LinkML:   {linkml_file}")
-    if schema_uri:
-        click.echo(f"            Schema URI: {schema_uri}")
-
-
-def _export_shacl(
-    void_file: str,
-    output_path: Path,
-    dataset_name: str,
-    schema_name: Optional[str],
-    schema_description: Optional[str],
-    schema_uri: Optional[str],
-    shacl_closed: bool,
-    shacl_suffix: Optional[str],
-) -> None:
-    """Export schema to SHACL format."""
-    shacl_schema_name = schema_name or dataset_name
-    shacl_ttl = to_shacl_from_file(
-        void_file,
-        filter_void_nodes=True,
-        schema_name=shacl_schema_name,
-        schema_description=schema_description,
-        schema_base_uri=schema_uri,
-        closed=shacl_closed,
-        suffix=shacl_suffix,
-    )
-    shacl_file = output_path / f"{dataset_name}_schema.shacl.ttl"
-    with open(shacl_file, "w") as f:
-        f.write(shacl_ttl)
-    shape_type = "closed" if shacl_closed else "open"
-    click.echo(f"OK SHACL:    {shacl_file} ({shape_type} shapes)")
-    if shacl_suffix:
-        click.echo(f"            Shape suffix: {shacl_suffix}")
-
-
-def _export_rdfconfig(
-    void_file: str,
-    output_path: Path,
-    dataset_name: str,
-    endpoint_url: Optional[str],
-    endpoint_name: str,
-    graph_uri: Optional[str],
-) -> None:
-    """Export schema to RDF-config format."""
-    rdfconfig = to_rdfconfig_from_file(
-        void_file,
-        filter_void_nodes=True,
-        endpoint_url=endpoint_url,
-        endpoint_name=endpoint_name,
-        graph_uri=graph_uri,
-    )
-
-    # Create config directory: $dataset_config
-    # This is required by the rdf-config tool to read the files
-    config_dir = output_path / f"{dataset_name}_config"
-    config_dir.mkdir(parents=True, exist_ok=True)
-
-    # Save model.yaml (standard name required by rdf-config)
-    model_file = config_dir / "model.yaml"
-    with open(model_file, "w") as f:
-        f.write(rdfconfig["model"])
-
-    # Save prefix.yaml (standard name required by rdf-config)
-    prefix_file = config_dir / "prefix.yaml"
-    with open(prefix_file, "w") as f:
-        f.write(rdfconfig["prefix"])
-
-    # Save endpoint.yaml if endpoint_url provided
-    # (standard name required by rdf-config)
-    if endpoint_url:
-        endpoint_file = config_dir / "endpoint.yaml"
-        with open(endpoint_file, "w") as f:
-            f.write(rdfconfig["endpoint"])
-        click.echo(f"OK RDF-config: {config_dir}/")
-        click.echo("              model.yaml")
-        click.echo("              prefix.yaml")
-        click.echo("              endpoint.yaml")
+    ext = path.suffix.lower()
+    if ext in (".jsonld", ".json"):
+        parser = load_parser_from_jsonld(str(path))
+        dataset_name = path.stem.replace("_schema", "")
     else:
-        click.echo(f"OK RDF-config: {config_dir}/")
-        click.echo("              model.yaml")
-        click.echo("              prefix.yaml")
-        click.echo("              (endpoint.yaml not created: use --endpoint-url)")
+        parser = load_parser_from_file(str(path))
+        dataset_name = path.stem.replace("_void", "")
+
+    return parser, dataset_name
 
 
-def _export_linkml_from_parser(
-    parser: "VoidParser",
-    output_path: Path,
-    dataset_name: str,
-    schema_name: Optional[str],
-    schema_description: Optional[str],
-    schema_uri: Optional[str],
+@main.group(invoke_without_command=True)
+@click.pass_context
+def export(ctx: click.Context) -> None:
+    r"""Convert RDF schemas between formats.
+
+    All subcommands accept a VoID Turtle (.ttl) or rdfsolve JSON-LD
+    (.jsonld) file as INPUT and produce the requested output format.
+    The input format is auto-detected from the file extension.
+
+    Supported conversions (any-to-any via the internal model)::
+
+        VoID (.ttl)      <->  JSON-LD (.jsonld)
+        JSON-LD (.jsonld) ->  CSV, LinkML, SHACL, RDF-config, VoID
+
+    Subcommands::
+
+        csv        Export schema patterns as a CSV table
+        jsonld     Export schema as JSON-LD
+        void       Export schema as VoID Turtle
+        linkml     Export schema as LinkML YAML
+        shacl      Export schema as SHACL shapes (Turtle)
+        rdfconfig  Export schema as RDF-config YAML files
+
+    Examples::
+
+        rdfsolve export csv       dataset_schema.jsonld
+        rdfsolve export linkml    dataset_void.ttl -o ./out
+        rdfsolve export shacl     dataset_schema.jsonld --closed
+        rdfsolve export rdfconfig dataset_void.ttl --endpoint-url http://...
+        rdfsolve export void      dataset_schema.jsonld
+    """
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+# ── export csv ───────────────────────────────────────────────────
+
+
+@export.command("csv")
+@click.argument("input_file", metavar="INPUT")
+@click.option("-o", "--output-dir", default=".", help="Output directory.")
+def export_csv(input_file: str, output_dir: str) -> None:
+    r"""Export schema patterns as a CSV table.
+
+    Example::
+
+        rdfsolve export csv dataset_schema.jsonld -o ./exports
+    """
+    try:
+        parser, name = _load_input(input_file)
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        df = parser.to_schema(filter_void_admin_nodes=True)
+        csv_path = out / f"{name}_schema.csv"
+        df.to_csv(csv_path, index=False)
+        click.echo(f"OK  {csv_path}  ({len(df)} rows)")
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+
+# ── export jsonld ────────────────────────────────────────────────
+
+
+@export.command("jsonld")
+@click.argument("input_file", metavar="INPUT")
+@click.option("-o", "--output-dir", default=".", help="Output directory.")
+@click.option("--endpoint-url", default=None, help="SPARQL endpoint URL for @about.")
+@click.option("--graph-uri", default=None, help="Named graph URI for @about.")
+def export_jsonld(
+    input_file: str,
+    output_dir: str,
+    endpoint_url: str | None,
+    graph_uri: str | None,
 ) -> None:
-    """Export schema to LinkML format from a pre-built parser."""
-    linkml_schema_name = schema_name or dataset_name
-    linkml_yaml = parser.to_linkml_yaml(
-        filter_void_nodes=True,
-        schema_name=linkml_schema_name,
-        schema_description=schema_description,
-        schema_base_uri=schema_uri,
-    )
-    linkml_file = output_path / f"{dataset_name}_linkml_schema.yaml"
-    with open(linkml_file, "w") as f:
-        f.write(linkml_yaml)
-    click.echo(f"OK LinkML:   {linkml_file}")
-    if schema_uri:
-        click.echo(f"            Schema URI: {schema_uri}")
+    r"""Export schema as JSON-LD.
 
+    Useful for converting a VoID Turtle file into the rdfsolve JSON-LD
+    format. If the input is already JSON-LD, it is re-serialised (which
+    can be used to refresh @about metadata).
 
-def _export_shacl_from_parser(
-    parser: "VoidParser",
-    output_path: Path,
-    dataset_name: str,
-    schema_name: Optional[str],
-    schema_description: Optional[str],
-    schema_uri: Optional[str],
-    shacl_closed: bool,
-    shacl_suffix: Optional[str],
-) -> None:
-    """Export schema to SHACL format from a pre-built parser."""
-    shacl_schema_name = schema_name or dataset_name
-    shacl_ttl = parser.to_shacl(
-        filter_void_nodes=True,
-        schema_name=shacl_schema_name,
-        schema_description=schema_description,
-        schema_base_uri=schema_uri,
-        closed=shacl_closed,
-        suffix=shacl_suffix,
-    )
-    shacl_file = output_path / f"{dataset_name}_schema.shacl.ttl"
-    with open(shacl_file, "w") as f:
-        f.write(shacl_ttl)
-    shape_type = "closed" if shacl_closed else "open"
-    click.echo(f"OK SHACL:    {shacl_file} ({shape_type} shapes)")
-    if shacl_suffix:
-        click.echo(f"            Shape suffix: {shacl_suffix}")
+    Example::
 
-
-def _export_rdfconfig_from_parser(
-    parser: "VoidParser",
-    output_path: Path,
-    dataset_name: str,
-    endpoint_url: Optional[str],
-    endpoint_name: str,
-    graph_uri: Optional[str],
-) -> None:
-    """Export schema to RDF-config format from a pre-built parser."""
-    rdfconfig = parser.to_rdfconfig(
-        filter_void_nodes=True,
-        endpoint_url=endpoint_url,
-        endpoint_name=endpoint_name,
-        graph_uri=graph_uri,
-    )
-    config_dir = output_path / f"{dataset_name}_config"
-    config_dir.mkdir(parents=True, exist_ok=True)
-
-    model_file = config_dir / "model.yaml"
-    with open(model_file, "w") as f:
-        f.write(rdfconfig["model"])
-
-    prefix_file = config_dir / "prefix.yaml"
-    with open(prefix_file, "w") as f:
-        f.write(rdfconfig["prefix"])
-
-    if endpoint_url:
-        endpoint_file = config_dir / "endpoint.yaml"
-        with open(endpoint_file, "w") as f:
-            f.write(rdfconfig["endpoint"])
-        click.echo(f"OK RDF-config: {config_dir}/")
-        click.echo("              model.yaml")
-        click.echo("              prefix.yaml")
-        click.echo("              endpoint.yaml")
-    else:
-        click.echo(f"OK RDF-config: {config_dir}/")
-        click.echo("              model.yaml")
-        click.echo("              prefix.yaml")
-        click.echo(
-            "              (endpoint.yaml not created:"
-            " use --endpoint-url)"
+        rdfsolve export jsonld dataset_void.ttl -o ./exports
+    """
+    try:
+        parser, name = _load_input(input_file)
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        graph_uris = [graph_uri] if graph_uri else None
+        schema_jsonld = parser.to_jsonld(
+            filter_void_admin_nodes=True,
+            endpoint_url=endpoint_url,
+            dataset_name=name,
+            graph_uris=graph_uris,
         )
+        jsonld_path = out / f"{name}_schema.jsonld"
+        with open(jsonld_path, "w") as f:
+            json.dump(schema_jsonld, f, indent=2)
+        click.echo(f"OK  {jsonld_path}")
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
 
 
-@main.command()
-@click.option(
-    "--void-file",
-    default=None,
-    help="Path to VoID file (Turtle format)",
-)
-@click.option(
-    "--schema-file",
-    default=None,
-    help="Path to mined-schema JSON-LD file (alternative to --void-file)",
-)
-@click.option("--output-dir", default=".", help="Output directory for exports")
-@click.option(
-    "--format",
-    type=click.Choice(["csv", "jsonld", "linkml", "shacl", "rdfconfig", "coverage", "all"]),
-    default="all",
-    help="Export format (default: all)",
-)
-@click.option(
-    "--schema-name",
-    help="Custom name for LinkML schema (default: derived from filename)",
-)
-@click.option(
-    "--schema-description",
-    help="Description for LinkML schema",
-)
+# ── export void ──────────────────────────────────────────────────
+
+
+@export.command("void")
+@click.argument("input_file", metavar="INPUT")
+@click.option("-o", "--output-dir", default=".", help="Output directory.")
+def export_void(input_file: str, output_dir: str) -> None:
+    r"""Export schema as VoID Turtle.
+
+    Converts a JSON-LD schema back to VoID RDF (Turtle).  Also works
+    with VoID input (round-trip).
+
+    Example::
+
+        rdfsolve export void dataset_schema.jsonld -o ./exports
+    """
+    try:
+        parser, name = _load_input(input_file)
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        jsonld_dict = parser.to_jsonld(filter_void_admin_nodes=True)
+
+        from rdfsolve.models import MinedSchema
+
+        schema = MinedSchema.from_dict(jsonld_dict)
+        g = schema.to_void_graph()
+        void_path = out / f"{name}_void.ttl"
+        g.serialize(destination=str(void_path), format="turtle")
+        click.echo(f"OK  {void_path}  ({len(g)} triples)")
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+
+# ── export linkml ────────────────────────────────────────────────
+
+
+@export.command("linkml")
+@click.argument("input_file", metavar="INPUT")
+@click.option("-o", "--output-dir", default=".", help="Output directory.")
+@click.option("--schema-name", default=None, help="Schema name (default: from filename).")
+@click.option("--schema-description", default=None, help="Schema description.")
 @click.option(
     "--schema-uri",
-    help="Base URI for LinkML schema (e.g., http://example.org/schemas/myschema)",
+    default=None,
+    help="Base URI for the schema (e.g. http://example.org/schemas/myschema).",
+)
+def export_linkml(
+    input_file: str,
+    output_dir: str,
+    schema_name: str | None,
+    schema_description: str | None,
+    schema_uri: str | None,
+) -> None:
+    r"""Export schema as LinkML YAML.
+
+    Generates a LinkML schema definition for data modelling,
+    validation, and code generation.
+
+    Example::
+
+        rdfsolve export linkml dataset_schema.jsonld --schema-name myds
+    """
+    try:
+        parser, name = _load_input(input_file)
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        linkml_yaml = parser.to_linkml_yaml(
+            filter_void_nodes=True,
+            schema_name=schema_name or name,
+            schema_description=schema_description,
+            schema_base_uri=schema_uri,
+        )
+        linkml_path = out / f"{name}_linkml_schema.yaml"
+        linkml_path.write_text(linkml_yaml)
+        click.echo(f"OK  {linkml_path}")
+        if schema_uri:
+            click.echo(f"    Schema URI: {schema_uri}")
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+
+# ── export shacl ─────────────────────────────────────────────────
+
+
+@export.command("shacl")
+@click.argument("input_file", metavar="INPUT")
+@click.option("-o", "--output-dir", default=".", help="Output directory.")
+@click.option("--schema-name", default=None, help="Schema name (default: from filename).")
+@click.option("--schema-description", default=None, help="Schema description.")
+@click.option(
+    "--schema-uri",
+    default=None,
+    help="Base URI for the schema.",
 )
 @click.option(
-    "--shacl-closed/--shacl-open",
+    "--closed/--open",
+    "shacl_closed",
     default=True,
-    help="Generate closed SHACL shapes (default: closed)",
+    help="Generate closed shapes (default) or open shapes.",
 )
 @click.option(
-    "--shacl-suffix",
-    help="Suffix for SHACL shape names (e.g., 'Shape' -> PersonShape)",
+    "--suffix",
+    default=None,
+    help="Suffix for shape names (e.g. 'Shape' -> PersonShape).",
 )
+def export_shacl(
+    input_file: str,
+    output_dir: str,
+    schema_name: str | None,
+    schema_description: str | None,
+    schema_uri: str | None,
+    shacl_closed: bool,
+    suffix: str | None,
+) -> None:
+    r"""Export schema as SHACL shapes (Turtle).
+
+    SHACL shapes validate RDF data against the extracted schema.
+    Use --closed (default) for strict validation or --open for flexible.
+
+    Examples::
+
+        rdfsolve export shacl dataset_schema.jsonld --open
+        rdfsolve export shacl dataset_schema.jsonld --suffix Shape
+    """
+    try:
+        parser, name = _load_input(input_file)
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        shacl_ttl = parser.to_shacl(
+            filter_void_nodes=True,
+            schema_name=schema_name or name,
+            schema_description=schema_description,
+            schema_base_uri=schema_uri,
+            closed=shacl_closed,
+            suffix=suffix,
+        )
+        shacl_path = out / f"{name}_schema.shacl.ttl"
+        shacl_path.write_text(shacl_ttl)
+        shape_type = "closed" if shacl_closed else "open"
+        click.echo(f"OK  {shacl_path}  ({shape_type} shapes)")
+        if suffix:
+            click.echo(f"    Shape suffix: {suffix}")
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+
+# ── export rdfconfig ─────────────────────────────────────────────
+
+
+@export.command("rdfconfig")
+@click.argument("input_file", metavar="INPUT")
+@click.option("-o", "--output-dir", default=".", help="Output directory.")
 @click.option(
     "--endpoint-url",
-    help="SPARQL endpoint URL for RDF-config export",
+    default=None,
+    help="SPARQL endpoint URL (generates endpoint.yaml when provided).",
 )
 @click.option(
     "--endpoint-name",
     default="endpoint",
-    help="Endpoint name for RDF-config (default: 'endpoint')",
+    help="Endpoint name (default: 'endpoint').",
 )
-@click.option(
-    "--graph-uri",
-    help="Named graph URI for RDF-config export",
-)
-def export(
-    void_file: Optional[str],
-    schema_file: Optional[str],
+@click.option("--graph-uri", default=None, help="Named graph URI.")
+def export_rdfconfig(
+    input_file: str,
     output_dir: str,
-    format: str,
-    schema_name: Optional[str],
-    schema_description: Optional[str],
-    schema_uri: Optional[str],
-    shacl_closed: bool,
-    shacl_suffix: Optional[str],
-    endpoint_url: Optional[str],
+    endpoint_url: str | None,
     endpoint_name: str,
-    graph_uri: Optional[str],
+    graph_uri: str | None,
 ) -> None:
-    r"""Export RDF schema to various formats.
+    r"""Export schema as RDF-config YAML files.
 
-    Takes a VoID description file (--void-file) or a mined-schema
-    JSON-LD file (--schema-file) and exports the schema in multiple
-    formats for different use cases: analysis (CSV), semantic web
-    (JSON-LD), data modeling (LinkML), validation (SHACL), RDF-config
-    schema standard, and coverage analysis.
+    RDF-config is a schema standard for describing RDF data models.
+    Produces a {dataset}_config/ directory with model.yaml,
+    prefix.yaml, and optionally endpoint.yaml.
 
-    Exactly one of --void-file or --schema-file must be provided.
+    Example::
 
-    Formats:
-      - csv:       Schema patterns as CSV table
-      - jsonld:    Semantic web JSON-LD format
-      - linkml:    LinkML YAML schema for data modeling
-      - shacl:     SHACL shapes for RDF validation
-      - rdfconfig: RDF-config YAML files (model, prefix, endpoint)
-      - coverage:  Pattern coverage analysis
-      - all:       Export all formats (default)
-
-
-    SHACL Export:
-      SHACL (Shapes Constraint Language) shapes can be used to validate
-      RDF data against the extracted schema. Use --shacl-closed for
-      strict validation (only allows defined properties) or --shacl-open
-      for flexible validation.
-
-    RDF-config Export:
-      RDF-config is a schema standard consisting of YAML configuration
-      files that describe RDF data models. Exports are saved in a
-      directory named {dataset}_config/ containing:
-
-        - model.yaml: Class and property structure
-        - prefix.yaml: Namespace prefix definitions
-        - endpoint.yaml: SPARQL endpoint configuration
-
-      This directory structure is required by the rdf-config tool to
-      read the configuration files.
-
-    Example using a VoID file:
-        >>> rdfsolve export --void-file void_description.ttl \\
-            --format rdfconfig \\
-            --endpoint-url https://example.org/sparql \\
-            --output-dir ./exports
-
-    Example using a mined-schema JSON-LD file:
-        >>> rdfsolve export --schema-file dataset_schema.jsonld \\
-            --format all \\
-            --output-dir ./exports
+        rdfsolve export rdfconfig dataset_void.ttl \
+            --endpoint-url https://example.org/sparql
     """
-    if not void_file and not schema_file:
-        raise click.UsageError(
-            "One of --void-file or --schema-file is required."
-        )
-    if void_file and schema_file:
-        raise click.UsageError(
-            "Provide only one of --void-file or --schema-file, not both."
-        )
-
-    input_file: str = void_file or schema_file  # type: ignore[assignment]
-    click.echo(f"Exporting schema from: {input_file}")
-
     try:
-        if schema_file:
-            parser = load_parser_from_jsonld(schema_file)
-            dataset_name = (
-                Path(schema_file).stem.replace("_schema", "")
-            )
+        parser, name = _load_input(input_file)
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        rdfconfig = parser.to_rdfconfig(
+            filter_void_nodes=True,
+            endpoint_url=endpoint_url,
+            endpoint_name=endpoint_name,
+            graph_uri=graph_uri,
+        )
+        config_dir = out / f"{name}_config"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        (config_dir / "model.yaml").write_text(rdfconfig["model"])
+        (config_dir / "prefix.yaml").write_text(rdfconfig["prefix"])
+        click.echo(f"OK  {config_dir}/")
+        click.echo("    model.yaml")
+        click.echo("    prefix.yaml")
+        if endpoint_url:
+            (config_dir / "endpoint.yaml").write_text(rdfconfig["endpoint"])
+            click.echo("    endpoint.yaml")
         else:
-            parser = load_parser_from_file(void_file)  # type: ignore[arg-type]
-            dataset_name = (
-                Path(void_file).stem.replace("_void", "")  # type: ignore[arg-type]
-            )
-
-        output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
-
-        # CSV export
-        if format in ["csv", "all"]:
-            _export_csv(parser, output_path, dataset_name)
-
-        # JSON-LD export — only meaningful when input is a VoID file;
-        # skip when the input is already a JSON-LD schema file.
-        if format in ["jsonld", "all"]:
-            if void_file:
-                _export_jsonld(
-                    void_file,
-                    output_path,
-                    dataset_name,
-                    endpoint_url=endpoint_url,
-                    graph_uri=graph_uri,
-                )
-            else:
-                click.echo(
-                    "OK JSON-LD:  skipped "
-                    "(input is already a JSON-LD schema file)"
-                )
-
-        # LinkML export
-        if format in ["linkml", "all"]:
-            if void_file:
-                _export_linkml(
-                    void_file,
-                    output_path,
-                    dataset_name,
-                    schema_name,
-                    schema_description,
-                    schema_uri,
-                )
-            else:
-                _export_linkml_from_parser(
-                    parser,
-                    output_path,
-                    dataset_name,
-                    schema_name,
-                    schema_description,
-                    schema_uri,
-                )
-
-        # SHACL export
-        if format in ["shacl", "all"]:
-            if void_file:
-                _export_shacl(
-                    void_file,
-                    output_path,
-                    dataset_name,
-                    schema_name,
-                    schema_description,
-                    schema_uri,
-                    shacl_closed,
-                    shacl_suffix,
-                )
-            else:
-                _export_shacl_from_parser(
-                    parser,
-                    output_path,
-                    dataset_name,
-                    schema_name,
-                    schema_description,
-                    schema_uri,
-                    shacl_closed,
-                    shacl_suffix,
-                )
-
-        # RDF-config export
-        if format in ["rdfconfig", "all"]:
-            if void_file:
-                _export_rdfconfig(
-                    void_file,
-                    output_path,
-                    dataset_name,
-                    endpoint_url,
-                    endpoint_name,
-                    graph_uri,
-                )
-            else:
-                _export_rdfconfig_from_parser(
-                    parser,
-                    output_path,
-                    dataset_name,
-                    endpoint_url,
-                    endpoint_name,
-                    graph_uri,
-                )
-
-        # Pattern coverage export
-        if format in ["coverage", "all"]:
-            click.echo(
-                "  Coverage: Skipped (requires instance data, "
-                "not available from schema file)"
-            )
-
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise click.Abort()
-
-
-# -------------------------------------------------------------------
-# NOTE: The old standalone ``mine`` and ``mine-all`` commands have been
-# removed.  Their functionality is now available under the ``pipeline``
-# sub-group  (``rdfsolve pipeline mine``, ``rdfsolve pipeline local-mine``).
-# -------------------------------------------------------------------
-
-
-@main.command()
-@click.option("--endpoint", required=True, help="SPARQL endpoint URL")
-@click.option(
-    "--graph-uri",
-    multiple=True,
-    help="Specific graph URI(s) to query (optional)",
-)
-@click.option("--sample-limit", type=int, help="Limit number of results")
-@click.option("--output", help="Output CSV file (prints to console if omitted)")
-@click.option(
-    "--exclude-service-graphs/--include-service-graphs",
-    default=True,
-    help="Exclude service/system graphs (default: excluded)",
-)
-def count(
-    endpoint: str,
-    graph_uri: tuple[str, ...],
-    sample_limit: Optional[int],
-    output: Optional[str],
-    exclude_service_graphs: bool,
-) -> None:
-    r"""Count instances per class in a SPARQL endpoint.
-
-    Queries the endpoint to count how many instances (subjects) exist
-    for each rdf:type class in the dataset. Useful for understanding
-    dataset size and composition before schema extraction.
-
-    By default, service and system graphs (Virtuoso, well-known URIs,
-    OWL ontology) are excluded from counting. Use
-    --include-service-graphs to include them.
-
-    Example:
-      >>> rdfsolve count --endpoint https://sparql.uniprot.org/sparql \
-                     --output class_counts.csv
-    """
-    click.echo(f"Counting instances at: {endpoint}")
-    if not exclude_service_graphs:
-        click.echo("  Including service/system graphs in counting")
-
-    try:
-        graph_uris = list(graph_uri) if graph_uri else None
-        counts = count_instances_per_class(
-            endpoint,
-            graph_uris=graph_uris,
-            sample_limit=sample_limit,
-            exclude_graphs=exclude_service_graphs,
-        )
-
-        if isinstance(counts, dict):
-            click.echo(f"\nFound {len(counts)} classes:")
-            click.echo("=" * 60)
-
-            sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
-
-            for class_uri, count in sorted_counts:
-                click.echo(f"{count}  {class_uri}")
-
-            if output:
-                import pandas as pd
-
-                df = pd.DataFrame(sorted_counts, columns=["class_uri", "instance_count"])
-                df.to_csv(output, index=False)
-                click.echo(f"\nFull results saved to: {output}")
-
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
+            click.echo("    (endpoint.yaml skipped - use --endpoint-url)")
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
         raise click.Abort()
 
 
@@ -945,15 +750,16 @@ def count(
 # instance-match command group
 # ---------------------------------------------------------------------------
 
+
 @main.group("instance-match")
 def instance_match_group() -> None:
-    """Instance-based matching: discover cross-dataset class links.
+    r"""Instance-based matching: discover cross-dataset class links.
 
     Probes SPARQL endpoints for classes whose instances match bioregistry
     URI patterns and writes skos:narrowMatch mapping JSON-LD files.
 
-    \b
-    Typical workflow:
+    Typical workflow::
+
         rdfsolve instance-match probe --prefix ensembl -o ensembl_mapping.jsonld
         rdfsolve instance-match seed  --prefixes ensembl uniprot chebi
     """
@@ -961,18 +767,21 @@ def instance_match_group() -> None:
 
 @instance_match_group.command("probe")
 @click.option(
-    "--prefix", "-p", required=True,
+    "--prefix",
+    "-p",
+    required=True,
     help="Bioregistry prefix to probe (e.g. 'ensembl').",
 )
 @click.option(
-    "--sources", default=None, show_default=False,
-    help=(
-        "Path to sources file (JSON-LD or CSV). "
-        "Default: auto-detect data/sources.jsonld."
-    ),
+    "--sources",
+    default=None,
+    show_default=False,
+    help=("Path to sources file (JSON-LD or CSV). Default: auto-detect data/sources.jsonld."),
 )
 @click.option(
-    "--sources-csv", default=None, hidden=True,
+    "--sources-csv",
+    default=None,
+    hidden=True,
     help="Deprecated alias for --sources.",
 )
 @click.option(
@@ -982,25 +791,33 @@ def instance_match_group() -> None:
     help="Mapping predicate URI.",
 )
 @click.option(
-    "--dataset", "-d", "datasets", multiple=True,
+    "--dataset",
+    "-d",
+    "datasets",
+    multiple=True,
     help="Restrict to this dataset name (repeatable).",
 )
 @click.option(
-    "--timeout", default=60.0, show_default=True, type=float,
+    "--timeout",
+    default=60.0,
+    show_default=True,
+    type=float,
     help="SPARQL request timeout in seconds.",
 )
 @click.option(
-    "--output", "-o", default=None,
+    "--output",
+    "-o",
+    default=None,
     help="Write JSON-LD to this file (default: stdout).",
 )
 def probe_cmd(
     prefix: str,
-    sources: Optional[str],
-    sources_csv: Optional[str],
+    sources: str | None,
+    sources_csv: str | None,
     predicate: str,
     datasets: tuple[str, ...],
     timeout: float,
-    output: Optional[str],
+    output: str | None,
 ) -> None:
     """Probe endpoints for a single bioregistry resource.
 
@@ -1035,18 +852,23 @@ def probe_cmd(
 
 @instance_match_group.command("seed")
 @click.option(
-    "--prefixes", "-p", "prefix_list", required=True, multiple=True,
+    "--prefixes",
+    "-p",
+    "prefix_list",
+    required=True,
+    multiple=True,
     help="Bioregistry prefix (repeatable).",
 )
 @click.option(
-    "--sources", default=None, show_default=False,
-    help=(
-        "Path to sources file (JSON-LD or CSV). "
-        "Default: auto-detect data/sources.jsonld."
-    ),
+    "--sources",
+    default=None,
+    show_default=False,
+    help=("Path to sources file (JSON-LD or CSV). Default: auto-detect data/sources.jsonld."),
 )
 @click.option(
-    "--sources-csv", default=None, hidden=True,
+    "--sources-csv",
+    default=None,
+    hidden=True,
     help="Deprecated alias for --sources.",
 )
 @click.option(
@@ -1062,21 +884,29 @@ def probe_cmd(
     help="Mapping predicate URI.",
 )
 @click.option(
-    "--dataset", "-d", "datasets", multiple=True,
+    "--dataset",
+    "-d",
+    "datasets",
+    multiple=True,
     help="Restrict to this dataset name (repeatable).",
 )
 @click.option(
-    "--timeout", default=60.0, show_default=True, type=float,
+    "--timeout",
+    default=60.0,
+    show_default=True,
+    type=float,
     help="SPARQL request timeout in seconds.",
 )
 @click.option(
-    "--no-skip-existing", is_flag=True, default=False,
+    "--no-skip-existing",
+    is_flag=True,
+    default=False,
     help="Re-probe even if the output file already exists.",
 )
 def seed_cmd(
     prefix_list: tuple[str, ...],
-    sources: Optional[str],
-    sources_csv: Optional[str],
+    sources: str | None,
+    sources_csv: str | None,
     output_dir: str,
     predicate: str,
     datasets: tuple[str, ...],
@@ -1119,13 +949,13 @@ def seed_cmd(
 
 @main.group("semra")
 def semra_group() -> None:
-    """SeMRA integration: import external mappings from semra sources.
+    r"""SeMRA integration: import external mappings from semra sources.
 
     Downloads mappings from community sources (biomappings, Gilda, etc.)
     and writes one JSON-LD file per (source, bioregistry-prefix) pair.
 
-    \b
-    Typical workflow:
+    Typical workflow::
+
         rdfsolve semra import --source biomappings
         rdfsolve semra seed --sources biomappings gilda
     """
@@ -1133,15 +963,17 @@ def semra_group() -> None:
 
 @semra_group.command("import")
 @click.option(
-    "--source", "-s", required=True,
+    "--source",
+    "-s",
+    required=True,
     help="SeMRA source key (e.g. 'biomappings', 'gilda').",
 )
 @click.option(
-    "--prefix", "-p", "prefixes", multiple=True,
-    help=(
-        "Keep only these bioregistry prefixes (repeatable). "
-        "Default: keep all."
-    ),
+    "--prefix",
+    "-p",
+    "prefixes",
+    multiple=True,
+    help=("Keep only these bioregistry prefixes (repeatable). Default: keep all."),
 )
 @click.option(
     "--output-dir",
@@ -1167,7 +999,7 @@ def semra_import_cmd(
             keep_prefixes=list(prefixes) if prefixes else None,
             output_dir=output_dir,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
         raise click.Abort()
 
@@ -1175,8 +1007,7 @@ def semra_import_cmd(
         click.echo(f"  OK {s}")
     for f in result["failed"]:
         click.echo(
-            f"  FAIL {f.get('source')}/{f.get('prefix')}: "
-            f"{f.get('error')}",
+            f"  FAIL {f.get('source')}/{f.get('prefix')}: {f.get('error')}",
             err=True,
         )
     if result["failed"]:
@@ -1185,14 +1016,19 @@ def semra_import_cmd(
 
 @semra_group.command("seed")
 @click.option(
-    "--sources", "-s", "source_list", required=True, multiple=True,
+    "--sources",
+    "-s",
+    "source_list",
+    required=True,
+    multiple=True,
     help="SeMRA source key (repeatable).",
 )
 @click.option(
-    "--prefix", "-p", "prefixes", multiple=True,
-    help=(
-        "Keep only these bioregistry prefixes (repeatable)."
-    ),
+    "--prefix",
+    "-p",
+    "prefixes",
+    multiple=True,
+    help=("Keep only these bioregistry prefixes (repeatable)."),
 )
 @click.option(
     "--output-dir",
@@ -1214,7 +1050,7 @@ def semra_seed_cmd(
             keep_prefixes=list(prefixes) if prefixes else None,
             output_dir=output_dir,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
         raise click.Abort()
 
@@ -1222,8 +1058,7 @@ def semra_seed_cmd(
         click.echo(f"  OK {s}")
     for f in result["failed"]:
         click.echo(
-            f"  FAIL {f.get('source')}/{f.get('prefix')}: "
-            f"{f.get('error')}",
+            f"  FAIL {f.get('source')}/{f.get('prefix')}: {f.get('error')}",
             err=True,
         )
     if result["failed"]:
@@ -1235,14 +1070,14 @@ def semra_seed_cmd(
 
 @main.group("inference")
 def inference_group() -> None:
-    """Mapping inference: derive new mappings from existing ones.
+    r"""Derive new mappings from existing ones.
 
     Uses SeMRA inference operations (inversion, transitivity,
     generalisation) to expand a set of mapping JSON-LD files.
 
-    \b
-    Typical workflow:
-        rdfsolve inference run --input file1.jsonld file2.jsonld \\
+    Typical workflow::
+
+        rdfsolve inference run --input file1.jsonld file2.jsonld \
             --output docker/mappings/inferenced/inferred.jsonld
         rdfsolve inference seed
     """
@@ -1250,31 +1085,49 @@ def inference_group() -> None:
 
 @inference_group.command("run")
 @click.option(
-    "--input", "-i", "input_paths", required=True, multiple=True,
+    "--input",
+    "-i",
+    "input_paths",
+    required=True,
+    multiple=True,
     help="Input mapping JSON-LD file (repeatable).",
 )
 @click.option(
-    "--output", "-o", "output_path", required=True,
+    "--output",
+    "-o",
+    "output_path",
+    required=True,
     help="Output JSON-LD file path.",
 )
 @click.option(
-    "--no-inversion", is_flag=True, default=False,
+    "--no-inversion",
+    is_flag=True,
+    default=False,
     help="Disable inversion inference.",
 )
 @click.option(
-    "--no-transitivity", is_flag=True, default=False,
+    "--no-transitivity",
+    is_flag=True,
+    default=False,
     help="Disable transitivity (chain) inference.",
 )
 @click.option(
-    "--generalisation", is_flag=True, default=False,
+    "--generalisation",
+    is_flag=True,
+    default=False,
     help="Enable generalisation inference (off by default).",
 )
 @click.option(
-    "--chain-cutoff", default=3, show_default=True, type=int,
+    "--chain-cutoff",
+    default=3,
+    show_default=True,
+    type=int,
     help="Maximum chain length for transitivity.",
 )
 @click.option(
-    "--name", "dataset_name", default=None,
+    "--name",
+    "dataset_name",
+    default=None,
     help="Override @about.dataset_name in the output.",
 )
 def inference_run_cmd(
@@ -1284,7 +1137,7 @@ def inference_run_cmd(
     no_transitivity: bool,
     generalisation: bool,
     chain_cutoff: int,
-    dataset_name: Optional[str],
+    dataset_name: str | None,
 ) -> None:
     """Infer new mappings from the given input files."""
     from rdfsolve.api import infer_mappings
@@ -1299,7 +1152,7 @@ def inference_run_cmd(
             chain_cutoff=chain_cutoff,
             dataset_name=dataset_name,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
         raise click.Abort()
 
@@ -1325,25 +1178,35 @@ def inference_run_cmd(
     help="Directory for the inferenced output.",
 )
 @click.option(
-    "--name", "output_name",
+    "--name",
+    "output_name",
     default="inferenced_mappings",
     show_default=True,
     help="Output file stem (without .jsonld).",
 )
 @click.option(
-    "--no-inversion", is_flag=True, default=False,
+    "--no-inversion",
+    is_flag=True,
+    default=False,
     help="Disable inversion inference.",
 )
 @click.option(
-    "--no-transitivity", is_flag=True, default=False,
+    "--no-transitivity",
+    is_flag=True,
+    default=False,
     help="Disable transitivity inference.",
 )
 @click.option(
-    "--generalisation", is_flag=True, default=False,
+    "--generalisation",
+    is_flag=True,
+    default=False,
     help="Enable generalisation inference.",
 )
 @click.option(
-    "--chain-cutoff", default=3, show_default=True, type=int,
+    "--chain-cutoff",
+    default=3,
+    show_default=True,
+    type=int,
     help="Maximum chain length for transitivity.",
 )
 def inference_seed_cmd(
@@ -1368,15 +1231,12 @@ def inference_seed_cmd(
             generalisation=generalisation,
             chain_cutoff=chain_cutoff,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
         raise click.Abort()
 
     if result["output_path"]:
-        click.echo(
-            f"  OK {result['output_edges']} edges → "
-            f"{result['output_path']}"
-        )
+        click.echo(f"  OK {result['output_edges']} edges -> {result['output_path']}")
     else:
         click.echo("  ⚠ No input files found.", err=True)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# run_pipeline.sh — End-to-end RDFSolve mining pipeline
+# run_pipeline.sh - End-to-end RDFSolve mining pipeline
 # =============================================================================
 #
 # OVERVIEW
@@ -30,7 +30,6 @@
 #     - Default datasets: set from script
 #     - Implies --skip-remote (no network SPARQL mining)
 #     - Implies --one-shot QLever strategy
-#   All steps still run inside Docker.
 #
 # USAGE
 #   ./scripts/run_pipeline.sh --mini
@@ -59,7 +58,7 @@
 #   ./scripts/run_pipeline.sh --results-dir /path/to/results
 #   ./scripts/run_pipeline.sh --data-dir /path/to/rdf-data
 #   ./scripts/run_pipeline.sh --output-dir /path/to/output
-#   ./scripts/run_pipeline.sh --author "Alice" --author "Bob"
+#   ./scripts/run_pipeline.sh --author "Javier"
 #   ./scripts/run_pipeline.sh --help
 #
 # =============================================================================
@@ -175,7 +174,7 @@ _summarise_index_warnings() {
     n_types="${n_types//[^0-9]/}"
     n_types="${n_types:-0}"
     [[ "${n_types}" -gt 10 ]] && \
-        echo -e "${YELLOW}    … (${n_types} distinct types total — see index_warnings.json)${NC}"
+        echo -e "${YELLOW}    … (${n_types} distinct types total - see index_warnings.json)${NC}"
 
     # ── Build / merge JSON ──────────────────────────────────────────
     local json_file="${CONTAINER_OUTPUT_DIR}/index_warnings.json"
@@ -267,7 +266,7 @@ done
 
 # ── --mini preset ───────────────────────────────────────────────
 if [[ "${MINI}" == true ]]; then
-    [[ ${#DATASETS[@]} -eq 0 ]] && DATASETS=(drugbank mesh)
+    [[ ${#DATASETS[@]} -eq 0 ]] && DATASETS=(aopwikirdf)
     SKIP_REMOTE=true
     ONE_SHOT=true
     [[ -z "${DATA_DIR}" ]] && DATA_DIR="${REPO_ROOT}/data/rdf"
@@ -319,7 +318,7 @@ else
     CONTAINER_OUTPUT_DIR="/output"
 fi
 
-# Mappings directory inside the container — lives under /output so it
+# Mappings directory inside the container - lives under /output so it
 # is always on the persistent volume (pipeline-output or bind-mounted OUTPUT_DIR).
 CONTAINER_MAPPINGS_DIR="${CONTAINER_OUTPUT_DIR}/mappings"
 
@@ -330,7 +329,7 @@ CONTAINER_SCHEMAS_DIR="${CONTAINER_OUTPUT_DIR}"
 # paper_data lives under /output so it is collected in step 15.
 CONTAINER_PAPER_DATA_DIR="${CONTAINER_OUTPUT_DIR}/paper_data"
 
-# Host results directory (step 15 target) — resolve to absolute path.
+# Host results directory (step 15 target) - resolve to absolute path.
 mkdir -p "${RESULTS_DIR}"
 RESULTS_DIR="$(cd "${RESULTS_DIR}" && pwd)"
 
@@ -396,7 +395,7 @@ _mine_local() {  # _mine_local NAME PORT STRATEGY ONE_SHOT CSIZE CBATCH
 # ═══════════════════════════════════════════════════════════════════
 # Preflight checks
 # ═══════════════════════════════════════════════════════════════════
-banner "RDFSolve Pipeline — ${MODE} mode${MINI:+ (mini)}"
+banner "RDFSolve Pipeline - ${MODE} mode${MINI:+ (mini)}"
 
 [[ -f "${REPO_ROOT}/docker-compose.pipeline.yml" ]] \
     || { fail "docker-compose.pipeline.yml not found at ${REPO_ROOT}."; exit 1; }
@@ -441,7 +440,7 @@ echo ""
 PIPELINE_START=$(date +%s)
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 0 — Build image
+# STEP 0 - Build image
 # ═══════════════════════════════════════════════════════════════════
 banner "Step 0: Build pipeline image"
 step "Building …"
@@ -449,7 +448,7 @@ ${DC} build --quiet
 step "Image ready."
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 1 — Remote VoID discovery
+# STEP 1 - Remote VoID discovery
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_REMOTE}" == false ]]; then
     banner "Step 1: Remote VoID discovery"
@@ -458,11 +457,11 @@ if [[ "${SKIP_REMOTE}" == false ]]; then
         || warn "Some discover tasks failed."
     step "Discovery done in $(elapsed $(( $(date +%s) - t0 )))."
 else
-    banner "Step 1: Remote VoID discovery — SKIPPED"
+    banner "Step 1: Remote VoID discovery - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 2 — Remote mining
+# STEP 2 - Remote mining
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_REMOTE}" == false ]]; then
     banner "Step 2: Remote schema mining"
@@ -483,7 +482,7 @@ for s in sources:
 " 2>/dev/null) || _REMOTE_DS=""
 
     if [[ -z "${_REMOTE_DS}" ]]; then
-        warn "No remote-endpoint datasets found — skipping."
+        warn "No remote-endpoint datasets found - skipping."
     else
         while IFS= read -r ds; do
             step "Dataset: ${ds}"
@@ -498,11 +497,11 @@ for s in sources:
     fi
     step "Remote mining done in $(elapsed $(( $(date +%s) - t0 )))."
 else
-    banner "Step 2: Remote mining — SKIPPED"
+    banner "Step 2: Remote mining - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEPS 3–4 — Local mining (QLever)
+# STEPS 3-4 - Local mining (QLever)
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_LOCAL}" == false ]]; then
 
@@ -525,7 +524,7 @@ if [[ "${SKIP_LOCAL}" == false ]]; then
 
     PORTS_JSON=$(run bash -c "cat ${CONTAINER_DATA_DIR}/qlever_workdirs/ports.json 2>/dev/null || echo '{}'")
     if [[ "${PORTS_JSON}" == "{}" ]]; then
-        warn "No ports.json found — nothing to process."
+        warn "No ports.json found- nothing to process."
     else
         DS_LINES=$(echo "${PORTS_JSON}" | python3 -c "
 import json, sys
@@ -546,7 +545,7 @@ for name, port in json.load(sys.stdin).items():
 
             # Download + Index (skip if DONE_INDEX exists)
             if run bash -c "test -f ${DONE_INDEX}" 2>/dev/null; then
-                step "Index cached — skipping download+index."
+                step "Index cached - skipping download+index."
             else
                 step "Downloading …"
                 run bash -c "cd ${WORKDIR} && qlever get-data" \
@@ -554,7 +553,7 @@ for name, port in json.load(sys.stdin).items():
 
                 step "Indexing …"
                 run bash -c "cd ${WORKDIR} && qlever index --overwrite-existing 2>&1 | grep -v '^$'" \
-                    || { fail "[${NAME}] Index failed — check ${WORKDIR}/${NAME}.index-log.txt"; continue; }
+                    || { fail "[${NAME}] Index failed - check ${WORKDIR}/${NAME}.index-log.txt"; continue; }
 
                 # Summarise any WARN lines from the index log
                 _summarise_index_warnings "${NAME}" "${WORKDIR}"
@@ -595,11 +594,11 @@ for name, port in json.load(sys.stdin).items():
         done 3<<< "${DS_LINES}"
     fi
 else
-    banner "Steps 3–4: Local mining — SKIPPED"
+    banner "Steps 3-4: Local mining - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 4b — Schema selection
+# STEP 4b - Schema selection
 # ═══════════════════════════════════════════════════════════════════
 # Selects the best schema per dataset (priority: qlever_oneshot > qlever >
 # most-complete-remote) and copies chosen schemas to
@@ -618,7 +617,7 @@ run bash -c "${_sel_args}" || warn "Schema selection had warnings."
 step "Schema selection done in $(elapsed $(( $(date +%s) - t0 )))."
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 5 — Seed SSSOM mappings (class + property)
+# STEP 5 - Seed SSSOM mappings (class + property)
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_MAPPINGS}" == false ]]; then
     banner "Step 5: Seed SSSOM mappings"
@@ -634,11 +633,11 @@ if [[ "${SKIP_MAPPINGS}" == false ]]; then
 
     step "SSSOM seeding done in $(elapsed $(( $(date +%s) - t0 )))."
 else
-    banner "Step 5: SSSOM mappings — SKIPPED"
+    banner "Step 5: SSSOM mappings - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 6 — Seed SeMRA mappings
+# STEP 6 - Seed SeMRA mappings
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_MAPPINGS}" == false ]]; then
     banner "Step 6: Seed SeMRA mappings"
@@ -650,11 +649,11 @@ if [[ "${SKIP_MAPPINGS}" == false ]]; then
 
     step "SeMRA seeding done in $(elapsed $(( $(date +%s) - t0 )))."
 else
-    banner "Step 6: SeMRA mappings — SKIPPED"
+    banner "Step 6: SeMRA mappings - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 7 — Instance mappings
+# STEP 7 - Instance mappings
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_MAPPINGS}" == false ]]; then
     banner "Step 7: Instance mappings"
@@ -671,11 +670,11 @@ if [[ "${SKIP_MAPPINGS}" == false ]]; then
     run bash -c "${_inst_args}" || warn "Instance mapping seeding had failures."
     step "Instance mappings done in $(elapsed $(( $(date +%s) - t0 )))."
 else
-    banner "Step 7: Instance mappings — SKIPPED"
+    banner "Step 7: Instance mappings - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 11 — Inference expansion  (always last mapping step)
+# STEP 11 - Inference expansion  (always last mapping step)
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_MAPPINGS}" == false ]]; then
     banner "Step 11: Inference expansion"
@@ -688,11 +687,11 @@ if [[ "${SKIP_MAPPINGS}" == false ]]; then
 
     step "Inference done in $(elapsed $(( $(date +%s) - t0 )))."
 else
-    banner "Step 11: Inference — SKIPPED"
+    banner "Step 11: Inference - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 12 — Build connectivity graphs -> Parquet
+# STEP 12 - Build connectivity graphs -> Parquet
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_BUILD_GRAPHS}" == false ]]; then
     banner "Step 12: Build graphs -> Parquet"
@@ -707,11 +706,11 @@ if [[ "${SKIP_BUILD_GRAPHS}" == false ]]; then
     run bash -c "${_bg_args}" || warn "build_graphs.py had warnings."
     step "Graph build done in $(elapsed $(( $(date +%s) - t0 )))."
 else
-    banner "Step 12: Build graphs — SKIPPED"
+    banner "Step 12: Build graphs - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 14 — Execute paper notebook
+# STEP 14 - Execute paper notebook
 # ═══════════════════════════════════════════════════════════════════
 # The notebook is expected at /app/paper/notebooks/mapping_analysis_paper.ipynb
 # inside the container.  Add 'COPY paper/ paper/' to Dockerfile.pipeline if needed.
@@ -730,7 +729,7 @@ if [[ "${SKIP_NOTEBOOK}" == false ]]; then
             /app/paper/notebooks/mapping_analysis_paper.ipynb \
             || warn "Paper notebook execution had errors."
 
-        # Also export as HTML for easy browsing — written to /output/paper_data/
+        # Also export as HTML for easy browsing - written to /output/paper_data/
         run python -m jupyter nbconvert \
             --to html \
             --ExecutePreprocessor.kernel_name=python3 \
@@ -744,11 +743,11 @@ if [[ "${SKIP_NOTEBOOK}" == false ]]; then
         warn "Add 'COPY paper/ paper/' to docker/Dockerfile.pipeline and rebuild (step 0)."
     fi
 else
-    banner "Step 14: Paper notebook — SKIPPED"
+    banner "Step 14: Paper notebook - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 14b — Execute schema-extraction / performance-analysis notebook
+# STEP 14b - Execute schema-extraction / performance-analysis notebook
 # ═══════════════════════════════════════════════════════════════════
 # Runs notebooks/schema_extraction/performance_analysis.ipynb inside the
 # container.  Passes INDEX_WARNINGS so the notebook can load
@@ -784,11 +783,11 @@ if [[ "${SKIP_NOTEBOOK}" == false ]]; then
         warn "Ensure notebooks/ is COPYed into the Docker image."
     fi
 else
-    banner "Step 14b: Performance notebook — SKIPPED"
+    banner "Step 14b: Performance notebook - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 15 — Collect /output -> host results directory
+# STEP 15 - Collect /output -> host results directory
 # ═══════════════════════════════════════════════════════════════════
 banner "Step 15: Collect results -> ${RESULTS_DIR}/"
 step "Copying ${CONTAINER_OUTPUT_DIR}/ -> ${RESULTS_DIR}/ …"
@@ -796,7 +795,7 @@ step "Copying ${CONTAINER_OUTPUT_DIR}/ -> ${RESULTS_DIR}/ …"
 run bash -c "ls -la ${CONTAINER_OUTPUT_DIR}/" || true
 run bash -c "cd ${CONTAINER_OUTPUT_DIR} && tar cf - . 2>/dev/null" \
     | tar xf - -C "${RESULTS_DIR}/" 2>/dev/null || {
-    warn "tar copy failed — falling back to docker cp."
+    warn "tar copy failed - falling back to docker cp."
     ${DC} run -d --name rdfsolve-copy pipeline sleep 30 >/dev/null 2>&1
     docker cp "rdfsolve-copy:${CONTAINER_OUTPUT_DIR}/." "${RESULTS_DIR}/" 2>/dev/null || true
     docker rm -f rdfsolve-copy >/dev/null 2>&1 || true

@@ -1,8 +1,8 @@
-"""IRI resolution routes — /api/iri/*."""
+"""IRI resolution routes - /api/iri/*."""
 
 from __future__ import annotations
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request
 
 from rdfsolve.backend.services.endpoint_service import EndpointService
 from rdfsolve.backend.services.iri_service import IriService
@@ -12,7 +12,7 @@ iri_bp = Blueprint("iri", __name__)
 
 
 @iri_bp.route("/resolve", methods=["POST"])
-def resolve_iris():
+def resolve_iris() -> Response | tuple[Response, int]:
     """Resolve IRIs against SPARQL endpoints to discover rdf:type."""
     data = request.get_json(force=True)
     iris = data.get("iris", [])
@@ -28,11 +28,15 @@ def resolve_iris():
 
     svc = IriService()
     result = svc.resolve(
-        iris=iris, endpoints=endpoints, timeout=timeout,
+        iris=iris,
+        endpoints=endpoints,
+        timeout=timeout,
     )
 
     result["rdfsolve_code"] = resolve_iris_snippet(
-        iris=iris, endpoints=endpoints, timeout=timeout,
+        iris=iris,
+        endpoints=endpoints,
+        timeout=timeout,
     )
 
     return jsonify(result)

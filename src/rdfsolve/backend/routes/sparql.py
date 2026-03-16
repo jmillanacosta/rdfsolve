@@ -1,8 +1,8 @@
-"""SPARQL proxy routes — /api/sparql/*."""
+"""SPARQL proxy routes - /api/sparql/*."""
 
 from __future__ import annotations
 
-from flask import Blueprint, abort, current_app, jsonify, request
+from flask import Blueprint, Response, abort, current_app, jsonify, request
 
 from rdfsolve.backend.services.sparql_service import SparqlService
 from rdfsolve.codegen import execute_sparql_snippet
@@ -14,12 +14,13 @@ def _endpoint_allowed(endpoint: str) -> bool:
     """Return True if *endpoint* is permitted by the allowlist.
 
     ``SPARQL_ALLOWED_ORIGINS``:
-    - ``"*"`` — open proxy (all endpoints allowed)
-    - ``""``  — strict mode (no proxy)
-    - comma-separated URLs — explicit allowlist
+    - ``"*"`` - open proxy (all endpoints allowed)
+    - ``""``  - strict mode (no proxy)
+    - comma-separated URLs - explicit allowlist
     """
     setting: str = current_app.config.get(
-        "SPARQL_ALLOWED_ORIGINS", "*",
+        "SPARQL_ALLOWED_ORIGINS",
+        "*",
     )
     if setting == "*":
         return True
@@ -27,14 +28,11 @@ def _endpoint_allowed(endpoint: str) -> bool:
         return False
     allowed = {s.strip() for s in setting.split(",") if s.strip()}
     # Exact match or prefix match (endpoint may include a path suffix)
-    return any(
-        endpoint == a or endpoint.startswith(a)
-        for a in allowed
-    )
+    return any(endpoint == a or endpoint.startswith(a) for a in allowed)
 
 
 @sparql_bp.route("/query", methods=["POST"])
-def proxy_query():
+def proxy_query() -> Response | tuple[Response, int]:
     """Proxy a SPARQL query to a remote endpoint.
 
     Solves CORS by making the request server-side.
@@ -52,7 +50,7 @@ def proxy_query():
     if not query or not endpoint:
         return jsonify({"error": "Missing 'query' or 'endpoint'"}), 400
 
-    # (7b) SSRF guard — validate endpoint against allowlist.
+    # (7b) SSRF guard - validate endpoint against allowlist.
     if not _endpoint_allowed(endpoint):
         abort(403, description="Endpoint not in allowlist")
 

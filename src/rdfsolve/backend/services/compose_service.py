@@ -1,4 +1,4 @@
-"""SPARQL query composition service — thin Flask wrapper.
+"""SPARQL query composition service - thin Flask wrapper.
 
 All core logic lives in :mod:`rdfsolve.compose`.
 """
@@ -11,7 +11,7 @@ from rdfsolve.compose import compose_query_from_paths
 
 
 class ComposeService:
-    """Generate SPARQL queries — delegates to the package."""
+    """Generate SPARQL queries - delegates to the package."""
 
     def compose_from_paths(
         self,

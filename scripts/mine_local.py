@@ -3,10 +3,10 @@ r"""Unified mining script with four routes.
 
 Routes
 ------
-- **discover**          — find existing VoID descriptions from remote endpoints
-- **mine**              — mine schemas from remote SPARQL endpoints
-- **local-mine**        — mine schemas from a local QLever endpoint
-- **generate-qleverfile** — auto-generate Qleverfiles for local mining
+- **discover**          - find existing VoID descriptions from remote endpoints
+- **mine**              - mine schemas from remote SPARQL endpoints
+- **local-mine**        - mine schemas from a local QLever endpoint
+- **generate-qleverfile** - auto-generate Qleverfiles for local mining
 
 Usage
 -----
@@ -285,8 +285,8 @@ def _fetch_qlever_stats(
     keys, or ``None`` if the endpoint does not expose stats or the
     request fails.
     """
-    import urllib.request
     import urllib.error
+    import urllib.request
 
     url = endpoint.rstrip("/") + "?cmd=stats"
     try:
@@ -332,8 +332,8 @@ def _parse_authors(
 
 
 def _embed_benchmark_in_report(
-    run,   # RunMetrics — import-free signature
-    bench,  # BenchmarkCollector
+    run,
+    bench,
     report_path: Path,
 ) -> None:
     """Merge benchmark data into the mining report JSON.
@@ -358,10 +358,9 @@ def _embed_benchmark_in_report(
 
 def _progress(name: str, idx: int, total: int, status: str) -> None:
     """Print a progress line."""
-    symbol = {"OK": "✓", "FAIL": "✗", "SKIP": "–", "DISCOVER": "◈"}.get(
+    {"OK": "OK", "FAIL": "FAIL", "SKIP": "-", "DISCOVER": "->"}.get(
         status.split(":")[0], "·"
     )
-    print(f"  [{idx}/{total}] {symbol}  {name}  {status}")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -371,12 +370,15 @@ def _progress(name: str, idx: int, total: int, status: str) -> None:
 
 def _route_discover(args: argparse.Namespace) -> dict[str, Any]:
     """Discover VoID graphs from remote endpoints."""
+    import time as _time
+
     from rdfsolve.api import discover_void_graphs
     from rdfsolve.parser import VoidParser
     from rdfsolve.tools.benchmark import (
-        collect_machine_info, _read_proc_io, _get_rusage,
+        _get_rusage,
+        _read_proc_io,
+        collect_machine_info,
     )
-    import time as _time
 
     entries = _load_entries(args.sources, args.name_filter)
     out = Path(args.output_dir)
@@ -521,7 +523,7 @@ def _route_discover(args: argparse.Namespace) -> dict[str, Any]:
                     name, idx, total,
                     f"DISCOVER: {len(partitions)} partitions "
                     f"in {len(found_graphs)} graphs "
-                    f"→ {void_path.name}",
+                    f"-> {void_path.name}",
                 )
                 discovered.append(name)
                 return len(partitions)
@@ -572,10 +574,10 @@ def _route_mine(args: argparse.Namespace) -> dict[str, Any]:
     if args.name_filter:
         entries = _load_entries(args.sources, args.name_filter)
         if not entries:
-            print("No sources match the filter.")
             return {"succeeded": [], "failed": [], "skipped": []}
 
         import tempfile
+
         import yaml
 
         tmp = tempfile.NamedTemporaryFile(
@@ -619,6 +621,7 @@ def _route_mine(args: argparse.Namespace) -> dict[str, Any]:
                     _progress(n, idx, total, "OK")
 
             import tempfile as _tmp
+
             import yaml as _yaml
             _tf = _tmp.NamedTemporaryFile(
                 mode="w", suffix=".yaml", delete=False,
@@ -679,7 +682,7 @@ def _route_mine(args: argparse.Namespace) -> dict[str, Any]:
             "skipped": all_skipped,
         }
 
-    # No benchmarking — single bulk call.
+    # No benchmarking - single bulk call.
     def _on_progress(
         name: str, idx: int, total: int, error: str | None,
     ) -> None:
@@ -857,7 +860,7 @@ def _mine_single_local(
     """Mine a single dataset from a local endpoint.
 
     Returns a dict with ``classes``, ``properties``, and output
-    file paths — useful for populating benchmark run metrics.
+    file paths - useful for populating benchmark run metrics.
     """
     from rdfsolve.miner import mine_schema as _mine
 
@@ -905,7 +908,7 @@ def _mine_single_local(
         jsonld_path = out / f"{name}_{_tag}_schema.jsonld"
         with open(jsonld_path, "w", encoding="utf-8") as f:
             json.dump(schema.to_jsonld(), f, indent=2)
-        logger.info("  → %s", jsonld_path)
+        logger.info("  -> %s", jsonld_path)
         result_files["schema_jsonld"] = str(jsonld_path)
 
     if args.fmt in ("void", "all"):
@@ -915,7 +918,7 @@ def _mine_single_local(
             destination=str(void_path), format="turtle",
         )
         logger.info(
-            "  → %s (%d triples)", void_path, len(void_g),
+            "  -> %s (%d triples)", void_path, len(void_g),
         )
         result_files["void_ttl"] = str(void_path)
 
@@ -940,7 +943,6 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
     ) -> dict[str, Any]:
         """Run discover + mine for one dataset. Returns mine result."""
         if args.discover_first:
-            print(f"  Discovering VoID at {endpoint} …")
             void_uri = _resolve_void_uri_base(
                 name,
                 cli_override=getattr(args, "void_uri_base", None),
@@ -973,7 +975,6 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
         name = args.name
         endpoint = args.endpoint
 
-        print(f"Local-mine: {name} @ {endpoint}")
 
         succeeded: list[str] = []
         failed: list[dict[str, str]] = []
@@ -1011,7 +1012,6 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
     if args.test:
         entries = _select_test_sources(entries)
         if not entries:
-            print("No downloadable sources for test mode.")
             return {
                 "succeeded": [], "failed": [], "skipped": [],
             }
@@ -1025,11 +1025,6 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
             batch_entries.append((e, args.endpoint))
 
     if not batch_entries:
-        print(
-            "No sources with 'local_endpoint' found.\n"
-            "Hint: use --name + --endpoint for single mode,\n"
-            "      or add 'local_endpoint' to sources.yaml."
-        )
         return {
             "succeeded": [], "failed": [], "skipped": [],
         }
@@ -1040,8 +1035,6 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
 
     for idx, (entry, endpoint) in enumerate(batch_entries, 1):
         name = entry.get("name", "")
-        print(f"\n{'─'*60}")
-        print(f"[{idx}/{total}] {name} @ {endpoint}")
 
         try:
             if bench:
@@ -1072,8 +1065,7 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
 
     # Write benchmark summary CSV if collecting
     if bench:
-        csv_path = bench.write_summary_csv()
-        print(f"\nBenchmark summary → {csv_path}")
+        bench.write_summary_csv()
 
     return {
         "succeeded": succeeded,
@@ -1090,7 +1082,7 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
 def _nq_encode_cmd() -> str:
     """Return a ``python3 -c "..."`` command that:
 
-    1. **Joins continuation lines** — some bio2rdf NQ files contain IRIs that
+    1. **Joins continuation lines** - some bio2rdf NQ files contain IRIs that
        are wrapped across two lines (e.g. the IRI opens with ``<`` on one
        line and the closing ``>`` appears at the start of the next).  QLever
        requires every quad to be on a single line, so we re-join such pairs
@@ -1100,7 +1092,7 @@ def _nq_encode_cmd() -> str:
        outside quoted string literals (tracking ``"..."`` state so that
        ``"value < 10"`` is never touched).
 
-    The base64 payload avoids all shell-quoting issues — the b64 alphabet
+    The base64 payload avoids all shell-quoting issues - the b64 alphabet
     ([A-Za-z0-9+/=]) is safe inside both single and double quotes with no
     escaping needed.
     """
@@ -1150,7 +1142,7 @@ def _nq_encode_cmd() -> str:
     return f'python3 -u -c "import base64,sys; exec(base64.b64decode(\\"{b64}\\").decode())"'
 
 
-# Qleverfile template — INI-style config consumed by `qlever` CLI.
+# Qleverfile template - INI-style config consumed by `qlever` CLI.
 _QLEVERFILE_TEMPLATE = """\
 # Qleverfile for {name}
 # Auto-generated by rdfsolve  (scripts/mine_local.py generate-qleverfile)
@@ -1168,13 +1160,13 @@ _QLEVERFILE_TEMPLATE = """\
 NAME              = {name}
 GET_DATA_CMD      = {get_data_cmd}
 FORMAT            = {rdf_format}
-DESCRIPTION       = {name} — local RDF dataset for rdfsolve schema mining
+DESCRIPTION       = {name} - local RDF dataset for rdfsolve schema mining
 
 [index]
 INPUT_FILES          = {input_files}
 CAT_INPUT_FILES      = {cat_input_files}
 SETTINGS_JSON        = {settings_json}
-PARALLEL_PARSING     = true
+PARALLEL_PARSING     = false
 PARSER_BUFFER_SIZE   = 15MB
 
 [server]
@@ -1205,13 +1197,13 @@ def _detect_data_format(entry: Any) -> str | None:
     if not dl_keys:
         return None
     # Return the most descriptive key (prefer data over schema files)
-    _PRIORITY = [
+    priority = [
         "download_nq", "download_nquads", "download_nt", "download_n3",
         "download_ttl", "download_rdf", "download_rdfxml", "download_owl",
         "download_jsonld", "download_zip", "download_tar_gz", "download_tgz",
         "download_ftp",
     ]
-    for k in _PRIORITY:
+    for k in priority:
         if k in dl_keys:
             return k.removeprefix("download_")
     return dl_keys[0].removeprefix("download_")
@@ -1228,7 +1220,7 @@ def _urls_from_field(entry: dict, field: str) -> list[str]:
     return [u for u in urls if u]
 
 
-# Map download_* suffix → (QLever FORMAT, input glob, cat command)
+# Map download_* suffix -> (QLever FORMAT, input glob, cat command)
 # for formats that QLever can consume directly.
 _DIRECT_FORMATS: dict[str, tuple[str, str, str]] = {
     # N-Quads
@@ -1263,8 +1255,8 @@ def _build_qleverfile(
       - Downloads with ``wget -c -q``
       - Decompresses ``.gz`` / ``.xz`` archives
       - Extracts ``.tar.gz`` / ``.tgz`` / ``.zip`` archives
-      - Converts RDF/XML and OWL → Turtle (via rapper)
-      - Converts JSON-LD → Turtle (via Python rdflib)
+      - Converts RDF/XML and OWL -> Turtle (via rapper)
+      - Converts JSON-LD -> Turtle (via Python rdflib)
     """
     name = entry.get("name", "unknown")
 
@@ -1286,8 +1278,8 @@ def _build_qleverfile(
     has_gz = False          # any .gz files to decompress
     has_xz = False          # any .xz files to decompress
     has_archive = False     # any .zip / .tar.gz / .tgz to extract
-    has_rdfxml = False      # need RDF/XML → Turtle conversion
-    has_jsonld = False      # need JSON-LD → Turtle conversion
+    has_rdfxml = False      # need RDF/XML -> Turtle conversion
+    has_jsonld = False      # need JSON-LD -> Turtle conversion
     has_nq = False          # primary format is N-Quads
     has_nt = False          # primary format is N-Triples
     has_n3 = False          # primary format is N3
@@ -1366,7 +1358,7 @@ def _build_qleverfile(
             wget_parts.append(f'wget -c -q "{u}"')
         else:
             # Try to derive a filename from the URL path
-            # e.g. .../files/Hsa-u.c4-0.n3/content → Hsa-u.c4-0.n3
+            # e.g. .../files/Hsa-u.c4-0.n3/content -> Hsa-u.c4-0.n3
             parts = u.rstrip("/").split("/")
             derived = next(
                 (p for p in reversed(parts)
@@ -1410,10 +1402,10 @@ def _build_qleverfile(
         # After extraction, find RDF files in subdirectories and move them up.
         # If a file with the same name already exists in the target dir,
         # prefix it with its parent directory name to avoid overwrites
-        # (e.g. subdir/WP9.ttl → subdir__WP9.ttl).
+        # (e.g. subdir/WP9.ttl -> subdir__WP9.ttl).
         steps.append(
             "echo 'Collecting RDF files from subdirectories …' "
-            "&& find . -mindepth 2 \\( "
+            "&& find . -mindepth 2 \\( " # Do we need to set the depth iteratively here to ensure finding files
             '-name "*.ttl" -o -name "*.ttl.gz" -o -name "*.nt" -o '
             '-name "*.nt.gz" -o -name "*.nq" -o -name "*.nq.gz" -o '
             '-name "*.n3" -o -name "*.owl" -o -name "*.rdf" -o '
@@ -1450,7 +1442,7 @@ def _build_qleverfile(
         # For N-Quads and N-Triples, QLever can read .gz directly,
         # so only decompress TTL/OWL/RDF/N3/JSONLD .gz files.
         if has_nq or has_nt:
-            # Leave .nq.gz / .nt.gz compressed — QLever reads them.
+            # Leave .nq.gz / .nt.gz compressed - QLever reads them.
             # Only decompress other .gz files (ttl, owl, rdf, etc.)
             steps.append(
                 'for f in *.ttl.gz *.owl.gz *.rdf.gz *.n3.gz *.jsonld.gz; do '
@@ -1467,10 +1459,10 @@ def _build_qleverfile(
                 'done'
             )
 
-    # Convert RDF/XML and OWL → Turtle
+    # Convert RDF/XML and OWL -> Turtle
     if has_rdfxml:
-        steps.append("echo 'Converting RDF/XML → Turtle …'")
-        # Avoid ${f%.*} bash syntax — configparser can't handle %.
+        steps.append("echo 'Converting RDF/XML -> Turtle …'")
+        # Avoid ${f%.*} bash syntax - configparser can't handle %.
         # Use Python one-liner for the conversion instead.
         steps.append(
             "python3 -c \""
@@ -1485,9 +1477,9 @@ def _build_qleverfile(
             '"'
         )
 
-    # Convert JSON-LD → Turtle
+    # Convert JSON-LD -> Turtle
     if has_jsonld:
-        steps.append("echo 'Converting JSON-LD → Turtle …'")
+        steps.append("echo 'Converting JSON-LD -> Turtle …'")
         steps.append(
             "python3 -c \""
             "import glob, os; "
@@ -1505,14 +1497,14 @@ def _build_qleverfile(
     # parse Qleverfiles.
     #
     # Under ExtendedInterpolation:
-    #   - ``${section:key}``  →  variable interpolation (QLever uses this
+    #   - ``${section:key}``  ->  variable interpolation (QLever uses this
     #     for its own variables like ``${INPUT_FILES}``)
-    #   - bare ``$x``         →  triggers "$ must be followed by $ or {"
+    #   - bare ``$x``         ->  triggers "$ must be followed by $ or {"
     #     so bare ``$`` must be escaped as ``$$``
-    #   - ``%``               →  passed through unchanged (ExtendedInterpolation
+    #   - ``%``               ->  passed through unchanged (ExtendedInterpolation
     #     does NOT treat % as special; only BasicInterpolation does)
     #
-    # Therefore: escape bare ``$`` → ``$$`` only.  Do NOT touch ``%``.
+    # Therefore: escape bare ``$`` -> ``$$`` only.  Do NOT touch ``%``.
     # If cat_input_files contains a placeholder for {workdir}, expand it
     # now so the resulting command contains the absolute helper path.
     try:
@@ -1557,7 +1549,6 @@ def _route_generate_qleverfile(args: argparse.Namespace) -> dict:
         downloadable = _select_test_sources(downloadable)
 
     if not downloadable:
-        print("No downloadable sources found.")
         return {"generated": [], "skipped": [], "failed": []}
 
     generated: list[str] = []
@@ -1565,12 +1556,8 @@ def _route_generate_qleverfile(args: argparse.Namespace) -> dict:
     failed: list[dict[str, str]] = []
 
     total = len(downloadable)
-    print(
-        f"Generating Qleverfiles for {total} sources "
-        f"(data-dir: {data_dir})\n"
-    )
 
-    # Port-assignment manifest — handy for the user.
+    # Port-assignment manifest - handy for the user.
     port_map: dict[str, int] = {}
 
     for idx, entry in enumerate(downloadable):
@@ -1591,7 +1578,7 @@ def _route_generate_qleverfile(args: argparse.Namespace) -> dict:
             fmt = _detect_data_format(entry)
             _progress(
                 name, idx + 1, total,
-                f"OK: port {port}, format={fmt} → {qleverfile_path}",
+                f"OK: port {port}, format={fmt} -> {qleverfile_path}",
             )
             generated.append(name)
 
@@ -1605,7 +1592,6 @@ def _route_generate_qleverfile(args: argparse.Namespace) -> dict:
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     with open(manifest_path, "w") as f:
         json.dump(port_map, f, indent=2)
-    print(f"\nPort manifest → {manifest_path}")
 
     return {"generated": generated, "skipped": skipped, "failed": failed}
 
@@ -1623,6 +1609,7 @@ _ROUTES = {
 
 
 def main() -> None:
+    """Main script function."""
     parser = _build_parser()
     args = parser.parse_args()
 
@@ -1635,19 +1622,12 @@ def main() -> None:
     )
 
     route_fn = _ROUTES[args.route]
-    print(f"\n{'═'*60}")
-    print(f"  Route: {args.route}")
-    print(f"  Output: {args.output_dir}")
-    print(f"{'═'*60}\n")
 
     t0 = time.monotonic()
     result = route_fn(args)
-    elapsed = time.monotonic() - t0
+    time.monotonic() - t0
 
     # ── Summary ───────────────────────────────────────────────────
-    print(f"\n{'═'*60}")
-    print(f"  Route: {args.route}  |  Elapsed: {elapsed:.1f}s")
-    print(f"{'─'*60}")
 
     for key in (
         "succeeded", "generated", "discovered",
@@ -1655,16 +1635,12 @@ def main() -> None:
     ):
         val = result.get(key)
         if val is not None:
-            count = len(val)
-            label = key.capitalize()
-            print(f"  {label:12s}: {count}")
+            len(val)
+            key.capitalize()
             if key == "failed" and val:
                 for entry in val[:10]:
-                    ds = entry["dataset"] if isinstance(entry, dict) else entry
-                    err = entry.get("error", "")[:80] if isinstance(entry, dict) else ""
-                    print(f"    • {ds}: {err}")
-
-    print(f"{'═'*60}\n")
+                    entry["dataset"] if isinstance(entry, dict) else entry
+                    entry.get("error", "")[:80] if isinstance(entry, dict) else ""
 
 
 if __name__ == "__main__":

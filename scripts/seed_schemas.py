@@ -50,14 +50,13 @@ def mine_one(
             filter_service_namespaces=filter_service,
         )
         return result
-    except Exception as exc:
-        print(f"  ERROR mining {name}: {exc}", file=sys.stderr)
+    except Exception:
         return None
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Mine schemas → docker/schemas/",
+        description="Mine schemas -> docker/schemas/",
     )
     parser.add_argument(
         "-s", "--sources",
@@ -92,7 +91,6 @@ def main() -> None:
     if args.limit:
         entries = entries[: args.limit]
 
-    print(f"Mining {len(entries)} source(s)…")
 
     success = 0
     for entry in entries:
@@ -101,11 +99,9 @@ def main() -> None:
 
         # Skip if already exists
         if outfile.exists():
-            print(f"  [SKIP] {name} — already exists")
             success += 1
             continue
 
-        print(f"  [MINE] {name} …", end=" ", flush=True)
         result = mine_one(
             entry,
             filter_service=not args.no_filter_service,
@@ -113,12 +109,10 @@ def main() -> None:
         if result:
             with open(outfile, "w") as fp:
                 json.dump(result, fp, indent=2)
-            print("OK")
             success += 1
         else:
-            print("FAIL")
+            pass
 
-    print(f"\nDone: {success}/{len(entries)} succeeded.")
 
 
 if __name__ == "__main__":

@@ -1,10 +1,10 @@
-"""Schema management routes — /api/schemas/*."""
+"""Schema management routes - /api/schemas/*."""
 
 from __future__ import annotations
 
 import json
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request
 
 from rdfsolve.backend.services.schema_service import SchemaService
 
@@ -16,30 +16,30 @@ def _get_svc() -> SchemaService:
 
 
 @schemas_bp.route("/", methods=["GET"])
-def list_schemas():
+def list_schemas() -> Response | tuple[Response, int]:
     """Return a list of available schema IDs and metadata.
 
     Optional query parameters:
-      ?strategy=miner           — only source schemas (miner-produced)
-      ?strategy=instance_matcher — only instance-mapping results
-      ?strategy=instance_matcher,semra_import,inferenced — multiple (comma-sep)
-      ?type=mapping             — shorthand for all mapping strategies
+      ?strategy=miner           - only source schemas (miner-produced)
+      ?strategy=instance_matcher - only instance-mapping results
+      ?strategy=instance_matcher,semra_import,inferenced - multiple (comma-sep)
+      ?type=mapping             - shorthand for all mapping strategies
       (omit for all)
 
     Each item in the response includes an ``about`` dict with the
     ``@about`` metadata from the stored JSON-LD (useful for tooltips).
     """
-    _MAPPING_STRATEGIES = "instance_matcher,semra_import,inferenced"
+    _mapping_strategies = "instance_matcher,semra_import,inferenced"
     strategy = request.args.get("strategy")
     schema_type = request.args.get("type")
     if schema_type == "mapping" and not strategy:
-        strategy = _MAPPING_STRATEGIES
+        strategy = _mapping_strategies
     schemas = _get_svc().list_schemas(strategy=strategy)
     return jsonify(schemas)
 
 
 @schemas_bp.route("/<schema_id>", methods=["GET"])
-def get_schema(schema_id: str):
+def get_schema(schema_id: str) -> Response | tuple[Response, int]:
     """Return the full JSON-LD schema for a dataset."""
     schema = _get_svc().get_schema(schema_id)
     if schema is None:
@@ -48,7 +48,7 @@ def get_schema(schema_id: str):
 
 
 @schemas_bp.route("/generate", methods=["POST"])
-def generate_schema():
+def generate_schema() -> Response | tuple[Response, int]:
     """Generate a JSON-LD schema from a live SPARQL endpoint."""
     data = request.get_json(force=True)
 
@@ -58,7 +58,8 @@ def generate_schema():
 
     dataset_name = data.get("dataset_name", "unnamed")
     strategy = data.get(
-        "strategy", current_app.config.get("RDFSOLVE_STRATEGY", "miner"),
+        "strategy",
+        current_app.config.get("RDFSOLVE_STRATEGY", "miner"),
     )
     graph = data.get("graph")
     save = data.get("save", True)
@@ -83,7 +84,7 @@ def generate_schema():
 
 
 @schemas_bp.route("/upload", methods=["POST"])
-def upload_schema():
+def upload_schema() -> Response | tuple[Response, int]:
     """Upload a JSON-LD schema file."""
     if "file" in request.files:
         file = request.files["file"]
@@ -103,7 +104,7 @@ def upload_schema():
 
 
 @schemas_bp.route("/<schema_id>", methods=["DELETE"])
-def delete_schema(schema_id: str):
+def delete_schema(schema_id: str) -> Response | tuple[Response, int]:
     """Delete a stored schema."""
     if not _get_svc().delete_schema(schema_id):
         return jsonify({"error": "Not found"}), 404

@@ -1,5 +1,5 @@
 # =============================================================================
-# docker-compose.pipeline.yml — RDFSolve Mining Pipeline
+# docker-compose.pipeline.yml - RDFSolve Mining Pipeline
 # =============================================================================
 #
 # Separate from the main docker-compose.yml (which runs the Flask UI).
@@ -92,7 +92,7 @@ services:
     # server containers, which publish their ports on the host.
     network_mode: host
 
-    # No restart policy — pipeline runs are one-shot.
+    # No restart policy - pipeline runs are one-shot.
     restart: "no"
 
     # Allow long-running batch jobs
@@ -104,7 +104,7 @@ services:
     #     limits:
     #       memory: 32G
 
-# Named volumes — Docker manages storage location.
+# Named volumes - Docker manages storage location.
 # Use `docker volume ls` and `docker volume inspect` to find them.
 # Use `docker compose -f docker-compose.pipeline.yml down -v` to delete.
 volumes:

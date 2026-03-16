@@ -1,8 +1,8 @@
-"""Instance mapping routes — /api/mappings/*."""
+"""Instance mapping routes - /api/mappings/*."""
 
 from __future__ import annotations
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request
 
 from rdfsolve.backend.services.mapping_service import MappingService
 
@@ -14,7 +14,7 @@ def _get_svc() -> MappingService:
 
 
 @mappings_bp.route("/", methods=["GET"])
-def list_mappings():
+def list_mappings() -> Response | tuple[Response, int]:
     """List all stored instance mappings (strategy=instance_matcher).
 
     Returns
@@ -22,21 +22,21 @@ def list_mappings():
     JSON array of lightweight mapping metadata dicts, e.g.::
 
         [
-          {
-            "id": "ensembl_instance_mapping",
-            "name": "ensembl_instance_mapping",
-            "endpoint": "",
-            "pattern_count": 4,
-            "strategy": "instance_matcher",
-            "generated_at": "2026-02-19T..."
-          }
+            {
+                "id": "ensembl_instance_mapping",
+                "name": "ensembl_instance_mapping",
+                "endpoint": "",
+                "pattern_count": 4,
+                "strategy": "instance_matcher",
+                "generated_at": "2026-02-19T...",
+            }
         ]
     """
     return jsonify(_get_svc().list_mappings())
 
 
 @mappings_bp.route("/<mapping_id>", methods=["GET"])
-def get_mapping(mapping_id: str):
+def get_mapping(mapping_id: str) -> Response | tuple[Response, int]:
     """Return the full JSON-LD for a stored mapping.
 
     Parameters
@@ -51,7 +51,7 @@ def get_mapping(mapping_id: str):
 
 
 @mappings_bp.route("/probe", methods=["POST"])
-def probe():
+def probe() -> Response | tuple[Response, int]:
     """Probe endpoints for a bioregistry resource and return/save the mapping.
 
     Request body (JSON)
@@ -115,7 +115,7 @@ def probe():
 
 
 @mappings_bp.route("/<mapping_id>", methods=["DELETE"])
-def delete_mapping(mapping_id: str):
+def delete_mapping(mapping_id: str) -> Response | tuple[Response, int]:
     """Delete a stored mapping.
 
     Parameters

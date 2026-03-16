@@ -1,4 +1,4 @@
-name: GitHub Pages — redirect to ReadTheDocs
+name: GitHub Pages - redirect to ReadTheDocs
 
 on:
   push:

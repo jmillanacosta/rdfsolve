@@ -1,10 +1,10 @@
-"""Instance mapping service — thin Flask wrapper around the probe API.
+"""Instance mapping service - thin Flask wrapper around the probe API.
 
 Mappings are stored in the **existing** ``schemas`` table with
 ``strategy`` set to one of:
-  - ``'instance_matcher'`` — probed from SPARQL endpoints
-  - ``'semra_import'``     — imported from a SeMRA source
-  - ``'inferenced'``       — produced by the inference pipeline
+  - ``'instance_matcher'`` - probed from SPARQL endpoints
+  - ``'semra_import'``     - imported from a SeMRA source
+  - ``'inferenced'``       - produced by the inference pipeline
 
 No schema migration is required.
 """
@@ -12,9 +12,12 @@ No schema migration is required.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from rdfsolve.backend.database import Database
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +36,13 @@ class MappingService:
     """
 
     def __init__(self, db: Database) -> None:
+        """
+        Initialize a MappingService.
+
+        :param self: Description
+        :param db: rdfsolve Database
+        :type db: Database
+        """
         self.db = db
 
     # ── read ──────────────────────────────────────────────────────────
@@ -40,10 +50,7 @@ class MappingService:
     def list_mappings(self) -> list[dict[str, Any]]:
         """Return lightweight metadata for every stored mapping."""
         all_schemas = self.db.list_schemas()
-        return [
-            s for s in all_schemas
-            if s.get("strategy") in _MAPPING_STRATEGIES
-        ]
+        return [s for s in all_schemas if s.get("strategy") in _MAPPING_STRATEGIES]
 
     def get_mapping(self, mapping_id: str) -> dict[str, Any] | None:
         """Return the full JSON-LD for a mapping, or ``None``."""
@@ -60,7 +67,7 @@ class MappingService:
         """Persist a mapping JSON-LD document.  Returns the mapping id."""
         about = data.get("@about", {})
         detected_strategy = about.get("strategy", strategy)
-        mapping_id = about.get("dataset_name", f"{prefix}_mapping")
+        mapping_id: str = about.get("dataset_name", f"{prefix}_mapping")
         self.db.save_schema(
             schema_id=mapping_id,
             name=about.get("dataset_name", mapping_id),
@@ -78,7 +85,7 @@ class MappingService:
 
     # ── probe (delegates to API) ──────────────────────────────────────
 
-    def _datasources_from_db(self) -> "pd.DataFrame":
+    def _datasources_from_db(self) -> pd.DataFrame:
         """Build a datasources DataFrame from schemas stored in the DB.
 
         Reads ``name`` and ``endpoint`` from every row in the ``schemas``
@@ -91,15 +98,14 @@ class MappingService:
             "SELECT name, endpoint FROM schemas WHERE strategy = 'miner'"
         ).fetchall()
         return pd.DataFrame(
-            [{"dataset_name": r["name"], "endpoint_url": r["endpoint"]}
-             for r in rows]
+            [{"dataset_name": r["name"], "endpoint_url": r["endpoint"]} for r in rows]
         )
 
     def probe(
         self,
         prefix: str,
         predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
-        dataset_names: Optional[list[str]] = None,
+        dataset_names: list[str] | None = None,
         timeout: float = 60.0,
     ) -> dict[str, Any]:
         """Run the instance matcher for *prefix* and return JSON-LD.
@@ -116,7 +122,6 @@ class MappingService:
         Returns:
             JSON-LD dict ready for :meth:`save_mapping`.
         """
-        import pandas as pd
         from rdfsolve.instance_matcher import probe_resource
 
         datasources: pd.DataFrame = self._datasources_from_db()

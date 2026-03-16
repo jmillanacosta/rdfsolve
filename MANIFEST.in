@@ -1,5 +1,5 @@
 # =============================================================================
-# MANIFEST.in — controls what goes into the Python source distribution (sdist)
+# MANIFEST.in - controls what goes into the Python source distribution (sdist)
 # =============================================================================
 # Only ship the installable Python package, its tests, and essential metadata.
 # Docker images, generated data, notebooks, and docs are NOT part of the sdist.
@@ -27,6 +27,16 @@ prune results
 prune paper
 prune frontend
 prune docker
+
+# ── Dev / infra files — tracked by git but not shipped in sdist ──
+exclude .cruft.json
+exclude .dockerignore
+exclude .gitmodules
+exclude .readthedocs.yml
+exclude docker-compose.yml
+exclude docker-compose.pipeline.yml
+exclude tox.ini
+exclude rdfsolve.db
 
 # ── Always exclude generated / cache artefacts ───────────────────
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle

@@ -1,4 +1,4 @@
-"""LinkML schema routes — /api/linkml/*."""
+"""LinkML schema routes - /api/linkml/*."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ linkml_bp = Blueprint("linkml", __name__)
 
 
 @linkml_bp.route("/", methods=["GET"])
-def list_linkml_schemas():
+def list_linkml_schemas() -> Response | tuple[Response, int]:
     """List all LinkML schemas.
 
-    Query parameter: ``dataset`` — filter by dataset name.
+    Query parameter: ``dataset`` - filter by dataset name.
     """
     db = current_app.config["DB"]
     dataset = request.args.get("dataset")
@@ -20,7 +20,7 @@ def list_linkml_schemas():
 
 
 @linkml_bp.route("/<schema_id>", methods=["GET"])
-def get_linkml_schema(schema_id: str):
+def get_linkml_schema(schema_id: str) -> Response | tuple[Response, int]:
     """Return the LinkML schema as ``text/yaml``."""
     db = current_app.config["DB"]
     record = db.get_linkml_schema(schema_id)
@@ -34,15 +34,13 @@ def get_linkml_schema(schema_id: str):
         yaml_str,
         mimetype="text/yaml",
         headers={
-            "Content-Disposition": (
-                f'attachment; filename="{schema_id}.yaml"'
-            ),
+            "Content-Disposition": (f'attachment; filename="{schema_id}.yaml"'),
         },
     )
 
 
 @linkml_bp.route("/", methods=["POST"])
-def upload_linkml_schema():
+def upload_linkml_schema() -> Response | tuple[Response, int]:
     """Upload a LinkML schema YAML.
 
     Accepts JSON body with ``meta`` (dict) and ``yaml`` (string),
@@ -58,9 +56,7 @@ def upload_linkml_schema():
         f = request.files["file"]
         yaml_str = f.read().decode("utf-8", errors="replace")
         fname: str = f.filename or "unknown.yaml"
-        dataset_name = (
-            fname.replace(".yaml", "").replace(".yml", "")
-        )
+        dataset_name = fname.replace(".yaml", "").replace(".yml", "")
         meta = {"dataset_name": dataset_name}
     else:
         return jsonify(
@@ -75,7 +71,7 @@ def upload_linkml_schema():
 
 
 @linkml_bp.route("/<schema_id>", methods=["DELETE"])
-def delete_linkml_schema(schema_id: str):
+def delete_linkml_schema(schema_id: str) -> Response | tuple[Response, int]:
     """Delete a LinkML schema."""
     db = current_app.config["DB"]
     deleted = db.delete_linkml_schema(schema_id)

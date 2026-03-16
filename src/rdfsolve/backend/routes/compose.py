@@ -1,8 +1,8 @@
-"""Query composition routes — /api/compose/*."""
+"""Query composition routes - /api/compose/*."""
 
 from __future__ import annotations
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 from rdfsolve.backend.services.compose_service import ComposeService
 from rdfsolve.codegen import compose_snippet
@@ -11,7 +11,7 @@ compose_bp = Blueprint("compose", __name__)
 
 
 @compose_bp.route("/from-paths", methods=["POST"])
-def compose_from_paths():
+def compose_from_paths() -> Response | tuple[Response, int]:
     """Generate a SPARQL query from diagram paths."""
     data = request.get_json(force=True)
     paths = data.get("paths", [])

@@ -3,8 +3,8 @@ Decompress RDF data files (.gz, .xz) in bulk.
 
 Supports the two compression formats found across RDF data repositories:
 
-* **.gz**  – used by RDFPortal (``*.ttl.gz``), Bio2RDF (``*.nq.gz``)
-* **.xz**  – used by UniProt FTP (``*.rdf.xz``, ``*.owl.xz``)
+* **.gz** used by e.g. RDFPortal (``*.ttl.gz``), Bio2RDF (``*.nq.gz``)
+* **.xz** used by e.g. UniProt FTP (``*.rdf.xz``, ``*.owl.xz``)
 
 Usage
 -----
@@ -25,8 +25,8 @@ from __future__ import annotations
 
 import argparse
 import gzip
-import lzma
 import logging
+import lzma
 import shutil
 from pathlib import Path
 
@@ -38,9 +38,9 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 __all__ = [
-    "decompress_file",
-    "decompress_directory",
     "SUPPORTED_EXTENSIONS",
+    "decompress_directory",
+    "decompress_file",
 ]
 
 # ── supported formats ────────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ def decompress_file(
         Path to the compressed file.
     dest
         Explicit output path.  When *None* the suffix is stripped
-        (e.g. ``foo.ttl.gz`` → ``foo.ttl``).
+        (e.g. ``foo.ttl.gz`` -> ``foo.ttl``).
     keep
         If *True* the original compressed file is kept; otherwise it is
         removed after successful decompression.
@@ -83,7 +83,7 @@ def decompress_file(
     """
     suffix = src.suffix.lower()
     if suffix not in SUPPORTED_EXTENSIONS:
-        log.warning("Unsupported extension %r — skipping %s", suffix, src)
+        log.warning("Unsupported extension %r - skipping %s", suffix, src)
         return None
 
     if dest is None:
@@ -103,7 +103,7 @@ def decompress_file(
         with opener(src, "rb") as f_in, open(dest, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out, length=chunk_size)
         dest_mb = dest.stat().st_size / (1024 * 1024)
-        log.info("  ✓ %s → %.1f MB", dest.name, dest_mb)
+        log.info("  ✓ %s -> %.1f MB", dest.name, dest_mb)
     except Exception as exc:
         log.error("  ✗ Failed to decompress %s: %s", src.name, exc)
         if dest.exists():
@@ -147,9 +147,7 @@ def decompress_directory(
         extensions = set(SUPPORTED_EXTENSIONS)
 
     pattern_fn = directory.rglob if recursive else directory.glob
-    files = sorted(
-        f for ext in extensions for f in pattern_fn(f"*{ext}") if f.is_file()
-    )
+    files = sorted(f for ext in extensions for f in pattern_fn(f"*{ext}") if f.is_file())
 
     if not files:
         log.info("No compressed files found in %s", directory)
@@ -170,6 +168,7 @@ def decompress_directory(
 
 
 def main() -> None:
+    """CLI entry point — parse arguments and decompress the target path."""
     parser = argparse.ArgumentParser(
         description="Decompress RDF data files (.gz, .xz).",
     )
@@ -179,12 +178,14 @@ def main() -> None:
         help="File or directory to decompress.",
     )
     parser.add_argument(
-        "--recursive", "-r",
+        "--recursive",
+        "-r",
         action="store_true",
         help="Recurse into subdirectories.",
     )
     parser.add_argument(
-        "--keep", "-k",
+        "--keep",
+        "-k",
         action="store_true",
         help="Keep the original compressed files.",
     )
@@ -206,20 +207,17 @@ def main() -> None:
 
     if target.is_file():
         if args.dry_run:
-            print(f"Would decompress: {target}")
+            pass
         else:
             decompress_file(target, keep=args.keep)
     elif target.is_dir():
         if exts is None:
             exts = set(SUPPORTED_EXTENSIONS)
         pattern_fn = target.rglob if args.recursive else target.glob
-        files = sorted(
-            f for ext in exts for f in pattern_fn(f"*{ext}") if f.is_file()
-        )
+        files = sorted(f for ext in exts for f in pattern_fn(f"*{ext}") if f.is_file())
         if args.dry_run:
-            print(f"Would decompress {len(files)} file(s):")
-            for f in files:
-                print(f"  {f}")
+            for _f in files:
+                pass
         else:
             decompress_directory(
                 target,

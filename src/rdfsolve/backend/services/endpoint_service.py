@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import Any
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
@@ -15,29 +16,35 @@ class EndpointService:
     """Manages known SPARQL endpoints (auto-discovered + manual)."""
 
     def __init__(self, db: Database) -> None:
+        """
+        Initialize an EndpointService from a rdfsolve SQLite Database.
+
+        :param self: Description
+        :param db: Description
+        :type db: Database
+        """
         self.db = db
 
-    def get_all_endpoints(self) -> list[dict]:
+    def get_all_endpoints(self) -> list[dict[str, Any]]:
         """Merge schema-discovered + manually registered endpoints.
 
         De-duplicates by endpoint URL.
         """
         seen: set[str] = set()
-        result: list[dict] = []
+        result: list[dict[str, Any]] = []
 
-        sources = (
-            self.db.get_schema_endpoints()
-            + self.db.list_endpoints()
-        )
+        sources = self.db.get_schema_endpoints() + self.db.list_endpoints()
         for ep in sources:
             url = ep["endpoint"]
             if url not in seen:
                 seen.add(url)
-                result.append({
-                    "name": ep.get("name", "unknown"),
-                    "endpoint": url,
-                    "graph": ep.get("graph"),
-                })
+                result.append(
+                    {
+                        "name": ep.get("name", "unknown"),
+                        "endpoint": url,
+                        "graph": ep.get("graph"),
+                    }
+                )
         return result
 
     def add_manual_endpoint(
@@ -48,10 +55,12 @@ class EndpointService:
     ) -> int:
         """Register a manually provided endpoint."""
         return self.db.add_endpoint(
-            name=name, endpoint=endpoint, graph=graph,
+            name=name,
+            endpoint=endpoint,
+            graph=graph,
         )
 
-    def check_health(self) -> list[dict]:
+    def check_health(self) -> list[dict[str, Any]]:
         """Ping each endpoint with ``ASK {}`` and report status."""
         results = []
         for ep in self.get_all_endpoints():
@@ -65,9 +74,7 @@ class EndpointService:
                     },
                     timeout=5,
                 )
-                status = (
-                    "ok" if resp.ok else f"http_{resp.status_code}"
-                )
+                status = "ok" if resp.ok else f"http_{resp.status_code}"
             except requests.exceptions.Timeout:
                 status = "timeout"
             except requests.exceptions.ConnectionError:
@@ -78,26 +85,25 @@ class EndpointService:
             results.append({**ep, "status": status})
         return results
 
-    def to_known_sources_jsonld(self) -> dict:
+    def to_known_sources_jsonld(self) -> dict[str, Any]:
         """Build a KnownSourcesJSONLD document."""
         graph = []
         for ep in self.get_all_endpoints():
             safe = ep["name"].lower().replace(" ", "_")
-            graph.append({
-                "@id": f"urn:source:{safe}",
-                "@type": ["sd:Service", "void:Dataset"],
-                "dcterms:title": ep["name"],
-                "sd:endpoint": {"@id": ep["endpoint"]},
-                "void:sparqlEndpoint": {"@id": ep["endpoint"]},
-            })
+            graph.append(
+                {
+                    "@id": f"urn:source:{safe}",
+                    "@type": ["sd:Service", "void:Dataset"],
+                    "dcterms:title": ep["name"],
+                    "sd:endpoint": {"@id": ep["endpoint"]},
+                    "void:sparqlEndpoint": {"@id": ep["endpoint"]},
+                }
+            )
 
         return {
             "@context": {
                 "dcterms": "http://purl.org/dc/terms/",
-                "sd": (
-                    "http://www.w3.org/ns/"
-                    "sparql-service-description#"
-                ),
+                "sd": ("http://www.w3.org/ns/sparql-service-description#"),
                 "void": "http://rdfs.org/ns/void#",
             },
             "@graph": graph,

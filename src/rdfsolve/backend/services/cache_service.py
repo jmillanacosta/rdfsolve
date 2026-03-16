@@ -11,9 +11,11 @@ class MemoryCache:
     """Simple in-memory cache with per-key TTL."""
 
     def __init__(self) -> None:
+        """Initialize MemoryCache."""
         self._store: dict[str, tuple[float, Any]] = {}
 
     def get(self, key: str) -> Any | None:
+        """Return cached value for *key*, or ``None`` if missing/expired."""
         entry = self._store.get(key)
         if entry is None:
             return None
@@ -24,6 +26,7 @@ class MemoryCache:
         return value
 
     def set(self, key: str, value: Any, ttl: int = 300) -> None:
+        """Store *value* under *key* with a TTL in seconds."""
         self._store[key] = (time.time() + ttl, value)
 
     def invalidate(self, pattern: str = "") -> None:

@@ -1,10 +1,10 @@
-"""Export routes — /api/export/*."""
+"""Export routes - /api/export/*."""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 from rdfsolve.codegen import export_query_snippet
 
@@ -12,7 +12,7 @@ export_bp = Blueprint("export", __name__)
 
 
 @export_bp.route("/query", methods=["POST"])
-def export_query_jsonld():
+def export_query_jsonld() -> Response | tuple[Response, int]:
     """Export a SPARQL query as sh:SPARQLExecutable JSON-LD."""
     data = request.get_json(force=True)
     query = data.get("query", "")
@@ -29,10 +29,7 @@ def export_query_jsonld():
             **prefixes,
             "sh": "http://www.w3.org/ns/shacl#",
             "schema": "https://schema.org/",
-            "sd": (
-                "http://www.w3.org/ns/"
-                "sparql-service-description#"
-            ),
+            "sd": ("http://www.w3.org/ns/sparql-service-description#"),
         },
         "@id": f"_:query_{int(now.timestamp() * 1000)}",
         "@type": [
@@ -64,7 +61,7 @@ def export_query_jsonld():
 
 
 @export_bp.route("/results", methods=["POST"])
-def export_results_jsonld():
+def export_results_jsonld() -> Response | tuple[Response, int]:
     """Export SPARQL query results as JSON-LD with provenance."""
     data = request.get_json(force=True)
     now = datetime.now(timezone.utc)
@@ -72,10 +69,7 @@ def export_results_jsonld():
     result = {
         "@context": {
             "schema": "https://schema.org/",
-            "sd": (
-                "http://www.w3.org/ns/"
-                "sparql-service-description#"
-            ),
+            "sd": ("http://www.w3.org/ns/sparql-service-description#"),
             "prov": "http://www.w3.org/ns/prov#",
         },
         "@type": "schema:Dataset",

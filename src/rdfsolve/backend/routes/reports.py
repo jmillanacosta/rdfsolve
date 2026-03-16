@@ -1,16 +1,17 @@
-"""Run-report routes — /api/reports/*."""
+"""Run-report routes - /api/reports/*."""
 
 from __future__ import annotations
 
 import json
+from typing import Any
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request
 
 reports_bp = Blueprint("reports", __name__)
 
 
 @reports_bp.route("/", methods=["GET"])
-def list_reports():
+def list_reports() -> Response | tuple[Response, int]:
     """List all run reports.
 
     Query parameters:
@@ -21,13 +22,14 @@ def list_reports():
     dataset = request.args.get("dataset")
     strategy = request.args.get("strategy")
     items = db.list_reports(
-        dataset_name=dataset, strategy=strategy,
+        dataset_name=dataset,
+        strategy=strategy,
     )
     return jsonify(items)
 
 
 @reports_bp.route("/<report_id>", methods=["GET"])
-def get_report(report_id: str):
+def get_report(report_id: str) -> Response | tuple[Response, int]:
     """Return the full report JSON for *report_id*."""
     db = current_app.config["DB"]
     report = db.get_report(report_id)
@@ -37,14 +39,14 @@ def get_report(report_id: str):
 
 
 @reports_bp.route("/", methods=["POST"])
-def upload_report():
+def upload_report() -> Response | tuple[Response, int]:
     """Upload / register a report JSON.
 
     Accepts either ``application/json`` body or a file upload
     under the ``file`` field.
     """
     db = current_app.config["DB"]
-    data: dict | None = None
+    data: dict[str, Any] | None = None
 
     if request.is_json:
         data = request.get_json(force=True)
@@ -70,7 +72,7 @@ def upload_report():
 
 
 @reports_bp.route("/<report_id>", methods=["DELETE"])
-def delete_report(report_id: str):
+def delete_report(report_id: str) -> Response | tuple[Response, int]:
     """Delete a report."""
     db = current_app.config["DB"]
     deleted = db.delete_report(report_id)

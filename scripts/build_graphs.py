@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Build dataset-level connectivity graphs and export to Parquet.
+r"""Build dataset-level connectivity graphs and export to Parquet.
 
 Pipeline step 4b + 12 (see docs/notes/pipeline_planning.md):
 
-  4b  Schema selection – pick the best canonical schema per dataset and copy
+  4b  Schema selection - pick the best canonical schema per dataset and copy
       to results/paper_data/schemas/.
 
-  12  Graph construction – build G_schema / G_raw / G_inferred at the dataset
+  12  Graph construction - build G_schema / G_raw / G_inferred at the dataset
       level and export edge / node tables as Parquet plus a JSON metrics file.
 
 Output layout::
@@ -73,14 +73,14 @@ logger = logging.getLogger(__name__)
 # Schema selection
 # ─────────────────────────────────────────────────────────────────────────────
 
-def select_best_schema(candidates: list) -> "Any":  # list[MinedSchema]
+def select_best_schema(candidates: list) -> Any:  # list[MinedSchema]
     """Return the single best schema from a list of candidates.
 
     Priority order (from pipeline_planning.md §3 Phase 1):
-      P1 – qlever_oneshot               (highest pattern_count)
-      P2 – any qlever-* strategy        (highest pattern_count)
-      P3 – any strategy with counts     (highest pattern_count)
-      P4 – fallback: most patterns (len)
+      P1 - qlever_oneshot               (highest pattern_count)
+      P2 - any qlever-* strategy        (highest pattern_count)
+      P3 - any strategy with counts     (highest pattern_count)
+      P4 - fallback: most patterns (len)
     """
     p1 = [s for s in candidates if s.about.strategy == "qlever_oneshot"]
     if p1:
@@ -100,7 +100,7 @@ def select_best_schema(candidates: list) -> "Any":  # list[MinedSchema]
 def collect_schemas(
     schemas_dir: Path,
     dataset_filter: list[str] | None = None,
-) -> dict[str, list]:  # dataset_name → list[MinedSchema]
+) -> dict[str, list]:  # dataset_name -> list[MinedSchema]
     """Load all *_schema.jsonld files and group by dataset_name."""
     from rdfsolve.models import MinedSchema
 
@@ -139,7 +139,7 @@ def collect_schemas(
 # Graph builders
 # ─────────────────────────────────────────────────────────────────────────────
 
-def build_schema_graph(schemas: list) -> "nx.Graph":
+def build_schema_graph(schemas: list) -> nx.Graph:
     """Build G_schema: dataset-level typed-object cross-links from schema patterns.
 
     Returns
@@ -147,17 +147,18 @@ def build_schema_graph(schemas: list) -> "nx.Graph":
     G : nx.Graph
         Dataset-level graph (undirected, weighted).
     class_to_datasets : dict[str, set[str]]
-        Mapping from class URI → set of dataset names that use it as a subject.
+        Mapping from class URI -> set of dataset names that use it as a subject.
     edge_predicates : dict[tuple[str,str], Counter]
         For each ordered (dataset_a, dataset_b) pair (a < b), a Counter of
         predicate URIs and how many schema patterns contribute them.
     """
-    import networkx as nx
     from collections import Counter
+
+    import networkx as nx
 
     G = nx.Graph()
     class_to_datasets: dict[str, set[str]] = defaultdict(set)
-    # (min_ds, max_ds) → Counter{predicate_uri: count}
+    # (min_ds, max_ds) -> Counter{predicate_uri: count}
     edge_predicates: dict[tuple[str, str], Counter] = defaultdict(Counter)
 
     for ms in schemas:
@@ -189,7 +190,7 @@ def build_schema_graph(schemas: list) -> "nx.Graph":
 # Parquet export helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def graph_to_edges_df(G: "nx.Graph") -> "pd.DataFrame":
+def graph_to_edges_df(G: nx.Graph) -> pd.DataFrame:
     import pandas as pd
     rows = [
         {"dataset_a": u, "dataset_b": v, "weight": d.get("weight", 1)}
@@ -198,7 +199,7 @@ def graph_to_edges_df(G: "nx.Graph") -> "pd.DataFrame":
     return pd.DataFrame(rows, columns=["dataset_a", "dataset_b", "weight"])
 
 
-def graph_to_nodes_df(G: "nx.Graph", component_map: dict[str, int]) -> "pd.DataFrame":
+def graph_to_nodes_df(G: nx.Graph, component_map: dict[str, int]) -> pd.DataFrame:
     import pandas as pd
     rows = [
         {
@@ -212,7 +213,7 @@ def graph_to_nodes_df(G: "nx.Graph", component_map: dict[str, int]) -> "pd.DataF
     return pd.DataFrame(rows)
 
 
-def component_map(G: "nx.Graph") -> dict[str, int]:
+def component_map(G: nx.Graph) -> dict[str, int]:
     import networkx as nx
     comps = list(nx.connected_components(G))
     comps_sorted = sorted(comps, key=len, reverse=True)
@@ -249,7 +250,7 @@ class BenchmarkLog:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Select canonical schemas and build dataset-level graphs → Parquet.",
+        description="Select canonical schemas and build dataset-level graphs -> Parquet.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -321,7 +322,7 @@ def main() -> None:
         logger.error("No schemas found under %s", schemas_dir)
         sys.exit(1)
 
-    selected: dict[str, object] = {}  # dataset → MinedSchema
+    selected: dict[str, object] = {}  # dataset -> MinedSchema
     for ds, candidates in sorted(by_dataset.items()):
         best = select_best_schema(candidates)
         selected[ds] = best
@@ -347,11 +348,11 @@ def main() -> None:
     if not args.no_copy_schemas:
         import shutil
         copied = 0
-        for ds, ms in selected.items():
-            # Locate the source file — from_jsonld loses the path, but
+        for ds, _ms in selected.items():
+            # Locate the source file - from_jsonld loses the path, but
             # the schema file is always in schemas_dir/<ds>/<ds>_schema.jsonld
             # or schemas_dir/<ds_folder>/<name>_schema.jsonld (we search).
-            matches = list(schemas_dir.rglob(f"*_schema.jsonld"))
+            matches = list(schemas_dir.rglob("*_schema.jsonld"))
             for candidate_path in matches:
                 if candidate_path.parent.name == ds or candidate_path.stem.startswith(ds):
                     dest = schemas_out / f"{ds}_schema.jsonld"
@@ -359,7 +360,7 @@ def main() -> None:
                         shutil.copy2(candidate_path, dest)
                         copied += 1
                     break
-        logger.info("Copied %d schema files → %s", copied, schemas_out)
+        logger.info("Copied %d schema files -> %s", copied, schemas_out)
 
     if args.schema_only:
         logger.info("--schema-only: stopping after selection.")
@@ -377,7 +378,7 @@ def main() -> None:
     G_schema, class_to_datasets, schema_edge_predicates = build_schema_graph(schemas_list)
     t_sch = time.perf_counter() - t0
     logger.info(
-        "G_schema — nodes: %d  edges: %d  (%.1fs)",
+        "G_schema- nodes: %d  edges: %d  (%.1fs)",
         G_schema.number_of_nodes(), G_schema.number_of_edges(), t_sch,
     )
     bench.record(
@@ -419,7 +420,7 @@ def main() -> None:
             - {frozenset(e) for e in G_schema.edges()}
         )
         logger.info(
-            "G_raw     — nodes: %d  edges: %d  (+%d new)  (%.1fs)",
+            "G_raw    - nodes: %d  edges: %d  (+%d new)  (%.1fs)",
             G_raw.number_of_nodes(), G_raw.number_of_edges(), len(new_raw), t_raw,
         )
         bench.record(
@@ -432,7 +433,7 @@ def main() -> None:
             elapsed_s=round(t_raw, 2),
         )
     else:
-        logger.warning("No SSSOM/SeMRA/instance mapping files found — G_raw = G_schema")
+        logger.warning("No SSSOM/SeMRA/instance mapping files found - G_raw = G_schema")
         G_raw = G_schema.copy()
 
     # G_inferred
@@ -452,7 +453,7 @@ def main() -> None:
             - {frozenset(e) for e in G_raw.edges()}
         )
         logger.info(
-            "G_inferred— nodes: %d  edges: %d  (+%d new)  (%.1fs)",
+            "G_inferred- nodes: %d  edges: %d  (+%d new)  (%.1fs)",
             G_inferred.number_of_nodes(), G_inferred.number_of_edges(), len(new_inf), t_inf,
         )
         bench.record(
@@ -464,7 +465,7 @@ def main() -> None:
             elapsed_s=round(t_inf, 2),
         )
     else:
-        logger.warning("No inferenced mapping files found — G_inferred = G_raw")
+        logger.warning("No inferenced mapping files found - G_inferred = G_raw")
         G_inferred = G_raw.copy()
 
     # ── Export to Parquet ─────────────────────────────────────────────────────
@@ -479,13 +480,13 @@ def main() -> None:
         df = graph_to_edges_df(G)
         out_path = graphs_dir / fname
         df.to_parquet(out_path, index=False)
-        logger.info("  %s → %s  (%d rows)", label, out_path.name, len(df))
+        logger.info("  %s -> %s  (%d rows)", label, out_path.name, len(df))
 
     # Nodes table based on G_inferred (most connected)
     df_nodes = graph_to_nodes_df(G_inferred, cmap_inferred)
     nodes_path = graphs_dir / "nodes.parquet"
     df_nodes.to_parquet(nodes_path, index=False)
-    logger.info("  nodes → %s  (%d rows)", nodes_path.name, len(df_nodes))
+    logger.info("  nodes -> %s  (%d rows)", nodes_path.name, len(df_nodes))
 
     # ── Strategy + predicate counts from mapping files ────────────────────────
     import pandas as pd
@@ -509,11 +510,11 @@ def main() -> None:
         pred_edges_path = graphs_dir / "schema_edge_predicates.parquet"
         df_pred_edges.to_parquet(pred_edges_path, index=False)
         logger.info(
-            "  schema_edge_predicates → %s  (%d rows)",
+            "  schema_edge_predicates -> %s  (%d rows)",
             pred_edges_path.name, len(df_pred_edges),
         )
     else:
-        logger.warning("  schema_edge_predicates: empty — nothing to write")
+        logger.warning("  schema_edge_predicates: empty- nothing to write")
 
     try:
         import ujson as _json_fast
@@ -535,7 +536,7 @@ def main() -> None:
         try:
             raw = _json_fast.loads(mf.read_bytes())
             strategy = raw.get("@about", {}).get("strategy", "unknown")
-            ctx = {
+            {
                 **raw.get("@about", {}).get("curie_map", {}),
                 **raw.get("@context", {}),
             }
@@ -566,7 +567,7 @@ def main() -> None:
             [{"strategy": k, "count": v} for k, v in strategy_counts.items()]
         ).sort_values("count", ascending=False).reset_index(drop=True)
         strat_df.to_parquet(output_dir / "strategy_counts.parquet", index=False)
-        logger.info("  strategy_counts → strategy_counts.parquet  (%d rows)", len(strat_df))
+        logger.info("  strategy_counts -> strategy_counts.parquet  (%d rows)", len(strat_df))
 
     if predicate_counts:
         pred_df = pd.DataFrame([
@@ -574,11 +575,12 @@ def main() -> None:
             for k, v in predicate_counts.items()
         ]).sort_values("count", ascending=False).reset_index(drop=True)
         pred_df.to_parquet(output_dir / "predicate_counts.parquet", index=False)
-        logger.info("  predicate_counts → predicate_counts.parquet  (%d rows)", len(pred_df))
+        logger.info("  predicate_counts -> predicate_counts.parquet  (%d rows)", len(pred_df))
 
     # ── metadata.json ─────────────────────────────────────────────────────────
-    from rdfsolve.version import VERSION
     import subprocess
+
+    from rdfsolve.version import VERSION
 
     try:
         git_sha = subprocess.check_output(

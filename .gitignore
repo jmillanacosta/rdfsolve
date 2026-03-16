@@ -926,7 +926,7 @@ notes/*
 docker/*
 
 # ---------------------------------------------------------------------------
-# QLever workdirs and generated index data — never commit
+# QLever workdirs and generated index data - never commit
 # ---------------------------------------------------------------------------
 # These are large, machine-generated files produced by `qlever get-data`,
 # `qlever index`, and the pipeline.  They are regenerated on demand and must
@@ -948,7 +948,7 @@ Qleverfile
 # ---------------------------------------------------------------------------
 # JSON-LD schema and mapping files
 # ---------------------------------------------------------------------------
-# All *.jsonld files are generated artefacts — output of the schema miner or
+# All *.jsonld files are generated artefacts - output of the schema miner or
 # the instance matcher.  They are NOT committed to git because:
 #   - They can be large and change frequently as endpoints evolve.
 #   - They are regenerated on demand with the mining/seeding scripts.

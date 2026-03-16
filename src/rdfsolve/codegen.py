@@ -6,8 +6,6 @@ directly.  The snippets are included in every API response so
 users can learn how to script their workflows.
 """
 
-from __future__ import annotations
-
 import json
 from typing import Any
 
@@ -17,11 +15,7 @@ from typing import Any
 def _fmt(obj: Any, indent: int = 4) -> str:
     """Format a Python object as a readable literal."""
     raw = json.dumps(obj, indent=indent, ensure_ascii=False)
-    return (
-        raw.replace(": null", ": None")
-        .replace(": true", ": True")
-        .replace(": false", ": False")
-    )
+    return raw.replace(": null", ": None").replace(": true", ": True").replace(": false", ": False")
 
 
 def _fmt_strings(lst: list[str]) -> str:
@@ -72,7 +66,7 @@ def execute_sparql_snippet(
     timeout: int = 30,
 ) -> str:
     """Return Python code for ``execute_sparql()``."""
-    q = query.replace('"""', r'\"\"\"')
+    q = query.replace('"""', r"\"\"\"")
     parts = [
         "from rdfsolve import execute_sparql",
         "",
@@ -87,7 +81,7 @@ def execute_sparql_snippet(
         f"    timeout={timeout},",
         ")",
         "",
-        "print(f'Rows: {result[\"row_count\"]}, Time: {result[\"duration_ms\"]}ms')",
+        'print(f\'Rows: {result["row_count"]}, Time: {result["duration_ms"]}ms\')',
         "for row in result['rows'][:5]:",
         "    print(row)",
     ]
@@ -132,7 +126,7 @@ def export_query_snippet(
     endpoint: str | None = None,
 ) -> str:
     """Return Python code to export a query as JSON-LD."""
-    q = query.replace('"""', r'\"\"\"')
+    q = query.replace('"""', r"\"\"\"")
     pfx = prefixes or {}
     cap = query_type.capitalize()
     parts = [

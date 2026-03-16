@@ -8,15 +8,15 @@
 #
 # Fields
 # ──────
-#   name        – unique identifier; used as the output file prefix and as the
+#   name        - unique identifier; used as the output file prefix and as the
 #                 source_name recorded in every mapping edge
-#   provider    – human-readable provider / organisation name
-#   url         – direct download URL; may be a .tgz, .tar.gz, .zip, or a
+#   provider    - human-readable provider / organisation name
+#   url         - direct download URL; may be a .tgz, .tar.gz, .zip, or a
 #                 plain .sssom.tsv file
-#   description – optional free-text description
-#   license     – SPDX expression or URL (optional)
-#   homepage    – upstream homepage (optional)
-#   type        – optional, one of {class_mappings, property_mappings}; if
+#   description - optional free-text description
+#   license     - SPDX expression or URL (optional)
+#   homepage    - upstream homepage (optional)
+#   type        - optional, one of {class_mappings, property_mappings}; if
 
 - name: ols_mappings
   provider: "EMBL-EBI (UK)"

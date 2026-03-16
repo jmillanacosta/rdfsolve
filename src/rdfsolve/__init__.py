@@ -1,42 +1,59 @@
 """RDFSolve: A library for RDF schema analysis and VoID generation.
 
 Main modules:
+- api: High-level API functions (all re-exported here)
 - parser: VoidParser class for parsing VoID descriptions and schemas
 - miner: SchemaMiner class for direct SPARQL schema mining
-- config: RDF configuration tools for YAML model processing (separate module)
-- utils: Common utility functions for RDF processing
 - query: SPARQL query execution with structured results
 - iri: IRI resolution against SPARQL endpoints
 - compose: SPARQL query composition from diagram paths
 """
 
-# Import parser and models
-from . import utils
-from .api import mine_all_sources
-from .compose import compose_query_from_paths
-from .iri import resolve_iris
+from .api import (
+    compose_query_from_paths,
+    execute_sparql,
+    graph_to_jsonld,
+    graph_to_linkml,
+    graph_to_schema,
+    graph_to_shacl,
+    import_semra_source,
+    import_sssom_source,
+    infer_mappings,
+    load_mapping_jsonld,
+    load_parser_from_file,
+    load_parser_from_graph,
+    load_parser_from_jsonld,
+    mine_all_sources,
+    mine_schema,
+    probe_instance_mapping,
+    resolve_iris,
+    seed_inferenced_mappings,
+    seed_instance_mappings,
+    seed_semra_mappings,
+    seed_sssom_mappings,
+    to_jsonld_from_file,
+    to_linkml_from_file,
+    to_rdfconfig_from_file,
+    to_shacl_from_file,
+    to_void_from_file,
+)
 from .miner import SchemaMiner
 from .models import (
     AboutMetadata,
-    LinkMLSchema,
     Mapping,
     MappingEdge,
     MinedSchema,
     SchemaPattern,
-    SchemaTriple,
-    VoidSchema,
 )
 from .parser import VoidParser
-from .parser import parse_void_file as parse_void_simple
-from .query import QueryResult, ResultCell, execute_sparql
-
-# Import version information
+from .query import QueryResult, ResultCell
 from .version import VERSION
 
 __all__ = [
+    # ── version ──────────────────────────────────────────────────
     "VERSION",
+    # ── models ───────────────────────────────────────────────────
     "AboutMetadata",
-    "LinkMLSchema",
     "Mapping",
     "MappingEdge",
     "MinedSchema",
@@ -44,13 +61,36 @@ __all__ = [
     "ResultCell",
     "SchemaMiner",
     "SchemaPattern",
-    "SchemaTriple",
     "VoidParser",
-    "VoidSchema",
+    # ── api: SPARQL / IRI ────────────────────────────────────────
     "compose_query_from_paths",
     "execute_sparql",
+    # ── api: conversion / export ─────────────────────────────────
+    "graph_to_jsonld",
+    "graph_to_linkml",
+    "graph_to_schema",
+    "graph_to_shacl",
+    "import_semra_source",
+    "import_sssom_source",
+    "infer_mappings",
+    "load_mapping_jsonld",
+    # ── api: parsing / loading ───────────────────────────────────
+    "load_parser_from_file",
+    "load_parser_from_graph",
+    "load_parser_from_jsonld",
+    # ── api: mining ──────────────────────────────────────────────
     "mine_all_sources",
-    "parse_void_simple",
+    "mine_schema",
+    # ── api: mappings ────────────────────────────────────────────
+    "probe_instance_mapping",
     "resolve_iris",
-    "utils",
+    "seed_inferenced_mappings",
+    "seed_instance_mappings",
+    "seed_semra_mappings",
+    "seed_sssom_mappings",
+    "to_jsonld_from_file",
+    "to_linkml_from_file",
+    "to_rdfconfig_from_file",
+    "to_shacl_from_file",
+    "to_void_from_file",
 ]

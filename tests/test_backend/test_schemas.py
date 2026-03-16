@@ -37,7 +37,7 @@ def test_upload_and_get_schema(client):
     data = resp.get_json()
     assert "id" in data
 
-    # List — should contain one entry
+    # List - should contain one entry
     resp = client.get("/api/schemas/")
     assert resp.status_code == 200
     items = resp.get_json()

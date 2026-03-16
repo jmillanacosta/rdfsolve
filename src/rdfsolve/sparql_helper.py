@@ -2,7 +2,7 @@
 SPARQL Helper, Centralized SPARQL query execution with automatic fallback.
 
 This module is a SPARQL client that handles:
-- Automatic GET → POST fallback for endpoints that require POST
+- Automatic GET -> POST fallback for endpoints that require POST
 - Exponential backoff retry logic for transient failures
 - Support for SELECT (JSON) and CONSTRUCT (Turtle/N3) queries
 - HTML error detection in responses
@@ -100,6 +100,12 @@ class PaginationTruncatedError(EndpointTimeoutError):
     """
 
     def __init__(self, msg: str, offset: int = 0) -> None:
+        """Initialize a pagination truncation error.
+
+        Args:
+            msg: Error message.
+            offset: Offset at which pagination stopped.
+        """
         super().__init__(msg)
         self.offset = offset
 
@@ -168,7 +174,7 @@ class SparqlHelper:
 
     # Response body fragments that indicate a query-cost / timeout
     # rejection from the endpoint (not a transient server error).
-    # These 500s should NOT be retried — raise EndpointTimeoutError
+    # These 500s should NOT be retried - raise EndpointTimeoutError
     # immediately so callers can fall back to pagination.
     COST_LIMIT_PATTERNS: ClassVar[tuple[str, ...]] = (
         "estimated execution time",
@@ -353,7 +359,9 @@ class SparqlHelper:
         logger.debug(f"SparqlHelper initialized for {self.endpoint_url}")
 
     def select(
-        self, query: str, purpose: str = "",
+        self,
+        query: str,
+        purpose: str = "",
     ) -> dict[str, Any]:
         """Execute a SELECT query and return JSON results.
 
@@ -407,7 +415,7 @@ class SparqlHelper:
         Execute a CONSTRUCT query and return an RDFLib Graph.
 
         The CONSTRUCT method internally uses _execute which handles
-        GET→POST fallback automatically when HTML is detected in the
+        GET->POST fallback automatically when HTML is detected in the
         response string.
 
         Args:
@@ -420,7 +428,7 @@ class SparqlHelper:
             EndpointError: If the endpoint returns an error after all retries
             QueryError: If the query is malformed
         """
-        # construct() calls _execute which handles GET→POST fallback
+        # construct() calls _execute which handles GET->POST fallback
         turtle_data = self.construct(query)
 
         graph = Graph()
@@ -454,7 +462,12 @@ class SparqlHelper:
         result: dict[str, Any] = self._execute(
             query, accept=MimeTypes.SELECT_ACCEPT, query_type="ASK", parse_json=True
         )
-        return bool(result.get("boolean", False))
+        raw = result.get("boolean", False)
+        # JSON parser already gives us a bool; guard against endpoints
+        # that return the string "true"/"false" instead.
+        if isinstance(raw, str):
+            return raw.strip().lower() == "true"
+        return bool(raw)
 
     # Characters that are illegal inside a SPARQL IRI literal <...>.
     # If the incremented upper-bound character is one of these the range
@@ -478,11 +491,11 @@ class SparqlHelper:
         The upper-bound ``uri_prefix_next`` is derived by incrementing the
         last character of *uri_prefix* by one code-point (e.g.
         ``"https://bioregistry.io/faldo/"``
-        → ``"https://bioregistry.io/faldo0"``
+        -> ``"https://bioregistry.io/faldo0"``
         because ``ord('/') + 1 == ord('0')``).
 
         If the incremented character would be illegal inside a SPARQL
-        ``<…>`` IRI literal (e.g. ``=`` → ``>``, which closes the IRI),
+        ``<…>`` IRI literal (e.g. ``=`` -> ``>``, which closes the IRI),
         falls back to the safer ``STRSTARTS`` filter::
 
             SELECT DISTINCT ?c
@@ -504,15 +517,10 @@ class SparqlHelper:
         # Build the exclusive upper bound by bumping the last char's codepoint.
         next_char = chr(ord(uri_prefix[-1]) + 1)
         if next_char in self._IRI_UNSAFE_CHARS:
-            # Upper-bound IRI would be malformed — use STRSTARTS fallback.
-            escaped = uri_prefix.replace(
-                "\\", "\\\\"
-            ).replace('"', '\\"')
+            # Upper-bound IRI would be malformed - use STRSTARTS fallback.
+            escaped = uri_prefix.replace("\\", "\\\\").replace('"', '\\"')
             query = (
-                "SELECT DISTINCT ?c WHERE { "
-                "?s a ?c . "
-                f'FILTER(STRSTARTS(STR(?s), "{escaped}")) '
-                "}"
+                f'SELECT DISTINCT ?c WHERE {{ ?s a ?c . FILTER(STRSTARTS(STR(?s), "{escaped}")) }}'
             )
         else:
             uri_prefix_next = uri_prefix[:-1] + next_char
@@ -614,37 +622,28 @@ class SparqlHelper:
                 if status_code in self.RETRY_STATUS_CODES:
                     # A 500/504 whose body signals "query too expensive"
                     # (Virtuoso cost limit, statement timeout, gateway
-                    # timeout, etc.) is not a transient server error —
+                    # timeout, etc.) is not a transient server error -
                     # retrying the identical query will always fail.
                     # Raise as EndpointTimeoutError so callers (e.g.
                     # the two-phase miner) can fall back to pagination.
                     if status_code in (500, 504):
-                        body = (
-                            e.response.text.lower()
-                            if e.response is not None else ""
-                        )
-                        is_cost_limit = (
-                            status_code == 504
-                            or any(
-                                pat in body
-                                for pat in self.COST_LIMIT_PATTERNS
-                            )
+                        body = e.response.text.lower() if e.response is not None else ""
+                        is_cost_limit = status_code == 504 or any(
+                            pat in body for pat in self.COST_LIMIT_PATTERNS
                         )
                         if is_cost_limit:
-                            tag = (
-                                f"{query_type}[{purpose}]"
-                                if purpose else query_type
-                            )
+                            tag = f"{query_type}[{purpose}]" if purpose else query_type
                             logger.warning(
-                                "%s query cost/time limit on %s "
-                                "— not retrying",
-                                tag, self.endpoint_url,
+                                "%s query cost/time limit on %s - not retrying",
+                                tag,
+                                self.endpoint_url,
                             )
-                            raise EndpointTimeoutError(
-                                f"Query cost/time limit: {e}"
-                            ) from e
+                            raise EndpointTimeoutError(f"Query cost/time limit: {e}") from e
                     self._handle_retry(
-                        attempt, query_type, e, purpose,
+                        attempt,
+                        query_type,
+                        e,
+                        purpose,
                     )
                     continue
 
@@ -656,36 +655,29 @@ class SparqlHelper:
                 # (e.g. select_chunked) can apply adaptive strategies
                 # such as reducing the page size, rather than blindly
                 # retrying the same expensive query.
-                tag = (
-                    f"{query_type}[{purpose}]"
-                    if purpose else query_type
-                )
+                tag = f"{query_type}[{purpose}]" if purpose else query_type
                 logger.warning(
                     "%s timed out against %s: %s",
-                    tag, self.endpoint_url, e,
+                    tag,
+                    self.endpoint_url,
+                    e,
                 )
-                raise EndpointTimeoutError(
-                    f"Timeout: {e}"
-                ) from e
+                raise EndpointTimeoutError(f"Timeout: {e}") from e
 
             except requests.exceptions.RequestException as e:
                 error_msg = str(e).lower()
 
                 # ── Permanent failures: fail fast, don't retry ────
                 # DNS resolution failure or connection refused are not
-                # transient — the host doesn't exist or isn't listening.
+                # transient - the host doesn't exist or isn't listening.
                 if self._is_permanent_failure(e):
-                    tag = (
-                        f"{query_type}[{purpose}]"
-                        if purpose else query_type
-                    )
+                    tag = f"{query_type}[{purpose}]" if purpose else query_type
                     logger.warning(
-                        "%s endpoint unreachable (%s) — not retrying",
-                        tag, self.endpoint_url,
+                        "%s endpoint unreachable (%s)- not retrying",
+                        tag,
+                        self.endpoint_url,
                     )
-                    raise EndpointError(
-                        f"Endpoint unreachable: {e}"
-                    ) from e
+                    raise EndpointError(f"Endpoint unreachable: {e}") from e
 
                 # Check if this looks like a POST-required error
                 if not use_post and self._should_retry_with_post(error_msg):
@@ -696,13 +688,19 @@ class SparqlHelper:
 
                 # Handle transient network errors with retry
                 self._handle_retry(
-                    attempt, query_type, e, purpose,
+                    attempt,
+                    query_type,
+                    e,
+                    purpose,
                 )
 
             except json.JSONDecodeError as e:
                 # JSON parse error, might be HTML response
                 self._handle_retry(
-                    attempt, query_type, e, purpose,
+                    attempt,
+                    query_type,
+                    e,
+                    purpose,
                 )
 
             except Exception as e:
@@ -716,7 +714,10 @@ class SparqlHelper:
                     continue
 
                 self._handle_retry(
-                    attempt, query_type, e, purpose,
+                    attempt,
+                    query_type,
+                    e,
+                    purpose,
                 )
 
         # Catch anything else?
@@ -743,16 +744,12 @@ class SparqlHelper:
         """Raise :class:`EndpointUnhealthyError` for deceptive responses.
 
         Some endpoints return HTTP 200 (or 400) with a plain-text or
-        HTML body that is actually a database / proxy error — not a
+        HTML body that is actually a database / proxy error- not a
         valid SPARQL result.  Detecting these early prevents silent
         empty-result bugs and allows callers to handle them
         gracefully.
         """
-        ct = (
-            response.headers
-            .get("Content-Type", "")
-            .lower()
-        )
+        ct = response.headers.get("Content-Type", "").lower()
         body = response.text.strip()
 
         # If the response is proper SPARQL JSON, nothing to do.
@@ -864,9 +861,7 @@ class SparqlHelper:
         )
 
         if attempt >= self.max_retries:
-            logger.error(
-                f"{tag} failed after {self.max_retries} tries"
-            )
+            logger.error(f"{tag} failed after {self.max_retries} tries")
             raise EndpointError(
                 f"Query failed after {self.max_retries} attempts: {error}"
             ) from error
@@ -887,23 +882,23 @@ class SparqlHelper:
     # Patterns in the stringified exception chain that indicate the
     # endpoint is permanently unreachable (DNS, refused, no route).
     _PERMANENT_FAILURE_PATTERNS: ClassVar[tuple[str, ...]] = (
-        "name or service not known",      # DNS resolution failure
-        "nameresolutionerror",             # urllib3 wrapper
+        "name or service not known",  # DNS resolution failure
+        "nameresolutionerror",  # urllib3 wrapper
         "nodename nor servname provided",  # macOS DNS failure
-        "getaddrinfo failed",             # generic DNS failure
-        "no address associated",           # DNS NXDOMAIN
-        "[errno 111]",                     # connection refused (Linux)
-        "[errno 61]",                      # connection refused (macOS)
-        "[winerror 10061]",                # connection refused (Windows)
-        "no route to host",                # network unreachable
-        "[errno 113]",                     # no route to host (Linux)
+        "getaddrinfo failed",  # generic DNS failure
+        "no address associated",  # DNS NXDOMAIN
+        "[errno 111]",  # connection refused (Linux)
+        "[errno 61]",  # connection refused (macOS)
+        "[winerror 10061]",  # connection refused (Windows)
+        "no route to host",  # network unreachable
+        "[errno 113]",  # no route to host (Linux)
     )
 
     @classmethod
     def _is_permanent_failure(cls, exc: Exception) -> bool:
         """Return True if the exception indicates a permanent failure.
 
-        DNS resolution errors and connection-refused are not transient —
+        DNS resolution errors and connection-refused are not transient -
         retrying will always produce the same result.
         """
         # Walk the full exception chain (cause, context, args)
@@ -987,18 +982,19 @@ class SparqlHelper:
             List of bindings (dicts) from each chunk.
         """
         # ---- adaptive-pagination tunables -------------------------
-        shrink_factor = 0.85          # reduce LIMIT by 15 % each time
-        min_chunk_size = max(        # never go below 60 % of original
-            int(chunk_size * 0.60), 1,
+        shrink_factor = 0.85  # reduce LIMIT by 15 % each time
+        min_chunk_size = max(  # never go below 60 % of original
+            int(chunk_size * 0.60),
+            1,
         )
-        max_shrinks_per_offset = 3    # give up after 3 reductions
+        max_shrinks_per_offset = 3  # give up after 3 reductions
         cooldown_after_timeout = 5.0  # seconds to wait after a timeout
         # -----------------------------------------------------------
 
         current_offset = 0
         total_fetched = 0
         current_chunk_size = chunk_size
-        max_iterations = 10_000       # safety limit
+        max_iterations = 10_000  # safety limit
 
         for _ in range(max_iterations):
             # Honour max_total_results cap
@@ -1011,7 +1007,8 @@ class SparqlHelper:
                 effective_limit = current_chunk_size
 
             query = query_template.format(
-                offset=current_offset, limit=effective_limit,
+                offset=current_offset,
+                limit=effective_limit,
             )
 
             # --- attempt this page (with adaptive retries) ---------
@@ -1031,11 +1028,11 @@ class SparqlHelper:
                     elapsed = time.monotonic() - t0
 
                     bindings = results.get(
-                        "results", {},
+                        "results",
+                        {},
                     ).get("bindings", [])
                     logger.debug(
-                        "Chunked %s: offset=%d returned %d "
-                        "rows in %.1fs",
+                        "Chunked %s: offset=%d returned %d rows in %.1fs",
                         purpose or "query",
                         current_offset,
                         len(bindings),
@@ -1052,18 +1049,18 @@ class SparqlHelper:
                     )
 
                     if new_limit >= effective_limit:
-                        # Already at floor — cannot shrink further
+                        # Already at floor - cannot shrink further
                         logger.warning(
-                            "Timeout at offset %d; chunk size "
-                            "already at minimum (%d) — skipping",
-                            current_offset, effective_limit,
+                            "Timeout at offset %d; chunk size already at minimum (%d) - skipping",
+                            current_offset,
+                            effective_limit,
                         )
                         break
 
                     shrink_attempts += 1
                     logger.warning(
-                        "Timeout at offset %d — reducing chunk "
-                        "%d → %d (attempt %d/%d, cooling %ds)",
+                        "Timeout at offset %d - reducing chunk "
+                        "%d -> %d (attempt %d/%d, cooling %ds)",
                         current_offset,
                         effective_limit,
                         new_limit,
@@ -1074,16 +1071,18 @@ class SparqlHelper:
                     effective_limit = new_limit
                     current_chunk_size = new_limit  # sticky
                     query = query_template.format(
-                        offset=current_offset, limit=effective_limit,
+                        offset=current_offset,
+                        limit=effective_limit,
                     )
                     time.sleep(cooldown_after_timeout)
 
                 except Exception as e:
                     logger.warning(
                         "Chunk query failed at offset %d: %s",
-                        current_offset, e,
+                        current_offset,
+                        e,
                     )
-                    break  # non-timeout error → stop paging
+                    break  # non-timeout error -> stop paging
 
             if not success:
                 # Could not fetch this page even with reduced size.
@@ -1091,7 +1090,7 @@ class SparqlHelper:
                 raise PaginationTruncatedError(
                     f"Pagination abandoned at offset {current_offset}"
                     f" after {max_shrinks_per_offset} chunk-size"
-                    " reductions — results are incomplete",
+                    " reductions - results are incomplete",
                     offset=current_offset,
                 )
 
@@ -1107,8 +1106,7 @@ class SparqlHelper:
             current_offset += chunk_count
 
             logger.info(
-                "Chunked %s: fetched %d rows "
-                "(total so far: %d, limit: %d)",
+                "Chunked %s: fetched %d rows (total so far: %d, limit: %d)",
                 purpose or "query",
                 chunk_count,
                 total_fetched,

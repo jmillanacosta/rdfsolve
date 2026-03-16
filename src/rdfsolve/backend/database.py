@@ -7,11 +7,14 @@ in a local SQLite database.  Thread-safe via ``check_same_thread=False``.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+_log = logging.getLogger(__name__)
 
 
 def _json_or_none(value: Any) -> str | None:
@@ -112,15 +115,19 @@ class Database:
     """Simple SQLite wrapper for schema & endpoint persistence."""
 
     def __init__(self, db_path: str | Path = "rdfsolve.db") -> None:
+        """Initialize an rdfsolve SQLite Database."""
         self._db_path = str(db_path)
         self._is_memory = self._db_path in (":memory:", "")
         self._lock = threading.Lock()
+
+        self._shared_conn: sqlite3.Connection | None
 
         if self._is_memory:
             # For in-memory databases, use a single shared connection
             # (thread-safety via the lock).
             self._shared_conn = sqlite3.connect(
-                ":memory:", check_same_thread=False,
+                ":memory:",
+                check_same_thread=False,
             )
             self._shared_conn.row_factory = sqlite3.Row
         else:
@@ -133,14 +140,15 @@ class Database:
 
     @property
     def _conn(self) -> sqlite3.Connection:
-        """Return a connection — shared for :memory:, per-thread otherwise."""
+        """Return a connection - shared for :memory:, per-thread otherwise."""
         if self._shared_conn is not None:
             return self._shared_conn
 
         conn = getattr(self._local, "conn", None)
         if conn is None:
             conn = sqlite3.connect(
-                self._db_path, check_same_thread=False,
+                self._db_path,
+                check_same_thread=False,
             )
             conn.row_factory = sqlite3.Row
             conn.execute("PRAGMA journal_mode=WAL")
@@ -150,15 +158,16 @@ class Database:
     def _init_db(self) -> None:
         self._conn.executescript(_DB_INIT_SQL)
         self._conn.commit()
-        # Run idempotent column migrations (ignore "duplicate column" errors).
+        # Ignore "duplicate column" errors.
         for stmt in _SCHEMAS_MIGRATIONS:
             try:
                 self._conn.execute(stmt)
                 self._conn.commit()
             except sqlite3.OperationalError:
-                pass  # Column already exists — safe to ignore.
+                pass  # Column already exists.
 
     def close(self) -> None:
+        """Close the database connection (no-op for shared in-memory DBs)."""
         if self._shared_conn is not None:
             # Don't actually close the shared in-memory conn here;
             # it would destroy all data.
@@ -180,12 +189,12 @@ class Database:
         if strategy:
             values = [s.strip() for s in strategy.split(",") if s.strip()]
             placeholders = ",".join("?" * len(values))
-            rows = self._conn.execute(
-                "SELECT id, name, endpoint, pattern_count, "
+            sql = (
+                "SELECT id, name, endpoint, pattern_count, "  # noqa: S608
                 "generated_at, strategy, data FROM schemas "
-                f"WHERE strategy IN ({placeholders}) ORDER BY name",
-                values,
-            ).fetchall()
+                f"WHERE strategy IN ({placeholders}) ORDER BY name"
+            )
+            rows = self._conn.execute(sql, values).fetchall()
         else:
             rows = self._conn.execute(
                 "SELECT id, name, endpoint, pattern_count, "
@@ -208,17 +217,20 @@ class Database:
     def get_schema(self, schema_id: str) -> dict[str, Any] | None:
         """Load a full JSON-LD schema by *schema_id*."""
         row = self._conn.execute(
-            "SELECT data FROM schemas WHERE id = ?", (schema_id,),
+            "SELECT data FROM schemas WHERE id = ?",
+            (schema_id,),
         ).fetchone()
         if row is None:
-            # Try normalised variant (hyphens → underscores)
+            # Try normalised variant (hyphens -> underscores)
             norm = schema_id.replace("-", "_")
             row = self._conn.execute(
-                "SELECT data FROM schemas WHERE id = ?", (norm,),
+                "SELECT data FROM schemas WHERE id = ?",
+                (norm,),
             ).fetchone()
         if row is None:
             return None
-        return json.loads(row["data"])
+        result: dict[str, Any] = json.loads(row["data"])
+        return result
 
     def save_schema(
         self,
@@ -248,9 +260,15 @@ class Database:
                 updated_at=excluded.updated_at
             """,
             (
-                schema_id, name, endpoint, pattern_count,
-                generated_at, strategy, json.dumps(data),
-                now, now,
+                schema_id,
+                name,
+                endpoint,
+                pattern_count,
+                generated_at,
+                strategy,
+                json.dumps(data),
+                now,
+                now,
             ),
         )
         self._conn.commit()
@@ -259,7 +277,8 @@ class Database:
     def delete_schema(self, schema_id: str) -> bool:
         """Delete a schema. Returns True if a row was deleted."""
         cur = self._conn.execute(
-            "DELETE FROM schemas WHERE id = ?", (schema_id,),
+            "DELETE FROM schemas WHERE id = ?",
+            (schema_id,),
         )
         self._conn.commit()
         return cur.rowcount > 0
@@ -269,8 +288,7 @@ class Database:
     def list_endpoints(self) -> list[dict[str, Any]]:
         """Return all manually registered endpoints."""
         rows = self._conn.execute(
-            "SELECT id, name, endpoint, graph, manual "
-            "FROM endpoints ORDER BY name",
+            "SELECT id, name, endpoint, graph, manual FROM endpoints ORDER BY name",
         ).fetchall()
         return [dict(r) for r in rows]
 
@@ -322,24 +340,30 @@ class Database:
             ds_name = about.get("dataset_name", row["name"])
             ep = about.get("endpoint", "")
             if isinstance(ep, str) and ep:
-                eps.append({
-                    "name": ds_name,
-                    "endpoint": ep,
-                    "graph": None,
-                })
+                eps.append(
+                    {
+                        "name": ds_name,
+                        "endpoint": ep,
+                        "graph": None,
+                    }
+                )
             for ep_url in about.get("endpoints", []):
                 if isinstance(ep_url, str) and ep_url:
-                    eps.append({
-                        "name": ds_name,
-                        "endpoint": ep_url,
-                        "graph": None,
-                    })
+                    eps.append(
+                        {
+                            "name": ds_name,
+                            "endpoint": ep_url,
+                            "graph": None,
+                        }
+                    )
         return eps
 
     # -- report operations ----------------------------------------------
 
     def save_report(
-        self, report_id: str, data: dict[str, Any],
+        self,
+        report_id: str,
+        data: dict[str, Any],
     ) -> str:
         """Insert or replace a run report. Returns report_id."""
         now = datetime.now(timezone.utc).isoformat()
@@ -398,11 +422,13 @@ class Database:
     def get_report(self, report_id: str) -> dict[str, Any] | None:
         """Load a full report by id."""
         row = self._conn.execute(
-            "SELECT data FROM reports WHERE id = ?", (report_id,),
+            "SELECT data FROM reports WHERE id = ?",
+            (report_id,),
         ).fetchone()
         if row is None:
             return None
-        return json.loads(row["data"])
+        result: dict[str, Any] = json.loads(row["data"])
+        return result
 
     def list_reports(
         self,
@@ -418,11 +444,9 @@ class Database:
         if strategy:
             conditions.append("strategy = ?")
             params.append(strategy)
-        where = (
-            "WHERE " + " AND ".join(conditions) if conditions else ""
-        )
+        where = "WHERE " + " AND ".join(conditions) if conditions else ""
         rows = self._conn.execute(
-            f"SELECT id, dataset_name, endpoint_url, strategy, "
+            f"SELECT id, dataset_name, endpoint_url, strategy, "  # noqa: S608
             f"rdfsolve_version, started_at, finished_at, "
             f"total_duration_s, pattern_count, class_count, "
             f"property_count, abort_reason, authors "
@@ -436,14 +460,18 @@ class Database:
                 try:
                     item["authors"] = json.loads(item["authors"])
                 except Exception:
-                    pass
+                    _log.debug(
+                        "authors not valid JSON for report %s",
+                        item.get("id"),
+                    )
             results.append(item)
         return results
 
     def delete_report(self, report_id: str) -> bool:
         """Delete a report. Returns True if a row was deleted."""
         cur = self._conn.execute(
-            "DELETE FROM reports WHERE id = ?", (report_id,),
+            "DELETE FROM reports WHERE id = ?",
+            (report_id,),
         )
         self._conn.commit()
         return cur.rowcount > 0
@@ -504,7 +532,8 @@ class Database:
         return catalog_id
 
     def get_void_catalog(
-        self, catalog_id: str,
+        self,
+        catalog_id: str,
     ) -> dict[str, Any] | None:
         """Load a VoID catalog by id. Returns meta + turtle."""
         row = self._conn.execute(
@@ -519,11 +548,16 @@ class Database:
                 try:
                     item[field] = json.loads(item[field])
                 except Exception:
-                    pass
+                    _log.debug(
+                        "%s not valid JSON for void_catalog %s",
+                        field,
+                        item.get("id"),
+                    )
         return item
 
     def list_void_catalogs(
-        self, dataset_name: str | None = None,
+        self,
+        dataset_name: str | None = None,
     ) -> list[dict[str, Any]]:
         """Return lightweight metadata for every stored VoID catalog."""
         if dataset_name:
@@ -547,7 +581,8 @@ class Database:
     def delete_void_catalog(self, catalog_id: str) -> bool:
         """Delete a VoID catalog. Returns True if deleted."""
         cur = self._conn.execute(
-            "DELETE FROM void_catalogs WHERE id = ?", (catalog_id,),
+            "DELETE FROM void_catalogs WHERE id = ?",
+            (catalog_id,),
         )
         self._conn.commit()
         return cur.rowcount > 0
@@ -601,7 +636,8 @@ class Database:
         return schema_id
 
     def get_linkml_schema(
-        self, schema_id: str,
+        self,
+        schema_id: str,
     ) -> dict[str, Any] | None:
         """Load a LinkML schema by id. Returns meta + yaml."""
         row = self._conn.execute(
@@ -616,11 +652,16 @@ class Database:
                 try:
                     item[field] = json.loads(item[field])
                 except Exception:
-                    pass
+                    _log.debug(
+                        "%s not valid JSON for linkml_schema %s",
+                        field,
+                        item.get("id"),
+                    )
         return item
 
     def list_linkml_schemas(
-        self, dataset_name: str | None = None,
+        self,
+        dataset_name: str | None = None,
     ) -> list[dict[str, Any]]:
         """Return lightweight metadata for every stored LinkML schema."""
         if dataset_name:
@@ -642,7 +683,8 @@ class Database:
     def delete_linkml_schema(self, schema_id: str) -> bool:
         """Delete a LinkML schema. Returns True if deleted."""
         cur = self._conn.execute(
-            "DELETE FROM linkml_schemas WHERE id = ?", (schema_id,),
+            "DELETE FROM linkml_schemas WHERE id = ?",
+            (schema_id,),
         )
         self._conn.commit()
         return cur.rowcount > 0

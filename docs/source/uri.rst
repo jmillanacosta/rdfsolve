@@ -1,7 +1,7 @@
-Models
-======
+URI Helpers
+===========
 
-.. automodule:: rdfsolve.models
+.. automodule:: rdfsolve._uri
    :members:
    :undoc-members:
    :show-inheritance:
