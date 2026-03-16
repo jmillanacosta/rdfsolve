@@ -31,7 +31,6 @@ from rdfsolve.schema_models.report import (
     QueryStats,
 )
 
-
 # Names that should be resolved lazily via __getattr__
 _LAZY_LINKML = {
     "make_valid_linkml_name": "rdfsolve.schema_models.linkml",
