@@ -313,6 +313,7 @@ ignore = [
     "frontend/**",
     "paper/**",
     ".cruft.json",
+    ".check-manifest-ignore",
     ".dockerignore",
     ".gitmodules",
 ]
