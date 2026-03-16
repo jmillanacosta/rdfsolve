@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json as _json
 import logging
-import types
 from collections import Counter
 from collections.abc import Callable, Collection, Iterable
 from pathlib import Path
@@ -193,11 +192,11 @@ class Mapping(BaseModel):
             ) from exc
 
         # ujson is ~3-5x faster for large files
-        fast_json: types.ModuleType
         try:
-            import ujson as fast_json
+            import ujson as _fast_json
         except ImportError:
-            fast_json = _json
+            _fast_json = None  # type: ignore[assignment]
+        fast_json = _fast_json if _fast_json is not None else _json
 
         br_map = _build_br_prefix_map()
         skip_keys = frozenset(
