@@ -304,3 +304,15 @@ replace = "VERSION = \"{new_version}\""
 filename = "CITATION.cff"
 search = "version: {current_version}"
 replace = "version: {new_version}"
+
+[tool.check-manifest]
+# Patterns to ignore when running `check-manifest` in CI/local.
+# The frontend and paper directories are separate submodules tracked in git
+# but intentionally not included in the Python sdist.
+ignore = [
+    "frontend/**",
+    "paper/**",
+    ".cruft.json",
+    ".dockerignore",
+    ".gitmodules",
+]

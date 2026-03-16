@@ -88,6 +88,10 @@ extensions.append("sphinx_click.ext")
 # generate autosummary pages
 autosummary_generate = True
 
+autodoc_mock_imports = [
+    "semra",
+]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 

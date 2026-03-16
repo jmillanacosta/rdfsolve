@@ -24,8 +24,8 @@ prune notebooks
 prune scripts
 prune data/rdf
 prune results
-prune paper
-prune frontend
+exclude paper
+exclude frontend
 prune docker
 
 # ── Dev / infra files — tracked by git but not shipped in sdist ──
