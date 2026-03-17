@@ -22,7 +22,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # All strategy values that identify a mapping (not a schema)
-_MAPPING_STRATEGIES = {"instance_matcher", "semra_import", "inferenced", "sssom_import"}
+_MAPPING_STRATEGIES = {
+    "instance_matcher",
+    "semra_import",
+    "inferenced",
+    "sssom_import",
+    "class_derived",
+}
 
 
 class MappingService:
@@ -47,10 +53,21 @@ class MappingService:
 
     # ── read ──────────────────────────────────────────────────────────
 
-    def list_mappings(self) -> list[dict[str, Any]]:
-        """Return lightweight metadata for every stored mapping."""
+    def list_mappings(
+        self,
+        strategy: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return lightweight metadata for every stored mapping.
+
+        Args:
+            strategy: Optional strategy filter (e.g. ``"class_derived"``).
+                When ``None`` all mapping strategies are returned.
+        """
         all_schemas = self.db.list_schemas()
-        return [s for s in all_schemas if s.get("strategy") in _MAPPING_STRATEGIES]
+        results = [s for s in all_schemas if s.get("strategy") in _MAPPING_STRATEGIES]
+        if strategy is not None:
+            results = [s for s in results if s.get("strategy") == strategy]
+        return results
 
     def get_mapping(self, mapping_id: str) -> dict[str, Any] | None:
         """Return the full JSON-LD for a mapping, or ``None``."""

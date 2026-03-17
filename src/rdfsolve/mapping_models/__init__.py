@@ -1,5 +1,6 @@
 """Mapping models - public API re-exports."""
 
+from rdfsolve.mapping_models.class_derived import ClassDerivedMapping
 from rdfsolve.mapping_models.core import (
     SKOS_NARROW_MATCH,
     InstanceMatchResult,
@@ -20,6 +21,7 @@ from rdfsolve.schema_models.core import AboutMetadata
 __all__ = [
     "SKOS_NARROW_MATCH",
     "AboutMetadata",
+    "ClassDerivedMapping",
     "InferencedMapping",
     "InstanceMapping",
     "InstanceMatchResult",

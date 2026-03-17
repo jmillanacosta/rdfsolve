@@ -20,6 +20,9 @@
 #   5.  Seed SSSOM mappings (class + property)
 #   6.  Seed SeMRA mappings
 #   7.  Seed instance mappings
+#   8.  Build class index (instance IRI -> rdf:type lookup via LSLOD)
+#   9.  Derive class-level mappings from instance mappings
+#   10. Enrich instance JSON-LD with class annotations
 #   11. Inference expansion
 #   12. Build connectivity graphs -> Parquet
 #   14. Execute paper notebook -> HTML
@@ -41,6 +44,8 @@
 #   ./scripts/run_pipeline.sh --skip-mappings
 #   ./scripts/run_pipeline.sh --skip-build-graphs
 #   ./scripts/run_pipeline.sh --skip-notebook
+#   ./scripts/run_pipeline.sh --skip-class-derivation
+#   ./scripts/run_pipeline.sh --lslod-endpoint http://lslod.example.org/api/sparql
 #   ./scripts/run_pipeline.sh --chunk-size 5000
 #   ./scripts/run_pipeline.sh --chunk-sizes 1000,5000,10000
 #   ./scripts/run_pipeline.sh --class-batch-size 10
@@ -97,6 +102,8 @@ MINI=false
 SKIP_MAPPINGS=false
 SKIP_BUILD_GRAPHS=false
 SKIP_NOTEBOOK=false
+SKIP_CLASS_DERIVATION=false
+LSLOD_ENDPOINT=""   # e.g. http://lslod.example.org/api/sparql
 
 DC="docker compose -f ${REPO_ROOT}/docker-compose.pipeline.yml"
 
@@ -255,6 +262,8 @@ while [[ $# -gt 0 ]]; do
         --skip-mappings)       SKIP_MAPPINGS=true;      shift ;;
         --skip-build-graphs)   SKIP_BUILD_GRAPHS=true;  shift ;;
         --skip-notebook)       SKIP_NOTEBOOK=true;      shift ;;
+        --skip-class-derivation) SKIP_CLASS_DERIVATION=true; shift ;;
+        --lslod-endpoint)      LSLOD_ENDPOINT="$2";     shift 2 ;;
         --help|-h)             head -65 "$0" | grep -E "^#" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *)                     fail "Unknown option: $1"; echo "Use --help for usage." >&2; exit 1 ;;
     esac
@@ -266,7 +275,7 @@ done
 
 # ── --mini preset ───────────────────────────────────────────────
 if [[ "${MINI}" == true ]]; then
-    [[ ${#DATASETS[@]} -eq 0 ]] && DATASETS=(aopwikirdf)
+    [[ ${#DATASETS[@]} -eq 0 ]] && DATASETS=(drugbank aopwikirdf kegg mesh wikipathways)
     SKIP_REMOTE=true
     ONE_SHOT=true
     [[ -z "${DATA_DIR}" ]] && DATA_DIR="${REPO_ROOT}/data/rdf"
@@ -671,6 +680,142 @@ if [[ "${SKIP_MAPPINGS}" == false ]]; then
     step "Instance mappings done in $(elapsed $(( $(date +%s) - t0 )))."
 else
     banner "Step 7: Instance mappings - SKIPPED"
+fi
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 8 - Build class index (instance IRI → rdf:type via LSLOD)
+# ═══════════════════════════════════════════════════════════════════
+# Queries the LSLOD QLever endpoint for every entity IRI that appears
+# in the instance_matching/ JSON-LD files and records which rdf:type
+# classes each entity belongs to in which named graphs.
+# The result is a cached class-index JSON used by steps 9 and 10.
+#
+# Requires --lslod-endpoint <url> (or LSLOD_ENDPOINT env var).
+# ───────────────────────────────────────────────────────────────────
+if [[ "${SKIP_MAPPINGS}" == false && "${SKIP_CLASS_DERIVATION}" == false ]]; then
+    if [[ -z "${LSLOD_ENDPOINT}" ]]; then
+        warn "Step 8: --lslod-endpoint not set - skipping class index build."
+        warn "  Re-run with: --lslod-endpoint <sparql-url>"
+    else
+        banner "Step 8: Build class index (instance IRIs → rdf:type)"
+        t0=$(date +%s)
+
+        # Discover all instance-mapping JSON-LD files produced in step 7
+        _inst_dir="${CONTAINER_MAPPINGS_DIR}/instance_matching"
+
+        # We call derive with --cache-index only; --enrich and the actual
+        # derivation are done in steps 9/10 (or all at once in step 9).
+        # The index cache lands next to each output file by convention.
+        # Since there may be multiple input files, we loop over them.
+        _inst_files=$(run bash -c "find ${_inst_dir} -name '*.jsonld' ! -name '*.enriched.jsonld' 2>/dev/null || true")
+
+        if [[ -z "${_inst_files}" ]]; then
+            warn "No instance-mapping JSON-LD files found in ${_inst_dir}."
+        else
+            while IFS= read -r _f; do
+                [[ -z "${_f}" ]] && continue
+                _stem="${_f%.jsonld}"
+                _out="${_stem}.class_derived.jsonld"
+                step "  Building class index for: $(basename "${_f}")"
+                run rdfsolve instance-match derive \
+                    --input  "${_f}" \
+                    --output "${_out}" \
+                    --endpoint "${LSLOD_ENDPOINT}" \
+                    --cache-index \
+                    --timeout "${TIMEOUT}" \
+                    || warn "Class index build failed for $(basename "${_f}")."
+            done <<< "${_inst_files}"
+        fi
+
+        step "Class index done in $(elapsed $(( $(date +%s) - t0 )))."
+    fi
+else
+    banner "Step 8: Class index build - SKIPPED"
+fi
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 9 - Derive class-level mappings
+# ═══════════════════════════════════════════════════════════════════
+# Reads each instance-mapping JSON-LD together with its cached class
+# index (produced in step 8) and outputs a class-derived mapping
+# JSON-LD in docker/mappings/class_derived/.
+# ───────────────────────────────────────────────────────────────────
+if [[ "${SKIP_MAPPINGS}" == false && "${SKIP_CLASS_DERIVATION}" == false ]]; then
+    if [[ -z "${LSLOD_ENDPOINT}" ]]; then
+        banner "Step 9: Derive class mappings - SKIPPED (no --lslod-endpoint)"
+    else
+        banner "Step 9: Derive class-level mappings"
+        t0=$(date +%s)
+
+        _inst_dir="${CONTAINER_MAPPINGS_DIR}/instance_matching"
+        _class_out_dir="${CONTAINER_MAPPINGS_DIR}/class_derived"
+
+        _inst_files=$(run bash -c "find ${_inst_dir} -name '*.jsonld' ! -name '*.enriched.jsonld' ! -name '*.class_derived.jsonld' 2>/dev/null || true")
+
+        if [[ -z "${_inst_files}" ]]; then
+            warn "No instance-mapping JSON-LD files found - nothing to derive."
+        else
+            run bash -c "mkdir -p ${_class_out_dir}"
+            while IFS= read -r _f; do
+                [[ -z "${_f}" ]] && continue
+                _base=$(basename "${_f}" .jsonld)
+                _out="${_class_out_dir}/${_base}.class_derived.jsonld"
+                step "  Deriving: $(basename "${_f}") → class_derived/"
+                run rdfsolve instance-match derive \
+                    --input    "${_f}" \
+                    --output   "${_out}" \
+                    --endpoint "${LSLOD_ENDPOINT}" \
+                    --cache-index \
+                    --timeout  "${TIMEOUT}" \
+                    || warn "Class derivation failed for $(basename "${_f}")."
+            done <<< "${_inst_files}"
+        fi
+
+        step "Class derivation done in $(elapsed $(( $(date +%s) - t0 )))."
+    fi
+else
+    banner "Step 9: Derive class mappings - SKIPPED"
+fi
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 10 - Enrich instance JSON-LD with class annotations
+# ═══════════════════════════════════════════════════════════════════
+# Writes {stem}.enriched.jsonld alongside each instance-mapping file,
+# annotating every entity node with @type and rdfsolve:classifiedIn
+# provenance from the class index.
+# ───────────────────────────────────────────────────────────────────
+if [[ "${SKIP_MAPPINGS}" == false && "${SKIP_CLASS_DERIVATION}" == false ]]; then
+    if [[ -z "${LSLOD_ENDPOINT}" ]]; then
+        banner "Step 10: Enrich instance JSON-LD - SKIPPED (no --lslod-endpoint)"
+    else
+        banner "Step 10: Enrich instance JSON-LD with class annotations"
+        t0=$(date +%s)
+
+        _inst_dir="${CONTAINER_MAPPINGS_DIR}/instance_matching"
+
+        _inst_files=$(run bash -c "find ${_inst_dir} -name '*.jsonld' ! -name '*.enriched.jsonld' ! -name '*.class_derived.jsonld' 2>/dev/null || true")
+
+        if [[ -z "${_inst_files}" ]]; then
+            warn "No instance-mapping JSON-LD files found - nothing to enrich."
+        else
+            while IFS= read -r _f; do
+                [[ -z "${_f}" ]] && continue
+                step "  Enriching: $(basename "${_f}")"
+                run rdfsolve instance-match derive \
+                    --input    "${_f}" \
+                    --output   "${_f%.jsonld}.class_derived.jsonld" \
+                    --endpoint "${LSLOD_ENDPOINT}" \
+                    --cache-index \
+                    --enrich \
+                    --timeout  "${TIMEOUT}" \
+                    || warn "Enrichment failed for $(basename "${_f}")."
+            done <<< "${_inst_files}"
+        fi
+
+        step "Enrichment done in $(elapsed $(( $(date +%s) - t0 )))."
+    fi
+else
+    banner "Step 10: Enrich instance JSON-LD - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════

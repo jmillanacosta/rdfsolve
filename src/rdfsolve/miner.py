@@ -1,8 +1,7 @@
 """
-Schema Miner - extract RDF schema patterns via simple SELECT queries.
+Schema Miner - extract RDF schema patterns via SELECT queries.
 
-Instead of building VoID on the endpoint with heavy CONSTRUCT + BIND
-queries, this module runs three lightweight SELECT DISTINCT queries
+This module runs three lightweight SELECT DISTINCT queries
 and assembles the schema in Python:
 
 1. **Typed-object patterns**::
@@ -29,8 +28,8 @@ All queries use OFFSET / LIMIT pagination via
 :meth:`SparqlHelper.select_chunked`.
 
 The primary export is :class:`MinedSchema` (-> JSON-LD).  It can also
-be converted to a VoID graph for downstream LinkML / SHACL / RDF-config
-export via :class:`~rdfsolve.parser.VoidParser`.
+be converted to downstream LinkML / SHACL / RDF-config
+exports.
 """
 
 from __future__ import annotations

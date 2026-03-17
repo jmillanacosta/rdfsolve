@@ -437,6 +437,7 @@ def _build_semra_mapping(
     group: list[SemraMapping_],
     source: str,
     prefix: str,
+    mapping_type: str = "instance",
 ) -> dict[str, Any]:
     """Build a SemraMapping JSON-LD dict from a group of semra Mappings."""
     edges = semra_to_rdfsolve_edges(group, dataset_hint=source)
@@ -448,7 +449,7 @@ def _build_semra_mapping(
     about = AboutMetadata.build(
         dataset_name=f"{source}_{prefix}_mapping",
         pattern_count=len(edges),
-        strategy="semra_import",
+        strategy=mapping_type,
     )
     mapping = SemraMapping(
         edges=edges,
@@ -456,6 +457,7 @@ def _build_semra_mapping(
         source_name=source,
         source_prefix=prefix,
         evidence_chain=evidence_chain,
+        mapping_type=mapping_type,
     )
     return mapping.to_jsonld()
 
@@ -464,6 +466,7 @@ def import_source(
     source: str,
     keep_prefixes: list[str] | None = None,
     output_dir: str = "docker/mappings/semra",
+    mapping_type: str = "instance",
 ) -> dict[str, Any]:
     """Fetch mappings from a SeMRA source and write JSON-LD files.
 
@@ -477,9 +480,13 @@ def import_source(
         source: SeMRA source key (e.g. ``"biomappings"``).
         keep_prefixes: Optional prefix filter.
         output_dir: Directory for output files.
+        mapping_type: ``"instance"`` (default) or ``"class"``.
+            Stored in the ``@about.mapping_type`` field of each
+            output JSON-LD file.
 
     Returns:
-        Summary dict ``{"succeeded": [...], "failed": [...], "skipped": [...]}``.
+        Summary dict
+        ``{"succeeded": [...], "failed": [...], "skipped": [...]}``.
     """
     import json as _json
     from collections import defaultdict
@@ -507,6 +514,7 @@ def import_source(
                 out,
                 succeeded,
                 failed,
+                mapping_type=mapping_type,
             )
 
         fn = SOURCE_RESOLVER.lookup(source)
@@ -544,7 +552,7 @@ def import_source(
     for prefix, group in sorted(by_prefix.items()):
         outfile = out / f"{source}_{prefix}.jsonld"
         try:
-            doc = _build_semra_mapping(group, source, prefix)
+            doc = _build_semra_mapping(group, source, prefix, mapping_type=mapping_type)
             outfile.write_text(
                 _json.dumps(doc, indent=2, ensure_ascii=False),
                 encoding="utf-8",
@@ -582,6 +590,7 @@ def _import_wikidata(
     out: Any,
     succeeded: list[str],
     failed: list[dict[str, str]],
+    mapping_type: str = "instance",
 ) -> dict[str, Any]:
     """Handle the Wikidata special case for import_source."""
     available = set(
@@ -612,6 +621,7 @@ def _import_wikidata(
                 grp,
                 "wikidata",
                 wd_prefix,
+                mapping_type=mapping_type,
             )
             outfile.write_text(
                 _json.dumps(

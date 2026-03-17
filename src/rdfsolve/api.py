@@ -939,6 +939,7 @@ def import_semra_source(
     source: str,
     keep_prefixes: list[str] | None = None,
     output_dir: str = "docker/mappings/semra",
+    mapping_type: str = "instance",
 ) -> dict[str, Any]:
     """Import mappings from a SeMRA source and write one JSON-LD per prefix.
 
@@ -948,6 +949,10 @@ def import_semra_source(
         source: SeMRA source key (e.g. ``"biomappings"``).
         keep_prefixes: Optional prefix filter.
         output_dir: Directory for output files.
+        mapping_type: ``"instance"`` (default) or ``"class"``.  When
+            ``"instance"``, the output JSON-LD contains instance-level
+            edges that can be passed to
+            :func:`derive_class_mappings_from_instances`.
 
     Returns:
         Summary dict ``{"succeeded", "failed", "skipped"}``.
@@ -958,6 +963,7 @@ def import_semra_source(
         source=source,
         keep_prefixes=keep_prefixes,
         output_dir=output_dir,
+        mapping_type=mapping_type,
     )
 
 
@@ -965,6 +971,7 @@ def seed_semra_mappings(
     sources: list[str],
     keep_prefixes: list[str] | None = None,
     output_dir: str = "docker/mappings/semra",
+    mapping_type: str = "instance",
 ) -> dict[str, Any]:
     """Seed semra mapping files for multiple sources.
 
@@ -976,6 +983,9 @@ def seed_semra_mappings(
             (e.g. ``["biomappings", "gilda"]``).
         keep_prefixes: Optional shared prefix filter applied to all sources.
         output_dir: Directory for output files.
+        mapping_type: ``"instance"`` (default) or ``"class"``.
+            Stored in the ``@about.mapping_type`` field of each output
+            JSON-LD file.
 
     Returns:
         Aggregated summary with keys ``"succeeded"``, ``"failed"``,
@@ -990,6 +1000,7 @@ def seed_semra_mappings(
             source=source,
             keep_prefixes=keep_prefixes,
             output_dir=output_dir,
+            mapping_type=mapping_type,
         )
         succeeded.extend(result.get("succeeded", []))
         failed.extend(result.get("failed", []))
@@ -1096,6 +1107,7 @@ def seed_inferenced_mappings(
 def import_sssom_source(
     entry: dict[str, Any],
     output_dir: str = "docker/mappings/sssom",
+    mapping_type: str = "instance",
 ) -> dict[str, Any]:
     """Download and convert one SSSOM source entry to JSON-LD files.
 
@@ -1111,6 +1123,9 @@ def import_sssom_source(
         entry: Dict with at least ``"name"`` and ``"url"`` keys, as found
                in ``data/sssom_sources.yaml``.
         output_dir: Directory to write output JSON-LD files.
+        mapping_type: ``"instance"`` (default) or ``"class"``.
+            Stored in the ``@about.mapping_type`` field of each output
+            JSON-LD file.
 
     Returns:
         Summary dict with keys ``"succeeded"``, ``"failed"``,
@@ -1118,13 +1133,18 @@ def import_sssom_source(
     """
     from rdfsolve.sssom_importer import import_sssom_source as _import
 
-    return _import(entry=entry, output_dir=output_dir)
+    return _import(
+        entry=entry,
+        output_dir=output_dir,
+        mapping_type=mapping_type,
+    )
 
 
 def seed_sssom_mappings(
     sssom_sources_yaml: str = "data/sssom_sources.yaml",
     output_dir: str = "docker/mappings/sssom",
     names: list[str] | None = None,
+    mapping_type: str = "instance",
 ) -> dict[str, Any]:
     """Seed SSSOM mapping files for all (or selected) sources.
 
@@ -1141,6 +1161,9 @@ def seed_sssom_mappings(
             (default: ``docker/mappings/sssom``).
         names: Optional list of source names to restrict processing;
                if ``None`` (default), all entries are processed.
+        mapping_type: ``"instance"`` (default) or ``"class"``.
+            Stored in the ``@about.mapping_type`` field of each output
+            JSON-LD file.
 
     Returns:
         Aggregated summary with keys ``"succeeded"``, ``"failed"``,
@@ -1152,4 +1175,313 @@ def seed_sssom_mappings(
         sssom_sources_yaml=sssom_sources_yaml,
         output_dir=output_dir,
         names=names,
+        mapping_type=mapping_type,
     )
+
+
+# ---------------------------------------------------------------------------
+# Instance-to-class derivation
+# ---------------------------------------------------------------------------
+
+
+def build_class_index_from_endpoints(
+    entity_iris: list[str],
+    endpoint_url: str,
+    *,
+    batch_size: int = 50,
+    timeout: float = 60.0,
+    cache_path: str | None = None,
+) -> tuple[Any, dict[str, Any]]:
+    """Build (or load) a :class:`~rdfsolve.class_index.ClassIndex`.
+
+    Queries *endpoint_url* for the RDF classes of every IRI in
+    *entity_iris* and returns the populated index together with cost
+    statistics.  When *cache_path* is given and the file already exists,
+    the index is loaded from disk and no network calls are made.
+
+    Args:
+        entity_iris: List of entity IRIs to look up.
+        endpoint_url: QLever (or SPARQL 1.1) endpoint URL.
+        batch_size: Number of IRIs sent per VALUES query (default 50).
+        timeout: Per-request timeout in seconds (default 60.0).
+        cache_path: Optional path to read/write a cached
+            :func:`~rdfsolve.class_index.save_class_index` JSON file.
+
+    Returns:
+        ``(class_index, cost_stats)`` where *cost_stats* is a dict with
+        keys ``"queries"``, ``"found"``, ``"not_found"``,
+        ``"elapsed_s"``.
+    """
+    from rdfsolve.class_index import (
+        build_class_index,
+        load_class_index,
+        save_class_index,
+    )
+
+    if cache_path is not None:
+        from pathlib import Path as _Path
+
+        p = _Path(cache_path)
+        if p.exists():
+            idx = load_class_index(cache_path)
+            cost: dict[str, Any] = {
+                "queries": 0,
+                "found": len(idx.entities),
+                "not_found": 0,
+                "elapsed_s": 0.0,
+                "cached": True,
+            }
+            return idx, cost
+
+    idx, cost = build_class_index(
+        entity_iris,
+        endpoint_url,
+        batch_size=batch_size,
+        timeout=timeout,
+    )
+
+    if cache_path is not None:
+        save_class_index(idx, cache_path)
+
+    return idx, cost
+
+
+def enrich_instance_jsonld(
+    jsonld_path: str,
+    class_index: Any,
+    *,
+    output_path: str | None = None,
+) -> dict[str, Any]:
+    """Enrich an instance-mapping JSON-LD file with class annotations.
+
+    Reads the JSON-LD document at *jsonld_path*, calls
+    :func:`~rdfsolve.class_index.enrich_jsonld_with_classes`, and writes
+    the enriched document.  The output location defaults to
+    ``{stem}.enriched.jsonld`` next to the source file.
+
+    Args:
+        jsonld_path: Path to the source JSON-LD mapping file.
+        class_index: A :class:`~rdfsolve.class_index.ClassIndex` instance
+            returned by :func:`build_class_index_from_endpoints`.
+        output_path: Explicit destination path.  Defaults to
+            ``{jsonld_path_stem}.enriched.jsonld``.
+
+    Returns:
+        Enrichment statistics dict with keys
+        ``"total_edges"``, ``"enriched_edges"``, ``"elapsed_s"``.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    from rdfsolve.class_index import enrich_jsonld_with_classes
+
+    src = _Path(jsonld_path)
+    doc = _json.loads(src.read_text(encoding="utf-8"))
+    enriched_doc, stats = enrich_jsonld_with_classes(doc, class_index)
+
+    dest = _Path(output_path) if output_path else src.with_suffix(".enriched.jsonld")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(
+        _json.dumps(enriched_doc, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return stats
+
+
+def derive_class_mappings_from_instances(
+    input_paths: list[str],
+    output_path: str,
+    *,
+    endpoint_url: str,
+    timeout: float = 60.0,
+    batch_size: int = 50,
+    min_instance_count: int = 1,
+    min_confidence: float = 0.0,
+    cache_index: bool = False,
+    index_cache_path: str | None = None,
+    enrich_in_place: bool = False,
+    source_name: str | None = None,
+) -> dict[str, Any]:
+    """Derive class-level mappings from a set of instance-mapping files.
+
+    Orchestrates the full derivation pipeline:
+
+    1. Load all instance-mapping JSON-LD files from *input_paths*.
+    2. Collect unique entity IRIs (subjects and objects).
+    3. Build (or load) a :class:`~rdfsolve.class_index.ClassIndex` via
+       *endpoint_url*.
+    4. Optionally enrich each input file in-place with class annotations.
+    5. Call :func:`~rdfsolve.class_derivation.derive_class_mappings`.
+    6. Serialise the resulting
+       :class:`~rdfsolve.mapping_models.ClassDerivedMapping` to
+       *output_path*.
+    7. Write a session-report JSON next to the output file.
+
+    Args:
+        input_paths: Paths to instance-mapping JSON-LD files.
+        output_path: Destination path for the class-derived JSON-LD.
+        endpoint_url: QLever / SPARQL 1.1 endpoint used for class lookup.
+        timeout: Per-request timeout in seconds (default 60.0).
+        batch_size: IRIs per VALUES query (default 50).
+        min_instance_count: Minimum evidence pairs to retain a class pair
+            (default 1).
+        min_confidence: Minimum confidence score threshold (default 0.0).
+        cache_index: If ``True``, persist the class index to disk and
+            reuse it on subsequent runs.
+        index_cache_path: Explicit path for the cached index JSON.
+            Defaults to ``{output_path}.class_index_cache.json``
+            when *cache_index* is ``True``.
+        enrich_in_place: If ``True``, write enriched copies of all input
+            files alongside the originals
+            (``{stem}.enriched.jsonld``).
+        source_name: Human-readable name for the session report.
+            Defaults to the stem of *output_path*.
+
+    Returns:
+        Session-report dict with keys
+        ``source_name``, ``timestamp``, ``source_mapping_type``,
+        ``endpoint_url``, ``cost``, ``enrichment``, ``derivation``,
+        ``elapsed_s``.
+    """
+    import json as _json
+    import time as _time
+    from datetime import datetime as _dt
+    from pathlib import Path as _Path
+
+    from rdfsolve.class_derivation import derive_class_mappings
+    from rdfsolve.class_index import enrich_jsonld_with_classes
+    from rdfsolve.mapping_models import MappingEdge
+    from rdfsolve.mapping_models.class_derived import ClassDerivedMapping
+    from rdfsolve.schema_models.core import AboutMetadata
+
+    t0 = _time.monotonic()
+
+    # ── 1. Load input files ──────────────────────────────────────────
+    input_docs: list[dict[str, Any]] = []
+    source_files: list[str] = []
+    source_types: set[str] = set()
+    for p_str in input_paths:
+        p = _Path(p_str)
+        raw = _json.loads(p.read_text(encoding="utf-8"))
+        input_docs.append(raw)
+        source_files.append(p_str)
+        about = raw.get("@about", {})
+        mt = about.get("mapping_type") or about.get("strategy", "unknown")
+        source_types.add(mt)
+
+    # ── 2. Collect unique entity IRIs ────────────────────────────────
+    entity_iris_set: set[str] = set()
+    all_instance_edges: list[Any] = []
+    for raw in input_docs:
+        for e in raw.get("@graph", []):
+            src_iri = e.get("subject_source_iri") or (e.get("subject_source") or {}).get("@id")
+            tgt_iri = e.get("object_source_iri") or (e.get("object_source") or {}).get("@id")
+            if src_iri:
+                entity_iris_set.add(src_iri)
+            if tgt_iri:
+                entity_iris_set.add(tgt_iri)
+            edge_data = {k: v for k, v in e.items() if k in MappingEdge.model_fields}
+            all_instance_edges.append(MappingEdge(**edge_data))
+
+    entity_iris = sorted(entity_iris_set)
+
+    # ── 3. Build class index ─────────────────────────────────────────
+    _cache_path: str | None = None
+    if cache_index:
+        _cache_path = index_cache_path or str(
+            _Path(output_path).with_suffix(".class_index_cache.json")
+        )
+
+    class_index, cost_stats = build_class_index_from_endpoints(
+        entity_iris,
+        endpoint_url,
+        batch_size=batch_size,
+        timeout=timeout,
+        cache_path=_cache_path,
+    )
+
+    # ── 4. Optionally enrich input files ─────────────────────────────
+    enrichment_stats_total: dict[str, Any] = {
+        "entities_total": 0,
+        "entities_enriched": 0,
+        "entities_not_found": 0,
+        "classes_added": 0,
+        "elapsed_s": 0.0,
+    }
+    if enrich_in_place:
+        for p_str, raw in zip(input_paths, input_docs, strict=False):
+            _, e_stats = enrich_jsonld_with_classes(raw, class_index)
+            for k in (
+                "entities_total",
+                "entities_enriched",
+                "entities_not_found",
+                "classes_added",
+            ):
+                enrichment_stats_total[k] = enrichment_stats_total.get(k, 0) + e_stats.get(k, 0)
+            enrichment_stats_total["elapsed_s"] = enrichment_stats_total.get(
+                "elapsed_s", 0.0
+            ) + e_stats.get("elapsed_s", 0.0)
+            out_enrich = _Path(p_str).with_suffix(".enriched.jsonld")
+            out_enrich.write_text(
+                _json.dumps(raw, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+
+    # ── 5. Derive class mappings ─────────────────────────────────────
+    class_pairs, derivation_stats = derive_class_mappings(
+        all_instance_edges,
+        class_index,
+        min_instance_count=min_instance_count,
+        min_confidence=min_confidence,
+    )
+
+    # ── 6. Serialise ClassDerivedMapping ─────────────────────────────
+    out_p = _Path(output_path)
+    out_p.parent.mkdir(parents=True, exist_ok=True)
+
+    _src_name = source_name or out_p.stem
+    class_edges = [pair.to_mapping_edge() for pair in class_pairs]
+    about = AboutMetadata.build(
+        dataset_name=_src_name,
+        pattern_count=len(class_edges),
+        strategy="class_derived",
+    )
+    _src_type = next(iter(source_types), "unknown")
+    mapping = ClassDerivedMapping(
+        edges=class_edges,
+        about=about,
+        source_mapping_type=_src_type,
+        source_mapping_files=source_files,
+        derivation_stats=derivation_stats,
+        enrichment_stats=enrichment_stats_total,
+        class_index_endpoint=endpoint_url,
+    )
+    out_p.write_text(
+        _json.dumps(mapping.to_jsonld(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    elapsed = _time.monotonic() - t0
+
+    # ── 7. Session report ────────────────────────────────────────────
+    report: dict[str, Any] = {
+        "source_name": _src_name,
+        "timestamp": _dt.utcnow().isoformat() + "Z",
+        "source_mapping_type": _src_type,
+        "endpoint_url": endpoint_url,
+        "cost": cost_stats,
+        "enrichment": enrichment_stats_total,
+        "derivation": derivation_stats,
+        "elapsed_s": elapsed,
+    }
+
+    report_dir = _Path("docker/mappings/class_derived/.session_reports")
+    report_dir.mkdir(parents=True, exist_ok=True)
+    ts = _dt.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    report_file = report_dir / f"{_src_name}_{ts}.json"
+    report_file.write_text(
+        _json.dumps(report, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    return report

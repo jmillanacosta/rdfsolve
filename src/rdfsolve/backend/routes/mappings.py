@@ -15,7 +15,14 @@ def _get_svc() -> MappingService:
 
 @mappings_bp.route("/", methods=["GET"])
 def list_mappings() -> Response | tuple[Response, int]:
-    """List all stored instance mappings (strategy=instance_matcher).
+    """List stored mappings, optionally filtered by strategy.
+
+    Query parameters
+    ----------------
+    strategy : str, optional
+        Filter by strategy value, e.g. ``class_derived``,
+        ``instance_matcher``, ``sssom_import``, ``semra_import``,
+        ``inferenced``.  Omit to return all mapping types.
 
     Returns
     -------
@@ -32,7 +39,8 @@ def list_mappings() -> Response | tuple[Response, int]:
             }
         ]
     """
-    return jsonify(_get_svc().list_mappings())
+    strategy = request.args.get("strategy") or None
+    return jsonify(_get_svc().list_mappings(strategy=strategy))
 
 
 @mappings_bp.route("/<mapping_id>", methods=["GET"])
