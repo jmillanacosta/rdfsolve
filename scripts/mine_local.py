@@ -856,8 +856,17 @@ def _mine_single_local(
     out: Path,
     args: argparse.Namespace,
     entry: dict[str, Any] | None = None,
+    graph_uris_override: list[str] | None = None,
 ) -> dict[str, Any]:
     """Mine a single dataset from a local endpoint.
+
+    Parameters
+    ----------
+    graph_uris_override:
+        Named-graph URIs to scope queries to.  When *None*, the value
+        from ``entry["graph_uris"]`` is used (if present).  Pass an
+        explicit list to restrict a provider-level joint index to a
+        single source's named graphs.
 
     Returns a dict with ``classes``, ``properties``, and output
     file paths - useful for populating benchmark run metrics.
@@ -873,9 +882,25 @@ def _mine_single_local(
         endpoint, timeout=args.timeout,
     )
 
+    # Resolve graph_uris: CLI override > entry > args attribute
+    if graph_uris_override is not None:
+        _graph_uris: list[str] | None = graph_uris_override or None
+    elif entry is not None:
+        raw = entry.get("graph_uris")
+        _graph_uris = raw if raw else None
+    else:
+        # args.graph_uris is a tuple from Click's multiple=True
+        raw_args = getattr(args, "graph_uris", None) or ()
+        # Special sentinel: '--graph-uri none' -> mine all graphs
+        if len(raw_args) == 1 and raw_args[0].lower() == "none":
+            _graph_uris = None
+        else:
+            _graph_uris = list(raw_args) if raw_args else None
+
     schema = _mine(
         endpoint_url=endpoint,
         dataset_name=name,
+        graph_uris=_graph_uris,
         chunk_size=args.chunk_size,
         class_batch_size=args.class_batch_size,
         timeout=args.timeout,
@@ -1099,43 +1124,40 @@ def _nq_encode_cmd() -> str:
     import base64
 
     code = (
-        "import sys\n"
-        # ── enc(): encode spaces in IRIs, quote-aware ──────────────────
+        "import sys, re\n"
+        # enc(): percent-encode characters QLever rejects inside IRI tokens.
+        # <([^<>\n]*)> isolates IRIs: per NQ spec IRIs cannot contain '<',
+        # so bare '<' in literals never matches (no '>' before the next '<').
         "def enc(ln):\n"
-        "    out=[]; i=0; n=len(ln); q=False; esc=False\n"
-        "    while i<n:\n"
-        "        c=ln[i]\n"
-        "        if q:\n"
-        "            out.append(c)\n"
-        "            if esc: esc=False\n"
-        "            elif c=='\\\\': esc=True\n"
-        "            elif c=='\"': q=False\n"
-        "        elif c=='\"': out.append(c); q=True\n"
-        "        elif c=='<':\n"
-        "            j=i+1\n"
-        "            while j<n and ln[j]!='>' : j+=1\n"
-        "            if j<n:\n"
-        "                out.append('<'+ln[i+1:j].replace(' ','%20')+'>'); i=j\n"
-        "            else: out.append(c)\n"
-        "        else: out.append(c)\n"
-        "        i+=1\n"
-        "    return ''.join(out)\n"
-        # ── main loop: join lines whose IRI was split across a newline ──
-        # Detect a split by counting raw '<' and '>' characters.  We do NOT
-        # track quoting here: a '"' inside an angle-bracket IRI is just
-        # content and must not suppress the '>' counter.  A well-formed
-        # complete NQ line always has balanced '<'/'>' counts.
-        "inp=sys.stdin.buffer; out=sys.stdout\n"
-        "pending=''\n"
+        "    def fix(m):\n"
+        "        s = m.group(1).replace(' ', '%20').replace('\"', '%22')\n"
+        "        return '<' + s + '>'\n"
+        "    return re.sub(r'<([^<>\\n]*)>', fix, ln)\n"
+        # has_open_iri(): True when a line ends mid-IRI (a '<' was opened
+        # but the matching '>' has not appeared yet on this line).
+        # We count unmatched '<' by stripping all complete <...> tokens first,
+        # then checking whether a bare '<' remains before end-of-line.
+        "def has_open_iri(ln):\n"
+        "    stripped = re.sub(r'<[^<>\\n]*>', '', ln)\n"
+        "    return '<' in stripped\n"
+        "inp = sys.stdin.buffer\n"
+        "out = sys.stdout\n"
+        "pending = ''\n"
         "for raw in inp:\n"
-        "    ln=pending+raw.decode('utf-8','replace')\n"
-        "    pending=''\n"
-        "    if ln.count('<')>ln.count('>'):\n"
-        "        pending=ln.rstrip('\\n')\n"
+        "    line = raw.decode('utf-8', 'replace')\n"
+        # If we are accumulating a split IRI, strip the leading newline/whitespace
+        # from the continuation and append it to the pending fragment.
+        "    if pending:\n"
+        "        line = pending.rstrip('\\n') + line.lstrip()\n"
+        "        pending = ''\n"
+        # If the joined line still has an open IRI (extremely rare multi-line
+        # splits), keep accumulating.
+        "    if has_open_iri(line.rstrip('\\n')):\n"
+        "        pending = line\n"
         "        continue\n"
-        "    out.write(enc(ln))\n"
+        "    out.write(enc(line))\n"
         "if pending:\n"
-        "    out.write(enc(pending+'\\n'))\n"
+        "    out.write(enc(pending))\n"
         "out.flush()\n"
     )
     b64 = base64.b64encode(code.encode()).decode()
@@ -1160,14 +1182,14 @@ _QLEVERFILE_TEMPLATE = """\
 NAME              = {name}
 GET_DATA_CMD      = {get_data_cmd}
 FORMAT            = {rdf_format}
-DESCRIPTION       = {name} - local RDF dataset for rdfsolve schema mining
+DESCRIPTION       = {name} - rdfsolve-generated Qleverfile
 
 [index]
 INPUT_FILES          = {input_files}
 CAT_INPUT_FILES      = {cat_input_files}
 SETTINGS_JSON        = {settings_json}
 PARALLEL_PARSING     = false
-PARSER_BUFFER_SIZE   = 15MB
+PARSER_BUFFER_SIZE   = 512MB
 
 [server]
 PORT              = {port}
@@ -1185,23 +1207,26 @@ UI_CONFIG = default
 
 
 def _detect_data_format(entry: Any) -> str | None:
-    """Return format string if the entry has any download field.
+    """Return format string if the entry has any download field or local_tar_url.
 
     The return value is a short label used for logging only.  The actual
     Qleverfile construction is handled generically by
     ``_build_qleverfile``.
 
-    Returns ``None`` when the entry has no ``download_*`` fields at all.
+    Returns ``None`` when the entry has neither ``download_*`` fields
+    nor a ``local_tar_url``.
     """
+    if entry.get("local_tar_url"):
+        return "trig"  # IDSM-style tar sources
     dl_keys = [k for k in entry if k.startswith("download_") and entry.get(k)]
     if not dl_keys:
         return None
     # Return the most descriptive key (prefer data over schema files)
     priority = [
-        "download_nq", "download_nquads", "download_nt", "download_n3",
-        "download_ttl", "download_rdf", "download_rdfxml", "download_owl",
-        "download_jsonld", "download_zip", "download_tar_gz", "download_tgz",
-        "download_ftp",
+        "download_nq", "download_nquads", "download_trig", "download_nt",
+        "download_n3", "download_ttl", "download_rdf", "download_rdfxml",
+        "download_owl", "download_jsonld", "download_zip", "download_tar_gz",
+        "download_tgz", "download_ftp",
     ]
     for k in priority:
         if k in dl_keys:
@@ -1218,6 +1243,171 @@ def _urls_from_field(entry: dict, field: str) -> list[str]:
         return []
     urls = raw if isinstance(raw, list) else [raw]
     return [u for u in urls if u]
+
+
+def _graph_uri_to_tar_folder(uri: str) -> str:
+    """Convert a named-graph URI to the folder name used inside IDSM-style tars.
+
+    Convention (observed from the IDSM tar):
+      http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
+        -> http_rdf.ncbi.nlm.nih.gov_pubchem_taxonomy
+    That is: strip the scheme ``://``, replace ``/`` with ``_``.
+    """
+    no_scheme = re.sub(r'^https?://', '', uri)
+    return 'http_' + no_scheme.replace('/', '_')
+
+
+def _tar_source_qleverfile_parts(
+    tar_url: str,
+    tar_subdirs: list[str],
+    src_data_dir: str,
+    rdf_subdir: str,
+) -> tuple[str, str, str, str]:
+    """Return (get_data_cmd, rdf_format, input_files, cat_input_files) for
+    a source (or provider) whose data lives inside an IDSM-style remote tar.
+
+    ``tar_subdirs`` is the list of named-graph folder names to extract.
+    When it contains all provider members, this produces the combined
+    provider Qleverfile parts; when it contains a single source's folder,
+    it produces the per-source parts.
+
+    Files inside the tar are ``.trig.gz``; each is a TriG document whose
+    default graph corresponds to the named graph.  QLever indexes TriG
+    as a Turtle superset (``FORMAT = ttl``).
+    """
+    steps_tar: list[str] = [
+        f"mkdir -p {src_data_dir}",
+        f"cd {src_data_dir}",
+        # Discover tar root prefix from the first 512-byte header block.
+        f'TAR_ROOT=$(curl -s --range 0-511 "{tar_url}" | '
+        "python3 -c \""
+        "import sys; b=sys.stdin.buffer.read(512); "
+        "print(b[:100].rstrip(b'\\x00').decode('utf-8','replace').split('/')[0]) "
+        "if len(b)==512 else print('')"
+        "\")",
+    ]
+    for subdir in tar_subdirs:
+        # Stream only the matching subdirectory from the remote tar and
+        # place all .trig.gz files flat in the working directory.
+        # --strip-components=2 removes <root>/<subdir>/ prefixes.
+        steps_tar.append(
+            f'echo "Streaming {subdir} …" && '
+            f'curl -s "{tar_url}" | '
+            f'tar -xzf - --wildcards "${{TAR_ROOT}}/{subdir}/*.trig.gz" '
+            f'--strip-components=2 '
+            f'--no-anchored 2>/dev/null || true'
+        )
+
+    get_data_cmd = " && ".join(steps_tar)
+    get_data_cmd = re.sub(r'\$(?!\{)', '$$', get_data_cmd)
+
+    rdf_format = "ttl"          # QLever reads TriG as Turtle superset
+    input_files = f"{rdf_subdir}/*.trig.gz"
+    cat_input_files = (
+        "zcat ${INPUT_FILES} 2>/dev/null | grep -v '^$$'"
+    )
+    cat_input_files = re.sub(r'\$(?!\{)', '$$', cat_input_files)
+
+    return get_data_cmd, rdf_format, input_files, cat_input_files
+
+
+def _build_provider_qleverfile(
+    provider: str,
+    members: list[Any],
+    data_dir: Path,
+    port: int,
+    runtime: str,
+) -> str:
+    """Build a combined Qleverfile that indexes ALL members of a provider group.
+
+    For tar-based providers (``local_tar_url`` present on members): streams
+    every member's named-graph folder from the single remote tar.
+
+    For download-based providers (``local_provider`` set but no
+    ``local_tar_url``): aggregates all ``download_*`` URLs from every member
+    and generates a normal multi-URL Qleverfile by calling ``_build_qleverfile``
+    on a synthetic merged entry.
+    """
+    workdir = (data_dir / "qlever_workdirs" / provider).resolve()
+    rdf_subdir = "rdf"
+    src_data_dir = f"{workdir}/{rdf_subdir}"
+    settings_json = (
+        '{ "ascii-prefixes-only": false, '
+        '"num-triples-per-batch": 1000000 }'
+    )
+
+    # Split members into tar-based vs download-based.
+    tar_members  = [m for m in members if m.get("local_tar_url")]
+    dl_members   = [m for m in members if not m.get("local_tar_url")
+                    and any(k.startswith("download_") for k in m)]
+
+    # Collect the canonical tar URL (all tar members share the same one).
+    tar_url = tar_members[0].get("local_tar_url", "") if tar_members else ""
+
+    # ── Pure download-based provider (e.g. Bio2RDF) ───────────────
+    # No tar members at all: merge all download_* fields.
+    if not tar_url:
+        merged: dict[str, Any] = {"name": provider}
+        for m in dl_members:
+            for key in m:
+                if not key.startswith("download_"):
+                    continue
+                new_urls = _urls_from_field(m, key)
+                existing = merged.get(key)
+                if existing is None:
+                    merged[key] = new_urls if len(new_urls) > 1 else (new_urls[0] if new_urls else "")
+                else:
+                    merged[key] = (existing if isinstance(existing, list) else [existing]) + new_urls
+        return _build_qleverfile(merged, data_dir, port, runtime)
+
+    # ── Tar-based provider (e.g. IDSM), possibly with extra dl members ──
+    # Collect all tar subdirectories from tar-having members.
+    all_subdirs: list[str] = []
+    for m in tar_members:
+        for g in (m.get("graph_uris") or []):
+            folder = _graph_uri_to_tar_folder(g)
+            if folder not in all_subdirs:
+                all_subdirs.append(folder)
+
+    get_data_cmd, rdf_format, input_files, cat_input_files = \
+        _tar_source_qleverfile_parts(
+            tar_url, all_subdirs, src_data_dir, rdf_subdir
+        )
+
+    # If there are also download-based members (e.g. chebi, chembl in IDSM),
+    # append their wget steps to GET_DATA_CMD.  Their files land alongside the
+    # .trig.gz files in rdf/; they will be converted as needed.
+    if dl_members:
+        extra_steps: list[str] = []
+        for m in dl_members:
+            mname = m.get("name", "?")
+            for key in sorted(k for k in m if k.startswith("download_")):
+                for url in _urls_from_field(m, key):
+                    extra_steps.append(
+                        f'echo "Downloading {mname}: {url}" && '
+                        f'wget -c -q --content-disposition "{url}" 2>/dev/null || '
+                        f'wget -c -q -O "$(basename {url})" "{url}"'
+                    )
+        if extra_steps:
+            # Remove the $$ escaping from get_data_cmd before extending,
+            # then re-apply at the end.
+            unescaped = get_data_cmd.replace('$$', '$')
+            extra_block = " && ".join(extra_steps)
+            combined = unescaped + " && " + extra_block
+            get_data_cmd = re.sub(r'\$(?!\{)', '$$', combined)
+
+    return _QLEVERFILE_TEMPLATE.format(
+        name=provider,
+        workdir=workdir,
+        port=port,
+        rdf_format=rdf_format,
+        input_files=input_files,
+        cat_input_files=cat_input_files,
+        get_data_cmd=get_data_cmd,
+        settings_json=settings_json,
+        access_token=provider,
+        runtime=runtime,
+    )
 
 
 # Map download_* suffix -> (QLever FORMAT, input glob, cat command)
@@ -1257,8 +1447,14 @@ def _build_qleverfile(
       - Extracts ``.tar.gz`` / ``.tgz`` / ``.zip`` archives
       - Converts RDF/XML and OWL -> Turtle (via rapper)
       - Converts JSON-LD -> Turtle (via Python rdflib)
+
+    For provider-level bulk tars (``local_tar_url``), a separate
+    Qleverfile is generated that streams only the named-graph subdir
+    from the tar using ``tar -xOf``.
     """
     name = entry.get("name", "unknown")
+    local_provider = entry.get("local_provider", "")
+    local_tar_url = entry.get("local_tar_url", "")
 
     workdir = (data_dir / "qlever_workdirs" / name).resolve()
     rdf_subdir = "rdf"  # relative to workdir
@@ -1268,6 +1464,37 @@ def _build_qleverfile(
         '{ "ascii-prefixes-only": false, '
         '"num-triples-per-batch": 1000000 }'
     )
+
+    # ── Provider bulk-tar path (local_tar_url) ────────────────────
+    # When a source belongs to a multi-graph provider (e.g. IDSM) the
+    # tar is structured as:
+    #   <tarball-root>/<named-graph-as-path>/<predicate>.trig.gz
+    # Each named-graph URI maps to a folder in the tar:
+    #   http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
+    #     -> http_rdf.ncbi.nlm.nih.gov_pubchem_taxonomy
+    if local_tar_url:
+        graph_uris: list[str] = entry.get("graph_uris") or []
+        if not graph_uris:
+            raise ValueError(
+                f"Source '{name}' has local_tar_url but no graph_uris"
+            )
+        tar_subdirs = [_graph_uri_to_tar_folder(g) for g in graph_uris]
+        get_data_cmd, rdf_format, input_files, cat_input_files = \
+            _tar_source_qleverfile_parts(
+                local_tar_url, tar_subdirs, src_data_dir, rdf_subdir
+            )
+        return _QLEVERFILE_TEMPLATE.format(
+            name=name,
+            workdir=workdir,
+            port=port,
+            rdf_format=rdf_format,
+            input_files=input_files,
+            cat_input_files=cat_input_files,
+            get_data_cmd=get_data_cmd,
+            settings_json=settings_json,
+            access_token=name,
+            runtime=runtime,
+        )
 
     # ── Collect ALL download URLs, grouped by type ────────────────
     dl_keys = sorted(k for k in entry if k.startswith("download_") and entry.get(k))
@@ -1281,8 +1508,10 @@ def _build_qleverfile(
     has_rdfxml = False      # need RDF/XML -> Turtle conversion
     has_jsonld = False      # need JSON-LD -> Turtle conversion
     has_nq = False          # primary format is N-Quads
+    has_trig = False        # primary format is TriG (named graphs)
     has_nt = False          # primary format is N-Triples
     has_n3 = False          # primary format is N3
+    has_ttl = False         # has plain Turtle files
 
     for dk in dl_keys:
         suffix = dk.removeprefix("download_")
@@ -1306,10 +1535,14 @@ def _build_qleverfile(
             has_jsonld = True
         if suffix in ("nq", "nquads"):
             has_nq = True
+        if suffix == "trig":
+            has_trig = True
         if suffix == "nt":
             has_nt = True
         if suffix == "n3":
             has_n3 = True
+        if suffix == "ttl":
+            has_ttl = True
 
     # ── Decide QLever FORMAT and INPUT_FILES / CAT_INPUT_FILES ────
     if has_nq:
@@ -1321,6 +1554,15 @@ def _build_qleverfile(
             "grep -v '^$' | "
             + _nq_encode_cmd()
         )
+    elif has_trig:
+        # TriG carries named graphs; QLever ingests as nq format
+        rdf_format = "nq"
+        input_files = f"{rdf_subdir}/*.trig* {rdf_subdir}/*.nq*"
+        cat_input_files = (
+            "( zcat ${INPUT_FILES} 2>/dev/null || "
+            "cat ${INPUT_FILES} 2>/dev/null ) | "
+            "grep -v '^$'"
+        )
     elif has_nt:
         rdf_format = "nt"
         input_files = f"{rdf_subdir}/*.nt*"
@@ -1330,6 +1572,11 @@ def _build_qleverfile(
             "grep -v '^$' | "
             + _nq_encode_cmd()
         )
+    elif has_n3 and has_ttl:
+        # Mixed N3 + Turtle: both are Turtle-compatible, glob both
+        rdf_format = "ttl"
+        input_files = f"{rdf_subdir}/*.ttl {rdf_subdir}/*.n3"
+        cat_input_files = "cat ${INPUT_FILES}"
     elif has_n3:
         rdf_format = "ttl"
         input_files = f"{rdf_subdir}/*.n3"
@@ -1349,8 +1596,8 @@ def _build_qleverfile(
     wget_parts: list[str] = []
     _RDF_EXTS = (
         ".ttl", ".ttl.gz", ".nt", ".nt.gz", ".nq", ".nq.gz",
-        ".n3", ".owl", ".rdf", ".rdf.gz", ".rdf.xz", ".owl.xz",
-        ".xml.gz", ".jsonld", ".tar.gz", ".tgz", ".zip",
+        ".trig", ".trig.gz", ".n3", ".owl", ".rdf", ".rdf.gz",
+        ".rdf.xz", ".owl.xz", ".xml.gz", ".jsonld", ".tar.gz", ".tgz", ".zip",
     )
     for u in all_urls:
         fname = u.rsplit("/", 1)[-1]
@@ -1408,6 +1655,7 @@ def _build_qleverfile(
             "&& find . -mindepth 2 \\( " # Do we need to set the depth iteratively here to ensure finding files
             '-name "*.ttl" -o -name "*.ttl.gz" -o -name "*.nt" -o '
             '-name "*.nt.gz" -o -name "*.nq" -o -name "*.nq.gz" -o '
+            '-name "*.trig" -o -name "*.trig.gz" -o '
             '-name "*.n3" -o -name "*.owl" -o -name "*.rdf" -o '
             '-name "*.rdf.gz" -o -name "*.jsonld" '
             "\\) -print0 | while IFS= read -r -d '' fp; do "
@@ -1533,14 +1781,24 @@ def _build_qleverfile(
 
 
 def _route_generate_qleverfile(args: argparse.Namespace) -> dict:
-    """Generate Qleverfiles for sources with download URLs."""
+    """Generate Qleverfiles for sources with download URLs.
+
+    For each eligible source a per-source Qleverfile is written to
+    ``qlever_workdirs/<name>/Qleverfile``.
+
+    Additionally, for every ``local_provider`` group a *combined*
+    Qleverfile is written to ``qlever_workdirs/<provider>/Qleverfile``
+    that downloads/streams the data for ALL member sources at once.
+    This combined index is what is used for whole-provider mining
+    before individual per-named-graph passes.
+    """
     data_dir = Path(args.data_dir).resolve()
     base_port = args.base_port
     runtime = args.runtime
 
     entries = _load_entries(args.sources, args.name_filter)
 
-    # Keep only sources that have a recognised download field.
+    # Keep only sources that have a recognised download field or local_tar_url.
     downloadable = [
         e for e in entries if _detect_data_format(e) is not None
     ]
@@ -1560,6 +1818,7 @@ def _route_generate_qleverfile(args: argparse.Namespace) -> dict:
     # Port-assignment manifest - handy for the user.
     port_map: dict[str, int] = {}
 
+    # ── Per-source Qleverfiles ────────────────────────────────────
     for idx, entry in enumerate(downloadable):
         name = entry.get("name", "unknown")
         port = base_port + idx
@@ -1586,6 +1845,42 @@ def _route_generate_qleverfile(args: argparse.Namespace) -> dict:
             msg = str(exc)[:120]
             _progress(name, idx + 1, total, f"FAIL: {msg}")
             failed.append({"dataset": name, "error": str(exc)})
+
+    # ── Combined provider Qleverfiles ─────────────────────────────
+    # Group downloadable entries by local_provider (skip entries with no
+    # local_provider — they are standalone).
+    from collections import defaultdict
+    provider_groups: dict[str, list[Any]] = defaultdict(list)
+    for entry in downloadable:
+        provider = entry.get("local_provider", "")
+        if provider:
+            provider_groups[provider].append(entry)
+
+    provider_base_port = base_port + len(downloadable)
+    for p_idx, (provider, members) in enumerate(sorted(provider_groups.items())):
+        prov_port = provider_base_port + p_idx
+        port_map[provider] = prov_port
+
+        workdir = data_dir / "qlever_workdirs" / provider
+        qleverfile_path = workdir / "Qleverfile"
+
+        try:
+            content = _build_provider_qleverfile(
+                provider, members, data_dir, prov_port, runtime,
+            )
+            workdir.mkdir(parents=True, exist_ok=True)
+            qleverfile_path.write_text(content)
+            _progress(
+                provider, p_idx + 1, len(provider_groups),
+                f"OK (combined): port {prov_port}, "
+                f"{len(members)} members -> {qleverfile_path}",
+            )
+            generated.append(f"{provider} (combined)")
+
+        except Exception as exc:
+            msg = str(exc)[:120]
+            _progress(provider, p_idx + 1, len(provider_groups), f"FAIL (combined): {msg}")
+            failed.append({"dataset": f"{provider} (combined)", "error": str(exc)})
 
     # ── Write port-assignment manifest ────────────────────────────
     manifest_path = data_dir / "qlever_workdirs" / "ports.json"

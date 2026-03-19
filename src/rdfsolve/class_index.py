@@ -28,6 +28,7 @@ __all__ = [
     "ClassIndex",
     "EntityClassInfo",
     "build_class_index",
+    "build_class_index_from_endpoints",
     "enrich_jsonld_with_classes",
     "expand_iri_alternatives",
     "load_class_index",
@@ -557,3 +558,54 @@ def enrich_jsonld_with_classes(
         "not_found_prefixes": dict(not_found_prefix_counter.most_common()),
     }
     return jsonld_doc, stats
+
+
+def build_class_index_from_endpoints(
+    entity_iris: list[str],
+    endpoint_url: str,
+    *,
+    batch_size: int = 50,
+    timeout: float = 60.0,
+    cache_path: str | None = None,
+) -> tuple[ClassIndex, dict[str, Any]]:
+    """Build (or load) a :class:`ClassIndex`, with optional disk cache.
+
+    Queries *endpoint_url* for the RDF classes of every IRI in
+    *entity_iris*.  When *cache_path* is given and the file already
+    exists, the index is loaded from disk and no network calls are made.
+
+    Args:
+        entity_iris: List of entity IRIs to look up.
+        endpoint_url: QLever (or SPARQL 1.1) endpoint URL.
+        batch_size: Number of IRIs sent per VALUES query (default 50).
+        timeout: Per-request timeout in seconds (default 60.0).
+        cache_path: Optional path to read/write a cached index JSON.
+
+    Returns:
+        ``(class_index, cost_stats)`` where *cost_stats* has keys
+        ``"queries"``, ``"found"``, ``"not_found"``, ``"elapsed_s"``.
+    """
+    if cache_path is not None:
+        p = Path(cache_path)
+        if p.exists():
+            idx = load_class_index(cache_path)
+            cost: dict[str, Any] = {
+                "queries": 0,
+                "found": len(idx.entities),
+                "not_found": 0,
+                "elapsed_s": 0.0,
+                "cached": True,
+            }
+            return idx, cost
+
+    idx, cost = build_class_index(
+        entity_iris,
+        endpoint_url,
+        batch_size=batch_size,
+        timeout=timeout,
+    )
+
+    if cache_path is not None:
+        save_class_index(idx, cache_path)
+
+    return idx, cost

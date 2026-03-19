@@ -160,10 +160,11 @@ def _yaml_node_to_entry(node: dict[str, Any]) -> SourceEntry:
     if "notes" in node:
         e["notes"] = str(node["notes"])
 
-    # Pass through download_* and local_endpoint fields so that
-    # scripts (e.g. mine_local.py generate-qleverfile) can see them.
+    # Pass through download_*, local_endpoint, and provider fields so
+    # that scripts (e.g. mine_local.py generate-qleverfile) can see them.
+    passthrough = {"local_endpoint", "local_provider", "local_tar_url"}
     for key in node:
-        if key.startswith("download_") or key == "local_endpoint":
+        if key.startswith("download_") or key in passthrough:
             e[key] = node[key]  # type: ignore[literal-required]
 
     return e
@@ -232,7 +233,7 @@ def _node_to_entry(node: dict[str, Any]) -> SourceEntry:
     return e
 
 
-# ── CSV reader (legacy) ──────────────────────────────────────────
+# ── CSV reader (deprecated now) ──────────────────────────────────────────
 
 
 def _load_csv(path: Path) -> list[SourceEntry]:

@@ -293,6 +293,17 @@ def pipeline_mine(ctx: click.Context, **kwargs: Any) -> None:
 @_common_options
 @_mining_options
 @click.option(
+    "--graph-uri",
+    "graph_uris",
+    multiple=True,
+    default=None,
+    help=(
+        "Named graph URI to scope mining queries to (repeatable). "
+        "When omitted, graph_uris from sources.yaml are used. "
+        "Pass '--graph-uri none' to mine all graphs (no filter)."
+    ),
+)
+@click.option(
     "--endpoint",
     default="http://localhost:7001",
     help="Local QLever SPARQL endpoint URL.",

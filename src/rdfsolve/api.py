@@ -9,14 +9,18 @@ from typing import Any
 import pandas as pd
 from rdflib import Graph
 
-from .miner import _mine_one_source
 from .parser import VoidParser
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
     "compose_query_from_paths",
+    "count_instances",
+    "count_instances_per_class",
+    "discover_void_graphs",
     "execute_sparql",
+    "extract_partitions_from_void",
+    "generate_void_from_endpoint",
     "graph_to_jsonld",
     "graph_to_linkml",
     "graph_to_schema",
@@ -32,6 +36,7 @@ __all__ = [
     "mine_schema",
     "probe_instance_mapping",
     "resolve_iris",
+    "retrieve_void_from_graphs",
     "seed_inferenced_mappings",
     "seed_instance_mappings",
     "seed_semra_mappings",
@@ -423,6 +428,129 @@ def graph_to_schema(
     return parser.to_schema(filter_void_admin_nodes=filter_void_admin_nodes)
 
 
+def discover_void_graphs(
+    endpoint_url: str,
+    graph_uris: str | list[str] | None = None,
+    exclude_graphs: bool = False,
+) -> dict[str, Any]:
+    """Find VoID graphs at *endpoint_url*.
+
+    Delegates to :meth:`~rdfsolve.parser.VoidParser.discover_void_graphs`.
+    *graph_uris* and *exclude_graphs* are accepted for backwards-compatibility
+    but the discovery query always searches all named graphs.
+    """
+    return VoidParser().discover_void_graphs(endpoint_url)
+
+
+def count_instances(
+    endpoint_url: str,
+    sample_limit: int | None = None,
+    sample_offset: int | None = None,
+    chunk_size: int | None = None,
+    offset_limit_steps: int | None = None,
+    delay_between_chunks: float = 20.0,
+    streaming: bool = False,
+) -> dict[str, int] | Any:
+    """Count instances per class at *endpoint_url*.
+
+    Delegates to :func:`~rdfsolve.miner.count_instances`.
+    """
+    from rdfsolve.miner import count_instances as _count
+
+    return _count(
+        endpoint_url,
+        sample_limit=sample_limit,
+        sample_offset=sample_offset,
+        chunk_size=chunk_size,
+        offset_limit_steps=offset_limit_steps,
+        delay_between_chunks=delay_between_chunks,
+        streaming=streaming,
+    )
+
+
+def extract_partitions_from_void(
+    endpoint_url: str,
+    void_graph_uris: list[str],
+) -> list[dict[str, str]]:
+    """Extract partition records from VoID graphs.
+
+    Delegates to :func:`~rdfsolve.miner.extract_partitions_from_void`.
+    """
+    from rdfsolve.miner import extract_partitions_from_void as _epv
+
+    return _epv(endpoint_url, void_graph_uris)
+
+
+def retrieve_void_from_graphs(
+    endpoint_url: str,
+    void_graph_uris: list[str],
+    graph_uris: str | list[str] | None = None,
+    partitions: list[dict[str, str]] | None = None,
+) -> Graph:
+    """Build a VoID RDF graph from partition data.
+
+    Delegates to :func:`~rdfsolve.miner.retrieve_void_from_graphs`.
+    """
+    from rdfsolve.miner import retrieve_void_from_graphs as _rvfg
+
+    return _rvfg(
+        endpoint_url,
+        void_graph_uris,
+        graph_uris=graph_uris,
+        partitions=partitions,
+    )
+
+
+def generate_void_from_endpoint(
+    endpoint_url: str,
+    graph_uris: str | list[str] | None = None,
+    output_file: str | None = None,
+    counts: bool = True,
+    offset_limit_steps: int | None = None,
+    exclude_graphs: bool = True,
+    dataset_uri: str | None = None,
+    void_base_uri: str | None = None,
+) -> Graph:
+    """Mine a VoID description from a SPARQL endpoint.
+
+    .. deprecated:: Use :func:`mine_schema` instead.
+
+    Delegates to :func:`~rdfsolve.miner.generate_void_from_endpoint`.
+    """
+    from rdfsolve.miner import generate_void_from_endpoint as _gvfe
+
+    return _gvfe(
+        endpoint_url,
+        graph_uris=graph_uris,
+        output_file=output_file,
+        counts=counts,
+        offset_limit_steps=offset_limit_steps,
+        exclude_graphs=exclude_graphs,
+        dataset_uri=dataset_uri,
+        void_base_uri=void_base_uri,
+    )
+
+
+def count_instances_per_class(
+    endpoint_url: str,
+    graph_uris: str | list[str] | None = None,
+    sample_limit: int | None = None,
+    exclude_graphs: bool = True,
+) -> dict[str, int]:
+    """Return ``{class_uri: count}`` for *endpoint_url*.
+
+    Delegates to :func:`~rdfsolve.miner.count_instances_per_class`.
+    """
+    from rdfsolve.miner import count_instances_per_class as _cipc
+
+    return _cipc(
+        endpoint_url,
+        graph_uris=graph_uris,
+        sample_limit=sample_limit,
+        exclude_graphs=exclude_graphs,
+    )
+
+
 def mine_schema(
     endpoint_url: str,
     graph_uris: str | list[str] | None = None,
@@ -505,109 +633,27 @@ def mine_all_sources(
 ) -> dict[str, Any]:
     """Mine schemas for all sources in a JSON-LD or CSV file.
 
-    Reads a sources file (JSON-LD preferred, CSV still accepted)
-    and runs :func:`mine_schema` for each entry whose *endpoint*
-    is non-empty.  Results are written to *output_dir* as
-    ``{name}_schema.jsonld`` and / or ``{name}_void.ttl``.
-
-    Per-source overrides (``chunk_size``, ``class_batch_size``,
-    ``timeout``, etc.) in the JSON-LD file take precedence over
-    the function-level defaults.
-
-    Args:
-        sources_csv: **Deprecated** - use *sources* instead.
-            Path to a CSV file with data sources.  Kept for
-            backwards compatibility; ignored when *sources* is
-            given.
-        sources: Path to the sources file (JSON-LD or CSV).
-            When ``None``, the default ``data/sources.jsonld``
-            (or ``.csv`` fallback) is used.
-        output_dir: Directory where outputs are written.
-        fmt: Export format - ``"jsonld"``, ``"void"``, or
-            ``"all"``.
-        chunk_size: Pagination page size for SPARQL queries.
-        class_chunk_size: Page size for Phase-1 class discovery
-            in two-phase mode.  ``None`` = no pagination.
-            Ignored for rows that are not two-phase.
-        class_batch_size: Number of classes per VALUES query in
-            Phase-2 of two-phase mining (default 15).
-        delay: Delay between paginated pages (seconds).
-        timeout: HTTP timeout per request (seconds).
-        counts: Whether to fetch triple-count queries.
-        reports: Write per-source analytics JSON reports.
-        filter_service_namespaces: Strip service/system namespace
-            patterns from each mined schema (default ``True``).
-        untyped_as_classes: Treat untyped URI objects as
-            ``owl:Class`` references instead of the generic
-            ``rdfs:Resource`` sentinel (default ``False``).
-        on_progress:
-            Optional callback invoked after each source is
-            processed.  Signature:
-            ``(dataset_name, index, total, status_or_error)``.
-            *status_or_error* is ``None`` on success, or an
-            error message string.
-
-    Returns:
-        Summary dict with keys ``"succeeded"``, ``"failed"``, and
-        ``"skipped"`` mapping to lists of dataset names.
+    Delegates to :func:`rdfsolve.miner.mine_all_sources`.
     """
-    from .sources import load_sources
+    from rdfsolve.miner import mine_all_sources as _mas
 
-    # Resolve the path: new kwarg > legacy positional > auto-detect
-    src_path: str | None = sources or sources_csv or None
-
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
-
-    entries = load_sources(src_path)
-
-    succeeded: list[str] = []
-    failed: list[dict[str, str]] = []
-    skipped: list[str] = []
-
-    total = len(entries)
-    for idx, entry in enumerate(entries, 1):
-        name = entry.get("name", "")
-        endpoint = entry.get("endpoint", "")
-
-        if not endpoint:
-            logger.info(
-                "[%d/%d] Skipping %r: no endpoint",
-                idx,
-                total,
-                name,
-            )
-            skipped.append(name)
-            if on_progress:
-                on_progress(name, idx, total, "skipped")
-            continue
-
-        _mine_one_source(
-            entry,
-            idx=idx,
-            total=total,
-            out=out,
-            fmt=fmt,
-            chunk_size=chunk_size,
-            class_chunk_size=class_chunk_size,
-            class_batch_size=class_batch_size,
-            delay=delay,
-            timeout=timeout,
-            counts=counts,
-            reports=reports,
-            filter_service_namespaces=filter_service_namespaces,
-            untyped_as_classes=untyped_as_classes,
-            authors=authors,
-            on_progress=on_progress,
-            succeeded=succeeded,
-            failed=failed,
-        )
-
-    return {
-        "succeeded": succeeded,
-        "failed": failed,
-        "skipped": skipped,
-    }
+    return _mas(
+        sources_csv,
+        sources=sources,
+        output_dir=output_dir,
+        fmt=fmt,
+        chunk_size=chunk_size,
+        class_chunk_size=class_chunk_size,
+        class_batch_size=class_batch_size,
+        delay=delay,
+        timeout=timeout,
+        counts=counts,
+        reports=reports,
+        filter_service_namespaces=filter_service_namespaces,
+        untyped_as_classes=untyped_as_classes,
+        authors=authors,
+        on_progress=on_progress,
+    )
 
 
 # ── SPARQL / IRI / Compose API ───────────────────────────────────
@@ -835,101 +881,20 @@ def seed_instance_mappings(
 ) -> dict[str, Any]:
     """Probe multiple bioregistry resources and write mapping JSON-LD files.
 
-    Iterates over *prefixes*, runs :func:`probe_instance_mapping` for each,
-    and writes the result to
-    ``{output_dir}/{prefix}_instance_mapping.jsonld``.
-
-    When a file already exists on disk the new probe results are **merged**
-    into it rather than overwriting it:
-
-    * New ``@graph`` nodes (source classes not yet in the file) are appended.
-    * For existing source nodes, new predicate->target entries are added;
-      duplicates are silently skipped.
-    * ``uri_formats_queried`` in ``@about`` is unioned.
-    * ``pattern_count`` and ``generated_at`` are refreshed.
-
-    The default behaviour (``skip_existing=False``) is to always probe and
-    merge.  Pass ``skip_existing=True`` only when you explicitly want to skip
-    prefixes whose output file already exists without re-probing.
-
-    Args:
-        prefixes: List of bioregistry prefixes to process.
-        sources_csv: **Deprecated** - use *sources* instead.
-        sources: Path to the sources file (JSON-LD or CSV).
-            When ``None``, auto-detects the default file.
-        output_dir: Directory where JSON-LD files are written
-            (created if absent).
-        predicate: Mapping predicate URI.
-        dataset_names: Restrict probing to these dataset names.
-        timeout: SPARQL request timeout per request.
-        skip_existing: If ``True``, skip prefixes whose output file
-            already exists without re-probing.  Defaults to ``False``
-            (always probe and merge).
-
-    Returns:
-        Summary dict: ``{"succeeded": [...], "failed": [...]}``.
+    Delegates to :func:`rdfsolve.instance_matcher.seed_instance_mappings`.
     """
-    import json as _json
+    from rdfsolve.instance_matcher import seed_instance_mappings as _sim
 
-    from rdfsolve.instance_matcher import probe_resource
-    from rdfsolve.sources import load_sources_dataframe
-
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
-
-    src_path = sources or sources_csv or None
-    datasources = load_sources_dataframe(src_path)
-
-    succeeded: list[str] = []
-    failed: list[dict[str, str]] = []
-
-    for prefix in prefixes:
-        logger.info("Querying prefix: %s", prefix)
-        outfile = out / f"{prefix}_instance_mapping.jsonld"
-
-        if skip_existing and outfile.exists():
-            logger.info(
-                "Skipping %s: already exists at %s (skip_existing=True)",
-                prefix,
-                outfile,
-            )
-            succeeded.append(prefix)
-            continue
-
-        try:
-            mapping = probe_resource(
-                prefix=prefix,
-                datasources=datasources,
-                predicate=predicate,
-                dataset_names=dataset_names,
-                timeout=timeout,
-            )
-            new_jsonld = mapping.to_jsonld()
-
-            if outfile.exists():
-                try:
-                    existing_jsonld = _json.loads(outfile.read_text())
-                    merged = _merge_instance_mapping_jsonld(existing_jsonld, new_jsonld)
-                    outfile.write_text(_json.dumps(merged, indent=2))
-                    logger.info("Merged into existing: %s", outfile)
-                except Exception as merge_exc:
-                    logger.warning(
-                        "Could not merge into %s (%s); overwriting.",
-                        outfile,
-                        merge_exc,
-                    )
-                    outfile.write_text(_json.dumps(new_jsonld, indent=2))
-                    logger.info("Overwritten: %s", outfile)
-            else:
-                outfile.write_text(_json.dumps(new_jsonld, indent=2))
-                logger.info("Written: %s", outfile)
-
-            succeeded.append(prefix)
-        except Exception as exc:
-            logger.error("Failed %s: %s", prefix, exc)
-            failed.append({"prefix": prefix, "error": str(exc)})
-
-    return {"succeeded": succeeded, "failed": failed}
+    return _sim(
+        prefixes,
+        sources_csv,
+        sources=sources,
+        output_dir=output_dir,
+        predicate=predicate,
+        dataset_names=dataset_names,
+        timeout=timeout,
+        skip_existing=skip_existing,
+    )
 
 
 # ── SeMRA import API ─────────────────────────────────────────────
@@ -975,38 +940,16 @@ def seed_semra_mappings(
 ) -> dict[str, Any]:
     """Seed semra mapping files for multiple sources.
 
-    Calls :func:`import_semra_source` for each entry in *sources* and
-    aggregates the results.
-
-    Args:
-        sources: List of SeMRA source keys
-            (e.g. ``["biomappings", "gilda"]``).
-        keep_prefixes: Optional shared prefix filter applied to all sources.
-        output_dir: Directory for output files.
-        mapping_type: ``"instance"`` (default) or ``"class"``.
-            Stored in the ``@about.mapping_type`` field of each output
-            JSON-LD file.
-
-    Returns:
-        Aggregated summary with keys ``"succeeded"``, ``"failed"``,
-        ``"skipped"``.
+    Delegates to :func:`rdfsolve.semra_converter.seed_semra_mappings`.
     """
-    succeeded: list[str] = []
-    failed: list[dict[str, str]] = []
-    skipped: list[str] = []
+    from rdfsolve.semra_converter import seed_semra_mappings as _ssm
 
-    for source in sources:
-        result = import_semra_source(
-            source=source,
-            keep_prefixes=keep_prefixes,
-            output_dir=output_dir,
-            mapping_type=mapping_type,
-        )
-        succeeded.extend(result.get("succeeded", []))
-        failed.extend(result.get("failed", []))
-        skipped.extend(result.get("skipped", []))
-
-    return {"succeeded": succeeded, "failed": failed, "skipped": skipped}
+    return _ssm(
+        sources,
+        keep_prefixes=keep_prefixes,
+        output_dir=output_dir,
+        mapping_type=mapping_type,
+    )
 
 
 def load_mapping_jsonld(path: str) -> dict[str, Any]:
@@ -1194,56 +1137,17 @@ def build_class_index_from_endpoints(
 ) -> tuple[Any, dict[str, Any]]:
     """Build (or load) a :class:`~rdfsolve.class_index.ClassIndex`.
 
-    Queries *endpoint_url* for the RDF classes of every IRI in
-    *entity_iris* and returns the populated index together with cost
-    statistics.  When *cache_path* is given and the file already exists,
-    the index is loaded from disk and no network calls are made.
-
-    Args:
-        entity_iris: List of entity IRIs to look up.
-        endpoint_url: QLever (or SPARQL 1.1) endpoint URL.
-        batch_size: Number of IRIs sent per VALUES query (default 50).
-        timeout: Per-request timeout in seconds (default 60.0).
-        cache_path: Optional path to read/write a cached
-            :func:`~rdfsolve.class_index.save_class_index` JSON file.
-
-    Returns:
-        ``(class_index, cost_stats)`` where *cost_stats* is a dict with
-        keys ``"queries"``, ``"found"``, ``"not_found"``,
-        ``"elapsed_s"``.
+    Delegates to :func:`rdfsolve.class_index.build_class_index_from_endpoints`.
     """
-    from rdfsolve.class_index import (
-        build_class_index,
-        load_class_index,
-        save_class_index,
-    )
+    from rdfsolve.class_index import build_class_index_from_endpoints as _build
 
-    if cache_path is not None:
-        from pathlib import Path as _Path
-
-        p = _Path(cache_path)
-        if p.exists():
-            idx = load_class_index(cache_path)
-            cost: dict[str, Any] = {
-                "queries": 0,
-                "found": len(idx.entities),
-                "not_found": 0,
-                "elapsed_s": 0.0,
-                "cached": True,
-            }
-            return idx, cost
-
-    idx, cost = build_class_index(
+    return _build(
         entity_iris,
         endpoint_url,
         batch_size=batch_size,
         timeout=timeout,
+        cache_path=cache_path,
     )
-
-    if cache_path is not None:
-        save_class_index(idx, cache_path)
-
-    return idx, cost
 
 
 def enrich_instance_jsonld(
@@ -1302,186 +1206,25 @@ def derive_class_mappings_from_instances(
     enrich_in_place: bool = False,
     source_name: str | None = None,
 ) -> dict[str, Any]:
-    """Derive class-level mappings from a set of instance-mapping files.
+    """Orchestrate the full instance-to-class derivation pipeline.
 
-    Orchestrates the full derivation pipeline:
-
-    1. Load all instance-mapping JSON-LD files from *input_paths*.
-    2. Collect unique entity IRIs (subjects and objects).
-    3. Build (or load) a :class:`~rdfsolve.class_index.ClassIndex` via
-       *endpoint_url*.
-    4. Optionally enrich each input file in-place with class annotations.
-    5. Call :func:`~rdfsolve.class_derivation.derive_class_mappings`.
-    6. Serialise the resulting
-       :class:`~rdfsolve.mapping_models.ClassDerivedMapping` to
-       *output_path*.
-    7. Write a session-report JSON next to the output file.
-
-    Args:
-        input_paths: Paths to instance-mapping JSON-LD files.
-        output_path: Destination path for the class-derived JSON-LD.
-        endpoint_url: QLever / SPARQL 1.1 endpoint used for class lookup.
-        timeout: Per-request timeout in seconds (default 60.0).
-        batch_size: IRIs per VALUES query (default 50).
-        min_instance_count: Minimum evidence pairs to retain a class pair
-            (default 1).
-        min_confidence: Minimum confidence score threshold (default 0.0).
-        cache_index: If ``True``, persist the class index to disk and
-            reuse it on subsequent runs.
-        index_cache_path: Explicit path for the cached index JSON.
-            Defaults to ``{output_path}.class_index_cache.json``
-            when *cache_index* is ``True``.
-        enrich_in_place: If ``True``, write enriched copies of all input
-            files alongside the originals
-            (``{stem}.enriched.jsonld``).
-        source_name: Human-readable name for the session report.
-            Defaults to the stem of *output_path*.
-
-    Returns:
-        Session-report dict with keys
-        ``source_name``, ``timestamp``, ``source_mapping_type``,
-        ``endpoint_url``, ``cost``, ``enrichment``, ``derivation``,
-        ``elapsed_s``.
+    Delegates to
+    :func:`rdfsolve.class_derivation.derive_class_mappings_from_instances`.
     """
-    import json as _json
-    import time as _time
-    from datetime import datetime as _dt
-    from pathlib import Path as _Path
-
-    from rdfsolve.class_derivation import derive_class_mappings
-    from rdfsolve.class_index import enrich_jsonld_with_classes
-    from rdfsolve.mapping_models import MappingEdge
-    from rdfsolve.mapping_models.class_derived import ClassDerivedMapping
-    from rdfsolve.schema_models.core import AboutMetadata
-
-    t0 = _time.monotonic()
-
-    # ── 1. Load input files ──────────────────────────────────────────
-    input_docs: list[dict[str, Any]] = []
-    source_files: list[str] = []
-    source_types: set[str] = set()
-    for p_str in input_paths:
-        p = _Path(p_str)
-        raw = _json.loads(p.read_text(encoding="utf-8"))
-        input_docs.append(raw)
-        source_files.append(p_str)
-        about = raw.get("@about", {})
-        mt = about.get("mapping_type") or about.get("strategy", "unknown")
-        source_types.add(mt)
-
-    # ── 2. Collect unique entity IRIs ────────────────────────────────
-    entity_iris_set: set[str] = set()
-    all_instance_edges: list[Any] = []
-    for raw in input_docs:
-        for e in raw.get("@graph", []):
-            src_iri = e.get("subject_source_iri") or (e.get("subject_source") or {}).get("@id")
-            tgt_iri = e.get("object_source_iri") or (e.get("object_source") or {}).get("@id")
-            if src_iri:
-                entity_iris_set.add(src_iri)
-            if tgt_iri:
-                entity_iris_set.add(tgt_iri)
-            edge_data = {k: v for k, v in e.items() if k in MappingEdge.model_fields}
-            all_instance_edges.append(MappingEdge(**edge_data))
-
-    entity_iris = sorted(entity_iris_set)
-
-    # ── 3. Build class index ─────────────────────────────────────────
-    _cache_path: str | None = None
-    if cache_index:
-        _cache_path = index_cache_path or str(
-            _Path(output_path).with_suffix(".class_index_cache.json")
-        )
-
-    class_index, cost_stats = build_class_index_from_endpoints(
-        entity_iris,
-        endpoint_url,
-        batch_size=batch_size,
-        timeout=timeout,
-        cache_path=_cache_path,
+    from rdfsolve.class_derivation import (
+        derive_class_mappings_from_instances as _dcmfi,
     )
 
-    # ── 4. Optionally enrich input files ─────────────────────────────
-    enrichment_stats_total: dict[str, Any] = {
-        "entities_total": 0,
-        "entities_enriched": 0,
-        "entities_not_found": 0,
-        "classes_added": 0,
-        "elapsed_s": 0.0,
-    }
-    if enrich_in_place:
-        for p_str, raw in zip(input_paths, input_docs, strict=False):
-            _, e_stats = enrich_jsonld_with_classes(raw, class_index)
-            for k in (
-                "entities_total",
-                "entities_enriched",
-                "entities_not_found",
-                "classes_added",
-            ):
-                enrichment_stats_total[k] = enrichment_stats_total.get(k, 0) + e_stats.get(k, 0)
-            enrichment_stats_total["elapsed_s"] = enrichment_stats_total.get(
-                "elapsed_s", 0.0
-            ) + e_stats.get("elapsed_s", 0.0)
-            out_enrich = _Path(p_str).with_suffix(".enriched.jsonld")
-            out_enrich.write_text(
-                _json.dumps(raw, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
-
-    # ── 5. Derive class mappings ─────────────────────────────────────
-    class_pairs, derivation_stats = derive_class_mappings(
-        all_instance_edges,
-        class_index,
+    return _dcmfi(
+        input_paths,
+        output_path,
+        endpoint_url=endpoint_url,
+        timeout=timeout,
+        batch_size=batch_size,
         min_instance_count=min_instance_count,
         min_confidence=min_confidence,
+        cache_index=cache_index,
+        index_cache_path=index_cache_path,
+        enrich_in_place=enrich_in_place,
+        source_name=source_name,
     )
-
-    # ── 6. Serialise ClassDerivedMapping ─────────────────────────────
-    out_p = _Path(output_path)
-    out_p.parent.mkdir(parents=True, exist_ok=True)
-
-    _src_name = source_name or out_p.stem
-    class_edges = [pair.to_mapping_edge() for pair in class_pairs]
-    about = AboutMetadata.build(
-        dataset_name=_src_name,
-        pattern_count=len(class_edges),
-        strategy="class_derived",
-    )
-    _src_type = next(iter(source_types), "unknown")
-    mapping = ClassDerivedMapping(
-        edges=class_edges,
-        about=about,
-        source_mapping_type=_src_type,
-        source_mapping_files=source_files,
-        derivation_stats=derivation_stats,
-        enrichment_stats=enrichment_stats_total,
-        class_index_endpoint=endpoint_url,
-    )
-    out_p.write_text(
-        _json.dumps(mapping.to_jsonld(), indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
-
-    elapsed = _time.monotonic() - t0
-
-    # ── 7. Session report ────────────────────────────────────────────
-    report: dict[str, Any] = {
-        "source_name": _src_name,
-        "timestamp": _dt.utcnow().isoformat() + "Z",
-        "source_mapping_type": _src_type,
-        "endpoint_url": endpoint_url,
-        "cost": cost_stats,
-        "enrichment": enrichment_stats_total,
-        "derivation": derivation_stats,
-        "elapsed_s": elapsed,
-    }
-
-    report_dir = _Path("docker/mappings/class_derived/.session_reports")
-    report_dir.mkdir(parents=True, exist_ok=True)
-    ts = _dt.utcnow().strftime("%Y%m%dT%H%M%SZ")
-    report_file = report_dir / f"{_src_name}_{ts}.json"
-    report_file.write_text(
-        _json.dumps(report, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
-
-    return report

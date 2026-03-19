@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "import_source",
     "rdfsolve_edges_to_semra",
+    "seed_semra_mappings",
     "semra_evidence_to_jsonld_about",
     "semra_to_rdfsolve_edges",
 ]
@@ -656,3 +657,42 @@ def _import_wikidata(
         "failed": failed,
         "skipped": [],
     }
+
+
+def seed_semra_mappings(
+    sources: list[str],
+    keep_prefixes: list[str] | None = None,
+    output_dir: str = "docker/mappings/semra",
+    mapping_type: str = "instance",
+) -> dict[str, Any]:
+    """Seed semra mapping files for multiple sources.
+
+    Calls :func:`import_source` for each entry in *sources* and
+    aggregates the results.
+
+    Args:
+        sources: List of SeMRA source keys.
+        keep_prefixes: Optional shared prefix filter applied to all sources.
+        output_dir: Directory for output files.
+        mapping_type: ``"instance"`` (default) or ``"class"``.
+
+    Returns:
+        Aggregated summary with keys ``"succeeded"``, ``"failed"``,
+        ``"skipped"``.
+    """
+    succeeded: list[str] = []
+    failed: list[dict[str, str]] = []
+    skipped: list[str] = []
+
+    for source in sources:
+        result = import_source(
+            source=source,
+            keep_prefixes=keep_prefixes,
+            output_dir=output_dir,
+            mapping_type=mapping_type,
+        )
+        succeeded.extend(result.get("succeeded", []))
+        failed.extend(result.get("failed", []))
+        skipped.extend(result.get("skipped", []))
+
+    return {"succeeded": succeeded, "failed": failed, "skipped": skipped}

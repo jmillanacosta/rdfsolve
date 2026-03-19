@@ -968,3 +968,4 @@ docs/notes/*
 results/*
 
 rdfsolve.db
+results_*.zip
