@@ -20,6 +20,9 @@
 #   5.  Seed SSSOM mappings (class + property)
 #   6.  Seed SeMRA mappings
 #   7.  Seed instance mappings
+#   8.  Build class index (instance IRI -> rdf:type lookup via LSLOD)
+#   9.  Derive class-level mappings from instance mappings
+#   10. Enrich instance JSON-LD with class annotations
 #   11. Inference expansion
 #   12. Build connectivity graphs -> Parquet
 #   14. Execute paper notebook -> HTML
@@ -41,6 +44,8 @@
 #   ./scripts/run_pipeline.sh --skip-mappings
 #   ./scripts/run_pipeline.sh --skip-build-graphs
 #   ./scripts/run_pipeline.sh --skip-notebook
+#   ./scripts/run_pipeline.sh --skip-class-derivation
+#   ./scripts/run_pipeline.sh --lslod-endpoint http://lslod.example.org/api/sparql
 #   ./scripts/run_pipeline.sh --chunk-size 5000
 #   ./scripts/run_pipeline.sh --chunk-sizes 1000,5000,10000
 #   ./scripts/run_pipeline.sh --class-batch-size 10
@@ -55,6 +60,8 @@
 #   ./scripts/run_pipeline.sh --no-benchmark
 #   ./scripts/run_pipeline.sh --base-port 7100
 #   ./scripts/run_pipeline.sh --timeout 180
+#   ./scripts/run_pipeline.sh --disk-space-factor 15   # multiplier for compressed→indexed size estimate (default 12)
+#   ./scripts/run_pipeline.sh --disk-space-min-mb 1000 # min free MiB required regardless of dataset size (default 500)
 #   ./scripts/run_pipeline.sh --results-dir /path/to/results
 #   ./scripts/run_pipeline.sh --data-dir /path/to/rdf-data
 #   ./scripts/run_pipeline.sh --output-dir /path/to/output
@@ -97,6 +104,16 @@ MINI=false
 SKIP_MAPPINGS=false
 SKIP_BUILD_GRAPHS=false
 SKIP_NOTEBOOK=false
+SKIP_CLASS_DERIVATION=false
+LSLOD_ENDPOINT=""   # e.g. http://lslod.example.org/api/sparql
+# Disk-space guard (Step 4).
+# DISK_SPACE_FACTOR: multiplier applied to compressed download size to
+#   estimate on-disk need after decompression + QLever index files.
+#   12 is conservative (uncompressed RDF is often 5-8× compressed;
+#   QLever index adds another 1.5-2× on top of the raw files).
+# DISK_SPACE_MIN_MB: minimum free MiB required even for tiny sources.
+DISK_SPACE_FACTOR=12
+DISK_SPACE_MIN_MB=500
 
 DC="docker compose -f ${REPO_ROOT}/docker-compose.pipeline.yml"
 
@@ -251,10 +268,14 @@ while [[ $# -gt 0 ]]; do
         --remote-batch-sizes)  REMOTE_BATCH_SIZES="$2"; shift 2 ;;
         --base-port)           BASE_PORT="$2";          shift 2 ;;
         --timeout)             TIMEOUT="$2";            shift 2 ;;
+        --disk-space-factor)   DISK_SPACE_FACTOR="$2";  shift 2 ;;
+        --disk-space-min-mb)   DISK_SPACE_MIN_MB="$2";  shift 2 ;;
         --mini)                MINI=true;               shift ;;
         --skip-mappings)       SKIP_MAPPINGS=true;      shift ;;
         --skip-build-graphs)   SKIP_BUILD_GRAPHS=true;  shift ;;
         --skip-notebook)       SKIP_NOTEBOOK=true;      shift ;;
+        --skip-class-derivation) SKIP_CLASS_DERIVATION=true; shift ;;
+        --lslod-endpoint)      LSLOD_ENDPOINT="$2";     shift 2 ;;
         --help|-h)             head -65 "$0" | grep -E "^#" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *)                     fail "Unknown option: $1"; echo "Use --help for usage." >&2; exit 1 ;;
     esac
@@ -266,7 +287,12 @@ done
 
 # ── --mini preset ───────────────────────────────────────────────
 if [[ "${MINI}" == true ]]; then
-    [[ ${#DATASETS[@]} -eq 0 ]] && DATASETS=(aopwikirdf)
+    [[ ${#DATASETS[@]} -eq 0 ]] && DATASETS=(
+        #drugbank aopwikirdf 
+                                            #mesh medgen
+                                            #kegg pharmkgb #hp sgd eco
+                                            #wormbase #orthodb #swisslipids
+                                            glycosmos)
     SKIP_REMOTE=true
     ONE_SHOT=true
     [[ -z "${DATA_DIR}" ]] && DATA_DIR="${REPO_ROOT}/data/rdf"
@@ -390,6 +416,155 @@ _mine_local() {  # _mine_local NAME PORT STRATEGY ONE_SHOT CSIZE CBATCH
 
     step "  Pass -> qlever/${strat}/${cfg}"
     eval "run rdfsolve pipeline local-mine ${flags}" || warn "[${name}] qlever/${strat}/${cfg} failed."
+}
+
+_mine_local_named() {  # _mine_local_named NAME PORT STRATEGY ONE_SHOT CSIZE CBATCH GRAPH_FLAGS
+    # Like _mine_local but scopes queries to specific named graph(s).
+    # GRAPH_FLAGS is a pre-built string of "--graph-uri <uri> ..." flags.
+    local name=$1 port=$2 strat=$3 os=$4 cs=$5 cb=$6 graph_flags=$7
+    local cfg; cfg=$(_cfg_label "$os" "$cs" "$cb")
+    local out="${CONTAINER_OUTPUT_DIR}/${name}/qlever/${strat}/${cfg}"
+
+    local flags="--name ${name} --endpoint http://localhost:${port}"
+    flags+=" --discover-first --output-dir ${out}"
+    flags+=" --chunk-size ${cs} --class-batch-size ${cb}"
+    [[ -n "${CLASS_CHUNK_SIZE}" ]] && flags+=" --class-chunk-size ${CLASS_CHUNK_SIZE}"
+    [[ "${strat}" == "untyped"  ]] && flags+=" --untyped-as-classes"
+    [[ "${os}" == true           ]] && flags+=" --one-shot"
+    [[ "${BENCHMARK}" == true   ]] && flags+=" --benchmark"
+    [[ -n "${AUTHORS_FLAGS}"    ]] && flags+="${AUTHORS_FLAGS}"
+    [[ -n "${graph_flags}"      ]] && flags+=" ${graph_flags}"
+
+    step "  Pass -> ${name}/qlever/${strat}/${cfg}"
+    eval "run rdfsolve pipeline local-mine ${flags}" || warn "[${name}] qlever/${strat}/${cfg} failed."
+}
+
+# _check_disk_space NAME WORKDIR REPORT_JSON
+#
+# Estimates the compressed download size for source NAME by fetching
+# Content-Length headers from all its download_* URLs (or local_tar_url
+# if the source is tar-based).  Applies a configurable expansion factor
+# (DISK_SPACE_FACTOR, default 12×) to account for decompression and the
+# QLever index overhead, then compares the estimate against the free
+# space on the filesystem that WORKDIR lives on.
+#
+# Returns:
+#   0  – enough space (or estimate unavailable, so optimistically continue)
+#   1  – insufficient space; reason written to REPORT_JSON + logged
+#
+# Environment:
+#   DISK_SPACE_FACTOR  – integer multiplier (default 12)
+#   DISK_SPACE_MIN_MB  – minimum required free MB regardless of estimate (default 500)
+_check_disk_space() {
+    local name="$1"
+    local workdir="$2"
+    local report_json="$3"
+    local factor="${DISK_SPACE_FACTOR:-12}"
+    local min_mb="${DISK_SPACE_MIN_MB:-500}"
+
+    step "  [${name}] Estimating download size …"
+
+    # Query sources.yaml inside the container for this source's URLs.
+    local url_info
+    url_info=$(run python3 - "${name}" /app/data/sources.yaml <<'PYEOF'
+import sys, json, yaml
+name, yaml_path = sys.argv[1], sys.argv[2]
+with open(yaml_path) as f:
+    sources = yaml.safe_load(f)
+entry = next((s for s in sources if s['name'] == name), None)
+if not entry:
+    print(json.dumps({"urls": [], "tar_url": None}))
+    sys.exit(0)
+urls = []
+for k, v in entry.items():
+    if k.startswith('download_'):
+        items = v if isinstance(v, list) else [v]
+        urls.extend(u for u in items if u)
+tar_url = entry.get('local_tar_url')
+print(json.dumps({"urls": urls, "tar_url": tar_url}))
+PYEOF
+    )
+
+    local dl_urls tar_url
+    dl_urls=$(echo "${url_info}" | python3 -c "import json,sys; d=json.load(sys.stdin); print('\n'.join(d['urls']))" 2>/dev/null || true)
+    tar_url=$(echo "${url_info}"  | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['tar_url'] or '')"        2>/dev/null || true)
+
+    # Build the list of URLs to HEAD-check.
+    local check_urls=()
+    if [[ -n "${tar_url}" ]]; then
+        check_urls=("${tar_url}")
+    elif [[ -n "${dl_urls}" ]]; then
+        while IFS= read -r u; do [[ -n "$u" ]] && check_urls+=("$u"); done <<< "${dl_urls}"
+    fi
+
+    if [[ ${#check_urls[@]} -eq 0 ]]; then
+        warn "  [${name}] No download URLs found in sources.yaml – skipping disk check."
+        return 0
+    fi
+
+    # Sum Content-Length headers via curl -sI (fast HEAD requests, no body).
+    local total_compressed=0 n_unknown=0
+    for url in "${check_urls[@]}"; do
+        local cl
+        cl=$(curl -sI --max-time 15 --location "${url}" \
+               | tr -d '\r' \
+               | awk 'tolower($1)=="content-length:"{print $2; exit}')
+        if [[ "${cl}" =~ ^[0-9]+$ ]]; then
+            total_compressed=$(( total_compressed + cl ))
+        else
+            n_unknown=$(( n_unknown + 1 ))
+        fi
+    done
+
+    # If we got nothing, bail out optimistically.
+    if [[ "${total_compressed}" -eq 0 && "${n_unknown}" -eq "${#check_urls[@]}" ]]; then
+        warn "  [${name}] Could not obtain Content-Length for any URL – skipping disk check."
+        return 0
+    fi
+
+    # Estimate required bytes (compressed + expansion factor).
+    local required=$(( total_compressed * factor ))
+    local required_mb=$(( required / 1048576 ))
+    local compressed_mb=$(( total_compressed / 1048576 ))
+    [[ "${n_unknown}" -gt 0 ]] && \
+        warn "  [${name}] ${n_unknown}/${#check_urls[@]} URLs had no Content-Length (estimate is a lower bound)."
+    step "  [${name}] Compressed: ~${compressed_mb} MiB → estimated need: ~${required_mb} MiB (×${factor} expansion)"
+
+    # Check free space on the workdir's filesystem (inside the container).
+    local free_bytes
+    free_bytes=$(run df --output=avail -B1 "${workdir}" 2>/dev/null | tail -1 | tr -d ' ' || echo 0)
+    free_bytes="${free_bytes//[^0-9]/}"
+    free_bytes="${free_bytes:-0}"
+    local free_mb=$(( free_bytes / 1048576 ))
+
+    # Also enforce a minimum free threshold.
+    local min_bytes=$(( min_mb * 1048576 ))
+
+    step "  [${name}] Free space on $(dirname ${workdir}): ${free_mb} MiB"
+
+    if [[ "${free_bytes}" -lt "${required}" ]] || [[ "${free_bytes}" -lt "${min_bytes}" ]]; then
+        local reason
+        if [[ "${free_bytes}" -lt "${min_bytes}" ]]; then
+            reason="insufficient disk space: only ${free_mb} MiB free (minimum ${min_mb} MiB required regardless of dataset size)"
+        else
+            reason="insufficient disk space: need ~${required_mb} MiB (×${factor} of ${compressed_mb} MiB compressed), only ${free_mb} MiB free"
+        fi
+        fail "[${name}] Skipping: ${reason}"
+
+        # Write to pipeline_report.json inside the container.
+        run python3 - "${report_json}" "${name}" "${reason}" <<'PYEOF'
+import sys, json, pathlib
+path, name, reason = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3]
+data = json.loads(path.read_text()) if path.exists() and path.stat().st_size else {}
+data.setdefault("local_index_failures", {})[name] = reason
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(json.dumps(data, indent=2))
+PYEOF
+        return 1
+    fi
+
+    step "  [${name}] Disk space OK (need ~${required_mb} MiB, have ${free_mb} MiB free)."
+    return 0
 }
 
 # ═══════════════════════════════════════════════════════════════════
@@ -534,6 +709,25 @@ for name, port in json.load(sys.stdin).items():
         TOTAL=$(echo "${DS_LINES}" | wc -l)
         IDX=0
 
+        # Build a lookup: provider_name -> "member1,graph_uri1|member2,graph_uri2|..."
+        # Used in Step 4 to decide whether NAME is a combined provider index.
+        PROVIDER_MEMBERS=$(run python3 -c "
+import yaml, sys, json
+with open('/app/data/sources.yaml') as f:
+    sources = yaml.safe_load(f)
+groups = {}
+for s in sources:
+    p = s.get('local_provider','')
+    if not p:
+        continue
+    graphs = s.get('graph_uris') or []
+    entry = {'name': s['name'], 'graph_uris': graphs}
+    groups.setdefault(p, []).append(entry)
+# Output: one line per provider: PROVIDER\tJSON
+for p, members in groups.items():
+    print(p + '\t' + json.dumps(members))
+" 2>/dev/null || true)
+
         while read -r NAME PORT <&3; do
             IDX=$((IDX + 1))
             echo ""
@@ -547,9 +741,43 @@ for name, port in json.load(sys.stdin).items():
             if run bash -c "test -f ${DONE_INDEX}" 2>/dev/null; then
                 step "Index cached - skipping download+index."
             else
+                # ── Disk-space preflight ──────────────────────────────────
+                _check_disk_space "${NAME}" "${WORKDIR}" \
+                    "${CONTAINER_OUTPUT_DIR}/pipeline_report.json" \
+                    || { continue; }
+
                 step "Downloading …"
                 run bash -c "cd ${WORKDIR} && qlever get-data" \
                     || { fail "[${NAME}] Download failed."; continue; }
+
+                # Guard: check that INPUT_FILES matched at least one non-empty file.
+                # Extracts INPUT_FILES glob from the Qleverfile, expands it, sums sizes.
+                _INPUT_BYTES=$(run bash -c "
+                    cd ${WORKDIR}
+                    glob=\$(grep '^INPUT_FILES' Qleverfile 2>/dev/null | head -1 | sed 's/.*=[ ]*//')
+                    [ -z \"\$glob\" ] && { echo 0; exit 0; }
+                    total=0
+                    for f in \$glob; do
+                        [ -f \"\$f\" ] && total=\$(( total + \$(stat -c%s \"\$f\" 2>/dev/null || echo 0) ))
+                    done
+                    echo \$total
+                " 2>/dev/null || echo 0)
+                _INPUT_BYTES="${_INPUT_BYTES//[^0-9]/}"
+                _INPUT_BYTES="${_INPUT_BYTES:-0}"
+
+                if [[ "${_INPUT_BYTES}" -eq 0 ]]; then
+                    fail "[${NAME}] Download produced 0 bytes of RDF input (INPUT_FILES matched nothing). Skipping index."
+                    # Record the failure in the pipeline report JSON
+                    run python3 - "${CONTAINER_OUTPUT_DIR}/pipeline_report.json" "${NAME}" <<'PYEOF'
+import sys, json, pathlib
+path, name = pathlib.Path(sys.argv[1]), sys.argv[2]
+data = json.loads(path.read_text()) if path.exists() and path.stat().st_size else {}
+data.setdefault("local_index_failures", {})[name] = "download produced 0 bytes of RDF input"
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(json.dumps(data, indent=2))
+PYEOF
+                    continue
+                fi
 
                 step "Indexing …"
                 run bash -c "cd ${WORKDIR} && qlever index --overwrite-existing 2>&1 | grep -v '^$'" \
@@ -571,24 +799,99 @@ for name, port in json.load(sys.stdin).items():
             run bash -c "cd ${WORKDIR} && qlever start" \
                 || { fail "[${NAME}] Server start failed."; continue; }
 
-            # Mine
-            for strat in "${STRATEGIES[@]}"; do
-                if [[ "${HAS_SWEEP}" == true ]]; then
-                    for cs in "${LOCAL_CHUNK_LIST[@]}"; do
-                        for cb in "${LOCAL_BATCH_LIST[@]}"; do
-                            _mine_local "${NAME}" "${PORT}" "${strat}" false "${cs}" "${cb}"
+            # Check if NAME is a combined provider index.
+            PROV_MEMBERS_JSON=$(echo "${PROVIDER_MEMBERS}" | awk -F'\t' -v p="${NAME}" '$1==p{print $2}')
+
+            if [[ -n "${PROV_MEMBERS_JSON}" ]]; then
+                # ── Combined provider index ───────────────────────
+                # 1. Mine the full index with no graph filter (provider-level results).
+                step "  [provider=${NAME}] Mining full joint index …"
+                for strat in "${STRATEGIES[@]}"; do
+                    if [[ "${HAS_SWEEP}" == true ]]; then
+                        for cs in "${LOCAL_CHUNK_LIST[@]}"; do
+                            for cb in "${LOCAL_BATCH_LIST[@]}"; do
+                                _mine_local "${NAME}" "${PORT}" "${strat}" false "${cs}" "${cb}"
+                            done
                         done
+                    fi
+                    if [[ "${ONE_SHOT}" == true ]]; then
+                        _mine_local "${NAME}" "${PORT}" "${strat}" true \
+                            "${LOCAL_CHUNK_LIST[0]}" "${LOCAL_BATCH_LIST[0]}"
+                    fi
+                done
+
+                # 2. Mine each member source using its named graph(s) as filter.
+                MEMBER_COUNT=$(echo "${PROV_MEMBERS_JSON}" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))")
+                step "  [provider=${NAME}] Mining ${MEMBER_COUNT} member sources …"
+                while IFS=$'\t' read -r MNAME MGRAPHS_JSON; do
+                    # Build --graph-uri flags from the member's graph_uris list.
+                    GRAPH_FLAGS=$(python3 -c "
+import json, sys
+graphs = json.loads(sys.argv[1])
+print(' '.join('--graph-uri ' + g for g in graphs))
+" "${MGRAPHS_JSON}" 2>/dev/null || true)
+
+                    for strat in "${STRATEGIES[@]}"; do
+                        if [[ "${HAS_SWEEP}" == true ]]; then
+                            for cs in "${LOCAL_CHUNK_LIST[@]}"; do
+                                for cb in "${LOCAL_BATCH_LIST[@]}"; do
+                                    _mine_local_named "${MNAME}" "${PORT}" "${strat}" false \
+                                        "${cs}" "${cb}" "${GRAPH_FLAGS}"
+                                done
+                            done
+                        fi
+                        if [[ "${ONE_SHOT}" == true ]]; then
+                            _mine_local_named "${MNAME}" "${PORT}" "${strat}" true \
+                                "${LOCAL_CHUNK_LIST[0]}" "${LOCAL_BATCH_LIST[0]}" "${GRAPH_FLAGS}"
+                        fi
                     done
-                fi
-                if [[ "${ONE_SHOT}" == true ]]; then
-                    _mine_local "${NAME}" "${PORT}" "${strat}" true \
-                        "${LOCAL_CHUNK_LIST[0]}" "${LOCAL_BATCH_LIST[0]}"
-                fi
-            done
+                done < <(echo "${PROV_MEMBERS_JSON}" | python3 -c "
+import json, sys
+members = json.load(sys.stdin)
+for m in members:
+    print(m['name'] + '\t' + json.dumps(m['graph_uris']))
+")
+            else
+                # ── Standalone source index ───────────────────────
+                for strat in "${STRATEGIES[@]}"; do
+                    if [[ "${HAS_SWEEP}" == true ]]; then
+                        for cs in "${LOCAL_CHUNK_LIST[@]}"; do
+                            for cb in "${LOCAL_BATCH_LIST[@]}"; do
+                                _mine_local "${NAME}" "${PORT}" "${strat}" false "${cs}" "${cb}"
+                            done
+                        done
+                    fi
+                    if [[ "${ONE_SHOT}" == true ]]; then
+                        _mine_local "${NAME}" "${PORT}" "${strat}" true \
+                            "${LOCAL_CHUNK_LIST[0]}" "${LOCAL_BATCH_LIST[0]}"
+                    fi
+                done
+            fi
 
             # Stop server
             step "Stopping QLever …"
             run bash -c "cd ${WORKDIR} && qlever stop" 2>/dev/null || true
+
+            # ── Cleanup: delete raw RDF input files after indexing ────────
+            # The QLever index files (*.index.*, *.vocabulary.*, etc.) MUST
+            # stay in WORKDIR — the final LSOLD step loads all indices together.
+            # Only the downloaded/decompressed RDF inputs in rdf/ are deleted
+            # here to reclaim disk space before the next source is processed.
+            step "Cleaning up raw RDF files for ${NAME} …"
+            run bash -c "
+                rdf_dir=${WORKDIR}/rdf
+                if [ -d \"\$rdf_dir\" ]; then
+                    du -sh \"\$rdf_dir\" 2>/dev/null && \
+                    rm -rf \"\$rdf_dir\" && \
+                    echo '  Deleted rdf/ input files.'
+                fi
+                # Also remove any loose archive/compressed files in workdir root
+                find ${WORKDIR} -maxdepth 1 \
+                    \( -name '*.tar' -o -name '*.tar.gz' -o -name '*.tgz' \
+                    -o -name '*.zip' -o -name '*.gz' -o -name '*.xz' \) \
+                    -delete 2>/dev/null || true
+            " 2>/dev/null || true
+
             step "[${NAME}] Done."
 
         done 3<<< "${DS_LINES}"
@@ -671,6 +974,142 @@ if [[ "${SKIP_MAPPINGS}" == false ]]; then
     step "Instance mappings done in $(elapsed $(( $(date +%s) - t0 )))."
 else
     banner "Step 7: Instance mappings - SKIPPED"
+fi
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 8 - Build class index (instance IRI → rdf:type via LSLOD)
+# ═══════════════════════════════════════════════════════════════════
+# Queries the LSLOD QLever endpoint for every entity IRI that appears
+# in the instance_matching/ JSON-LD files and records which rdf:type
+# classes each entity belongs to in which named graphs.
+# The result is a cached class-index JSON used by steps 9 and 10.
+#
+# Requires --lslod-endpoint <url> (or LSLOD_ENDPOINT env var).
+# ───────────────────────────────────────────────────────────────────
+if [[ "${SKIP_MAPPINGS}" == false && "${SKIP_CLASS_DERIVATION}" == false ]]; then
+    if [[ -z "${LSLOD_ENDPOINT}" ]]; then
+        warn "Step 8: --lslod-endpoint not set - skipping class index build."
+        warn "  Re-run with: --lslod-endpoint <sparql-url>"
+    else
+        banner "Step 8: Build class index (instance IRIs → rdf:type)"
+        t0=$(date +%s)
+
+        # Discover all instance-mapping JSON-LD files produced in step 7
+        _inst_dir="${CONTAINER_MAPPINGS_DIR}/instance_matching"
+
+        # We call derive with --cache-index only; --enrich and the actual
+        # derivation are done in steps 9/10 (or all at once in step 9).
+        # The index cache lands next to each output file by convention.
+        # Since there may be multiple input files, we loop over them.
+        _inst_files=$(run bash -c "find ${_inst_dir} -name '*.jsonld' ! -name '*.enriched.jsonld' 2>/dev/null || true")
+
+        if [[ -z "${_inst_files}" ]]; then
+            warn "No instance-mapping JSON-LD files found in ${_inst_dir}."
+        else
+            while IFS= read -r _f; do
+                [[ -z "${_f}" ]] && continue
+                _stem="${_f%.jsonld}"
+                _out="${_stem}.class_derived.jsonld"
+                step "  Building class index for: $(basename "${_f}")"
+                run rdfsolve instance-match derive \
+                    --input  "${_f}" \
+                    --output "${_out}" \
+                    --endpoint "${LSLOD_ENDPOINT}" \
+                    --cache-index \
+                    --timeout "${TIMEOUT}" \
+                    || warn "Class index build failed for $(basename "${_f}")."
+            done <<< "${_inst_files}"
+        fi
+
+        step "Class index done in $(elapsed $(( $(date +%s) - t0 )))."
+    fi
+else
+    banner "Step 8: Class index build - SKIPPED"
+fi
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 9 - Derive class-level mappings
+# ═══════════════════════════════════════════════════════════════════
+# Reads each instance-mapping JSON-LD together with its cached class
+# index (produced in step 8) and outputs a class-derived mapping
+# JSON-LD in docker/mappings/class_derived/.
+# ───────────────────────────────────────────────────────────────────
+if [[ "${SKIP_MAPPINGS}" == false && "${SKIP_CLASS_DERIVATION}" == false ]]; then
+    if [[ -z "${LSLOD_ENDPOINT}" ]]; then
+        banner "Step 9: Derive class mappings - SKIPPED (no --lslod-endpoint)"
+    else
+        banner "Step 9: Derive class-level mappings"
+        t0=$(date +%s)
+
+        _inst_dir="${CONTAINER_MAPPINGS_DIR}/instance_matching"
+        _class_out_dir="${CONTAINER_MAPPINGS_DIR}/class_derived"
+
+        _inst_files=$(run bash -c "find ${_inst_dir} -name '*.jsonld' ! -name '*.enriched.jsonld' ! -name '*.class_derived.jsonld' 2>/dev/null || true")
+
+        if [[ -z "${_inst_files}" ]]; then
+            warn "No instance-mapping JSON-LD files found - nothing to derive."
+        else
+            run bash -c "mkdir -p ${_class_out_dir}"
+            while IFS= read -r _f; do
+                [[ -z "${_f}" ]] && continue
+                _base=$(basename "${_f}" .jsonld)
+                _out="${_class_out_dir}/${_base}.class_derived.jsonld"
+                step "  Deriving: $(basename "${_f}") → class_derived/"
+                run rdfsolve instance-match derive \
+                    --input    "${_f}" \
+                    --output   "${_out}" \
+                    --endpoint "${LSLOD_ENDPOINT}" \
+                    --cache-index \
+                    --timeout  "${TIMEOUT}" \
+                    || warn "Class derivation failed for $(basename "${_f}")."
+            done <<< "${_inst_files}"
+        fi
+
+        step "Class derivation done in $(elapsed $(( $(date +%s) - t0 )))."
+    fi
+else
+    banner "Step 9: Derive class mappings - SKIPPED"
+fi
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 10 - Enrich instance JSON-LD with class annotations
+# ═══════════════════════════════════════════════════════════════════
+# Writes {stem}.enriched.jsonld alongside each instance-mapping file,
+# annotating every entity node with @type and rdfsolve:classifiedIn
+# provenance from the class index.
+# ───────────────────────────────────────────────────────────────────
+if [[ "${SKIP_MAPPINGS}" == false && "${SKIP_CLASS_DERIVATION}" == false ]]; then
+    if [[ -z "${LSLOD_ENDPOINT}" ]]; then
+        banner "Step 10: Enrich instance JSON-LD - SKIPPED (no --lslod-endpoint)"
+    else
+        banner "Step 10: Enrich instance JSON-LD with class annotations"
+        t0=$(date +%s)
+
+        _inst_dir="${CONTAINER_MAPPINGS_DIR}/instance_matching"
+
+        _inst_files=$(run bash -c "find ${_inst_dir} -name '*.jsonld' ! -name '*.enriched.jsonld' ! -name '*.class_derived.jsonld' 2>/dev/null || true")
+
+        if [[ -z "${_inst_files}" ]]; then
+            warn "No instance-mapping JSON-LD files found - nothing to enrich."
+        else
+            while IFS= read -r _f; do
+                [[ -z "${_f}" ]] && continue
+                step "  Enriching: $(basename "${_f}")"
+                run rdfsolve instance-match derive \
+                    --input    "${_f}" \
+                    --output   "${_f%.jsonld}.class_derived.jsonld" \
+                    --endpoint "${LSLOD_ENDPOINT}" \
+                    --cache-index \
+                    --enrich \
+                    --timeout  "${TIMEOUT}" \
+                    || warn "Enrichment failed for $(basename "${_f}")."
+            done <<< "${_inst_files}"
+        fi
+
+        step "Enrichment done in $(elapsed $(( $(date +%s) - t0 )))."
+    fi
+else
+    banner "Step 10: Enrich instance JSON-LD - SKIPPED"
 fi
 
 # ═══════════════════════════════════════════════════════════════════

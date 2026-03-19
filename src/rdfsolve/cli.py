@@ -293,6 +293,17 @@ def pipeline_mine(ctx: click.Context, **kwargs: Any) -> None:
 @_common_options
 @_mining_options
 @click.option(
+    "--graph-uri",
+    "graph_uris",
+    multiple=True,
+    default=None,
+    help=(
+        "Named graph URI to scope mining queries to (repeatable). "
+        "When omitted, graph_uris from sources.yaml are used. "
+        "Pass '--graph-uri none' to mine all graphs (no filter)."
+    ),
+)
+@click.option(
     "--endpoint",
     default="http://localhost:7001",
     help="Local QLever SPARQL endpoint URL.",
@@ -981,10 +992,22 @@ def semra_group() -> None:
     show_default=True,
     help="Directory to write JSON-LD files.",
 )
+@click.option(
+    "--mapping-type",
+    default="instance",
+    show_default=True,
+    type=click.Choice(["instance", "class"], case_sensitive=False),
+    help=(
+        "Mapping type to store in @about.mapping_type. "
+        "Use 'instance' for entity-level mappings (default) "
+        "or 'class' for concept/class mappings."
+    ),
+)
 def semra_import_cmd(
     source: str,
     prefixes: tuple[str, ...],
     output_dir: str,
+    mapping_type: str,
 ) -> None:
     """Import mappings from a single SeMRA source.
 
@@ -998,6 +1021,7 @@ def semra_import_cmd(
             source=source,
             keep_prefixes=list(prefixes) if prefixes else None,
             output_dir=output_dir,
+            mapping_type=mapping_type,
         )
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
@@ -1036,10 +1060,22 @@ def semra_import_cmd(
     show_default=True,
     help="Directory to write JSON-LD files.",
 )
+@click.option(
+    "--mapping-type",
+    default="instance",
+    show_default=True,
+    type=click.Choice(["instance", "class"], case_sensitive=False),
+    help=(
+        "Mapping type to store in @about.mapping_type. "
+        "Use 'instance' for entity-level mappings (default) "
+        "or 'class' for concept/class mappings."
+    ),
+)
 def semra_seed_cmd(
     source_list: tuple[str, ...],
     prefixes: tuple[str, ...],
     output_dir: str,
+    mapping_type: str,
 ) -> None:
     """Seed mapping files from multiple SeMRA sources."""
     from rdfsolve.api import seed_semra_mappings
@@ -1049,6 +1085,7 @@ def semra_seed_cmd(
             sources=list(source_list),
             keep_prefixes=list(prefixes) if prefixes else None,
             output_dir=output_dir,
+            mapping_type=mapping_type,
         )
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
@@ -1239,6 +1276,290 @@ def inference_seed_cmd(
         click.echo(f"  OK {result['output_edges']} edges -> {result['output_path']}")
     else:
         click.echo("  ⚠ No input files found.", err=True)
+
+
+# ── sssom command group ──────────────────────────────────────────
+
+
+@main.group("sssom")
+def sssom_group() -> None:
+    r"""SSSOM integration: import SSSOM mapping bundles.
+
+    Downloads SSSOM TSV bundles from the URLs listed in
+    ``data/sssom_sources.yaml`` and writes one JSON-LD file per
+    ``.sssom.tsv`` file extracted.
+
+    Typical workflow::
+
+        rdfsolve sssom import --name ols_mappings
+        rdfsolve sssom seed
+    """
+
+
+@sssom_group.command("import")
+@click.option(
+    "--name",
+    "-n",
+    required=True,
+    help="Source name as defined in sssom_sources.yaml.",
+)
+@click.option(
+    "--url",
+    default=None,
+    help=("Override the URL for this source (default: read from YAML)."),
+)
+@click.option(
+    "--sources-yaml",
+    default="data/sssom_sources.yaml",
+    show_default=True,
+    help="Path to the SSSOM sources YAML file.",
+)
+@click.option(
+    "--output-dir",
+    default="docker/mappings/sssom",
+    show_default=True,
+    help="Directory to write JSON-LD files.",
+)
+@click.option(
+    "--mapping-type",
+    default="instance",
+    show_default=True,
+    type=click.Choice(["instance", "class"], case_sensitive=False),
+    help=(
+        "Mapping type to store in @about.mapping_type. "
+        "Use 'instance' for entity-level mappings (default) "
+        "or 'class' for concept/class mappings."
+    ),
+)
+def sssom_import_cmd(
+    name: str,
+    url: str | None,
+    sources_yaml: str,
+    output_dir: str,
+    mapping_type: str,
+) -> None:
+    """Import one SSSOM source by name."""
+    import yaml as _yaml
+
+    from rdfsolve.api import import_sssom_source
+
+    yaml_path = Path(sources_yaml)
+    entries: list[dict[str, str]] = []
+    if yaml_path.exists():
+        entries = _yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or []
+
+    entry = next((e for e in entries if e.get("name") == name), None)
+    if entry is None:
+        if url is None:
+            click.echo(
+                f"Error: source '{name}' not found in {sources_yaml} and no --url given.",
+                err=True,
+            )
+            raise click.Abort()
+        entry = {"name": name, "url": url}
+    elif url is not None:
+        entry = dict(entry)
+        entry["url"] = url
+
+    try:
+        result = import_sssom_source(
+            entry=entry,
+            output_dir=output_dir,
+            mapping_type=mapping_type,
+        )
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    for s in result["succeeded"]:
+        click.echo(f"  OK {s}")
+    for f in result["failed"]:
+        click.echo(
+            f"  FAIL {f.get('file', f.get('source', '?'))}: {f.get('error')}",
+            err=True,
+        )
+    if result["failed"]:
+        raise SystemExit(1)
+
+
+@sssom_group.command("seed")
+@click.option(
+    "--sources-yaml",
+    default="data/sssom_sources.yaml",
+    show_default=True,
+    help="Path to the SSSOM sources YAML file.",
+)
+@click.option(
+    "--output-dir",
+    default="docker/mappings/sssom",
+    show_default=True,
+    help="Directory to write JSON-LD files.",
+)
+@click.option(
+    "--name",
+    "-n",
+    "names",
+    multiple=True,
+    help=("Process only sources with these names (repeatable). Default: process all."),
+)
+@click.option(
+    "--mapping-type",
+    default="instance",
+    show_default=True,
+    type=click.Choice(["instance", "class"], case_sensitive=False),
+    help=(
+        "Mapping type to store in @about.mapping_type. "
+        "Use 'instance' for entity-level mappings (default) "
+        "or 'class' for concept/class mappings."
+    ),
+)
+def sssom_seed_cmd(
+    sources_yaml: str,
+    output_dir: str,
+    names: tuple[str, ...],
+    mapping_type: str,
+) -> None:
+    """Seed SSSOM mapping files for all (or selected) sources."""
+    from rdfsolve.api import seed_sssom_mappings
+
+    try:
+        result = seed_sssom_mappings(
+            sssom_sources_yaml=sources_yaml,
+            output_dir=output_dir,
+            names=list(names) if names else None,
+            mapping_type=mapping_type,
+        )
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    for s in result["succeeded"]:
+        click.echo(f"  OK {s}")
+    for f in result["failed"]:
+        click.echo(
+            f"  FAIL {f.get('file', f.get('source', '?'))}: {f.get('error')}",
+            err=True,
+        )
+    if result["failed"]:
+        raise SystemExit(1)
+
+
+# ── instance-match derive ────────────────────────────────────────
+
+
+@instance_match_group.command("derive")
+@click.option(
+    "--input",
+    "-i",
+    "input_paths",
+    required=True,
+    multiple=True,
+    help="Input instance-mapping JSON-LD file (repeatable).",
+)
+@click.option(
+    "--output",
+    "-o",
+    "output_path",
+    required=True,
+    help="Output JSON-LD file for class-derived mappings.",
+)
+@click.option(
+    "--endpoint",
+    "-e",
+    "endpoint_url",
+    required=True,
+    help="SPARQL / QLever endpoint URL for class lookup.",
+)
+@click.option(
+    "--batch-size",
+    default=50,
+    show_default=True,
+    type=int,
+    help="Number of IRIs per VALUES query.",
+)
+@click.option(
+    "--timeout",
+    default=60.0,
+    show_default=True,
+    type=float,
+    help="Per-request SPARQL timeout in seconds.",
+)
+@click.option(
+    "--min-count",
+    "min_instance_count",
+    default=1,
+    show_default=True,
+    type=int,
+    help="Minimum instance pairs to retain a class pair.",
+)
+@click.option(
+    "--min-confidence",
+    default=0.0,
+    show_default=True,
+    type=float,
+    help="Minimum confidence score to retain a class pair.",
+)
+@click.option(
+    "--cache-index",
+    is_flag=True,
+    default=False,
+    help=("Cache the class index to disk and reuse on subsequent runs."),
+)
+@click.option(
+    "--index-cache-path",
+    default=None,
+    help=("Explicit path for the cached index JSON. Defaults to {output}.class_index_cache.json."),
+)
+@click.option(
+    "--enrich",
+    "enrich_in_place",
+    is_flag=True,
+    default=False,
+    help=("Write enriched copies of input files alongside the originals ({stem}.enriched.jsonld)."),
+)
+@click.option(
+    "--name",
+    "source_name",
+    default=None,
+    help=("Human-readable name for the session report. Defaults to the output file stem."),
+)
+def instance_match_derive_cmd(
+    input_paths: tuple[str, ...],
+    output_path: str,
+    endpoint_url: str,
+    batch_size: int,
+    timeout: float,
+    min_instance_count: int,
+    min_confidence: float,
+    cache_index: bool,
+    index_cache_path: str | None,
+    enrich_in_place: bool,
+    source_name: str | None,
+) -> None:
+    """Derive class-level mappings from instance-mapping files."""
+    from rdfsolve.api import derive_class_mappings_from_instances
+
+    try:
+        report = derive_class_mappings_from_instances(
+            input_paths=list(input_paths),
+            output_path=output_path,
+            endpoint_url=endpoint_url,
+            timeout=timeout,
+            batch_size=batch_size,
+            min_instance_count=min_instance_count,
+            min_confidence=min_confidence,
+            cache_index=cache_index,
+            index_cache_path=index_cache_path,
+            enrich_in_place=enrich_in_place,
+            source_name=source_name,
+        )
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    derivation = report.get("derivation", {})
+    click.echo(f"  OK {derivation.get('output_class_pairs', '?')} class pairs -> {output_path}")
+    click.echo(f"  elapsed: {report.get('elapsed_s', 0):.1f}s  cost: {report.get('cost', {})}")
 
 
 if __name__ == "__main__":

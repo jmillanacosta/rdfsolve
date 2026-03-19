@@ -3,9 +3,15 @@
 Parses an in-memory VoID RDF graph and converts the embedded schema
 to various downstream formats (JSON-LD, LinkML, SHACL, RDF-config,
 DataFrame).
+
+It also serves as the entry-point for *discovering* VoID catalogs at
+live SPARQL endpoints (``discover_void_graphs``) and for turning raw
+partition records back into an RDF graph
+(``build_void_graph_from_partitions``).
 """
 
 import logging
+from hashlib import md5
 from typing import Any, cast
 
 import pandas as pd
@@ -636,3 +642,193 @@ class VoidParser:
             endpoint_name=endpoint_name,
             graph_uri=graph_uri,
         )
+
+    # ------------------------------------------------------------------
+    # VoID catalog discovery
+    # ------------------------------------------------------------------
+
+    def discover_void_graphs(self, endpoint_url: str) -> dict[str, Any]:
+        """Discover VoID graphs at *endpoint_url* via a SELECT query.
+
+        Queries for VoID partitions across all named graphs.  Returns a
+        dict describing found graphs and their raw partition records,
+        which can be passed directly to
+        :meth:`build_void_graph_from_partitions`.
+
+        Args:
+            endpoint_url: SPARQL endpoint URL.
+
+        Returns:
+            Dict with keys ``has_void_descriptions``, ``found_graphs``,
+            ``total_graphs``, ``void_content``, ``partitions``.
+            On failure an ``error`` key is added and counts are zero.
+        """
+        from rdfsolve.sparql_helper import SparqlHelper
+
+        query = """
+        PREFIX void: <http://rdfs.org/ns/void#>
+        PREFIX void-ext: <http://ldf.fi/void-ext#>
+        SELECT DISTINCT ?subjectClass ?prop ?objectClass ?objectDatatype ?g
+        WHERE {
+          GRAPH ?g {
+            {
+              ?cp void:class ?subjectClass ;
+                  void:propertyPartition ?pp .
+              ?pp void:property ?prop .
+              OPTIONAL {
+                {
+                  ?pp void:classPartition [ void:class ?objectClass ] .
+                } UNION {
+                  ?pp void-ext:datatypePartition
+                      [ void-ext:datatype ?objectDatatype ] .
+                }
+              }
+            } UNION {
+              ?ls void:subjectsTarget [ void:class ?subjectClass ] ;
+                  void:linkPredicate ?prop ;
+                  void:objectsTarget [ void:class ?objectClass ] .
+            }
+          }
+        }
+        """
+        try:
+            helper = SparqlHelper(endpoint_url)
+            results = helper.select(query, purpose="void/partition-discovery")
+
+            found_graphs: list[str] = []
+            void_content: dict[str, dict[str, Any]] = {}
+            partitions: list[dict[str, str]] = []
+
+            for row in results["results"]["bindings"]:
+                g = row.get("g", {}).get("value")
+                if not g:
+                    continue
+                if g not in void_content:
+                    void_content[g] = {
+                        "partition_count": 0,
+                        "has_any_partitions": True,
+                    }
+                    found_graphs.append(g)
+                void_content[g]["partition_count"] += 1
+
+                p: dict[str, str] = {
+                    "graph": g,
+                    "subjectClass": row.get("subjectClass", {}).get("value", ""),
+                    "prop": row.get("prop", {}).get("value", ""),
+                }
+                if row.get("objectClass", {}).get("value"):
+                    p["objectClass"] = row["objectClass"]["value"]
+                if row.get("objectDatatype", {}).get("value"):
+                    p["objectDatatype"] = row["objectDatatype"]["value"]
+                partitions.append(p)
+
+            return {
+                "has_void_descriptions": bool(found_graphs),
+                "found_graphs": found_graphs,
+                "total_graphs": len(found_graphs),
+                "void_content": void_content,
+                "partitions": partitions,
+            }
+        except Exception as exc:
+            logger.info("VoID discovery failed: %s", exc)
+            return {
+                "has_void_descriptions": False,
+                "found_graphs": [],
+                "total_graphs": 0,
+                "void_content": {},
+                "partitions": [],
+                "error": str(exc),
+            }
+
+    def build_void_graph_from_partitions(
+        self,
+        partitions: list[dict[str, str]],
+        base_uri: str | None = None,
+    ) -> Graph:
+        """Convert raw partition records into an RDF VoID graph.
+
+        Partition records are the dicts produced by
+        :meth:`discover_void_graphs` (keys: ``subjectClass``, ``prop``,
+        optionally ``objectClass`` / ``objectDatatype``).
+
+        Args:
+            partitions: Partition records from :meth:`discover_void_graphs`.
+            base_uri: Base URI for generated blank-node-replacement IRIs.
+
+        Returns:
+            RDF :class:`~rdflib.Graph` with VoID partition triples.
+        """
+        VOID = "http://rdfs.org/ns/void#"
+        VOID_EXT = "http://ldf.fi/void-ext#"
+        base = base_uri or "urn:void:partition:"
+
+        void_graph = Graph()
+        void_graph.bind("void", URIRef(VOID))
+        void_graph.bind("void-ext", URIRef(VOID_EXT))
+
+        class_partitions: dict[str, URIRef] = {}
+
+        for part in partitions:
+            sc = part.get("subjectClass", "")
+            prop = part.get("prop", "")
+            if not sc or not prop:
+                continue
+
+            if sc not in class_partitions:
+                cp_uri = URIRef(f"{base}class_{md5(sc.encode()).hexdigest()[:12]}")
+                class_partitions[sc] = cp_uri
+                void_graph.add((cp_uri, URIRef(f"{VOID}class"), URIRef(sc)))
+
+            cp_uri = class_partitions[sc]
+            oc = part.get("objectClass", "")
+            dt = part.get("objectDatatype", "")
+            pp_key = f"{sc}_{prop}_{oc or dt}"
+            pp_uri = URIRef(f"{base}prop_{md5(pp_key.encode()).hexdigest()[:12]}")
+
+            void_graph.add((cp_uri, URIRef(f"{VOID}propertyPartition"), pp_uri))
+            void_graph.add((pp_uri, URIRef(f"{VOID}property"), URIRef(prop)))
+            void_graph.add(
+                (
+                    pp_uri,
+                    URIRef(f"{VOID_EXT}subjectClass"),
+                    URIRef(sc),
+                )
+            )
+
+            if oc:
+                if oc not in class_partitions:
+                    oc_uri = URIRef(f"{base}class_{md5(oc.encode()).hexdigest()[:12]}")
+                    class_partitions[oc] = oc_uri
+                    void_graph.add((oc_uri, URIRef(f"{VOID}class"), URIRef(oc)))
+                oc_uri = class_partitions[oc]
+                void_graph.add(
+                    (
+                        pp_uri,
+                        URIRef(f"{VOID}classPartition"),
+                        oc_uri,
+                    )
+                )
+                void_graph.add(
+                    (
+                        pp_uri,
+                        URIRef(f"{VOID_EXT}objectClass"),
+                        URIRef(oc),
+                    )
+                )
+            elif dt:
+                dt_uri = URIRef(f"{base}dtype_{md5(dt.encode()).hexdigest()[:12]}")
+                void_graph.add(
+                    (
+                        pp_uri,
+                        URIRef(f"{VOID_EXT}datatypePartition"),
+                        dt_uri,
+                    )
+                )
+                void_graph.add((dt_uri, URIRef(f"{VOID_EXT}datatype"), URIRef(dt)))
+
+        logger.debug(
+            "Built VoID graph: %d triples from %d partitions",
+            len(void_graph),
+            len(partitions),
+        )
+        return void_graph

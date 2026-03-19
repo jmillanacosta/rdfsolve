@@ -1,8 +1,7 @@
 """
-Schema Miner - extract RDF schema patterns via simple SELECT queries.
+Schema Miner - extract RDF schema patterns via SELECT queries.
 
-Instead of building VoID on the endpoint with heavy CONSTRUCT + BIND
-queries, this module runs three lightweight SELECT DISTINCT queries
+This module runs three lightweight SELECT DISTINCT queries
 and assembles the schema in Python:
 
 1. **Typed-object patterns**::
@@ -29,8 +28,8 @@ All queries use OFFSET / LIMIT pagination via
 :meth:`SparqlHelper.select_chunked`.
 
 The primary export is :class:`MinedSchema` (-> JSON-LD).  It can also
-be converted to a VoID graph for downstream LinkML / SHACL / RDF-config
-export via :class:`~rdfsolve.parser.VoidParser`.
+be converted to downstream LinkML / SHACL / RDF-config
+exports.
 """
 
 from __future__ import annotations
@@ -68,7 +67,13 @@ __all__ = [
     "_mine_one_source",
     "_resolve_source_overrides",
     "_write_schema_outputs",
+    "count_instances",
+    "count_instances_per_class",
+    "extract_partitions_from_void",
+    "generate_void_from_endpoint",
+    "mine_all_sources",
     "mine_schema",
+    "retrieve_void_from_graphs",
 ]
 
 
@@ -2626,3 +2631,402 @@ def _mine_one_source(
         failed.append({"dataset": name, "error": msg})
         if on_progress:
             on_progress(name, idx, total, msg)
+
+
+# -------------------------------------------------------------------
+# VoID / instance-counting helpers
+# -------------------------------------------------------------------
+
+
+def count_instances(
+    endpoint_url: str,
+    graph_uris: str | list[str] | None = None,
+    sample_limit: int | None = None,
+    sample_offset: int | None = None,
+    chunk_size: int | None = None,
+    offset_limit_steps: int | None = None,
+    delay_between_chunks: float = 20.0,
+    streaming: bool = False,
+    timeout: float = 120.0,
+) -> dict[str, int] | Any:
+    """Count instances per class at *endpoint_url*.
+
+    Args:
+        endpoint_url: SPARQL endpoint URL.
+        graph_uris: Optional named-graph URI(s) to restrict queries.
+        sample_limit: Maximum number of classes to return.
+        sample_offset: Starting offset for pagination.
+        chunk_size: Page size when paginating.
+        offset_limit_steps: Use this value as both LIMIT and OFFSET
+            step (overrides *chunk_size*).
+        delay_between_chunks: Seconds to sleep between pages.
+        streaming: If ``True`` return a generator of
+            ``(class_uri, count)`` tuples instead of a dict.
+        timeout: HTTP timeout per request.
+
+    Returns:
+        ``{class_uri: count}`` dict, or a generator when
+        *streaming* is ``True``.
+    """
+    helper = SparqlHelper(endpoint_url, timeout=timeout)
+    step = offset_limit_steps or chunk_size
+    offset = sample_offset or 0
+
+    if step is not None:
+
+        def _chunked() -> Any:
+            off = offset
+            seen = 0
+            while True:
+                q = _count_instances_query(
+                    graph_uris,
+                    limit=step,
+                    offset=off,
+                )
+                results = helper.select(q, purpose="coverage/class")
+                bindings = results["results"]["bindings"]
+                if not bindings:
+                    break
+                for row in bindings:
+                    if sample_limit and seen >= sample_limit:
+                        return
+                    yield (
+                        row["class"]["value"],
+                        int(row["count"]["value"]),
+                    )
+                    seen += 1
+                if len(bindings) < step:
+                    break
+                off += step
+                time.sleep(delay_between_chunks)
+
+        gen = _chunked()
+        return gen if streaming else dict(gen)
+
+    q = _count_instances_query(
+        graph_uris,
+        limit=sample_limit,
+        offset=sample_offset,
+    )
+    try:
+        results = helper.select(q, purpose="coverage/class")
+        pairs = (
+            (r["class"]["value"], int(r["count"]["value"])) for r in results["results"]["bindings"]
+        )
+        if streaming:
+            return pairs
+        return dict(pairs)
+    except Exception:
+        return iter([]) if streaming else {}
+
+
+def _count_instances_query(
+    graph_uris: str | list[str] | None,
+    limit: int | None,
+    offset: int | None,
+) -> str:
+    gc = _graph_clause([graph_uris] if isinstance(graph_uris, str) else graph_uris)
+    tail = ""
+    if offset:
+        tail += f"\nOFFSET {offset}"
+    if limit:
+        tail += f"\nLIMIT {limit}"
+    return (
+        f"SELECT ?class (COUNT(DISTINCT ?instance) AS ?count) WHERE {{"
+        f"\n{gc}"
+        f"\n  ?instance a ?class ."
+        f"\n{'}}' if not gc else ''}"
+        f"\n}}\nGROUP BY ?class\nORDER BY DESC(?count){tail}"
+    )
+
+
+def count_instances_per_class(
+    endpoint_url: str,
+    graph_uris: str | list[str] | None = None,
+    sample_limit: int | None = None,
+    exclude_graphs: bool = True,
+    timeout: float = 120.0,
+) -> dict[str, int]:
+    """Return ``{class_uri: instance_count}`` for *endpoint_url*.
+
+    A simplified single-query variant of :func:`count_instances`.
+
+    Args:
+        endpoint_url: SPARQL endpoint URL.
+        graph_uris: Optional named-graph URI(s).
+        sample_limit: Cap on the number of classes returned.
+        exclude_graphs: Unused; kept for backwards-compatibility.
+        timeout: HTTP timeout per request.
+
+    Returns:
+        ``{class_uri: count}`` dict.
+    """
+    result = count_instances(
+        endpoint_url,
+        graph_uris=graph_uris,
+        sample_limit=sample_limit,
+        timeout=timeout,
+    )
+    return result if isinstance(result, dict) else dict(result)
+
+
+def extract_partitions_from_void(
+    endpoint_url: str,
+    void_graph_uris: list[str],
+    timeout: float = 120.0,
+) -> list[dict[str, str]]:
+    """Query partition records from named VoID graphs.
+
+    Runs a SELECT query against each graph URI in *void_graph_uris*
+    and returns the raw partition records suitable for passing to
+    :meth:`~rdfsolve.parser.VoidParser.build_void_graph_from_partitions`.
+
+    Args:
+        endpoint_url: SPARQL endpoint URL.
+        void_graph_uris: Graph URIs that are known to contain VoID.
+        timeout: HTTP timeout per request.
+
+    Returns:
+        List of partition dicts with keys ``subject_class``,
+        ``property``, and optionally ``object_class`` /
+        ``object_datatype``.
+    """
+    helper = SparqlHelper(endpoint_url, timeout=timeout)
+    all_partitions: list[dict[str, str]] = []
+
+    for graph_uri in void_graph_uris:
+        esc = graph_uri.replace("\\", "\\\\").replace('"', '\\"')
+        query = f"""
+        PREFIX void: <http://rdfs.org/ns/void#>
+        PREFIX void-ext: <http://ldf.fi/void-ext#>
+        SELECT DISTINCT ?subjectClass ?prop ?objectClass ?objectDatatype
+        WHERE {{
+          GRAPH <{esc}> {{
+            {{
+              ?cp void:class ?subjectClass ;
+                  void:propertyPartition ?pp .
+              ?pp void:property ?prop .
+              OPTIONAL {{
+                {{
+                  ?pp void:classPartition [ void:class ?objectClass ] .
+                }} UNION {{
+                  ?pp void-ext:datatypePartition
+                      [ void-ext:datatype ?objectDatatype ] .
+                }}
+              }}
+            }} UNION {{
+              ?ls void:subjectsTarget [ void:class ?subjectClass ] ;
+                  void:linkPredicate ?prop ;
+                  void:objectsTarget [ void:class ?objectClass ] .
+            }}
+          }}
+        }}
+        """
+        try:
+            results = helper.select(query, purpose="void/partition-detail")
+            for row in results.get("results", {}).get("bindings", []):
+                rec: dict[str, str] = {
+                    "subject_class": row.get("subjectClass", {}).get("value", ""),
+                    "property": row.get("prop", {}).get("value", ""),
+                }
+                if row.get("objectClass", {}).get("value"):
+                    rec["object_class"] = row["objectClass"]["value"]
+                elif row.get("objectDatatype", {}).get("value"):
+                    rec["object_datatype"] = row["objectDatatype"]["value"]
+                all_partitions.append(rec)
+        except Exception as exc:
+            logger.warning(
+                "Failed to retrieve partitions from %s: %s",
+                graph_uri,
+                exc,
+            )
+
+    return all_partitions
+
+
+def retrieve_void_from_graphs(
+    endpoint_url: str,
+    void_graph_uris: list[str],
+    graph_uris: str | list[str] | None = None,
+    partitions: list[dict[str, str]] | None = None,
+    timeout: float = 120.0,
+) -> Any:
+    """Build an RDF VoID graph from partition records.
+
+    If *partitions* are provided they are used directly; otherwise a
+    fresh discovery query is run via
+    :meth:`~rdfsolve.parser.VoidParser.discover_void_graphs`.
+
+    Args:
+        endpoint_url: SPARQL endpoint URL.
+        void_graph_uris: Graph URIs containing VoID (used as base URI).
+        graph_uris: Unused; kept for backwards-compatibility.
+        partitions: Pre-fetched partition records.
+        timeout: HTTP timeout per request.
+
+    Returns:
+        :class:`~rdflib.Graph` with VoID triples.
+    """
+    from rdflib import Graph as _Graph
+
+    from rdfsolve.parser import VoidParser
+
+    if not partitions:
+        result = VoidParser().discover_void_graphs(endpoint_url)
+        partitions = result.get("partitions", [])
+
+    if partitions:
+        base_uri = void_graph_uris[0] if void_graph_uris else None
+        return VoidParser().build_void_graph_from_partitions(partitions, base_uri=base_uri)
+    return _Graph()
+
+
+def generate_void_from_endpoint(
+    endpoint_url: str,
+    graph_uris: str | list[str] | None = None,
+    output_file: str | None = None,
+    counts: bool = True,
+    offset_limit_steps: int | None = None,
+    exclude_graphs: bool = True,
+    dataset_uri: str | None = None,
+    void_base_uri: str | None = None,
+    timeout: float = 120.0,
+) -> Any:
+    """Mine a VoID description from a SPARQL endpoint.
+
+    .. deprecated::
+        Use :func:`mine_schema` instead.
+
+    Args:
+        endpoint_url: SPARQL endpoint URL.
+        graph_uris: Named-graph URI(s) to restrict queries.
+        output_file: If given, serialise result as Turtle here.
+        counts: Include triple counts (passed to :func:`mine_schema`).
+        offset_limit_steps: Pagination chunk size.
+        exclude_graphs: Unused; kept for backwards-compatibility.
+        dataset_uri: Unused; kept for backwards-compatibility.
+        void_base_uri: Unused; kept for backwards-compatibility.
+        timeout: HTTP timeout per request.
+
+    Returns:
+        :class:`~rdflib.Graph` with VoID triples.
+    """
+    import warnings
+
+    warnings.warn(
+        "generate_void_from_endpoint is deprecated; use mine_schema().",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    schema = mine_schema(
+        endpoint_url=endpoint_url,
+        graph_uris=graph_uris,
+        counts=counts,
+        timeout=timeout,
+    )
+    void_g = schema.to_void_graph()
+    if output_file:
+        void_g.serialize(destination=output_file, format="turtle")
+    return void_g
+
+
+def mine_all_sources(
+    sources_csv: str | None = None,
+    *,
+    sources: str | None = None,
+    output_dir: str = ".",
+    fmt: str = "all",
+    chunk_size: int = 10_000,
+    class_chunk_size: int | None = None,
+    class_batch_size: int = 15,
+    delay: float = 0.5,
+    timeout: float = 120.0,
+    counts: bool = True,
+    reports: bool = True,
+    filter_service_namespaces: bool = True,
+    untyped_as_classes: bool = False,
+    authors: list[dict[str, str]] | None = None,
+    on_progress: Callable[[str, int, int, str | None], None] | None = None,
+) -> dict[str, Any]:
+    """Mine schemas for all sources in a JSON-LD or CSV file.
+
+    Reads a sources file (JSON-LD preferred, CSV still accepted) and runs
+    :func:`mine_schema` for each entry whose *endpoint* is non-empty.
+    Results are written to *output_dir* as ``{name}_schema.jsonld`` and/or
+    ``{name}_void.ttl``.
+
+    Per-source overrides (``chunk_size``, ``class_batch_size``, ``timeout``,
+    etc.) in the JSON-LD file take precedence over the function-level
+    defaults.
+
+    Args:
+        sources_csv: **Deprecated** - use *sources* instead.
+        sources: Path to the sources file (JSON-LD or CSV).
+        output_dir: Directory where outputs are written.
+        fmt: Export format - ``"jsonld"``, ``"void"``, or ``"all"``.
+        chunk_size: Pagination page size for SPARQL queries.
+        class_chunk_size: Page size for Phase-1 class discovery.
+        class_batch_size: Number of classes per VALUES query in Phase-2.
+        delay: Delay between paginated pages (seconds).
+        timeout: HTTP timeout per request (seconds).
+        counts: Whether to fetch triple-count queries.
+        reports: Write per-source analytics JSON reports.
+        filter_service_namespaces: Strip service/system namespace patterns.
+        untyped_as_classes: Treat untyped URI objects as ``owl:Class``.
+        on_progress: Optional callback ``(dataset_name, index, total,
+            status_or_error)``.
+
+    Returns:
+        Summary dict with keys ``"succeeded"``, ``"failed"``, ``"skipped"``.
+    """
+    from rdfsolve.sources import load_sources
+
+    src_path: str | None = sources or sources_csv or None
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    entries = load_sources(src_path)
+
+    succeeded: list[str] = []
+    failed: list[dict[str, str]] = []
+    skipped: list[str] = []
+
+    total = len(entries)
+    for idx, entry in enumerate(entries, 1):
+        name = entry.get("name", "")
+        endpoint = entry.get("endpoint", "")
+
+        if not endpoint:
+            logger.info("[%d/%d] Skipping %r: no endpoint", idx, total, name)
+            skipped.append(name)
+            if on_progress:
+                on_progress(name, idx, total, "skipped")
+            continue
+
+        _mine_one_source(
+            entry,
+            idx=idx,
+            total=total,
+            out=out,
+            fmt=fmt,
+            chunk_size=chunk_size,
+            class_chunk_size=class_chunk_size,
+            class_batch_size=class_batch_size,
+            delay=delay,
+            timeout=timeout,
+            counts=counts,
+            reports=reports,
+            filter_service_namespaces=filter_service_namespaces,
+            untyped_as_classes=untyped_as_classes,
+            authors=authors,
+            on_progress=on_progress,
+            succeeded=succeeded,
+            failed=failed,
+        )
+
+    return {
+        "succeeded": succeeded,
+        "failed": failed,
+        "skipped": skipped,
+    }

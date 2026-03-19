@@ -249,6 +249,44 @@ class TestMappingSubclassProvenance:
         assert doc["@about"]["stats"]["output_edges"] == 15
         assert "inversion" in doc["@about"]["inference_types"]
 
+    def test_class_derived_mapping_has_provenance(self):
+        """ClassDerivedMapping @about must expose all derivation fields."""
+        from rdfsolve.mapping_models.class_derived import ClassDerivedMapping
+
+        doc = ClassDerivedMapping(
+            edges=[],
+            about=self._about("cd", "class_derived"),
+            source_mapping_type="sssom_import",
+            source_mapping_files=["ols.jsonld"],
+            derivation_stats={"input_edges": 1000, "output_edges": 42},
+            enrichment_stats={"entities_enriched": 800},
+            class_index_endpoint="https://qlever.example.org/",
+        ).to_jsonld()
+        about = doc["@about"]
+        assert about["strategy"] == "class_derived"
+        assert about["source_mapping_type"] == "sssom_import"
+        assert about["source_files"] == ["ols.jsonld"]
+        assert about["derivation_stats"]["output_edges"] == 42
+        assert about["enrichment_stats"]["entities_enriched"] == 800
+        assert about["class_index_endpoint"] == "https://qlever.example.org/"
+
+    def test_class_derived_empty_stats_omitted(self):
+        """Empty derivation/enrichment dicts must not appear in @about."""
+        from rdfsolve.mapping_models.class_derived import ClassDerivedMapping
+
+        doc = ClassDerivedMapping(
+            edges=[],
+            about=self._about("cd2", "class_derived"),
+            source_mapping_type="semra_import",
+            derivation_stats={},
+            enrichment_stats={},
+            class_index_endpoint=None,
+        ).to_jsonld()
+        about = doc["@about"]
+        assert "derivation_stats" not in about
+        assert "enrichment_stats" not in about
+        assert "class_index_endpoint" not in about
+
 
 # ── Mapping.dataset_graph ─────────────────────────────────────────
 

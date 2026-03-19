@@ -325,7 +325,9 @@ def _parse_mapping_graph(
         src_uri = expand(src_id)
         src_ds_node = node.get("void:inDataset") or {}
         src_ds = src_ds_node.get("dcterms:title", "")
-        src_ep_raw = src_ds_node.get("void:sparqlEndpoint") or {}
+        src_ep_raw = (
+            src_ds_node.get("void:sparqlEndpoint") or src_ds_node.get("foaf:homepage") or {}
+        )
         src_ep = src_ep_raw.get("@id") if isinstance(src_ep_raw, dict) else None
 
         for key, val in node.items():
@@ -363,7 +365,7 @@ def _parse_mapping_target(
     tgt_uri = expand(tgt["@id"])
     tgt_ds_node = tgt.get("void:inDataset") or {}
     tgt_ds = tgt_ds_node.get("dcterms:title", "") or src_ds
-    tgt_ep_raw = tgt_ds_node.get("void:sparqlEndpoint") or {}
+    tgt_ep_raw = tgt_ds_node.get("void:sparqlEndpoint") or tgt_ds_node.get("foaf:homepage") or {}
     tgt_ep = tgt_ep_raw.get("@id") if isinstance(tgt_ep_raw, dict) else None
     confidence = tgt.get("rdfsolve:confidence")
     try:

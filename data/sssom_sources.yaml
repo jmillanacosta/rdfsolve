@@ -17,9 +17,16 @@
 #   license     - SPDX expression or URL (optional)
 #   homepage    - upstream homepage (optional)
 #   type        - optional, one of {class_mappings, property_mappings}; if
+#                 absent, the entry is treated as a class/instance mapping.
+#   mapping_type - one of {instance, class}; controls @about.mapping_type in
+#                 the output JSON-LD.  Only meaningful for entity/class-level
+#                 sources.  Property-mapping entries (type: property_mappings)
+#                 are handled by a separate pipeline and do NOT carry this
+#                 field.
 
 - name: ols_mappings
   provider: "EMBL-EBI (UK)"
+  mapping_type: instance
   url: "https://ftp.ebi.ac.uk/pub/databases/spot/ols/latest/mappings_sssom.tgz"
   description: >-
     OLS (Ontology Lookup Service) cross-ontology mappings exported in SSSOM

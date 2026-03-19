@@ -313,6 +313,7 @@ def _iter_sssom_tsv_from_archive(archive_path: Path) -> Iterator[tuple[str, str]
 def import_sssom_source(
     entry: dict[str, Any],
     output_dir: str = "docker/mappings/sssom",
+    mapping_type: str = "instance",
 ) -> dict[str, Any]:
     """Download and convert one SSSOM source entry to JSON-LD files.
 
@@ -325,6 +326,9 @@ def import_sssom_source(
         entry: A dict with at least ``name`` and ``url`` keys, as found in
                ``data/sssom_sources.yaml``.
         output_dir: Directory to write output JSON-LD files.
+        mapping_type: ``"instance"`` (default) or ``"class"``.
+            Stored in the ``@about.mapping_type`` field of each output
+            JSON-LD file.
 
     Returns:
         Summary dict::
@@ -374,7 +378,7 @@ def import_sssom_source(
                 about = AboutMetadata.build(
                     dataset_name=dataset_name,
                     pattern_count=len(edges),
-                    strategy="sssom_import",
+                    strategy=mapping_type,
                 )
 
                 mapping = SsomMapping(
@@ -386,6 +390,7 @@ def import_sssom_source(
                     mapping_set_title=header_meta.get("mapping_set_title"),
                     license=header_meta.get("license") or entry.get("license"),
                     curie_map=curie_map,
+                    mapping_type=mapping_type,
                 )
 
                 out_path = out / f"{dataset_name}.jsonld"
@@ -412,6 +417,7 @@ def seed_sssom_mappings(
     sssom_sources_yaml: str = "data/sssom_sources.yaml",
     output_dir: str = "docker/mappings/sssom",
     names: list[str] | None = None,
+    mapping_type: str = "instance",
 ) -> dict[str, Any]:
     """Seed SSSOM mapping files for all (or selected) sources.
 
@@ -423,6 +429,9 @@ def seed_sssom_mappings(
         output_dir: Directory for output JSON-LD files.
         names: Optional list of source names to restrict processing;
                if ``None`` (default), all entries are processed.
+        mapping_type: ``"instance"`` (default) or ``"class"``.
+            Stored in the ``@about.mapping_type`` field of each output
+            JSON-LD file.
 
     Returns:
         Aggregated summary with keys ``"succeeded"``, ``"failed"``,
@@ -453,7 +462,11 @@ def seed_sssom_mappings(
 
     for entry in entries:
         logger.info("Processing SSSOM source: %s", entry["name"])
-        result = import_sssom_source(entry, output_dir=output_dir)
+        result = import_sssom_source(
+            entry,
+            output_dir=output_dir,
+            mapping_type=mapping_type,
+        )
         all_succeeded.extend(result.get("succeeded", []))
         all_failed.extend(result.get("failed", []))
         all_skipped.extend(result.get("skipped", []))

@@ -26,6 +26,7 @@ Typical usage::
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import pandas as pd
 
@@ -40,7 +41,7 @@ from rdfsolve.sparql_helper import SparqlHelper
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["probe_resource"]
+__all__ = ["probe_resource", "seed_instance_mappings"]
 
 
 def _get_uri_formats(prefix: str) -> list[str]:
@@ -319,3 +320,100 @@ def probe_resource(
         uri_formats=uri_formats,
         match_results=all_results,
     )
+
+
+def seed_instance_mappings(
+    prefixes: list[str],
+    sources_csv: str | None = None,
+    *,
+    sources: str | None = None,
+    output_dir: str = "docker/mappings/instance_matching",
+    predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
+    dataset_names: list[str] | None = None,
+    timeout: float = 60.0,
+    skip_existing: bool = False,
+) -> dict[str, Any]:
+    """Probe multiple bioregistry resources and write mapping JSON-LD files.
+
+    Iterates over *prefixes*, runs :func:`probe_resource` for each, and
+    writes the result to ``{output_dir}/{prefix}_instance_mapping.jsonld``.
+
+    When a file already exists on disk the new probe results are **merged**
+    into it rather than overwriting it.
+
+    Args:
+        prefixes: List of bioregistry prefixes to process.
+        sources_csv: **Deprecated** - use *sources* instead.
+        sources: Path to the sources file (JSON-LD or CSV).
+        output_dir: Directory where JSON-LD files are written.
+        predicate: Mapping predicate URI.
+        dataset_names: Restrict probing to these dataset names.
+        timeout: SPARQL request timeout per request.
+        skip_existing: If ``True``, skip prefixes whose output file
+            already exists without re-probing.
+
+    Returns:
+        Summary dict: ``{"succeeded": [...], "failed": [...]}``.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    from rdfsolve.mapping_models.instance import merge_instance_jsonld
+    from rdfsolve.sources import load_sources_dataframe
+
+    out = _Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    src_path = sources or sources_csv or None
+    datasources = load_sources_dataframe(src_path)
+
+    succeeded: list[str] = []
+    failed: list[dict[str, str]] = []
+
+    for prefix in prefixes:
+        logger.info("Querying prefix: %s", prefix)
+        outfile = out / f"{prefix}_instance_mapping.jsonld"
+
+        if skip_existing and outfile.exists():
+            logger.info(
+                "Skipping %s: already exists at %s (skip_existing=True)",
+                prefix,
+                outfile,
+            )
+            succeeded.append(prefix)
+            continue
+
+        try:
+            mapping = probe_resource(
+                prefix=prefix,
+                datasources=datasources,
+                predicate=predicate,
+                dataset_names=dataset_names,
+                timeout=timeout,
+            )
+            new_jsonld = mapping.to_jsonld()
+
+            if outfile.exists():
+                try:
+                    existing_jsonld = _json.loads(outfile.read_text())
+                    merged = merge_instance_jsonld(existing_jsonld, new_jsonld)
+                    outfile.write_text(_json.dumps(merged, indent=2))
+                    logger.info("Merged into existing: %s", outfile)
+                except Exception as merge_exc:
+                    logger.warning(
+                        "Could not merge into %s (%s); overwriting.",
+                        outfile,
+                        merge_exc,
+                    )
+                    outfile.write_text(_json.dumps(new_jsonld, indent=2))
+                    logger.info("Overwritten: %s", outfile)
+            else:
+                outfile.write_text(_json.dumps(new_jsonld, indent=2))
+                logger.info("Written: %s", outfile)
+
+            succeeded.append(prefix)
+        except Exception as exc:
+            logger.error("Failed %s: %s", prefix, exc)
+            failed.append({"prefix": prefix, "error": str(exc)})
+
+    return {"succeeded": succeeded, "failed": failed}

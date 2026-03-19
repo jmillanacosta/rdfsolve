@@ -100,7 +100,9 @@ def get_rdfsolve_instance_mappings(
                 source_id = node.get("@id", "")
                 src_ds_node = node.get("void:inDataset", {})
                 src_ds = src_ds_node.get("dcterms:title", "")
-                src_ep = (src_ds_node.get("void:sparqlEndpoint") or {}).get("@id")
+                src_ep = (
+                    src_ds_node.get("void:sparqlEndpoint") or src_ds_node.get("foaf:homepage") or {}
+                ).get("@id")
                 for key, val in node.items():
                     if key.startswith("@") or key in (
                         "void:inDataset",
@@ -114,7 +116,11 @@ def get_rdfsolve_instance_mappings(
                         tgt_id = tgt.get("@id", "")
                         tgt_ds_node = tgt.get("void:inDataset", {})
                         tgt_ds = tgt_ds_node.get("dcterms:title", "")
-                        tgt_ep = (tgt_ds_node.get("void:sparqlEndpoint") or {}).get("@id")
+                        tgt_ep = (
+                            tgt_ds_node.get("void:sparqlEndpoint")
+                            or tgt_ds_node.get("foaf:homepage")
+                            or {}
+                        ).get("@id")
                         # Expand CURIE -> URI via context
                         context = data.get("@context", {})
                         pred_uri = expand_curie(key, context)

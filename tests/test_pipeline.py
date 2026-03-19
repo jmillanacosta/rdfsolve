@@ -4,17 +4,22 @@ These cover the functions that glue the pipeline together:
   1. inference._load_edges_from_jsonld - loads mapping fixtures
   2. api._merge_instance_mapping_jsonld - merges probe results
   3. query.QueryResult / ResultCell - SPARQL result models
+  4. class derivation + enrichment integration - with mock ClassIndex
 """
 # ruff: noqa: D102
 
 from __future__ import annotations
 
 import copy
+import json
+import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 DATA = Path(__file__).parent / "test_data"
 SSSOM_MAPPING = DATA / "sssom_mapping.jsonld"
 INSTANCE_MAPPING = DATA / "instance_mapping.jsonld"
+SYNTHETIC_INSTANCE = DATA / "instance_mappings" / "synthetic_instance.jsonld"
 
 
 # ── inference._load_edges_from_jsonld ─────────────────────────────
@@ -164,3 +169,152 @@ class TestQueryResultModels:
         assert d["row_count"] == 1
         assert d["rows"][0]["s"]["type"] == "uri"
         assert d["error"] is None
+
+
+# ── class derivation + enrichment integration ─────────────────────
+
+
+_GRAPH_A = "https://example.org/graphs/a"
+_GENE_IRI = "https://identifiers.org/ncbigene/672"
+_CLASS_GENE = "http://purl.obolibrary.org/obo/SO_0000704"
+_PROTEIN_IRI = "https://identifiers.org/uniprot/P38398"
+_CLASS_PROTEIN = "http://purl.obolibrary.org/obo/PR_000000001"
+
+
+def _make_class_index():
+    from rdfsolve.class_index import ClassIndex, EntityClassInfo
+
+    idx = ClassIndex(endpoint_url="https://example.org/sparql")
+    idx.entities[_GENE_IRI] = EntityClassInfo(
+        entity_iri=_GENE_IRI,
+        graph_classes={_GRAPH_A: [_CLASS_GENE]},
+    )
+    idx.entities[_PROTEIN_IRI] = EntityClassInfo(
+        entity_iri=_PROTEIN_IRI,
+        graph_classes={_GRAPH_A: [_CLASS_PROTEIN]},
+    )
+    return idx
+
+
+class TestDeriveClassMappingsPipeline:
+    """Full derivation pipeline: instance edges + ClassIndex -> output."""
+
+    def _make_instance_edges(self):
+        from rdfsolve.mapping_models.core import MappingEdge
+
+        return [
+            MappingEdge(
+                source_class=_GENE_IRI,
+                target_class=_PROTEIN_IRI,
+                predicate="skos:exactMatch",
+                source_dataset="ncbigene",
+                target_dataset="uniprot",
+            )
+        ]
+
+    def test_derive_produces_class_edge(self):
+        """A single instance edge with known class index yields >= 1 pair."""
+        from rdfsolve.class_derivation import derive_class_mappings
+
+        pairs, stats = derive_class_mappings(
+            self._make_instance_edges(),
+            _make_class_index(),
+        )
+        assert len(pairs) >= 1
+        assert stats["input_edges"] == 1
+        assert stats["output_edges"] >= 1
+
+    def test_derive_to_class_derived_mapping_jsonld(self):
+        """Derived pairs must serialise to valid ClassDerivedMapping JSON-LD."""
+        from rdfsolve.class_derivation import derive_class_mappings
+        from rdfsolve.mapping_models.class_derived import ClassDerivedMapping
+        from rdfsolve.schema_models.core import AboutMetadata
+
+        pairs, stats = derive_class_mappings(
+            self._make_instance_edges(),
+            _make_class_index(),
+        )
+        about = AboutMetadata.build(
+            dataset_name="test_derived",
+            pattern_count=len(pairs),
+            strategy="class_derived",
+        )
+        mapping = ClassDerivedMapping(
+            edges=[p.to_mapping_edge() for p in pairs],
+            about=about,
+            source_mapping_type="sssom_import",
+            derivation_stats=stats,
+        )
+        doc = mapping.to_jsonld()
+        assert doc["@about"]["strategy"] == "class_derived"
+        assert len(doc["@graph"]) >= 1
+
+    def test_derive_no_class_info_yields_empty(self):
+        """Edges whose entities are absent from the index are skipped."""
+        from rdfsolve.class_derivation import derive_class_mappings
+        from rdfsolve.class_index import ClassIndex
+        from rdfsolve.mapping_models.core import MappingEdge
+
+        empty_idx = ClassIndex(endpoint_url="https://example.org/sparql")
+        edges = [
+            MappingEdge(
+                source_class="https://unknown.org/A",
+                target_class="https://unknown.org/B",
+                predicate="skos:exactMatch",
+                source_dataset="x",
+                target_dataset="y",
+            )
+        ]
+        pairs, stats = derive_class_mappings(edges, empty_idx)
+        assert pairs == []
+        assert stats["output_edges"] == 0
+
+
+class TestEnrichInstanceJsonldWritesFile:
+    """enrich_instance_jsonld must write an enriched file to disk."""
+
+    def test_enriched_file_written_and_has_type(self):
+        from rdfsolve.api import enrich_instance_jsonld
+
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td) / "mapping.jsonld"
+            src.write_text(
+                json.dumps({
+                    "@context": {},
+                    "@graph": [{"@id": _GENE_IRI}],
+                    "@about": {},
+                })
+            )
+            enrich_instance_jsonld(
+                str(src),
+                _make_class_index(),
+            )
+            enriched = src.with_suffix(".enriched.jsonld")
+            assert enriched.exists()
+            doc = json.loads(enriched.read_text())
+            gene_node = next(
+                n for n in doc["@graph"]
+                if n.get("@id") == _GENE_IRI
+            )
+            assert "@type" in gene_node
+            assert _CLASS_GENE in gene_node["@type"]
+
+    def test_enrichment_stats_keys_present(self):
+        from rdfsolve.api import enrich_instance_jsonld
+
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td) / "mapping.jsonld"
+            src.write_text(
+                json.dumps({
+                    "@context": {},
+                    "@graph": [{"@id": _GENE_IRI}],
+                    "@about": {},
+                })
+            )
+            stats = enrich_instance_jsonld(
+                str(src),
+                _make_class_index(),
+            )
+        assert "entities_total" in stats
+        assert "entities_enriched" in stats
+        assert stats["entities_enriched"] >= 1

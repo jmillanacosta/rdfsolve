@@ -541,6 +541,61 @@ class SparqlHelper:
         bindings = out.get("results", {}).get("bindings", [])
         return [b["c"]["value"] for b in bindings if "c" in b]
 
+    def find_classes_for_iris_by_graph(
+        self,
+        iris: list[str],
+    ) -> dict[str, dict[str, list[str]]]:
+        """Find rdf:type classes for specific IRIs, grouped by named graph.
+
+        Uses a VALUES-based query to resolve multiple IRIs at once::
+
+            SELECT DISTINCT ?s ?g ?c
+            WHERE {
+              VALUES ?s { <iri1> <iri2> ... }
+              GRAPH ?g { ?s a ?c }
+            }
+
+        This is different from :meth:`find_classes_for_uri_pattern` which
+        uses range filters on URI prefixes.  Here we resolve exact IRIs.
+
+        Args:
+            iris: Full entity IRIs to look up.
+
+        Returns:
+            Nested dict ``{entity_iri: {graph_uri: [class_uri, ...]}}``.
+            Only IRIs found in at least one graph are included.
+        """
+        if not iris:
+            return {}
+
+        values_block = "\n    ".join(f"<{iri}>" for iri in iris)
+        query = (
+            "SELECT DISTINCT ?s ?g ?c\n"
+            "WHERE {\n"
+            "  VALUES ?s {\n"
+            f"    {values_block}\n"
+            "  }\n"
+            "  GRAPH ?g { ?s a ?c }\n"
+            "}"
+        )
+        try:
+            out = self.select(query)
+        except Exception:
+            return {}
+
+        bindings = out.get("results", {}).get("bindings", [])
+        result: dict[str, dict[str, list[str]]] = {}
+        for b in bindings:
+            s = b.get("s", {}).get("value")
+            g = b.get("g", {}).get("value")
+            c = b.get("c", {}).get("value")
+            if not (s and g and c):
+                continue
+            result.setdefault(s, {}).setdefault(g, [])
+            if c not in result[s][g]:
+                result[s][g].append(c)
+        return result
+
     def _execute(
         self,
         query: str,
