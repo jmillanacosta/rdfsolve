@@ -42,6 +42,10 @@ CLASS_BATCH_SIZE=15
 DISK_SPACE_FACTOR=12
 DISK_SPACE_MIN_MB=500
 
+# Prevent curl and Python requests from using proxy for QLever instances
+export no_proxy="localhost,127.0.0.1,${no_proxy:-}"
+export NO_PROXY="localhost,127.0.0.1,${NO_PROXY:-}"
+
 # Directories — override via env vars or CLI flags
 DATA_DIR="${DATA_DIR:-${REPO_ROOT}/data/rdf}"
 OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/results/output}"
@@ -141,17 +145,16 @@ _qlever_start() {
     # Stop any stale instance
     singularity instance stop "${instance_name}" 2>/dev/null || true
 
-    singularity instance start \
+    (cd "${workdir}" && singularity instance start \
         --bind "${workdir}:${workdir}" \
         --bind "${DATA_DIR}:${DATA_DIR}" \
-        --pwd "${workdir}" \
         "${SINGULARITY_IMAGE}" \
         "${instance_name}" \
-        qlever start --port "${port}"
+        qlever start --port "${port}")
 
     # Wait for the SPARQL endpoint to come up (max 60s)
     local i=0
-    until curl -sf "http://localhost:${port}/?query=ASK%7B%7D" >/dev/null 2>&1; do
+    until curl --noproxy '*' -sf "http://localhost:${port}/?query=ASK%7B%7D" >/dev/null 2>&1; do
         sleep 2; i=$((i+2))
         [[ $i -ge 60 ]] && { fail "[${name}] QLever did not start within 60s"; return 1; }
     done
