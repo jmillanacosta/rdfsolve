@@ -1,0 +1,131 @@
+{
+  "@context": {
+    "aopo": "http://aopkb.org/aop_ontology#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "void": "http://rdfs.org/ns/void#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "foaf": "http://xmlns.com/foaf/0.1/"
+  },
+  "@graph": [
+    {
+      "@id": "aopo:BiologicalEvent",
+      "aopo:hasObject": [
+        {
+          "@id": "aopo:CellTypeContext"
+        },
+        {
+          "@type": "xsd:string"
+        }
+      ],
+      "aopo:hasProcess": {
+        "@id": "aopo:OrganContext"
+      },
+      "aopo:hasAction": {
+        "@type": "xsd:string"
+      },
+      "_counts": {
+        "aopo:hasObject": {
+          "aopo:CellTypeContext": 62,
+          "Literal:xsd:string": 3
+        },
+        "aopo:hasProcess": {
+          "aopo:OrganContext": 49
+        },
+        "aopo:hasAction": {
+          "Literal:xsd:string": 1111
+        }
+      }
+    },
+    {
+      "@id": "aopo:KeyEvent",
+      "dcterms:isPartOf": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "rdfs:label": {
+        "@type": "xsd:string"
+      },
+      "foaf:page": {
+        "@type": "xsd:string"
+      },
+      "_counts": {
+        "dcterms:isPartOf": {
+          "aopo:AdverseOutcomePathway": 2300
+        },
+        "rdfs:label": {
+          "Literal:xsd:string": 1500
+        },
+        "foaf:page": {
+          "Literal:xsd:string": 800
+        }
+      }
+    },
+    {
+      "@id": "aopo:AdverseOutcomePathway",
+      "dc:title": {
+        "@type": "xsd:string"
+      },
+      "dc:description": {
+        "@type": "xsd:string"
+      },
+      "skos:exactMatch": {
+        "@id": "aopo:AdverseOutcomePathway"
+      },
+      "_counts": {
+        "dc:title": {
+          "Literal:xsd:string": 500
+        },
+        "dc:description": {
+          "Literal:xsd:string": 450
+        },
+        "skos:exactMatch": {
+          "aopo:AdverseOutcomePathway": 100
+        }
+      }
+    },
+    {
+      "@id": "void:Dataset",
+      "dcterms:isPartOf": {
+        "@id": "void:Dataset"
+      },
+      "foaf:page": {
+        "@type": "xsd:string"
+      },
+      "_counts": {
+        "dcterms:isPartOf": {
+          "void:Dataset": 10
+        },
+        "foaf:page": {
+          "Literal:xsd:string": 5
+        }
+      }
+    }
+  ],
+  "@about": {
+    "generated_by": "rdfsolve 0.0.1",
+    "generated_at": "2026-01-01T00:00:00+00:00",
+    "endpoint": "http://example.org/sparql",
+    "dataset_name": "test_aopwiki",
+    "pattern_count": 10,
+    "strategy": "miner/two-phase"
+  },
+  "_labels": {
+    "aopo:BiologicalEvent": "BiologicalEvent",
+    "aopo:hasObject": "hasObject",
+    "aopo:CellTypeContext": "Cell-term",
+    "aopo:hasProcess": "hasProcess",
+    "aopo:OrganContext": "Organ-term",
+    "aopo:hasAction": "hasAction",
+    "aopo:KeyEvent": "Key Event",
+    "dcterms:isPartOf": "isPartOf",
+    "aopo:AdverseOutcomePathway": "Adverse Outcome Pathway",
+    "dc:title": "title",
+    "dc:description": "description",
+    "skos:exactMatch": "exactMatch",
+    "void:Dataset": "Dataset",
+    "foaf:page": "page",
+    "rdfs:label": "label"
+  }
+}
