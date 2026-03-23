@@ -58,13 +58,35 @@ QLEVER_DOCKER_IMAGE="docker://docker.io/adfreiburg/qlever:latest"
 # ═══════════════════════════════════════════════════════════════════
 # Colours & helpers
 # ═══════════════════════════════════════════════════════════════════
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
-BLUE='\033[0;34m'; BOLD='\033[1m'; NC='\033[0m'
+# Terminal Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
 
-banner()  { echo ""; echo -e "${BLUE}${BOLD}════════════════════════════════════════${NC}"; echo -e "${BLUE}${BOLD}  $1${NC}"; echo -e "${BLUE}${BOLD}════════════════════════════════════════${NC}"; echo ""; }
+# Helpers
+banner()  { echo -e "\n${BLUE}════════════════════════════════════════\n  $1\n════════════════════════════════════════${NC}\n"; }
 step()    { echo -e "${GREEN}▸ $1${NC}"; }
-warn()    { echo -e "${YELLOW}⚠ $1${NC}"; }
-fail()    { echo -e "${RED}✗ $1${NC}" >&2; }
+warn()    { 
+    echo -e "${YELLOW}⚠ $1${NC}"
+    if command -v _notify >/dev/null 2>&1; then
+        _notify "rdfsolve warning ⚠️" "$1" "default"
+    fi
+}
+fail()    { 
+    echo -e "${RED}✗ $1${NC}" >&2
+    if command -v _notify >/dev/null 2>&1; then
+        _notify "rdfsolve error ❌" "$1" "high"
+    fi
+}
+success() {
+    echo -e "${GREEN}✓ $1${NC}"
+    if command -v _notify >/dev/null 2>&1; then
+        _notify "rdfsolve success ✅" "$1" "default"
+    fi
+}
 elapsed() { printf '%02d:%02d:%02d' $(($1/3600)) $((($1%3600)/60)) $(($1%60)); }
 
 # ═══════════════════════════════════════════════════════════════════
@@ -145,12 +167,11 @@ _qlever_start() {
     # Stop any stale instance
     singularity instance stop "${instance_name}" 2>/dev/null || true
 
-    (cd "${workdir}" && singularity instance start \
+    (cd "${workdir}" && singularity exec \
         --bind "${workdir}:${workdir}" \
         --bind "${DATA_DIR}:${DATA_DIR}" \
         "${SINGULARITY_IMAGE}" \
-        "${instance_name}" \
-        qlever start --port "${port}")
+        qlever start --port "${port}") > "${workdir}/start.log" 2>&1
 
     # Wait for the SPARQL endpoint to come up (max 60s)
     local i=0
@@ -165,7 +186,14 @@ _qlever_start() {
 # Stop a running QLever Singularity instance.
 _qlever_stop() {
     local instance_name="$1"
-    singularity instance stop "${instance_name}" 2>/dev/null || true
+    local port="$2"
+    local workdir="$3"
+    
+    (cd "${workdir}" && singularity exec \
+        --bind "${workdir}:${workdir}" \
+        --bind "${DATA_DIR}:${DATA_DIR}" \
+        "${SINGULARITY_IMAGE}" \
+        qlever stop --port "${port}") > "${workdir}/stop.log" 2>&1 || true
 }
 
 # ═══════════════════════════════════════════════════════════════════
@@ -413,7 +441,7 @@ for name, port in d.items():
 
             # ── Stop server ───────────────────────────────────────
             step "Stopping QLever …"
-            _qlever_stop "${INSTANCE_NAME}"
+            _qlever_stop "${INSTANCE_NAME}" "${PORT}" "${WORKDIR}"
 
             # ── Cleanup raw RDF files ─────────────────────────────
             # Index files stay (needed for final LSOLD step).
@@ -428,12 +456,12 @@ for name, port in d.items():
                 -o -name '*.zip' -o -name '*.gz' -o -name '*.xz' \) \
                 -delete 2>/dev/null || true
 
-            step "[${NAME}] Done."
+            success "[${NAME}] pipeline steps completed."
 
         done <<< "${DS_LINES}"
     fi
 else
-    banner "Steps 3-4: Local mining - SKIPPED"
+    step "Local processing skipped (--skip-local)."
 fi
 
 # ═══════════════════════════════════════════════════════════════════
@@ -459,4 +487,10 @@ echo -e "  Results in: ${BOLD}${RESULTS_DIR}/${NC}"
 FILE_COUNT=$(find "${RESULTS_DIR}" -type f 2>/dev/null | wc -l)
 echo -e "  Files:      ${BOLD}${FILE_COUNT}${NC}"
 echo ""
+
+if [[ "${FILE_COUNT}" -eq 0 ]]; then
+    fail "0 files found in results. Pipeline failed to output data!"
+    exit 1
+fi
+
 echo -e "${GREEN}${BOLD}Done.${NC}"
