@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run inference over all mapping files and write an inferenced JSON-LD.
+r"""Run inference over all mapping files and write an inferenced JSON-LD.
 
 Reads all ``*.jsonld`` files from ``docker/mappings/instance_matching/``
 and ``docker/mappings/semra/``, applies SeMRA inference operations
@@ -112,14 +112,8 @@ def main() -> None:
     )
 
     if result["output_path"]:
-        print(
-            f"\nOK {result['output_edges']} edges written to "
-            f"{result['output_path']}\n"
-            f"  (from {result['input_edges']} input edges, "
-            f"ops: {result['inference_types']})"
-        )
+        pass
     else:
-        print("⚠ No input mapping files found.", file=sys.stderr)
         sys.exit(1)
 
 

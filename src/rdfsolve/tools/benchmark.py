@@ -31,17 +31,18 @@ import os
 import platform
 import resource
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Machine info — gathered once per session
+# Machine info - gathered once per session
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -50,9 +51,9 @@ class MachineInfo:
     """Static information about the host machine."""
 
     hostname: str = ""
-    os_name: str = ""       # e.g. "Linux"
-    os_release: str = ""    # kernel version
-    os_version: str = ""    # e.g. "#1 SMP ..."
+    os_name: str = ""  # e.g. "Linux"
+    os_release: str = ""  # kernel version
+    os_version: str = ""  # e.g. "#1 SMP ..."
     architecture: str = ""  # e.g. "x86_64"
     cpu_model: str = ""
     cpu_count_logical: int = 0
@@ -73,7 +74,7 @@ def collect_machine_info() -> MachineInfo:
     info.architecture = platform.machine()
     info.python_version = platform.python_version()
 
-    # CPU model — Linux only (/proc/cpuinfo)
+    # CPU model - Linux only (/proc/cpuinfo)
     try:
         with open("/proc/cpuinfo", encoding="utf-8") as f:
             for line in f:
@@ -86,9 +87,7 @@ def collect_machine_info() -> MachineInfo:
     # CPU count
     info.cpu_count_logical = os.cpu_count() or 0
     try:
-        info.cpu_count_physical = len(
-            os.sched_getaffinity(0)
-        )
+        info.cpu_count_physical = len(os.sched_getaffinity(0))
     except AttributeError:
         info.cpu_count_physical = info.cpu_count_logical
 
@@ -106,6 +105,7 @@ def collect_machine_info() -> MachineInfo:
     # rdfsolve version
     try:
         from importlib.metadata import version
+
         info.rdfsolve_version = version("rdfsolve")
     except Exception:
         info.rdfsolve_version = "unknown"
@@ -113,9 +113,12 @@ def collect_machine_info() -> MachineInfo:
     # qlever version
     try:
         import subprocess
+
         proc = subprocess.run(
-            ["qlever", "--version"],
-            capture_output=True, text=True, timeout=5,
+            ["qlever", "--version"],  # noqa S607
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         info.qlever_version = proc.stdout.strip() or "unknown"
     except Exception:
@@ -135,16 +138,16 @@ class RunMetrics:
 
     # Identity
     dataset: str = ""
-    method: str = ""          # discover / mine / local-mine
+    method: str = ""  # discover / mine / local-mine
     endpoint: str = ""
 
     # Timing
-    started_at: str = ""      # ISO-8601
+    started_at: str = ""  # ISO-8601
     finished_at: str = ""
     wall_time_s: float = 0.0
 
     # CPU
-    cpu_user_s: float = 0.0   # user-mode CPU seconds
+    cpu_user_s: float = 0.0  # user-mode CPU seconds
     cpu_system_s: float = 0.0  # kernel CPU seconds
 
     # Memory
@@ -167,7 +170,7 @@ class RunMetrics:
     output_files: dict[str, str] = field(default_factory=dict)
     output_sizes_mb: dict[str, float] = field(default_factory=dict)
 
-    # Extra — arbitrary key-value pairs for ad-hoc metrics
+    # Extra - arbitrary key-value pairs for ad-hoc metrics
     extra: dict[str, Any] = field(default_factory=dict)
 
     def add_extra(self, key: str, value: Any) -> None:
@@ -197,7 +200,7 @@ def _get_rusage() -> tuple[float, float, float]:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Collector — context-manager API
+# Collector - context-manager API
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -214,6 +217,11 @@ class BenchmarkCollector:
     """
 
     def __init__(self, output_dir: Path) -> None:
+        """
+        Initialize a BenchmarkCollector with an output directory Path.
+
+        :param output_dir: Path to output directory
+        """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.jsonl_path = self.output_dir / "benchmarks.jsonl"
@@ -257,20 +265,13 @@ class BenchmarkCollector:
             cpu1_user, cpu1_sys, peak_rss = _get_rusage()
             io1 = _read_proc_io()
 
-            run.finished_at = (
-                datetime.now(timezone.utc).isoformat()
-            )
+            run.finished_at = datetime.now(timezone.utc).isoformat()
             run.wall_time_s = round(t1 - t0, 3)
             run.cpu_user_s = round(cpu1_user - cpu0_user, 3)
             run.cpu_system_s = round(cpu1_sys - cpu0_sys, 3)
             run.peak_rss_mb = round(peak_rss, 2)
-            run.read_bytes = (
-                io1.get("read_bytes", 0) - io0.get("read_bytes", 0)
-            )
-            run.write_bytes = (
-                io1.get("write_bytes", 0)
-                - io0.get("write_bytes", 0)
-            )
+            run.read_bytes = io1.get("read_bytes", 0) - io0.get("read_bytes", 0)
+            run.write_bytes = io1.get("write_bytes", 0) - io0.get("write_bytes", 0)
 
             # Measure output file sizes
             for label, path_str in run.output_files.items():
@@ -290,17 +291,22 @@ class BenchmarkCollector:
         }
         try:
             with open(
-                self.jsonl_path, "a", encoding="utf-8",
+                self.jsonl_path,
+                "a",
+                encoding="utf-8",
             ) as f:
                 f.write(json.dumps(record, default=str))
                 f.write("\n")
             logger.info(
-                "Benchmark appended → %s (%s, %.1fs)",
-                self.jsonl_path, run.dataset, run.wall_time_s,
+                "Benchmark appended -> %s (%s, %.1fs)",
+                self.jsonl_path,
+                run.dataset,
+                run.wall_time_s,
             )
         except OSError as exc:
             logger.warning(
-                "Failed to write benchmark: %s", exc,
+                "Failed to write benchmark: %s",
+                exc,
             )
 
     def write_summary_csv(self) -> Path:
@@ -313,7 +319,8 @@ class BenchmarkCollector:
 
         try:
             with open(
-                self.jsonl_path, encoding="utf-8",
+                self.jsonl_path,
+                encoding="utf-8",
             ) as f:
                 for line in f:
                     line = line.strip()
@@ -341,16 +348,16 @@ class BenchmarkCollector:
 
         # Write CSV
         import csv
-        all_keys = list(dict.fromkeys(
-            k for r in records for k in r
-        ))
+
+        all_keys = list(dict.fromkeys(k for r in records for k in r))
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=all_keys)
             writer.writeheader()
             writer.writerows(records)
 
         logger.info(
-            "Benchmark summary → %s (%d records)",
-            csv_path, len(records),
+            "Benchmark summary -> %s (%d records)",
+            csv_path,
+            len(records),
         )
         return csv_path

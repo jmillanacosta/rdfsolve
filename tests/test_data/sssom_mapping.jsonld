@@ -1,0 +1,56 @@
+{
+  "@context": {
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "rdfsolve": "https://w3id.org/rdfsolve/",
+    "void": "http://rdfs.org/ns/void#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "sd": "http://www.w3.org/ns/sparql-service-description#",
+    "oboInOwl": "http://www.geneontology.org/formats/oboInOwl#",
+    "CARO": "http://purl.obolibrary.org/obo/CARO_",
+    "CL": "http://purl.obolibrary.org/obo/CL_",
+    "GO": "http://purl.obolibrary.org/obo/GO_"
+  },
+  "@graph": [
+    {
+      "@id": "CARO:0000013",
+      "void:inDataset": {
+        "@id": "rdfsolve:dataset/CARO",
+        "dcterms:title": "CARO"
+      },
+      "dcterms:created": "2026-01-01T00:00:00+00:00",
+      "oboInOwl:hasDbXref": [
+        {
+          "@id": "CL:0000000",
+          "void:inDataset": {
+            "@id": "rdfsolve:dataset/CL",
+            "dcterms:title": "CL"
+          }
+        },
+        {
+          "@id": "GO:0005623",
+          "void:inDataset": {
+            "@id": "rdfsolve:dataset/GO",
+            "dcterms:title": "GO"
+          }
+        }
+      ]
+    }
+  ],
+  "@about": {
+    "generated_by": "rdfsolve 0.0.1",
+    "generated_at": "2026-01-01T00:00:00+00:00",
+    "dataset_name": "test_sssom_mapping",
+    "pattern_count": 2,
+    "strategy": "sssom_import",
+    "rdfsolve_version": "0.0.1",
+    "schema_uri": "https://example.org/schemas/test_sssom",
+    "void_uri": "https://example.org/void/test_sssom",
+    "report_uri": "https://example.org/reports/test_sssom",
+    "linkml_uri": "https://example.org/linkml/test_sssom",
+    "sssom_source": "ols_mappings",
+    "sssom_file": "caro.ols.sssom.tsv",
+    "mapping_set_id": "https://w3id.org/commons/ols/mappings/caro.ols.sssom.tsv",
+    "license": "https://www.ebi.ac.uk/about/terms-of-use"
+  }
+}

@@ -6,10 +6,11 @@ match the resource's known URI prefixes.  When two datasets both contain
 instances of the same resource, a mapping edge is emitted between their
 respective classes.
 
-The result is an :class:`~rdfsolve.models.InstanceMapping` that can be
+The result is an :class:`~rdfsolve.mapping_models.instance.InstanceMapping`
+that can be
 serialised to JSON-LD and imported into the rdfsolve database alongside
 mined schemas.  The JSON-LD format is identical to a mined schema's, so
-the frontend ``parseJSONLD`` pipeline works without any changes —
+the frontend ``parseJSONLD`` pipeline works without any changes -
 ``skos:narrowMatch`` edges become walkable graph edges in the UI.
 
 Typical usage::
@@ -25,22 +26,22 @@ Typical usage::
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from typing import Any
 
 import pandas as pd
 
-from rdfsolve.models import (
-    AboutMetadata,
-    InstanceMatchResult,
-    InstanceMapping,
-    MappingEdge,
+from rdfsolve.mapping_models import (
     SKOS_NARROW_MATCH,
+    AboutMetadata,
+    InstanceMapping,
+    InstanceMatchResult,
+    MappingEdge,
 )
 from rdfsolve.sparql_helper import SparqlHelper
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["probe_resource"]
+__all__ = ["probe_resource", "seed_instance_mappings"]
 
 
 def _get_uri_formats(prefix: str) -> list[str]:
@@ -105,39 +106,48 @@ def _probe_dataset(
     except Exception as exc:
         logger.warning(
             "Could not create SparqlHelper for %s (%s): %s",
-            dataset_name, endpoint_url, exc,
+            dataset_name,
+            endpoint_url,
+            exc,
         )
         return results
 
     for uri_format in uri_formats:
         logger.info(
             "Probing  dataset=%-20s  endpoint=%s  pattern=%s",
-            dataset_name, endpoint_url, uri_format,
+            dataset_name,
+            endpoint_url,
+            uri_format,
         )
         try:
             classes = sparql.find_classes_for_uri_pattern(uri_format)
         except Exception as exc:
             logger.warning(
-                "Probe failed — dataset=%s format=%s: %s",
-                dataset_name, uri_format, exc,
+                "Probe failed - dataset=%s format=%s: %s",
+                dataset_name,
+                uri_format,
+                exc,
             )
             continue
 
         if classes:
             logger.info(
-                "  → %d hit(s): %s",
-                len(classes), ", ".join(classes),
+                "  -> %d hit(s): %s",
+                len(classes),
+                ", ".join(classes),
             )
         else:
-            logger.debug("  → no hits")
+            logger.debug("  -> no hits")
 
         for cls_uri in classes:
-            results.append(InstanceMatchResult(
-                dataset_name=dataset_name,
-                endpoint_url=endpoint_url,
-                uri_format=uri_format,
-                matched_class=cls_uri,
-            ))
+            results.append(
+                InstanceMatchResult(
+                    dataset_name=dataset_name,
+                    endpoint_url=endpoint_url,
+                    uri_format=uri_format,
+                    matched_class=cls_uri,
+                )
+            )
 
     return results
 
@@ -170,39 +180,39 @@ def _build_edges(
     """
     hits = [r for r in match_results if r.matched_class]
     edges: list[MappingEdge] = []
-    seen: set[tuple[str, str, str, str]] = set()
+    seen: set[tuple[str, str | None, str, str | None]] = set()
 
     for i, a in enumerate(hits):
-        for b in hits[i + 1:]:
-            assert a.matched_class is not None
-            assert b.matched_class is not None
+        for b in hits[i + 1 :]:
             # Skip exact duplicates (same dataset AND same class)
-            if (
-                a.dataset_name == b.dataset_name
-                and a.matched_class == b.matched_class
-            ):
+            if a.dataset_name == b.dataset_name and a.matched_class == b.matched_class:
                 continue
-            # Canonicalise order so (A→B) and (B→A) count as one edge
-            src, tgt = (a, b) if (
-                (a.dataset_name, a.matched_class)
-                <= (b.dataset_name, b.matched_class)
-            ) else (b, a)
+            # Canonicalise order so (A->B) and (B->A) count as one edge
+            src, tgt = (
+                (a, b)
+                if ((a.dataset_name, a.matched_class) <= (b.dataset_name, b.matched_class))
+                else (b, a)
+            )
             key = (
-                src.dataset_name, src.matched_class,
-                tgt.dataset_name, tgt.matched_class,
+                src.dataset_name,
+                src.matched_class,
+                tgt.dataset_name,
+                tgt.matched_class,
             )
             if key in seen:
                 continue
             seen.add(key)
-            edges.append(MappingEdge(
-                source_class=src.matched_class,
-                target_class=tgt.matched_class,
-                predicate=predicate,
-                source_dataset=src.dataset_name,
-                target_dataset=tgt.dataset_name,
-                source_endpoint=src.endpoint_url,
-                target_endpoint=tgt.endpoint_url,
-            ))
+            edges.append(
+                MappingEdge(
+                    source_class=src.matched_class,
+                    target_class=tgt.matched_class,
+                    predicate=predicate,
+                    source_dataset=src.dataset_name,
+                    target_dataset=tgt.dataset_name,
+                    source_endpoint=src.endpoint_url,
+                    target_endpoint=tgt.endpoint_url,
+                )
+            )
 
     return edges
 
@@ -211,7 +221,7 @@ def probe_resource(
     prefix: str,
     datasources: pd.DataFrame,
     predicate: str = SKOS_NARROW_MATCH,
-    dataset_names: Optional[list[str]] = None,
+    dataset_names: list[str] | None = None,
     timeout: float = 60.0,
 ) -> InstanceMapping:
     """Probe SPARQL endpoints for a bioregistry resource.
@@ -223,7 +233,7 @@ def probe_resource(
     3. For each dataset, query its endpoint with each URI prefix using
        ``STRSTARTS``-based ``SELECT DISTINCT ?c``.
     4. Build pairwise :class:`MappingEdge` instances between any two
-       **distinct classes** that both matched the resource — including
+       **distinct classes** that both matched the resource - including
        two classes within the *same* dataset (e.g. ``Gene`` and
        ``GeneAnnotation`` in the same endpoint both having Ensembl
        instance URIs are linked just like cross-dataset classes).
@@ -249,7 +259,7 @@ def probe_resource(
     uri_formats = _get_uri_formats(prefix)
     if not uri_formats:
         logger.warning(
-            "Bioregistry prefix %r has no URI formats — no probes to run.",
+            "Bioregistry prefix %r has no URI formats- no probes to run.",
             prefix,
         )
 
@@ -262,8 +272,7 @@ def probe_resource(
     missing = required_cols - set(df.columns)
     if missing:
         raise ValueError(
-            f"datasources DataFrame is missing columns: {missing}. "
-            f"Available: {list(df.columns)}"
+            f"datasources DataFrame is missing columns: {missing}. Available: {list(df.columns)}"
         )
 
     # Probe each dataset
@@ -276,11 +285,15 @@ def probe_resource(
             continue
         logger.info(
             "── Probing dataset=%s  endpoint=%s  (%d uri formats)",
-            dataset, endpoint, len(uri_formats),
+            dataset,
+            endpoint,
+            len(uri_formats),
         )
         results = _probe_dataset(dataset, endpoint, uri_formats, timeout)
         logger.info(
-            "   dataset=%s  total hits=%d", dataset, len(results),
+            "   dataset=%s  total hits=%d",
+            dataset,
+            len(results),
         )
         all_results.extend(results)
 
@@ -289,7 +302,9 @@ def probe_resource(
 
     logger.info(
         "probe_resource(%r): %d hits, %d edges generated",
-        prefix, len(all_results), len(edges),
+        prefix,
+        len(all_results),
+        len(edges),
     )
 
     about = AboutMetadata.build(
@@ -305,3 +320,100 @@ def probe_resource(
         uri_formats=uri_formats,
         match_results=all_results,
     )
+
+
+def seed_instance_mappings(
+    prefixes: list[str],
+    sources_csv: str | None = None,
+    *,
+    sources: str | None = None,
+    output_dir: str = "docker/mappings/instance_matching",
+    predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
+    dataset_names: list[str] | None = None,
+    timeout: float = 60.0,
+    skip_existing: bool = False,
+) -> dict[str, Any]:
+    """Probe multiple bioregistry resources and write mapping JSON-LD files.
+
+    Iterates over *prefixes*, runs :func:`probe_resource` for each, and
+    writes the result to ``{output_dir}/{prefix}_instance_mapping.jsonld``.
+
+    When a file already exists on disk the new probe results are **merged**
+    into it rather than overwriting it.
+
+    Args:
+        prefixes: List of bioregistry prefixes to process.
+        sources_csv: **Deprecated** - use *sources* instead.
+        sources: Path to the sources file (JSON-LD or CSV).
+        output_dir: Directory where JSON-LD files are written.
+        predicate: Mapping predicate URI.
+        dataset_names: Restrict probing to these dataset names.
+        timeout: SPARQL request timeout per request.
+        skip_existing: If ``True``, skip prefixes whose output file
+            already exists without re-probing.
+
+    Returns:
+        Summary dict: ``{"succeeded": [...], "failed": [...]}``.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    from rdfsolve.mapping_models.instance import merge_instance_jsonld
+    from rdfsolve.sources import load_sources_dataframe
+
+    out = _Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    src_path = sources or sources_csv or None
+    datasources = load_sources_dataframe(src_path)
+
+    succeeded: list[str] = []
+    failed: list[dict[str, str]] = []
+
+    for prefix in prefixes:
+        logger.info("Querying prefix: %s", prefix)
+        outfile = out / f"{prefix}_instance_mapping.jsonld"
+
+        if skip_existing and outfile.exists():
+            logger.info(
+                "Skipping %s: already exists at %s (skip_existing=True)",
+                prefix,
+                outfile,
+            )
+            succeeded.append(prefix)
+            continue
+
+        try:
+            mapping = probe_resource(
+                prefix=prefix,
+                datasources=datasources,
+                predicate=predicate,
+                dataset_names=dataset_names,
+                timeout=timeout,
+            )
+            new_jsonld = mapping.to_jsonld()
+
+            if outfile.exists():
+                try:
+                    existing_jsonld = _json.loads(outfile.read_text())
+                    merged = merge_instance_jsonld(existing_jsonld, new_jsonld)
+                    outfile.write_text(_json.dumps(merged, indent=2))
+                    logger.info("Merged into existing: %s", outfile)
+                except Exception as merge_exc:
+                    logger.warning(
+                        "Could not merge into %s (%s); overwriting.",
+                        outfile,
+                        merge_exc,
+                    )
+                    outfile.write_text(_json.dumps(new_jsonld, indent=2))
+                    logger.info("Overwritten: %s", outfile)
+            else:
+                outfile.write_text(_json.dumps(new_jsonld, indent=2))
+                logger.info("Written: %s", outfile)
+
+            succeeded.append(prefix)
+        except Exception as exc:
+            logger.error("Failed %s: %s", prefix, exc)
+            failed.append({"prefix": prefix, "error": str(exc)})
+
+    return {"succeeded": succeeded, "failed": failed}

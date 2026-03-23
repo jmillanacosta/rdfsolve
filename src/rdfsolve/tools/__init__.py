@@ -1,1 +1,1 @@
-"""Utility tools for RDFSolve — download helpers, decompression, etc."""
+"""Utility tools for RDFSolve - download helpers, decompression, etc."""

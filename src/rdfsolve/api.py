@@ -2,8 +2,9 @@
 
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 import pandas as pd
 from rdflib import Graph
@@ -25,6 +26,7 @@ __all__ = [
     "graph_to_schema",
     "graph_to_shacl",
     "import_semra_source",
+    "import_sssom_source",
     "infer_mappings",
     "load_mapping_jsonld",
     "load_parser_from_file",
@@ -38,16 +40,18 @@ __all__ = [
     "seed_inferenced_mappings",
     "seed_instance_mappings",
     "seed_semra_mappings",
+    "seed_sssom_mappings",
     "to_jsonld_from_file",
     "to_linkml_from_file",
     "to_rdfconfig_from_file",
     "to_shacl_from_file",
+    "to_void_from_file",
 ]
 
 
 def load_parser_from_file(
     void_file_path: str,
-    graph_uris: Optional[Union[str, List[str]]] = None,
+    graph_uris: str | list[str] | None = None,
     exclude_graphs: bool = True,
 ) -> VoidParser:
     """Load a VoID file and return a parser for schema extraction.
@@ -67,7 +71,7 @@ def load_parser_from_file(
 
 def load_parser_from_graph(
     graph: Graph,
-    graph_uris: Optional[Union[str, List[str]]] = None,
+    graph_uris: str | list[str] | None = None,
     exclude_graphs: bool = True,
 ) -> VoidParser:
     """Load a VoID graph and return a parser for schema extraction.
@@ -85,17 +89,16 @@ def load_parser_from_graph(
 
 def load_parser_from_jsonld(
     jsonld_path: str,
-    graph_uris: Optional[Union[str, List[str]]] = None,
+    graph_uris: str | list[str] | None = None,
     exclude_graphs: bool = True,
 ) -> VoidParser:
     """Load a mined-schema JSON-LD file and return a VoidParser.
 
     Reads the JSON-LD produced by ``rdfsolve mine``, reconstructs a
-    :class:`~rdfsolve.models.MinedSchema` via its Pydantic fields,
-    converts it to an in-memory VoID RDF graph with
-    :meth:`~rdfsolve.models.MinedSchema.to_void_graph`, and wraps it
-    in a :class:`~rdfsolve.parser.VoidParser` ready for export to CSV /
-    LinkML / SHACL / RDF-config.
+    :class:`~rdfsolve.schema_models.core.MinedSchema` via
+    :meth:`MinedSchema.from_jsonld`, converts it to an in-memory VoID
+    RDF graph, and wraps it in a :class:`~rdfsolve.parser.VoidParser`
+    ready for export to CSV / LinkML / SHACL / RDF-config.
 
     Args:
         jsonld_path: Path to a ``*_schema.jsonld`` file produced by
@@ -106,91 +109,11 @@ def load_parser_from_jsonld(
     Returns:
         VoidParser instance backed by the converted VoID graph.
     """
-    from .models import AboutMetadata, MinedSchema, SchemaPattern
+    from .models import MinedSchema
 
-    raw = json.loads(Path(jsonld_path).read_text(encoding="utf-8"))
-
-    # Rebuild flat SchemaPattern list from the grouped @graph
-    context: Dict[str, str] = raw.get("@context", {})
-    about_data = raw.get("@about", {})
-    labels: Dict[str, str] = raw.get("_labels", {})
-
-    def _expand_curie(curie: str) -> str:
-        """Expand a CURIE to a full URI using the @context."""
-        if curie.startswith(("http://", "https://", "urn:")):
-            return curie
-        if ":" in curie:
-            prefix, local = curie.split(":", 1)
-            ns = context.get(prefix)
-            if ns:
-                return ns + local
-        return curie
-
-    patterns: List[SchemaPattern] = []
-    for node in raw.get("@graph", []):
-        sc_curie = node.get("@id", "")
-        sc_uri = _expand_curie(sc_curie)
-        counts_map: Dict[str, Dict[str, int]] = node.get(
-            "_counts", {},
-        )
-        for key, val in node.items():
-            if key.startswith("@") or key == "_counts":
-                continue
-            p_uri = _expand_curie(key)
-            entries = val if isinstance(val, list) else [val]
-            for entry in entries:
-                if not isinstance(entry, dict):
-                    continue
-                obj_id = entry.get("@id")
-                obj_type = entry.get("@type")
-                count = (
-                    counts_map.get(key, {}).get(
-                        obj_id or obj_type or "", None,
-                    )
-                )
-                if obj_id is not None:
-                    # typed-object or Resource sentinel
-                    oc_uri = _expand_curie(obj_id)
-                    if oc_uri in (
-                        "http://www.w3.org/2000/01/rdf-schema#Resource",
-                        "rdfs:Resource",
-                    ):
-                        patterns.append(SchemaPattern(
-                            subject_class=sc_uri,
-                            property_uri=p_uri,
-                            object_class="Resource",
-                            count=count,
-                            subject_label=labels.get(sc_curie),
-                            property_label=labels.get(key),
-                        ))
-                    else:
-                        patterns.append(SchemaPattern(
-                            subject_class=sc_uri,
-                            property_uri=p_uri,
-                            object_class=oc_uri,
-                            count=count,
-                            subject_label=labels.get(sc_curie),
-                            property_label=labels.get(key),
-                            object_label=labels.get(obj_id),
-                        ))
-                elif obj_type is not None:
-                    # Literal with datatype
-                    dt_uri = _expand_curie(obj_type)
-                    patterns.append(SchemaPattern(
-                        subject_class=sc_uri,
-                        property_uri=p_uri,
-                        object_class="Literal",
-                        datatype=dt_uri,
-                        count=count,
-                        subject_label=labels.get(sc_curie),
-                        property_label=labels.get(key),
-                    ))
-
-    about = AboutMetadata.model_validate(about_data)
-    schema = MinedSchema(patterns=patterns, about=about)
-    void_graph = schema.to_void_graph()
+    schema = MinedSchema.from_jsonld(jsonld_path)
     return VoidParser(
-        void_source=void_graph,
+        void_source=schema.to_void_graph(),
         graph_uris=graph_uris,
         exclude_graphs=exclude_graphs,
     )
@@ -199,9 +122,9 @@ def load_parser_from_jsonld(
 def to_linkml_from_file(
     void_file_path: str,
     filter_void_nodes: bool = True,
-    schema_name: Optional[str] = None,
-    schema_description: Optional[str] = None,
-    schema_base_uri: Optional[str] = None,
+    schema_name: str | None = None,
+    schema_description: str | None = None,
+    schema_base_uri: str | None = None,
 ) -> str:
     """Convert a VoID file to LinkML YAML schema.
 
@@ -227,11 +150,11 @@ def to_linkml_from_file(
 def to_shacl_from_file(
     void_file_path: str,
     filter_void_nodes: bool = True,
-    schema_name: Optional[str] = None,
-    schema_description: Optional[str] = None,
-    schema_base_uri: Optional[str] = None,
+    schema_name: str | None = None,
+    schema_description: str | None = None,
+    schema_base_uri: str | None = None,
     closed: bool = True,
-    suffix: Optional[str] = None,
+    suffix: str | None = None,
     include_annotations: bool = False,
 ) -> str:
     """Convert a VoID file to SHACL shapes.
@@ -276,10 +199,10 @@ def to_shacl_from_file(
 def to_rdfconfig_from_file(
     void_file_path: str,
     filter_void_nodes: bool = True,
-    endpoint_url: Optional[str] = None,
-    endpoint_name: Optional[str] = None,
-    graph_uri: Optional[str] = None,
-) -> Dict[str, str]:
+    endpoint_url: str | None = None,
+    endpoint_name: str | None = None,
+    graph_uri: str | None = None,
+) -> dict[str, str]:
     """Convert a VoID file to RDF-config YAML files.
 
     RDF-config is a schema standard that describes RDF data models using
@@ -327,13 +250,34 @@ def to_rdfconfig_from_file(
     )
 
 
+def to_void_from_file(
+    jsonld_path: str,
+) -> Graph:
+    """Convert a mined-schema JSON-LD file to a VoID RDF graph.
+
+    Reads the JSON-LD, reconstructs a
+    :class:`~rdfsolve.schema_models.core.MinedSchema`, and returns the
+    equivalent VoID graph (rdflib ``Graph``).
+
+    Args:
+        jsonld_path: Path to a ``*_schema.jsonld`` file.
+
+    Returns:
+        rdflib ``Graph`` containing the VoID description.
+    """
+    from .models import MinedSchema
+
+    schema = MinedSchema.from_jsonld(jsonld_path)
+    return schema.to_void_graph()
+
+
 def to_jsonld_from_file(
     void_file_path: str,
     filter_void_admin_nodes: bool = True,
-    endpoint_url: Optional[str] = None,
-    dataset_name: Optional[str] = None,
-    graph_uris: Optional[Union[str, List[str]]] = None,
-) -> Dict[str, Any]:
+    endpoint_url: str | None = None,
+    dataset_name: str | None = None,
+    graph_uris: str | list[str] | None = None,
+) -> dict[str, Any]:
     """Convert a VoID file to JSON-LD format.
 
     Args:
@@ -347,9 +291,7 @@ def to_jsonld_from_file(
         JSON-LD with @context, @graph, and @about
     """
     parser = load_parser_from_file(void_file_path)
-    graph_uris_list = (
-        [graph_uris] if isinstance(graph_uris, str) else graph_uris
-    )
+    graph_uris_list = [graph_uris] if isinstance(graph_uris, str) else graph_uris
     return parser.to_jsonld(
         filter_void_admin_nodes=filter_void_admin_nodes,
         endpoint_url=endpoint_url,
@@ -360,11 +302,11 @@ def to_jsonld_from_file(
 
 def graph_to_jsonld(
     graph: Graph,
-    graph_uris: Optional[Union[str, List[str]]] = None,
+    graph_uris: str | list[str] | None = None,
     filter_void_admin_nodes: bool = True,
-    endpoint_url: Optional[str] = None,
-    dataset_name: Optional[str] = None,
-) -> Dict[str, Any]:
+    endpoint_url: str | None = None,
+    dataset_name: str | None = None,
+) -> dict[str, Any]:
     """Convert a VoID graph to JSON-LD format.
 
     Args:
@@ -378,9 +320,7 @@ def graph_to_jsonld(
         JSON-LD with @context, @graph, and @about
     """
     parser = load_parser_from_graph(graph, graph_uris=graph_uris)
-    graph_uris_list = (
-        [graph_uris] if isinstance(graph_uris, str) else graph_uris
-    )
+    graph_uris_list = [graph_uris] if isinstance(graph_uris, str) else graph_uris
     return parser.to_jsonld(
         filter_void_admin_nodes=filter_void_admin_nodes,
         endpoint_url=endpoint_url,
@@ -391,11 +331,11 @@ def graph_to_jsonld(
 
 def graph_to_linkml(
     graph: Graph,
-    graph_uris: Optional[Union[str, List[str]]] = None,
+    graph_uris: str | list[str] | None = None,
     filter_void_nodes: bool = True,
-    schema_name: Optional[str] = None,
-    schema_description: Optional[str] = None,
-    schema_base_uri: Optional[str] = None,
+    schema_name: str | None = None,
+    schema_description: str | None = None,
+    schema_base_uri: str | None = None,
 ) -> str:
     """Convert a VoID graph to LinkML YAML schema.
 
@@ -421,13 +361,13 @@ def graph_to_linkml(
 
 def graph_to_shacl(
     graph: Graph,
-    graph_uris: Optional[Union[str, List[str]]] = None,
+    graph_uris: str | list[str] | None = None,
     filter_void_nodes: bool = True,
-    schema_name: Optional[str] = None,
-    schema_description: Optional[str] = None,
-    schema_base_uri: Optional[str] = None,
+    schema_name: str | None = None,
+    schema_description: str | None = None,
+    schema_base_uri: str | None = None,
     closed: bool = True,
-    suffix: Optional[str] = None,
+    suffix: str | None = None,
     include_annotations: bool = False,
 ) -> str:
     """Convert a VoID graph to SHACL shapes.
@@ -469,184 +409,9 @@ def graph_to_shacl(
     )
 
 
-def discover_void_graphs(
-    endpoint_url: str,
-    graph_uris: Optional[Union[str, List[str]]] = None,
-    exclude_graphs: bool = False,
-) -> Dict[str, Any]:
-    """Find VoID graphs in a SPARQL endpoint.
-
-    Discovery always includes well-known URIs and VoID graphs by default,
-    as these commonly contain metadata descriptions. Only Virtuoso system
-    graphs are excluded by default.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        graph_uris: Graph URIs to search
-        exclude_graphs: Exclude Virtuoso system graphs (default: False for discovery)
-
-    Returns:
-        Discovery metadata per graph URI
-    """
-    parser = VoidParser(graph_uris=graph_uris, exclude_graphs=exclude_graphs)
-    return parser.discover_void_graphs(endpoint_url)
-
-
-def count_instances(
-    endpoint_url: str,
-    sample_limit: Optional[int] = None,
-    sample_offset: Optional[int] = None,
-    chunk_size: Optional[int] = None,
-    offset_limit_steps: Optional[int] = None,
-    delay_between_chunks: float = 20.0,
-    streaming: bool = False,
-) -> Union[Dict[str, int], Any]:
-    """Count instances per class in a SPARQL endpoint.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        sample_limit: Max results to return
-        sample_offset: Starting offset
-        chunk_size: Chunk size for pagination
-        offset_limit_steps: Combined LIMIT/OFFSET step
-        delay_between_chunks: Seconds between chunks
-        streaming: Return generator if True
-
-    Returns:
-        Dict mapping class URI to count, or generator
-    """
-    parser = VoidParser()
-    return parser.count_instances_per_class(
-        endpoint_url,
-        sample_limit=sample_limit,
-        sample_offset=sample_offset,
-        chunk_size=chunk_size,
-        offset_limit_steps=offset_limit_steps,
-        delay_between_chunks=delay_between_chunks,
-        streaming=streaming,
-    )
-
-
-def extract_partitions_from_void(
-    endpoint_url: str, void_graph_uris: List[str]
-) -> List[Dict[str, str]]:
-    """Extract partition data from discovered VoID graphs.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        void_graph_uris: List of VoID graph URIs with partitions
-
-    Returns:
-        List of partition records (class-property-object)
-    """
-    parser = VoidParser()
-    return parser.retrieve_partitions_from_void(endpoint_url, void_graph_uris)
-
-
-def retrieve_void_from_graphs(
-    endpoint_url: str,
-    void_graph_uris: List[str],
-    graph_uris: Optional[Union[str, List[str]]] = None,
-    partitions: Optional[List[Dict[str, str]]] = None,
-) -> Graph:
-    """Retrieve VoID descriptions from specific graphs at endpoint.
-
-    If partition data is provided (from discover_void_graphs), builds the
-    graph directly from that data. Otherwise, runs a new discovery query.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        void_graph_uris: List of graph URIs containing VoID
-        graph_uris: Graph URIs to filter queries
-        partitions: Optional partition data from discover_void_graphs result
-
-    Returns:
-        RDF Graph with VoID descriptions built from partition data
-    """
-    parser = VoidParser(graph_uris=graph_uris)
-
-    # If partition data provided, build graph directly (no CONSTRUCT needed)
-    if partitions:
-        base_uri = void_graph_uris[0] if void_graph_uris else None
-        return parser.build_void_graph_from_partitions(partitions, base_uri=base_uri)
-
-    # Otherwise, run discovery to get partitions and build graph
-    discovery_result = parser.discover_void_graphs(endpoint_url)
-    partitions = discovery_result.get("partitions", [])
-
-    if partitions:
-        base_uri = void_graph_uris[0] if void_graph_uris else None
-        return parser.build_void_graph_from_partitions(partitions, base_uri=base_uri)
-
-    # Fallback: return empty graph if no partitions found
-    from rdflib import Graph
-
-    return Graph()
-
-
-def generate_void_from_endpoint(
-    endpoint_url: str,
-    graph_uris: Optional[Union[str, List[str]]] = None,
-    output_file: Optional[str] = None,
-    counts: bool = True,
-    offset_limit_steps: Optional[int] = None,
-    exclude_graphs: bool = True,
-    dataset_uri: Optional[str] = None,
-    void_base_uri: Optional[str] = None,
-) -> Graph:
-    """Generate VoID description from a SPARQL endpoint.
-
-    .. deprecated::
-        Use :func:`mine_schema` instead.  It uses lightweight SELECT
-        queries, supports two-phase mining, pagination bisection, and
-        per-source tuning.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        graph_uris: Graph URI(s) to analyze
-        output_file: Path to save Turtle output
-        counts: Include instance counts
-        offset_limit_steps: Chunk size for pagination
-        exclude_graphs: Exclude system graphs
-        dataset_uri: Custom URI for the VoID dataset
-            (default: uses first graph_uri or endpoint URL)
-        void_base_uri: Custom base URI for VoID partition IRIs
-
-    Returns:
-        RDF graph with VoID description
-    """
-    import warnings
-
-    warnings.warn(
-        "generate_void_from_endpoint is deprecated. "
-        "Use mine_schema() instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    # Determine dataset_uri if not provided
-    if dataset_uri is None:
-        if graph_uris:
-            dataset_uri = graph_uris[0] if isinstance(graph_uris, list) else graph_uris
-        else:
-            # Use endpoint URL as fallback
-            dataset_uri = endpoint_url.rstrip("/")
-
-    # Note: VoidParser.generate_void_from_sparql uses graph_uris for building partition IRIs
-    # The dataset_uri is embedded in the VoID graph structure
-    return VoidParser.generate_void_from_sparql(
-        endpoint_url=endpoint_url,
-        graph_uris=graph_uris,
-        output_file=output_file,
-        counts=counts,
-        offset_limit_steps=offset_limit_steps,
-        exclude_graphs=exclude_graphs,
-        void_base_uri=void_base_uri,
-    )
-
-
 def graph_to_schema(
     void_graph: Graph,
-    graph_uris: Optional[Union[str, List[str]]] = None,
+    graph_uris: str | list[str] | None = None,
     filter_void_admin_nodes: bool = True,
 ) -> pd.DataFrame:
     """Convert VoID graph to schema DataFrame.
@@ -663,44 +428,144 @@ def graph_to_schema(
     return parser.to_schema(filter_void_admin_nodes=filter_void_admin_nodes)
 
 
+def discover_void_graphs(
+    endpoint_url: str,
+    graph_uris: str | list[str] | None = None,
+    exclude_graphs: bool = False,
+) -> dict[str, Any]:
+    """Find VoID graphs at *endpoint_url*.
+
+    Delegates to :meth:`~rdfsolve.parser.VoidParser.discover_void_graphs`.
+    *graph_uris* and *exclude_graphs* are accepted for backwards-compatibility
+    but the discovery query always searches all named graphs.
+    """
+    return VoidParser().discover_void_graphs(endpoint_url)
+
+
+def count_instances(
+    endpoint_url: str,
+    sample_limit: int | None = None,
+    sample_offset: int | None = None,
+    chunk_size: int | None = None,
+    offset_limit_steps: int | None = None,
+    delay_between_chunks: float = 20.0,
+    streaming: bool = False,
+) -> dict[str, int] | Any:
+    """Count instances per class at *endpoint_url*.
+
+    Delegates to :func:`~rdfsolve.miner.count_instances`.
+    """
+    from rdfsolve.miner import count_instances as _count
+
+    return _count(
+        endpoint_url,
+        sample_limit=sample_limit,
+        sample_offset=sample_offset,
+        chunk_size=chunk_size,
+        offset_limit_steps=offset_limit_steps,
+        delay_between_chunks=delay_between_chunks,
+        streaming=streaming,
+    )
+
+
+def extract_partitions_from_void(
+    endpoint_url: str,
+    void_graph_uris: list[str],
+) -> list[dict[str, str]]:
+    """Extract partition records from VoID graphs.
+
+    Delegates to :func:`~rdfsolve.miner.extract_partitions_from_void`.
+    """
+    from rdfsolve.miner import extract_partitions_from_void as _epv
+
+    return _epv(endpoint_url, void_graph_uris)
+
+
+def retrieve_void_from_graphs(
+    endpoint_url: str,
+    void_graph_uris: list[str],
+    graph_uris: str | list[str] | None = None,
+    partitions: list[dict[str, str]] | None = None,
+) -> Graph:
+    """Build a VoID RDF graph from partition data.
+
+    Delegates to :func:`~rdfsolve.miner.retrieve_void_from_graphs`.
+    """
+    from rdfsolve.miner import retrieve_void_from_graphs as _rvfg
+
+    return _rvfg(
+        endpoint_url,
+        void_graph_uris,
+        graph_uris=graph_uris,
+        partitions=partitions,
+    )
+
+
+def generate_void_from_endpoint(
+    endpoint_url: str,
+    graph_uris: str | list[str] | None = None,
+    output_file: str | None = None,
+    counts: bool = True,
+    offset_limit_steps: int | None = None,
+    exclude_graphs: bool = True,
+    dataset_uri: str | None = None,
+    void_base_uri: str | None = None,
+) -> Graph:
+    """Mine a VoID description from a SPARQL endpoint.
+
+    .. deprecated:: Use :func:`mine_schema` instead.
+
+    Delegates to :func:`~rdfsolve.miner.generate_void_from_endpoint`.
+    """
+    from rdfsolve.miner import generate_void_from_endpoint as _gvfe
+
+    return _gvfe(
+        endpoint_url,
+        graph_uris=graph_uris,
+        output_file=output_file,
+        counts=counts,
+        offset_limit_steps=offset_limit_steps,
+        exclude_graphs=exclude_graphs,
+        dataset_uri=dataset_uri,
+        void_base_uri=void_base_uri,
+    )
+
+
 def count_instances_per_class(
     endpoint_url: str,
-    graph_uris: Optional[Union[str, List[str]]] = None,
-    sample_limit: Optional[int] = None,
+    graph_uris: str | list[str] | None = None,
+    sample_limit: int | None = None,
     exclude_graphs: bool = True,
-) -> Dict[str, int]:
-    """Count instances per class in a SPARQL endpoint.
+) -> dict[str, int]:
+    """Return ``{class_uri: count}`` for *endpoint_url*.
 
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        graph_uris: Graph URI(s) to query
-        sample_limit: Max results to sample
-        exclude_graphs: Exclude service/system graphs from counting
-
-    Returns:
-        Class URI to instance count mapping
+    Delegates to :func:`~rdfsolve.miner.count_instances_per_class`.
     """
-    parser = VoidParser(graph_uris=graph_uris, exclude_graphs=exclude_graphs)
-    result = parser.count_instances_per_class(endpoint_url, sample_limit=sample_limit)
-    if isinstance(result, dict):
-        return result
-    return dict(result)  # Convert generator to dict if needed
+    from rdfsolve.miner import count_instances_per_class as _cipc
+
+    return _cipc(
+        endpoint_url,
+        graph_uris=graph_uris,
+        sample_limit=sample_limit,
+        exclude_graphs=exclude_graphs,
+    )
 
 
 def mine_schema(
     endpoint_url: str,
-    graph_uris: Optional[Union[str, List[str]]] = None,
-    dataset_name: Optional[str] = None,
+    graph_uris: str | list[str] | None = None,
+    dataset_name: str | None = None,
     chunk_size: int = 10_000,
-    class_chunk_size: Optional[int] = None,
+    class_chunk_size: int | None = None,
     class_batch_size: int = 15,
     delay: float = 0.5,
     timeout: float = 120.0,
     counts: bool = True,
     two_phase: bool = True,
-    report_path: Optional[str] = None,
+    report_path: str | None = None,
     filter_service_namespaces: bool = True,
-) -> Dict[str, Any]:
+    authors: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
     """Mine RDF schema from a SPARQL endpoint using SELECT queries.
 
     This is a simpler, faster alternative to generate_void_from_endpoint
@@ -743,196 +608,52 @@ def mine_schema(
         two_phase=two_phase,
         report_path=report_path,
         filter_service_namespaces=filter_service_namespaces,
+        authors=authors,
     )
     return schema.to_jsonld()
 
 
 def mine_all_sources(
-    sources_csv: Optional[str] = None,
+    sources_csv: str | None = None,
     *,
-    sources: Optional[str] = None,
+    sources: str | None = None,
     output_dir: str = ".",
     fmt: str = "all",
     chunk_size: int = 10_000,
-    class_chunk_size: Optional[int] = None,
+    class_chunk_size: int | None = None,
     class_batch_size: int = 15,
     delay: float = 0.5,
     timeout: float = 120.0,
     counts: bool = True,
     reports: bool = True,
     filter_service_namespaces: bool = True,
-    on_progress: Optional[
-        Callable[[str, int, int, Optional[str]], None]
-    ] = None,
-) -> Dict[str, Any]:
+    untyped_as_classes: bool = False,
+    authors: list[dict[str, str]] | None = None,
+    on_progress: Callable[[str, int, int, str | None], None] | None = None,
+) -> dict[str, Any]:
     """Mine schemas for all sources in a JSON-LD or CSV file.
 
-    Reads a sources file (JSON-LD preferred, CSV still accepted)
-    and runs :func:`mine_schema` for each entry whose *endpoint*
-    is non-empty.  Results are written to *output_dir* as
-    ``{name}_schema.jsonld`` and / or ``{name}_void.ttl``.
-
-    Per-source overrides (``chunk_size``, ``class_batch_size``,
-    ``timeout``, etc.) in the JSON-LD file take precedence over
-    the function-level defaults.
-
-    Args:
-        sources_csv: **Deprecated** — use *sources* instead.
-            Path to a CSV file with data sources.  Kept for
-            backwards compatibility; ignored when *sources* is
-            given.
-        sources: Path to the sources file (JSON-LD or CSV).
-            When ``None``, the default ``data/sources.jsonld``
-            (or ``.csv`` fallback) is used.
-        output_dir: Directory where outputs are written.
-        fmt: Export format – ``"jsonld"``, ``"void"``, or
-            ``"all"``.
-        chunk_size: Pagination page size for SPARQL queries.
-        class_chunk_size: Page size for Phase-1 class discovery
-            in two-phase mode.  ``None`` = no pagination.
-            Ignored for rows that are not two-phase.
-        class_batch_size: Number of classes per VALUES query in
-            Phase-2 of two-phase mining (default 15).
-        delay: Delay between paginated pages (seconds).
-        timeout: HTTP timeout per request (seconds).
-        counts: Whether to fetch triple-count queries.
-        reports: Write per-source analytics JSON reports.
-        filter_service_namespaces: Strip service/system namespace
-            patterns from each mined schema (default ``True``).
-        on_progress:
-            Optional callback invoked after each source is
-            processed.  Signature:
-            ``(dataset_name, index, total, status_or_error)``.
-            *status_or_error* is ``None`` on success, or an
-            error message string.
-
-    Returns:
-        Summary dict with keys ``"succeeded"``, ``"failed"``, and
-        ``"skipped"`` mapping to lists of dataset names.
+    Delegates to :func:`rdfsolve.miner.mine_all_sources`.
     """
-    from .miner import mine_schema as _mine
-    from .sources import load_sources
+    from rdfsolve.miner import mine_all_sources as _mas
 
-    # Resolve the path: new kwarg > legacy positional > auto-detect
-    src_path: Optional[str] = sources or sources_csv or None
-
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
-
-    entries = load_sources(src_path)
-
-    succeeded: List[str] = []
-    failed: List[Dict[str, str]] = []
-    skipped: List[str] = []
-
-    total = len(entries)
-    for idx, entry in enumerate(entries, 1):
-        name = entry.get("name", "")
-        endpoint = entry.get("endpoint", "")
-        use_graph = entry.get("use_graph", False)
-        row_two_phase = entry.get("two_phase", True)
-
-        if not endpoint:
-            logger.info(
-                f"[{idx}/{total}] Skipping {name!r}: "
-                f"no endpoint"
-            )
-            skipped.append(name)
-            if on_progress:
-                on_progress(name, idx, total, "skipped")
-            continue
-
-        # Build graph_uris argument
-        graph_uris_arg: Optional[List[str]] = None
-        entry_graphs = entry.get("graph_uris", [])
-        if use_graph and entry_graphs:
-            graph_uris_arg = list(entry_graphs)
-
-        logger.info(
-            f"[{idx}/{total}] Mining {name!r} "
-            f"({endpoint})"
-        )
-
-        # Per-source overrides (JSON-LD values win over CLI defaults)
-        eff_chunk = entry.get("chunk_size", chunk_size)
-        eff_batch = entry.get(
-            "class_batch_size", class_batch_size,
-        )
-        eff_delay = entry.get("delay", delay)
-        eff_timeout = entry.get("timeout", timeout)
-        eff_counts = entry.get("counts", counts)
-
-        # class_chunk_size only applies to two-phase rows
-        effective_ccs: Optional[int] = None
-        if row_two_phase:
-            effective_ccs = entry.get(
-                "class_chunk_size", class_chunk_size,
-            )
-        elif class_chunk_size is not None:
-            logger.info(
-                "[%d/%d] --class-chunk-size ignored for "
-                "%r (not two-phase)",
-                idx, total, name,
-            )
-
-        try:
-            rpt_path = (
-                out / f"{name}_report.json"
-                if reports else None
-            )
-            schema = _mine(
-                endpoint_url=endpoint,
-                graph_uris=graph_uris_arg,
-                dataset_name=name,
-                chunk_size=eff_chunk,
-                class_chunk_size=effective_ccs,
-                class_batch_size=eff_batch,
-                delay=eff_delay,
-                timeout=eff_timeout,
-                counts=eff_counts,
-                two_phase=row_two_phase,
-                report_path=rpt_path,
-                filter_service_namespaces=filter_service_namespaces,
-            )
-
-            if fmt in ("jsonld", "all"):
-                jsonld_path = out / f"{name}_schema.jsonld"
-                with open(jsonld_path, "w") as f:
-                    json.dump(
-                        schema.to_jsonld(), f, indent=2,
-                    )
-                logger.info(f"  → {jsonld_path}")
-
-            if fmt in ("void", "all"):
-                void_path = out / f"{name}_void.ttl"
-                void_g = schema.to_void_graph()
-                void_g.serialize(
-                    destination=str(void_path),
-                    format="turtle",
-                )
-                logger.info(
-                    f"  → {void_path} "
-                    f"({len(void_g)} triples)"
-                )
-
-            succeeded.append(name)
-            if on_progress:
-                on_progress(name, idx, total, None)
-
-        except Exception as exc:
-            msg = str(exc)
-            logger.warning(
-                f"  FAIL {name}: {msg}"
-            )
-            failed.append({"dataset": name, "error": msg})
-            if on_progress:
-                on_progress(name, idx, total, msg)
-
-    return {
-        "succeeded": succeeded,
-        "failed": failed,
-        "skipped": skipped,
-    }
+    return _mas(
+        sources_csv,
+        sources=sources,
+        output_dir=output_dir,
+        fmt=fmt,
+        chunk_size=chunk_size,
+        class_chunk_size=class_chunk_size,
+        class_batch_size=class_batch_size,
+        delay=delay,
+        timeout=timeout,
+        counts=counts,
+        reports=reports,
+        filter_service_namespaces=filter_service_namespaces,
+        untyped_as_classes=untyped_as_classes,
+        authors=authors,
+        on_progress=on_progress,
+    )
 
 
 # ── SPARQL / IRI / Compose API ───────────────────────────────────
@@ -943,11 +664,11 @@ def execute_sparql(
     endpoint: str,
     method: str = "GET",
     timeout: int = 30,
-    variable_map: Optional[Dict[str, str]] = None,
-) -> Dict[str, Any]:
+    variable_map: dict[str, str] | None = None,
+) -> dict[str, Any]:
     """Execute a SPARQL query against a remote endpoint.
 
-    This is a pure-Python function — no Flask required.  It delegates to
+    This is a pure-Python function- no Flask required.  It delegates to
     :func:`rdfsolve.query.execute_sparql` which uses the robust
     :class:`~rdfsolve.sparql_helper.SparqlHelper` under the hood.
 
@@ -956,7 +677,7 @@ def execute_sparql(
         endpoint:     SPARQL endpoint URL.
         method:       HTTP method (``"GET"`` or ``"POST"``).
         timeout:      Timeout in seconds.
-        variable_map: Optional mapping of SPARQL ?variable → schema URI.
+        variable_map: Optional mapping of SPARQL ?variable -> schema URI.
 
     Returns:
         Dict with keys ``query``, ``endpoint``, ``variables``, ``rows``,
@@ -986,13 +707,13 @@ def execute_sparql(
 
 
 def resolve_iris(
-    iris: List[str],
-    endpoints: List[Dict[str, Any]],
+    iris: list[str],
+    endpoints: list[dict[str, Any]],
     timeout: int = 15,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Resolve IRIs against SPARQL endpoints to discover their rdf:type.
 
-    This is a pure-Python function — no Flask required.  It delegates to
+    This is a pure-Python function- no Flask required.  It delegates to
     :func:`rdfsolve.iri.resolve_iris`.
 
     Args:
@@ -1023,16 +744,16 @@ def resolve_iris(
 
 
 def compose_query_from_paths(
-    paths: List[Dict[str, Any]],
-    prefixes: Optional[Dict[str, str]] = None,
+    paths: list[dict[str, Any]],
+    prefixes: dict[str, str] | None = None,
     include_types: bool = False,
     include_labels: bool = True,
     limit: int = 100,
-    value_bindings: Optional[Dict[str, List[str]]] = None,
-) -> Dict[str, Any]:
+    value_bindings: dict[str, list[str]] | None = None,
+) -> dict[str, Any]:
     """Generate a SPARQL query from diagram paths.
 
-    This is a pure-Python function — no Flask required.  It delegates to
+    This is a pure-Python function- no Flask required.  It delegates to
     :func:`rdfsolve.compose.compose_query_from_paths`.
 
     Args:
@@ -1049,7 +770,7 @@ def compose_query_from_paths(
 
     Returns:
         Dict with ``query`` (SPARQL string), ``variable_map``
-        (var → schema URI), and ``jsonld``
+        (var -> schema URI), and ``jsonld``
         (SPARQLExecutable JSON-LD).
 
     Example::
@@ -1084,13 +805,13 @@ def compose_query_from_paths(
 
 def probe_instance_mapping(
     prefix: str,
-    sources_csv: Optional[str] = None,
+    sources_csv: str | None = None,
     *,
-    sources: Optional[str] = None,
+    sources: str | None = None,
     predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
-    dataset_names: Optional[List[str]] = None,
+    dataset_names: list[str] | None = None,
     timeout: float = 60.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Probe SPARQL endpoints for a bioregistry resource and return JSON-LD.
 
     For every dataset in *sources* (or the subset in *dataset_names*),
@@ -1105,7 +826,7 @@ def probe_instance_mapping(
 
     Args:
         prefix: Bioregistry prefix, e.g. ``"ensembl"``.
-        sources_csv: **Deprecated** — use *sources* instead.
+        sources_csv: **Deprecated** - use *sources* instead.
         sources: Path to the sources file (JSON-LD or CSV).
             When ``None``, auto-detects the default file.
         predicate: Mapping predicate URI.  Defaults to
@@ -1135,204 +856,45 @@ def probe_instance_mapping(
 
 
 def _merge_instance_mapping_jsonld(
-    existing: Dict[str, Any],
-    new: Dict[str, Any],
-) -> Dict[str, Any]:
+    existing: dict[str, Any],
+    new: dict[str, Any],
+) -> dict[str, Any]:
     """Merge *new* instance-mapping JSON-LD into *existing* in-place.
 
-    Merges:
-    * ``@context`` — union of all prefix→namespace entries.
-    * ``@graph``   — nodes are keyed by ``@id``; for each source node the
-      predicate targets are merged (duplicates skipped).
-    * ``@about``   — ``uri_formats_queried`` is unioned;
-      ``pattern_count`` is recomputed from the merged graph size;
-      ``generated_at`` is refreshed to *now*.
-
-    Args:
-        existing: The JSON-LD dict loaded from the file on disk.
-        new: The JSON-LD dict produced by the latest probe run.
-
-    Returns:
-        The mutated *existing* dict (also returned for convenience).
+    Delegates to :func:`rdfsolve.mapping_models.instance.merge_instance_jsonld`.
     """
-    import copy
+    from rdfsolve.mapping_models.instance import merge_instance_jsonld
 
-    # ── context ──────────────────────────────────────────────────────────────
-    existing.setdefault("@context", {})
-    for k, v in new.get("@context", {}).items():
-        existing["@context"].setdefault(k, v)
-
-    # ── graph — merge by @id ─────────────────────────────────────────────────
-    # Build an index of existing nodes keyed by @id
-    existing_nodes: Dict[str, Dict[str, Any]] = {}
-    for node in existing.get("@graph", []):
-        nid = node.get("@id")
-        if nid:
-            existing_nodes[nid] = node
-
-    for new_node in new.get("@graph", []):
-        nid = new_node.get("@id")
-        if nid not in existing_nodes:
-            # Completely new source class — just append a deep copy
-            existing_nodes[nid] = copy.deepcopy(new_node)
-        else:
-            # Merge predicate targets into existing node
-            ex_node = existing_nodes[nid]
-            for key, value in new_node.items():
-                if key in ("@id", "void:inDataset", "dcterms:created"):
-                    continue  # structural fields — keep original
-                if key not in ex_node:
-                    ex_node[key] = copy.deepcopy(value)
-                else:
-                    # Normalise both sides to lists and merge unique entries
-                    existing_vals = ex_node[key]
-                    if not isinstance(existing_vals, list):
-                        existing_vals = [existing_vals]
-                    new_vals = value if isinstance(value, list) else [value]
-                    for v in new_vals:
-                        if v not in existing_vals:
-                            existing_vals.append(v)
-                    ex_node[key] = (
-                        existing_vals[0]
-                        if len(existing_vals) == 1
-                        else existing_vals
-                    )
-
-    existing["@graph"] = list(existing_nodes.values())
-
-    # ── @about ───────────────────────────────────────────────────────────────
-    from datetime import datetime, timezone
-
-    about_ex = existing.setdefault("@about", {})
-    about_new = new.get("@about", {})
-
-    # Union uri_formats_queried
-    seen: List[str] = list(about_ex.get("uri_formats_queried", []))
-    for fmt in about_new.get("uri_formats_queried", []):
-        if fmt not in seen:
-            seen.append(fmt)
-    about_ex["uri_formats_queried"] = seen
-
-    # Recount edges (each non-structural predicate entry on each node = 1 edge)
-    structural = {"@id", "void:inDataset", "dcterms:created"}
-    edge_count = sum(
-        len(node) - len(structural & node.keys())
-        for node in existing["@graph"]
-    )
-    about_ex["pattern_count"] = edge_count
-    about_ex["generated_at"] = datetime.now(timezone.utc).isoformat()
-
-    return existing
+    return merge_instance_jsonld(existing, new)
 
 
 def seed_instance_mappings(
-    prefixes: List[str],
-    sources_csv: Optional[str] = None,
+    prefixes: list[str],
+    sources_csv: str | None = None,
     *,
-    sources: Optional[str] = None,
+    sources: str | None = None,
     output_dir: str = "docker/mappings/instance_matching",
     predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
-    dataset_names: Optional[List[str]] = None,
+    dataset_names: list[str] | None = None,
     timeout: float = 60.0,
     skip_existing: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Probe multiple bioregistry resources and write mapping JSON-LD files.
 
-    Iterates over *prefixes*, runs :func:`probe_instance_mapping` for each,
-    and writes the result to
-    ``{output_dir}/{prefix}_instance_mapping.jsonld``.
-
-    When a file already exists on disk the new probe results are **merged**
-    into it rather than overwriting it:
-
-    * New ``@graph`` nodes (source classes not yet in the file) are appended.
-    * For existing source nodes, new predicate→target entries are added;
-      duplicates are silently skipped.
-    * ``uri_formats_queried`` in ``@about`` is unioned.
-    * ``pattern_count`` and ``generated_at`` are refreshed.
-
-    The default behaviour (``skip_existing=False``) is to always probe and
-    merge.  Pass ``skip_existing=True`` only when you explicitly want to skip
-    prefixes whose output file already exists without re-probing.
-
-    Args:
-        prefixes: List of bioregistry prefixes to process.
-        sources_csv: **Deprecated** — use *sources* instead.
-        sources: Path to the sources file (JSON-LD or CSV).
-            When ``None``, auto-detects the default file.
-        output_dir: Directory where JSON-LD files are written
-            (created if absent).
-        predicate: Mapping predicate URI.
-        dataset_names: Restrict probing to these dataset names.
-        timeout: SPARQL request timeout per request.
-        skip_existing: If ``True``, skip prefixes whose output file
-            already exists without re-probing.  Defaults to ``False``
-            (always probe and merge).
-
-    Returns:
-        Summary dict: ``{"succeeded": [...], "failed": [...]}``.
+    Delegates to :func:`rdfsolve.instance_matcher.seed_instance_mappings`.
     """
-    import json as _json
+    from rdfsolve.instance_matcher import seed_instance_mappings as _sim
 
-    from rdfsolve.instance_matcher import probe_resource
-    from rdfsolve.sources import load_sources_dataframe
-
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
-
-    src_path = sources or sources_csv or None
-    datasources = load_sources_dataframe(src_path)
-
-    succeeded: List[str] = []
-    failed: List[Dict[str, str]] = []
-
-    for prefix in prefixes:
-        logger.info("Querying prefix: %s", prefix)
-        outfile = out / f"{prefix}_instance_mapping.jsonld"
-
-        if skip_existing and outfile.exists():
-            logger.info(
-                "Skipping %s: already exists at %s (skip_existing=True)",
-                prefix, outfile,
-            )
-            succeeded.append(prefix)
-            continue
-
-        try:
-            mapping = probe_resource(
-                prefix=prefix,
-                datasources=datasources,
-                predicate=predicate,
-                dataset_names=dataset_names,
-                timeout=timeout,
-            )
-            new_jsonld = mapping.to_jsonld()
-
-            if outfile.exists():
-                try:
-                    existing_jsonld = _json.loads(outfile.read_text())
-                    merged = _merge_instance_mapping_jsonld(
-                        existing_jsonld, new_jsonld
-                    )
-                    outfile.write_text(_json.dumps(merged, indent=2))
-                    logger.info("Merged into existing: %s", outfile)
-                except Exception as merge_exc:
-                    logger.warning(
-                        "Could not merge into %s (%s); overwriting.",
-                        outfile, merge_exc,
-                    )
-                    outfile.write_text(_json.dumps(new_jsonld, indent=2))
-                    logger.info("Overwritten: %s", outfile)
-            else:
-                outfile.write_text(_json.dumps(new_jsonld, indent=2))
-                logger.info("Written: %s", outfile)
-
-            succeeded.append(prefix)
-        except Exception as exc:
-            logger.error("Failed %s: %s", prefix, exc)
-            failed.append({"prefix": prefix, "error": str(exc)})
-
-    return {"succeeded": succeeded, "failed": failed}
+    return _sim(
+        prefixes,
+        sources_csv,
+        sources=sources,
+        output_dir=output_dir,
+        predicate=predicate,
+        dataset_names=dataset_names,
+        timeout=timeout,
+        skip_existing=skip_existing,
+    )
 
 
 # ── SeMRA import API ─────────────────────────────────────────────
@@ -1340,228 +902,57 @@ def seed_instance_mappings(
 
 def import_semra_source(
     source: str,
-    keep_prefixes: Optional[List[str]] = None,
+    keep_prefixes: list[str] | None = None,
     output_dir: str = "docker/mappings/semra",
-) -> Dict[str, Any]:
+    mapping_type: str = "instance",
+) -> dict[str, Any]:
     """Import mappings from a SeMRA source and write one JSON-LD per prefix.
 
-    Fetches all ``semra.Mapping`` objects from the named source (e.g.
-    ``"biomappings"``), optionally filters to *keep_prefixes*, groups by
-    the *source* prefix of each mapping, and writes one JSON-LD file per
-    unique prefix: ``{output_dir}/{source}_{prefix}.jsonld``.
-
-    The files use the :class:`~rdfsolve.models.SemraMapping` format and
-    are importable directly by :func:`rdfsolve.backend.services.schema_service
-    .SchemaService.import_from_directory`.
+    Delegates to :func:`rdfsolve.semra_converter.import_source`.
 
     Args:
-        source: SeMRA source key registered in
-            ``semra.sources.SOURCE_RESOLVER``
-            (e.g. ``"biomappings"``, ``"gilda"``).
-        keep_prefixes: Optional list of bioregistry prefixes to retain;
-            all others are discarded.
+        source: SeMRA source key (e.g. ``"biomappings"``).
+        keep_prefixes: Optional prefix filter.
         output_dir: Directory for output files.
+        mapping_type: ``"instance"`` (default) or ``"class"``.  When
+            ``"instance"``, the output JSON-LD contains instance-level
+            edges that can be passed to
+            :func:`derive_class_mappings_from_instances`.
 
     Returns:
-        Summary dict with keys ``"succeeded"``, ``"failed"``,
-        ``"skipped"``.
+        Summary dict ``{"succeeded", "failed", "skipped"}``.
     """
-    from collections import defaultdict
+    from rdfsolve.semra_converter import import_source
 
-    from semra.api import keep_prefixes as _keep_prefixes
-    from semra.sources import SOURCE_RESOLVER
-
-    from rdfsolve.models import AboutMetadata, SemraMapping
-    from rdfsolve.semra_converter import (
-        semra_evidence_to_jsonld_about,
-        semra_to_rdfsolve_edges,
+    return import_source(
+        source=source,
+        keep_prefixes=keep_prefixes,
+        output_dir=output_dir,
+        mapping_type=mapping_type,
     )
-
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
-
-    succeeded: List[str] = []
-    failed: List[Dict[str, str]] = []
-
-    # Fetch all mappings from the source
-    try:
-        logger.info("Fetching semra source: %s", source)
-
-        # ── Wikidata special case ────────────────────────────────────────
-        # get_wikidata_mappings() requires a `prop` keyword; the friendlier
-        # get_wikidata_mappings_by_prefix(prefix) takes a bioregistry prefix.
-        # We fetch one prefix at a time so partial failures don't abort all.
-        if source.lower() in ("wikidata", "getwikidatamappings"):
-            import bioregistry
-            from semra.sources.wikidata import get_wikidata_mappings_by_prefix
-
-            available = set(bioregistry.get_registry_map("wikidata").keys())
-            targets = (
-                [p for p in keep_prefixes if p in available]
-                if keep_prefixes
-                else sorted(available)
-            )
-            if not targets:
-                logger.warning(
-                    "wikidata: none of the requested prefixes have a "
-                    "Wikidata property mapping. Available: %s",
-                    sorted(available)[:20],
-                )
-                return {"succeeded": [], "failed": [], "skipped": [source]}
-
-            for wd_prefix in targets:
-                wp_filename = f"wikidata_{wd_prefix}.jsonld"
-                wp_outfile = out / wp_filename
-                try:
-                    logger.info(
-                        "wikidata: fetching prefix %r", wd_prefix
-                    )
-                    grp = get_wikidata_mappings_by_prefix(wd_prefix)
-                    edges = semra_to_rdfsolve_edges(grp, dataset_hint="wikidata")
-                    evidence_chain: List[Dict[str, Any]] = []
-                    for m in grp:
-                        evidence_chain.extend(
-                            semra_evidence_to_jsonld_about(m.evidence)
-                        )
-                    dataset_name = f"wikidata_{wd_prefix}_mapping"
-                    about = AboutMetadata.build(
-                        dataset_name=dataset_name,
-                        pattern_count=len(edges),
-                        strategy="semra_import",
-                    )
-                    mapping = SemraMapping(
-                        edges=edges,
-                        about=about,
-                        source_name="wikidata",
-                        source_prefix=wd_prefix,
-                        evidence_chain=evidence_chain,
-                    )
-                    wp_outfile.write_text(
-                        json.dumps(
-                            mapping.to_jsonld(), indent=2, ensure_ascii=False
-                        ),
-                        encoding="utf-8",
-                    )
-                    logger.info(
-                        "Written: %s (%d edges)", wp_outfile, len(edges)
-                    )
-                    succeeded.append(f"wikidata_{wd_prefix}")
-                except Exception as exc:
-                    logger.error(
-                        "Failed wikidata/%s: %s", wd_prefix, exc
-                    )
-                    failed.append(
-                        {"source": "wikidata", "prefix": wd_prefix,
-                         "error": str(exc)}
-                    )
-            return {"succeeded": succeeded, "failed": failed, "skipped": []}
-        # ── End Wikidata special case ────────────────────────────────────
-
-        fn = SOURCE_RESOLVER.lookup(source)
-        semra_mappings = fn()
-    except Exception as exc:
-        logger.error("Failed to load semra source %r: %s", source, exc)
-        return {"succeeded": [], "failed": [
-            {"source": source, "error": str(exc)}
-        ], "skipped": []}
-
-    # Optional prefix filter
-    if keep_prefixes:
-        semra_mappings = _keep_prefixes(semra_mappings, keep_prefixes)
-
-    # Group by subject prefix
-    by_prefix: dict[str, list] = defaultdict(list)
-    for m in semra_mappings:
-        prefix = getattr(m.subject, "prefix", None) or "unknown"
-        by_prefix[prefix].append(m)
-
-    logger.info(
-        "Source %r: %d mappings across %d prefixes",
-        source, len(semra_mappings), len(by_prefix),
-    )
-
-    for prefix, group in sorted(by_prefix.items()):
-        filename = f"{source}_{prefix}.jsonld"
-        outfile = out / filename
-        try:
-            edges = semra_to_rdfsolve_edges(
-                group,
-                dataset_hint=source,
-            )
-            evidence_chain = []
-            for m in group:
-                evidence_chain.extend(
-                    semra_evidence_to_jsonld_about(m.evidence)
-                )
-
-            dataset_name = f"{source}_{prefix}_mapping"
-            about = AboutMetadata.build(
-                dataset_name=dataset_name,
-                pattern_count=len(edges),
-                strategy="semra_import",
-            )
-            mapping = SemraMapping(
-                edges=edges,
-                about=about,
-                source_name=source,
-                source_prefix=prefix,
-                evidence_chain=evidence_chain,
-            )
-            outfile.write_text(
-                json.dumps(mapping.to_jsonld(), indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
-            logger.info("Written: %s (%d edges)", outfile, len(edges))
-            succeeded.append(f"{source}_{prefix}")
-        except Exception as exc:
-            logger.error(
-                "Failed %s/%s: %s", source, prefix, exc
-            )
-            failed.append({
-                "source": source, "prefix": prefix, "error": str(exc),
-            })
-
-    return {"succeeded": succeeded, "failed": failed, "skipped": []}
 
 
 def seed_semra_mappings(
-    sources: List[str],
-    keep_prefixes: Optional[List[str]] = None,
+    sources: list[str],
+    keep_prefixes: list[str] | None = None,
     output_dir: str = "docker/mappings/semra",
-) -> Dict[str, Any]:
+    mapping_type: str = "instance",
+) -> dict[str, Any]:
     """Seed semra mapping files for multiple sources.
 
-    Calls :func:`import_semra_source` for each entry in *sources* and
-    aggregates the results.
-
-    Args:
-        sources: List of SeMRA source keys
-            (e.g. ``["biomappings", "gilda"]``).
-        keep_prefixes: Optional shared prefix filter applied to all sources.
-        output_dir: Directory for output files.
-
-    Returns:
-        Aggregated summary with keys ``"succeeded"``, ``"failed"``,
-        ``"skipped"``.
+    Delegates to :func:`rdfsolve.semra_converter.seed_semra_mappings`.
     """
-    succeeded: List[str] = []
-    failed: List[Dict[str, str]] = []
-    skipped: List[str] = []
+    from rdfsolve.semra_converter import seed_semra_mappings as _ssm
 
-    for source in sources:
-        result = import_semra_source(
-            source=source,
-            keep_prefixes=keep_prefixes,
-            output_dir=output_dir,
-        )
-        succeeded.extend(result.get("succeeded", []))
-        failed.extend(result.get("failed", []))
-        skipped.extend(result.get("skipped", []))
-
-    return {"succeeded": succeeded, "failed": failed, "skipped": skipped}
+    return _ssm(
+        sources,
+        keep_prefixes=keep_prefixes,
+        output_dir=output_dir,
+        mapping_type=mapping_type,
+    )
 
 
-def load_mapping_jsonld(path: str) -> Dict[str, Any]:
+def load_mapping_jsonld(path: str) -> dict[str, Any]:
     """Load a mapping JSON-LD file from disk.
 
     Args:
@@ -1570,19 +961,20 @@ def load_mapping_jsonld(path: str) -> Dict[str, Any]:
     Returns:
         Parsed JSON dict.
     """
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    result: dict[str, Any] = json.loads(Path(path).read_text(encoding="utf-8"))
+    return result
 
 
 def infer_mappings(
-    input_paths: List[str],
+    input_paths: list[str],
     output_path: str,
     *,
     inversion: bool = True,
     transitivity: bool = True,
     generalisation: bool = False,
     chain_cutoff: int = 3,
-    dataset_name: Optional[str] = None,
-) -> Dict[str, Any]:
+    dataset_name: str | None = None,
+) -> dict[str, Any]:
     """Run the SeMRA inference pipeline over mapping JSON-LD files.
 
     Thin wrapper around :func:`rdfsolve.inference.infer_mappings`.
@@ -1622,7 +1014,7 @@ def seed_inferenced_mappings(
     transitivity: bool = True,
     generalisation: bool = False,
     chain_cutoff: int = 3,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Infer over all mappings in *input_dir* and write to *output_dir*.
 
     Thin wrapper around
@@ -1652,4 +1044,187 @@ def seed_inferenced_mappings(
         transitivity=transitivity,
         generalisation=generalisation,
         chain_cutoff=chain_cutoff,
+    )
+
+
+def import_sssom_source(
+    entry: dict[str, Any],
+    output_dir: str = "docker/mappings/sssom",
+    mapping_type: str = "instance",
+) -> dict[str, Any]:
+    """Download and convert one SSSOM source entry to JSON-LD files.
+
+    Thin wrapper around
+    :func:`rdfsolve.sssom_importer.import_sssom_source`.
+
+    For each ``.sssom.tsv`` file found inside the archive at
+    ``entry["url"]``, one JSON-LD file is written to *output_dir*::
+
+        {source_name}__{sssom_file_stem}.jsonld
+
+    Args:
+        entry: Dict with at least ``"name"`` and ``"url"`` keys, as found
+               in ``data/sssom_sources.yaml``.
+        output_dir: Directory to write output JSON-LD files.
+        mapping_type: ``"instance"`` (default) or ``"class"``.
+            Stored in the ``@about.mapping_type`` field of each output
+            JSON-LD file.
+
+    Returns:
+        Summary dict with keys ``"succeeded"``, ``"failed"``,
+        ``"skipped"``.
+    """
+    from rdfsolve.sssom_importer import import_sssom_source as _import
+
+    return _import(
+        entry=entry,
+        output_dir=output_dir,
+        mapping_type=mapping_type,
+    )
+
+
+def seed_sssom_mappings(
+    sssom_sources_yaml: str = "data/sssom_sources.yaml",
+    output_dir: str = "docker/mappings/sssom",
+    names: list[str] | None = None,
+    mapping_type: str = "instance",
+) -> dict[str, Any]:
+    """Seed SSSOM mapping files for all (or selected) sources.
+
+    Thin wrapper around
+    :func:`rdfsolve.sssom_importer.seed_sssom_mappings`.
+
+    Reads *sssom_sources_yaml*, optionally filters to *names*, and calls
+    :func:`import_sssom_source` for each entry.
+
+    Args:
+        sssom_sources_yaml: Path to the SSSOM sources YAML file
+            (default: ``data/sssom_sources.yaml``).
+        output_dir: Directory for output JSON-LD files
+            (default: ``docker/mappings/sssom``).
+        names: Optional list of source names to restrict processing;
+               if ``None`` (default), all entries are processed.
+        mapping_type: ``"instance"`` (default) or ``"class"``.
+            Stored in the ``@about.mapping_type`` field of each output
+            JSON-LD file.
+
+    Returns:
+        Aggregated summary with keys ``"succeeded"``, ``"failed"``,
+        ``"skipped"``.
+    """
+    from rdfsolve.sssom_importer import seed_sssom_mappings as _seed
+
+    return _seed(
+        sssom_sources_yaml=sssom_sources_yaml,
+        output_dir=output_dir,
+        names=names,
+        mapping_type=mapping_type,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Instance-to-class derivation
+# ---------------------------------------------------------------------------
+
+
+def build_class_index_from_endpoints(
+    entity_iris: list[str],
+    endpoint_url: str,
+    *,
+    batch_size: int = 50,
+    timeout: float = 60.0,
+    cache_path: str | None = None,
+) -> tuple[Any, dict[str, Any]]:
+    """Build (or load) a :class:`~rdfsolve.class_index.ClassIndex`.
+
+    Delegates to :func:`rdfsolve.class_index.build_class_index_from_endpoints`.
+    """
+    from rdfsolve.class_index import build_class_index_from_endpoints as _build
+
+    return _build(
+        entity_iris,
+        endpoint_url,
+        batch_size=batch_size,
+        timeout=timeout,
+        cache_path=cache_path,
+    )
+
+
+def enrich_instance_jsonld(
+    jsonld_path: str,
+    class_index: Any,
+    *,
+    output_path: str | None = None,
+) -> dict[str, Any]:
+    """Enrich an instance-mapping JSON-LD file with class annotations.
+
+    Reads the JSON-LD document at *jsonld_path*, calls
+    :func:`~rdfsolve.class_index.enrich_jsonld_with_classes`, and writes
+    the enriched document.  The output location defaults to
+    ``{stem}.enriched.jsonld`` next to the source file.
+
+    Args:
+        jsonld_path: Path to the source JSON-LD mapping file.
+        class_index: A :class:`~rdfsolve.class_index.ClassIndex` instance
+            returned by :func:`build_class_index_from_endpoints`.
+        output_path: Explicit destination path.  Defaults to
+            ``{jsonld_path_stem}.enriched.jsonld``.
+
+    Returns:
+        Enrichment statistics dict with keys
+        ``"total_edges"``, ``"enriched_edges"``, ``"elapsed_s"``.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    from rdfsolve.class_index import enrich_jsonld_with_classes
+
+    src = _Path(jsonld_path)
+    doc = _json.loads(src.read_text(encoding="utf-8"))
+    enriched_doc, stats = enrich_jsonld_with_classes(doc, class_index)
+
+    dest = _Path(output_path) if output_path else src.with_suffix(".enriched.jsonld")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(
+        _json.dumps(enriched_doc, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return stats
+
+
+def derive_class_mappings_from_instances(
+    input_paths: list[str],
+    output_path: str,
+    *,
+    endpoint_url: str,
+    timeout: float = 60.0,
+    batch_size: int = 50,
+    min_instance_count: int = 1,
+    min_confidence: float = 0.0,
+    cache_index: bool = False,
+    index_cache_path: str | None = None,
+    enrich_in_place: bool = False,
+    source_name: str | None = None,
+) -> dict[str, Any]:
+    """Orchestrate the full instance-to-class derivation pipeline.
+
+    Delegates to
+    :func:`rdfsolve.class_derivation.derive_class_mappings_from_instances`.
+    """
+    from rdfsolve.class_derivation import (
+        derive_class_mappings_from_instances as _dcmfi,
+    )
+
+    return _dcmfi(
+        input_paths,
+        output_path,
+        endpoint_url=endpoint_url,
+        timeout=timeout,
+        batch_size=batch_size,
+        min_instance_count=min_instance_count,
+        min_confidence=min_confidence,
+        cache_index=cache_index,
+        index_cache_path=index_cache_path,
+        enrich_in_place=enrich_in_place,
+        source_name=source_name,
     )
