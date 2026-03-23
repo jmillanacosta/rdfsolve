@@ -1,0 +1,23 @@
+{
+  "@context": {
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "rdfsolve": "https://w3id.org/rdfsolve/",
+    "void": "http://rdfs.org/ns/void#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "sd": "http://www.w3.org/ns/sparql-service-description#"
+  },
+  "@graph": [],
+  "@about": {
+    "generated_by": "rdfsolve 0.0.1",
+    "generated_at": "2026-01-01T00:00:00+00:00",
+    "dataset_name": "test_instance_mapping",
+    "pattern_count": 0,
+    "strategy": "instance_matcher",
+    "resource": "chebi",
+    "uri_formats_queried": [
+      "http://purl.obolibrary.org/obo/CHEBI_",
+      "http://identifiers.org/CHEBI:",
+      "http://bio2rdf.org/chebi:"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+# Files and directories to ignore for check-manifest
+# Submodule directories (frontend and paper) are tracked in git but should not
+# be included in the sdist produced for the Python package.
+frontend/**
+paper/**
