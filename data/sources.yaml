@@ -4,6 +4,9 @@
   - http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/anatomy/pc_anatomy.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy
 - name: pubchem.ftp.author
   local_provider: pubchem
   graph_uris:
@@ -29,36 +32,54 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/author/pc_author_000018.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/author/pc_author_000019.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/author/pc_author_000020.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/author
 - name: pubchem.ftp.bioassay
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/bioassay/pc_bioassay.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay
 - name: pubchem.ftp.book
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/book
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/book/pc_book_000001.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/book
 - name: pubchem.ftp.cell
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/cell
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cell/pc_cell.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cell
 - name: pubchem.ftp.concept
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/concept
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/concept/pc_concept.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/concept
 - name: pubchem.ftp.conserveddomain
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/conserveddomain/pc_conserveddomain.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain
 - name: pubchem.ftp.cooccurrence
   local_provider: pubchem
   graph_uris:
@@ -174,12 +195,18 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_gene_gene_000006.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_gene_gene_000007.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_gene_gene_000008.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence
 - name: pubchem.ftp.disease
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/disease
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/disease/pc_disease.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/disease
 - name: pubchem.ftp.endpoint
   local_provider: pubchem
   graph_uris:
@@ -255,18 +282,27 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/endpoint/pc_endpoint_type_000019.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/endpoint/pc_endpoint_unit.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/endpoint/pc_endpoint_value.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint
 - name: pubchem.ftp.gene
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/gene
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/gene/pc_gene.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/gene
 - name: pubchem.ftp.grant
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/grant
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/grant/pc_grant_000001.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/grant
 - name: pubchem.ftp.inchikey
   local_provider: pubchem
   graph_uris:
@@ -308,12 +344,18 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/inchikey/pc_inchikey_value_000010.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/inchikey/pc_inchikey_value_000011.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/inchikey/pc_inchikey_value_000012.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey
 - name: pubchem.ftp.journal
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/journal
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/journal/pc_journal_000001.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/journal
 - name: pubchem.ftp.measuregroup
   local_provider: pubchem
   graph_uris:
@@ -346,6 +388,9 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/measuregroup/pc_measuregroup_source.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/measuregroup/pc_measuregroup_title.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/measuregroup/pc_measuregroup_type.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup
 - name: pubchem.ftp.organization
   local_provider: pubchem
   graph_uris:
@@ -353,6 +398,9 @@
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/organization/pc_organization_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/organization/pc_organization_000002.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/organization
 - name: pubchem.ftp.patent
   local_provider: pubchem
   graph_uris:
@@ -611,12 +659,18 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2vc_fn_000005.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2vc_fn_000006.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2vc_fn_000007.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/patent
 - name: pubchem.ftp.pathway
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/pathway
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/pathway/pc_pathway.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/pathway
 - name: pubchem.ftp.protein
   local_provider: pubchem
   graph_uris:
@@ -654,6 +708,9 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/protein/pc_protein_000030.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/protein/pc_protein_000031.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/protein/pc_protein_000032.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/protein
 - name: pubchem.ftp.reference
   local_provider: pubchem
   graph_uris:
@@ -835,6 +892,9 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_title_000007.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_title_000008.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_type.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/reference
 - name: pubchem.ftp.schema
   local_provider: pubchem
   graph_uris:
@@ -848,6 +908,9 @@
   - http://rdf.ncbi.nlm.nih.gov/pubchem/source
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/source/pc_source.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/source
 - name: pubchem.ftp.substance
   local_provider: pubchem
   graph_uris:
@@ -1198,6 +1261,9 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_version_000018.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_version_000019.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_version_000020.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/substance
 - name: pubchem.ftp.synonym
   local_provider: pubchem
   graph_uris:
@@ -1257,12 +1323,18 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_value_000019.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_value_000020.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_value_000021.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/synonym
 - name: pubchem.ftp.taxonomy
   local_provider: pubchem
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/taxonomy/pc_taxonomy.ttl.gz
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  use_graph: true
+  void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
 - name: aopwikirdf
   endpoint: https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
   void_iri: http://aopwiki.org/
