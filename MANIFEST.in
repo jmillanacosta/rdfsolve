@@ -14,7 +14,6 @@ include README.md LICENSE CITATION.cff
 
 # ── Source registry (needed at runtime by the package) ───────────
 include data/sources.yaml
-include data/sources_all.yaml
 include data/sssom_sources.yaml
 
 # ── Exclude everything that is not part of the installable package ──
@@ -33,6 +32,7 @@ exclude paper
 
 # ── Dev / infra files — tracked by git but not shipped in sdist ──
 exclude .cruft.json
+exclude .vscode
 exclude .check-manifest-ignore
 exclude .dockerignore
 exclude .gitmodules

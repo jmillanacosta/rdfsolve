@@ -10,6 +10,7 @@ Main modules:
 """
 
 from .api import (
+    build_ontology_index,
     compose_query_from_paths,
     enrich_source_with_bioregistry,
     execute_sparql,
@@ -22,6 +23,8 @@ from .api import (
     import_sssom_source,
     infer_mappings,
     load_mapping_jsonld,
+    load_ontology_index,
+    load_ontology_index_from_db,
     load_parser_from_file,
     load_parser_from_graph,
     load_parser_from_jsonld,
@@ -29,6 +32,8 @@ from .api import (
     mine_schema,
     probe_instance_mapping,
     resolve_iris,
+    save_ontology_index,
+    save_ontology_index_to_db,
     seed_inferenced_mappings,
     seed_instance_mappings,
     seed_semra_mappings,
@@ -65,13 +70,12 @@ __all__ = [
     "SchemaMiner",
     "SchemaPattern",
     "VoidParser",
-    # ── api: SPARQL / IRI ────────────────────────────────────────
+    # ── api ──────────────────────────────────────────────────────
+    "build_ontology_index",
     "compose_query_from_paths",
-    # ── api: bioregistry enrichment ──────────────────────────────
     "enrich_source_with_bioregistry",
     "execute_sparql",
     "get_bioregistry_metadata",
-    # ── api: conversion / export ─────────────────────────────────
     "graph_to_jsonld",
     "graph_to_linkml",
     "graph_to_schema",
@@ -80,16 +84,17 @@ __all__ = [
     "import_sssom_source",
     "infer_mappings",
     "load_mapping_jsonld",
-    # ── api: parsing / loading ───────────────────────────────────
+    "load_ontology_index",
+    "load_ontology_index_from_db",
     "load_parser_from_file",
     "load_parser_from_graph",
     "load_parser_from_jsonld",
-    # ── api: mining ──────────────────────────────────────────────
     "mine_all_sources",
     "mine_schema",
-    # ── api: mappings ────────────────────────────────────────────
     "probe_instance_mapping",
     "resolve_iris",
+    "save_ontology_index",
+    "save_ontology_index_to_db",
     "seed_inferenced_mappings",
     "seed_instance_mappings",
     "seed_semra_mappings",

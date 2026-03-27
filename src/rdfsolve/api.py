@@ -19,6 +19,7 @@ from .parser import VoidParser
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "build_ontology_index",
     "compose_query_from_paths",
     "count_instances",
     "count_instances_per_class",
@@ -36,6 +37,7 @@ __all__ = [
     "import_sssom_source",
     "infer_mappings",
     "load_mapping_jsonld",
+    "load_ontology_index",
     "load_parser_from_file",
     "load_parser_from_graph",
     "load_parser_from_jsonld",
@@ -1317,3 +1319,109 @@ def sources_to_jsonld(
     from rdfsolve.sources import sources_to_jsonld as _impl
 
     return _impl(entries, enrich=enrich)
+
+
+# ── Ontology Index ────────────────────────────────────────────────────────
+
+
+def build_ontology_index(
+    schema_class_uris: set[str] | None = None,
+    *,
+    cache_dir: str | None = None,
+    ontology_ids: list[str] | None = None,
+) -> Any:
+    """Build an OntologyIndex from OLS4 metadata.
+
+    Delegates to :func:`rdfsolve.ontology.index.build_ontology_index`.
+
+    Parameters:
+        schema_class_uris: Set of class IRIs from rdfsolve schemas.  When
+            provided, only ontologies whose ``baseUri`` overlaps with the
+            given URIs are fully indexed.
+        cache_dir: Directory for diskcache (OLS HTTP-response cache).
+            Pass ``None`` to disable caching.
+        ontology_ids: Explicit list of OLS4 ontology IDs to index.  When
+            provided, the OLS paginated ontology listing is skipped.
+
+    Returns:
+        OntologyIndex: Populated index ready for grounding tier 3 and
+            path planning.
+    """
+    from rdfsolve.ontology.index import build_ontology_index as _impl
+
+    return _impl(schema_class_uris, cache_dir=cache_dir, ontology_ids=ontology_ids)
+
+
+def load_ontology_index(data_dir: str | Path = "data") -> Any:
+    """Load a persisted OntologyIndex from *data_dir*.
+
+    Delegates to :func:`rdfsolve.ontology.index.load_ontology_index`.
+
+    Parameters:
+        data_dir: Directory that contains ``ontology_index.pkl.gz`` and
+            (optionally) ``ontology_graph.graphml``, as written by
+            :func:`~rdfsolve.ontology.index.save_ontology_index`.
+
+    Returns:
+        OntologyIndex: Restored index.
+
+    Raises:
+        FileNotFoundError: If ``ontology_index.pkl.gz`` does not exist
+            under *data_dir*.
+    """
+    from rdfsolve.ontology.index import load_ontology_index as _impl
+
+    return _impl(data_dir)
+
+
+def save_ontology_index(index: Any, data_dir: str | Path = "data") -> None:
+    """Persist an OntologyIndex to *data_dir* as compressed pickle + GraphML.
+
+    Delegates to :func:`rdfsolve.ontology.index.save_ontology_index`.
+
+    Parameters:
+        index: Populated OntologyIndex instance to save.
+        data_dir: Target directory.  Created if it does not exist.
+
+    Returns:
+        None
+    """
+    from rdfsolve.ontology.index import save_ontology_index as _impl
+
+    return _impl(index, data_dir)
+
+
+def save_ontology_index_to_db(index: Any, db: Any) -> None:
+    """Persist an OntologyIndex to the rdfsolve SQLite database.
+
+    Delegates to :func:`rdfsolve.ontology.index.save_ontology_index_to_db`.
+
+    Parameters:
+        index: Populated OntologyIndex instance.
+        db: Open :class:`~rdfsolve.backend.database.Database` instance.
+
+    Returns:
+        None
+    """
+    from rdfsolve.ontology.index import save_ontology_index_to_db as _impl
+
+    return _impl(index, db)
+
+
+def load_ontology_index_from_db(db: Any) -> Any:
+    """Load an OntologyIndex from the rdfsolve SQLite database.
+
+    Delegates to :func:`rdfsolve.ontology.index.load_ontology_index_from_db`.
+
+    Parameters:
+        db: Open :class:`~rdfsolve.backend.database.Database` instance.
+
+    Returns:
+        OntologyIndex: Reconstructed index.
+
+    Raises:
+        RuntimeError: If no ontology index is found in the database.
+    """
+    from rdfsolve.ontology.index import load_ontology_index_from_db as _impl
+
+    return _impl(db)
