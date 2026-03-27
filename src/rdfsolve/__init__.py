@@ -67,7 +67,10 @@ __all__ = [
     "VoidParser",
     # ── api: SPARQL / IRI ────────────────────────────────────────
     "compose_query_from_paths",
+    # ── api: bioregistry enrichment ──────────────────────────────
+    "enrich_source_with_bioregistry",
     "execute_sparql",
+    "get_bioregistry_metadata",
     # ── api: conversion / export ─────────────────────────────────
     "graph_to_jsonld",
     "graph_to_linkml",
@@ -91,13 +94,10 @@ __all__ = [
     "seed_instance_mappings",
     "seed_semra_mappings",
     "seed_sssom_mappings",
+    "sources_to_jsonld",
     "to_jsonld_from_file",
     "to_linkml_from_file",
     "to_rdfconfig_from_file",
     "to_shacl_from_file",
     "to_void_from_file",
-    # ── api: bioregistry enrichment ──────────────────────────────
-    "enrich_source_with_bioregistry",
-    "get_bioregistry_metadata",
-    "sources_to_jsonld",
 ]

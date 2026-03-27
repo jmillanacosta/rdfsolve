@@ -1,10 +1,15 @@
 """Main RDFSolve functionalities for extraction, conversion and solving."""
 
+from __future__ import annotations
+
 import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from rdfsolve.sources import SourceEntry
 
 import pandas as pd
 from rdflib import Graph
@@ -1265,7 +1270,7 @@ def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
 
 
 def enrich_source_with_bioregistry(
-    entry: "SourceEntry",  # type: ignore[name-defined]
+    entry: SourceEntry,
 ) -> str | None:
     """Populate ``bioregistry_*`` fields on a source entry in-place.
 
@@ -1287,7 +1292,7 @@ def enrich_source_with_bioregistry(
 
 
 def sources_to_jsonld(
-    entries: "list[SourceEntry]",  # type: ignore[name-defined]
+    entries: list[SourceEntry],
     *,
     enrich: bool = False,
 ) -> dict[str, Any]:

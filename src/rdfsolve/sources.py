@@ -103,12 +103,24 @@ DEFAULT_SOURCES_CSV = _REPO_ROOT / "data" / "sources.csv"
 
 
 def _default_sources_path() -> Path:
-    """Return the default sources file, preferring YAML."""
+    """Return the default sources file, preferring YAML.
+
+    Raises
+    ------
+    FileNotFoundError
+        If neither ``data/sources.yaml`` nor ``data/sources.jsonld`` exists
+        relative to the repository root.
+    """
     if DEFAULT_SOURCES_YAML.exists():
         return DEFAULT_SOURCES_YAML
     if DEFAULT_SOURCES_JSONLD.exists():
         return DEFAULT_SOURCES_JSONLD
-    return DEFAULT_SOURCES_CSV
+    raise FileNotFoundError(
+        f"Default sources file not found. Looked for:\n"
+        f"  {DEFAULT_SOURCES_YAML}\n"
+        f"  {DEFAULT_SOURCES_JSONLD}\n"
+        "Pass an explicit 'path' argument to load_sources()."
+    )
 
 
 # ── Bioregistry enrichment ────────────────────────────────────────
@@ -207,6 +219,96 @@ def _resolve_bioregistry_prefix(entry: SourceEntry) -> str | None:
     return None
 
 
+# ── Bioregistry metadata helpers ──────────────────────────────────
+
+
+def _extract_publications(resource: Any) -> list[dict[str, str | None]]:
+    """Extract publication dicts from a Bioregistry resource object."""
+    pubs: list[dict[str, str | None]] = []
+    raw = resource.get_publications()
+    if not raw:
+        return pubs
+    for pub in raw:
+        p: dict[str, str | None] = {}
+        if pub.pubmed:
+            p["pubmed"] = pub.pubmed
+        if pub.doi:
+            p["doi"] = pub.doi
+        if pub.pmc:
+            p["pmc"] = pub.pmc
+        if hasattr(pub, "title") and pub.title:
+            p["title"] = pub.title
+        if p:
+            pubs.append(p)
+    return pubs
+
+
+def _extract_extra_providers(resource: Any) -> list[dict[str, str]]:
+    """Extract extra-provider dicts from a Bioregistry resource object."""
+    raw = resource.get_extra_providers()
+    if not raw:
+        return []
+    result: list[dict[str, str]] = []
+    for ep in raw:
+        d: dict[str, str] = {
+            "code": ep.code,
+            "name": ep.name,
+            "uri_format": ep.uri_format,
+        }
+        if ep.homepage:
+            d["homepage"] = ep.homepage
+        if ep.description:
+            d["description"] = ep.description
+        result.append(d)
+    return result
+
+
+def _extract_scalar_metadata(resource: Any, meta: dict[str, Any]) -> None:
+    """Populate *meta* with scalar fields from a Bioregistry resource object."""
+    name = resource.get_name()
+    if name:
+        meta["name"] = name
+    description = resource.get_description()
+    if description:
+        meta["description"] = description
+    homepage = resource.get_homepage()
+    if homepage:
+        meta["homepage"] = homepage
+    license_ = resource.get_license()
+    if license_:
+        meta["license"] = license_
+    if resource.domain:
+        meta["domain"] = resource.domain
+    logo = resource.get_logo() if hasattr(resource, "get_logo") else getattr(resource, "logo", None)
+    if logo:
+        meta["logo"] = logo
+
+
+def _extract_collection_metadata(resource: Any, meta: dict[str, Any]) -> None:
+    """Populate *meta* with collection/list fields from a Bioregistry resource object."""
+    keywords = resource.get_keywords()
+    if keywords:
+        meta["keywords"] = sorted(keywords)
+    pubs = _extract_publications(resource)
+    if pubs:
+        meta["publications"] = pubs
+    uri_prefix = resource.get_uri_prefix()
+    if uri_prefix:
+        meta["uri_prefix"] = uri_prefix
+    uri_prefixes = resource.get_uri_prefixes()
+    if uri_prefixes:
+        meta["uri_prefixes"] = sorted(uri_prefixes)
+    synonyms = resource.get_synonyms()
+    if synonyms:
+        meta["synonyms"] = sorted(synonyms)
+    mappings = resource.get_mappings()
+    if mappings:
+        meta["mappings"] = dict(sorted(mappings.items()))
+    extra_providers = _extract_extra_providers(resource)
+    if extra_providers:
+        meta["extra_providers"] = extra_providers
+
+
 def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
     """Return a structured metadata dict for a Bioregistry prefix.
 
@@ -261,81 +363,8 @@ def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
         raise ValueError(f"Unknown Bioregistry prefix: {br_prefix!r}")
 
     meta: dict[str, Any] = {"prefix": br_prefix}
-
-    name = resource.get_name()
-    if name:
-        meta["name"] = name
-
-    description = resource.get_description()
-    if description:
-        meta["description"] = description
-
-    homepage = resource.get_homepage()
-    if homepage:
-        meta["homepage"] = homepage
-
-    license_ = resource.get_license()
-    if license_:
-        meta["license"] = license_
-
-    if resource.domain:
-        meta["domain"] = resource.domain
-
-    keywords = resource.get_keywords()
-    if keywords:
-        meta["keywords"] = sorted(keywords)
-
-    publications = resource.get_publications()
-    if publications:
-        pubs = []
-        for pub in publications:
-            p: dict[str, str | None] = {}
-            if pub.pubmed:
-                p["pubmed"] = pub.pubmed
-            if pub.doi:
-                p["doi"] = pub.doi
-            if pub.pmc:
-                p["pmc"] = pub.pmc
-            if hasattr(pub, "title") and pub.title:
-                p["title"] = pub.title
-            if p:
-                pubs.append(p)
-        if pubs:
-            meta["publications"] = pubs
-
-    uri_prefix = resource.get_uri_prefix()
-    if uri_prefix:
-        meta["uri_prefix"] = uri_prefix
-
-    uri_prefixes = resource.get_uri_prefixes()
-    if uri_prefixes:
-        meta["uri_prefixes"] = sorted(uri_prefixes)
-
-    synonyms = resource.get_synonyms()
-    if synonyms:
-        meta["synonyms"] = sorted(synonyms)
-
-    mappings = resource.get_mappings()
-    if mappings:
-        meta["mappings"] = dict(sorted(mappings.items()))
-
-    logo = resource.get_logo() if hasattr(resource, "get_logo") else getattr(resource, "logo", None)
-    if logo:
-        meta["logo"] = logo
-
-    extra_providers = resource.get_extra_providers()
-    if extra_providers:
-        meta["extra_providers"] = [
-            {
-                "code": ep.code,
-                "name": ep.name,
-                "uri_format": ep.uri_format,
-                **({"homepage": ep.homepage} if ep.homepage else {}),
-                **({"description": ep.description} if ep.description else {}),
-            }
-            for ep in extra_providers
-        ]
-
+    _extract_scalar_metadata(resource, meta)
+    _extract_collection_metadata(resource, meta)
     return meta
 
 
@@ -359,9 +388,9 @@ def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
     -------
     ::
 
-        src = load_sources()[0]      # e.g. name="drugbank.drugs"
+        src = load_sources()[0]  # e.g. name="drugbank.drugs"
         prefix = enrich_source_with_bioregistry(src)
-        print(prefix)                # "drugbank"
+        print(prefix)  # "drugbank"
         print(src["bioregistry_name"])  # "DrugBank"
     """
     br_prefix = _resolve_bioregistry_prefix(entry)
@@ -446,6 +475,82 @@ _SOURCES_JSONLD_CONTEXT: dict[str, Any] = {
     "uri_format": "rdfsolve:uriFormat",
 }
 
+_JSONLD_SCALAR_BR_FIELDS: list[tuple[str, str]] = [
+    ("bioregistry_name", "name"),
+    ("bioregistry_description", "description"),
+    ("bioregistry_homepage", "homepage"),
+    ("bioregistry_license", "license"),
+    ("bioregistry_domain", "domain"),
+    ("bioregistry_uri_prefix", "uri_prefix"),
+    ("bioregistry_logo", "logo"),
+]
+
+_JSONLD_LIST_BR_FIELDS: list[tuple[str, str]] = [
+    ("bioregistry_keywords", "keywords"),
+    ("bioregistry_synonyms", "synonyms"),
+    ("bioregistry_uri_prefixes", "uri_prefixes"),
+]
+
+
+def _entry_to_jsonld_node(entry: SourceEntry) -> dict[str, Any]:
+    """Build a JSON-LD ``@graph`` node dict for a single source entry."""
+    node: dict[str, Any] = {}
+
+    src_name: str = entry.get("name", "") or ""
+    node["@id"] = f"https://rdfsolve.io/sources/{src_name}"
+    node["@type"] = "dcat:Dataset"
+
+    if src_name:
+        node["rdfsolve:sourceName"] = src_name
+
+    endpoint = entry.get("endpoint") or ""
+    if endpoint:
+        node["endpoint"] = endpoint
+
+    void_iri = entry.get("void_iri") or ""
+    if void_iri:
+        node["void_iri"] = void_iri
+
+    graph_uris: list[str] = entry.get("graph_uris") or []
+    if graph_uris:
+        node["graph_uris"] = graph_uris
+
+    if entry.get("notes"):
+        node["rdfsolve:notes"] = entry["notes"]
+
+    _node_add_bioregistry_fields(node, entry)
+    return node
+
+
+def _node_add_bioregistry_fields(node: dict[str, Any], entry: SourceEntry) -> None:
+    """Populate *node* with Bioregistry-derived fields from *entry*."""
+    br_prefix = entry.get("bioregistry_prefix") or ""
+    if br_prefix:
+        node["bioregistry_prefix"] = br_prefix
+        node["skos:exactMatch"] = {"@id": f"https://bioregistry.io/registry/{br_prefix}"}
+
+    for field, pred in _JSONLD_SCALAR_BR_FIELDS:
+        val = entry.get(field)  # type: ignore[literal-required]
+        if val:
+            node[pred] = val
+
+    for field, pred in _JSONLD_LIST_BR_FIELDS:
+        lst = entry.get(field)  # type: ignore[literal-required]
+        if lst:
+            node[pred] = lst
+
+    pubs = entry.get("bioregistry_publications")
+    if pubs:
+        node["publications"] = pubs
+
+    extra_providers = entry.get("bioregistry_extra_providers")
+    if extra_providers:
+        node["extra_providers"] = extra_providers
+
+    br_mappings = entry.get("bioregistry_mappings")
+    if br_mappings:
+        node["mappings"] = br_mappings
+
 
 def sources_to_jsonld(
     entries: list[SourceEntry],
@@ -494,73 +599,7 @@ def sources_to_jsonld(
         else:
             entry = raw_entry
 
-        node: dict[str, Any] = {}
-
-        # ── identity ──────────────────────────────────────────────
-        src_name: str = entry.get("name", "") or ""
-        node["@id"] = f"https://rdfsolve.io/sources/{src_name}"
-        node["@type"] = "dcat:Dataset"
-
-        # ── rdfsolve-specific fields ───────────────────────────────
-        if src_name:
-            node["rdfsolve:sourceName"] = src_name
-
-        endpoint = entry.get("endpoint") or ""
-        if endpoint:
-            node["endpoint"] = endpoint
-
-        void_iri = entry.get("void_iri") or ""
-        if void_iri:
-            node["void_iri"] = void_iri
-
-        graph_uris: list[str] = entry.get("graph_uris") or []
-        if graph_uris:
-            node["graph_uris"] = graph_uris
-
-        if entry.get("notes"):
-            node["rdfsolve:notes"] = entry["notes"]
-
-        # ── bioregistry-derived metadata ───────────────────────────
-        br_prefix = entry.get("bioregistry_prefix") or ""
-        if br_prefix:
-            node["bioregistry_prefix"] = br_prefix
-            node["skos:exactMatch"] = {"@id": f"https://bioregistry.io/registry/{br_prefix}"}
-
-        for field, pred in [
-            ("bioregistry_name", "name"),
-            ("bioregistry_description", "description"),
-            ("bioregistry_homepage", "homepage"),
-            ("bioregistry_license", "license"),
-            ("bioregistry_domain", "domain"),
-            ("bioregistry_uri_prefix", "uri_prefix"),
-            ("bioregistry_logo", "logo"),
-        ]:
-            val = entry.get(field)  # type: ignore[literal-required]
-            if val:
-                node[pred] = val
-
-        for field, pred in [
-            ("bioregistry_keywords", "keywords"),
-            ("bioregistry_synonyms", "synonyms"),
-            ("bioregistry_uri_prefixes", "uri_prefixes"),
-        ]:
-            lst = entry.get(field)  # type: ignore[literal-required]
-            if lst:
-                node[pred] = lst
-
-        pubs = entry.get("bioregistry_publications")
-        if pubs:
-            node["publications"] = pubs
-
-        extra_providers = entry.get("bioregistry_extra_providers")
-        if extra_providers:
-            node["extra_providers"] = extra_providers
-
-        br_mappings = entry.get("bioregistry_mappings")
-        if br_mappings:
-            node["mappings"] = br_mappings
-
-        graph.append(node)
+        graph.append(_entry_to_jsonld_node(entry))
 
     return {"@context": _SOURCES_JSONLD_CONTEXT, "@graph": graph}
 

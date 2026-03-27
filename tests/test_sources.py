@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_DEFAULT_YAML = _REPO_ROOT / "data" / "sources.yaml"
+_HAVE_SOURCES_YAML = _DEFAULT_YAML.exists()
 
 from rdfsolve.sources import (
     SourceEntry,
@@ -301,15 +306,15 @@ class TestSourcesToJsonld:
 # ── Integration: load_sources + enrich ───────────────────────────
 
 
+@pytest.mark.skipif(not _HAVE_SOURCES_YAML, reason="data/sources.yaml not present in this environment")
 class TestLoadSourcesIntegration:
     def test_load_sources_returns_list(self) -> None:
-        sources = load_sources()
+        sources = load_sources(_DEFAULT_YAML)
         assert isinstance(sources, list)
         assert len(sources) > 0
 
     def test_known_source_enrichable(self) -> None:
-        """At least one well-known source should resolve via bioregistry."""
-        sources = load_sources()
+        sources = load_sources(_DEFAULT_YAML)
         # find drugbank or chebi in the list
         well_known = {"chebi", "drugbank", "mesh", "hgnc", "uniprot"}
         enriched = []
@@ -322,8 +327,7 @@ class TestLoadSourcesIntegration:
         assert len(enriched) > 0, "Expected at least one known source to enrich"
 
     def test_sources_to_jsonld_round_trip(self) -> None:
-        """sources_to_jsonld output for a small slice is valid JSON."""
-        sources = load_sources()[:5]
+        sources = load_sources(_DEFAULT_YAML)[:5]
         doc = sources_to_jsonld(sources, enrich=True)
         assert len(doc["@graph"]) == 5
         # Must round-trip through json
