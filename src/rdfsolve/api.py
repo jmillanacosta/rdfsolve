@@ -1,10 +1,15 @@
-"""Main RDFSolve functionalities for VoID extraction and conversion."""
+"""Main RDFSolve functionalities for extraction, conversion and solving."""
+
+from __future__ import annotations
 
 import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from rdfsolve.sources import SourceEntry
 
 import pandas as pd
 from rdflib import Graph
@@ -14,13 +19,16 @@ from .parser import VoidParser
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "build_ontology_index",
     "compose_query_from_paths",
     "count_instances",
     "count_instances_per_class",
     "discover_void_graphs",
+    "enrich_source_with_bioregistry",
     "execute_sparql",
     "extract_partitions_from_void",
     "generate_void_from_endpoint",
+    "get_bioregistry_metadata",
     "graph_to_jsonld",
     "graph_to_linkml",
     "graph_to_schema",
@@ -29,6 +37,7 @@ __all__ = [
     "import_sssom_source",
     "infer_mappings",
     "load_mapping_jsonld",
+    "load_ontology_index",
     "load_parser_from_file",
     "load_parser_from_graph",
     "load_parser_from_jsonld",
@@ -41,6 +50,7 @@ __all__ = [
     "seed_instance_mappings",
     "seed_semra_mappings",
     "seed_sssom_mappings",
+    "sources_to_jsonld",
     "to_jsonld_from_file",
     "to_linkml_from_file",
     "to_rdfconfig_from_file",
@@ -1228,3 +1238,190 @@ def derive_class_mappings_from_instances(
         enrich_in_place=enrich_in_place,
         source_name=source_name,
     )
+
+
+# ── Bioregistry metadata ──────────────────────────────────────────
+
+
+def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
+    """Return a structured metadata dict for a Bioregistry prefix.
+
+    Delegates to :func:`rdfsolve.sources.get_bioregistry_metadata`.
+
+    Parameters
+    ----------
+    br_prefix:
+        A valid Bioregistry prefix (e.g. ``"drugbank"``, ``"chebi"``).
+
+    Returns
+    -------
+    dict
+        Fields: ``prefix``, ``name``, ``description``, ``homepage``,
+        ``license``, ``domain``, ``keywords``, ``publications``,
+        ``uri_prefix``, ``uri_prefixes``, ``synonyms``, ``mappings``,
+        ``logo``, ``extra_providers``.
+
+    Raises
+    ------
+    ValueError
+        If *br_prefix* is unknown to Bioregistry.
+    """
+    from rdfsolve.sources import get_bioregistry_metadata as _impl
+
+    return _impl(br_prefix)
+
+
+def enrich_source_with_bioregistry(
+    entry: SourceEntry,
+) -> str | None:
+    """Populate ``bioregistry_*`` fields on a source entry in-place.
+
+    Delegates to :func:`rdfsolve.sources.enrich_source_with_bioregistry`.
+
+    Parameters
+    ----------
+    entry:
+        A :class:`~rdfsolve.sources.SourceEntry` dict, modified in-place.
+
+    Returns
+    -------
+    str or None
+        The resolved Bioregistry prefix, or ``None`` if no match was found.
+    """
+    from rdfsolve.sources import enrich_source_with_bioregistry as _impl
+
+    return _impl(entry)
+
+
+def sources_to_jsonld(
+    entries: list[SourceEntry],
+    *,
+    enrich: bool = False,
+) -> dict[str, Any]:
+    """Serialise source entries to a JSON-LD document.
+
+    Delegates to :func:`rdfsolve.sources.sources_to_jsonld`.
+
+    Parameters
+    ----------
+    entries:
+        Source entries, typically returned by
+        :func:`~rdfsolve.sources.load_sources`.
+    enrich:
+        When ``True``, resolve and embed Bioregistry metadata for each
+        source before serialisation (entries are not modified in place).
+
+    Returns
+    -------
+    dict
+        JSON-LD document with ``@context`` and ``@graph`` keys.
+    """
+    from rdfsolve.sources import sources_to_jsonld as _impl
+
+    return _impl(entries, enrich=enrich)
+
+
+# ── Ontology Index ────────────────────────────────────────────────────────
+
+
+def build_ontology_index(
+    schema_class_uris: set[str] | None = None,
+    *,
+    cache_dir: str | None = None,
+    ontology_ids: list[str] | None = None,
+) -> Any:
+    """Build an OntologyIndex from OLS4 metadata.
+
+    Delegates to :func:`rdfsolve.ontology.index.build_ontology_index`.
+
+    Parameters:
+        schema_class_uris: Set of class IRIs from rdfsolve schemas.  When
+            provided, only ontologies whose ``baseUri`` overlaps with the
+            given URIs are fully indexed.
+        cache_dir: Directory for diskcache (OLS HTTP-response cache).
+            Pass ``None`` to disable caching.
+        ontology_ids: Explicit list of OLS4 ontology IDs to index.  When
+            provided, the OLS paginated ontology listing is skipped.
+
+    Returns:
+        OntologyIndex: Populated index ready for grounding tier 3 and
+            path planning.
+    """
+    from rdfsolve.ontology.index import build_ontology_index as _impl
+
+    return _impl(schema_class_uris, cache_dir=cache_dir, ontology_ids=ontology_ids)
+
+
+def load_ontology_index(data_dir: str | Path = "data") -> Any:
+    """Load a persisted OntologyIndex from *data_dir*.
+
+    Delegates to :func:`rdfsolve.ontology.index.load_ontology_index`.
+
+    Parameters:
+        data_dir: Directory that contains ``ontology_index.pkl.gz`` and
+            (optionally) ``ontology_graph.graphml``, as written by
+            :func:`~rdfsolve.ontology.index.save_ontology_index`.
+
+    Returns:
+        OntologyIndex: Restored index.
+
+    Raises:
+        FileNotFoundError: If ``ontology_index.pkl.gz`` does not exist
+            under *data_dir*.
+    """
+    from rdfsolve.ontology.index import load_ontology_index as _impl
+
+    return _impl(data_dir)
+
+
+def save_ontology_index(index: Any, data_dir: str | Path = "data") -> None:
+    """Persist an OntologyIndex to *data_dir* as compressed pickle + GraphML.
+
+    Delegates to :func:`rdfsolve.ontology.index.save_ontology_index`.
+
+    Parameters:
+        index: Populated OntologyIndex instance to save.
+        data_dir: Target directory.  Created if it does not exist.
+
+    Returns:
+        None
+    """
+    from rdfsolve.ontology.index import save_ontology_index as _impl
+
+    return _impl(index, data_dir)
+
+
+def save_ontology_index_to_db(index: Any, db: Any) -> None:
+    """Persist an OntologyIndex to the rdfsolve SQLite database.
+
+    Delegates to :func:`rdfsolve.ontology.index.save_ontology_index_to_db`.
+
+    Parameters:
+        index: Populated OntologyIndex instance.
+        db: Open :class:`~rdfsolve.backend.database.Database` instance.
+
+    Returns:
+        None
+    """
+    from rdfsolve.ontology.index import save_ontology_index_to_db as _impl
+
+    return _impl(index, db)
+
+
+def load_ontology_index_from_db(db: Any) -> Any:
+    """Load an OntologyIndex from the rdfsolve SQLite database.
+
+    Delegates to :func:`rdfsolve.ontology.index.load_ontology_index_from_db`.
+
+    Parameters:
+        db: Open :class:`~rdfsolve.backend.database.Database` instance.
+
+    Returns:
+        OntologyIndex: Reconstructed index.
+
+    Raises:
+        RuntimeError: If no ontology index is found in the database.
+    """
+    from rdfsolve.ontology.index import load_ontology_index_from_db as _impl
+
+    return _impl(db)

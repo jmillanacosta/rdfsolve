@@ -24,9 +24,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Framework :: Pytest",
-    
+
     "Framework :: tox",
-    
+
     "Framework :: Sphinx",
     "Natural Language :: English",
     "Programming Language :: Python",
@@ -54,7 +54,7 @@ dependencies = [
     # Core RDF processing
     "rdflib>=6.0.0", # RDF graph processing and parsing
     "sparqlwrapper>=2.0.0", # SPARQL endpoint communication
-    
+
     # Other
     "pandas>=2.0.0", # DataFrame operations for analysis results
     "numpy",
@@ -83,11 +83,13 @@ dependencies = [
 tests = [
     "pytest",
     "coverage",
+    "networkx>=2.8",
+    "httpx>=0.24",
 ]
 docs = [
     "sphinx>=8",
     "sphinx-rtd-theme>=3.0",
-    "sphinx-click", 
+    "sphinx-click",
     "sphinx-automodapi",
     # To include LaTeX comments easily in your docs.
     # If you uncomment this, don't forget to do the same in docs/conf.py
