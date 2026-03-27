@@ -1,4 +1,4 @@
-"""Main RDFSolve functionalities for VoID extraction and conversion."""
+"""Main RDFSolve functionalities for extraction, conversion and solving."""
 
 import json
 import logging
@@ -18,9 +18,11 @@ __all__ = [
     "count_instances",
     "count_instances_per_class",
     "discover_void_graphs",
+    "enrich_source_with_bioregistry",
     "execute_sparql",
     "extract_partitions_from_void",
     "generate_void_from_endpoint",
+    "get_bioregistry_metadata",
     "graph_to_jsonld",
     "graph_to_linkml",
     "graph_to_schema",
@@ -41,6 +43,7 @@ __all__ = [
     "seed_instance_mappings",
     "seed_semra_mappings",
     "seed_sssom_mappings",
+    "sources_to_jsonld",
     "to_jsonld_from_file",
     "to_linkml_from_file",
     "to_rdfconfig_from_file",
@@ -1228,3 +1231,84 @@ def derive_class_mappings_from_instances(
         enrich_in_place=enrich_in_place,
         source_name=source_name,
     )
+
+
+# ── Bioregistry metadata ──────────────────────────────────────────
+
+
+def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
+    """Return a structured metadata dict for a Bioregistry prefix.
+
+    Delegates to :func:`rdfsolve.sources.get_bioregistry_metadata`.
+
+    Parameters
+    ----------
+    br_prefix:
+        A valid Bioregistry prefix (e.g. ``"drugbank"``, ``"chebi"``).
+
+    Returns
+    -------
+    dict
+        Fields: ``prefix``, ``name``, ``description``, ``homepage``,
+        ``license``, ``domain``, ``keywords``, ``publications``,
+        ``uri_prefix``, ``uri_prefixes``, ``synonyms``, ``mappings``,
+        ``logo``, ``extra_providers``.
+
+    Raises
+    ------
+    ValueError
+        If *br_prefix* is unknown to Bioregistry.
+    """
+    from rdfsolve.sources import get_bioregistry_metadata as _impl
+
+    return _impl(br_prefix)
+
+
+def enrich_source_with_bioregistry(
+    entry: "SourceEntry",  # type: ignore[name-defined]
+) -> str | None:
+    """Populate ``bioregistry_*`` fields on a source entry in-place.
+
+    Delegates to :func:`rdfsolve.sources.enrich_source_with_bioregistry`.
+
+    Parameters
+    ----------
+    entry:
+        A :class:`~rdfsolve.sources.SourceEntry` dict, modified in-place.
+
+    Returns
+    -------
+    str or None
+        The resolved Bioregistry prefix, or ``None`` if no match was found.
+    """
+    from rdfsolve.sources import enrich_source_with_bioregistry as _impl
+
+    return _impl(entry)
+
+
+def sources_to_jsonld(
+    entries: "list[SourceEntry]",  # type: ignore[name-defined]
+    *,
+    enrich: bool = False,
+) -> dict[str, Any]:
+    """Serialise source entries to a JSON-LD document.
+
+    Delegates to :func:`rdfsolve.sources.sources_to_jsonld`.
+
+    Parameters
+    ----------
+    entries:
+        Source entries, typically returned by
+        :func:`~rdfsolve.sources.load_sources`.
+    enrich:
+        When ``True``, resolve and embed Bioregistry metadata for each
+        source before serialisation (entries are not modified in place).
+
+    Returns
+    -------
+    dict
+        JSON-LD document with ``@context`` and ``@graph`` keys.
+    """
+    from rdfsolve.sources import sources_to_jsonld as _impl
+
+    return _impl(entries, enrich=enrich)

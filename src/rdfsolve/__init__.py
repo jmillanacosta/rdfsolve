@@ -11,7 +11,9 @@ Main modules:
 
 from .api import (
     compose_query_from_paths,
+    enrich_source_with_bioregistry,
     execute_sparql,
+    get_bioregistry_metadata,
     graph_to_jsonld,
     graph_to_linkml,
     graph_to_schema,
@@ -31,6 +33,7 @@ from .api import (
     seed_instance_mappings,
     seed_semra_mappings,
     seed_sssom_mappings,
+    sources_to_jsonld,
     to_jsonld_from_file,
     to_linkml_from_file,
     to_rdfconfig_from_file,
@@ -93,4 +96,8 @@ __all__ = [
     "to_rdfconfig_from_file",
     "to_shacl_from_file",
     "to_void_from_file",
+    # ── api: bioregistry enrichment ──────────────────────────────
+    "enrich_source_with_bioregistry",
+    "get_bioregistry_metadata",
+    "sources_to_jsonld",
 ]
