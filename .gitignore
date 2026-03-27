@@ -969,3 +969,4 @@ results/*
 
 rdfsolve.db
 results_*.zip
+.vscode/settings.json
