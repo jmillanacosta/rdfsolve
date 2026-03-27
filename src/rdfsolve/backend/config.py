@@ -91,6 +91,12 @@ class Config:
     # Optional bulk-import directory
     SCHEMA_IMPORT_DIR: str = os.getenv("SCHEMA_IMPORT_DIR", "")
 
+    # Sources YAML registry (seeded to DB on startup when table is empty)
+    SOURCES_YAML: str = os.getenv("SOURCES_YAML", "")
+
+    # OLS4 HTTP-response disk cache directory for the ontology index builder
+    ONTOLOGY_CACHE_DIR: str = os.getenv("ONTOLOGY_CACHE_DIR", "")
+
     # Frontend static build directory
     FRONTEND_DIST: str = os.getenv("FRONTEND_DIST", "")
 

@@ -99,6 +99,92 @@ CREATE TABLE IF NOT EXISTS linkml_schemas (
     created_at    TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- ── sources registry ──────────────────────────────────────────────────────
+-- One row per entry from sources.yaml.  List-valued fields are stored as
+-- JSON arrays; optional numeric fields use NULL when absent.
+CREATE TABLE IF NOT EXISTS sources (
+    name              TEXT PRIMARY KEY,
+    endpoint          TEXT NOT NULL DEFAULT '',
+    void_iri          TEXT NOT NULL DEFAULT '',
+    graph_uris        TEXT NOT NULL DEFAULT '[]',   -- JSON array
+    use_graph         INTEGER NOT NULL DEFAULT 0,
+    two_phase         INTEGER NOT NULL DEFAULT 1,
+    chunk_size        INTEGER,
+    class_batch_size  INTEGER,
+    class_chunk_size  INTEGER,
+    timeout           REAL,
+    delay             REAL,
+    counts            INTEGER NOT NULL DEFAULT 0,
+    unsafe_paging     INTEGER NOT NULL DEFAULT 0,
+    notes             TEXT NOT NULL DEFAULT '',
+    local_provider    TEXT NOT NULL DEFAULT '',
+    download_ttl      TEXT NOT NULL DEFAULT '[]',   -- JSON array
+    -- Bioregistry-derived fields (optional — populated by enrichment)
+    bioregistry_prefix      TEXT NOT NULL DEFAULT '',
+    bioregistry_name        TEXT NOT NULL DEFAULT '',
+    bioregistry_description TEXT NOT NULL DEFAULT '',
+    bioregistry_homepage    TEXT NOT NULL DEFAULT '',
+    bioregistry_license     TEXT NOT NULL DEFAULT '',
+    bioregistry_domain      TEXT NOT NULL DEFAULT '',
+    bioregistry_keywords    TEXT NOT NULL DEFAULT '[]',     -- JSON array
+    bioregistry_publications TEXT NOT NULL DEFAULT '[]',    -- JSON array
+    bioregistry_uri_prefix  TEXT NOT NULL DEFAULT '',
+    bioregistry_uri_prefixes TEXT NOT NULL DEFAULT '[]',    -- JSON array
+    bioregistry_synonyms    TEXT NOT NULL DEFAULT '[]',     -- JSON array
+    bioregistry_mappings    TEXT NOT NULL DEFAULT '{}',     -- JSON object
+    bioregistry_logo        TEXT NOT NULL DEFAULT '',
+    bioregistry_extra_providers TEXT NOT NULL DEFAULT '[]', -- JSON array
+    created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ── ontology index tables ──────────────────────────────────────────────────
+-- Flat relational representation of OntologyIndex, replacing pkl.gz + graphml.
+
+-- term label/synonym → one row per (term, class_iri) pair
+CREATE TABLE IF NOT EXISTS ontology_terms (
+    term       TEXT NOT NULL,   -- normalised (lower-cased, stripped)
+    class_iri  TEXT NOT NULL,
+    PRIMARY KEY (term, class_iri)
+);
+
+-- class IRI → ontology
+CREATE TABLE IF NOT EXISTS ontology_classes (
+    class_iri    TEXT PRIMARY KEY,
+    ontology_id  TEXT NOT NULL
+);
+
+-- ancestor chains: one row per (class_iri, position, ancestor_iri)
+CREATE TABLE IF NOT EXISTS ontology_ancestors (
+    class_iri    TEXT NOT NULL,
+    position     INTEGER NOT NULL,   -- 0 = nearest ancestor
+    ancestor_iri TEXT NOT NULL,
+    PRIMARY KEY (class_iri, position)
+);
+
+-- base URI → ontology mapping
+CREATE TABLE IF NOT EXISTS ontology_base_uris (
+    base_uri    TEXT PRIMARY KEY,
+    ontology_id TEXT NOT NULL
+);
+
+-- ontology graph nodes
+CREATE TABLE IF NOT EXISTS ontology_graph_nodes (
+    ontology_id      TEXT PRIMARY KEY,
+    preferred_prefix TEXT NOT NULL DEFAULT '',
+    base_uris        TEXT NOT NULL DEFAULT '[]',  -- JSON array
+    domain           TEXT NOT NULL DEFAULT '',
+    n_classes        INTEGER NOT NULL DEFAULT 0
+);
+
+-- ontology graph edges (importsFrom / exportsTo)
+CREATE TABLE IF NOT EXISTS ontology_graph_edges (
+    source_id TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    rel       TEXT NOT NULL DEFAULT 'imports',
+    PRIMARY KEY (source_id, target_id)
+);
 """
 
 # Migration: add new columns to schemas if they do not yet exist.
@@ -108,6 +194,77 @@ _SCHEMAS_MIGRATIONS = [
     "ALTER TABLE schemas ADD COLUMN authors TEXT",
     "ALTER TABLE schemas ADD COLUMN dataset_metadata TEXT",
     "ALTER TABLE schemas ADD COLUMN full_strategy TEXT",
+]
+
+# Migration: create new tables introduced after initial schema.
+# Each statement is idempotent (CREATE TABLE IF NOT EXISTS).
+_NEW_TABLE_MIGRATIONS = [
+    """CREATE TABLE IF NOT EXISTS sources (
+    name              TEXT PRIMARY KEY,
+    endpoint          TEXT NOT NULL DEFAULT '',
+    void_iri          TEXT NOT NULL DEFAULT '',
+    graph_uris        TEXT NOT NULL DEFAULT '[]',
+    use_graph         INTEGER NOT NULL DEFAULT 0,
+    two_phase         INTEGER NOT NULL DEFAULT 1,
+    chunk_size        INTEGER,
+    class_batch_size  INTEGER,
+    class_chunk_size  INTEGER,
+    timeout           REAL,
+    delay             REAL,
+    counts            INTEGER NOT NULL DEFAULT 0,
+    unsafe_paging     INTEGER NOT NULL DEFAULT 0,
+    notes             TEXT NOT NULL DEFAULT '',
+    local_provider    TEXT NOT NULL DEFAULT '',
+    download_ttl      TEXT NOT NULL DEFAULT '[]',
+    bioregistry_prefix      TEXT NOT NULL DEFAULT '',
+    bioregistry_name        TEXT NOT NULL DEFAULT '',
+    bioregistry_description TEXT NOT NULL DEFAULT '',
+    bioregistry_homepage    TEXT NOT NULL DEFAULT '',
+    bioregistry_license     TEXT NOT NULL DEFAULT '',
+    bioregistry_domain      TEXT NOT NULL DEFAULT '',
+    bioregistry_keywords    TEXT NOT NULL DEFAULT '[]',
+    bioregistry_publications TEXT NOT NULL DEFAULT '[]',
+    bioregistry_uri_prefix  TEXT NOT NULL DEFAULT '',
+    bioregistry_uri_prefixes TEXT NOT NULL DEFAULT '[]',
+    bioregistry_synonyms    TEXT NOT NULL DEFAULT '[]',
+    bioregistry_mappings    TEXT NOT NULL DEFAULT '{}',
+    bioregistry_logo        TEXT NOT NULL DEFAULT '',
+    bioregistry_extra_providers TEXT NOT NULL DEFAULT '[]',
+    created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
+)""",
+    """CREATE TABLE IF NOT EXISTS ontology_terms (
+    term       TEXT NOT NULL,
+    class_iri  TEXT NOT NULL,
+    PRIMARY KEY (term, class_iri)
+)""",
+    """CREATE TABLE IF NOT EXISTS ontology_classes (
+    class_iri    TEXT PRIMARY KEY,
+    ontology_id  TEXT NOT NULL
+)""",
+    """CREATE TABLE IF NOT EXISTS ontology_ancestors (
+    class_iri    TEXT NOT NULL,
+    position     INTEGER NOT NULL,
+    ancestor_iri TEXT NOT NULL,
+    PRIMARY KEY (class_iri, position)
+)""",
+    """CREATE TABLE IF NOT EXISTS ontology_base_uris (
+    base_uri    TEXT PRIMARY KEY,
+    ontology_id TEXT NOT NULL
+)""",
+    """CREATE TABLE IF NOT EXISTS ontology_graph_nodes (
+    ontology_id      TEXT PRIMARY KEY,
+    preferred_prefix TEXT NOT NULL DEFAULT '',
+    base_uris        TEXT NOT NULL DEFAULT '[]',
+    domain           TEXT NOT NULL DEFAULT '',
+    n_classes        INTEGER NOT NULL DEFAULT 0
+)""",
+    """CREATE TABLE IF NOT EXISTS ontology_graph_edges (
+    source_id TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    rel       TEXT NOT NULL DEFAULT 'imports',
+    PRIMARY KEY (source_id, target_id)
+)""",
 ]
 
 
@@ -165,6 +322,10 @@ class Database:
                 self._conn.commit()
             except sqlite3.OperationalError:
                 pass  # Column already exists.
+        # Create new tables (idempotent — IF NOT EXISTS).
+        for stmt in _NEW_TABLE_MIGRATIONS:
+            self._conn.execute(stmt)
+        self._conn.commit()
 
     def close(self) -> None:
         """Close the database connection (no-op for shared in-memory DBs)."""
@@ -688,3 +849,356 @@ class Database:
         )
         self._conn.commit()
         return cur.rowcount > 0
+
+    # -- sources operations ---------------------------------------------
+
+    _SOURCE_JSON_LISTS = (
+        "graph_uris",
+        "download_ttl",
+        "bioregistry_keywords",
+        "bioregistry_publications",
+        "bioregistry_uri_prefixes",
+        "bioregistry_synonyms",
+        "bioregistry_extra_providers",
+    )
+    _SOURCE_JSON_DICTS = ("bioregistry_mappings",)
+
+    def _source_row_to_dict(self, row: sqlite3.Row) -> dict[str, Any]:
+        """Convert a sources table row to a plain dict, decoding JSON cols."""
+        item = dict(row)
+        for col in self._SOURCE_JSON_LISTS:
+            raw = item.get(col)
+            if raw:
+                try:
+                    item[col] = json.loads(raw)
+                except Exception:
+                    item[col] = []
+            else:
+                item[col] = []
+        for col in self._SOURCE_JSON_DICTS:
+            raw = item.get(col)
+            if raw:
+                try:
+                    item[col] = json.loads(raw)
+                except Exception:
+                    item[col] = {}
+            else:
+                item[col] = {}
+        # Convert SQLite integers back to bool
+        for col in ("use_graph", "two_phase", "counts", "unsafe_paging"):
+            if col in item:
+                item[col] = bool(item[col])
+        return item
+
+    def save_source(self, entry: dict[str, Any]) -> str:
+        """Insert or replace a single source entry. Returns the source name."""
+        now = datetime.now(timezone.utc).isoformat()
+        name: str = entry["name"]
+        self._conn.execute(
+            """
+            INSERT INTO sources (
+                name, endpoint, void_iri, graph_uris, use_graph, two_phase,
+                chunk_size, class_batch_size, class_chunk_size, timeout, delay,
+                counts, unsafe_paging, notes, local_provider, download_ttl,
+                bioregistry_prefix, bioregistry_name, bioregistry_description,
+                bioregistry_homepage, bioregistry_license, bioregistry_domain,
+                bioregistry_keywords, bioregistry_publications,
+                bioregistry_uri_prefix, bioregistry_uri_prefixes,
+                bioregistry_synonyms, bioregistry_mappings,
+                bioregistry_logo, bioregistry_extra_providers,
+                created_at, updated_at
+            ) VALUES (
+                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+            )
+            ON CONFLICT(name) DO UPDATE SET
+                endpoint=excluded.endpoint,
+                void_iri=excluded.void_iri,
+                graph_uris=excluded.graph_uris,
+                use_graph=excluded.use_graph,
+                two_phase=excluded.two_phase,
+                chunk_size=excluded.chunk_size,
+                class_batch_size=excluded.class_batch_size,
+                class_chunk_size=excluded.class_chunk_size,
+                timeout=excluded.timeout,
+                delay=excluded.delay,
+                counts=excluded.counts,
+                unsafe_paging=excluded.unsafe_paging,
+                notes=excluded.notes,
+                local_provider=excluded.local_provider,
+                download_ttl=excluded.download_ttl,
+                bioregistry_prefix=excluded.bioregistry_prefix,
+                bioregistry_name=excluded.bioregistry_name,
+                bioregistry_description=excluded.bioregistry_description,
+                bioregistry_homepage=excluded.bioregistry_homepage,
+                bioregistry_license=excluded.bioregistry_license,
+                bioregistry_domain=excluded.bioregistry_domain,
+                bioregistry_keywords=excluded.bioregistry_keywords,
+                bioregistry_publications=excluded.bioregistry_publications,
+                bioregistry_uri_prefix=excluded.bioregistry_uri_prefix,
+                bioregistry_uri_prefixes=excluded.bioregistry_uri_prefixes,
+                bioregistry_synonyms=excluded.bioregistry_synonyms,
+                bioregistry_mappings=excluded.bioregistry_mappings,
+                bioregistry_logo=excluded.bioregistry_logo,
+                bioregistry_extra_providers=excluded.bioregistry_extra_providers,
+                updated_at=excluded.updated_at
+            """,
+            (
+                name,
+                entry.get("endpoint", ""),
+                entry.get("void_iri", ""),
+                json.dumps(entry.get("graph_uris") or []),
+                int(bool(entry.get("use_graph", False))),
+                int(bool(entry.get("two_phase", True))),
+                entry.get("chunk_size"),
+                entry.get("class_batch_size"),
+                entry.get("class_chunk_size"),
+                entry.get("timeout"),
+                entry.get("delay"),
+                int(bool(entry.get("counts", False))),
+                int(bool(entry.get("unsafe_paging", False))),
+                entry.get("notes", ""),
+                entry.get("local_provider", ""),
+                json.dumps(entry.get("download_ttl") or []),
+                entry.get("bioregistry_prefix", ""),
+                entry.get("bioregistry_name", ""),
+                entry.get("bioregistry_description", ""),
+                entry.get("bioregistry_homepage", ""),
+                entry.get("bioregistry_license", ""),
+                entry.get("bioregistry_domain", ""),
+                json.dumps(entry.get("bioregistry_keywords") or []),
+                json.dumps(entry.get("bioregistry_publications") or []),
+                entry.get("bioregistry_uri_prefix", ""),
+                json.dumps(entry.get("bioregistry_uri_prefixes") or []),
+                json.dumps(entry.get("bioregistry_synonyms") or []),
+                json.dumps(entry.get("bioregistry_mappings") or {}),
+                entry.get("bioregistry_logo", ""),
+                json.dumps(entry.get("bioregistry_extra_providers") or []),
+                now,
+                now,
+            ),
+        )
+        self._conn.commit()
+        name_str: str = str(name)
+        return name_str
+
+    def save_sources_bulk(self, entries: list[dict[str, Any]]) -> int:
+        """Upsert many source entries at once. Returns count saved."""
+        count = 0
+        for entry in entries:
+            self.save_source(entry)
+            count += 1
+        return count
+
+    def get_source(self, name: str) -> dict[str, Any] | None:
+        """Load a single source entry by name."""
+        row = self._conn.execute(
+            "SELECT * FROM sources WHERE name = ?",
+            (name,),
+        ).fetchone()
+        if row is None:
+            return None
+        return self._source_row_to_dict(row)
+
+    def list_sources(
+        self,
+        domain: str | None = None,
+        bioregistry_prefix: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return all source entries, optionally filtered by domain or bioregistry_prefix."""
+        conditions: list[str] = []
+        params: list[Any] = []
+        if domain:
+            conditions.append("bioregistry_domain = ?")
+            params.append(domain)
+        if bioregistry_prefix:
+            conditions.append("bioregistry_prefix = ?")
+            params.append(bioregistry_prefix)
+        where = "WHERE " + " AND ".join(conditions) if conditions else ""
+        rows = self._conn.execute(
+            f"SELECT * FROM sources {where} ORDER BY name",  # noqa: S608
+            params,
+        ).fetchall()
+        return [self._source_row_to_dict(r) for r in rows]
+
+    def delete_source(self, name: str) -> bool:
+        """Delete a source entry by name. Returns True if deleted."""
+        cur = self._conn.execute("DELETE FROM sources WHERE name = ?", (name,))
+        self._conn.commit()
+        return cur.rowcount > 0
+
+    def count_sources(self) -> int:
+        """Return the total number of source entries in the database."""
+        row = self._conn.execute("SELECT COUNT(*) FROM sources").fetchone()
+        return int(row[0]) if row else 0
+
+    # -- ontology index operations --------------------------------------
+
+    def save_ontology_index(self, index: Any) -> None:
+        """Persist an OntologyIndex to the database.
+
+        Clears all existing ontology data and replaces it with *index*.
+        Accepts any object with the same attributes as
+        :class:`~rdfsolve.ontology.index.OntologyIndex`.
+
+        Parameters
+        ----------
+        index:
+            Populated OntologyIndex instance.
+        """
+        now = datetime.now(timezone.utc).isoformat()
+        conn = self._conn
+
+        # Clear existing data
+        conn.execute("DELETE FROM ontology_terms")
+        conn.execute("DELETE FROM ontology_classes")
+        conn.execute("DELETE FROM ontology_ancestors")
+        conn.execute("DELETE FROM ontology_base_uris")
+        conn.execute("DELETE FROM ontology_graph_nodes")
+        conn.execute("DELETE FROM ontology_graph_edges")
+
+        # term_to_classes
+        for term, iris in index.term_to_classes.items():
+            for iri in iris:
+                conn.execute(
+                    "INSERT OR IGNORE INTO ontology_terms (term, class_iri) VALUES (?,?)",
+                    (term, iri),
+                )
+
+        # class_to_ontology
+        for class_iri, ont_id in index.class_to_ontology.items():
+            conn.execute(
+                "INSERT OR REPLACE INTO ontology_classes (class_iri, ontology_id) VALUES (?,?)",
+                (class_iri, ont_id),
+            )
+
+        # ancestors
+        for class_iri, anc_list in index.ancestors.items():
+            for pos, anc_iri in enumerate(anc_list):
+                conn.execute(
+                    "INSERT OR REPLACE INTO ontology_ancestors "
+                    "(class_iri, position, ancestor_iri) VALUES (?,?,?)",
+                    (class_iri, pos, anc_iri),
+                )
+
+        # base_uri_to_ontology
+        for base_uri, ont_id in index.base_uri_to_ontology.items():
+            conn.execute(
+                "INSERT OR REPLACE INTO ontology_base_uris (base_uri, ontology_id) VALUES (?,?)",
+                (base_uri, ont_id),
+            )
+
+        # ontology graph
+        graph = index.ontology_graph
+        if graph is not None:
+            for node_id, attrs in graph.nodes(data=True):
+                conn.execute(
+                    """INSERT OR REPLACE INTO ontology_graph_nodes
+                    (ontology_id, preferred_prefix, base_uris, domain, n_classes)
+                    VALUES (?,?,?,?,?)""",
+                    (
+                        node_id,
+                        attrs.get("preferred_prefix", ""),
+                        json.dumps(attrs.get("base_uris", [])),
+                        attrs.get("domain", ""),
+                        int(attrs.get("n_classes", 0)),
+                    ),
+                )
+            for src, dst, attrs in graph.edges(data=True):
+                conn.execute(
+                    "INSERT OR REPLACE INTO ontology_graph_edges "
+                    "(source_id, target_id, rel) VALUES (?,?,?)",
+                    (src, dst, attrs.get("rel", "imports")),
+                )
+
+        _log.info("Ontology index saved to DB at %s", now)
+        conn.commit()
+
+    def load_ontology_index(self) -> Any:
+        """Load a stored OntologyIndex from the database.
+
+        Returns
+        -------
+        OntologyIndex
+            Reconstructed index.
+
+        Raises
+        ------
+        RuntimeError
+            If no ontology data is found in the database.
+        """
+        from rdfsolve.ontology.index import OntologyIndex
+
+        # term_to_classes
+        rows = self._conn.execute("SELECT term, class_iri FROM ontology_terms").fetchall()
+        term_to_classes: dict[str, list[str]] = {}
+        for r in rows:
+            term_to_classes.setdefault(r["term"], []).append(r["class_iri"])
+
+        # class_to_ontology
+        rows = self._conn.execute("SELECT class_iri, ontology_id FROM ontology_classes").fetchall()
+        class_to_ontology: dict[str, str] = {r["class_iri"]: r["ontology_id"] for r in rows}
+
+        # ancestors
+        rows = self._conn.execute(
+            "SELECT class_iri, position, ancestor_iri FROM ontology_ancestors "
+            "ORDER BY class_iri, position"
+        ).fetchall()
+        ancestors: dict[str, list[str]] = {}
+        for r in rows:
+            ancestors.setdefault(r["class_iri"], []).append(r["ancestor_iri"])
+
+        # base_uri_to_ontology
+        rows = self._conn.execute("SELECT base_uri, ontology_id FROM ontology_base_uris").fetchall()
+        base_uri_to_ontology: dict[str, str] = {r["base_uri"]: r["ontology_id"] for r in rows}
+
+        # ontology graph
+        graph: Any = None
+        node_rows = self._conn.execute(
+            "SELECT ontology_id, preferred_prefix, base_uris, domain, n_classes "
+            "FROM ontology_graph_nodes"
+        ).fetchall()
+        if node_rows:
+            import networkx as nx
+
+            graph = nx.DiGraph()
+            for r in node_rows:
+                graph.add_node(
+                    r["ontology_id"],
+                    preferred_prefix=r["preferred_prefix"],
+                    base_uris=json.loads(r["base_uris"] or "[]"),
+                    domain=r["domain"],
+                    n_classes=r["n_classes"],
+                )
+            edge_rows = self._conn.execute(
+                "SELECT source_id, target_id, rel FROM ontology_graph_edges"
+            ).fetchall()
+            for r in edge_rows:
+                graph.add_edge(r["source_id"], r["target_id"], rel=r["rel"])
+
+        return OntologyIndex(
+            term_to_classes=term_to_classes,
+            class_to_ontology=class_to_ontology,
+            ancestors=ancestors,
+            base_uri_to_ontology=base_uri_to_ontology,
+            ontology_graph=graph,
+        )
+
+    def ontology_stats(self) -> dict[str, int]:
+        """Return row counts for ontology tables."""
+        result: dict[str, int] = {}
+        for table in (
+            "ontology_terms",
+            "ontology_classes",
+            "ontology_ancestors",
+            "ontology_base_uris",
+            "ontology_graph_nodes",
+            "ontology_graph_edges",
+        ):
+            row = self._conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()  # noqa: S608
+            result[table] = int(row[0]) if row else 0
+        return result
+
+    def has_ontology_index(self) -> bool:
+        """Return True if any ontology data is stored in the database."""
+        row = self._conn.execute("SELECT COUNT(*) FROM ontology_graph_nodes").fetchone()
+        return bool(row and row[0] > 0)

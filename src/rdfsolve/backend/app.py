@@ -108,9 +108,11 @@ def _register_blueprints(app: Flask) -> None:
     from rdfsolve.backend.routes.iri import iri_bp
     from rdfsolve.backend.routes.linkml import linkml_bp
     from rdfsolve.backend.routes.mappings import mappings_bp
+    from rdfsolve.backend.routes.ontology import ontology_bp
     from rdfsolve.backend.routes.reports import reports_bp
     from rdfsolve.backend.routes.schemas import schemas_bp
     from rdfsolve.backend.routes.shapes import shapes_bp
+    from rdfsolve.backend.routes.sources import sources_bp
     from rdfsolve.backend.routes.sparql import sparql_bp
     from rdfsolve.backend.routes.void_catalogs import void_bp
 
@@ -125,6 +127,8 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(reports_bp, url_prefix="/api/reports")
     app.register_blueprint(void_bp, url_prefix="/api/void")
     app.register_blueprint(linkml_bp, url_prefix="/api/linkml")
+    app.register_blueprint(sources_bp, url_prefix="/api/sources")
+    app.register_blueprint(ontology_bp, url_prefix="/api/ontology")
 
 
 def _configure_frontend(app: Flask, frontend_dist: str) -> None:
@@ -163,6 +167,15 @@ def _bulk_import_schemas(db: Database, import_dir: str) -> None:
         logger.info("Imported %d schemas from %s", n, import_dir)
 
 
+def _seed_sources(db: Database, sources_yaml: str) -> None:
+    """Seed the sources registry from YAML on first startup (no-op if already populated)."""
+    if not sources_yaml:
+        return
+    from rdfsolve.backend.services.sources_service import SourcesService
+
+    SourcesService(db).seed_from_yaml(sources_yaml)
+
+
 def create_app(config_class: type[Config] = Config) -> Flask:
     """Create and configure the Flask application.
 
@@ -198,6 +211,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     _configure_frontend(app, config_class.FRONTEND_DIST)
     _bulk_import_schemas(db, config_class.SCHEMA_IMPORT_DIR)
+    _seed_sources(db, config_class.SOURCES_YAML)
 
     return app
 
