@@ -32,17 +32,20 @@ exclude paper
 
 # ── Dev / infra files — tracked by git but not shipped in sdist ──
 exclude .cruft.json
+exclude .env.example
 exclude .vscode
 exclude .check-manifest-ignore
 exclude .dockerignore
 exclude .gitmodules
 exclude .readthedocs.yml
 exclude docker-compose.yml
+exclude docker-compose.full.yml
 exclude docker-compose.pipeline.yml
 exclude tox.ini
 exclude rdfsolve.db
 
 # ── Always exclude generated / cache artefacts ───────────────────
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
-global-exclude *.jsonld *.parquet *.pkl *.nq *.nq.gz *.ttl.gz
+global-exclude *.jsonld *.parquet *.pkl *.nq *.nq.gz *.ttl.gz *.gz
 global-exclude Qleverfile *.index-log.txt *.settings.json *.meta-data.json
+global-exclude *.graphml
