@@ -52,7 +52,7 @@ import csv
 import json
 import logging
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 import pandas as pd
 import yaml
@@ -197,7 +197,7 @@ def _resolve_bioregistry_prefix(entry: SourceEntry) -> str | None:
             return root
 
     # 3. local_provider field (e.g. 'pubchem', 'idsm')
-    local_provider: str = entry.get("local_provider", "") or ""  # type: ignore[misc]
+    local_provider: str = str(entry.get("local_provider") or "")
     if local_provider and bioregistry.get_resource(local_provider) is not None:
         return local_provider
 
@@ -403,7 +403,7 @@ def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
         logger.warning("Could not fetch bioregistry metadata for %r: %s", br_prefix, exc)
         return None
 
-    entry["bioregistry_prefix"] = meta.get("prefix", br_prefix)  # type: ignore[literal-required]
+    entry["bioregistry_prefix"] = meta.get("prefix", br_prefix)
 
     _scalar_fields = {
         "bioregistry_name": "name",
@@ -414,9 +414,10 @@ def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
         "bioregistry_uri_prefix": "uri_prefix",
         "bioregistry_logo": "logo",
     }
+    _entry_dict: dict[str, Any] = entry  # type: ignore[assignment]
     for entry_key, meta_key in _scalar_fields.items():
         if meta_key in meta:
-            entry[entry_key] = meta[meta_key]  # type: ignore[literal-required]
+            _entry_dict[entry_key] = meta[meta_key]
 
     _list_fields = {
         "bioregistry_keywords": "keywords",
@@ -427,10 +428,10 @@ def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
     }
     for entry_key, meta_key in _list_fields.items():
         if meta_key in meta:
-            entry[entry_key] = meta[meta_key]  # type: ignore[literal-required]
+            _entry_dict[entry_key] = meta[meta_key]
 
     if "mappings" in meta:
-        entry["bioregistry_mappings"] = meta["mappings"]  # type: ignore[literal-required]
+        _entry_dict["bioregistry_mappings"] = meta["mappings"]
 
     return br_prefix
 
@@ -530,12 +531,12 @@ def _node_add_bioregistry_fields(node: dict[str, Any], entry: SourceEntry) -> No
         node["skos:exactMatch"] = {"@id": f"https://bioregistry.io/registry/{br_prefix}"}
 
     for field, pred in _JSONLD_SCALAR_BR_FIELDS:
-        val = entry.get(field)  # type: ignore[literal-required]
+        val = entry.get(field)
         if val:
             node[pred] = val
 
     for field, pred in _JSONLD_LIST_BR_FIELDS:
-        lst = entry.get(field)  # type: ignore[literal-required]
+        lst = entry.get(field)
         if lst:
             node[pred] = lst
 
@@ -594,7 +595,7 @@ def sources_to_jsonld(
 
     for raw_entry in entries:
         if enrich:
-            entry: SourceEntry = dict(raw_entry)  # type: ignore[assignment]
+            entry: SourceEntry = cast(SourceEntry, dict(raw_entry))
             enrich_source_with_bioregistry(entry)
         else:
             entry = raw_entry
@@ -695,9 +696,10 @@ def _yaml_node_to_entry(node: dict[str, Any]) -> SourceEntry:
     # Pass through download_*, local_endpoint, and provider fields so
     # that scripts (e.g. mine_local.py generate-qleverfile) can see them.
     passthrough = {"local_endpoint", "local_provider", "local_tar_url"}
+    e_dict: dict[str, Any] = e  # type: ignore[assignment]
     for key in node:
         if key.startswith("download_") or key in passthrough:
-            e[key] = node[key]  # type: ignore[literal-required]
+            e_dict[key] = node[key]
 
     return e
 

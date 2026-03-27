@@ -344,7 +344,8 @@ class OlsClient:
             OLS4 ontology metadata object, or ``None`` on error.
         """
         url = f"{self._base}/ontologies/{ontology_id}"
-        return self._get(url)  # type: ignore[return-value]
+        result: dict[str, Any] | None = self._get(url)
+        return result
 
     def close(self) -> None:
         """Close the disk cache if open."""

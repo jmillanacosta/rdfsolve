@@ -893,7 +893,7 @@ class Database:
     def save_source(self, entry: dict[str, Any]) -> str:
         """Insert or replace a single source entry. Returns the source name."""
         now = datetime.now(timezone.utc).isoformat()
-        name = entry["name"]
+        name: str = entry["name"]
         self._conn.execute(
             """
             INSERT INTO sources (
@@ -978,7 +978,8 @@ class Database:
             ),
         )
         self._conn.commit()
-        return name
+        name_str: str = str(name)
+        return name_str
 
     def save_sources_bulk(self, entries: list[dict[str, Any]]) -> int:
         """Upsert many source entries at once. Returns count saved."""
