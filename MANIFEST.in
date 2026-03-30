@@ -26,9 +26,11 @@ prune results
 prune paper
 prune frontend
 prune docker
+prune mcp
 # ── Git submodules are tracked as files, prune alone won't catch them ──
 exclude frontend
 exclude paper
+exclude mcp
 
 # ── Dev / infra files — tracked by git but not shipped in sdist ──
 exclude .cruft.json
