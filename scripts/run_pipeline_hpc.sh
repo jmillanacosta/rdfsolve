@@ -261,6 +261,12 @@ _qlever_index() {
     settings_raw=$(grep '^SETTINGS_JSON' "${workdir}/Qleverfile" 2>/dev/null \
         | head -1 | sed 's/.*=[ ]*//')
 
+    # INPUT_FILES is referenced inside CAT_INPUT_FILES — export it before eval
+    local input_files_raw
+    input_files_raw=$(grep '^INPUT_FILES' "${workdir}/Qleverfile" 2>/dev/null \
+        | head -1 | sed 's/.*=[ ]*//')
+    export INPUT_FILES="${input_files_raw}"
+
     # Write settings file
     echo "${settings_raw}" > "${settings_json}"
 
