@@ -184,6 +184,9 @@ class SparqlHelper:
         "execution time limit",
         "statement timeout",
         "cost limit exceeded",
+        # QLever-specific: query exhausted memory or thread resources
+        "waited for a result from another thread which then failed",
+        "memory limit exceeded",
     )
 
     # Class-level query registry to collect all executed queries
