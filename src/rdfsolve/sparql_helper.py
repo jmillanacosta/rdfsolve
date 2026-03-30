@@ -675,6 +675,19 @@ class SparqlHelper:
 
                 # Check for retryable status codes
                 if status_code in self.RETRY_STATUS_CODES:
+                    # A 502 Bad Gateway almost always means the upstream
+                    # host is permanently down (not a transient spike).
+                    # Retrying the same endpoint repeatedly wastes time.
+                    # Raise immediately so the caller moves on.
+                    if status_code == 502:
+                        tag = f"{query_type}[{purpose}]" if purpose else query_type
+                        logger.warning(
+                            "%s 502 Bad Gateway from %s - endpoint appears"
+                            " permanently unreachable, not retrying",
+                            tag,
+                            self.endpoint_url,
+                        )
+                        raise EndpointError(f"HTTP 502 Bad Gateway: {e}") from e
                     # A 500/504 whose body signals "query too expensive"
                     # (Virtuoso cost limit, statement timeout, gateway
                     # timeout, etc.) is not a transient server error -

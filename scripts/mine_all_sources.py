@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -109,15 +111,49 @@ def _cli() -> argparse.Namespace:
     return p.parse_args()
 
 
+def _ntfy(title: str, msg: str, priority: str = "default") -> None:
+    """Send a push notification via ntfy.sh if NTFY_TOPIC is set."""
+    topic = os.environ.get("NTFY_TOPIC", "")
+    if not topic:
+        return
+    try:
+        subprocess.run(
+            [
+                "curl", "-s",
+                "-H", f"Title: {title}",
+                "-H", f"Priority: {priority}",
+                "-H", "Tags: slurm",
+                "-d", msg,
+                f"https://ntfy.sh/{topic}",
+            ],
+            check=False,
+            timeout=10,
+        )
+    except Exception:
+        pass
+
+
 def _on_progress(
     name: str, idx: int, total: int, error: str | None,
 ) -> None:
     if error == "skipped":
-        pass
+        _ntfy(
+            f"Skipped: {name}",
+            f"[{idx}/{total}] {name} was skipped.",
+            "min",
+        )
     elif error:
-        pass
+        _ntfy(
+            f"FAIL: {name}",
+            f"[{idx}/{total}] {name} failed: {error}",
+            "high",
+        )
     else:
-        pass
+        _ntfy(
+            f"Done: {name}",
+            f"[{idx}/{total}] {name} finished successfully.",
+            "default",
+        )
 
 
 def main() -> None:

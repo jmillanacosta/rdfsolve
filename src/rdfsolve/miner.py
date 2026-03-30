@@ -53,7 +53,7 @@ from rdfsolve.models import (
     QueryStats,
     SchemaPattern,
 )
-from rdfsolve.sparql_helper import PaginationTruncatedError, SparqlHelper
+from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError, PaginationTruncatedError, SparqlHelper
 from rdfsolve.utils import get_local_name, pick_label
 from rdfsolve.version import VERSION
 
@@ -1548,6 +1548,25 @@ class SchemaMiner:
             result = self._helper.select(q, purpose=purpose)
             bindings: list[dict[str, Any]] = result.get("results", {}).get("bindings", [])
             return bindings
+        except EndpointTimeoutError:
+            # Cost/timeout — worth bisecting/paginating, fall through.
+            logger.warning(
+                "  %s single-shot timed out for [%s] (%d classes) - %s",
+                purpose,
+                label,
+                len(classes),
+                "trying paginated" if len(classes) == 1 else "bisecting",
+            )
+        except EndpointError as e:
+            # Hard failure (502, unreachable, etc.) — no point retrying
+            # with smaller batches or pagination against the same dead host.
+            logger.warning(
+                "  %s endpoint error for [%s] - skipping all fallbacks: %s",
+                purpose,
+                label,
+                e,
+            )
+            return []
         except Exception:
             logger.warning(
                 "  %s single-shot failed for [%s] (%d classes) - %s\n    query: %s",
