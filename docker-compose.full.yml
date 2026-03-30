@@ -1,0 +1,118 @@
+# =============================================================================
+# docker-compose.full.yml - rdfsolve full stack (backend + MCP service)
+# =============================================================================
+#
+# Runs three services sharing one SQLite database volume:
+#   rdfsolve    - Flask backend + compiled frontend UI   (port 8000)
+#   mcp         - rdfsolve-mcp MCP service               (port 8001)
+#
+# QUICK START
+# -----------
+#   cp .env.example .env           # create your local env file
+#   docker compose -f docker-compose.full.yml up --build
+#   open http://localhost:8000     # rdfsolve UI + API
+#   # MCP endpoints at http://localhost:8001/api/mcp/
+#
+# PREREQUISITES
+# -------------
+#   The rdfsolve-mcp git submodule must be checked out at mcp/:
+#     git submodule update --init --recursive
+#
+# ENVIRONMENT VARIABLES
+# ---------------------
+#   Copy .env.example to .env and fill in:
+#     BACKEND_PORT=8000
+#     MCP_PORT=8001
+#     OPENAI_API_KEY=sk-...        (optional — MCP falls back to regex parser)
+#     OPENAI_MODEL=gpt-4o          (optional)
+#     CORS_ORIGINS=*
+#     SPARQL_TIMEOUT=60
+#
+# DATABASE
+# --------
+#   Both services share the db-data named volume (/app/data/rdfsolve.db).
+#   rdfsolve writes: schemas, sources, ontology_* tables.
+#   mcp writes:      mcp_sessions, mcp_plans, mcp_results tables.
+#   SQLite WAL mode ensures safe concurrent access.
+#
+#   To wipe everything and start fresh:
+#     docker compose -f docker-compose.full.yml down -v
+#
+# =============================================================================
+
+name: rdfsolve-full
+
+services:
+
+  # --------------------------------------------------------------------------
+  # rdfsolve — Flask backend API + compiled React frontend
+  # --------------------------------------------------------------------------
+  rdfsolve:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: rdfsolve
+    volumes:
+      - db-data:/app/data
+      - ./docker/schemas:/app/schemas:ro
+    environment:
+      - DATABASE_PATH=/app/data/rdfsolve.db
+      - SCHEMA_IMPORT_DIR=/app/schemas
+      - FRONTEND_DIST=/app/frontend
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - SPARQL_TIMEOUT=${SPARQL_TIMEOUT:-60}
+      - FLASK_DEBUG=0
+      - PORT=${BACKEND_PORT:-8000}
+      - SOURCES_YAML=/app/data/sources.yaml
+      - ONTOLOGY_CACHE_DIR=/app/data/ols_cache
+    ports:
+      - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import os,urllib.request; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\",\"8000\")}/api/health')"
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # --------------------------------------------------------------------------
+  # mcp — rdfsolve-mcp MCP service (submodule at mcp/)
+  # --------------------------------------------------------------------------
+  mcp:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mcp
+    container_name: rdfsolve-mcp
+    depends_on:
+      rdfsolve:
+        condition: service_healthy
+    volumes:
+      - db-data:/app/data
+      - ./docker/schemas:/app/schemas:ro
+    environment:
+      - DATABASE_PATH=/app/data/rdfsolve.db
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
+      - OLS_CACHE_DIR=/app/data/ols_cache
+      - PORT=${MCP_PORT:-8001}
+      - BACKEND_URL=http://rdfsolve:${BACKEND_PORT:-8000}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+    ports:
+      - "${MCP_PORT:-8001}:${MCP_PORT:-8001}"
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import os,urllib.request; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\",\"8001\")}/api/mcp/health')"
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+# Shared named volume — both services mount this at /app/data
+volumes:
+  db-data:

@@ -22,6 +22,14 @@ Usage examples::
 
     # Save index to a non-default data directory
     python scripts/build_ontology_index.py --data-dir data/ontology/
+
+    # Persist to the rdfsolve SQLite database
+    python scripts/build_ontology_index.py --from-sources data/sources.yaml \\
+        --db data/rdfsolve.db --cache-dir /tmp/ols_cache
+
+    # Write both files AND the database
+    python scripts/build_ontology_index.py --ontologies chebi go \\
+        --db data/rdfsolve.db --data-dir data/ontology/
 """
 
 from __future__ import annotations
@@ -83,14 +91,25 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--data-dir",
         metavar="DIR",
-        default="data",
+        default=None,
         help="Directory to write ontology_index.pkl.gz and ontology_graph.graphml. "
-        "(default: data/)",
+        "When omitted, no files are written (use --db for DB-only persistence).",
+    )
+    parser.add_argument(
+        "--db",
+        metavar="DB",
+        default=None,
+        help=(
+            "Path to the rdfsolve SQLite database file "
+            "(e.g. data/rdfsolve.db). When provided, the index is persisted "
+            "to the ontology_* tables via Database.save_ontology_index(). "
+            "Can be combined with --data-dir to write both formats."
+        ),
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Build the index but do not write any files — only print stats.",
+        help="Build the index but do not write any files or database rows — only print stats.",
     )
     parser.add_argument(
         "-v",
@@ -337,15 +356,44 @@ def main(argv: list[str] | None = None) -> int:
         logger.info("Dry-run mode — skipping write to disk.")
         return 0
 
-    # ── Persist ───────────────────────────────────────────────────────────
-    data_dir = Path(args.data_dir)
-    try:
-        save_ontology_index(idx, data_dir)
-    except Exception as exc:
-        logger.error("Failed to save ontology index: %s", exc, exc_info=args.verbose)
-        return 1
+    wrote_something = False
 
-    logger.info("OntologyIndex written to %s/", data_dir)
+    # ── Persist to database ───────────────────────────────────────────────
+    if args.db:
+        try:
+            from rdfsolve.backend.database import Database
+        except ImportError as exc:
+            logger.error("Cannot import rdfsolve.backend.database: %s", exc)
+            return 1
+
+        try:
+            db = Database(args.db)
+            from rdfsolve.ontology.index import save_ontology_index_to_db
+
+            save_ontology_index_to_db(idx, db)
+            logger.info("OntologyIndex persisted to database %s", args.db)
+            wrote_something = True
+        except Exception as exc:
+            logger.error("Failed to save ontology index to database: %s", exc, exc_info=args.verbose)
+            return 1
+
+    # ── Persist to files ──────────────────────────────────────────────────
+    if args.data_dir:
+        data_dir = Path(args.data_dir)
+        try:
+            save_ontology_index(idx, data_dir)
+            logger.info("OntologyIndex written to %s/", data_dir)
+            wrote_something = True
+        except Exception as exc:
+            logger.error("Failed to save ontology index: %s", exc, exc_info=args.verbose)
+            return 1
+
+    if not wrote_something:
+        logger.warning(
+            "Index was built but not persisted. "
+            "Pass --db and/or --data-dir to save it."
+        )
+
     return 0
 
 
