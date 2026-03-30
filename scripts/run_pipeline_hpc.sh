@@ -294,22 +294,27 @@ _qlever_start() {
     # Stop any stale instance
     singularity instance stop "${instance_name}" 2>/dev/null || true
 
-    # To avoid the container namespace killing background processes (like nohup),
-    # we start an apptainer instance configured to run qlever-server as its main daemon.
-    # Note: '-W' tells apptainer to set the working directory to where the index files are.
+    # Start a bare Singularity instance (no startup command — qlever-server
+    # does not work as PID 1 of the container; it must be exec'd separately).
     singularity instance start \
         --bind "${workdir}:${workdir}" \
         --bind "${DATA_DIR}:${DATA_DIR}" \
         -W "${workdir}" \
         "${SINGULARITY_IMAGE}" \
         "${instance_name}" \
-        qlever-server -i "${name}" -j 8 -p "${port}" -m 10G -c 2G -e 1G -k 200 -s 1000s -a "${name}" > "${workdir}/start.log" 2>&1
+        > "${workdir}/start.log" 2>&1
 
-    # Wait for the SPARQL endpoint to come up (max 60s)
+    # Run qlever-server inside the instance in the background.
+    # We must cd to workdir explicitly — singularity exec ignores -W from instance start.
+    singularity exec "instance://${instance_name}" \
+        bash -c "cd '${workdir}' && exec qlever-server -i '${name}' -j 8 -p '${port}' -m 10G -c 2G -e 1G -k 200 -s 1000s -a '${name}'" \
+        > "${workdir}/server.log" 2>&1 &
+
+    # Wait for the SPARQL endpoint to come up (max 120s)
     local i=0
     until curl --noproxy '*' -sf "http://localhost:${port}/?query=ASK%7B%7D" >/dev/null 2>&1; do
         sleep 2; i=$((i+2))
-        [[ $i -ge 60 ]] && { fail "[${name}] QLever did not start within 60s"; return 1; }
+        [[ $i -ge 120 ]] && { fail "[${name}] QLever did not start within 120s"; return 1; }
     done
     step "[${name}] QLever server ready on port ${port}."
     echo "${instance_name}"
