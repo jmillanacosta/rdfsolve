@@ -307,7 +307,7 @@ _qlever_start() {
     # Run qlever-server inside the instance in the background.
     # We must cd to workdir explicitly — singularity exec ignores -W from instance start.
     singularity exec "instance://${instance_name}" \
-        bash -c "cd '${workdir}' && exec qlever-server -i '${name}' -j 8 -p '${port}' -m 10G -c 2G -e 1G -k 200 -s 1000s -a '${name}'" \
+        bash -c "cd '${workdir}' && exec qlever-server -i '${name}' -j 8 -p '${port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '${name}'" \
         > "${workdir}/server.log" 2>&1 &
 
     # Wait for the SPARQL endpoint to come up (max 120s)
