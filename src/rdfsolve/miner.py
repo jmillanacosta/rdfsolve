@@ -53,7 +53,12 @@ from rdfsolve.models import (
     QueryStats,
     SchemaPattern,
 )
-from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError, PaginationTruncatedError, SparqlHelper
+from rdfsolve.sparql_helper import (
+    EndpointError,
+    EndpointTimeoutError,
+    PaginationTruncatedError,
+    SparqlHelper,
+)
 from rdfsolve.utils import get_local_name, pick_label
 from rdfsolve.version import VERSION
 
