@@ -127,8 +127,8 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Export format (default: all)",
     )
     common.add_argument(
-        "--timeout", type=float, default=120.0,
-        help="HTTP timeout per SPARQL request (seconds, default: 120)",
+        "--timeout", type=float, default=1200000.0,
+        help="HTTP timeout per SPARQL request (seconds, default: 1200000.0)",
     )
     common.add_argument(
         "--filter", default=None, dest="name_filter",
@@ -1189,13 +1189,13 @@ INPUT_FILES          = {input_files}
 CAT_INPUT_FILES      = {cat_input_files}
 SETTINGS_JSON        = {settings_json}
 PARALLEL_PARSING     = false
-PARSER_BUFFER_SIZE   = 512MB
+PARSER_BUFFER_SIZE   = 8GB
 
 [server]
 PORT              = {port}
 ACCESS_TOKEN      = {access_token}
-MEMORY_FOR_QUERIES = 10G
-TIMEOUT           = 1000s
+MEMORY_FOR_QUERIES = 300G
+TIMEOUT           = 10000s
 
 [runtime]
 SYSTEM = {runtime}

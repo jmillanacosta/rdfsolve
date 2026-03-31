@@ -24,7 +24,7 @@
 #SBATCH --job-name=rdfsolve-mine-only
 #SBATCH --time=0
 #SBATCH --cpus-per-task=32
-#SBATCH --mem=128G
+#SBATCH --mem=400G
 #SBATCH --output=/trinity/home/p70085013/rdfsolve/logs/mine-only-%j.out
 #SBATCH --error=/trinity/home/p70085013/rdfsolve/logs/mine-only-%j.err
 
