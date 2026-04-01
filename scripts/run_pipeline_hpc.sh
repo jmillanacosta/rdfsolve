@@ -198,7 +198,6 @@ _ensure_singularity_image() {
 }
 
 # Run a command inside the QLever Singularity container.
-# Bind-mounts the workdir so QLever can read/write index files.
 _qlever_run() {
     local workdir="$1"; shift
     (cd "${workdir}" && singularity exec \
@@ -208,47 +207,20 @@ _qlever_run() {
         "$@")
 }
 
-# Run qlever CLI command (get-data only) inside container.
-# The qlever CLI binary is bundled in the adfreiburg/qlever image.
-_qlever_cmd() {
-    local workdir="$1"; shift
-    (cd "${workdir}" && qlever "$@")
+# Run the GET_DATA_CMD from the Qleverfile directly as a shell command.
+_qlever_get_data() {
+    local workdir="$1"
+    local get_data_cmd
+    get_data_cmd=$(grep '^GET_DATA_CMD' "${workdir}/Qleverfile" 2>/dev/null \
+        | head -1 | sed 's/^[^=]*=[ ]*//')
+    if [[ -z "${get_data_cmd}" ]]; then
+        echo "ERROR: No GET_DATA_CMD found in ${workdir}/Qleverfile" >&2
+        return 1
+    fi
+    (cd "${workdir}" && eval "${get_data_cmd}")
 }
 
-# Run QLever indexing directly via the qlever-index binary.
-_qlever_index() {
-    local name="$1"
-    local workdir="$2"
-
-    local settings_json="${workdir}/${name}.settings.json"
-    local input_files cat_cmd
-    input_files=$(grep '^INPUT_FILES' "${workdir}/Qleverfile" 2>/dev/null \
-        | head -1 | sed 's/.*=[ ]*//')
-    cat_cmd=$(grep '^CAT_INPUT_FILES' "${workdir}/Qleverfile" 2>/dev/null \
-        | head -1 | sed 's/.*=[ ]*//')
-    local settings_raw
-    settings_raw=$(grep '^SETTINGS_JSON' "${workdir}/Qleverfile" 2>/dev/null \
-        | head -1 | sed 's/.*=[ ]*//')
-
-    # Write settings file
-    echo "${settings_raw}" > "${settings_json}"
-
-    # Build the index
-    # INPUT_FILES must be exported so that eval of CAT_INPUT_FILES can reference it
-    (cd "${workdir}" && INPUT_FILES="${input_files}" && export INPUT_FILES && eval "${cat_cmd}" | \
-        singularity exec \
-            --bind "${workdir}:${workdir}" \
-            --bind "${DATA_DIR}:${DATA_DIR}" \
-            "${SINGULARITY_IMAGE}" \
-            qlever-index -i "${name}" \
-                -s "${settings_json}" \
-                --vocabulary-type on-disk-compressed \
-                -F ttl -f - -p false \
-                2>&1 | tee "${workdir}/${name}.index-log.txt")
-}
-
-# Run QLever indexing directly via the qlever-index C++ binary.
-# Avoids the Python qlever CLI which calls `ulimit -n` — disallowed in SLURM.
+# Run QLever indexing
 _qlever_index() {
     local name="$1"
     local workdir="$2"
@@ -261,7 +233,6 @@ _qlever_index() {
     settings_raw=$(grep '^SETTINGS_JSON' "${workdir}/Qleverfile" 2>/dev/null \
         | head -1 | sed 's/.*=[ ]*//')
 
-    # INPUT_FILES is referenced inside CAT_INPUT_FILES — export it before eval
     local input_files_raw
     input_files_raw=$(grep '^INPUT_FILES' "${workdir}/Qleverfile" 2>/dev/null \
         | head -1 | sed 's/.*=[ ]*//')
@@ -270,7 +241,7 @@ _qlever_index() {
     # Write settings file
     echo "${settings_raw}" > "${settings_json}"
 
-    # Build the index via the C++ binary directly — no ulimit calls
+    # Build the index
     (cd "${workdir}" && eval "${cat_cmd}" | \
         singularity exec \
             --bind "${workdir}:${workdir}" \
@@ -279,6 +250,7 @@ _qlever_index() {
             qlever-index -i "${name}" \
                 -s "${settings_json}" \
                 --vocabulary-type on-disk-compressed \
+                -m 300G \
                 -F ttl -f - -p false \
                 2>&1 | tee "${workdir}/${name}.index-log.txt")
 }
@@ -305,7 +277,6 @@ _qlever_start() {
         > "${workdir}/start.log" 2>&1
 
     # Run qlever-server inside the instance in the background.
-    # We must cd to workdir explicitly — singularity exec ignores -W from instance start.
     singularity exec "instance://${instance_name}" \
         bash -c "cd '${workdir}' && exec qlever-server -i '${name}' -j 8 -p '${port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '${name}'" \
         > "${workdir}/server.log" 2>&1 &
@@ -614,7 +585,7 @@ for name, port in d.items():
                 _check_disk_space "${NAME}" "${WORKDIR}" || { continue; }
 
                 step "Downloading …"
-                _qlever_cmd "${WORKDIR}" get-data \
+                _qlever_get_data "${WORKDIR}" \
                     || { fail "[${NAME}] Download failed."; continue; }
 
                 # Verify RDF input exists

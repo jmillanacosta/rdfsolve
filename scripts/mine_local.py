@@ -1299,14 +1299,12 @@ def _tar_source_qleverfile_parts(
         )
 
     get_data_cmd = " && ".join(steps_tar)
-    get_data_cmd = re.sub(r'\$(?!\{)', '$$', get_data_cmd)
 
     rdf_format = "ttl"          # QLever reads TriG as Turtle superset
     input_files = f"{rdf_subdir}/*.trig.gz"
     cat_input_files = (
-        "zcat ${INPUT_FILES} 2>/dev/null | grep -v '^$$'"
+        "zcat ${INPUT_FILES} 2>/dev/null | grep -v '^$'"
     )
-    cat_input_files = re.sub(r'\$(?!\{)', '$$', cat_input_files)
 
     return get_data_cmd, rdf_format, input_files, cat_input_files
 
@@ -1389,12 +1387,8 @@ def _build_provider_qleverfile(
                         f'wget -c -q -O "$(basename {url})" "{url}"'
                     )
         if extra_steps:
-            # Remove the $$ escaping from get_data_cmd before extending,
-            # then re-apply at the end.
-            unescaped = get_data_cmd.replace('$$', '$')
             extra_block = " && ".join(extra_steps)
-            combined = unescaped + " && " + extra_block
-            get_data_cmd = re.sub(r'\$(?!\{)', '$$', combined)
+            get_data_cmd = get_data_cmd + " && " + extra_block
 
     return _QLEVERFILE_TEMPLATE.format(
         name=provider,
@@ -1760,11 +1754,6 @@ def _build_qleverfile(
     except Exception:
         # If format fails for any reason, fall back to the raw string.
         pass
-
-    # Apply escaping for bare $ (but not ${...}) so ExtendedInterpolation
-    # in configparser doesn't raise errors when parsing the Qleverfile.
-    get_data_cmd = re.sub(r'\$(?!\{)', '$$', get_data_cmd)
-    cat_input_files = re.sub(r'\$(?!\{)', '$$', cat_input_files)
 
     return _QLEVERFILE_TEMPLATE.format(
         name=name,
