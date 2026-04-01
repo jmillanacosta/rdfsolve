@@ -37,6 +37,57 @@ _notify() {
 }
 export -f _notify
 
+# Parse a report JSON and send a formatted ntfy notification.
+# Usage: _notify_report <title> <json_file> [extra_msg]
+_notify_report() {
+    local title="$1" json="$2" extra="${3:-}"
+    if [[ ! -f "${json}" ]]; then
+        if command -v _notify >/dev/null 2>&1; then
+            _notify "${title}" "${extra}(no report file found at ${json})" "default"
+        fi
+        return
+    fi
+    local msg
+    msg=$(python3 - <<PYEOF
+import json, sys
+with open("${json}") as f:
+    r = json.load(f)
+lines = []
+ds   = r.get("dataset") or r.get("dataset_name", "?")
+src  = r.get("source", "")
+ep   = r.get("endpoint") or r.get("endpoint_url", "")
+lines.append(f"Dataset: {ds}" + (f" ({src})" if src else ""))
+if ep:
+    lines.append(f"Endpoint: {ep}")
+if "graphs_found" in r:
+    lines.append(f"Graphs: {r['graphs_found']}  |  Partitions: {r['partitions_found']}")
+if "total_duration_s" in r:
+    lines.append(f"Duration: {r['total_duration_s']:.1f}s")
+if "total_queries_sent" in r:
+    failed = r.get("total_queries_failed", 0)
+    lines.append(f"Queries: {r['total_queries_sent']} sent, {failed} failed")
+if "phases" in r:
+    for ph in r["phases"]:
+        items = ph.get("items_discovered", "?")
+        err   = f" WARN {ph['error']}" if ph.get("error") else ""
+        lines.append(f"  {ph['name']}: {items} items ({ph['duration_s']:.2f}s){err}")
+bm = r.get("benchmark", {})
+if bm:
+    lines.append(f"Wall time: {bm.get('wall_time_s','?')}s  |  Peak RSS: {bm.get('peak_rss_mb','?')} MB")
+print("\n".join(lines))
+PYEOF
+    )
+    local file_count
+    file_count=$(find "$(dirname "${json}")" -type f 2>/dev/null | wc -l)
+    local full_msg="${msg}
+Files in dir: ${file_count}"
+    [[ -n "${extra}" ]] && full_msg="${extra}
+${full_msg}"
+    _notify "${title}" "${full_msg}" "default"
+    echo -e "\033[0;32m▸ ntfy: ${title}\033[0m"
+}
+export -f _notify_report
+
 # Fires on any non-zero exit: explicit errors, set -e failures, OOM, timeout
 _on_exit() {
     local code=$?
@@ -157,8 +208,8 @@ echo ""
 #   --data-dir            → where QLever workdirs + index files are written
 #   --output-dir          → where mined schemas/JSON-LD outputs go
 #   --base-port 7019      → QLever server port base offset
-#   --chunk-size 10000    → SPARQL result page size for schema mining queries
-# All steps are run.
+#   --chunk-size 50000    → SPARQL result page size for schema mining queries
+# Extra flags (e.g. --skip-remote) can be passed as sbatch trailing args.
 
 export DATA_DIR OUTPUT_DIR RESULTS_DIR
 export SINGULARITY_IMAGE="${DATA_DIR}/qlever.sif"
@@ -168,7 +219,8 @@ bash "${REPO}/scripts/run_pipeline_hpc.sh" \
     --output-dir "${OUTPUT_DIR}" \
     --results-dir "${RESULTS_DIR}" \
     --base-port  7019 \
-    --chunk-size 10000
+    --chunk-size 50000 \
+    "$@"
 
 # ── Validate output ───────────────────────────────────────────────────────
 FILE_COUNT=$(find "${RESULTS_DIR}" -type f | wc -l)

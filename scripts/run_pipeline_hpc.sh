@@ -3,11 +3,6 @@
 # run_pipeline_hpc.sh - RDFSolve pipeline for TGX-HPC (Singularity / SLURM)
 # =============================================================================
 #
-# Differences from run_pipeline.sh (Docker version):
-#   - No Docker / docker compose. The pipeline Python code runs NATIVELY.
-#   - QLever runs inside a Singularity container (pulled from Docker Hub).
-#   - Paths are host-side; /trinity/storage is used for data + output.
-#   - Designed to be launched by a SLURM sbatch script.
 #
 # USAGE (direct):
 #   bash scripts/run_pipeline_hpc.sh --dataset aopwikirdf --skip-remote
@@ -32,14 +27,15 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DATASETS=()
 FILTER=""
 SKIP_REMOTE=false
+SKIP_DISCOVERY=false
 SKIP_LOCAL=false
 SKIP_MAPPINGS=false
 BENCHMARK=true
 BASE_PORT=7019
-TIMEOUT=120
+TIMEOUT=1000
 ONE_SHOT=true
-CHUNK_SIZE=10000
-CLASS_BATCH_SIZE=15
+CHUNK_SIZE=50000
+CLASS_BATCH_SIZE=50
 DISK_SPACE_FACTOR=12
 DISK_SPACE_MIN_MB=500
 
@@ -160,6 +156,7 @@ while [[ $# -gt 0 ]]; do
         --dataset)            DATASETS+=("$2");        shift 2 ;;
         --filter)             FILTER="$2";             shift 2 ;;
         --skip-remote)        SKIP_REMOTE=true;        shift ;;
+        --skip-discovery)     SKIP_DISCOVERY=true;     shift ;;
         --skip-local)         SKIP_LOCAL=true;         shift ;;
         --skip-mappings)      SKIP_MAPPINGS=true;      shift ;;
         --data-dir)           DATA_DIR="$2";           shift 2 ;;
@@ -201,7 +198,6 @@ _ensure_singularity_image() {
 }
 
 # Run a command inside the QLever Singularity container.
-# Bind-mounts the workdir so QLever can read/write index files.
 _qlever_run() {
     local workdir="$1"; shift
     (cd "${workdir}" && singularity exec \
@@ -211,15 +207,20 @@ _qlever_run() {
         "$@")
 }
 
-# Run qlever CLI command (get-data only) inside container.
-# The qlever CLI binary is bundled in the adfreiburg/qlever image.
-_qlever_cmd() {
-    local workdir="$1"; shift
-    _qlever_run "${workdir}" qlever "$@"
+# Run the GET_DATA_CMD from the Qleverfile directly as a shell command.
+_qlever_get_data() {
+    local workdir="$1"
+    local get_data_cmd
+    get_data_cmd=$(grep '^GET_DATA_CMD' "${workdir}/Qleverfile" 2>/dev/null \
+        | head -1 | sed 's/^[^=]*=[ ]*//')
+    if [[ -z "${get_data_cmd}" ]]; then
+        echo "ERROR: No GET_DATA_CMD found in ${workdir}/Qleverfile" >&2
+        return 1
+    fi
+    (cd "${workdir}" && eval "${get_data_cmd}")
 }
 
-# Run QLever indexing directly via the qlever-index C++ binary.
-# Avoids the Python qlever CLI which calls `ulimit -n` — disallowed in SLURM.
+# Run QLever indexing
 _qlever_index() {
     local name="$1"
     local workdir="$2"
@@ -232,10 +233,15 @@ _qlever_index() {
     settings_raw=$(grep '^SETTINGS_JSON' "${workdir}/Qleverfile" 2>/dev/null \
         | head -1 | sed 's/.*=[ ]*//')
 
+    local input_files_raw
+    input_files_raw=$(grep '^INPUT_FILES' "${workdir}/Qleverfile" 2>/dev/null \
+        | head -1 | sed 's/.*=[ ]*//')
+    export INPUT_FILES="${input_files_raw}"
+
     # Write settings file
     echo "${settings_raw}" > "${settings_json}"
 
-    # Build the index via the C++ binary directly — no ulimit calls
+    # Build the index
     (cd "${workdir}" && eval "${cat_cmd}" | \
         singularity exec \
             --bind "${workdir}:${workdir}" \
@@ -244,6 +250,7 @@ _qlever_index() {
             qlever-index -i "${name}" \
                 -s "${settings_json}" \
                 --vocabulary-type on-disk-compressed \
+                -m 300G \
                 -F ttl -f - -p false \
                 2>&1 | tee "${workdir}/${name}.index-log.txt")
 }
@@ -259,22 +266,26 @@ _qlever_start() {
     # Stop any stale instance
     singularity instance stop "${instance_name}" 2>/dev/null || true
 
-    # To avoid the container namespace killing background processes (like nohup),
-    # we start an apptainer instance configured to run qlever-server as its main daemon.
-    # Note: '-W' tells apptainer to set the working directory to where the index files are.
+    # Start a bare Singularity instance (no startup command — qlever-server
+    # does not work as PID 1 of the container; it must be exec'd separately).
     singularity instance start \
         --bind "${workdir}:${workdir}" \
         --bind "${DATA_DIR}:${DATA_DIR}" \
         -W "${workdir}" \
         "${SINGULARITY_IMAGE}" \
         "${instance_name}" \
-        qlever-server -i "${name}" -j 8 -p "${port}" -m 10G -c 2G -e 1G -k 200 -s 1000s -a "${name}" > "${workdir}/start.log" 2>&1
+        > "${workdir}/start.log" 2>&1
 
-    # Wait for the SPARQL endpoint to come up (max 60s)
+    # Run qlever-server inside the instance in the background.
+    singularity exec "instance://${instance_name}" \
+        bash -c "cd '${workdir}' && exec qlever-server -i '${name}' -j 8 -p '${port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '${name}'" \
+        > "${workdir}/server.log" 2>&1 &
+
+    # Wait for the SPARQL endpoint to come up (max 120s)
     local i=0
     until curl --noproxy '*' -sf "http://localhost:${port}/?query=ASK%7B%7D" >/dev/null 2>&1; do
         sleep 2; i=$((i+2))
-        [[ $i -ge 60 ]] && { fail "[${name}] QLever did not start within 60s"; return 1; }
+        [[ $i -ge 120 ]] && { fail "[${name}] QLever did not start within 120s"; return 1; }
     done
     step "[${name}] QLever server ready on port ${port}."
     echo "${instance_name}"
@@ -290,7 +301,7 @@ _qlever_stop() {
 }
 
 # ═══════════════════════════════════════════════════════════════════
-# Disk space check (native, no container needed)
+# Disk space check
 # ═══════════════════════════════════════════════════════════════════
 _check_disk_space() {
     local name="$1"
@@ -364,7 +375,7 @@ PYEOF
 }
 
 # ═══════════════════════════════════════════════════════════════════
-# Mining helpers (call Python mine_local.py directly — no container)
+# Mining helpers
 # ═══════════════════════════════════════════════════════════════════
 _mine_local() {
     local name="$1" port="$2" strat="$3" one_shot="$4" cs="$5" cb="$6"
@@ -412,13 +423,46 @@ _ensure_singularity_image
 # ═══════════════════════════════════════════════════════════════════
 # STEP 1 - Remote VoID discovery
 # ═══════════════════════════════════════════════════════════════════
-if [[ "${SKIP_REMOTE}" == false ]]; then
+if [[ "${SKIP_REMOTE}" == false && "${SKIP_DISCOVERY}" == false ]]; then
     banner "Step 1: Remote VoID discovery"
     t0=$(date +%s)
-    local_flags="--output-dir ${OUTPUT_DIR} --timeout ${TIMEOUT}"
-    [[ -n "${FILTER}" ]] && local_flags+=" --filter '${FILTER}'"
-    eval "python3 ${REPO_ROOT}/scripts/mine_local.py discover ${local_flags}" \
-        || warn "Some discover tasks failed."
+
+    # Collect dataset names to iterate over (respecting --filter / --dataset)
+    _discover_names=()
+    while IFS= read -r _n; do
+        [[ -n "${_n}" ]] && _discover_names+=("${_n}")
+    done < <(python3 - "${REPO_ROOT}/data/sources.yaml" "${FILTER}" <<'PYEOF'
+import sys, re, yaml
+yaml_path, filt = sys.argv[1], sys.argv[2]
+with open(yaml_path) as f:
+    sources = yaml.safe_load(f) or []
+rx = re.compile(filt) if filt else None
+for s in sources:
+    name = s.get("name", "")
+    if rx is None or rx.search(name):
+        print(name)
+PYEOF
+)
+
+    for _ds_name in "${_discover_names[@]}"; do
+        _ds_t0=$(date +%s)
+        step "[${_ds_name}] Discovering VoID …"
+        _ds_flags="--output-dir ${OUTPUT_DIR} --filter '^${_ds_name}$'"
+        [[ "${TIMEOUT}" -gt 0 ]] 2>/dev/null && _ds_flags+=" --timeout ${TIMEOUT}"
+        eval "python3 ${REPO_ROOT}/scripts/mine_local.py discover ${_ds_flags}" \
+            || warn "[${_ds_name}] discover had failures."
+        _ds_elapsed=$(elapsed $(( $(date +%s) - _ds_t0 )))
+        report_json="${OUTPUT_DIR}/${_ds_name}_discovered_remote_report.json"
+        if [[ -f "${report_json}" ]]; then
+            _notify_report "VoID discovery: ${_ds_name}" "${report_json}" "Elapsed: ${_ds_elapsed}"
+        else
+            if command -v _notify >/dev/null 2>&1; then
+                _notify "VoID discovery: ${_ds_name}" "No VoID partitions found at endpoint. Elapsed: ${_ds_elapsed}" "default"
+            fi
+            step "  [${_ds_name}] No VoID report written (no partitions found)."
+        fi
+    done
+
     step "Discovery done in $(elapsed $(( $(date +%s) - t0 )))."
     # Notify per-dataset VoID discovery report
     for report_json in "${OUTPUT_DIR}"/*_discovered_remote_report.json; do
@@ -436,11 +480,45 @@ fi
 if [[ "${SKIP_REMOTE}" == false ]]; then
     banner "Step 2: Remote schema mining"
     t0=$(date +%s)
-    local_flags="--output-dir ${OUTPUT_DIR} --timeout ${TIMEOUT}"
-    [[ -n "${FILTER}" ]] && local_flags+=" --filter '${FILTER}'"
-    [[ "${BENCHMARK}" == true ]] && local_flags+=" --benchmark"
-    eval "python3 ${REPO_ROOT}/scripts/mine_local.py mine ${local_flags}" \
-        || warn "Remote mining had failures."
+
+    # Reuse same name list from Step 1 (or rebuild if Step 1 was skipped)
+    if [[ ${#_discover_names[@]} -eq 0 ]]; then
+        while IFS= read -r _n; do
+            [[ -n "${_n}" ]] && _discover_names+=("${_n}")
+        done < <(python3 - "${REPO_ROOT}/data/sources.yaml" "${FILTER}" <<'PYEOF'
+import sys, re, yaml
+yaml_path, filt = sys.argv[1], sys.argv[2]
+with open(yaml_path) as f:
+    sources = yaml.safe_load(f) or []
+rx = re.compile(filt) if filt else None
+for s in sources:
+    name = s.get("name", "")
+    if rx is None or rx.search(name):
+        print(name)
+PYEOF
+)
+    fi
+
+    for _ds_name in "${_discover_names[@]}"; do
+        _ds_t0=$(date +%s)
+        step "[${_ds_name}] Mining remote schema …"
+        _ds_flags="--output-dir ${OUTPUT_DIR} --filter '^${_ds_name}$'"
+        [[ "${TIMEOUT}" -gt 0 ]] 2>/dev/null && _ds_flags+=" --timeout ${TIMEOUT}"
+        [[ "${BENCHMARK}" == true ]] && _ds_flags+=" --benchmark"
+        eval "python3 ${REPO_ROOT}/scripts/mine_local.py mine ${_ds_flags}" \
+            || warn "[${_ds_name}] remote mining had failures."
+        _ds_elapsed=$(elapsed $(( $(date +%s) - _ds_t0 )))
+        report_json="${OUTPUT_DIR}/${_ds_name}_mined_remote_report.json"
+        if [[ -f "${report_json}" ]]; then
+            _notify_report "Remote mining: ${_ds_name}" "${report_json}" "Elapsed: ${_ds_elapsed}"
+        else
+            if command -v _notify >/dev/null 2>&1; then
+                _notify "Remote mining: ${_ds_name}" "No report written (endpoint unreachable or no data). Elapsed: ${_ds_elapsed}" "default"
+            fi
+            step "  [${_ds_name}] No mining report written (endpoint unreachable or no data)."
+        fi
+    done
+
     step "Remote mining done in $(elapsed $(( $(date +%s) - t0 )))."
     # Notify per-dataset remote mining report
     for report_json in "${OUTPUT_DIR}"/*_mined_remote_report.json; do
@@ -507,7 +585,7 @@ for name, port in d.items():
                 _check_disk_space "${NAME}" "${WORKDIR}" || { continue; }
 
                 step "Downloading …"
-                _qlever_cmd "${WORKDIR}" get-data \
+                _qlever_get_data "${WORKDIR}" \
                     || { fail "[${NAME}] Download failed."; continue; }
 
                 # Verify RDF input exists
