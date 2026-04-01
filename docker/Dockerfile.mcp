@@ -1,0 +1,27 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install uv for fast dependency resolution
+RUN pip install --no-cache-dir uv
+
+# The rdfsolve-mcp source tree is checked out as a git submodule at mcp/.
+# We copy only the files needed to install the package first (layer caching).
+COPY mcp/pyproject.toml ./pyproject.toml
+COPY mcp/src/ ./src/
+
+# Install rdfsolve from PyPI plus rdfsolve-mcp with its [dev] extras.
+# The rdfsolve version pin lives in mcp/pyproject.toml.
+RUN uv pip install --system -e ".[dev]"
+
+# Copy remaining mcp files (tests, README, entrypoint scripts, etc.)
+COPY mcp/ .
+
+ENV DATABASE_PATH=/app/data/rdfsolve.db
+ENV OLS_CACHE_DIR=/app/data/ols_cache
+ENV PORT=8001
+
+EXPOSE 8001
+
+# rdfsolve-mcp exposes its server as the __main__ module of rdfsolve_mcp
+CMD ["python", "-m", "rdfsolve_mcp.server"]
