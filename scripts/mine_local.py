@@ -1487,11 +1487,12 @@ def _build_qleverfile(
         input_files = f"{rdf_subdir}/*.nq"
         cat_input_files = (
             "cat ${INPUT_FILES} | "
-            # Drop lines whose subject IRI contains a literal " — these have
-            # the form <http://...\"...> and cause QLever's IRI parser to crash
-            # with "Unterminated IRI reference".  Affects ~9 lines in bio2rdf
-            # release-3 .nq files (drug names with embedded double-quotes).
-            "grep -v '^<[^\">]*\"' | "
+            # bio2rdf release-3 .nq files contain IRIs with literal " (0x22)
+            # which cause QLever's parser to crash with "Unterminated IRI".
+            # Use sed with hex escape (\x22) to avoid shell quoting issues
+            # when this string is eval'd by run_pipeline_hpc.sh.
+            # Replace " with %22 only inside IRI angle brackets (<...>).
+            r"sed 's/\x22/%22/g' | "
             "grep -v '^$'"
         )
     elif has_trig:
