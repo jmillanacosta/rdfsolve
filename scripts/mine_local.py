@@ -1532,10 +1532,10 @@ def _build_qleverfile(
         input_files = f"{rdf_subdir}/*.nq"
         cat_input_files = "cat ${INPUT_FILES}"
     elif has_obo:
-        # OBO files are converted via rapper (-i turtle) to N-Triples.
-        # The converted files land as *.nt.
-        rdf_format = "nt"
-        input_files = f"{rdf_subdir}/*.nt"
+        # OBO files are converted via ROBOT to Turtle.
+        # The converted files land as *.ttl.
+        rdf_format = "ttl"
+        input_files = f"{rdf_subdir}/*.ttl"
         cat_input_files = "cat ${INPUT_FILES}"
     else:
         # Everything else is converted / decompressed to .ttl
@@ -1683,18 +1683,23 @@ def _build_qleverfile(
             'done'
         )
 
-    # Convert OBO -> N-Triples (via rapper).
-    # rapper supports OBO 1.4 format directly with -i turtle.
+    # Convert OBO -> Turtle via ROBOT (https://robot.obolibrary.org).
+    # ROBOT is downloaded on-the-fly, used, then removed to save space.
     if has_obo:
-        steps.append("echo 'Converting OBO -> N-Triples …'")
+        steps.append("echo 'Converting OBO -> Turtle via ROBOT …'")
+        steps.append(
+            '[ -f robot.jar ] || wget -q -O robot.jar '
+            '"https://github.com/ontodev/robot/releases/download/v1.9.10/robot.jar"'
+        )
         steps.append(
             'for f in *.obo; do '
             '[ -f "$f" ] || continue; '
-            'nt=$(echo "$f" | sed "s/\\.[^.]*$/.nt/"); '
-            '[ -f "$nt" ] && continue; '
-            'rapper -q -i turtle -o ntriples "$f" > "$nt" 2>/dev/null || rm -f "$nt"; '
+            'ttl=$(echo "$f" | sed "s/\\.[^.]*$/.ttl/"); '
+            '[ -f "$ttl" ] && continue; '
+            'java -jar robot.jar convert --input "$f" --output "$ttl" --format ttl 2>/dev/null || rm -f "$ttl"; '
             'done'
         )
+        steps.append('rm -f robot.jar robot.log')
 
     # Convert JSON-LD -> Turtle
     if has_jsonld:
