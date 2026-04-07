@@ -14381,7 +14381,7 @@
   endpoint: https://sparql.string-db.org/sparql
 - name: cellosaurus
   endpoint: https://sparql.cellosaurus.org/sparql
-  download_ttl:
+  download_obo:
   - https://ftp.expasy.org/databases/cellosaurus/cellosaurus.obo
   bioregistry_prefix: cellosaurus
   bioregistry_name: Cellosaurus

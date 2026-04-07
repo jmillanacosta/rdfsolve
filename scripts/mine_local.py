@@ -1164,8 +1164,8 @@ def _detect_data_format(entry: Any) -> str | None:
     priority = [
         "download_nq", "download_nquads", "download_trig", "download_nt",
         "download_n3", "download_ttl", "download_rdf", "download_rdfxml",
-        "download_owl", "download_jsonld", "download_zip", "download_tar_gz",
-        "download_tgz", "download_ftp",
+        "download_owl", "download_obo", "download_jsonld", "download_zip",
+        "download_tar_gz", "download_tgz", "download_ftp",
     ]
     for k in priority:
         if k in dl_keys:
@@ -1441,6 +1441,7 @@ def _build_qleverfile(
     has_xz = False          # any .xz files to decompress
     has_archive = False     # any .zip / .tar.gz / .tgz to extract
     has_rdfxml = False      # need RDF/XML -> Turtle conversion
+    has_obo = False         # need OBO -> N-Triples conversion (via rapper)
     has_jsonld = False      # need JSON-LD -> Turtle conversion
     has_nq = False          # primary format is N-Quads
     has_trig = False        # primary format is TriG (named graphs)
@@ -1466,6 +1467,8 @@ def _build_qleverfile(
             has_archive = True
         if suffix in ("rdf", "rdfxml", "owl"):
             has_rdfxml = True
+        if suffix == "obo":
+            has_obo = True
         if suffix == "jsonld":
             has_jsonld = True
         if suffix in ("nq", "nquads"):
@@ -1528,6 +1531,12 @@ def _build_qleverfile(
         rdf_format = "nq"
         input_files = f"{rdf_subdir}/*.nq"
         cat_input_files = "cat ${INPUT_FILES}"
+    elif has_obo:
+        # OBO files are converted via rapper (-i turtle) to N-Triples.
+        # The converted files land as *.nt.
+        rdf_format = "nt"
+        input_files = f"{rdf_subdir}/*.nt"
+        cat_input_files = "cat ${INPUT_FILES}"
     else:
         # Everything else is converted / decompressed to .ttl
         rdf_format = "ttl"
@@ -1544,7 +1553,8 @@ def _build_qleverfile(
     _RDF_EXTS = (
         ".ttl", ".ttl.gz", ".nt", ".nt.gz", ".nq", ".nq.gz",
         ".trig", ".trig.gz", ".n3", ".owl", ".rdf", ".rdf.gz",
-        ".rdf.xz", ".owl.xz", ".xml.gz", ".jsonld", ".tar.gz", ".tgz", ".zip",
+        ".rdf.xz", ".owl.xz", ".xml.gz", ".jsonld", ".obo",
+        ".tar.gz", ".tgz", ".zip",
     )
     for u in all_urls:
         fname = u.rsplit("/", 1)[-1]
@@ -1670,6 +1680,19 @@ def _build_qleverfile(
             'nq=$(echo "$f" | sed "s/\\.[^.]*$/.nq/"); '
             '[ -f "$nq" ] && continue; '
             'rapper -q -i rdfxml -o nquads "$f" > "$nq" 2>/dev/null || rm -f "$nq"; '
+            'done'
+        )
+
+    # Convert OBO -> N-Triples (via rapper).
+    # rapper supports OBO 1.4 format directly with -i turtle.
+    if has_obo:
+        steps.append("echo 'Converting OBO -> N-Triples …'")
+        steps.append(
+            'for f in *.obo; do '
+            '[ -f "$f" ] || continue; '
+            'nt=$(echo "$f" | sed "s/\\.[^.]*$/.nt/"); '
+            '[ -f "$nt" ] && continue; '
+            'rapper -q -i turtle -o ntriples "$f" > "$nt" 2>/dev/null || rm -f "$nt"; '
             'done'
         )
 
