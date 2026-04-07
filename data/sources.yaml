@@ -5432,7 +5432,7 @@
   use_graph: true
   local_provider: idsm
   in_kamdar: true
-  download_owl: https://rdfportal.org/download/chebi/latest/chebi.owl.gz
+  #download_owl: https://rdfportal.org/download/chebi/latest/chebi.owl.gz
   bioregistry_prefix: chebi
   bioregistry_name: Chemical Entities of Biological Interest
   bioregistry_description: Chemical Entities of Biological Interest (ChEBI) is a freely
@@ -8484,14 +8484,35 @@
     wikidata: P662
 - name: nanosafetyrdf
   endpoint: https://nanosafety.rdf.bigcat-bioinformatics.org/sparql//
-  void_iri: http://localhost:8890/DAV
   graph_uris:
   - https://nanosafety.rdf.bigcat-bioinformatics.org
   use_graph: true
+- name: rdfportal.uniprot
+  endpoint: https://rdfportal.org/sib/sparql
+  graph_uris:
+  - http://sparql.uniprot.org/uniprot
+  - http://sparql.uniprot.org/obsolete
+  - http://sparql.uniprot.org/citationmapping
+  - http://sparql.uniprot.org/taxonomy
+  - http://sparql.uniprot.org/citations
+  - http://sparql.uniprot.org/proteomes
+  - http://sparql.uniprot.org/go
+  - http://sparql.uniprot.org/enzyme
+  - http://sparql.uniprot.org/diseases
+  - http://sparql.uniprot.org/journal
+  - http://sparql.uniprot.org/pathways
+  - http://sparql.uniprot.org/keywords
+  - http://sparql.uniprot.org/locations
+  - http://sparql.uniprot.org/tissues
+  - http://sparql.uniprot.org/core
+  - http://sparql.uniprot.org/databases
+  void_iri: https://sparql.uniprot.org/.well-known/void
+  download_nt: https://rdfportal.org/ntriples/uniprot/latest/core.nt.gz
+  use_graph: true
 - name: uniprot
+  void_iri: https://sparql.uniprot.org/.well-known/void
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: https://sparql.uniprot.org/
-  notes: CSV had only 4 fields; no graph_uri column
   download_rdf:
   - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/citation_mapping.rdf.xz
   - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/citations.rdf.xz
@@ -8514,7 +8535,6 @@
   - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/taxonomy.rdf.xz
   - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/tissues.rdf.xz
   - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/void.rdf
-  download_owl: https://rdfportal.org/download/uniprot/latest/core.owl
   bioregistry_prefix: uniprot
   bioregistry_name: UniProt Protein
   bioregistry_description: The UniProt Knowledgebase (UniProtKB) is a comprehensive
@@ -10364,13 +10384,13 @@
     re3data: r3d100010891
     togoid: Rhea
     wikidata.entity: Q24265951
-- name: pdb
+- name: rdfportal.pdb
   endpoint: http://rdfportal.org/pdb/sparql
   void_iri: http://rdfportal.org/dataset/pdbj
   graph_uris:
   - http://rdfportal.org/dataset/pdbj
   use_graph: true
-  download_owl: https://rdfportal.org/download/pdb/latest/pdbx-v50.owl
+  download_nt: https://rdfportal.org/ntriples/pdb/latest/pdbx-v50.nt.gz
   bioregistry_prefix: pdb
   bioregistry_name: PDB Structure
   bioregistry_description: The Protein Data Bank is the single worldwide archive of
@@ -10568,30 +10588,39 @@
     togoid: Pdb
     uniprot: DB-0172
     wikidata: P638
-- name: pubcasefinder
+- name: rdfportal.pubcasefinder
   endpoint: http://rdfportal.org/pdb/sparql
   void_iri: https://pubcasefinder.dbcls.jp/rdf
   graph_uris:
   - https://pubcasefinder.dbcls.jp/rdf
   use_graph: true
-- name: medgen
+- name: rdfportal.medgen
   endpoint: http://rdfportal.org/pdb/sparql
   void_iri: http://rdfportal.org/dataset/medgen
   graph_uris:
   - http://rdfportal.org/dataset/medgen
   use_graph: true
-  download_ttl:
-  - https://rdfportal.org/download/medgen/latest/MGCONSO.ttl.gz
-  - https://rdfportal.org/download/medgen/latest/MGDEF.ttl.gz
-  - https://rdfportal.org/download/medgen/latest/MGREL_1.ttl.gz
-  - https://rdfportal.org/download/medgen/latest/MGREL_2.ttl.gz
-  - https://rdfportal.org/download/medgen/latest/MGSAT_1.ttl.gz
-  - https://rdfportal.org/download/medgen/latest/MGSAT_2.ttl.gz
-  - https://rdfportal.org/download/medgen/latest/MGSTY.ttl.gz
-  - https://rdfportal.org/download/medgen/latest/MedGen_HPO_OMIM_Mapping.ttl.gz
-  - https://rdfportal.org/download/medgen/latest/NAMES.ttl.gz
-  - https://rdfportal.org/download/medgen/latest/medgen_pubmed_lnk_rdf.ttl.gz
-  - https://rdfportal.org/download/medgen/latest/mim2gene_medgen.ttl.gz
+  download_nt:
+  - https://rdfportal.org/ntriples/medgen/latest/MGCONSO.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/MGDEF.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/MGREL_1.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/MGREL_2.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/MGSAT_1.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/MGSAT_2.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/MGSTY.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/MedGen_HPO_OMIM_Mapping.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/NAMES.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/medgen_pubmed_lnk_rdf.0.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/medgen_pubmed_lnk_rdf.1.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/medgen_pubmed_lnk_rdf.2.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/medgen_pubmed_lnk_rdf.3.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/medgen_pubmed_lnk_rdf.4.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/medgen_pubmed_lnk_rdf.5.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/medgen_pubmed_lnk_rdf.6.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/medgen_pubmed_lnk_rdf.7.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/medgen_pubmed_lnk_rdf.8.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/medgen_pubmed_lnk_rdf.9.nt.gz
+  - https://rdfportal.org/ntriples/medgen/latest/mim2gene_medgen.nt.gz
   bioregistry_prefix: medgen
   bioregistry_name: Human Medical Genetics
   bioregistry_description: MedGen is a portal for information about conditions and
@@ -10631,17 +10660,17 @@
     n2t: medgen
     ncbi: MedGen
     togoid: Medgen
-- name: jpost
+- name: rdfportal.jpost
   endpoint: http://rdfportal.org/pdb/sparql
   void_iri: http://jpost.org/graph/database
   graph_uris:
   - http://jpost.org/graph/database
   use_graph: true
-- name: affymetrix
+- name: rdfportal.affymetrix
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/affymetrix_resource:bio2rdf.dataset.affymetrix.R3
   graph_uris:
-  - http://bio2rdf.org/affymetrix_resource:bio2rdf.dataset.affymetrix.R3
+   - http://bio2rdf.org/affymetrix_resource:bio2rdf.dataset.affymetrix.R3
   use_graph: true
   download_nq: https://download.bio2rdf.org/files/release/3/affymetrix/affymetrix.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/affymetrix/affymetrix.schema.owl
@@ -14451,12 +14480,11 @@
     wikidata: P3289
     wikidata.entity: Q21014462
 - name: rdfportal.cellosaurus
-  endpoint: https://sparql.cellosaurus.org/sparql
-  download_ttl:
-  - https://rdfportal.org/download/cellosaurus/latest/materialized_transitive_more_specific_than.ttl
-  - https://rdfportal.org/download/cellosaurus/latest/materialized_transitive_subclasses.ttl
-  - https://rdfportal.org/download/cellosaurus/latest/materialized_transitive_subproperties.ttl
-  download_tar_gz: https://rdfportal.org/download/cellosaurus/latest/cellosaurus_ttl.tar.gz
+  endpoint: https://rdfportal.org/sib/sparql
+  download_nt:
+  - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_more_specific_than.nt.gz
+  - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_subclasses.nt.gz
+  - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_subproperties.nt.gz
 - name: sibils
   endpoint: https://sparql.sibils.org/sparql
   download_ttl: https://sparql.sibils.org/ontology.ttl
@@ -14637,7 +14665,10 @@
   - https://ftp.dbcls.jp/lsd/lsd.ontology_latest.nt.gz
 - name: rdfportal.pubchem
   endpoint: https://rdfportal.org/pubchem/sparql
-  download_ttl: https://rdfportal.org/download/pubchem/latest/void.ttl
+  download_nt: https://rdfportal.org/ntriples/pubchem/latest/void.nt.gz
+- name: rdfportal.chebi
+  endpoint: https://rdfportal.org/primary/sparql
+  download_nt: https://rdfportal.org/ntriples/chebi/latest/chebi.nt.gz
 - name: rdfportal.primary
   endpoint: https://rdfportal.org/primary/sparql
 - name: mesh.nlm
@@ -14963,10 +14994,10 @@
   endpoint: https://rdfportal.org/kero/sparql
 - name: rdfportal.wikidata
   endpoint: https://rdfportal.org/wikidata/sparql
-  download_ttl: https://rdfportal.org/download/wikidata/latest/latest-all.ttl.gz
+  # download split into 2000+ files at https://rdfportal.org/ntriples/wikidata/latest/latest-all.*.nt.gz
 - name: rdfportal.pdb
   endpoint: https://rdfportal.org/pdb/sparql
-  download_owl: https://rdfportal.org/download/pdb/latest/pdbx-v50.owl
+  download_nt: https://rdfportal.org/ntriples/pdb/latest/pdbx-v50.nt.gz
 - name: rdfportal.ebi
   endpoint: https://rdfportal.org/ebi/sparql
 - name: rdfportal.ncbi
@@ -15121,7 +15152,9 @@
   endpoint: https://www.imgt.org/fuseki/ImgtKg/sparql
 - name: brenda
   endpoint: https://sparql.dsmz.de/api/brenda
-  download_ttl: https://rdfportal.org/download/brenda/latest/rdf-mod-r.ttl
+  download_nt:
+  - https://rdfportal.org/ntriples/brenda/latest/rdf-mod-r.0.nt.gz
+  - https://rdfportal.org/ntriples/brenda/latest/rdf-mod-r.1.nt.gz
   bioregistry_prefix: brenda
   bioregistry_name: BRENDA Enzyme
   bioregistry_description: BRENDA is a collection of enzyme functional data available
@@ -15263,7 +15296,8 @@
     fairsharing: FAIRsharing.anpj91
     wikidata: P8061
     wikidata.entity: Q292649
-- name: chebi.standalone
+- name: chebi
+  download_owl: https://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi.owl
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/chebi
   bioregistry_prefix: chebi
   bioregistry_name: Chemical Entities of Biological Interest
@@ -15401,14 +15435,14 @@
     wikidata.entity: Q902623
 - name: mediadive
   endpoint: https://sparql.dsmz.de/api/mediadive
-  download_ttl: https://rdfportal.org/download/mediadive/latest/rdf-mod-r.ttl
+  download_nt: https://rdfportal.org/ntriples/mediadive/latest/rdf-mod-r.nt.gz
 - name: glytoucan
   endpoint: https://ts.glytoucan.org/sparql
-  download_ttl:
-  - https://rdfportal.org/download/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-09042015.ttl.gz
-  - https://rdfportal.org/download/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-Monosaccharide-09042015.ttl.gz
-  - https://rdfportal.org/download/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-Motif-09042015.ttl.gz
-  - https://rdfportal.org/download/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-SaccharideSeeAlso-09072015.ttl.gz
+  download_nt:
+  - https://rdfportal.org/ntriples/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-09042015.nt.gz
+  - https://rdfportal.org/ntriples/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-Monosaccharide-09042015.nt.gz
+  - https://rdfportal.org/ntriples/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-Motif-09042015.nt.gz
+  - https://rdfportal.org/ntriples/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-SaccharideSeeAlso-09072015.nt.gz
   bioregistry_prefix: glytoucan
   bioregistry_name: GlyTouCan
   bioregistry_description: GlyTouCan is the single worldwide registry of glycan (carbohydrate
@@ -15572,7 +15606,9 @@
   endpoint: https://atted.jp/sparql
 - name: bacdive
   endpoint: https://sparql.dsmz.de/api/bacdive
-  download_ttl: https://rdfportal.org/download/bacdive/latest/rdf-mod-r.ttl
+  download_nt:
+  - https://rdfportal.org/ntriples/bacdive/latest/rdf-mod-r.0.nt.gz
+  - https://rdfportal.org/ntriples/bacdive/latest/rdf-mod-r.1.nt.gz
   bioregistry_prefix: bacdive
   bioregistry_name: BacDive
   bioregistry_description: BacDive—the Bacterial Diversity Metadatabase merges detailed
@@ -15615,165 +15651,166 @@
     wikidata: P2946
 - name: rdfportal.proteinatlas
   endpoint: https://rdfportal.org/proteinatlas/sparql
-- name: nextprot
-  endpoint: https://sparql.nextprot.org/
-  download_ttl:
-  - https://rdfportal.org/download/nextprot/latest/experimentalcontext.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/expression_high.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/expression_low.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/expression_medium.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/inferredChildOf-a.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/inferredChildOf-b.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/inferredSubClassOf-a.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/inferredSubClassOf-b.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_01.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_02.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_03.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_04.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_05.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_06.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_07.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_08.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_09.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_10.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_11.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_12.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_13.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_14.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_15.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_16.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_17.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_18.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_19.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_20.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_21.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_22.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_MT.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_X.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_Y.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_unknown.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/publication.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/schema.ttl.gz
-  - https://rdfportal.org/download/nextprot/latest/terminology.ttl.gz
-  bioregistry_prefix: nextprot
-  bioregistry_name: nextProt
-  bioregistry_description: neXtProt is a resource on human proteins, and includes
-    information such as proteins’ function, subcellular location, expression, interactions
-    and role in diseases.
-  bioregistry_homepage: https://www.nextprot.org/
-  bioregistry_uri_prefix: https://www.nextprot.org/db/entry/
-  bioregistry_uri_prefixes:
-  - 'http://bioregistry.io/NXP:'
-  - 'http://bioregistry.io/nextprot:'
-  - http://identifiers.org/nextprot/
-  - 'http://identifiers.org/nextprot:'
-  - 'http://n2t.net/nextprot:'
-  - http://www.nextprot.org/db/entry/
-  - 'https://bioregistry.io/NXP:'
-  - 'https://bioregistry.io/nextprot:'
-  - https://identifiers.org/nextprot/
-  - 'https://identifiers.org/nextprot:'
-  - 'https://n2t.net/nextprot:'
-  - https://www.nextprot.org/db/entry/
-  bioregistry_keywords:
-  - cell/organelle
-  - expression
-  - genetic variation
-  - genome/gene
-  - health/disease
-  - protein
-  - sequence
-  bioregistry_synonyms:
-  - NXP
-  bioregistry_publications:
-  - pubmed: '31724716'
-    doi: 10.1093/nar/gkz995
-    pmc: PMC7145669
-    title: 'The neXtProt knowledgebase in 2020: data, tools and usability improvements'
-  - pubmed: '27899619'
-    doi: 10.1093/nar/gkw1062
-    pmc: PMC5210547
-    title: 'The neXtProt knowledgebase on human proteins: 2017 update'
-  - pubmed: '25593349'
-    doi: 10.1093/nar/gku1178
-    pmc: PMC4383972
-    title: 'The neXtProt knowledgebase on human proteins: current status'
-  - pubmed: '23205526'
-    doi: 10.1021/pr300830v
-    title: 'neXtProt: organizing protein knowledge in the context of human proteome
-      projects'
-  - pubmed: '22139911'
-    doi: 10.1093/nar/gkr1179
-    pmc: PMC3245017
-    title: 'neXtProt: a knowledge platform for human proteins'
-  bioregistry_mappings:
-    biocontext: NEXTPROT
-    integbio: nbdc02107
-    miriam: nextprot
-    n2t: nextprot
-    wikidata.entity: Q6983890
-- name: proteinontology
-  endpoint: https://sparql.proconsortium.org/virtuoso/sparql
-- name: hitontology
-  endpoint: https://hitontology.eu/sparql
-- name: glygen
-  endpoint: http://sparql.glygen.org:8880/sparql
-  bioregistry_prefix: glygen
-  bioregistry_name: GlyTouCan
-  bioregistry_description: GlyTouCan is the single worldwide registry of glycan (carbohydrate
-    sugar chain) data.
-  bioregistry_homepage: https://glytoucan.org
-  bioregistry_uri_prefix: https://glytoucan.org/Structures/Glycans/
-  bioregistry_uri_prefixes:
-  - 'http://bioregistry.io/glygen:'
-  - 'http://bioregistry.io/glytoucan:'
-  - http://glygen.org/glycan/
-  - http://glytoucan.org/Structures/Glycans/
-  - http://identifiers.org/glytoucan/
-  - 'http://identifiers.org/glytoucan:'
-  - 'http://n2t.net/glytoucan:'
-  - 'https://bioregistry.io/glygen:'
-  - 'https://bioregistry.io/glytoucan:'
-  - https://glygen.org/glycan/
-  - https://glytoucan.org/Structures/Glycans/
-  - https://identifiers.org/glytoucan/
-  - 'https://identifiers.org/glytoucan:'
-  - 'https://n2t.net/glytoucan:'
-  bioregistry_keywords:
-  - carbohydrate
-  - chemical structure
-  - expression
-  - glycan
-  - health/disease
-  - interaction/pathway
-  - portal
-  - protein
-  - sequence
-  bioregistry_synonyms:
-  - glygen
-  bioregistry_publications:
-  - pubmed: '28922742'
-    doi: 10.1093/glycob/cwx066
-    pmc: PMC5881658
-    title: 'GlyTouCan: an accessible glycan structure repository'
-  - pubmed: '26476458'
-    doi: 10.1093/nar/gkv1041
-    pmc: PMC4702779
-    title: GlyTouCan 1.0--The international glycan structure repository
-  bioregistry_extra_providers:
-  - code: glygen
-    name: GlyGen
-    uri_format: https://glygen.org/glycan/$1
-    homepage: https://www.glygen.org/
-    description: 'GlyGen is a data integration and dissemination project for carbohydrate
-      and glycoconjugate related data. '
-  bioregistry_mappings:
-    biocontext: GLYTOUCAN
-    integbio: nbdc02434
-    miriam: glytoucan
-    n2t: glytoucan
-    re3data: r3d100012388
-    togoid: Glytoucan
+#- name: rdfportal.nextprot
+#  download_ttl:
+#  - https://rdfportal.org/download/nextprot/latest/experimentalcontext.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/expression_high.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/expression_low.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/expression_medium.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/inferredChildOf-a.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/inferredChildOf-b.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/inferredSubClassOf-a.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/inferredSubClassOf-b.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_01.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_02.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_03.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_04.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_05.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_06.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_07.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_08.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_09.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_10.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_11.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_12.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_13.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_14.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_15.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_16.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_17.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_18.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_19.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_20.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_21.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_22.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_MT.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_X.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_Y.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/nextprot_chromosome_unknown.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/publication.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/schema.ttl.gz
+#  - https://rdfportal.org/download/nextprot/latest/terminology.ttl.gz
+#- name: nextprot
+#  endpoint: https://sparql.nextprot.org/
+#  bioregistry_prefix: nextprot
+#  bioregistry_name: nextProt
+#  bioregistry_description: neXtProt is a resource on human proteins, and includes
+#    information such as proteins’ function, subcellular location, expression, interactions
+#    and role in diseases.
+#  bioregistry_homepage: https://www.nextprot.org/
+#  bioregistry_uri_prefix: https://www.nextprot.org/db/entry/
+#  bioregistry_uri_prefixes:
+#  - 'http://bioregistry.io/NXP:'
+#  - 'http://bioregistry.io/nextprot:'
+#  - http://identifiers.org/nextprot/
+#  - 'http://identifiers.org/nextprot:'
+#  - 'http://n2t.net/nextprot:'
+#  - http://www.nextprot.org/db/entry/
+#  - 'https://bioregistry.io/NXP:'
+#  - 'https://bioregistry.io/nextprot:'
+#  - https://identifiers.org/nextprot/
+#  - 'https://identifiers.org/nextprot:'
+#  - 'https://n2t.net/nextprot:'
+#  - https://www.nextprot.org/db/entry/
+#  bioregistry_keywords:
+#  - cell/organelle
+#  - expression
+#  - genetic variation
+#  - genome/gene
+#  - health/disease
+#  - protein
+#  - sequence
+#  bioregistry_synonyms:
+#  - NXP
+#  bioregistry_publications:
+#  - pubmed: '31724716'
+#    doi: 10.1093/nar/gkz995
+#    pmc: PMC7145669
+#    title: 'The neXtProt knowledgebase in 2020: data, tools and usability improvements'
+#  - pubmed: '27899619'
+#    doi: 10.1093/nar/gkw1062
+#    pmc: PMC5210547
+#    title: 'The neXtProt knowledgebase on human proteins: 2017 update'
+#  - pubmed: '25593349'
+#    doi: 10.1093/nar/gku1178
+#    pmc: PMC4383972
+#    title: 'The neXtProt knowledgebase on human proteins: current status'
+#  - pubmed: '23205526'
+#    doi: 10.1021/pr300830v
+#    title: 'neXtProt: organizing protein knowledge in the context of human proteome
+#      projects'
+#  - pubmed: '22139911'
+#    doi: 10.1093/nar/gkr1179
+#    pmc: PMC3245017
+#    title: 'neXtProt: a knowledge platform for human proteins'
+#  bioregistry_mappings:
+#    biocontext: NEXTPROT
+#    integbio: nbdc02107
+#    miriam: nextprot
+#    n2t: nextprot
+#    wikidata.entity: Q6983890
+#- name: proteinontology
+#  endpoint: https://sparql.proconsortium.org/virtuoso/sparql
+#- name: hitontology
+#  endpoint: https://hitontology.eu/sparql
+#- name: glygen
+#  endpoint: http://sparql.glygen.org:8880/sparql
+#  bioregistry_prefix: glygen
+#  bioregistry_name: GlyTouCan
+#  bioregistry_description: GlyTouCan is the single worldwide registry of glycan (carbohydrate
+#    sugar chain) data.
+#  bioregistry_homepage: https://glytoucan.org
+#  bioregistry_uri_prefix: https://glytoucan.org/Structures/Glycans/
+#  bioregistry_uri_prefixes:
+#  - 'http://bioregistry.io/glygen:'
+#  - 'http://bioregistry.io/glytoucan:'
+#  - http://glygen.org/glycan/
+#  - http://glytoucan.org/Structures/Glycans/
+#  - http://identifiers.org/glytoucan/
+#  - 'http://identifiers.org/glytoucan:'
+#  - 'http://n2t.net/glytoucan:'
+#  - 'https://bioregistry.io/glygen:'
+#  - 'https://bioregistry.io/glytoucan:'
+#  - https://glygen.org/glycan/
+#  - https://glytoucan.org/Structures/Glycans/
+#  - https://identifiers.org/glytoucan/
+#  - 'https://identifiers.org/glytoucan:'
+#  - 'https://n2t.net/glytoucan:'
+#  bioregistry_keywords:
+#  - carbohydrate
+#  - chemical structure
+#  - expression
+#  - glycan
+#  - health/disease
+#  - interaction/pathway
+#  - portal
+#  - protein
+#  - sequence
+#  bioregistry_synonyms:
+#  - glygen
+#  bioregistry_publications:
+#  - pubmed: '28922742'
+#    doi: 10.1093/glycob/cwx066
+#    pmc: PMC5881658
+#    title: 'GlyTouCan: an accessible glycan structure repository'
+#  - pubmed: '26476458'
+#    doi: 10.1093/nar/gkv1041
+#    pmc: PMC4702779
+#    title: GlyTouCan 1.0--The international glycan structure repository
+#  bioregistry_extra_providers:
+#  - code: glygen
+#    name: GlyGen
+#    uri_format: https://glygen.org/glycan/$1
+#    homepage: https://www.glygen.org/
+#    description: 'GlyGen is a data integration and dissemination project for carbohydrate
+#      and glycoconjugate related data. '
+#  bioregistry_mappings:
+#    biocontext: GLYTOUCAN
+#    integbio: nbdc02434
+#    miriam: glytoucan
+#    n2t: glytoucan
+#    re3data: r3d100012388
+#    togoid: Glytoucan
 - name: prokino
   endpoint: http://vulcan.cs.uga.edu/sparql
 - name: linkeddrugs
@@ -16043,12 +16080,12 @@
 - name: bio2rdf.kegg.cu
   endpoint: http://cu.kegg.bio2rdf.org/sparql
   notes: Bio2RDF KEGG mirror (cu.kegg.bio2rdf.org)
-- name: nadd
+- name: rdfportal.nadd
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/bio/18/nadd/
   use_graph: true
-  download_ttl: https://rdfportal.org/download/nadd/latest/rdf/graph-1/NucleicAcidDrug.ttl.gz
+  download_nt: https://rdfportal.org/ntriples/nadd/latest/rdf/graph-1/NucleicAcidDrug.nt.gz
   notes: Nucleic Acid Drug Database (NADD) - RDFPortal
 - name: biobricks-aopwiki
   endpoint: https://frink.apps.renci.org/biobricks-aopwiki/sparql

@@ -1104,66 +1104,6 @@ def _route_local_mine(args: argparse.Namespace) -> dict[str, Any]:
 # ═══════════════════════════════════════════════════════════════════
 
 
-def _nq_encode_cmd() -> str:
-    """Return a ``python3 -c "..."`` command that:
-
-    1. **Joins continuation lines** - some bio2rdf NQ files contain IRIs that
-       are wrapped across two lines (e.g. the IRI opens with ``<`` on one
-       line and the closing ``>`` appears at the start of the next).  QLever
-       requires every quad to be on a single line, so we re-join such pairs
-       before any other processing.
-
-    2. **Percent-encodes spaces** inside angle-bracket IRIs, but *only*
-       outside quoted string literals (tracking ``"..."`` state so that
-       ``"value < 10"`` is never touched).
-
-    The base64 payload avoids all shell-quoting issues - the b64 alphabet
-    ([A-Za-z0-9+/=]) is safe inside both single and double quotes with no
-    escaping needed.
-    """
-    import base64
-
-    code = (
-        "import sys, re\n"
-        # enc(): percent-encode characters QLever rejects inside IRI tokens.
-        # <([^<>\n]*)> isolates IRIs: per NQ spec IRIs cannot contain '<',
-        # so bare '<' in literals never matches (no '>' before the next '<').
-        "def enc(ln):\n"
-        "    def fix(m):\n"
-        "        s = m.group(1).replace(' ', '%20').replace('\"', '%22')\n"
-        "        return '<' + s + '>'\n"
-        "    return re.sub(r'<([^<>\\n]*)>', fix, ln)\n"
-        # has_open_iri(): True when a line ends mid-IRI (a '<' was opened
-        # but the matching '>' has not appeared yet on this line).
-        # We count unmatched '<' by stripping all complete <...> tokens first,
-        # then checking whether a bare '<' remains before end-of-line.
-        "def has_open_iri(ln):\n"
-        "    stripped = re.sub(r'<[^<>\\n]*>', '', ln)\n"
-        "    return '<' in stripped\n"
-        "inp = sys.stdin.buffer\n"
-        "out = sys.stdout\n"
-        "pending = ''\n"
-        "for raw in inp:\n"
-        "    line = raw.decode('utf-8', 'replace')\n"
-        # If we are accumulating a split IRI, strip the leading newline/whitespace
-        # from the continuation and append it to the pending fragment.
-        "    if pending:\n"
-        "        line = pending.rstrip('\\n') + line.lstrip()\n"
-        "        pending = ''\n"
-        # If the joined line still has an open IRI (extremely rare multi-line
-        # splits), keep accumulating.
-        "    if has_open_iri(line.rstrip('\\n')):\n"
-        "        pending = line\n"
-        "        continue\n"
-        "    out.write(enc(line))\n"
-        "if pending:\n"
-        "    out.write(enc(pending))\n"
-        "out.flush()\n"
-    )
-    b64 = base64.b64encode(code.encode()).decode()
-    return f'python3 -u -c "import base64,sys; exec(base64.b64decode(\\"{b64}\\").decode())"'
-
-
 # Qleverfile template - INI-style config consumed by `qlever` CLI.
 _QLEVERFILE_TEMPLATE = """\
 # Qleverfile for {name}
@@ -1331,7 +1271,8 @@ def _build_provider_qleverfile(
     src_data_dir = f"{workdir}/{rdf_subdir}"
     settings_json = (
         '{ "ascii-prefixes-only": false, '
-        '"num-triples-per-batch": 1000000 }'
+        '"num-triples-per-batch": 1000000, '
+        '"parser-integer-overflow-behavior": "overflowing-integers-become-doubles" }'
     )
 
     # Split members into tar-based vs download-based.
@@ -1456,7 +1397,8 @@ def _build_qleverfile(
 
     settings_json = (
         '{ "ascii-prefixes-only": false, '
-        '"num-triples-per-batch": 1000000 }'
+        '"num-triples-per-batch": 1000000, '
+        '"parser-integer-overflow-behavior": "overflowing-integers-become-doubles" }'
     )
 
     # ── Provider bulk-tar path (local_tar_url) ────────────────────
@@ -1541,12 +1483,16 @@ def _build_qleverfile(
     # ── Decide QLever FORMAT and INPUT_FILES / CAT_INPUT_FILES ────
     if has_nq:
         rdf_format = "nq"
-        input_files = f"{rdf_subdir}/*.nq*"
+        # .nq.gz files are decompressed in GET_DATA_CMD, so only match *.nq
+        input_files = f"{rdf_subdir}/*.nq"
         cat_input_files = (
-            "( zcat ${INPUT_FILES} 2>/dev/null || "
-            "cat ${INPUT_FILES} 2>/dev/null ) | "
-            "grep -v '^$' | "
-            + _nq_encode_cmd()
+            "cat ${INPUT_FILES} | "
+            # Drop lines whose subject IRI contains a literal " — these have
+            # the form <http://...\"...> and cause QLever's IRI parser to crash
+            # with "Unterminated IRI reference".  Affects ~9 lines in bio2rdf
+            # release-3 .nq files (drug names with embedded double-quotes).
+            "grep -v '^<[^\">]*\"' | "
+            "grep -v '^$'"
         )
     elif has_trig:
         # TriG carries named graphs; QLever ingests as nq format
@@ -1563,8 +1509,7 @@ def _build_qleverfile(
         cat_input_files = (
             "( zcat ${INPUT_FILES} 2>/dev/null || "
             "cat ${INPUT_FILES} 2>/dev/null ) | "
-            "grep -v '^$' | "
-            + _nq_encode_cmd()
+            "grep -v '^$'"
         )
     elif has_n3 and has_ttl:
         # Mixed N3 + Turtle: both are Turtle-compatible, glob both
@@ -1574,6 +1519,13 @@ def _build_qleverfile(
     elif has_n3:
         rdf_format = "ttl"
         input_files = f"{rdf_subdir}/*.n3"
+        cat_input_files = "cat ${INPUT_FILES}"
+    elif has_rdfxml:
+        # RDF/XML sources may contain named graphs (quads).  We convert via
+        # rapper to N-Quads so graph membership is preserved, and tell QLever
+        # to index as N-Quads (-F nq).  The converted files land as *.nq.
+        rdf_format = "nq"
+        input_files = f"{rdf_subdir}/*.nq"
         cat_input_files = "cat ${INPUT_FILES}"
     else:
         # Everything else is converted / decompressed to .ttl
@@ -1681,13 +1633,13 @@ def _build_qleverfile(
     # Decompress .gz files (but not .tar.gz)
     if has_gz:
         steps.append("echo 'Decompressing .gz files …'")
-        # For N-Quads and N-Triples, QLever can read .gz directly,
-        # so only decompress TTL/OWL/RDF/N3/JSONLD .gz files.
         if has_nq or has_nt:
-            # Leave .nq.gz / .nt.gz compressed - QLever reads them.
-            # Only decompress other .gz files (ttl, owl, rdf, etc.)
+            # Decompress ALL .gz files including .nq.gz / .nt.gz.
+            # Mixing compressed and uncompressed files in INPUT_FILES causes
+            # the zcat||cat fallback in CAT_INPUT_FILES to read .gz as raw
+            # binary when any plain file is also present, corrupting the stream.
             steps.append(
-                'for f in *.ttl.gz *.owl.gz *.rdf.gz *.n3.gz *.jsonld.gz; do '
+                'for f in *.ttl.gz *.owl.gz *.rdf.gz *.n3.gz *.jsonld.gz *.nq.gz *.nt.gz; do '
                 '[ -f "$f" ] || continue; '
                 'gunzip -fk "$f" 2>/dev/null || true; '
                 'done'
@@ -1701,22 +1653,23 @@ def _build_qleverfile(
                 'done'
             )
 
-    # Convert RDF/XML and OWL -> Turtle
+    # Convert RDF/XML and OWL -> N-Quads (via rapper).
+    # RDF/XML may contain named graphs; rapper emits N-Quads which preserves
+    # graph membership. The format-decision block above already set
+    # rdf_format = "nq" and input_files = *.nq to match.
+    #
+    # Note: we use `sed` to strip the extension instead of bash ${f%.*}
+    # because configparser (which parses Qleverfiles) treats % as a format
+    # interpolation character and would reject the Qleverfile.
     if has_rdfxml:
-        steps.append("echo 'Converting RDF/XML -> Turtle …'")
-        # Avoid ${f%.*} bash syntax - configparser can't handle %.
-        # Use Python one-liner for the conversion instead.
+        steps.append("echo 'Converting RDF/XML -> N-Quads …'")
         steps.append(
-            "python3 -c \""
-            "import glob, subprocess, os; "
-            "[subprocess.run("
-            "['rapper','-i','rdfxml','-o','turtle',f],"
-            "stdout=open(os.path.splitext(f)[0]+'.ttl','w'),"
-            "stderr=subprocess.DEVNULL"
-            ") for f in glob.glob('*.rdf')+glob.glob('*.owl')"
-            "+glob.glob('*.xml') "
-            "if not os.path.exists(os.path.splitext(f)[0]+'.ttl')]"
-            '"'
+            'for f in *.rdf *.owl *.xml; do '
+            '[ -f "$f" ] || continue; '
+            'nq=$(echo "$f" | sed "s/\\.[^.]*$/.nq/"); '
+            '[ -f "$nq" ] && continue; '
+            'rapper -q -i rdfxml -o nquads "$f" > "$nq" 2>/dev/null || rm -f "$nq"; '
+            'done'
         )
 
     # Convert JSON-LD -> Turtle

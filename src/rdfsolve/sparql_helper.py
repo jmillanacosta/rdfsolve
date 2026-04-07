@@ -691,6 +691,21 @@ class SparqlHelper:
                             self.endpoint_url,
                         )
                         raise EndpointError(f"HTTP 502 Bad Gateway: {e}") from e
+                    # 429 from a local QLever means the server is at capacity
+                    # (query too expensive / concurrent limit hit).
+                    # Raise as EndpointTimeoutError immediately so the miner
+                    # falls back to chunked/paginated queries instead of
+                    # retrying the same heavy one-shot query 10 more times —
+                    # each of which will also run for many minutes before 429.
+                    if status_code == 429:
+                        tag = f"{query_type}[{purpose}]" if purpose else query_type
+                        logger.warning(
+                            "%s 429 Too Many Requests from local QLever %s"
+                            " - treating as cost limit, falling back",
+                            tag,
+                            self.endpoint_url,
+                        )
+                        raise EndpointTimeoutError(f"QLever 429 (at capacity): {e}") from e
                     # A 500/504 whose body signals "query too expensive"
                     # (Virtuoso cost limit, statement timeout, gateway
                     # timeout, etc.) is not a transient server error -
@@ -766,7 +781,25 @@ class SparqlHelper:
                 )
 
             except json.JSONDecodeError as e:
-                # JSON parse error, might be HTML response
+                # JSON parse error — could be malformed response or
+                # corrupted data (e.g. control characters in literals).
+                # If the response contains control characters there is
+                # nothing we can do by retrying: the server will return
+                # the same broken JSON every time.  Raise immediately.
+                err_msg = str(e).lower()
+                if "control character" in err_msg or "invalid" in err_msg:
+                    tag = f"{query_type}[{purpose}]" if purpose else query_type
+                    logger.warning(
+                        "%s JSON parse error (invalid/control-char) from %s"
+                        " - not retrying: %s",
+                        tag,
+                        self.endpoint_url,
+                        e,
+                    )
+                    raise EndpointTimeoutError(
+                        f"JSON decode error (non-retriable): {e}"
+                    ) from e
+                # Other JSON parse error, might be HTML response — retry.
                 self._handle_retry(
                     attempt,
                     query_type,

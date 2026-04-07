@@ -227,8 +227,19 @@ _qlever_index() {
 
     local settings_json="${workdir}/${name}.settings.json"
     local cat_cmd
-    cat_cmd=$(grep '^CAT_INPUT_FILES' "${workdir}/Qleverfile" 2>/dev/null \
-        | head -1 | sed 's/.*=[ ]*//')
+    # Parse Qleverfile ini-style: key = value, with continuation lines (lines
+    # starting with whitespace are folded into the previous value).
+    cat_cmd=$(python3 - "${workdir}/Qleverfile" <<'PYEOF'
+import sys, re
+path = sys.argv[1]
+with open(path) as f:
+    content = f.read()
+# Join continuation lines (line ending with a non-blank continuation indented line)
+content_joined = re.sub(r'\n([ \t]+)', r' ', content)
+m = re.search(r'^CAT_INPUT_FILES\s*=\s*(.+)', content_joined, re.MULTILINE)
+print(m.group(1).strip() if m else '')
+PYEOF
+)
     local settings_raw
     settings_raw=$(grep '^SETTINGS_JSON' "${workdir}/Qleverfile" 2>/dev/null \
         | head -1 | sed 's/.*=[ ]*//')
@@ -237,6 +248,12 @@ _qlever_index() {
     input_files_raw=$(grep '^INPUT_FILES' "${workdir}/Qleverfile" 2>/dev/null \
         | head -1 | sed 's/.*=[ ]*//')
     export INPUT_FILES="${input_files_raw}"
+
+    # Read FORMAT from Qleverfile (ttl / nq / nt); default to ttl.
+    local rdf_format
+    rdf_format=$(grep '^FORMAT' "${workdir}/Qleverfile" 2>/dev/null \
+        | head -1 | sed 's/.*=[ ]*//' | tr -d '[:space:]')
+    rdf_format="${rdf_format:-ttl}"
 
     # Write settings file
     echo "${settings_raw}" > "${settings_json}"
@@ -251,7 +268,7 @@ _qlever_index() {
                 -s "${settings_json}" \
                 --vocabulary-type on-disk-compressed \
                 -m 300G \
-                -F ttl -f - -p false \
+                -F "${rdf_format}" -f - -p false \
                 2>&1 | tee "${workdir}/${name}.index-log.txt")
 }
 
