@@ -115,7 +115,7 @@ if [[ ! -x "${UV}" ]]; then
     echo "Installing uv …"
     curl -LsSf https://astral.sh/uv/install.sh | sh
 fi
-export PATH="${HOME}/.local/bin:${PATH}"
+export PATH="${HOME}/.local/bin:${HOME}/local/bin:${PATH}"
 echo "uv: $(uv --version)"
 
 VENV="${BASE}/venv"

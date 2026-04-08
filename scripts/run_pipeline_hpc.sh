@@ -227,8 +227,19 @@ _qlever_index() {
 
     local settings_json="${workdir}/${name}.settings.json"
     local cat_cmd
-    cat_cmd=$(grep '^CAT_INPUT_FILES' "${workdir}/Qleverfile" 2>/dev/null \
-        | head -1 | sed 's/.*=[ ]*//')
+    # Parse Qleverfile ini-style: key = value, with continuation lines (lines
+    # starting with whitespace are folded into the previous value).
+    cat_cmd=$(python3 - "${workdir}/Qleverfile" <<'PYEOF'
+import sys, re
+path = sys.argv[1]
+with open(path) as f:
+    content = f.read()
+# Join continuation lines (line ending with a non-blank continuation indented line)
+content_joined = re.sub(r'\n([ \t]+)', r' ', content)
+m = re.search(r'^CAT_INPUT_FILES\s*=\s*(.+)', content_joined, re.MULTILINE)
+print(m.group(1).strip() if m else '')
+PYEOF
+)
     local settings_raw
     settings_raw=$(grep '^SETTINGS_JSON' "${workdir}/Qleverfile" 2>/dev/null \
         | head -1 | sed 's/.*=[ ]*//')
@@ -238,21 +249,108 @@ _qlever_index() {
         | head -1 | sed 's/.*=[ ]*//')
     export INPUT_FILES="${input_files_raw}"
 
+    # Read FORMAT from Qleverfile (ttl / nq / nt); default to ttl.
+    local rdf_format
+    rdf_format=$(grep '^FORMAT' "${workdir}/Qleverfile" 2>/dev/null \
+        | head -1 | sed 's/.*=[ ]*//' | tr -d '[:space:]')
+    rdf_format="${rdf_format:-ttl}"
+
+    # Read MEMORY_FOR_QUERIES from Qleverfile; default to 300G
+    local mem_for_queries
+    mem_for_queries=$(grep '^MEMORY_FOR_QUERIES' "${workdir}/Qleverfile" 2>/dev/null \
+        | head -1 | sed 's/.*=[ ]*//' | tr -d '[:space:]')
+    mem_for_queries="${mem_for_queries:-300G}"
+
     # Write settings file
     echo "${settings_raw}" > "${settings_json}"
 
-    # Build the index
-    (cd "${workdir}" && eval "${cat_cmd}" | \
-        singularity exec \
-            --bind "${workdir}:${workdir}" \
-            --bind "${DATA_DIR}:${DATA_DIR}" \
-            "${SINGULARITY_IMAGE}" \
-            qlever-index -i "${name}" \
-                -s "${settings_json}" \
-                --vocabulary-type on-disk-compressed \
-                -m 300G \
-                -F ttl -f - -p false \
-                2>&1 | tee "${workdir}/${name}.index-log.txt")
+    # Decide whether to pass files directly (-f file …) or pipe via stdin
+    # (-f -).  Direct file input lets QLever use its mmap-based parser,
+    # which avoids the streaming-buffer limit that causes
+    # "Could not parse 10,000 Within 1,048,576MB of Turtle input" on very
+    # large datasets (e.g. pubchem.ftp.endpoint, 860 M+ triples).
+    #
+    # We use direct mode when CAT_INPUT_FILES is a simple "cat ${INPUT_FILES}"
+    # (no pipes or filters).  Any pipeline (perl, zcat, grep …) still needs
+    # stdin streaming.
+    local use_direct_files=false
+    # Trim whitespace for comparison
+    local cat_cmd_trimmed
+    cat_cmd_trimmed="$(echo "${cat_cmd}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    if [[ "${cat_cmd_trimmed}" == 'cat ${INPUT_FILES}' ]]; then
+        use_direct_files=true
+    fi
+
+    # ── Workaround: rewrite bare integers that overflow int64 ──────────
+    # QLever bug: parser-integer-overflow-behavior is not propagated to
+    # per-file sub-parsers in RdfMultifileParser, so overflowing integers
+    # still crash the indexer.  As a pre-processing hack we turn any bare
+    # integer ≥ 20 digits into an xsd:double literal via sed.
+    #   109648000000000000000  →  "1.09648E+20"^^<…#double>
+    # This only touches object positions (tab-separated, followed by
+    # whitespace + dot) and is intentionally conservative.
+    echo "  ▸ Checking for int64-overflowing integers …" >&2
+    local _overflow_patched=0
+    pushd "${workdir}" > /dev/null
+    for f in ${INPUT_FILES}; do
+        [ -f "$f" ] || continue
+        if grep -qP '\t[0-9]{20,}\s' "$f"; then
+            echo "    fixing overflows in $(basename "$f") …" >&2
+            sed -i -E 's/\t([0-9]{20,})(\s)/\t"\1"^^<http:\/\/www.w3.org\/2001\/XMLSchema#double>\2/g' "$f"
+            _overflow_patched=$(( _overflow_patched + 1 ))
+        fi
+    done
+    popd > /dev/null
+    if [[ ${_overflow_patched} -gt 0 ]]; then
+        echo "  ▸ Patched overflowing integers in ${_overflow_patched} file(s)" >&2
+    fi
+
+    if [[ "${use_direct_files}" == true ]]; then
+        # Build -f flags for each individual file so QLever can mmap them.
+        local file_flags=()
+        (cd "${workdir}" && \
+            for f in ${INPUT_FILES}; do
+                [ -f "$f" ] && echo "${workdir}/$f"
+            done) | sort > "${workdir}/.input_file_list.tmp"
+
+        while IFS= read -r fpath; do
+            file_flags+=( -f "${fpath}" )
+        done < "${workdir}/.input_file_list.tmp"
+        rm -f "${workdir}/.input_file_list.tmp"
+
+        if [[ ${#file_flags[@]} -eq 0 ]]; then
+            echo "ERROR: No input files matched INPUT_FILES='${INPUT_FILES}' in ${workdir}" >&2
+            return 1
+        fi
+
+        echo "  ▸ Direct file input: ${#file_flags[@]} files" >&2
+
+        # Build the index with direct file input (no stdin pipe)
+        (cd "${workdir}" && \
+            singularity exec \
+                --bind "${workdir}:${workdir}" \
+                --bind "${DATA_DIR}:${DATA_DIR}" \
+                "${SINGULARITY_IMAGE}" \
+                qlever-index -i "${name}" \
+                    -s "${settings_json}" \
+                    --vocabulary-type on-disk-compressed \
+                    -m "${mem_for_queries}" \
+                    -F "${rdf_format}" "${file_flags[@]}" -p false \
+                    2>&1 | tee "${workdir}/${name}.index-log.txt")
+    else
+        # Fallback: pipe through stdin (needed for zcat, perl filters, etc.)
+        (cd "${workdir}" && eval "${cat_cmd}" | \
+            singularity exec \
+                --bind "${workdir}:${workdir}" \
+                --bind "${DATA_DIR}:${DATA_DIR}" \
+                "${SINGULARITY_IMAGE}" \
+                qlever-index -i "${name}" \
+                    -s "${settings_json}" \
+                    --vocabulary-type on-disk-compressed \
+                    -m "${mem_for_queries}" \
+                    -F "${rdf_format}" -f - -p false \
+                    2>&1 | tee "${workdir}/${name}.index-log.txt")
+    fi
 }
 
 # Start QLever server in background (Singularity instance).
