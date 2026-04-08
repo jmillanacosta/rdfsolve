@@ -1133,8 +1133,8 @@ PARSER_BUFFER_SIZE   = 8GB
 [server]
 PORT              = {port}
 ACCESS_TOKEN      = {access_token}
-MEMORY_FOR_QUERIES = 300G
-TIMEOUT           = 10000s
+MEMORY_FOR_QUERIES = 500G
+TIMEOUT           = 9999999999s
 
 [runtime]
 SYSTEM = {runtime}

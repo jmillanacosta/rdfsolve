@@ -255,21 +255,78 @@ PYEOF
         | head -1 | sed 's/.*=[ ]*//' | tr -d '[:space:]')
     rdf_format="${rdf_format:-ttl}"
 
+    # Read MEMORY_FOR_QUERIES from Qleverfile; default to 300G
+    local mem_for_queries
+    mem_for_queries=$(grep '^MEMORY_FOR_QUERIES' "${workdir}/Qleverfile" 2>/dev/null \
+        | head -1 | sed 's/.*=[ ]*//' | tr -d '[:space:]')
+    mem_for_queries="${mem_for_queries:-300G}"
+
     # Write settings file
     echo "${settings_raw}" > "${settings_json}"
 
-    # Build the index
-    (cd "${workdir}" && eval "${cat_cmd}" | \
-        singularity exec \
-            --bind "${workdir}:${workdir}" \
-            --bind "${DATA_DIR}:${DATA_DIR}" \
-            "${SINGULARITY_IMAGE}" \
-            qlever-index -i "${name}" \
-                -s "${settings_json}" \
-                --vocabulary-type on-disk-compressed \
-                -m 300G \
-                -F "${rdf_format}" -f - -p false \
-                2>&1 | tee "${workdir}/${name}.index-log.txt")
+    # Decide whether to pass files directly (-f file …) or pipe via stdin
+    # (-f -).  Direct file input lets QLever use its mmap-based parser,
+    # which avoids the streaming-buffer limit that causes
+    # "Could not parse 10,000 Within 1,048,576MB of Turtle input" on very
+    # large datasets (e.g. pubchem.ftp.endpoint, 860 M+ triples).
+    #
+    # We use direct mode when CAT_INPUT_FILES is a simple "cat ${INPUT_FILES}"
+    # (no pipes or filters).  Any pipeline (perl, zcat, grep …) still needs
+    # stdin streaming.
+    local use_direct_files=false
+    # Trim whitespace for comparison
+    local cat_cmd_trimmed
+    cat_cmd_trimmed="$(echo "${cat_cmd}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    if [[ "${cat_cmd_trimmed}" == 'cat ${INPUT_FILES}' ]]; then
+        use_direct_files=true
+    fi
+
+    if [[ "${use_direct_files}" == true ]]; then
+        # Build -f flags for each individual file so QLever can mmap them.
+        local file_flags=()
+        (cd "${workdir}" && \
+            for f in ${INPUT_FILES}; do
+                [ -f "$f" ] && echo "${workdir}/$f"
+            done) | sort > "${workdir}/.input_file_list.tmp"
+
+        while IFS= read -r fpath; do
+            file_flags+=( -f "${fpath}" )
+        done < "${workdir}/.input_file_list.tmp"
+        rm -f "${workdir}/.input_file_list.tmp"
+
+        if [[ ${#file_flags[@]} -eq 0 ]]; then
+            echo "ERROR: No input files matched INPUT_FILES='${INPUT_FILES}' in ${workdir}" >&2
+            return 1
+        fi
+
+        echo "  ▸ Direct file input: ${#file_flags[@]} files" >&2
+
+        # Build the index with direct file input (no stdin pipe)
+        (cd "${workdir}" && \
+            singularity exec \
+                --bind "${workdir}:${workdir}" \
+                --bind "${DATA_DIR}:${DATA_DIR}" \
+                "${SINGULARITY_IMAGE}" \
+                qlever-index -i "${name}" \
+                    -s "${settings_json}" \
+                    --vocabulary-type on-disk-compressed \
+                    -m "${mem_for_queries}" \
+                    -F "${rdf_format}" "${file_flags[@]}" -p false \
+                    2>&1 | tee "${workdir}/${name}.index-log.txt")
+    else
+        # Fallback: pipe through stdin (needed for zcat, perl filters, etc.)
+        (cd "${workdir}" && eval "${cat_cmd}" | \
+            singularity exec \
+                --bind "${workdir}:${workdir}" \
+                --bind "${DATA_DIR}:${DATA_DIR}" \
+                "${SINGULARITY_IMAGE}" \
+                qlever-index -i "${name}" \
+                    -s "${settings_json}" \
+                    --vocabulary-type on-disk-compressed \
+                    -m "${mem_for_queries}" \
+                    -F "${rdf_format}" -f - -p false \
+                    2>&1 | tee "${workdir}/${name}.index-log.txt")
+    fi
 }
 
 # Start QLever server in background (Singularity instance).
