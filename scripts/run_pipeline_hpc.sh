@@ -281,6 +281,30 @@ PYEOF
         use_direct_files=true
     fi
 
+    # ── Workaround: rewrite bare integers that overflow int64 ──────────
+    # QLever bug: parser-integer-overflow-behavior is not propagated to
+    # per-file sub-parsers in RdfMultifileParser, so overflowing integers
+    # still crash the indexer.  As a pre-processing hack we turn any bare
+    # integer ≥ 20 digits into an xsd:double literal via sed.
+    #   109648000000000000000  →  "1.09648E+20"^^<…#double>
+    # This only touches object positions (tab-separated, followed by
+    # whitespace + dot) and is intentionally conservative.
+    echo "  ▸ Checking for int64-overflowing integers …" >&2
+    local _overflow_patched=0
+    pushd "${workdir}" > /dev/null
+    for f in ${INPUT_FILES}; do
+        [ -f "$f" ] || continue
+        if grep -qP '\t[0-9]{20,}\s' "$f"; then
+            echo "    fixing overflows in $(basename "$f") …" >&2
+            sed -i -E 's/\t([0-9]{20,})(\s)/\t"\1"^^<http:\/\/www.w3.org\/2001\/XMLSchema#double>\2/g' "$f"
+            _overflow_patched=$(( _overflow_patched + 1 ))
+        fi
+    done
+    popd > /dev/null
+    if [[ ${_overflow_patched} -gt 0 ]]; then
+        echo "  ▸ Patched overflowing integers in ${_overflow_patched} file(s)" >&2
+    fi
+
     if [[ "${use_direct_files}" == true ]]; then
         # Build -f flags for each individual file so QLever can mmap them.
         local file_flags=()
