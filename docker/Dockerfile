@@ -72,13 +72,13 @@
 # ------------------
 # The SQLite database file is NOT tracked in git (it's in .gitignore).
 # Neither are *.jsonld schema files — they are generated artefacts that you
-# produce locally with the mining scripts and place in docker/schemas/ before
+# produce locally with the mining CLI and place in docker/schemas/ before
 # building.  The .gitignore rule "*.jsonld" (with an exception for
 # tests/test_data/) ensures they are never accidentally committed.
 #
 # To generate schemas for the docker/schemas/ directory:
-#   python scripts/mine_all_sources.py --output-dir docker/schemas
-#   python scripts/seed_instance_mappings.py --output-dir docker/schemas
+#   rdfsolve mine --output-dir docker/schemas
+#   rdfsolve instance-match seed --output-dir docker/schemas
 #
 # After generating, rebuild the image to bake the new files in (or just
 # restart — docker-compose.yml bind-mounts the directory at runtime so
@@ -86,7 +86,7 @@
 #   docker compose restart
 #
 # On a fresh clone with no pre-generated schemas:
-#   1. Run the mining scripts above to populate docker/schemas/.
+#   1. Run the mining CLI commands above to populate docker/schemas/.
 #   2. Run docker compose up --build.
 #   The database will be populated from those files on first boot.
 # =============================================================================
@@ -183,7 +183,7 @@ RUN uv pip install --system --no-cache ".[web]"
 #   3. Restart Flask (docker compose restart) — it re-imports on every boot.
 #
 # To regenerate all schemas from the live SPARQL endpoints:
-#   python scripts/mine_all_sources.py --output-dir docker/schemas --format jsonld --no-counts
+#   rdfsolve mine --output-dir docker/schemas --format jsonld --no-counts
 # (run this locally before rebuilding the image)
 # ---------------------------------------------------------------------------
 COPY docker/schemas/ /app/schemas/

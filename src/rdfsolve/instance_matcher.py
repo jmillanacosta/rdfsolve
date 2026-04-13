@@ -332,6 +332,7 @@ def seed_instance_mappings(
     dataset_names: list[str] | None = None,
     timeout: float = 60.0,
     skip_existing: bool = False,
+    ports_json: str | None = None,
 ) -> dict[str, Any]:
     """Probe multiple bioregistry resources and write mapping JSON-LD files.
 
@@ -351,6 +352,10 @@ def seed_instance_mappings(
         timeout: SPARQL request timeout per request.
         skip_existing: If ``True``, skip prefixes whose output file
             already exists without re-probing.
+        ports_json: Path to QLever ``ports.json`` mapping
+            ``{dataset_name: port}``.  When supplied, queries go to
+            local QLever (``http://localhost:{port}``) instead of the
+            remote endpoints in ``sources.yaml``.
 
     Returns:
         Summary dict: ``{"succeeded": [...], "failed": [...]}``.
@@ -365,7 +370,7 @@ def seed_instance_mappings(
     out.mkdir(parents=True, exist_ok=True)
 
     src_path = sources or sources_csv or None
-    datasources = load_sources_dataframe(src_path)
+    datasources = load_sources_dataframe(src_path, ports_json=ports_json)
 
     succeeded: list[str] = []
     failed: list[dict[str, str]] = []

@@ -1,10 +1,10 @@
 # ─── RDFSolve SSSOM source registry ─────────────────────────────────────────
 #
 # Each entry defines an SSSOM mapping bundle for import into the rdfsolve
-# database.  The seeding script (scripts/seed_sssom_mappings.py) reads this
-# file, downloads the archive, extracts every *.sssom.tsv file inside it,
+# database.  The ``rdfsolve sssom seed`` CLI command reads this file,
+# downloads the archive, extracts every *.sssom.tsv file inside it,
 # converts each one to a SsomMapping JSON-LD file, and writes the results to
-# docker/mappings/sssom/.
+# the configured output directory.
 #
 # Fields
 # ──────
