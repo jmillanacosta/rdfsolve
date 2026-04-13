@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -24,9 +25,12 @@ __all__ = [
     "count_instances",
     "count_instances_per_class",
     "discover_void_graphs",
+    "discover_void_source",
     "enrich_source_with_bioregistry",
     "execute_sparql",
+    "export_schema_artifacts",
     "extract_partitions_from_void",
+    "generate_qleverfiles",
     "generate_void_from_endpoint",
     "get_bioregistry_metadata",
     "graph_to_jsonld",
@@ -41,10 +45,13 @@ __all__ = [
     "load_parser_from_file",
     "load_parser_from_graph",
     "load_parser_from_jsonld",
+    "load_sources",
     "mine_all_sources",
+    "mine_local_source",
     "mine_schema",
     "probe_instance_mapping",
     "resolve_iris",
+    "resolve_void_uri_base",
     "retrieve_void_from_graphs",
     "seed_inferenced_mappings",
     "seed_instance_mappings",
@@ -678,10 +685,6 @@ def execute_sparql(
 ) -> dict[str, Any]:
     """Execute a SPARQL query against a remote endpoint.
 
-    This is a pure-Python function- no Flask required.  It delegates to
-    :func:`rdfsolve.query.execute_sparql` which uses the robust
-    :class:`~rdfsolve.sparql_helper.SparqlHelper` under the hood.
-
     Args:
         query:        Full SPARQL query string.
         endpoint:     SPARQL endpoint URL.
@@ -723,9 +726,6 @@ def resolve_iris(
 ) -> dict[str, Any]:
     """Resolve IRIs against SPARQL endpoints to discover their rdf:type.
 
-    This is a pure-Python function- no Flask required.  It delegates to
-    :func:`rdfsolve.iri.resolve_iris`.
-
     Args:
         iris: List of IRI strings to resolve.
         endpoints: List of endpoint dicts, each with keys
@@ -762,9 +762,6 @@ def compose_query_from_paths(
     value_bindings: dict[str, list[str]] | None = None,
 ) -> dict[str, Any]:
     """Generate a SPARQL query from diagram paths.
-
-    This is a pure-Python function- no Flask required.  It delegates to
-    :func:`rdfsolve.compose.compose_query_from_paths`.
 
     Args:
         paths: List of path dicts, each with an ``edges`` list.
@@ -831,8 +828,7 @@ def probe_instance_mapping(
     returns the result as a JSON-LD mapping document.
 
     The returned dict has the same structure as a mined schema JSON-LD
-    (``@context`` + ``@graph`` + ``@about``) and can be saved directly
-    to ``docker/schemas/`` for auto-import on Flask startup.
+    (``@context`` + ``@graph`` + ``@about``).
 
     Args:
         prefix: Bioregistry prefix, e.g. ``"ensembl"``.
@@ -888,6 +884,7 @@ def seed_instance_mappings(
     dataset_names: list[str] | None = None,
     timeout: float = 60.0,
     skip_existing: bool = False,
+    ports_json: str | None = None,
 ) -> dict[str, Any]:
     """Probe multiple bioregistry resources and write mapping JSON-LD files.
 
@@ -904,6 +901,7 @@ def seed_instance_mappings(
         dataset_names=dataset_names,
         timeout=timeout,
         skip_existing=skip_existing,
+        ports_json=ports_json,
     )
 
 
@@ -1425,3 +1423,692 @@ def load_ontology_index_from_db(db: Any) -> Any:
     from rdfsolve.ontology.index import load_ontology_index_from_db as _impl
 
     return _impl(db)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Pipeline helpers - single-source discover / mine / export / qlever
+# ═══════════════════════════════════════════════════════════════════
+
+# Default base URI template for VoID partition IRIs.
+_VOID_URI_DEFAULT = "https://jmillanacosta.com/rdfsolve/{name}/mined/"
+
+
+def load_sources(
+    path: str | Path | None = None,
+    name_filter: str | None = None,
+) -> list["SourceEntry"]:
+    """Load source entries, optionally filtered by name regex.
+
+    Re-exports :func:`rdfsolve.sources.load_sources` with an
+    optional *name_filter* convenience argument.
+
+    Parameters
+    ----------
+    path:
+        Path to the sources file (YAML / JSON-LD / CSV).
+        ``None`` falls back to the default ``data/sources.yaml``.
+    name_filter:
+        Regex pattern (case-insensitive) to select sources by name.
+        ``None`` returns all sources.
+    """
+    from .sources import load_sources as _load
+
+    entries = _load(path)
+    if name_filter:
+        pat = re.compile(name_filter, re.IGNORECASE)
+        entries = [e for e in entries if pat.search(e.get("name", ""))]
+    return entries
+
+
+def resolve_void_uri_base(
+    name: str,
+    override: str | None = None,
+    entry: "SourceEntry | dict[str, Any] | None" = None,
+) -> str:
+    """Return the VoID base URI for a dataset.
+
+    Resolution order:
+
+    1. Explicit *override* value (e.g. from ``--void-uri-base``).
+    2. ``void_uri_base`` field in the source entry.
+    3. Default template
+       ``https://jmillanacosta.com/rdfsolve/{name}/mined/``.
+    """
+    if override:
+        return override.rstrip("/") + "/"
+    if entry and entry.get("void_uri_base"):
+        return str(entry["void_uri_base"]).rstrip("/") + "/"
+    return _VOID_URI_DEFAULT.format(name=name)
+
+
+def export_schema_artifacts(
+    void_graph: Graph,
+    name: str,
+    endpoint: str,
+    output_dir: str | Path,
+    tag: str = "discovered_remote",
+    fmt: str = "all",
+) -> dict[str, str]:
+    """Write VoID / JSON-LD / LinkML / SHACL / RDF-config artefacts.
+
+    This is the shared export routine used by :func:`discover_void_source`
+    and :func:`mine_local_source`.
+
+    Parameters
+    ----------
+    void_graph:
+        An ``rdflib.Graph`` containing VoID triples.
+    name:
+        Dataset name (used in file stems).
+    endpoint:
+        Endpoint URL written into JSON-LD ``@about`` and RDF-config.
+    output_dir:
+        Directory to write files into (created if needed).
+    tag:
+        File-name tag inserted between *name* and suffix,
+        e.g. ``"discovered_remote"`` → ``<name>_discovered_remote_void.ttl``.
+    fmt:
+        ``"jsonld"``, ``"void"``, or ``"all"`` (default).
+
+    Returns
+    -------
+    dict[str, str]
+        Mapping of artefact kind → file path written.
+    """
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    written: dict[str, str] = {}
+
+    # ── VoID Turtle ──────────────────────────────────────────────
+    if fmt in ("void", "all"):
+        void_path = out / f"{name}_{tag}_void.ttl"
+        void_graph.serialize(destination=str(void_path), format="turtle")
+        written["void_ttl"] = str(void_path)
+
+    # ── JSON-LD ──────────────────────────────────────────────────
+    if fmt in ("jsonld", "all"):
+        jsonld_doc = graph_to_jsonld(
+            void_graph, endpoint_url=endpoint, dataset_name=name,
+        )
+        jsonld_path = out / f"{name}_{tag}_schema.jsonld"
+        jsonld_path.write_text(
+            json.dumps(jsonld_doc, indent=2) + "\n", encoding="utf-8",
+        )
+        written["schema_jsonld"] = str(jsonld_path)
+
+    # ── LinkML ───────────────────────────────────────────────────
+    if fmt in ("all",):
+        try:
+            export_parser = VoidParser(void_source=void_graph)
+            linkml_yaml = export_parser.to_linkml_yaml(
+                filter_void_nodes=True, schema_name=name,
+            )
+            linkml_path = out / f"{name}_{tag}_linkml.yaml"
+            linkml_path.write_text(linkml_yaml, encoding="utf-8")
+            written["linkml_yaml"] = str(linkml_path)
+        except Exception as exc:
+            logger.debug("LinkML export failed for %s: %s", name, exc)
+
+    # ── SHACL ────────────────────────────────────────────────────
+    if fmt in ("all",):
+        try:
+            export_parser = VoidParser(void_source=void_graph)
+            shacl_ttl = export_parser.to_shacl(
+                filter_void_nodes=True, schema_name=name,
+            )
+            shacl_path = out / f"{name}_{tag}_shacl.ttl"
+            shacl_path.write_text(shacl_ttl, encoding="utf-8")
+            written["shacl_ttl"] = str(shacl_path)
+        except Exception as exc:
+            logger.debug("SHACL export failed for %s: %s", name, exc)
+
+    # ── RDF-config ───────────────────────────────────────────────
+    if fmt in ("all",):
+        try:
+            export_parser = VoidParser(void_source=void_graph)
+            rdfconfig = export_parser.to_rdfconfig(
+                filter_void_nodes=True,
+                endpoint_url=endpoint,
+                endpoint_name=name,
+            )
+            config_dir = out / f"{name}_{tag}_config"
+            config_dir.mkdir(parents=True, exist_ok=True)
+            for fname, content in rdfconfig.items():
+                (config_dir / f"{fname}.yaml").write_text(
+                    content, encoding="utf-8",
+                )
+            written["rdfconfig_dir"] = str(config_dir)
+        except Exception as exc:
+            logger.debug("RDF-config export failed for %s: %s", name, exc)
+
+    return written
+
+
+def discover_void_source(
+    endpoint: str,
+    name: str,
+    output_dir: str | Path = ".",
+    *,
+    tag: str = "discovered_remote",
+    void_uri_base: str | None = None,
+    entry: "SourceEntry | dict[str, Any] | None" = None,
+    fmt: str = "all",
+) -> dict[str, Any]:
+    """Discover VoID descriptions for one source and export artefacts.
+
+    Calls :func:`discover_void_graphs` then
+    :func:`export_schema_artifacts` for the result.
+
+    Parameters
+    ----------
+    endpoint:
+        SPARQL endpoint URL.
+    name:
+        Dataset name.
+    output_dir:
+        Directory for output files.
+    tag:
+        File-name tag (default ``"discovered_remote"``).
+    void_uri_base:
+        Explicit base URI override (``None`` → resolved via
+        :func:`resolve_void_uri_base`).
+    entry:
+        Source entry dict — used to resolve *void_uri_base* when no
+        explicit override is given.
+    fmt:
+        Export format (``"jsonld"``, ``"void"``, ``"all"``).
+
+    Returns
+    -------
+    dict with ``partitions_found``, ``graphs_found``, ``files``.
+    Returns ``partitions_found == 0`` when the endpoint has no VoID
+    data.
+    """
+    result = discover_void_graphs(endpoint, exclude_graphs=False)
+    partitions = result.get("partitions", [])
+
+    if not partitions:
+        return {
+            "partitions_found": 0,
+            "graphs_found": 0,
+            "files": {},
+        }
+
+    base_uri = void_uri_base or resolve_void_uri_base(
+        name, entry=entry,
+    )
+    parser = VoidParser()
+    void_graph = parser.build_void_graph_from_partitions(
+        partitions, base_uri=base_uri,
+    )
+
+    files = export_schema_artifacts(
+        void_graph, name, endpoint, output_dir, tag=tag, fmt=fmt,
+    )
+
+    # Discovery report
+    out = Path(output_dir)
+    report = {
+        "dataset": name,
+        "endpoint": endpoint,
+        "source": "discovered",
+        "graphs_found": len(result.get("found_graphs", [])),
+        "partitions_found": len(partitions),
+    }
+    report_path = out / f"{name}_{tag}_report.json"
+    report_path.write_text(
+        json.dumps(report, indent=2) + "\n", encoding="utf-8",
+    )
+    files["report"] = str(report_path)
+
+    return {
+        "partitions_found": len(partitions),
+        "graphs_found": len(result.get("found_graphs", [])),
+        "files": files,
+    }
+
+
+def mine_local_source(
+    endpoint: str,
+    name: str,
+    output_dir: str | Path = ".",
+    *,
+    graph_uris: list[str] | None = None,
+    void_uri_base: str | None = None,
+    entry: "SourceEntry | dict[str, Any] | None" = None,
+    chunk_size: int = 10_000,
+    class_batch_size: int = 15,
+    class_chunk_size: int | None = None,
+    timeout: float = 120.0,
+    counts: bool = True,
+    one_shot: bool = False,
+    untyped_as_classes: bool = False,
+    fmt: str = "all",
+    authors: list[dict[str, str]] | None = None,
+    discover_first: bool = False,
+    qlever_version: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Mine a single dataset from a (local) SPARQL endpoint.
+
+    Calls :func:`rdfsolve.miner.mine_schema` (returns ``MinedSchema``)
+    then exports artefacts via :func:`export_schema_artifacts`.
+
+    When *discover_first* is ``True`` a VoID discovery pass is run
+    **before** mining and its results are saved with the
+    ``discovered_local`` tag.
+
+    Parameters
+    ----------
+    endpoint:
+        SPARQL endpoint URL (typically ``http://localhost:<port>``).
+    name:
+        Dataset name.
+    output_dir:
+        Directory for output files.
+    graph_uris:
+        Named-graph URIs to scope mining queries.  ``None`` means
+        "use entry's graph_uris if available, else mine all graphs".
+    void_uri_base:
+        Explicit VoID base URI override.
+    entry:
+        Source entry dict — used for graph_uris fallback and
+        void_uri_base resolution.
+    chunk_size, class_batch_size, class_chunk_size, timeout, counts,
+    one_shot, untyped_as_classes, fmt, authors:
+        Forwarded to :func:`rdfsolve.miner.mine_schema`.
+    discover_first:
+        Run VoID discovery before mining.
+    qlever_version:
+        ``{"git_hash_server": ..., "git_hash_index": ...}`` from
+        ``?cmd=stats``.  Written into the mining report.
+
+    Returns
+    -------
+    dict with ``classes``, ``properties``, ``files``, ``report_path``.
+    """
+    from .miner import mine_schema as _mine
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    # ── Optional discovery pass ──────────────────────────────────
+    if discover_first:
+        disc = discover_void_source(
+            endpoint, name, output_dir,
+            tag="discovered_local",
+            void_uri_base=void_uri_base,
+            entry=entry,
+            fmt=fmt,
+        )
+        logger.info(
+            "%s: discovered %d partitions",
+            name, disc.get("partitions_found", 0),
+        )
+
+    # ── Resolve graph_uris ───────────────────────────────────────
+    if graph_uris is None and entry is not None:
+        raw = entry.get("graph_uris")
+        if raw:
+            graph_uris = list(raw) if isinstance(raw, (list, tuple)) else [raw]
+
+    # ── Tag ──────────────────────────────────────────────────────
+    _tag = "mined_local_untyped" if untyped_as_classes else "mined_local"
+    rpt_path = out / f"{name}_{_tag}_report.json"
+
+    # ── Mine ─────────────────────────────────────────────────────
+    schema = _mine(
+        endpoint_url=endpoint,
+        dataset_name=name,
+        graph_uris=graph_uris,
+        chunk_size=chunk_size,
+        class_chunk_size=class_chunk_size,
+        class_batch_size=class_batch_size,
+        timeout=timeout,
+        counts=counts,
+        two_phase=True,
+        report_path=rpt_path,
+        filter_service_namespaces=True,
+        untyped_as_classes=untyped_as_classes,
+        authors=authors,
+        qlever_version=qlever_version,
+        one_shot=one_shot,
+    )
+
+    # Override the endpoint in schema metadata so localhost:PORT
+    # doesn't leak into the published artefacts.
+    resolved = resolve_void_uri_base(
+        name, override=void_uri_base, entry=entry,
+    )
+    schema.about.endpoint = resolved.rstrip("/")
+
+    result_files: dict[str, str] = {"report": str(rpt_path)}
+
+    # ── Export from MinedSchema ──────────────────────────────────
+    if fmt in ("jsonld", "all"):
+        jsonld_path = out / f"{name}_{_tag}_schema.jsonld"
+        jsonld_path.write_text(
+            json.dumps(schema.to_jsonld(), indent=2) + "\n",
+            encoding="utf-8",
+        )
+        result_files["schema_jsonld"] = str(jsonld_path)
+
+    if fmt in ("void", "all"):
+        void_g = schema.to_void_graph()
+        void_path = out / f"{name}_{_tag}_void.ttl"
+        void_g.serialize(destination=str(void_path), format="turtle")
+        result_files["void_ttl"] = str(void_path)
+
+    return {
+        "classes": len(schema.get_classes()),
+        "properties": len(schema.get_properties()),
+        "files": result_files,
+        "report_path": str(rpt_path),
+    }
+
+
+def generate_qleverfiles(
+    sources_path: str | Path | None = None,
+    data_dir: str | Path = ".",
+    *,
+    base_port: int = 7019,
+    runtime: str = "docker",
+    name_filter: str | None = None,
+    test: bool = False,
+) -> dict[str, Any]:
+    """Generate Qleverfiles for all downloadable sources.
+
+    For each eligible source a per-source ``Qleverfile`` is written to
+    ``<data_dir>/qlever_workdirs/<name>/Qleverfile``.
+
+    Additionally, for every ``local_provider`` group a *combined*
+    ``Qleverfile`` is written that indexes all member sources together
+    into one QLever instance.
+
+    Parameters
+    ----------
+    sources_path:
+        Path to sources file (``None`` → default).
+    data_dir:
+        Root directory where RDF dumps live.
+    base_port:
+        First port number for allocation.
+    runtime:
+        ``"docker"`` or ``"native"``.
+    name_filter:
+        Regex to select sources by name.
+    test:
+        If ``True``, generate only for the 3 smallest sources.
+
+    Returns
+    -------
+    dict with ``generated``, ``skipped``, ``failed`` lists.
+    """
+    from .qlever import (
+        build_provider_qleverfile as _build_provider,
+        build_qleverfile as _build_single,
+        detect_data_format as _detect,
+    )
+
+    data_dir = Path(data_dir).resolve()
+    entries = load_sources(sources_path, name_filter=name_filter)
+
+    # Keep only sources with a recognised download format.
+    downloadable = [e for e in entries if _detect(e) is not None]
+
+    if test:
+        downloadable = _select_test_sources(downloadable)
+
+    if not downloadable:
+        return {"generated": [], "skipped": [], "failed": []}
+
+    generated: list[str] = []
+    skipped: list[str] = []
+    failed: list[dict[str, str]] = []
+    port_map: dict[str, int] = {}
+
+    # ── Per-source Qleverfiles ───────────────────────────────────
+    for idx, entry in enumerate(downloadable):
+        name = entry.get("name", "unknown")
+        port = base_port + idx
+        port_map[name] = port
+
+        workdir = data_dir / "qlever_workdirs" / name
+        qleverfile_path = workdir / "Qleverfile"
+
+        try:
+            content = _build_single(entry, data_dir, port, runtime)
+            workdir.mkdir(parents=True, exist_ok=True)
+            qleverfile_path.write_text(content, encoding="utf-8")
+            generated.append(name)
+            logger.info(
+                "[%d/%d] %s: port %d -> %s",
+                idx + 1, len(downloadable), name, port, qleverfile_path,
+            )
+        except Exception as exc:
+            failed.append({"dataset": name, "error": str(exc)[:200]})
+
+    # ── Combined provider Qleverfiles ────────────────────────────
+    from collections import defaultdict
+
+    provider_groups: dict[str, list[Any]] = defaultdict(list)
+    for entry in downloadable:
+        provider = entry.get("local_provider", "")
+        if provider:
+            provider_groups[provider].append(entry)
+
+    provider_base_port = base_port + len(downloadable)
+    for p_idx, (provider, members) in enumerate(sorted(provider_groups.items())):
+        prov_port = provider_base_port + p_idx
+        port_map[provider] = prov_port
+
+        workdir = data_dir / "qlever_workdirs" / provider
+        qleverfile_path = workdir / "Qleverfile"
+
+        try:
+            content = _build_provider(
+                provider, members, data_dir, prov_port, runtime,
+            )
+            workdir.mkdir(parents=True, exist_ok=True)
+            qleverfile_path.write_text(content, encoding="utf-8")
+            generated.append(f"{provider} (combined)")
+            logger.info(
+                "[combined] %s: port %d, %d members -> %s",
+                provider, prov_port, len(members), qleverfile_path,
+            )
+        except Exception as exc:
+            failed.append({
+                "dataset": f"{provider} (combined)",
+                "error": str(exc)[:200],
+            })
+
+    # ── Port manifest ────────────────────────────────────────────
+    manifest_path = data_dir / "qlever_workdirs" / "ports.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(
+        json.dumps(port_map, indent=2) + "\n", encoding="utf-8",
+    )
+
+    return {"generated": generated, "skipped": skipped, "failed": failed}
+
+
+def _select_test_sources(entries: list) -> list:
+    """Pick the 3 smallest downloadable sources for test mode.
+
+    Prefers sources whose download URLs point to single files
+    (not multi-file lists) and sorts alphabetically as tie-breaker.
+    """
+    downloadable = []
+    for e in entries:
+        has_download = any(
+            k.startswith("download_") and e.get(k) for k in e
+        )
+        if has_download:
+            download_fields = [
+                k for k in e if k.startswith("download_") and e.get(k)
+            ]
+            is_single = all(isinstance(e[k], str) for k in download_fields)
+            downloadable.append((is_single, e.get("name", ""), e))
+
+    downloadable.sort(key=lambda t: (not t[0], t[1]))
+    selected = [t[2] for t in downloadable[:3]]
+
+    if not selected:
+        logger.warning("No downloadable sources found for test mode")
+    else:
+        logger.info(
+            "Test mode: selected %s",
+            [s.get("name", "?") for s in selected],
+        )
+
+    return selected
+
+
+def fetch_qlever_stats(
+    endpoint: str,
+    timeout: float = 10.0,
+) -> dict[str, str] | None:
+    """Fetch QLever build info from ``{endpoint}?cmd=stats``.
+
+    Returns a dict with ``git_hash_server`` and ``git_hash_index``
+    keys, or ``None`` if the endpoint does not expose stats.
+    """
+    import urllib.error
+    import urllib.request
+
+    url = endpoint.rstrip("/") + "?cmd=stats"
+    try:
+        req = urllib.request.Request(
+            url, headers={"Accept": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        result: dict[str, str] = {}
+        if "git-hash-server" in data:
+            result["git_hash_server"] = str(data["git-hash-server"])
+        if "git-hash-index" in data:
+            result["git_hash_index"] = str(data["git-hash-index"])
+        return result or None
+    except Exception as exc:
+        logger.debug("Could not fetch QLever stats from %s: %s", url, exc)
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Graph building (step 4b + 12)
+# ---------------------------------------------------------------------------
+
+
+def run_graph_pipeline(
+    schemas_dir: str | Path,
+    mappings_dir: str | Path,
+    output_dir: str | Path,
+    *,
+    datasets: list[str] | None = None,
+    schema_only: bool = False,
+    copy_schemas: bool = True,
+) -> dict[str, Any]:
+    """Build dataset connectivity graphs and export to Parquet.
+
+    Delegates to :func:`rdfsolve.graphs.run_graph_pipeline`.
+
+    Parameters
+    ----------
+    schemas_dir:
+        Root directory containing ``*_schema.jsonld`` files.
+    mappings_dir:
+        Root directory with ``sssom/``, ``semra/``, ``instance_matching/``,
+        ``inferenced/`` sub-directories.
+    output_dir:
+        Output root for graphs, schemas, Parquet tables.
+    datasets:
+        Optional dataset name globs to restrict processing.
+    schema_only:
+        If True, only select schemas (step 4b); skip graph build.
+    copy_schemas:
+        Copy selected schemas to ``output_dir/schemas/``.
+
+    Returns
+    -------
+    dict with ``metadata`` and ``benchmarks_path`` keys.
+    """
+    from rdfsolve.graphs import run_graph_pipeline as _impl
+
+    return _impl(
+        schemas_dir,
+        mappings_dir,
+        output_dir,
+        datasets=datasets,
+        schema_only=schema_only,
+        copy_schemas=copy_schemas,
+    )
+
+
+# ---------------------------------------------------------------------------
+# QLever boot
+# ---------------------------------------------------------------------------
+
+
+def boot_qlever_sources(
+    sources_yaml: str | Path = "data/sources.yaml",
+    *,
+    source_names: list[str] | None = None,
+    name_filter: str | None = None,
+    step: str = "all",
+    data_dir: str | Path = "data",
+    base_port: int = 7019,
+    runtime: str = "native",
+    singularity_image: str = "./data/qlever.sif",
+    docker_ref: str = "docker://adfreiburg/qlever:latest",
+    memory_for_queries: str = "500G",
+    timeout: str = "9999999999s",
+    parser_buffer_size: str = "8GB",
+    parallel_parsing: bool = False,
+    num_triples_per_batch: int = 1_000_000,
+    qlever_image: str = "docker.io/adfreiburg/qlever:latest",
+    num_threads: int = 8,
+    cache_size: str = "8G",
+    server_memory: str = "40G",
+    wait_timeout: int = 120,
+) -> list[dict[str, Any]]:
+    """Boot one or more QLever SPARQL endpoints via Singularity.
+
+    Delegates to :func:`rdfsolve.qlever.boot.boot_sources`.
+
+    Returns a list of result dicts (one per source).
+    """
+    from rdfsolve.qlever.boot import boot_sources as _impl
+
+    return _impl(
+        sources_yaml,
+        source_names=source_names,
+        name_filter=name_filter,
+        step=step,
+        data_dir=data_dir,
+        base_port=base_port,
+        runtime=runtime,
+        singularity_image=singularity_image,
+        docker_ref=docker_ref,
+        memory_for_queries=memory_for_queries,
+        timeout=timeout,
+        parser_buffer_size=parser_buffer_size,
+        parallel_parsing=parallel_parsing,
+        num_triples_per_batch=num_triples_per_batch,
+        qlever_image=qlever_image,
+        num_threads=num_threads,
+        cache_size=cache_size,
+        server_memory=server_memory,
+        wait_timeout=wait_timeout,
+    )
+
+
+def list_qlever_sources(
+    sources_yaml: str | Path = "data/sources.yaml",
+) -> list[dict[str, str]]:
+    """List downloadable sources that can be booted as QLever endpoints.
+
+    Delegates to :func:`rdfsolve.qlever.boot.list_downloadable_sources`.
+    """
+    from rdfsolve.qlever.boot import list_downloadable_sources as _impl
+
+    return _impl(sources_yaml)
+

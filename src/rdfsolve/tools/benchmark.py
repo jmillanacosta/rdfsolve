@@ -12,13 +12,13 @@ papers and reproducibility analysis:
 All data is written to ``benchmarks.jsonl`` (one JSON object per line)
 for easy aggregation with pandas / polars.
 
-Usage from ``mine_local.py``::
+Usage from the CLI or API::
 
     from rdfsolve.tools.benchmark import BenchmarkCollector
 
     bench = BenchmarkCollector(output_dir=Path("mined_schemas"))
     with bench.track("affymetrix", method="local-mine") as run:
-        _mine_single_local(endpoint, name, out, args)
+        result = mine_local_source(endpoint, name, out)
         run.add_extra("triples_indexed", 123456)
     # run data auto-flushed to benchmarks.jsonl
 """

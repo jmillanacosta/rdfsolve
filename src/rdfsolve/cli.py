@@ -1,7 +1,6 @@
 """Command line interface for :mod:`rdfsolve`."""
 
 import json
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -32,15 +31,16 @@ __all__ = [
 def main(ctx: click.Context, verbose: bool) -> None:
     r"""RDFSolve - RDF Schema Extraction, Export and Analysis Toolkit.
 
-    Pipeline commands (schema mining)::
+    Mining commands::
 
-        rdfsolve pipeline mine         Mine schemas from remote endpoints
-        rdfsolve pipeline local-mine   Mine from a local QLever endpoint
-        rdfsolve pipeline qleverfile   Generate Qleverfiles for QLever
+        rdfsolve discover      Discover VoID descriptions from remote endpoints
+        rdfsolve mine          Mine schemas from remote SPARQL endpoints
+        rdfsolve local-mine    Mine from a local QLever endpoint
+        rdfsolve qleverfile    Generate Qleverfiles for QLever
 
-    Analysis commands::
+    Export commands::
 
-        rdfsolve export    Interconvert schemas between JSON-LD, LinkML, SHACL, CSV, ...
+        rdfsolve export    Interconvert schemas (JSON-LD, LinkML, SHACL, CSV, ...)
 
     Mapping commands::
 
@@ -69,56 +69,62 @@ def main(ctx: click.Context, verbose: bool) -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Pipeline group - wraps scripts/mine_local.py routes
+# Paths & helpers
 # ═══════════════════════════════════════════════════════════════════
 
-# We add mine_local.py's ``src/`` dir to sys.path lazily so the
-# helper functions can be imported.  The script already does this
-# internally, but we repeat for safety.
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-_SCRIPTS = _REPO_ROOT / "scripts"
-
-
-def _ensure_scripts_importable() -> None:
-    """Make ``scripts/`` importable so we can call mine_local helpers."""
-    s = str(_SCRIPTS)
-    if s not in sys.path:
-        sys.path.insert(0, s)
-
-
-@main.group()
-def pipeline() -> None:
-    r"""Schema-mining pipeline: mine, local-mine, qleverfile.
-
-    These commands replace the old ``rdfsolve discover``, ``mine``, and
-    ``mine-all`` top-level commands.  Each route can target remote SPARQL
-    endpoints or a local QLever instance.
-
-    Quick-start examples::
-
-        # Mine schemas from all remote endpoints
-        rdfsolve pipeline mine
-
-        # Generate Qleverfiles then mine locally
-        rdfsolve pipeline qleverfile --data-dir /data/rdf
-        rdfsolve pipeline local-mine --name drugbank \
-            --endpoint http://localhost:7026
-
-    All pipeline commands accept ``--sources``, ``--output-dir``,
-    ``--filter``, ``--timeout``, and ``--benchmark``.
-    Use ``rdfsolve pipeline <cmd> --help`` for full details.
-    """
-    _ensure_scripts_importable()
-
-
-# ── Shared option decorators ─────────────────────────────────────
-
 _DEFAULT_SOURCES = str(_REPO_ROOT / "data" / "sources.yaml")
 _DEFAULT_OUTPUT = str(_REPO_ROOT / "mined_schemas")
 
 
+def _parse_authors(
+    raw: tuple[str, ...] | None,
+) -> list[dict[str, str]] | None:
+    """Parse ``--author`` values into ``[{name, orcid}]``."""
+    if not raw:
+        return None
+    result: list[dict[str, str]] = []
+    for item in raw:
+        if "|" in item:
+            name, orcid = item.split("|", 1)
+            result.append({"name": name.strip(), "orcid": orcid.strip()})
+        else:
+            result.append({"name": item.strip()})
+    return result or None
+
+
+def _print_result(result: dict[str, Any]) -> None:
+    """Pretty-print a route result dict."""
+    click.echo(f"\n{'═' * 60}")
+    for key in (
+        "succeeded",
+        "generated",
+        "discovered",
+        "empty",
+        "failed",
+        "skipped",
+    ):
+        val = result.get(key)
+        if val is not None:
+            label = key.capitalize()
+            click.echo(f"  {label:12s}: {len(val)}")
+            if key == "failed" and val:
+                for entry in val[:10]:
+                    ds = entry["dataset"] if isinstance(entry, dict) else entry
+                    err = (
+                        entry.get("error", "")[:80]
+                        if isinstance(entry, dict)
+                        else ""
+                    )
+                    click.echo(f"    • {ds}: {err}")
+    click.echo(f"{'═' * 60}")
+
+
+# ── Shared option decorators ─────────────────────────────────────
+
+
 def _common_options(fn: Any) -> Any:
-    """Shared options for all pipeline subcommands."""
+    """Shared options for mining / discover / qleverfile commands."""
     fn = click.option(
         "--sources",
         default=_DEFAULT_SOURCES,
@@ -169,7 +175,8 @@ def _mining_options(fn: Any) -> Any:
         type=int,
         default=None,
         help=(
-            "Page size for Phase-1 class discovery (two-phase mode only). Default: no pagination."
+            "Page size for Phase-1 class discovery "
+            "(two-phase mode only). Default: no pagination."
         ),
     )(fn)
     fn = click.option(
@@ -186,7 +193,7 @@ def _mining_options(fn: Any) -> Any:
     fn = click.option(
         "--untyped-as-classes",
         is_flag=True,
-        help=("Treat untyped URI objects as owl:Class references instead of rdfs:Resource."),
+        help="Treat untyped URI objects as owl:Class references.",
     )(fn)
     fn = click.option(
         "--author",
@@ -206,90 +213,164 @@ def _mining_options(fn: Any) -> Any:
         help=(
             "Mine using a single unbounded SELECT per pattern "
             "type (no LIMIT/OFFSET, no fallback chain). "
-            "Recommended for local QLever endpoints. "
-            "Records per-query timing and row count in the "
-            "report for comparison with the fallback-chain run."
+            "Recommended for local QLever endpoints."
         ),
     )(fn)
     return fn
 
 
-def _build_namespace(ctx: click.Context, **overrides: Any) -> Any:
-    """Build an argparse.Namespace from Click params + overrides.
+# ═══════════════════════════════════════════════════════════════════
+# Top-level mining commands (discover, mine, local-mine, qleverfile)
+# ═══════════════════════════════════════════════════════════════════
 
-    This bridges Click -> argparse so we can call mine_local.py's
-    route functions directly.
 
-    Safe defaults are injected for attributes that route functions
-    access directly (not via getattr) but that Click never sets
-    (e.g. ``verbose``, ``route``).
+@main.command("discover")
+@_common_options
+def cmd_discover(
+    sources: str,
+    output_dir: str,
+    fmt: str,
+    timeout: float,
+    name_filter: str | None,
+    benchmark: bool,
+) -> None:
+    r"""Discover existing VoID descriptions from remote endpoints.
+
+    Queries every source endpoint for pre-existing VoID partitions
+    and exports VoID / JSON-LD / LinkML / SHACL artefacts.
+
+    Examples::
+
+        rdfsolve discover
+        rdfsolve discover --filter "chembl|drugbank"
+        rdfsolve discover --output-dir ./discovered
     """
-    import argparse
+    from .api import discover_void_source, load_sources
 
-    # Safe defaults for attributes only the argparse __main__ sets.
-    defaults = {
-        "verbose": False,
-        "route": None,
-    }
-    defaults.update(ctx.params)
-    defaults.update(overrides)
-    return argparse.Namespace(**defaults)
+    entries = load_sources(sources, name_filter=name_filter)
+    discovered: list[str] = []
+    empty: list[str] = []
+    failed: list[dict[str, str]] = []
+    skipped: list[str] = []
+
+    total = len(entries)
+    for idx, entry in enumerate(entries, 1):
+        ename = entry.get("name", "")
+        endpoint = entry.get("endpoint", "")
+        if not endpoint:
+            skipped.append(ename)
+            continue
+        try:
+            res = discover_void_source(
+                endpoint, ename, output_dir,
+                tag="discovered_remote",
+                entry=entry,
+                fmt=fmt,
+            )
+            if res["partitions_found"]:
+                discovered.append(ename)
+                click.echo(
+                    f"  [{idx}/{total}] {ename}: "
+                    f"{res['partitions_found']} partitions"
+                )
+            else:
+                empty.append(ename)
+        except Exception as exc:
+            msg = str(exc)[:120]
+            click.echo(f"  [{idx}/{total}] {ename}: FAIL {msg}")
+            failed.append({"dataset": ename, "error": msg})
+
+    _print_result({
+        "discovered": discovered,
+        "empty": empty,
+        "failed": failed,
+        "skipped": skipped,
+    })
 
 
-def _print_result(result: dict[str, Any]) -> None:
-    """Pretty-print a route result dict."""
-    click.echo(f"\n{'═' * 60}")
-    for key in (
-        "succeeded",
-        "generated",
-        "discovered",
-        "empty",
-        "failed",
-        "skipped",
-    ):
-        val = result.get(key)
-        if val is not None:
-            label = key.capitalize()
-            click.echo(f"  {label:12s}: {len(val)}")
-            if key == "failed" and val:
-                for entry in val[:10]:
-                    ds = entry["dataset"] if isinstance(entry, dict) else entry
-                    err = entry.get("error", "")[:80] if isinstance(entry, dict) else ""
-                    click.echo(f"    • {ds}: {err}")
-    click.echo(f"{'═' * 60}")
-
-
-# ── pipeline mine ─────────────────────────────────────────────────
-
-
-@pipeline.command("mine")
+@main.command("mine")
 @_common_options
 @_mining_options
-@click.pass_context
-def pipeline_mine(ctx: click.Context, **kwargs: Any) -> None:
+def cmd_mine(
+    sources: str,
+    output_dir: str,
+    fmt: str,
+    timeout: float,
+    name_filter: str | None,
+    benchmark: bool,
+    chunk_size: int,
+    class_chunk_size: int | None,
+    class_batch_size: int,
+    no_counts: bool,
+    untyped_as_classes: bool,
+    authors_raw: tuple[str, ...],
+    one_shot: bool,
+) -> None:
     r"""Mine schemas from remote SPARQL endpoints.
 
     Standard mining workflow: iterate endpoints, extract schema
     patterns, write JSON-LD schemas, VoID turtle, and analytics
-    reports.  Reports are always written.
+    reports.
 
     Examples::
 
-        rdfsolve pipeline mine
-        rdfsolve pipeline mine --filter "drugbank"
-        rdfsolve pipeline mine --benchmark
+        rdfsolve mine
+        rdfsolve mine --filter "drugbank"
+        rdfsolve mine --benchmark
     """
-    from mine_local import _route_mine
+    from .api import mine_all_sources
 
-    args = _build_namespace(ctx)
-    result = _route_mine(args)
+    authors = _parse_authors(authors_raw)
+
+    # Apply name_filter by writing a temporary filtered sources file.
+    sources_path: str = sources
+    if name_filter:
+        from .api import load_sources
+
+        entries = load_sources(sources, name_filter=name_filter)
+        if not entries:
+            click.echo("No sources match the filter.")
+            return
+
+        import tempfile
+        import yaml
+
+        tmp = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False, prefix="rdfsolve_filtered_",
+        )
+        yaml.dump(
+            [dict(e) for e in entries], tmp,
+            default_flow_style=False, allow_unicode=True,
+        )
+        tmp.close()
+        sources_path = tmp.name
+
+    def _on_progress(
+        name: str, idx: int, total: int, error: str | None,
+    ) -> None:
+        if error and error != "skipped":
+            click.echo(f"  [{idx}/{total}] {name}: FAIL {error[:120]}")
+        elif not error:
+            click.echo(f"  [{idx}/{total}] {name}: OK")
+
+    result = mine_all_sources(
+        sources=sources_path,
+        output_dir=output_dir,
+        fmt=fmt,
+        chunk_size=chunk_size,
+        class_chunk_size=class_chunk_size,
+        class_batch_size=class_batch_size,
+        timeout=timeout,
+        counts=not no_counts,
+        reports=True,
+        untyped_as_classes=untyped_as_classes,
+        authors=authors,
+        on_progress=_on_progress,
+    )
     _print_result(result)
 
 
-# ── pipeline local-mine ──────────────────────────────────────────
-
-
-@pipeline.command("local-mine")
+@main.command("local-mine")
 @_common_options
 @_mining_options
 @click.option(
@@ -300,7 +381,7 @@ def pipeline_mine(ctx: click.Context, **kwargs: Any) -> None:
     help=(
         "Named graph URI to scope mining queries to (repeatable). "
         "When omitted, graph_uris from sources.yaml are used. "
-        "Pass '--graph-uri none' to mine all graphs (no filter)."
+        "Pass '--graph-uri none' to mine all graphs."
     ),
 )
 @click.option(
@@ -308,70 +389,146 @@ def pipeline_mine(ctx: click.Context, **kwargs: Any) -> None:
     default="http://localhost:7001",
     help="Local QLever SPARQL endpoint URL.",
 )
+@click.option("--name", default=None, help="Dataset name (single-dataset mode).")
 @click.option(
-    "--name",
-    default=None,
-    help="Dataset name (required for single-dataset mode).",
-)
-@click.option(
-    "--discover-first",
-    is_flag=True,
-    help="Run VoID discovery before mining.",
+    "--discover-first", is_flag=True, help="Run VoID discovery before mining.",
 )
 @click.option(
     "--void-uri-base",
     default=None,
-    help=(
-        "Base URI for generated VoID partition IRIs "
-        "(default: sources.yaml value or built-in template)."
-    ),
+    help="Base URI for generated VoID partition IRIs.",
 )
 @click.option(
-    "--test",
-    is_flag=True,
-    help="Process only the 3 smallest downloadable sources.",
+    "--test", is_flag=True, help="Process only the 3 smallest downloadable sources.",
 )
-@click.pass_context
-def pipeline_local_mine(ctx: click.Context, **kwargs: Any) -> None:
+def cmd_local_mine(
+    sources: str,
+    output_dir: str,
+    fmt: str,
+    timeout: float,
+    name_filter: str | None,
+    benchmark: bool,
+    chunk_size: int,
+    class_chunk_size: int | None,
+    class_batch_size: int,
+    no_counts: bool,
+    untyped_as_classes: bool,
+    authors_raw: tuple[str, ...],
+    one_shot: bool,
+    graph_uris: tuple[str, ...],
+    endpoint: str,
+    name: str | None,
+    discover_first: bool,
+    void_uri_base: str | None,
+    test: bool,
+) -> None:
     r"""Mine schemas from a local QLever endpoint.
 
     Use after downloading data and running ``qlever index && qlever
-    start`` for a dataset.  Connects to the local endpoint and runs
-    the full mining pipeline.
+    start`` for a dataset.
 
-    Example::
+    Examples::
 
-        rdfsolve pipeline local-mine \
-            --endpoint http://localhost:7026 \
-            --name drugbank --discover-first --benchmark
+        rdfsolve local-mine --name drugbank \
+            --endpoint http://localhost:7026 --discover-first
+        rdfsolve local-mine --test
     """
-    from mine_local import _route_local_mine
+    from .api import (
+        _select_test_sources,
+        fetch_qlever_stats,
+        load_sources,
+        mine_local_source,
+    )
 
-    args = _build_namespace(ctx)
-    result = _route_local_mine(args)
-    _print_result(result)
+    authors = _parse_authors(authors_raw)
+
+    # Normalise graph_uris from Click's tuple
+    _graph_uris: list[str] | None = None
+    if graph_uris:
+        if len(graph_uris) == 1 and graph_uris[0].lower() == "none":
+            _graph_uris = None
+        else:
+            _graph_uris = list(graph_uris)
+
+    succeeded: list[str] = []
+    failed: list[dict[str, str]] = []
+
+    def _mine_one(
+        ds_name: str, ep: str,
+        entry: dict[str, Any] | None = None,
+        guris: list[str] | None = None,
+    ) -> None:
+        qlever_v = fetch_qlever_stats(ep, timeout=min(timeout, 10.0))
+        mine_local_source(
+            ep, ds_name, output_dir,
+            graph_uris=guris or _graph_uris,
+            void_uri_base=void_uri_base,
+            entry=entry,
+            chunk_size=chunk_size,
+            class_batch_size=class_batch_size,
+            class_chunk_size=class_chunk_size,
+            timeout=timeout,
+            counts=not no_counts,
+            one_shot=one_shot,
+            untyped_as_classes=untyped_as_classes,
+            fmt=fmt,
+            authors=authors,
+            discover_first=discover_first,
+            qlever_version=qlever_v,
+        )
+
+    # ── Single-dataset mode ──────────────────────────────────────
+    if name and not test:
+        try:
+            _mine_one(name, endpoint)
+            succeeded.append(name)
+            click.echo(f"  {name}: OK")
+        except Exception as exc:
+            msg = str(exc)[:120]
+            click.echo(f"  {name}: FAIL {msg}")
+            failed.append({"dataset": name, "error": msg})
+
+        _print_result({"succeeded": succeeded, "failed": failed, "skipped": []})
+        return
+
+    # ── Batch mode ───────────────────────────────────────────────
+    entries = load_sources(sources, name_filter=name_filter)
+
+    if test:
+        entries = _select_test_sources(entries)
+        if not entries:
+            click.echo("No downloadable sources for test mode.")
+            return
+
+    batch = []
+    for e in entries:
+        ep = e.get("local_endpoint", "")
+        if ep:
+            batch.append((e, ep))
+        elif test:
+            batch.append((e, endpoint))
+
+    total = len(batch)
+    for idx, (entry, ep) in enumerate(batch, 1):
+        ename = entry.get("name", "")
+        try:
+            _mine_one(ename, ep, entry=entry)
+            succeeded.append(ename)
+            click.echo(f"  [{idx}/{total}] {ename}: OK")
+        except Exception as exc:
+            msg = str(exc)[:120]
+            click.echo(f"  [{idx}/{total}] {ename}: FAIL {msg}")
+            failed.append({"dataset": ename, "error": msg})
+
+    _print_result({"succeeded": succeeded, "failed": failed, "skipped": []})
 
 
-# ── pipeline qleverfile ──────────────────────────────────────────
-
-
-@pipeline.command("qleverfile")
+@main.command("qleverfile")
 @_common_options
+@click.option("--data-dir", required=True, help="Root directory where RDF dumps live.")
+@click.option("--base-port", type=int, default=7019, help="First port number.")
 @click.option(
-    "--data-dir",
-    required=True,
-    help="Root directory where RDF dumps live (required).",
-)
-@click.option(
-    "--base-port",
-    type=int,
-    default=7019,
-    help="First port number for allocation.",
-)
-@click.option(
-    "--test",
-    is_flag=True,
-    help="Generate only for 3 smallest downloadable sources.",
+    "--test", is_flag=True, help="Generate only for 3 smallest downloadable sources.",
 )
 @click.option(
     "--runtime",
@@ -379,23 +536,37 @@ def pipeline_local_mine(ctx: click.Context, **kwargs: Any) -> None:
     default="docker",
     help="QLever runtime.",
 )
-@click.pass_context
-def pipeline_qleverfile(ctx: click.Context, **kwargs: Any) -> None:
+def cmd_qleverfile(
+    sources: str,
+    output_dir: str,
+    fmt: str,
+    timeout: float,
+    name_filter: str | None,
+    benchmark: bool,
+    data_dir: str,
+    base_port: int,
+    test: bool,
+    runtime: str,
+) -> None:
     r"""Generate Qleverfiles for local QLever mining.
 
-    Creates a Qleverfile for each source that has download URLs
-    in the sources registry.  Each Qleverfile includes a GET_DATA_CMD
-    that downloads and preprocesses the data.
+    Creates a Qleverfile for each source with download URLs.
 
     Examples::
 
-        rdfsolve pipeline qleverfile --data-dir /data/rdf
-        rdfsolve pipeline qleverfile --data-dir /data/rdf --test
+        rdfsolve qleverfile --data-dir /data/rdf
+        rdfsolve qleverfile --data-dir /data/rdf --test
     """
-    from mine_local import _route_generate_qleverfile
+    from .api import generate_qleverfiles
 
-    args = _build_namespace(ctx)
-    result = _route_generate_qleverfile(args)
+    result = generate_qleverfiles(
+        sources_path=sources,
+        data_dir=data_dir,
+        base_port=base_port,
+        runtime=runtime,
+        name_filter=name_filter,
+        test=test,
+    )
     _print_result(result)
 
 
@@ -758,6 +929,510 @@ def export_rdfconfig(
 
 
 # ---------------------------------------------------------------------------
+# bioregistry command
+# ---------------------------------------------------------------------------
+
+
+@main.command("bioregistry-enrich")
+@click.option(
+    "--sources",
+    "-s",
+    default="data/sources.yaml",
+    show_default=True,
+    help="Path to sources YAML file.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Print resolved prefixes but do not write the file.",
+)
+@click.option(
+    "--name",
+    "-n",
+    "names",
+    multiple=True,
+    help="Only process entries whose 'name' matches (repeatable).",
+)
+def bioregistry_enrich_cmd(
+    sources: str,
+    dry_run: bool,
+    names: tuple[str, ...],
+) -> None:
+    """Enrich sources.yaml with Bioregistry metadata in-place.
+
+    Reads the sources YAML, resolves the canonical Bioregistry prefix
+    for each entry, and writes the resolved ``bioregistry_*`` fields
+    back into the file, preserving existing keys and order.
+    """
+    import yaml as _yaml
+
+    from rdfsolve.sources import SourceEntry, enrich_source_with_bioregistry
+
+    _BIOREGISTRY_KEYS = [
+        "bioregistry_prefix",
+        "bioregistry_name",
+        "bioregistry_description",
+        "bioregistry_homepage",
+        "bioregistry_license",
+        "bioregistry_domain",
+        "bioregistry_uri_prefix",
+        "bioregistry_uri_prefixes",
+        "bioregistry_logo",
+        "bioregistry_keywords",
+        "bioregistry_synonyms",
+        "bioregistry_publications",
+        "bioregistry_extra_providers",
+        "bioregistry_mappings",
+    ]
+
+    sources_path = Path(sources)
+    if not sources_path.exists():
+        click.echo(f"Error: file not found: {sources_path}", err=True)
+        raise click.Abort()
+
+    nodes: list[dict] = _yaml.safe_load(sources_path.read_text(encoding="utf-8")) or []
+    if not isinstance(nodes, list):
+        click.echo("Error: expected a YAML list of source mappings.", err=True)
+        raise click.Abort()
+
+    name_filter: set[str] | None = set(names) if names else None
+
+    resolved = 0
+    skipped = 0
+    for node in nodes:
+        name = node.get("name", "")
+        if name_filter and name not in name_filter:
+            continue
+
+        # Build a minimal SourceEntry for the resolver
+        entry: SourceEntry = {}  # type: ignore[assignment]
+        for key in ("name", "void_iri", "endpoint", "graph_uris"):
+            if key in node:
+                entry[key] = node[key]  # type: ignore[literal-required]
+
+        prefix = enrich_source_with_bioregistry(entry)
+
+        if prefix:
+            # Copy resolved fields back into the raw YAML node
+            for key in _BIOREGISTRY_KEYS:
+                if key in entry:
+                    node[key] = entry[key]  # type: ignore[literal-required]
+                else:
+                    node.pop(key, None)
+            resolved += 1
+            click.echo(f"  {name!r:40s} → {prefix}")
+        else:
+            skipped += 1
+
+    click.echo(f"\nResolved: {resolved}  |  No match: {skipped}")
+
+    if dry_run:
+        click.echo("(dry-run: file not written)")
+        return
+
+    with open(sources_path, "w", encoding="utf-8") as fh:
+        _yaml.dump(
+            nodes,
+            fh,
+            allow_unicode=True,
+            default_flow_style=False,
+            sort_keys=False,
+        )
+    click.echo(f"Written: {sources_path}")
+
+
+# ---------------------------------------------------------------------------
+# build-graphs command
+# ---------------------------------------------------------------------------
+
+
+@main.command("build-graphs")
+@click.option(
+    "--schemas-dir",
+    default="docker/schemas",
+    show_default=True,
+    help="Root schemas directory.",
+)
+@click.option(
+    "--mappings-dir",
+    default="docker/mappings",
+    show_default=True,
+    help="Root mappings directory.",
+)
+@click.option(
+    "--output-dir",
+    default="results/paper_data",
+    show_default=True,
+    help="paper_data output root.",
+)
+@click.option(
+    "--datasets",
+    multiple=True,
+    help="Only process these dataset names (shell-style globs, repeatable).",
+)
+@click.option(
+    "--schema-only",
+    is_flag=True,
+    default=False,
+    help="Run schema selection only; skip graph construction.",
+)
+@click.option(
+    "--no-copy-schemas",
+    is_flag=True,
+    default=False,
+    help="Skip copying selected schemas to output-dir/schemas/.",
+)
+def build_graphs_cmd(
+    schemas_dir: str,
+    mappings_dir: str,
+    output_dir: str,
+    datasets: tuple[str, ...],
+    schema_only: bool,
+    no_copy_schemas: bool,
+) -> None:
+    """Select canonical schemas and build dataset-level connectivity graphs.
+
+    Performs pipeline step 4b (schema selection) and step 12 (graph
+    construction).  Exports edge/node Parquet tables, strategy/predicate
+    counts, and metadata.json.
+    """
+    from rdfsolve.api import run_graph_pipeline
+
+    try:
+        result = run_graph_pipeline(
+            schemas_dir=schemas_dir,
+            mappings_dir=mappings_dir,
+            output_dir=output_dir,
+            datasets=list(datasets) if datasets else None,
+            schema_only=schema_only,
+            copy_schemas=not no_copy_schemas,
+        )
+    except FileNotFoundError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    meta = result.get("metadata", {})
+    click.echo(f"  Datasets: {meta.get('n_datasets', len(meta.get('datasets', [])))}")
+    if not schema_only:
+        for gname in ("G_schema", "G_raw", "G_inferred"):
+            g = meta.get(gname, {})
+            click.echo(f"  {gname}: {g.get('nodes', '?')} nodes, {g.get('edges', '?')} edges")
+    click.echo(f"  Output: {output_dir}")
+
+
+# ---------------------------------------------------------------------------
+# ontology-index command
+# ---------------------------------------------------------------------------
+
+
+@main.command("ontology-index")
+@click.option(
+    "--ontologies",
+    multiple=True,
+    help="Explicit OLS4 ontology IDs to index (repeatable). Default: all.",
+)
+@click.option(
+    "--from-schemas",
+    "from_schemas_dir",
+    default=None,
+    help="Directory with *_schema.jsonld files to restrict indexing.",
+)
+@click.option(
+    "--from-sources",
+    "from_sources_yaml",
+    default=None,
+    help="Sources YAML whose URI prefixes restrict indexing.",
+)
+@click.option(
+    "--cache-dir",
+    default=None,
+    help="Directory for the OLS4 HTTP-response diskcache.",
+)
+@click.option(
+    "--data-dir",
+    default=None,
+    help="Directory to write ontology_index.pkl.gz / ontology_graph.graphml.",
+)
+@click.option(
+    "--db",
+    default=None,
+    help="Path to rdfsolve SQLite database for DB persistence.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Build the index but do not write any files or DB rows.",
+)
+def ontology_index_cmd(
+    ontologies: tuple[str, ...],
+    from_schemas_dir: str | None,
+    from_sources_yaml: str | None,
+    cache_dir: str | None,
+    data_dir: str | None,
+    db: str | None,
+    dry_run: bool,
+) -> None:
+    """Build and persist an OntologyIndex from OLS4 metadata.
+
+    Indexes ontology class hierarchies from the EBI Ontology Lookup
+    Service (OLS4) and persists the result to disk and/or database.
+    """
+    from rdfsolve.api import build_ontology_index, save_ontology_index
+
+    # Collect class URIs from schemas or sources if requested
+    schema_class_uris: set[str] | None = None
+    explicit_ids: list[str] | None = list(ontologies) if ontologies else None
+
+    if from_schemas_dir:
+        from rdfsolve.graphs import collect_schemas  # noqa: F811
+
+        # Use a lightweight helper to extract IRIs
+        import json as _json
+
+        from rdfsolve._uri import expand_curie
+
+        root = Path(from_schemas_dir)
+        uris: set[str] = set()
+        context: dict[str, str] = {}
+        for sf in sorted(root.rglob("*_schema.jsonld")):
+            try:
+                doc = _json.loads(sf.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            raw_ctx = doc.get("@context", {})
+            ctx: dict[str, str] = {}
+            if isinstance(raw_ctx, list):
+                for item in raw_ctx:
+                    if isinstance(item, dict):
+                        for k, v in item.items():
+                            if isinstance(v, str):
+                                ctx[k] = v
+            elif isinstance(raw_ctx, dict):
+                for k, v in raw_ctx.items():
+                    if isinstance(v, str):
+                        ctx[k] = v
+            context.update(ctx)
+            for node in doc.get("@graph", []):
+                raw_id = node.get("@id") if isinstance(node, dict) else None
+                if isinstance(raw_id, str) and raw_id:
+                    expanded = expand_curie(raw_id, ctx)
+                    if expanded.startswith(("http://", "https://")):
+                        uris.add(expanded)
+        schema_class_uris = uris or None
+
+    elif from_sources_yaml:
+        from rdfsolve.sources import load_sources as _load
+
+        entries = _load(Path(from_sources_yaml))
+        uris = set()
+        for entry in entries:
+            for key in ("uri_prefix", "bioregistry_uri_prefix"):
+                val = entry.get(key)
+                if isinstance(val, str) and val:
+                    uris.add(val)
+            for val in entry.get("bioregistry_uri_prefixes", []) or []:
+                if isinstance(val, str) and val:
+                    uris.add(val)
+        schema_class_uris = uris or None
+
+    try:
+        idx = build_ontology_index(
+            schema_class_uris=schema_class_uris,
+            cache_dir=cache_dir,
+            ontology_ids=explicit_ids,
+        )
+    except Exception as exc:
+        click.echo(f"Error building index: {exc}", err=True)
+        raise click.Abort()
+
+    stats = idx.stats()
+    click.echo("\n── OntologyIndex statistics ──")
+    for key, val in stats.items():
+        click.echo(f"  {key:<20}: {val:,}")
+
+    if dry_run:
+        click.echo("(dry-run: nothing written)")
+        return
+
+    wrote = False
+    if db:
+        try:
+            from rdfsolve.api import save_ontology_index_to_db
+            from rdfsolve.backend.database import Database
+
+            _db = Database(db)
+            save_ontology_index_to_db(idx, _db)
+            click.echo(f"  Persisted to database: {db}")
+            wrote = True
+        except Exception as exc:
+            click.echo(f"Error saving to DB: {exc}", err=True)
+            raise click.Abort()
+
+    if data_dir:
+        try:
+            save_ontology_index(idx, data_dir)
+            click.echo(f"  Written to: {data_dir}/")
+            wrote = True
+        except Exception as exc:
+            click.echo(f"Error saving to disk: {exc}", err=True)
+            raise click.Abort()
+
+    if not wrote:
+        click.echo(
+            "⚠ Index built but not persisted. "
+            "Pass --db and/or --data-dir to save it.",
+            err=True,
+        )
+
+
+# ---------------------------------------------------------------------------
+# qlever-boot command
+# ---------------------------------------------------------------------------
+
+
+@main.command("qlever-boot")
+@click.option(
+    "--source",
+    "sources",
+    multiple=True,
+    help="Source name (repeatable). Must match 'name' in sources.yaml.",
+)
+@click.option(
+    "--filter",
+    "name_filter",
+    default=None,
+    help="Regex filter applied to source names.",
+)
+@click.option(
+    "--sources-yaml",
+    default="data/sources.yaml",
+    show_default=True,
+    help="Path to sources.yaml.",
+)
+@click.option(
+    "--list-sources",
+    is_flag=True,
+    default=False,
+    help="List downloadable sources and exit.",
+)
+@click.option(
+    "--step",
+    default="all",
+    show_default=True,
+    type=click.Choice(
+        ["all", "setup", "get-data", "index", "start", "stop", "index-start", "setup-data"],
+        case_sensitive=False,
+    ),
+    help="Which pipeline step(s) to run.",
+)
+@click.option("--data-dir", default="data", show_default=True, help="Root data directory.")
+@click.option("--port", type=int, default=7019, show_default=True, help="Base SPARQL server port.")
+@click.option(
+    "--runtime",
+    default="native",
+    show_default=True,
+    type=click.Choice(["native", "docker"]),
+    help="QLever runtime for the Qleverfile.",
+)
+@click.option("--singularity-image", default="./data/qlever.sif", show_default=True)
+@click.option("--docker-ref", default="docker://adfreiburg/qlever:latest", show_default=True)
+@click.option("--memory-for-queries", default="500G", show_default=True)
+@click.option("--timeout", "qlever_timeout", default="9999999999s", show_default=True)
+@click.option("--parser-buffer-size", default="8GB", show_default=True)
+@click.option("--parallel-parsing", is_flag=True, default=False)
+@click.option("--num-triples-per-batch", type=int, default=1_000_000, show_default=True)
+@click.option("--qlever-image", default="docker.io/adfreiburg/qlever:latest", show_default=True)
+@click.option("--num-threads", type=int, default=8, show_default=True)
+@click.option("--cache-size", default="8G", show_default=True)
+@click.option("--server-memory", default="40G", show_default=True)
+@click.option("--wait-timeout", type=int, default=120, show_default=True)
+def qlever_boot_cmd(
+    sources: tuple[str, ...],
+    name_filter: str | None,
+    sources_yaml: str,
+    list_sources: bool,
+    step: str,
+    data_dir: str,
+    port: int,
+    runtime: str,
+    singularity_image: str,
+    docker_ref: str,
+    memory_for_queries: str,
+    qlever_timeout: str,
+    parser_buffer_size: str,
+    parallel_parsing: bool,
+    num_triples_per_batch: int,
+    qlever_image: str,
+    num_threads: int,
+    cache_size: str,
+    server_memory: str,
+    wait_timeout: int,
+) -> None:
+    """Boot QLever SPARQL endpoint(s) via Singularity.
+
+    Generates a Qleverfile, downloads data, builds the index, and starts
+    the SPARQL server for one or more sources from sources.yaml.
+    """
+    if list_sources:
+        from rdfsolve.api import list_qlever_sources
+
+        rows = list_qlever_sources(sources_yaml)
+        click.echo(f"{'Name':<40} {'Format':<15} {'Provider'}")
+        click.echo("─" * 70)
+        for r in rows:
+            click.echo(f"{r['name']:<40} {r['format']:<15} {r['provider']}")
+        click.echo(f"\nTotal: {len(rows)} downloadable sources.")
+        return
+
+    from rdfsolve.api import boot_qlever_sources
+
+    try:
+        results = boot_qlever_sources(
+            sources_yaml,
+            source_names=list(sources) if sources else None,
+            name_filter=name_filter,
+            step=step,
+            data_dir=data_dir,
+            base_port=port,
+            runtime=runtime,
+            singularity_image=singularity_image,
+            docker_ref=docker_ref,
+            memory_for_queries=memory_for_queries,
+            timeout=qlever_timeout,
+            parser_buffer_size=parser_buffer_size,
+            parallel_parsing=parallel_parsing,
+            num_triples_per_batch=num_triples_per_batch,
+            qlever_image=qlever_image,
+            num_threads=num_threads,
+            cache_size=cache_size,
+            server_memory=server_memory,
+            wait_timeout=wait_timeout,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        raise click.Abort()
+
+    ok = [r for r in results if r["status"] == "ok"]
+    failed = [r for r in results if r["status"] == "failed"]
+    click.echo(f"\n  Done: {len(ok)} succeeded, {len(failed)} failed")
+    for r in ok:
+        click.echo(f"  ✓ {r['name']:<35} {r.get('endpoint', '—')}")
+    for r in failed:
+        click.echo(f"  ✗ {r['name']:<35} {r.get('error', '?')[:40]}")
+
+    if failed:
+        raise SystemExit(1)
+
+
+# ---------------------------------------------------------------------------
 # instance-match command group
 # ---------------------------------------------------------------------------
 
@@ -914,6 +1589,14 @@ def probe_cmd(
     default=False,
     help="Re-probe even if the output file already exists.",
 )
+@click.option(
+    "--ports-json",
+    default=None,
+    help=(
+        "Path to QLever ports.json ({name: port}).  When supplied, "
+        "queries go to local QLever endpoints instead of remote SPARQL."
+    ),
+)
 def seed_cmd(
     prefix_list: tuple[str, ...],
     sources: str | None,
@@ -923,6 +1606,7 @@ def seed_cmd(
     datasets: tuple[str, ...],
     timeout: float,
     no_skip_existing: bool,
+    ports_json: str | None,
 ) -> None:
     """Seed mapping files for multiple bioregistry resources.
 
@@ -941,6 +1625,7 @@ def seed_cmd(
             dataset_names=list(datasets) if datasets else None,
             timeout=timeout,
             skip_existing=not no_skip_existing,
+            ports_json=ports_json,
         )
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
@@ -1045,7 +1730,10 @@ def semra_import_cmd(
     "source_list",
     required=True,
     multiple=True,
-    help="SeMRA source key (repeatable).",
+    help=(
+        "SeMRA source key (repeatable). Pass 'all' to import every "
+        "registered source."
+    ),
 )
 @click.option(
     "--prefix",
@@ -1077,12 +1765,31 @@ def semra_seed_cmd(
     output_dir: str,
     mapping_type: str,
 ) -> None:
-    """Seed mapping files from multiple SeMRA sources."""
+    """Seed mapping files from multiple SeMRA sources.
+
+    Pass ``--sources all`` to import every registered SeMRA source.
+    """
     from rdfsolve.api import seed_semra_mappings
+
+    # Expand "all" to the full registered-source list.
+    _ALL_SOURCES = [
+        "fplx", "pubchemmesh", "ncitchebi", "ncithgnc", "ncitgo",
+        "ncituniprot", "biomappingspositive", "gilda", "clo",
+        "wikidata", "omimgene", "cbms2019", "compath", "rdfsolveinstance",
+    ]
+    sources: list[str] = []
+    for s in source_list:
+        if s.lower() == "all":
+            sources.extend(_ALL_SOURCES)
+        else:
+            sources.append(s)
+    # Deduplicate while preserving order
+    seen: set[str] = set()
+    sources = [s for s in sources if not (s in seen or seen.add(s))]  # type: ignore[func-returns-value]
 
     try:
         result = seed_semra_mappings(
-            sources=list(source_list),
+            sources=sources,
             keep_prefixes=list(prefixes) if prefixes else None,
             output_dir=output_dir,
             mapping_type=mapping_type,
@@ -1396,6 +2103,14 @@ def sssom_import_cmd(
     help="Directory to write JSON-LD files.",
 )
 @click.option(
+    "--property-mappings-dir",
+    default=None,
+    help=(
+        "Output directory for entries with type: property_mappings. "
+        "Defaults to <output-dir>/../property_mappings/."
+    ),
+)
+@click.option(
     "--name",
     "-n",
     "names",
@@ -1416,31 +2131,71 @@ def sssom_import_cmd(
 def sssom_seed_cmd(
     sources_yaml: str,
     output_dir: str,
+    property_mappings_dir: str | None,
     names: tuple[str, ...],
     mapping_type: str,
 ) -> None:
-    """Seed SSSOM mapping files for all (or selected) sources."""
+    """Seed SSSOM mapping files for all (or selected) sources.
+
+    Entries whose ``type`` is ``property_mappings`` are routed to
+    ``--property-mappings-dir`` (default: ``<output-dir>/../property_mappings/``).
+    All other entries are written to ``--output-dir``.
+    """
+    import yaml as _yaml
+
     from rdfsolve.api import seed_sssom_mappings
 
+    prop_dir = property_mappings_dir or str(Path(output_dir).parent / "property_mappings")
+
+    # Load the YAML to split entries by type
+    yaml_path = Path(sources_yaml)
+    if not yaml_path.exists():
+        click.echo(f"Error: file not found: {yaml_path}", err=True)
+        raise click.Abort()
+
+    all_entries: list[dict] = _yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or []
+    name_set = set(names) if names else None
+    if name_set:
+        all_entries = [e for e in all_entries if e.get("name") in name_set]
+
+    class_entries = [e for e in all_entries if e.get("type") != "property_mappings"]
+    prop_entries = [e for e in all_entries if e.get("type") == "property_mappings"]
+
+    all_succeeded: list[str] = []
+    all_failed: list[dict] = []
+
     try:
-        result = seed_sssom_mappings(
-            sssom_sources_yaml=sources_yaml,
-            output_dir=output_dir,
-            names=list(names) if names else None,
-            mapping_type=mapping_type,
-        )
+        if class_entries:
+            result = seed_sssom_mappings(
+                sssom_sources_yaml=sources_yaml,
+                output_dir=output_dir,
+                names=[e["name"] for e in class_entries],
+                mapping_type=mapping_type,
+            )
+            all_succeeded.extend(result.get("succeeded", []))
+            all_failed.extend(result.get("failed", []))
+
+        if prop_entries:
+            result = seed_sssom_mappings(
+                sssom_sources_yaml=sources_yaml,
+                output_dir=prop_dir,
+                names=[e["name"] for e in prop_entries],
+                mapping_type=mapping_type,
+            )
+            all_succeeded.extend(result.get("succeeded", []))
+            all_failed.extend(result.get("failed", []))
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
         raise click.Abort()
 
-    for s in result["succeeded"]:
+    for s in all_succeeded:
         click.echo(f"  OK {s}")
-    for f in result["failed"]:
+    for f in all_failed:
         click.echo(
             f"  FAIL {f.get('file', f.get('source', '?'))}: {f.get('error')}",
             err=True,
         )
-    if result["failed"]:
+    if all_failed:
         raise SystemExit(1)
 
 
