@@ -1,29 +1,20 @@
 #!/usr/bin/env bash
-# =============================================================================
 # run_pipeline_hpc.sh - RDFSolve pipeline for TGX-HPC (Singularity / SLURM)
-# =============================================================================
 #
-#
-# USAGE (direct):
+# Usage:
 #   bash scripts/run_pipeline_hpc.sh --dataset aopwikirdf --skip-remote
-#
-# USAGE (via SLURM):
 #   sbatch scripts/slurm_pipeline.sh
 #
-# KEY ENV VARS (set by the SLURM wrapper or override here):
-#   DATA_DIR    - where RDF dumps + QLever indexes are stored  (required)
-#   OUTPUT_DIR  - where mined schemas + reports go             (required)
-#   RESULTS_DIR - host dir to copy final output to             (optional)
-#   SINGULARITY_IMAGE - path to qlever.sif (pulled if missing) (optional)
-#
-# =============================================================================
+# Env vars (set by SLURM wrapper or override):
+#   DATA_DIR           - RDF dumps + QLever indexes  (required)
+#   OUTPUT_DIR         - mined schemas + reports      (required)
+#   RESULTS_DIR        - final output copy target     (optional)
+#   SINGULARITY_IMAGE  - path to qlever.sif           (optional)
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-# ═══════════════════════════════════════════════════════════════════
-# Defaults
-# ═══════════════════════════════════════════════════════════════════
+# ── Defaults ──────────────────────────────────────────────────────
 DATASETS=()
 FILTER=""
 SKIP_REMOTE=false
@@ -39,118 +30,27 @@ CLASS_BATCH_SIZE=50
 DISK_SPACE_FACTOR=12
 DISK_SPACE_MIN_MB=500
 
-# Prevent curl and Python requests from using proxy for QLever instances
 export no_proxy="localhost,127.0.0.1,${no_proxy:-}"
 export NO_PROXY="localhost,127.0.0.1,${NO_PROXY:-}"
 
-# Directories — override via env vars or CLI flags
 DATA_DIR="${DATA_DIR:-${REPO_ROOT}/data/rdf}"
 OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/results/output}"
 RESULTS_DIR="${RESULTS_DIR:-${REPO_ROOT}/results}"
-
-# Singularity image for QLever
 SINGULARITY_IMAGE="${SINGULARITY_IMAGE:-${DATA_DIR}/qlever.sif}"
 QLEVER_DOCKER_IMAGE="docker://docker.io/adfreiburg/qlever:latest"
 
-# ═══════════════════════════════════════════════════════════════════
-# Colours & helpers
-# ═══════════════════════════════════════════════════════════════════
-# Terminal Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
-
-# Helpers
-banner()  { echo -e "\n${BLUE}════════════════════════════════════════\n  $1\n════════════════════════════════════════${NC}\n"; }
-step()    { echo -e "${GREEN}▸ $1${NC}"; }
-warn()    { 
-    echo -e "${YELLOW}⚠ $1${NC}"
-    if command -v _notify >/dev/null 2>&1; then
-        _notify "rdfsolve warning" "$1" "default"
-    fi
-}
-fail()    { 
-    echo -e "${RED}✗ $1${NC}" >&2
-    if command -v _notify >/dev/null 2>&1; then
-        _notify "rdfsolve error" "$1" "high"
-    fi
-}
-success() {
-    echo -e "${GREEN}✓ $1${NC}"
-    if command -v _notify >/dev/null 2>&1; then
-        _notify "rdfsolve success" "$1" "default"
-    fi
-}
+# ── Logging ───────────────────────────────────────────────────────
+log()  { echo "[$(date +%H:%M:%S)] $*"; }
+warn() { echo "[$(date +%H:%M:%S)] WARN: $*" >&2; }
+die()  { echo "[$(date +%H:%M:%S)] ERROR: $*" >&2; exit 1; }
 elapsed() { printf '%02d:%02d:%02d' $(($1/3600)) $((($1%3600)/60)) $(($1%60)); }
 
-# Parse a report JSON and send a formatted ntfy notification.
-# Usage: _notify_report <title> <json_file> [extra_msg]
-_notify_report() {
-    local title="$1" json="$2" extra="${3:-}"
-    if [[ ! -f "${json}" ]]; then
-        if command -v _notify >/dev/null 2>&1; then
-            _notify "${title}" "${extra}(no report file found at ${json})" "default"
-        fi
-        return
-    fi
-    local msg
-    msg=$(python3 - <<PYEOF
-import json, sys
-with open("${json}") as f:
-    r = json.load(f)
+# _notify: expected to be exported by the SLURM wrapper; no-op fallback.
+if ! declare -f _notify >/dev/null 2>&1; then
+    _notify() { :; }
+fi
 
-lines = []
-
-# Dataset identity
-ds   = r.get("dataset") or r.get("dataset_name", "?")
-src  = r.get("source", "")
-ep   = r.get("endpoint") or r.get("endpoint_url", "")
-lines.append(f"Dataset: {ds}" + (f" ({src})" if src else ""))
-if ep:
-    lines.append(f"Endpoint: {ep}")
-
-# VoID discovery fields
-if "graphs_found" in r:
-    lines.append(f"Graphs: {r['graphs_found']}  |  Partitions: {r['partitions_found']}")
-
-# Local mining fields
-if "total_duration_s" in r:
-    lines.append(f"Duration: {r['total_duration_s']:.1f}s")
-if "total_queries_sent" in r:
-    failed = r.get("total_queries_failed", 0)
-    lines.append(f"Queries: {r['total_queries_sent']} sent, {failed} failed")
-if "phases" in r:
-    for ph in r["phases"]:
-        items = ph.get("items_discovered", "?")
-        err   = f" WARN {ph['error']}" if ph.get("error") else ""
-        lines.append(f"  {ph['name']}: {items} items ({ph['duration_s']:.2f}s){err}")
-
-# Benchmark
-bm = r.get("benchmark", {})
-if bm:
-    lines.append(f"Wall time: {bm.get('wall_time_s','?')}s  |  Peak RSS: {bm.get('peak_rss_mb','?')} MB")
-
-print("\n".join(lines))
-PYEOF
-    )
-    local file_count
-    file_count=$(find "$(dirname "${json}")" -type f 2>/dev/null | wc -l)
-    local full_msg="${msg}
-Files in dir: ${file_count}"
-    [[ -n "${extra}" ]] && full_msg="${extra}
-${full_msg}"
-    if command -v _notify >/dev/null 2>&1; then
-        _notify "${title}" "${full_msg}" "default"
-    fi
-    echo -e "${GREEN}▸ ntfy: ${title}${NC}"
-}
-
-# ═══════════════════════════════════════════════════════════════════
-# Parse arguments
-# ═══════════════════════════════════════════════════════════════════
+# ── Parse arguments ───────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dataset)            DATASETS+=("$2");        shift 2 ;;
@@ -166,77 +66,63 @@ while [[ $# -gt 0 ]]; do
         --timeout)            TIMEOUT="$2";            shift 2 ;;
         --chunk-size)         CHUNK_SIZE="$2";         shift 2 ;;
         --singularity-image)  SINGULARITY_IMAGE="$2";  shift 2 ;;
-        --help|-h)            head -30 "$0" | grep "^#" | sed 's/^# \{0,1\}//'; exit 0 ;;
-        *)                    fail "Unknown option: $1"; exit 1 ;;
+        --help|-h)            head -14 "$0" | grep "^#" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *)                    die "Unknown option: $1" ;;
     esac
 done
 
-# Build FILTER from --dataset args
 if [[ ${#DATASETS[@]} -gt 0 && -z "${FILTER}" ]]; then
     FILTER="^($(IFS='|'; echo "${DATASETS[*]}"))$"
 fi
 
 mkdir -p "${DATA_DIR}" "${OUTPUT_DIR}" "${RESULTS_DIR}"
-
 QLEVER_WORKDIRS="${DATA_DIR}/qlever_workdirs"
 mkdir -p "${QLEVER_WORKDIRS}"
 
-# ═══════════════════════════════════════════════════════════════════
-# QLever via Singularity helpers
-# ═══════════════════════════════════════════════════════════════════
+# ── QLever Singularity helpers ────────────────────────────────────
 
-# Pull the QLever Singularity image if not already present.
 _ensure_singularity_image() {
     if [[ -f "${SINGULARITY_IMAGE}" ]]; then
-        step "Singularity image already present: ${SINGULARITY_IMAGE}"
+        log "Singularity image present: ${SINGULARITY_IMAGE}"
         return 0
     fi
-    step "Pulling QLever Singularity image …"
+    log "Pulling QLever Singularity image …"
     mkdir -p "$(dirname "${SINGULARITY_IMAGE}")"
     singularity pull --disable-cache "${SINGULARITY_IMAGE}" "${QLEVER_DOCKER_IMAGE}"
-    step "Image saved: ${SINGULARITY_IMAGE}"
 }
 
-# Run a command inside the QLever Singularity container.
 _qlever_run() {
     local workdir="$1"; shift
     (cd "${workdir}" && singularity exec \
         --bind "${workdir}:${workdir}" \
         --bind "${DATA_DIR}:${DATA_DIR}" \
-        "${SINGULARITY_IMAGE}" \
-        "$@")
+        "${SINGULARITY_IMAGE}" "$@")
 }
 
-# Run the GET_DATA_CMD from the Qleverfile directly as a shell command.
 _qlever_get_data() {
     local workdir="$1"
     local get_data_cmd
     get_data_cmd=$(grep '^GET_DATA_CMD' "${workdir}/Qleverfile" 2>/dev/null \
         | head -1 | sed 's/^[^=]*=[ ]*//')
     if [[ -z "${get_data_cmd}" ]]; then
-        echo "ERROR: No GET_DATA_CMD found in ${workdir}/Qleverfile" >&2
+        echo "ERROR: No GET_DATA_CMD in ${workdir}/Qleverfile" >&2
         return 1
     fi
     (cd "${workdir}" && eval "${get_data_cmd}")
 }
 
-# Run QLever indexing
 _qlever_index() {
-    local name="$1"
-    local workdir="$2"
-
+    local name="$1" workdir="$2"
     local settings_json="${workdir}/${name}.settings.json"
+
+    # Parse CAT_INPUT_FILES (handles continuation lines)
     local cat_cmd
-    # Parse Qleverfile ini-style: key = value, with continuation lines (lines
-    # starting with whitespace are folded into the previous value).
     cat_cmd=$(python3 - "${workdir}/Qleverfile" <<'PYEOF'
 import sys, re
-path = sys.argv[1]
-with open(path) as f:
+with open(sys.argv[1]) as f:
     content = f.read()
-# Join continuation lines (line ending with a non-blank continuation indented line)
-content_joined = re.sub(r'\n([ \t]+)', r' ', content)
-m = re.search(r'^CAT_INPUT_FILES\s*=\s*(.+)', content_joined, re.MULTILINE)
+content = re.sub(r'\n([ \t]+)', r' ', content)
+m = re.search(r'^CAT_INPUT_FILES\s*=\s*(.+)', content, re.MULTILINE)
 print(m.group(1).strip() if m else '')
 PYEOF
 )
@@ -249,64 +135,40 @@ PYEOF
         | head -1 | sed 's/.*=[ ]*//')
     export INPUT_FILES="${input_files_raw}"
 
-    # Read FORMAT from Qleverfile (ttl / nq / nt); default to ttl.
     local rdf_format
     rdf_format=$(grep '^FORMAT' "${workdir}/Qleverfile" 2>/dev/null \
         | head -1 | sed 's/.*=[ ]*//' | tr -d '[:space:]')
     rdf_format="${rdf_format:-ttl}"
 
-    # Read MEMORY_FOR_QUERIES from Qleverfile; default to 300G
     local mem_for_queries
     mem_for_queries=$(grep '^MEMORY_FOR_QUERIES' "${workdir}/Qleverfile" 2>/dev/null \
         | head -1 | sed 's/.*=[ ]*//' | tr -d '[:space:]')
     mem_for_queries="${mem_for_queries:-300G}"
 
-    # Write settings file
     echo "${settings_raw}" > "${settings_json}"
 
-    # Decide whether to pass files directly (-f file …) or pipe via stdin
-    # (-f -).  Direct file input lets QLever use its mmap-based parser,
-    # which avoids the streaming-buffer limit that causes
-    # "Could not parse 10,000 Within 1,048,576MB of Turtle input" on very
-    # large datasets (e.g. pubchem.ftp.endpoint, 860 M+ triples).
-    #
-    # We use direct mode when CAT_INPUT_FILES is a simple "cat ${INPUT_FILES}"
-    # (no pipes or filters).  Any pipeline (perl, zcat, grep …) still needs
-    # stdin streaming.
+    # Direct file mode when CAT_INPUT_FILES is plain "cat ${INPUT_FILES}"
     local use_direct_files=false
-    # Trim whitespace for comparison
     local cat_cmd_trimmed
     cat_cmd_trimmed="$(echo "${cat_cmd}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-    if [[ "${cat_cmd_trimmed}" == 'cat ${INPUT_FILES}' ]]; then
-        use_direct_files=true
-    fi
+    [[ "${cat_cmd_trimmed}" == 'cat ${INPUT_FILES}' ]] && use_direct_files=true
 
-    # ── Workaround: rewrite bare integers that overflow int64 ──────────
-    # QLever bug: parser-integer-overflow-behavior is not propagated to
-    # per-file sub-parsers in RdfMultifileParser, so overflowing integers
-    # still crash the indexer.  As a pre-processing hack we turn any bare
-    # integer ≥ 20 digits into an xsd:double literal via sed.
-    #   109648000000000000000  →  "1.09648E+20"^^<…#double>
-    # This only touches object positions (tab-separated, followed by
-    # whitespace + dot) and is intentionally conservative.
-    echo "  ▸ Checking for int64-overflowing integers …" >&2
+    # Workaround: rewrite bare integers that overflow int64 as xsd:double
+    log "Checking for int64-overflowing integers …"
     local _overflow_patched=0
     pushd "${workdir}" > /dev/null
     for f in ${INPUT_FILES}; do
         [ -f "$f" ] || continue
         if grep -qP '\t[0-9]{20,}\s' "$f"; then
-            echo "    fixing overflows in $(basename "$f") …" >&2
+            log "  fixing overflows in $(basename "$f")"
             sed -i -E 's/\t([0-9]{20,})(\s)/\t"\1"^^<http:\/\/www.w3.org\/2001\/XMLSchema#double>\2/g' "$f"
             _overflow_patched=$(( _overflow_patched + 1 ))
         fi
     done
     popd > /dev/null
-    if [[ ${_overflow_patched} -gt 0 ]]; then
-        echo "  ▸ Patched overflowing integers in ${_overflow_patched} file(s)" >&2
-    fi
+    [[ ${_overflow_patched} -gt 0 ]] && log "Patched overflowing integers in ${_overflow_patched} file(s)"
 
     if [[ "${use_direct_files}" == true ]]; then
-        # Build -f flags for each individual file so QLever can mmap them.
         local file_flags=()
         (cd "${workdir}" && \
             for f in ${INPUT_FILES}; do
@@ -318,54 +180,39 @@ PYEOF
         done < "${workdir}/.input_file_list.tmp"
         rm -f "${workdir}/.input_file_list.tmp"
 
-        if [[ ${#file_flags[@]} -eq 0 ]]; then
-            echo "ERROR: No input files matched INPUT_FILES='${INPUT_FILES}' in ${workdir}" >&2
-            return 1
-        fi
+        [[ ${#file_flags[@]} -eq 0 ]] && { echo "ERROR: No input files for ${name}" >&2; return 1; }
+        log "Direct file input: ${#file_flags[@]} files"
 
-        echo "  ▸ Direct file input: ${#file_flags[@]} files" >&2
-
-        # Build the index with direct file input (no stdin pipe)
-        (cd "${workdir}" && \
-            singularity exec \
-                --bind "${workdir}:${workdir}" \
-                --bind "${DATA_DIR}:${DATA_DIR}" \
-                "${SINGULARITY_IMAGE}" \
-                qlever-index -i "${name}" \
-                    -s "${settings_json}" \
-                    --vocabulary-type on-disk-compressed \
-                    -m "${mem_for_queries}" \
-                    -F "${rdf_format}" "${file_flags[@]}" -p false \
-                    2>&1 | tee "${workdir}/${name}.index-log.txt")
+        (cd "${workdir}" && singularity exec \
+            --bind "${workdir}:${workdir}" \
+            --bind "${DATA_DIR}:${DATA_DIR}" \
+            "${SINGULARITY_IMAGE}" \
+            qlever-index -i "${name}" \
+                -s "${settings_json}" \
+                --vocabulary-type on-disk-compressed \
+                -m "${mem_for_queries}" \
+                -F "${rdf_format}" "${file_flags[@]}" -p false \
+                2>&1 | tee "${workdir}/${name}.index-log.txt")
     else
-        # Fallback: pipe through stdin (needed for zcat, perl filters, etc.)
-        (cd "${workdir}" && eval "${cat_cmd}" | \
-            singularity exec \
-                --bind "${workdir}:${workdir}" \
-                --bind "${DATA_DIR}:${DATA_DIR}" \
-                "${SINGULARITY_IMAGE}" \
-                qlever-index -i "${name}" \
-                    -s "${settings_json}" \
-                    --vocabulary-type on-disk-compressed \
-                    -m "${mem_for_queries}" \
-                    -F "${rdf_format}" -f - -p false \
-                    2>&1 | tee "${workdir}/${name}.index-log.txt")
+        (cd "${workdir}" && eval "${cat_cmd}" | singularity exec \
+            --bind "${workdir}:${workdir}" \
+            --bind "${DATA_DIR}:${DATA_DIR}" \
+            "${SINGULARITY_IMAGE}" \
+            qlever-index -i "${name}" \
+                -s "${settings_json}" \
+                --vocabulary-type on-disk-compressed \
+                -m "${mem_for_queries}" \
+                -F "${rdf_format}" -f - -p false \
+                2>&1 | tee "${workdir}/${name}.index-log.txt")
     fi
 }
 
-# Start QLever server in background (Singularity instance).
-# Returns the instance name.
 _qlever_start() {
-    local name="$1"
-    local workdir="$2"
-    local port="$3"
+    local name="$1" workdir="$2" port="$3"
     local instance_name="qlever_${name}"
 
-    # Stop any stale instance
     singularity instance stop "${instance_name}" 2>/dev/null || true
 
-    # Start a bare Singularity instance (no startup command — qlever-server
-    # does not work as PID 1 of the container; it must be exec'd separately).
     singularity instance start \
         --bind "${workdir}:${workdir}" \
         --bind "${DATA_DIR}:${DATA_DIR}" \
@@ -374,38 +221,29 @@ _qlever_start() {
         "${instance_name}" \
         > "${workdir}/start.log" 2>&1
 
-    # Run qlever-server inside the instance in the background.
     singularity exec "instance://${instance_name}" \
         bash -c "cd '${workdir}' && exec qlever-server -i '${name}' -j 8 -p '${port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '${name}'" \
         > "${workdir}/server.log" 2>&1 &
 
-    # Wait for the SPARQL endpoint to come up (max 120s)
     local i=0
     until curl --noproxy '*' -sf "http://localhost:${port}/?query=ASK%7B%7D" >/dev/null 2>&1; do
         sleep 2; i=$((i+2))
-        [[ $i -ge 120 ]] && { fail "[${name}] QLever did not start within 120s"; return 1; }
+        [[ $i -ge 120 ]] && { warn "[${name}] QLever did not start within 120s"; return 1; }
     done
-    step "[${name}] QLever server ready on port ${port}."
+    log "[${name}] QLever ready on port ${port}"
     echo "${instance_name}"
 }
 
-# Stop a running QLever Singularity instance.
 _qlever_stop() {
-    local instance_name="$1"
-    local port="$2"
-    local workdir="$3"
-    
+    local instance_name="$1" port="$2" workdir="$3"
     singularity instance stop "${instance_name}" > "${workdir}/stop.log" 2>&1 || true
 }
 
-# ═══════════════════════════════════════════════════════════════════
-# Disk space check
-# ═══════════════════════════════════════════════════════════════════
+# ── Disk space check ──────────────────────────────────────────────
+
 _check_disk_space() {
-    local name="$1"
-    local workdir="$2"
-    local factor="${DISK_SPACE_FACTOR:-12}"
-    local min_mb="${DISK_SPACE_MIN_MB:-500}"
+    local name="$1" workdir="$2"
+    local factor="${DISK_SPACE_FACTOR}" min_mb="${DISK_SPACE_MIN_MB}"
 
     local url_info
     url_info=$(python3 - "${name}" "${REPO_ROOT}/data/sources.yaml" <<'PYEOF'
@@ -422,10 +260,9 @@ for k, v in entry.items():
     if k.startswith('download_'):
         items = v if isinstance(v, list) else [v]
         urls.extend(u for u in items if u)
-tar_url = entry.get('local_tar_url')
-print(json.dumps({"urls": urls, "tar_url": tar_url}))
+print(json.dumps({"urls": urls, "tar_url": entry.get('local_tar_url')}))
 PYEOF
-    )
+)
 
     local check_urls=()
     local tar_url
@@ -438,7 +275,7 @@ PYEOF
         )
     fi
 
-    [[ ${#check_urls[@]} -eq 0 ]] && { warn "[${name}] No URLs for disk check."; return 0; }
+    [[ ${#check_urls[@]} -eq 0 ]] && { warn "[${name}] No URLs for disk check"; return 0; }
 
     local total_compressed=0
     for url in "${check_urls[@]}"; do
@@ -448,33 +285,28 @@ PYEOF
         [[ "${cl}" =~ ^[0-9]+$ ]] && total_compressed=$(( total_compressed + cl ))
     done
 
-    [[ "${total_compressed}" -eq 0 ]] && { warn "[${name}] Could not estimate size, skipping disk check."; return 0; }
+    [[ "${total_compressed}" -eq 0 ]] && { warn "[${name}] Could not estimate size"; return 0; }
 
     local required=$(( total_compressed * factor ))
     local required_mb=$(( required / 1048576 ))
-    local compressed_mb=$(( total_compressed / 1048576 ))
-    step "[${name}] ~${compressed_mb} MiB download → ~${required_mb} MiB estimated need (×${factor})"
+    log "[${name}] ~$(( total_compressed / 1048576 )) MiB download > ~${required_mb} MiB needed (×${factor})"
 
     mkdir -p "${workdir}"
     local free_bytes
     free_bytes=$(df --output=avail -B1 "${workdir}" 2>/dev/null | tail -1 | tr -d ' ')
     free_bytes="${free_bytes//[^0-9]/}"
     free_bytes="${free_bytes:-0}"
-    local free_mb=$(( free_bytes / 1048576 ))
     local min_bytes=$(( min_mb * 1048576 ))
 
-    step "[${name}] Free: ${free_mb} MiB"
-
     if [[ "${free_bytes}" -lt "${required}" ]] || [[ "${free_bytes}" -lt "${min_bytes}" ]]; then
-        fail "[${name}] Insufficient disk space (need ~${required_mb} MiB, have ${free_mb} MiB). Skipping."
+        warn "[${name}] Insufficient disk space (need ~${required_mb} MiB, have $(( free_bytes / 1048576 )) MiB)"
         return 1
     fi
     return 0
 }
 
-# ═══════════════════════════════════════════════════════════════════
-# Mining helpers
-# ═══════════════════════════════════════════════════════════════════
+# ── Mining helper ─────────────────────────────────────────────────
+
 _mine_local() {
     local name="$1" port="$2" strat="$3" one_shot="$4" cs="$5" cb="$6"
     local out="${OUTPUT_DIR}/${name}/qlever/${strat}/chunk${cs}_batch${cb}"
@@ -487,174 +319,122 @@ _mine_local() {
     [[ "${one_shot}" == true   ]] && flags+=" --one-shot"
     [[ "${BENCHMARK}" == true  ]] && flags+=" --benchmark"
 
-    step "  [${name}] Mining qlever/${strat}/$(basename ${out}) …"
-    eval "python3 ${REPO_ROOT}/scripts/mine_local.py local-mine ${flags}" \
-        || warn "[${name}] Mining pass failed."
+    log "[${name}] Mining qlever/${strat}/$(basename ${out})"
+    eval "rdfsolve local-mine ${flags}" || warn "[${name}] Mining pass failed"
+}
+
+# ── Dataset name list helper ──────────────────────────────────────
+
+_list_dataset_names() {
+    python3 - "${REPO_ROOT}/data/sources.yaml" "${FILTER}" <<'PYEOF'
+import sys, re, yaml
+yaml_path, filt = sys.argv[1], sys.argv[2]
+with open(yaml_path) as f:
+    sources = yaml.safe_load(f) or []
+rx = re.compile(filt) if filt else None
+for s in sources:
+    name = s.get("name", "")
+    if rx is None or rx.search(name):
+        print(name)
+PYEOF
 }
 
 # ═══════════════════════════════════════════════════════════════════
 # PREFLIGHT
 # ═══════════════════════════════════════════════════════════════════
-banner "RDFSolve HPC Pipeline"
-echo -e "  Datasets:   ${BOLD}${FILTER:-<all>}${NC}"
-echo -e "  DATA_DIR:   ${DATA_DIR}"
-echo -e "  OUTPUT_DIR: ${OUTPUT_DIR}"
-echo ""
+log "=== RDFSolve HPC Pipeline ==="
+log "Datasets: ${FILTER:-<all>}"
+log "DATA_DIR: ${DATA_DIR}"
+log "OUTPUT_DIR: ${OUTPUT_DIR}"
 
-# Check Python environment
 python3 -c "import yaml, rdflib" 2>/dev/null \
-    || { fail "Python deps missing. Run: pip install pyyaml rdflib"; exit 1; }
-
-# Check singularity
+    || die "Python deps missing. Run: pip install pyyaml rdflib"
 command -v singularity >/dev/null 2>&1 \
-    || { fail "singularity not found in PATH."; exit 1; }
-step "Singularity: $(singularity --version)"
+    || die "singularity not found in PATH"
+log "Singularity: $(singularity --version)"
 
 PIPELINE_START=$(date +%s)
 
 # ═══════════════════════════════════════════════════════════════════
 # STEP 0 - Pull QLever Singularity image
 # ═══════════════════════════════════════════════════════════════════
-banner "Step 0: Ensure QLever Singularity image"
+log "--- Step 0: Ensure QLever Singularity image ---"
 _ensure_singularity_image
 
 # ═══════════════════════════════════════════════════════════════════
 # STEP 1 - Remote VoID discovery
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_REMOTE}" == false && "${SKIP_DISCOVERY}" == false ]]; then
-    banner "Step 1: Remote VoID discovery"
+    log "--- Step 1: Remote VoID discovery ---"
     t0=$(date +%s)
 
-    # Collect dataset names to iterate over (respecting --filter / --dataset)
     _discover_names=()
     while IFS= read -r _n; do
         [[ -n "${_n}" ]] && _discover_names+=("${_n}")
-    done < <(python3 - "${REPO_ROOT}/data/sources.yaml" "${FILTER}" <<'PYEOF'
-import sys, re, yaml
-yaml_path, filt = sys.argv[1], sys.argv[2]
-with open(yaml_path) as f:
-    sources = yaml.safe_load(f) or []
-rx = re.compile(filt) if filt else None
-for s in sources:
-    name = s.get("name", "")
-    if rx is None or rx.search(name):
-        print(name)
-PYEOF
-)
+    done < <(_list_dataset_names)
 
     for _ds_name in "${_discover_names[@]}"; do
-        _ds_t0=$(date +%s)
-        step "[${_ds_name}] Discovering VoID …"
+        log "[${_ds_name}] Discovering VoID …"
         _ds_flags="--output-dir ${OUTPUT_DIR} --filter '^${_ds_name}$'"
         [[ "${TIMEOUT}" -gt 0 ]] 2>/dev/null && _ds_flags+=" --timeout ${TIMEOUT}"
-        eval "python3 ${REPO_ROOT}/scripts/mine_local.py discover ${_ds_flags}" \
-            || warn "[${_ds_name}] discover had failures."
-        _ds_elapsed=$(elapsed $(( $(date +%s) - _ds_t0 )))
-        report_json="${OUTPUT_DIR}/${_ds_name}_discovered_remote_report.json"
-        if [[ -f "${report_json}" ]]; then
-            _notify_report "VoID discovery: ${_ds_name}" "${report_json}" "Elapsed: ${_ds_elapsed}"
-        else
-            if command -v _notify >/dev/null 2>&1; then
-                _notify "VoID discovery: ${_ds_name}" "No VoID partitions found at endpoint. Elapsed: ${_ds_elapsed}" "default"
-            fi
-            step "  [${_ds_name}] No VoID report written (no partitions found)."
-        fi
+        eval "rdfsolve discover ${_ds_flags}" \
+            || warn "[${_ds_name}] discover had failures"
     done
-
-    step "Discovery done in $(elapsed $(( $(date +%s) - t0 )))."
-    # Notify per-dataset VoID discovery report
-    for report_json in "${OUTPUT_DIR}"/*_discovered_remote_report.json; do
-        [[ -f "${report_json}" ]] || continue
-        ds_name=$(basename "${report_json}" _discovered_remote_report.json)
-        _notify_report "VoID discovery: ${ds_name}" "${report_json}"
-    done
+    log "Discovery done in $(elapsed $(( $(date +%s) - t0 )))"
 else
-    banner "Step 1: Remote VoID discovery - SKIPPED"
+    log "--- Step 1: Remote VoID discovery - SKIPPED ---"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
 # STEP 2 - Remote schema mining
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_REMOTE}" == false ]]; then
-    banner "Step 2: Remote schema mining"
+    log "--- Step 2: Remote schema mining ---"
     t0=$(date +%s)
 
-    # Reuse same name list from Step 1 (or rebuild if Step 1 was skipped)
-    if [[ ${#_discover_names[@]} -eq 0 ]]; then
+    if [[ -z "${_discover_names+x}" || ${#_discover_names[@]} -eq 0 ]]; then
+        _discover_names=()
         while IFS= read -r _n; do
             [[ -n "${_n}" ]] && _discover_names+=("${_n}")
-        done < <(python3 - "${REPO_ROOT}/data/sources.yaml" "${FILTER}" <<'PYEOF'
-import sys, re, yaml
-yaml_path, filt = sys.argv[1], sys.argv[2]
-with open(yaml_path) as f:
-    sources = yaml.safe_load(f) or []
-rx = re.compile(filt) if filt else None
-for s in sources:
-    name = s.get("name", "")
-    if rx is None or rx.search(name):
-        print(name)
-PYEOF
-)
+        done < <(_list_dataset_names)
     fi
 
     for _ds_name in "${_discover_names[@]}"; do
-        _ds_t0=$(date +%s)
-        step "[${_ds_name}] Mining remote schema …"
+        log "[${_ds_name}] Mining remote schema …"
         _ds_flags="--output-dir ${OUTPUT_DIR} --filter '^${_ds_name}$'"
         [[ "${TIMEOUT}" -gt 0 ]] 2>/dev/null && _ds_flags+=" --timeout ${TIMEOUT}"
         [[ "${BENCHMARK}" == true ]] && _ds_flags+=" --benchmark"
-        eval "python3 ${REPO_ROOT}/scripts/mine_local.py mine ${_ds_flags}" \
-            || warn "[${_ds_name}] remote mining had failures."
-        _ds_elapsed=$(elapsed $(( $(date +%s) - _ds_t0 )))
-        report_json="${OUTPUT_DIR}/${_ds_name}_mined_remote_report.json"
-        if [[ -f "${report_json}" ]]; then
-            _notify_report "Remote mining: ${_ds_name}" "${report_json}" "Elapsed: ${_ds_elapsed}"
-        else
-            if command -v _notify >/dev/null 2>&1; then
-                _notify "Remote mining: ${_ds_name}" "No report written (endpoint unreachable or no data). Elapsed: ${_ds_elapsed}" "default"
-            fi
-            step "  [${_ds_name}] No mining report written (endpoint unreachable or no data)."
-        fi
+        eval "rdfsolve mine ${_ds_flags}" \
+            || warn "[${_ds_name}] remote mining had failures"
     done
-
-    step "Remote mining done in $(elapsed $(( $(date +%s) - t0 )))."
-    # Notify per-dataset remote mining report
-    for report_json in "${OUTPUT_DIR}"/*_mined_remote_report.json; do
-        [[ -f "${report_json}" ]] || continue
-        ds_name=$(basename "${report_json}" _mined_remote_report.json)
-        _notify_report "Remote mining: ${ds_name}" "${report_json}"
-    done
+    log "Remote mining done in $(elapsed $(( $(date +%s) - t0 )))"
 else
-    banner "Step 2: Remote mining - SKIPPED"
+    log "--- Step 2: Remote mining - SKIPPED ---"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEPS 3-4 - Local mining (QLever via Singularity)
+# STEPS 3–4 - Local mining (QLever via Singularity)
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_LOCAL}" == false ]]; then
 
     # Step 3: Generate Qleverfiles
-    banner "Step 3: Generate Qleverfiles"
+    log "--- Step 3: Generate Qleverfiles ---"
     qf_flags="--data-dir ${DATA_DIR} --base-port ${BASE_PORT} --output-dir ${OUTPUT_DIR}"
     [[ -n "${FILTER}" ]] && qf_flags+=" --filter '${FILTER}'"
-    eval "python3 ${REPO_ROOT}/scripts/mine_local.py generate-qleverfile ${qf_flags}" \
-        || { fail "Qleverfile generation failed."; exit 1; }
+    eval "rdfsolve qleverfile ${qf_flags}" || die "Qleverfile generation failed"
 
-    # Override SYSTEM in all generated Qleverfiles: docker -> singularity
-    # The qlever CLI uses SYSTEM = singularity and IMAGE = path/to/qlever.sif
     find "${QLEVER_WORKDIRS}" -name "Qleverfile" | while read -r qf; do
         sed -i "s|^SYSTEM *=.*|SYSTEM = native|" "${qf}"
-        # Also point IMAGE to our local .sif
         sed -i "s|^IMAGE *=.*|IMAGE  = ${SINGULARITY_IMAGE}|" "${qf}"
     done
-    step "Qleverfiles ready (SYSTEM=native, IMAGE=${SINGULARITY_IMAGE})."
+    log "Qleverfiles ready (SYSTEM=native)"
 
-    # Step 4: For each dataset: download → index → start → mine → stop → cleanup
-    banner "Step 4: Download → Index → Mine"
+    # Step 4: For each dataset - download > index > start > mine > stop > cleanup
+    log "--- Step 4: Download > Index > Mine ---"
 
     PORTS_JSON="${QLEVER_WORKDIRS}/ports.json"
     if [[ ! -f "${PORTS_JSON}" ]]; then
-        warn "No ports.json found at ${PORTS_JSON} — nothing to process."
+        warn "No ports.json at ${PORTS_JSON} - nothing to process"
     else
         DS_LINES=$(python3 -c "
 import json
@@ -668,25 +448,21 @@ for name, port in d.items():
 
         while read -r NAME PORT; do
             IDX=$((IDX + 1))
-            echo ""
-            echo -e "${BOLD}  [${IDX}/${TOTAL}] ${NAME}  (port ${PORT})${NC}"
-            echo -e "${BOLD}──────────────────────────────────────────${NC}"
-
+            log "[${IDX}/${TOTAL}] ${NAME} (port ${PORT})"
             WORKDIR="${QLEVER_WORKDIRS}/${NAME}"
             DONE_INDEX="${WORKDIR}/.index.done"
             mkdir -p "${WORKDIR}"
 
-            # ── Download + Index ──────────────────────────────────
+            # Download + Index
             if [[ -f "${DONE_INDEX}" ]]; then
-                step "Index cached — skipping download+index."
+                log "  Index cached - skipping download+index"
             else
                 _check_disk_space "${NAME}" "${WORKDIR}" || { continue; }
 
-                step "Downloading …"
+                log "  Downloading …"
                 _qlever_get_data "${WORKDIR}" \
-                    || { fail "[${NAME}] Download failed."; continue; }
+                    || { warn "[${NAME}] Download failed"; continue; }
 
-                # Verify RDF input exists
                 INPUT_GLOB=$(grep '^INPUT_FILES' "${WORKDIR}/Qleverfile" 2>/dev/null \
                     | head -1 | sed 's/.*=[ ]*//')
                 INPUT_BYTES=0
@@ -695,63 +471,53 @@ for name, port in d.items():
                         [[ -f "$f" ]] && INPUT_BYTES=$(( INPUT_BYTES + $(stat -c%s "$f" 2>/dev/null || echo 0) ))
                     done
                 fi
-
                 if [[ "${INPUT_BYTES}" -eq 0 ]]; then
-                    fail "[${NAME}] Download produced 0 bytes of RDF input. Skipping."
+                    warn "[${NAME}] Download produced 0 bytes - skipping"
                     continue
                 fi
 
-                step "Indexing …"
+                log "  Indexing …"
                 _qlever_index "${NAME}" "${WORKDIR}" \
-                    || { fail "[${NAME}] Index failed."; continue; }
-
+                    || { warn "[${NAME}] Index failed"; continue; }
                 touch "${DONE_INDEX}"
             fi
 
-            # ── Start QLever server ───────────────────────────────
-            step "Starting QLever on port ${PORT} …"
+            # Start > Mine > Stop
+            log "  Starting QLever on port ${PORT} …"
             INSTANCE_NAME=$(_qlever_start "${NAME}" "${WORKDIR}" "${PORT}") \
-                || { fail "[${NAME}] Server start failed."; continue; }
+                || { warn "[${NAME}] Server start failed"; continue; }
 
-            # ── Mine ─────────────────────────────────────────────
             if [[ "${ONE_SHOT}" == true ]]; then
-                _mine_local "${NAME}" "${PORT}" "typed" true \
-                    "${CHUNK_SIZE}" "${CLASS_BATCH_SIZE}"
-                # Notify with local mining report
-                local_report="${OUTPUT_DIR}/${NAME}/qlever/typed/one_shot/${NAME}_mined_local_report.json"
-                _notify_report "Local mining: ${NAME}" "${local_report}" "Port ${PORT}"
+                _mine_local "${NAME}" "${PORT}" "typed" true "${CHUNK_SIZE}" "${CLASS_BATCH_SIZE}"
             fi
 
-            # ── Stop server ───────────────────────────────────────
-            step "Stopping QLever …"
+            log "  Stopping QLever …"
             _qlever_stop "${INSTANCE_NAME}" "${PORT}" "${WORKDIR}"
 
-            # ── Cleanup raw RDF files ─────────────────────────────
-            # Index files stay (needed for final LSOLD step).
-            step "Cleaning up raw RDF files for ${NAME} …"
+            # Cleanup raw RDF (keep index files for LSLOD)
             rdf_dir="${WORKDIR}/rdf"
             if [[ -d "${rdf_dir}" ]]; then
                 du -sh "${rdf_dir}" 2>/dev/null && rm -rf "${rdf_dir}"
-                step "  Deleted ${rdf_dir}"
             fi
             find "${WORKDIR}" -maxdepth 1 \
                 \( -name '*.tar' -o -name '*.tar.gz' -o -name '*.tgz' \
                 -o -name '*.zip' -o -name '*.gz' -o -name '*.xz' \) \
                 -delete 2>/dev/null || true
 
-            success "[${NAME}] pipeline steps completed."
-
+            log "[${NAME}] done"
         done <<< "${DS_LINES}"
     fi
 else
-    step "Local processing skipped (--skip-local)."
+    log "--- Steps 3–4: Local processing - SKIPPED (--skip-local) ---"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 4b - Schema selection → paper_data/schemas/
+# STEPS 5–10 - Mappings & graph build (requires --skip-mappings=false)
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_MAPPINGS}" == false ]]; then
-banner "Step 4b: Schema selection → paper_data/schemas/"
+
+# Step 5: Schema selection
+log "--- Step 5: Schema selection ---"
 t0=$(date +%s)
 
 SCHEMAS_DIR="${OUTPUT_DIR}/schemas"
@@ -759,126 +525,53 @@ MAPPINGS_DIR="${OUTPUT_DIR}/mappings"
 PAPER_DATA_DIR="${OUTPUT_DIR}/paper_data"
 mkdir -p "${SCHEMAS_DIR}" "${MAPPINGS_DIR}" "${PAPER_DATA_DIR}"
 
-_sel_args="python3 ${REPO_ROOT}/scripts/build_graphs.py"
+_sel_args="rdfsolve build-graphs"
 _sel_args+=" --schemas-dir ${OUTPUT_DIR}"
 _sel_args+=" --output-dir  ${PAPER_DATA_DIR}"
 _sel_args+=" --schema-only"
 if [[ ${#DATASETS[@]} -gt 0 ]]; then
     for _ds in "${DATASETS[@]}"; do _sel_args+=" --datasets ${_ds}"; done
 fi
-eval "${_sel_args}" || warn "Schema selection had warnings."
-step "Schema selection done in $(elapsed $(( $(date +%s) - t0 )))."
+eval "${_sel_args}" || warn "Schema selection had warnings"
+log "Schema selection done in $(elapsed $(( $(date +%s) - t0 )))"
 
-# ═══════════════════════════════════════════════════════════════════
-# STEP 5 - Seed SSSOM mappings (class + property)
-# ═══════════════════════════════════════════════════════════════════
-banner "Step 5: Seed SSSOM mappings"
+# Step 6: Seed SSSOM mappings
+log "--- Step 6: Seed SSSOM mappings ---"
 t0=$(date +%s)
 
-python3 "${REPO_ROOT}/scripts/seed_sssom_mappings.py" \
+rdfsolve sssom seed \
     --sources-yaml "${REPO_ROOT}/data/sssom_sources.yaml" \
     --output-dir   "${MAPPINGS_DIR}/sssom" \
     --property-mappings-dir "${MAPPINGS_DIR}/property_mappings" \
-    || warn "SSSOM seeding had failures."
+    || warn "SSSOM seeding had failures"
+log "SSSOM seeding done in $(elapsed $(( $(date +%s) - t0 )))"
 
-step "SSSOM seeding done in $(elapsed $(( $(date +%s) - t0 )))."
-if command -v _notify >/dev/null 2>&1; then
-    _notify "Step 5 done: SSSOM mappings" "$(elapsed $(( $(date +%s) - t0 ))) — output: ${MAPPINGS_DIR}/sssom" "default"
-fi
-
-# ═══════════════════════════════════════════════════════════════════
-# STEP 6 - Seed SeMRA mappings
-# ═══════════════════════════════════════════════════════════════════
-banner "Step 6: Seed SeMRA mappings"
+# Step 7: Seed SeMRA mappings
+log "--- Step 7: Seed SeMRA mappings ---"
 t0=$(date +%s)
 
-python3 "${REPO_ROOT}/scripts/seed_semra_mappings.py" \
+rdfsolve semra seed \
     --sources all \
     --output-dir "${MAPPINGS_DIR}/semra" \
-    || warn "SeMRA seeding had failures."
-
-step "SeMRA seeding done in $(elapsed $(( $(date +%s) - t0 )))."
-if command -v _notify >/dev/null 2>&1; then
-    _notify "Step 6 done: SeMRA mappings" "$(elapsed $(( $(date +%s) - t0 ))) — output: ${MAPPINGS_DIR}/semra" "default"
-fi
+    || warn "SeMRA seeding had failures"
+log "SeMRA seeding done in $(elapsed $(( $(date +%s) - t0 )))"
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 7 - Instance mappings (via rdfsolve CLI — prefixes from bioregistry)
-# ═══════════════════════════════════════════════════════════════════
-# Prefixes are bioregistry resource identifiers whose URI patterns are
-# probed against every SPARQL endpoint in data/sources.yaml.
-# The canonical set is whatever is already seeded in docker/mappings/
-# instance_matching/ plus any new ones added later.
-# ───────────────────────────────────────────────────────────────────
-banner "Step 7: Instance mappings"
-t0=$(date +%s)
-
-# Derive prefixes: scan existing docker/mappings/instance_matching/ for
-# *_instance_mapping.jsonld, extract the stem as the bioregistry prefix.
-# Fall back to a hardcoded default set if nothing is found.
-_inst_prefixes=()
-_inst_src_dir="${REPO_ROOT}/docker/mappings/instance_matching"
-if [[ -d "${_inst_src_dir}" ]]; then
-    while IFS= read -r _f; do
-        _pfx=$(basename "${_f}" _instance_mapping.jsonld)
-        _inst_prefixes+=("${_pfx}")
-    done < <(find "${_inst_src_dir}" -maxdepth 1 -name '*_instance_mapping.jsonld' | sort)
-fi
-# Fallback
-if [[ ${#_inst_prefixes[@]} -eq 0 ]]; then
-    _inst_prefixes=(chebi ensembl faldo uniprot)
-    warn "No existing instance_mapping files found; using default prefixes: ${_inst_prefixes[*]}"
-fi
-step "Instance mapping prefixes: ${_inst_prefixes[*]}"
-
-_inst_args="rdfsolve instance-match seed"
-for _pfx in "${_inst_prefixes[@]}"; do _inst_args+=" --prefixes ${_pfx}"; done
-_inst_args+=" --output-dir ${MAPPINGS_DIR}/instance_matching"
-_inst_args+=" --timeout ${TIMEOUT}"
-if [[ ${#DATASETS[@]} -gt 0 ]]; then
-    for _ds in "${DATASETS[@]}"; do _inst_args+=" --dataset ${_ds}"; done
-fi
-
-eval "${_inst_args}" || warn "Instance mapping seeding had failures."
-step "Instance mappings done in $(elapsed $(( $(date +%s) - t0 )))."
-if command -v _notify >/dev/null 2>&1; then
-    _notify "Step 7 done: Instance mappings" "Prefixes: ${_inst_prefixes[*]}
-$(elapsed $(( $(date +%s) - t0 ))) — output: ${MAPPINGS_DIR}/instance_matching" "default"
-fi
-
-# ═══════════════════════════════════════════════════════════════════
-# STEPS 8-10 - LSLOD endpoint: restart all QLever indexes simultaneously,
-# then derive class-level mappings + enrich instance JSON-LDs.
+# STEPS 8–10 - LSLOD block: start ALL QLever > instance mappings >
+#              class derivation > stop ALL QLever
 #
-# How it works:
-#   Step 7 produced instance_mapping files: each has skos:narrowMatch
-#   edges between RDF classes (from different datasets) that share
-#   instances of the same bioregistry resource (e.g. ChEBI).
-#
-#   build_class_index (inside `derive`) expands every entity IRI to
-#   ALL alternative URI forms via bioregistry, then batches VALUES
-#   queries to the LSLOD endpoint to look up rdf:type per named graph.
-#   This gives us C-C2 class pairs grounded in instance evidence.
-#
-# LSLOD endpoint strategy:
-#   All locally-indexed QLever datasets are restarted simultaneously
-#   (each on its own port from ports.json).  The first instance that
-#   comes up is used as the primary LSLOD endpoint — QLever supports
-#   SPARQL SERVICE federation, so it can forward queries to the others.
-#   derive is called once per instance-mapping file with --enrich so
-#   it: (a) builds the class index, (b) derives class pairs, and
-#   (c) writes enriched JSON-LDs in one pass.
-#
+# Instance mapping (step 8) queries LOCAL QLever endpoints only.
+# Class derivation (step 9) uses the same running instances.
 # All instances are stopped after step 10.
 # ═══════════════════════════════════════════════════════════════════
-
 LSLOD_ENDPOINT=""
-declare -a LSLOD_INSTANCES=()   # instance names to stop after step 10
+declare -a LSLOD_INSTANCES=()
 declare -a LSLOD_PORTS=()
 
 if [[ "${SKIP_LOCAL}" == false ]]; then
-    banner "Steps 8-10: Starting all QLever indexes as LSLOD"
+    log "--- Steps 8–10: LSLOD block (start QLever > instance match > derive > stop) ---"
     PORTS_JSON="${QLEVER_WORKDIRS}/ports.json"
+
     if [[ -f "${PORTS_JSON}" ]]; then
         DS_LINES_LSLOD=$(python3 -c "
 import json
@@ -889,159 +582,148 @@ for name, port in d.items():
 ")
         while read -r _LNAME _LPORT; do
             _LWORKDIR="${QLEVER_WORKDIRS}/${_LNAME}"
-            _LDONE="${_LWORKDIR}/.index.done"
-            if [[ ! -f "${_LDONE}" ]]; then
-                step "  [${_LNAME}] No index — skipping for LSLOD."
+            if [[ ! -f "${_LWORKDIR}/.index.done" ]]; then
+                log "  [${_LNAME}] No index - skipping"
                 continue
             fi
-            step "  Starting QLever LSLOD: ${_LNAME} on port ${_LPORT} ..."
+            log "  Starting ${_LNAME} on port ${_LPORT} …"
             _LINST=$(_qlever_start "${_LNAME}" "${_LWORKDIR}" "${_LPORT}") \
                 && {
                     LSLOD_INSTANCES+=("${_LINST}")
                     LSLOD_PORTS+=("${_LPORT}")
-                    [[ -z "${LSLOD_ENDPOINT}" ]] && \
-                        LSLOD_ENDPOINT="http://localhost:${_LPORT}"
-                } || warn "  [${_LNAME}] Failed to start for LSLOD."
+                    [[ -z "${LSLOD_ENDPOINT}" ]] && LSLOD_ENDPOINT="http://localhost:${_LPORT}"
+                } || warn "  [${_LNAME}] Failed to start"
         done <<< "${DS_LINES_LSLOD}"
     fi
 
     if [[ -z "${LSLOD_ENDPOINT}" ]]; then
-        warn "No QLever instances started — skipping Steps 8-10."
+        warn "No QLever instances started - skipping steps 8–10"
     else
-        step "LSLOD endpoint: ${LSLOD_ENDPOINT} (${#LSLOD_INSTANCES[@]} instances running)"
-        if command -v _notify >/dev/null 2>&1; then
-            _notify "LSLOD ready" "${#LSLOD_INSTANCES[@]} QLever instances running — ${LSLOD_ENDPOINT}" "default"
+        log "LSLOD: ${#LSLOD_INSTANCES[@]} instances running, primary: ${LSLOD_ENDPOINT}"
+
+        # Step 8: Instance mappings (LOCAL QLever only via ports.json)
+        log "--- Step 8: Instance mappings (local endpoints) ---"
+        t0=$(date +%s)
+
+        _inst_prefixes=()
+        _inst_src_dir="${REPO_ROOT}/docker/mappings/instance_matching"
+        if [[ -d "${_inst_src_dir}" ]]; then
+            while IFS= read -r _f; do
+                _pfx=$(basename "${_f}" _instance_mapping.jsonld)
+                _inst_prefixes+=("${_pfx}")
+            done < <(find "${_inst_src_dir}" -maxdepth 1 -name '*_instance_mapping.jsonld' | sort)
         fi
+        if [[ ${#_inst_prefixes[@]} -eq 0 ]]; then
+            _inst_prefixes=(chebi ensembl faldo uniprot)
+            warn "No existing instance_mapping files found; using defaults: ${_inst_prefixes[*]}"
+        fi
+        log "Instance mapping prefixes: ${_inst_prefixes[*]}"
+
+        _inst_args="rdfsolve instance-match seed"
+        for _pfx in "${_inst_prefixes[@]}"; do _inst_args+=" --prefixes ${_pfx}"; done
+        _inst_args+=" --output-dir ${MAPPINGS_DIR}/instance_matching"
+        _inst_args+=" --timeout ${TIMEOUT}"
+        _inst_args+=" --ports-json ${PORTS_JSON}"
+        if [[ ${#DATASETS[@]} -gt 0 ]]; then
+            for _ds in "${DATASETS[@]}"; do _inst_args+=" --dataset ${_ds}"; done
+        fi
+        eval "${_inst_args}" || warn "Instance mapping seeding had failures"
+        log "Instance mappings done in $(elapsed $(( $(date +%s) - t0 )))"
+
+        # Step 9: Class derivation + enrichment
+        log "--- Step 9: Class derivation + enrichment ---"
+        t0=$(date +%s)
+
+        _inst_dir="${MAPPINGS_DIR}/instance_matching"
+        _class_out_dir="${MAPPINGS_DIR}/class_derived"
+        mkdir -p "${_class_out_dir}"
+
+        _inst_files=$(find "${_inst_dir}" -maxdepth 1 -name '*.jsonld' \
+            ! -name '*.enriched.jsonld' \
+            ! -name '*.class_derived.jsonld' \
+            | sort 2>/dev/null || true)
+
+        if [[ -z "${_inst_files}" ]]; then
+            warn "No instance-mapping JSON-LD files in ${_inst_dir}"
+        else
+            while IFS= read -r _f; do
+                [[ -z "${_f}" ]] && continue
+                _base=$(basename "${_f}" .jsonld)
+                _out="${_class_out_dir}/${_base}.class_derived.jsonld"
+                log "  Deriving: $(basename "${_f}")"
+                rdfsolve instance-match derive \
+                    --input    "${_f}" \
+                    --output   "${_out}" \
+                    --endpoint "${LSLOD_ENDPOINT}" \
+                    --cache-index \
+                    --enrich \
+                    --timeout  "${TIMEOUT}" \
+                    || warn "Derivation failed for $(basename "${_f}")"
+            done <<< "${_inst_files}"
+        fi
+        log "Class derivation done in $(elapsed $(( $(date +%s) - t0 )))"
     fi
 else
-    warn "Local mining skipped — cannot build LSLOD endpoint. Steps 8-10 will be skipped."
+    log "--- Steps 8–10: LSLOD - SKIPPED (--skip-local) ---"
 fi
 
-# ── Steps 8-10: derive + enrich (one pass per instance-mapping file) ─
-# For each {prefix}_instance_mapping.jsonld produced in step 7:
-#   - build_class_index: expands IRIs to all bioregistry URI alternatives,
-#     queries LSLOD for rdf:type per named graph
-#   - derive: emits class-pair edges (C → C2) grounded in instance evidence
-#   - enrich: annotates each entity node with @type + classifiedIn provenance
-#
-if [[ -n "${LSLOD_ENDPOINT}" ]]; then
-    banner "Steps 8-10: Class index + derivation + enrichment"
-    t0=$(date +%s)
-
-    _inst_dir="${MAPPINGS_DIR}/instance_matching"
-    _class_out_dir="${MAPPINGS_DIR}/class_derived"
-    mkdir -p "${_class_out_dir}"
-
-    _inst_files=$(find "${_inst_dir}" -maxdepth 1 -name '*.jsonld' \
-        ! -name '*.enriched.jsonld' \
-        ! -name '*.class_derived.jsonld' \
-        | sort 2>/dev/null || true)
-
-    if [[ -z "${_inst_files}" ]]; then
-        warn "No instance-mapping JSON-LD files found in ${_inst_dir}."
-    else
-        while IFS= read -r _f; do
-            [[ -z "${_f}" ]] && continue
-            _base=$(basename "${_f}" .jsonld)
-            _out="${_class_out_dir}/${_base}.class_derived.jsonld"
-            step "  Deriving + enriching: $(basename "${_f}")"
-            # --enrich writes {stem}.enriched.jsonld alongside the input
-            # --cache-index saves the class index for inspection/reuse
-            rdfsolve instance-match derive \
-                --input    "${_f}" \
-                --output   "${_out}" \
-                --endpoint "${LSLOD_ENDPOINT}" \
-                --cache-index \
-                --enrich \
-                --timeout  "${TIMEOUT}" \
-                || warn "Derivation/enrichment failed for $(basename "${_f}")."
-        done <<< "${_inst_files}"
-    fi
-
-    step "Class derivation + enrichment done in $(elapsed $(( $(date +%s) - t0 )))."
-    if command -v _notify >/dev/null 2>&1; then
-        _notify "Steps 8-10 done: Class derivation + enrichment" \
-            "$(elapsed $(( $(date +%s) - t0 ))) — output: ${_class_out_dir}" "default"
-    fi
-else
-    banner "Steps 8-10: Class derivation - SKIPPED (no LSLOD endpoint)"
-fi
-
-# ── Stop all LSLOD QLever instances ──────────────────────────────
+# Step 10: Stop all LSLOD instances
 if [[ ${#LSLOD_INSTANCES[@]} -gt 0 ]]; then
-    banner "Stopping LSLOD QLever instances"
+    log "--- Step 10: Stopping LSLOD instances ---"
     for _i in "${!LSLOD_INSTANCES[@]}"; do
         _inst="${LSLOD_INSTANCES[${_i}]}"
         _port="${LSLOD_PORTS[${_i}]}"
         _iname="${_inst#qlever_}"
-        _iworkdir="${QLEVER_WORKDIRS}/${_iname}"
-        step "  Stopping ${_inst} ..."
-        _qlever_stop "${_inst}" "${_port}" "${_iworkdir}"
+        _qlever_stop "${_inst}" "${_port}" "${QLEVER_WORKDIRS}/${_iname}"
     done
-    step "All LSLOD instances stopped."
+    log "All LSLOD instances stopped"
 fi
 
-# ═══════════════════════════════════════════════════════════════════
-# STEP 11 - Inference expansion
-# ═══════════════════════════════════════════════════════════════════
-banner "Step 11: Inference expansion"
+# Step 11: Inference expansion
+log "--- Step 11: Inference expansion ---"
 t0=$(date +%s)
 
-python3 "${REPO_ROOT}/scripts/seed_inferenced_mappings.py" \
+rdfsolve inference seed \
     --input-dir  "${MAPPINGS_DIR}" \
     --output-dir "${MAPPINGS_DIR}/inferenced" \
-    || warn "Inference step had failures."
+    || warn "Inference step had failures"
+log "Inference done in $(elapsed $(( $(date +%s) - t0 )))"
 
-step "Inference done in $(elapsed $(( $(date +%s) - t0 )))."
-if command -v _notify >/dev/null 2>&1; then
-    _notify "Step 11 done: Inference expansion" "$(elapsed $(( $(date +%s) - t0 ))) — output: ${MAPPINGS_DIR}/inferenced" "default"
-fi
-
-# ═══════════════════════════════════════════════════════════════════
-# STEP 12 - Build connectivity graphs → Parquet
-# ═══════════════════════════════════════════════════════════════════
-banner "Step 12: Build graphs → Parquet"
+# Step 12: Build connectivity graphs > Parquet
+log "--- Step 12: Build graphs > Parquet ---"
 t0=$(date +%s)
 
-_bg_args="python3 ${REPO_ROOT}/scripts/build_graphs.py"
+_bg_args="rdfsolve build-graphs"
 _bg_args+=" --schemas-dir  ${OUTPUT_DIR}"
 _bg_args+=" --mappings-dir ${MAPPINGS_DIR}"
 _bg_args+=" --output-dir   ${PAPER_DATA_DIR}"
 if [[ ${#DATASETS[@]} -gt 0 ]]; then
     for _ds in "${DATASETS[@]}"; do _bg_args+=" --datasets ${_ds}"; done
 fi
-eval "${_bg_args}" || warn "build_graphs.py had warnings."
-step "Graph build done in $(elapsed $(( $(date +%s) - t0 )))."
-if command -v _notify >/dev/null 2>&1; then
-    _notify "Step 12 done: Graph build" "$(elapsed $(( $(date +%s) - t0 ))) — output: ${PAPER_DATA_DIR}" "default"
-fi
+eval "${_bg_args}" || warn "build-graphs had warnings"
+log "Graph build done in $(elapsed $(( $(date +%s) - t0 )))"
 
 else
-    banner "Steps 4b-12: Mappings & graphs - SKIPPED (--skip-mappings)"
+    log "--- Steps 5–12: Mappings & graphs - SKIPPED (--skip-mappings) ---"
 fi  # end SKIP_MAPPINGS
 
 # ═══════════════════════════════════════════════════════════════════
 # STEP 13 - Collect results
 # ═══════════════════════════════════════════════════════════════════
-banner "Step 13: Collect results → ${RESULTS_DIR}/"
+log "--- Step 13: Collect results > ${RESULTS_DIR}/ ---"
 rsync -a --info=progress2 "${OUTPUT_DIR}/" "${RESULTS_DIR}/" 2>/dev/null \
     || cp -r "${OUTPUT_DIR}/." "${RESULTS_DIR}/"
-step "Results collected."
 
-# ═══════════════════════════════════════════════════════════════════
-# Summary
-# ═══════════════════════════════════════════════════════════════════
+# ── Summary ───────────────────────────────────────────────────────
 TOTAL_ELAPSED=$(( $(date +%s) - PIPELINE_START ))
-banner "Pipeline complete"
-echo -e "  Total time: ${BOLD}$(elapsed ${TOTAL_ELAPSED})${NC}"
-echo -e "  Results in: ${BOLD}${RESULTS_DIR}/${NC}"
 FILE_COUNT=$(find "${RESULTS_DIR}" -type f 2>/dev/null | wc -l)
-echo -e "  Files:      ${BOLD}${FILE_COUNT}${NC}"
-echo ""
+log "=== Pipeline complete ==="
+log "Total time: $(elapsed ${TOTAL_ELAPSED})"
+log "Results:    ${RESULTS_DIR}/ (${FILE_COUNT} files)"
 
 if [[ "${FILE_COUNT}" -eq 0 ]]; then
-    fail "0 files found in results. Pipeline failed to output data!"
-    exit 1
+    die "0 files in results - pipeline produced no output"
 fi
 
-echo -e "${GREEN}${BOLD}Done.${NC}"
+_notify "Pipeline done" "$(elapsed ${TOTAL_ELAPSED}) - ${FILE_COUNT} files in ${RESULTS_DIR}" "default"
+log "Done."

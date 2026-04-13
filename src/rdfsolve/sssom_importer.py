@@ -30,9 +30,9 @@ From Python::
 
 From the CLI::
 
-    python scripts/seed_sssom_mappings.py
-    python scripts/seed_sssom_mappings.py --name ols_mappings
-    python scripts/seed_sssom_mappings.py --output-dir /tmp/sssom/
+    rdfsolve sssom seed
+    rdfsolve sssom seed --name ols_mappings
+    rdfsolve sssom seed --output-dir /tmp/sssom/
 
 SSSOM TSV format
 ----------------

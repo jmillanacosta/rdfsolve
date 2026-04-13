@@ -77,15 +77,15 @@ name: rdfsolve-ui
 #   - *.jsonld -> produced locally by the mining scripts (.gitignore: *.jsonld)
 #
 # On a fresh clone, populate docker/schemas/ before starting the container:
-#   python scripts/mine_all_sources.py --output-dir docker/schemas
-#   python scripts/seed_instance_mappings.py --output-dir docker/schemas
+#   rdfsolve mine --output-dir docker/schemas
+#   rdfsolve instance-match seed --output-dir docker/schemas
 #
 # The docker/schemas/ directory is bind-mounted into the container (see the
 # volumes block below), so new files are picked up without a rebuild:
 #   docker compose restart
 #
 # To add a single new schema to a running corpus:
-#   python scripts/mine_all_sources.py --output-dir docker/schemas --names mydb
+#   rdfsolve mine --output-dir docker/schemas --names mydb
 #   docker compose restart  # container re-imports from docker/schemas/ on boot
 #
 # INSPECTING THE DATABASE
