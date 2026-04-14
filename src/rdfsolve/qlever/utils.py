@@ -134,20 +134,12 @@ FORMAT_REGISTRY: dict[str, FormatSpec] = {
     "nq": FormatSpec(
         qlever_format="nq",
         glob="*.nq",
-        cat=(
-            "cat ${INPUT_FILES} | "
-            r"perl -pe 's{<([^<>]*)>}{my $i=$1; $i=~s/\x22/%22/g; qq{<$i>}}ge' | "
-            "grep -v '^$'"
-        ),
+        cat="cat ${INPUT_FILES}",
     ),
     "nquads": FormatSpec(  # alias
         qlever_format="nq",
         glob="*.nq",
-        cat=(
-            "cat ${INPUT_FILES} | "
-            r"perl -pe 's{<([^<>]*)>}{my $i=$1; $i=~s/\x22/%22/g; qq{<$i>}}ge' | "
-            "grep -v '^$'"
-        ),
+        cat="cat ${INPUT_FILES}",
     ),
     "trig": FormatSpec(
         qlever_format="nq",

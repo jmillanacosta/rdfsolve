@@ -359,6 +359,14 @@ class SparqlHelper:
         # Session for connection pooling
         self._session = requests.Session()
 
+        # Bypass proxy for localhost/127.0.0.1 endpoints (HPC compute nodes
+        # may have http_proxy set which breaks local QLever connections).
+        from urllib.parse import urlparse
+
+        _parsed = urlparse(self.endpoint_url)
+        if _parsed.hostname in ("localhost", "127.0.0.1", "::1"):
+            self._session.trust_env = False
+
         logger.debug(f"SparqlHelper initialized for {self.endpoint_url}")
 
     def select(
@@ -473,14 +481,26 @@ class SparqlHelper:
         return bool(raw)
 
     # Characters that are illegal inside a SPARQL IRI literal <...>.
-    # If the incremented upper-bound character is one of these the range
-    # query would produce a syntax error, so we fall back to STRSTARTS.
+    # Characters that are illegal inside a SPARQL ``<…>`` IRI literal.
     _IRI_UNSAFE_CHARS = frozenset('<>"{}|^`\\ \t\n\r')
+
+    def _next_safe_char(self, ch: str) -> str | None:
+        """Return the next codepoint after *ch* that is safe inside ``<…>``.
+
+        Scans up to 16 codepoints forward.  Returns ``None`` when no
+        safe character can be found (extremely unlikely in practice).
+        """
+        for offset in range(1, 17):
+            candidate = chr(ord(ch) + offset)
+            if candidate not in self._IRI_UNSAFE_CHARS:
+                return candidate
+        return None
 
     def find_classes_for_uri_pattern(self, uri_prefix: str) -> list[str]:
         """Find all ``rdf:type`` classes whose instances match *uri_prefix*.
 
-        Tries an IRI-range filter first (index-friendly on most engines)::
+        Uses an IRI-range filter (index-friendly on QLever and most
+        SPARQL engines)::
 
             SELECT DISTINCT ?c
             WHERE {
@@ -492,20 +512,14 @@ class SparqlHelper:
             }
 
         The upper-bound ``uri_prefix_next`` is derived by incrementing the
-        last character of *uri_prefix* by one code-point (e.g.
-        ``"https://bioregistry.io/faldo/"``
-        -> ``"https://bioregistry.io/faldo0"``
-        because ``ord('/') + 1 == ord('0')``).
+        last character of *uri_prefix* to the next IRI-safe codepoint
+        (e.g. ``"…/obo/AAO_"`` → ``"…/obo/AAOa"`` because ``_`` + 1 =
+        backtick which is IRI-unsafe, so we skip to ``a``).
 
-        If the incremented character would be illegal inside a SPARQL
-        ``<…>`` IRI literal (e.g. ``=`` -> ``>``, which closes the IRI),
-        falls back to the safer ``STRSTARTS`` filter::
-
-            SELECT DISTINCT ?c
-            WHERE {
-              ?s a ?c .
-              FILTER(STRSTARTS(STR(?s), "uri_prefix"))
-            }
+        Falls back to ``STRSTARTS`` only if *no* safe upper-bound
+        character can be found within 16 codepoints (virtually never
+        happens).  ``STRSTARTS`` forces a full table scan and can take
+        minutes on large datasets.
 
         Args:
             uri_prefix: URI prefix string, e.g.
@@ -517,10 +531,10 @@ class SparqlHelper:
         if not uri_prefix:
             return []
 
-        # Build the exclusive upper bound by bumping the last char's codepoint.
-        next_char = chr(ord(uri_prefix[-1]) + 1)
-        if next_char in self._IRI_UNSAFE_CHARS:
-            # Upper-bound IRI would be malformed - use STRSTARTS fallback.
+        # Build the exclusive upper bound by finding the next IRI-safe char.
+        next_char = self._next_safe_char(uri_prefix[-1])
+        if next_char is None:
+            # Extremely rare: no safe char found — STRSTARTS fallback.
             escaped = uri_prefix.replace("\\", "\\\\").replace('"', '\\"')
             query = (
                 f'SELECT DISTINCT ?c WHERE {{ ?s a ?c . FILTER(STRSTARTS(STR(?s), "{escaped}")) }}'
@@ -597,6 +611,62 @@ class SparqlHelper:
             result.setdefault(s, {}).setdefault(g, [])
             if c not in result[s][g]:
                 result[s][g].append(c)
+        return result
+
+    def find_classes_for_iris(
+        self,
+        iris: list[str],
+    ) -> dict[str, list[str]]:
+        """Find rdf:type classes for specific IRIs (no named-graph grouping).
+
+        Uses a VALUES-based query to resolve multiple IRIs at once::
+
+            SELECT DISTINCT ?s ?c
+            WHERE {
+              VALUES ?s { <iri1> <iri2> ... }
+              ?s a ?c .
+            }
+
+        This is the per-dataset variant of
+        :meth:`find_classes_for_iris_by_graph`.  It queries the default
+        graph, which is what per-dataset QLever instances expose when
+        data was loaded from Turtle (not N-Quads).
+
+        Args:
+            iris: Full entity IRIs to look up.
+
+        Returns:
+            Dict ``{entity_iri: [class_uri, ...]}``.
+            Only IRIs found in the endpoint are included.
+        """
+        if not iris:
+            return {}
+
+        values_block = "\n    ".join(f"<{iri}>" for iri in iris)
+        query = (
+            "SELECT DISTINCT ?s ?c\n"
+            "WHERE {\n"
+            "  VALUES ?s {\n"
+            f"    {values_block}\n"
+            "  }\n"
+            "  ?s a ?c .\n"
+            "}"
+        )
+        try:
+            out = self.select(query)
+        except Exception:
+            return {}
+
+        bindings = out.get("results", {}).get("bindings", [])
+        result: dict[str, list[str]] = {}
+        for b in bindings:
+            s = b.get("s", {}).get("value")
+            c = b.get("c", {}).get("value")
+            if not (s and c):
+                continue
+            result.setdefault(s, [])
+            if c not in result[s]:
+                result[s].append(c)
         return result
 
     def _execute(
