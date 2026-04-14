@@ -1736,6 +1736,17 @@ def semra_import_cmd(
     ),
 )
 @click.option(
+    "--exclude",
+    "-x",
+    "exclude_list",
+    multiple=True,
+    help=(
+        "SeMRA source key to exclude (repeatable). "
+        "Useful with --sources all to skip sources that are known to "
+        "fail (e.g. 'clo' requires Java, 'wikidata' hits 502 errors)."
+    ),
+)
+@click.option(
     "--prefix",
     "-p",
     "prefixes",
@@ -1761,6 +1772,7 @@ def semra_import_cmd(
 )
 def semra_seed_cmd(
     source_list: tuple[str, ...],
+    exclude_list: tuple[str, ...],
     prefixes: tuple[str, ...],
     output_dir: str,
     mapping_type: str,
@@ -1768,14 +1780,18 @@ def semra_seed_cmd(
     """Seed mapping files from multiple SeMRA sources.
 
     Pass ``--sources all`` to import every registered SeMRA source.
+    Use ``--exclude clo --exclude wikidata`` to skip problematic sources.
     """
     from rdfsolve.api import seed_semra_mappings
 
     # Expand "all" to the full registered-source list.
+    # NOTE: 'clo' (requires Java) and 'wikidata' (unreliable SPARQL
+    # endpoint) are excluded from 'all' by default.  Pass them
+    # explicitly with ``--sources clo`` if you really need them.
     _ALL_SOURCES = [
         "fplx", "pubchemmesh", "ncitchebi", "ncithgnc", "ncitgo",
-        "ncituniprot", "biomappingspositive", "gilda", "clo",
-        "wikidata", "omimgene", "cbms2019", "compath", "rdfsolveinstance",
+        "ncituniprot", "biomappingspositive", "gilda",
+        "omimgene", "cbms2019", "compath", "rdfsolveinstance",
     ]
     sources: list[str] = []
     for s in source_list:
@@ -1786,6 +1802,14 @@ def semra_seed_cmd(
     # Deduplicate while preserving order
     seen: set[str] = set()
     sources = [s for s in sources if not (s in seen or seen.add(s))]  # type: ignore[func-returns-value]
+
+    # Apply exclusions
+    if exclude_list:
+        excl = {e.lower() for e in exclude_list}
+        excluded = [s for s in sources if s.lower() in excl]
+        sources = [s for s in sources if s.lower() not in excl]
+        for e in excluded:
+            click.echo(f"  SKIP {e} (excluded via --exclude)")
 
     try:
         result = seed_semra_mappings(

@@ -44,6 +44,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from pydantic import ValidationError
+
 from rdfsolve.models import (
     AboutMetadata,
     MinedSchema,
@@ -782,6 +784,20 @@ class _ReportCollector:
             stats.failed += 1
             self._report.total_queries_failed += 1
 
+    # ── Dropped URI tracking ───────────────────────────────────────
+
+    _MAX_DROPPED_SAMPLES: int = 20
+
+    def record_dropped_uri(self, sample: str) -> None:
+        """Record a pattern dropped due to an invalid URI value.
+
+        Increments the counter and keeps the first few examples so
+        the report gives actionable debugging info.
+        """
+        self._report.dropped_invalid_uris += 1
+        if len(self._report.dropped_invalid_uri_samples) < self._MAX_DROPPED_SAMPLES:
+            self._report.dropped_invalid_uri_samples.append(sample)
+
     # ── Phase tracking ─────────────────────────────────────────────
 
     def start_phase(self, name: str) -> PhaseReport:
@@ -1257,39 +1273,51 @@ class SchemaMiner:
                 p = b.get("p", {}).get("value", "")
                 oc = b.get("oc", {}).get("value", "")
                 if sc and p and oc:
-                    patterns.append(
-                        SchemaPattern(
-                            subject_class=sc,
-                            property_uri=p,
-                            object_class=oc,
+                    try:
+                        patterns.append(
+                            SchemaPattern(
+                                subject_class=sc,
+                                property_uri=p,
+                                object_class=oc,
+                            )
                         )
-                    )
+                    except (ValueError, ValidationError) as exc:
+                        self._report.record_dropped_uri(f"{sc} {p} {oc}")
+                        logger.debug("Skipping invalid pattern (%s %s %s): %s", sc, p, oc, exc)
         elif qtype == "literal":
             for b in bindings:
                 sc = b.get("sc", {}).get("value", "")
                 p = b.get("p", {}).get("value", "")
                 dt = b.get("dt", {}).get("value")
                 if sc and p:
-                    patterns.append(
-                        SchemaPattern(
-                            subject_class=sc,
-                            property_uri=p,
-                            object_class="Literal",
-                            datatype=dt if dt else None,
+                    try:
+                        patterns.append(
+                            SchemaPattern(
+                                subject_class=sc,
+                                property_uri=p,
+                                object_class="Literal",
+                                datatype=dt if dt else None,
+                            )
                         )
-                    )
+                    except (ValueError, ValidationError) as exc:
+                        self._report.record_dropped_uri(f"{sc} {p} Literal")
+                        logger.debug("Skipping invalid pattern (%s %s Literal): %s", sc, p, exc)
         else:  # untyped-uri
             for b in bindings:
                 sc = b.get("sc", {}).get("value", "")
                 p = b.get("p", {}).get("value", "")
                 if sc and p:
-                    patterns.append(
-                        SchemaPattern(
-                            subject_class=sc,
-                            property_uri=p,
-                            object_class=oc_default,
+                    try:
+                        patterns.append(
+                            SchemaPattern(
+                                subject_class=sc,
+                                property_uri=p,
+                                object_class=oc_default,
+                            )
                         )
-                    )
+                    except (ValueError, ValidationError) as exc:
+                        self._report.record_dropped_uri(f"{sc} {p} {oc_default}")
+                        logger.debug("Skipping invalid pattern (%s %s %s): %s", sc, p, oc_default, exc)
         return patterns
 
     def _run_one_shot_query(
@@ -1477,8 +1505,7 @@ class SchemaMiner:
 
         # ── Ontology-graph fallback ───────────────────────────
         # If the GRAPH-scoped pass found 0 patterns but Phase 1
-        # discovered classes, the graph is probably an *ontology*
-        # (class definitions only) while instances live in the
+        # discovered classes, instances live in the
         # default graph or other named graphs.  Retry without the
         # GRAPH restriction so the instance triple patterns are
         # visible.
@@ -1931,13 +1958,16 @@ class SchemaMiner:
                 p = b.get("p", {}).get("value", "")
                 oc = b.get("oc", {}).get("value", "")
                 if cls and p and oc:
-                    patterns.append(
-                        SchemaPattern(
-                            subject_class=cls,
-                            property_uri=p,
-                            object_class=oc,
+                    try:
+                        patterns.append(
+                            SchemaPattern(
+                                subject_class=cls,
+                                property_uri=p,
+                                object_class=oc,
+                            )
                         )
-                    )
+                    except (ValueError, ValidationError):
+                        self._report.record_dropped_uri(f"{cls} {p} {oc}")
 
             # 2b. Literal patterns for this batch
             t0 = time.monotonic()
@@ -1956,14 +1986,17 @@ class SchemaMiner:
                 p = b.get("p", {}).get("value", "")
                 dt = b.get("dt", {}).get("value")
                 if cls and p:
-                    patterns.append(
-                        SchemaPattern(
-                            subject_class=cls,
-                            property_uri=p,
-                            object_class="Literal",
-                            datatype=dt if dt else None,
+                    try:
+                        patterns.append(
+                            SchemaPattern(
+                                subject_class=cls,
+                                property_uri=p,
+                                object_class="Literal",
+                                datatype=dt if dt else None,
+                            )
                         )
-                    )
+                    except (ValueError, ValidationError):
+                        self._report.record_dropped_uri(f"{cls} {p} Literal")
 
             # 2c. Untyped-URI patterns for this batch
             t0 = time.monotonic()
@@ -1984,13 +2017,16 @@ class SchemaMiner:
                 cls = b.get("class", {}).get("value", "")
                 p = b.get("p", {}).get("value", "")
                 if cls and p:
-                    patterns.append(
-                        SchemaPattern(
-                            subject_class=cls,
-                            property_uri=p,
-                            object_class=untyped_oc,
+                    try:
+                        patterns.append(
+                            SchemaPattern(
+                                subject_class=cls,
+                                property_uri=p,
+                                object_class=untyped_oc,
+                            )
                         )
-                    )
+                    except (ValueError, ValidationError):
+                        self._report.record_dropped_uri(f"{cls} {p} {untyped_oc}")
 
             # Polite delay between batches
             if self.delay > 0:
@@ -2054,13 +2090,16 @@ class SchemaMiner:
             p = b.get("p", {}).get("value", "")
             oc = b.get("oc", {}).get("value", "")
             if sc and p and oc:
-                results.append(
-                    SchemaPattern(
-                        subject_class=sc,
-                        property_uri=p,
-                        object_class=oc,
+                try:
+                    results.append(
+                        SchemaPattern(
+                            subject_class=sc,
+                            property_uri=p,
+                            object_class=oc,
+                        )
                     )
-                )
+                except (ValueError, ValidationError):
+                    self._report.record_dropped_uri(f"{sc} {p} {oc}")
         return results
 
     def _run_literal(self) -> list[SchemaPattern]:
@@ -2076,14 +2115,17 @@ class SchemaMiner:
             p = b.get("p", {}).get("value", "")
             dt = b.get("dt", {}).get("value")
             if sc and p:
-                results.append(
-                    SchemaPattern(
-                        subject_class=sc,
-                        property_uri=p,
-                        object_class="Literal",
-                        datatype=dt if dt else None,
+                try:
+                    results.append(
+                        SchemaPattern(
+                            subject_class=sc,
+                            property_uri=p,
+                            object_class="Literal",
+                            datatype=dt if dt else None,
+                        )
                     )
-                )
+                except (ValueError, ValidationError):
+                    self._report.record_dropped_uri(f"{sc} {p} Literal")
         return results
 
     def _run_untyped_uri(self) -> list[SchemaPattern]:
@@ -2099,18 +2141,21 @@ class SchemaMiner:
             sc = b.get("sc", {}).get("value", "")
             p = b.get("p", {}).get("value", "")
             if sc and p:
-                results.append(
-                    SchemaPattern(
-                        subject_class=sc,
-                        property_uri=p,
-                        object_class=oc,
-                        count=None,
-                        datatype=None,
-                        subject_label=None,
-                        object_label=None,
-                        property_label=None,
+                try:
+                    results.append(
+                        SchemaPattern(
+                            subject_class=sc,
+                            property_uri=p,
+                            object_class=oc,
+                            count=None,
+                            datatype=None,
+                            subject_label=None,
+                            object_label=None,
+                            property_label=None,
+                        )
                     )
-                )
+                except (ValueError, ValidationError):
+                    self._report.record_dropped_uri(f"{sc} {p} {oc}")
         return results
 
     def _fetch_typed_count_batch(

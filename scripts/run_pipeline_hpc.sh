@@ -21,6 +21,7 @@ SKIP_REMOTE=false
 SKIP_DISCOVERY=false
 SKIP_LOCAL=false
 SKIP_MAPPINGS=false
+SKIP_MINING=false
 BENCHMARK=true
 BASE_PORT=7019
 TIMEOUT=1000
@@ -58,6 +59,7 @@ while [[ $# -gt 0 ]]; do
         --skip-remote)        SKIP_REMOTE=true;        shift ;;
         --skip-discovery)     SKIP_DISCOVERY=true;     shift ;;
         --skip-local)         SKIP_LOCAL=true;         shift ;;
+        --skip-mining)        SKIP_MINING=true;        shift ;;
         --skip-mappings)      SKIP_MAPPINGS=true;      shift ;;
         --data-dir)           DATA_DIR="$2";           shift 2 ;;
         --output-dir)         OUTPUT_DIR="$2";         shift 2 ;;
@@ -167,6 +169,22 @@ PYEOF
     done
     popd > /dev/null
     [[ ${_overflow_patched} -gt 0 ]] && log "Patched overflowing integers in ${_overflow_patched} file(s)"
+
+    # Workaround: strip control chars (except \t, \n, \r) that break
+    # QLever's IRI / N-Quads parser (e.g. \x01 and \x7F in bio2rdf data).
+    log "Checking for illegal control characters …"
+    local _sanitised=0
+    pushd "${workdir}" > /dev/null
+    for f in ${INPUT_FILES}; do
+        [ -f "$f" ] || continue
+        if grep -qP '[\x00-\x08\x0e-\x1f\x7f]' "$f" 2>/dev/null; then
+            log "  stripping control chars from $(basename "$f")"
+            perl -pi -e 's/[\x00-\x08\x0e-\x1f\x7f]//g' "$f"
+            _sanitised=$(( _sanitised + 1 ))
+        fi
+    done
+    popd > /dev/null
+    [[ ${_sanitised} -gt 0 ]] && log "Sanitised ${_sanitised} file(s)"
 
     if [[ "${use_direct_files}" == true ]]; then
         local file_flags=()
@@ -430,6 +448,9 @@ if [[ "${SKIP_LOCAL}" == false ]]; then
     log "Qleverfiles ready (SYSTEM=native)"
 
     # Step 4: For each dataset - download > index > start > mine > stop > cleanup
+    if [[ "${SKIP_MINING}" == true ]]; then
+        log "--- Step 4: Mining — SKIPPED (--skip-mining) ---"
+    else
     log "--- Step 4: Download > Index > Mine ---"
 
     PORTS_JSON="${QLEVER_WORKDIRS}/ports.json"
@@ -507,6 +528,7 @@ for name, port in d.items():
             log "[${NAME}] done"
         done <<< "${DS_LINES}"
     fi
+    fi  # end SKIP_MINING
 else
     log "--- Steps 3–4: Local processing - SKIPPED (--skip-local) ---"
 fi
@@ -552,6 +574,7 @@ t0=$(date +%s)
 
 rdfsolve semra seed \
     --sources all \
+    --exclude clo --exclude wikidata \
     --output-dir "${MAPPINGS_DIR}/semra" \
     || warn "SeMRA seeding had failures"
 log "SeMRA seeding done in $(elapsed $(( $(date +%s) - t0 )))"
