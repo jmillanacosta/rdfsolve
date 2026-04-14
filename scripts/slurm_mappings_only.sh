@@ -1,11 +1,9 @@
 #!/bin/bash
-# slurm_mappings_only.sh — Run the full mappings pipeline (Steps 5–12)
+# slurm_mappings_only.sh — Run the mappings pipeline (Steps 8–13)
 #
-# Skips remote discovery and local mining (both already done).
+# Skips remote discovery, local mining, AND seeding (all already done).
 # Starts all 93 indexed QLever instances for LSLOD, runs:
-#   Step 5:  Schema selection
-#   Step 6:  SSSOM seed
-#   Step 7:  SeMRA seed
+#   Step 5–7: SKIPPED (seeding already done)
 #   Step 8:  Instance matching (with dynamically discovered prefixes)
 #   Step 9:  Class derivation + enrichment (multi-endpoint via ports.json)
 #   Step 10: Stop QLever
@@ -40,6 +38,7 @@ bash "${PIPELINE}" \
     --chunk-size  50000 \
     --skip-remote \
     --skip-mining \
+    --skip-seeding \
     || { _notify "Mappings FAILED" "Job ${SLURM_JOB_ID} failed" high; exit 1; }
 
 _notify "Mappings done" "Pipeline completed (job ${SLURM_JOB_ID})"

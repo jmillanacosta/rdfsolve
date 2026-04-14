@@ -22,6 +22,7 @@ SKIP_DISCOVERY=false
 SKIP_LOCAL=false
 SKIP_MAPPINGS=false
 SKIP_MINING=false
+SKIP_SEEDING=false
 BENCHMARK=true
 BASE_PORT=7019
 TIMEOUT=1000
@@ -61,6 +62,7 @@ while [[ $# -gt 0 ]]; do
         --skip-local)         SKIP_LOCAL=true;         shift ;;
         --skip-mining)        SKIP_MINING=true;        shift ;;
         --skip-mappings)      SKIP_MAPPINGS=true;      shift ;;
+        --skip-seeding)       SKIP_SEEDING=true;       shift ;;
         --data-dir)           DATA_DIR="$2";           shift 2 ;;
         --output-dir)         OUTPUT_DIR="$2";         shift 2 ;;
         --results-dir)        RESULTS_DIR="$2";        shift 2 ;;
@@ -560,14 +562,16 @@ fi
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_MAPPINGS}" == false ]]; then
 
-# Step 5: Schema selection
-log "--- Step 5: Schema selection ---"
-t0=$(date +%s)
-
 SCHEMAS_DIR="${OUTPUT_DIR}/schemas"
 MAPPINGS_DIR="${OUTPUT_DIR}/mappings"
 PAPER_DATA_DIR="${OUTPUT_DIR}/paper_data"
 mkdir -p "${SCHEMAS_DIR}" "${MAPPINGS_DIR}" "${PAPER_DATA_DIR}"
+
+if [[ "${SKIP_SEEDING}" == false ]]; then
+
+# Step 5: Schema selection
+log "--- Step 5: Schema selection ---"
+t0=$(date +%s)
 
 _sel_args="rdfsolve build-graphs"
 _sel_args+=" --schemas-dir ${OUTPUT_DIR}"
@@ -600,6 +604,10 @@ rdfsolve semra seed \
     --output-dir "${MAPPINGS_DIR}/semra" \
     || warn "SeMRA seeding had failures"
 log "SeMRA seeding done in $(elapsed $(( $(date +%s) - t0 )))"
+
+else
+    log "--- Steps 5–7: Seeding - SKIPPED (--skip-seeding) ---"
+fi  # end SKIP_SEEDING
 
 # ═══════════════════════════════════════════════════════════════════
 # STEPS 8–10 - LSLOD block: start ALL QLever > instance mappings >
