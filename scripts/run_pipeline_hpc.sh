@@ -637,12 +637,15 @@ for name, port in d.items():
                 continue
             fi
             log "  Starting ${_LNAME} on port ${_LPORT} …"
-            _LINST=$(_qlever_start "${_LNAME}" "${_LWORKDIR}" "${_LPORT}") \
-                && {
-                    LSLOD_INSTANCES+=("${_LINST}")
-                    LSLOD_PORTS+=("${_LPORT}")
-                    [[ -z "${LSLOD_ENDPOINT}" ]] && LSLOD_ENDPOINT="http://localhost:${_LPORT}"
-                } || warn "  [${_LNAME}] Failed to start"
+            if _LINST=$(_qlever_start "${_LNAME}" "${_LWORKDIR}" "${_LPORT}"); then
+                LSLOD_INSTANCES+=("${_LINST}")
+                LSLOD_PORTS+=("${_LPORT}")
+                if [[ -z "${LSLOD_ENDPOINT}" ]]; then
+                    LSLOD_ENDPOINT="http://localhost:${_LPORT}"
+                fi
+            else
+                warn "  [${_LNAME}] Failed to start"
+            fi
             sleep 1   # brief cooldown between instance starts
         done <<< "${DS_LINES_LSLOD}"
     fi
