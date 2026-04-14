@@ -229,7 +229,18 @@ _qlever_start() {
     local name="$1" workdir="$2" port="$3"
     local instance_name="qlever_${name}"
 
+    # --- Ensure port is free before starting ---
+    local _port_pid
+    _port_pid=$(ss -tlnp "sport = :${port}" 2>/dev/null \
+        | awk 'NR>1{match($0,/pid=([0-9]+)/,a); if(a[1]) print a[1]}' | head -1)
+    if [[ -n "${_port_pid}" ]]; then
+        warn "[${name}] Port ${port} occupied by PID ${_port_pid} – killing"
+        kill -9 "${_port_pid}" 2>/dev/null || true
+        sleep 2
+    fi
+
     singularity instance stop "${instance_name}" 2>/dev/null || true
+    sleep 1   # let the OS reclaim resources from the old instance
 
     singularity instance start \
         --bind "${workdir}:${workdir}" \
@@ -239,6 +250,9 @@ _qlever_start() {
         "${instance_name}" \
         > "${workdir}/start.log" 2>&1
 
+    # Clear old server log so we can detect fresh errors
+    : > "${workdir}/server.log"
+
     singularity exec "instance://${instance_name}" \
         bash -c "cd '${workdir}' && exec qlever-server -i '${name}' -j 8 -p '${port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '${name}'" \
         > "${workdir}/server.log" 2>&1 &
@@ -246,6 +260,13 @@ _qlever_start() {
     local i=0
     until curl --noproxy '*' -sf "http://localhost:${port}/?query=ASK%7B%7D" >/dev/null 2>&1; do
         sleep 2; i=$((i+2))
+        # Detect early fatal errors (e.g. "Address already in use") to fail fast
+        if [[ -s "${workdir}/server.log" ]] \
+            && grep -qi 'Address already in use\|cannot bind\|FATAL' "${workdir}/server.log" 2>/dev/null; then
+            warn "[${name}] QLever failed: $(head -5 "${workdir}/server.log")"
+            singularity instance stop "${instance_name}" 2>/dev/null || true
+            return 1
+        fi
         [[ $i -ge 120 ]] && { warn "[${name}] QLever did not start within 120s"; return 1; }
     done
     log "[${name}] QLever ready on port ${port}"
@@ -616,31 +637,38 @@ for name, port in d.items():
                     LSLOD_PORTS+=("${_LPORT}")
                     [[ -z "${LSLOD_ENDPOINT}" ]] && LSLOD_ENDPOINT="http://localhost:${_LPORT}"
                 } || warn "  [${_LNAME}] Failed to start"
+            sleep 1   # brief cooldown between instance starts
         done <<< "${DS_LINES_LSLOD}"
     fi
 
-    if [[ -z "${LSLOD_ENDPOINT}" ]]; then
+    if [[ ${#LSLOD_INSTANCES[@]} -eq 0 ]]; then
         warn "No QLever instances started - skipping steps 8–10"
     else
-        log "LSLOD: ${#LSLOD_INSTANCES[@]} instances running, primary: ${LSLOD_ENDPOINT}"
+        log "LSLOD: ${#LSLOD_INSTANCES[@]} instances running"
 
         # Step 8: Instance mappings (LOCAL QLever only via ports.json)
         log "--- Step 8: Instance mappings (local endpoints) ---"
         t0=$(date +%s)
 
+        # Dynamically discover entity prefixes from all mapping files
+        _pfx_file="${MAPPINGS_DIR}/.discovered_prefixes.txt"
+        _discover_args="rdfsolve instance-match discover-prefixes"
+        _discover_args+=" -d ${MAPPINGS_DIR}/sssom"
+        _discover_args+=" -d ${MAPPINGS_DIR}/semra"
+        _discover_args+=" -o ${_pfx_file}"
+        eval "${_discover_args}" || warn "Prefix discovery had warnings"
+
         _inst_prefixes=()
-        _inst_src_dir="${REPO_ROOT}/docker/mappings/instance_matching"
-        if [[ -d "${_inst_src_dir}" ]]; then
-            while IFS= read -r _f; do
-                _pfx=$(basename "${_f}" _instance_mapping.jsonld)
-                _inst_prefixes+=("${_pfx}")
-            done < <(find "${_inst_src_dir}" -maxdepth 1 -name '*_instance_mapping.jsonld' | sort)
+        if [[ -s "${_pfx_file}" ]]; then
+            while IFS= read -r _pfx_line; do
+                [[ -n "${_pfx_line}" ]] && _inst_prefixes+=("${_pfx_line}")
+            done < "${_pfx_file}"
         fi
         if [[ ${#_inst_prefixes[@]} -eq 0 ]]; then
             _inst_prefixes=(chebi ensembl faldo uniprot)
-            warn "No existing instance_mapping files found; using defaults: ${_inst_prefixes[*]}"
+            warn "Prefix discovery returned 0 prefixes; using defaults: ${_inst_prefixes[*]}"
         fi
-        log "Instance mapping prefixes: ${_inst_prefixes[*]}"
+        log "Instance mapping prefixes (${#_inst_prefixes[@]}): ${_inst_prefixes[*]}"
 
         _inst_args="rdfsolve instance-match seed"
         for _pfx in "${_inst_prefixes[@]}"; do _inst_args+=" --prefixes ${_pfx}"; done
@@ -677,7 +705,7 @@ for name, port in d.items():
                 rdfsolve instance-match derive \
                     --input    "${_f}" \
                     --output   "${_out}" \
-                    --endpoint "${LSLOD_ENDPOINT}" \
+                    --ports-json "${PORTS_JSON}" \
                     --cache-index \
                     --enrich \
                     --timeout  "${TIMEOUT}" \

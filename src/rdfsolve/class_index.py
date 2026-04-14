@@ -29,6 +29,7 @@ __all__ = [
     "EntityClassInfo",
     "build_class_index",
     "build_class_index_from_endpoints",
+    "build_class_index_from_ports",
     "enrich_jsonld_with_classes",
     "expand_iri_alternatives",
     "load_class_index",
@@ -609,3 +610,129 @@ def build_class_index_from_endpoints(
         save_class_index(idx, cache_path)
 
     return idx, cost
+
+
+def build_class_index_from_ports(
+    entity_iris: list[str],
+    ports_json_path: str,
+    *,
+    batch_size: int = 50,
+    timeout: float = 60.0,
+    cache_path: str | None = None,
+) -> tuple[ClassIndex, dict[str, Any]]:
+    """Build a :class:`ClassIndex` by querying **all** per-dataset QLever instances.
+
+    Each dataset in *ports_json_path* is queried individually using
+    :meth:`~rdfsolve.sparql_helper.SparqlHelper.find_classes_for_iris`
+    (default-graph ``?s a ?c``).  The dataset name is used as the
+    "graph" identifier in the resulting index, so downstream code that
+    groups evidence by graph works unchanged.
+
+    Args:
+        entity_iris: Canonical entity IRIs from the mapping set.
+        ports_json_path: Path to the ``ports.json`` file mapping
+            ``{dataset_name: port}``.
+        batch_size: Entities per VALUES query (default 50).
+        timeout: Per-request timeout in seconds (default 60.0).
+        cache_path: Optional path to read/write a cached index JSON.
+
+    Returns:
+        ``(class_index, cost_stats)`` — same shape as
+        :func:`build_class_index_from_endpoints`.
+    """
+    if cache_path is not None:
+        p = Path(cache_path)
+        if p.exists():
+            idx = load_class_index(cache_path)
+            cost: dict[str, Any] = {
+                "queries": 0,
+                "found": len(idx.entities),
+                "not_found": 0,
+                "elapsed_s": 0.0,
+                "cached": True,
+            }
+            return idx, cost
+
+    import json as _json
+
+    from rdfsolve.sparql_helper import SparqlHelper
+
+    with open(ports_json_path) as fh:
+        ports_map: dict[str, int] = _json.load(fh)
+
+    idx = ClassIndex(endpoint_url=f"ports:{ports_json_path}")
+    entity_to_alts = _expand_all_entities(entity_iris, idx)
+    iri_alternatives_total = sum(len(v) for v in entity_to_alts.values())
+    logger.info(
+        "Class index (multi-endpoint): %d entities, %d IRI forms, %d endpoints",
+        len(entity_iris),
+        iri_alternatives_total,
+        len(ports_map),
+    )
+
+    entities_list = list(entity_iris)
+    query_times: list[float] = []
+    errors = 0
+
+    for ds_name, port in ports_map.items():
+        endpoint_url = f"http://localhost:{port}"
+        sparql = SparqlHelper(endpoint_url, timeout=timeout)
+
+        # Quick health-check; skip unreachable instances
+        try:
+            sparql.ask("ASK {}")
+        except Exception:
+            logger.debug("Skipping unreachable endpoint %s (%s)", ds_name, endpoint_url)
+            continue
+
+        for batch_start in range(0, len(entities_list), batch_size):
+            batch = entities_list[batch_start : batch_start + batch_size]
+            all_alts = _collect_batch_alts(batch, entity_to_alts)
+            alt_to_canonical = _build_alt_to_canonical(batch, entity_to_alts)
+
+            t0 = time.perf_counter()
+            try:
+                flat_results = sparql.find_classes_for_iris(all_alts)
+            except Exception as exc:
+                logger.warning(
+                    "Class index batch failed on %s (batch %d-%d): %s",
+                    ds_name,
+                    batch_start,
+                    batch_start + len(batch) - 1,
+                    exc,
+                )
+                errors += 1
+                query_times.append(time.perf_counter() - t0)
+                continue
+
+            query_times.append(time.perf_counter() - t0)
+
+            # Convert flat {iri: [classes]} to graph-keyed form using
+            # the dataset name as the "graph" identifier.
+            graph_keyed: dict[str, dict[str, list[str]]] = {}
+            for found_iri, classes in flat_results.items():
+                graph_keyed[found_iri] = {ds_name: classes}
+
+            _merge_batch_results(graph_keyed, alt_to_canonical, idx)
+
+    cost_stats = _build_cost_stats(
+        len(entity_iris),
+        iri_alternatives_total,
+        query_times,
+        errors,
+        batch_size,
+    )
+
+    found = sum(1 for e in idx.entities.values() if e.graph_classes)
+    logger.info(
+        "Class index (multi-endpoint) built: %d/%d entities found (%d queries, %.1fs)",
+        found,
+        len(entity_iris),
+        len(query_times),
+        sum(query_times),
+    )
+
+    if cache_path is not None:
+        save_class_index(idx, cache_path)
+
+    return idx, cost_stats

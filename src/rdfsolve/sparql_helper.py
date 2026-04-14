@@ -599,6 +599,62 @@ class SparqlHelper:
                 result[s][g].append(c)
         return result
 
+    def find_classes_for_iris(
+        self,
+        iris: list[str],
+    ) -> dict[str, list[str]]:
+        """Find rdf:type classes for specific IRIs (no named-graph grouping).
+
+        Uses a VALUES-based query to resolve multiple IRIs at once::
+
+            SELECT DISTINCT ?s ?c
+            WHERE {
+              VALUES ?s { <iri1> <iri2> ... }
+              ?s a ?c .
+            }
+
+        This is the per-dataset variant of
+        :meth:`find_classes_for_iris_by_graph`.  It queries the default
+        graph, which is what per-dataset QLever instances expose when
+        data was loaded from Turtle (not N-Quads).
+
+        Args:
+            iris: Full entity IRIs to look up.
+
+        Returns:
+            Dict ``{entity_iri: [class_uri, ...]}``.
+            Only IRIs found in the endpoint are included.
+        """
+        if not iris:
+            return {}
+
+        values_block = "\n    ".join(f"<{iri}>" for iri in iris)
+        query = (
+            "SELECT DISTINCT ?s ?c\n"
+            "WHERE {\n"
+            "  VALUES ?s {\n"
+            f"    {values_block}\n"
+            "  }\n"
+            "  ?s a ?c .\n"
+            "}"
+        )
+        try:
+            out = self.select(query)
+        except Exception:
+            return {}
+
+        bindings = out.get("results", {}).get("bindings", [])
+        result: dict[str, list[str]] = {}
+        for b in bindings:
+            s = b.get("s", {}).get("value")
+            c = b.get("c", {}).get("value")
+            if not (s and c):
+                continue
+            result.setdefault(s, [])
+            if c not in result[s]:
+                result[s].append(c)
+        return result
+
     def _execute(
         self,
         query: str,
