@@ -27,7 +27,7 @@
 - name: ols_mappings
   provider: "EMBL-EBI (UK)"
   mapping_type: instance
-  url: "https://ftp.ebi.ac.uk/pub/databases/spot/ols/latest/mappings_sssom.tgz"
+  url: "https://ftp.ebi.ac.uk/pub/databases/spot/ols/latest/sssom.tgz"
   description: >-
     OLS (Ontology Lookup Service) cross-ontology mappings exported in SSSOM
     format by EMBL-EBI.  Each .sssom.tsv file inside the archive covers one
