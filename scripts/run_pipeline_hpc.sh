@@ -258,7 +258,8 @@ _qlever_start() {
         > "${workdir}/server.log" 2>&1 &
 
     local i=0
-    until curl --noproxy '*' -sf "http://localhost:${port}/?query=ASK%7B%7D" >/dev/null 2>&1; do
+    until env http_proxy= https_proxy= HTTP_PROXY= HTTPS_PROXY= \
+          curl --noproxy '*' -sf "http://localhost:${port}/?query=ASK%7B%7D" >/dev/null 2>&1; do
         sleep 2; i=$((i+2))
         # Detect early fatal errors (e.g. "Address already in use") to fail fast
         if [[ -s "${workdir}/server.log" ]] \
@@ -615,6 +616,11 @@ declare -a LSLOD_PORTS=()
 if [[ "${SKIP_LOCAL}" == false ]]; then
     log "--- Steps 8–10: LSLOD block (start QLever > instance match > derive > stop) ---"
     PORTS_JSON="${QLEVER_WORKDIRS}/ports.json"
+
+    # Reinforce proxy bypass for localhost QLever endpoints.
+    # (HPC module loads can reset no_proxy after our initial export.)
+    export no_proxy="localhost,127.0.0.1,${no_proxy:-}"
+    export NO_PROXY="localhost,127.0.0.1,${NO_PROXY:-}"
 
     if [[ -f "${PORTS_JSON}" ]]; then
         DS_LINES_LSLOD=$(python3 -c "

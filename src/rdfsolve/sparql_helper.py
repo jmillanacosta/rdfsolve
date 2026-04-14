@@ -359,6 +359,14 @@ class SparqlHelper:
         # Session for connection pooling
         self._session = requests.Session()
 
+        # Bypass proxy for localhost/127.0.0.1 endpoints (HPC compute nodes
+        # may have http_proxy set which breaks local QLever connections).
+        from urllib.parse import urlparse
+
+        _parsed = urlparse(self.endpoint_url)
+        if _parsed.hostname in ("localhost", "127.0.0.1", "::1"):
+            self._session.trust_env = False
+
         logger.debug(f"SparqlHelper initialized for {self.endpoint_url}")
 
     def select(
