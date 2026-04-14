@@ -48,8 +48,8 @@ class SchemaPattern(BaseModel):
     - **untyped-uri**:
       ``?s a ?sc . ?s ?p ?o . FILTER(isURI(?o))``
 
-    This model is shared contract between SchemaMiner (direct SPARQL)
-    and VoidParser (VoID-based extraction).
+    This model is shared between SchemaMiner (direct SPARQL)
+    and VoidParser (RDF triples VoID catalog-based extraction).
     """
 
     subject_class: str = Field(
@@ -114,11 +114,11 @@ class AboutMetadata(BaseModel):
     """Provenance metadata attached to every schema export."""
 
     generated_by: str = Field(
-        ...,
+        default="unknown",
         description="Tool and version string",
     )
     generated_at: str = Field(
-        ...,
+        default="",
         description="ISO-8601 timestamp (UTC)",
     )
     endpoint: str | None = Field(

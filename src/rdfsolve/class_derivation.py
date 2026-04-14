@@ -255,7 +255,8 @@ def derive_class_mappings_from_instances(
     input_paths: list[str],
     output_path: str,
     *,
-    endpoint_url: str,
+    endpoint_url: str = "",
+    ports_json_path: str | None = None,
     timeout: float = 60.0,
     batch_size: int = 50,
     min_instance_count: int = 1,
@@ -278,7 +279,12 @@ def derive_class_mappings_from_instances(
     Args:
         input_paths: Paths to instance-mapping JSON-LD files.
         output_path: Destination path for the class-derived JSON-LD.
-        endpoint_url: QLever / SPARQL 1.1 endpoint for class lookup.
+        endpoint_url: Single QLever / SPARQL 1.1 endpoint for class
+            lookup (used when *ports_json_path* is not given).
+        ports_json_path: Path to ``ports.json`` mapping
+            ``{dataset: port}``.  When provided, every per-dataset
+            QLever instance is queried and the dataset name is used as
+            the graph identifier.
         timeout: Per-request timeout in seconds.
         batch_size: IRIs per VALUES query.
         min_instance_count: Minimum evidence pairs to retain a class pair.
@@ -300,6 +306,7 @@ def derive_class_mappings_from_instances(
 
     from rdfsolve.class_index import (
         build_class_index_from_endpoints,
+        build_class_index_from_ports,
         enrich_jsonld_with_classes,
     )
     from rdfsolve.mapping_models import MappingEdge
@@ -340,13 +347,25 @@ def derive_class_mappings_from_instances(
         _cache_path = index_cache_path or str(
             _Path(output_path).with_suffix(".class_index_cache.json")
         )
-    class_index, cost_stats = build_class_index_from_endpoints(
-        sorted(entity_iris_set),
-        endpoint_url,
-        batch_size=batch_size,
-        timeout=timeout,
-        cache_path=_cache_path,
-    )
+
+    if ports_json_path:
+        class_index, cost_stats = build_class_index_from_ports(
+            sorted(entity_iris_set),
+            ports_json_path,
+            batch_size=batch_size,
+            timeout=timeout,
+            cache_path=_cache_path,
+        )
+    else:
+        if not endpoint_url:
+            raise ValueError("Either --endpoint or --ports-json must be provided")
+        class_index, cost_stats = build_class_index_from_endpoints(
+            sorted(entity_iris_set),
+            endpoint_url,
+            batch_size=batch_size,
+            timeout=timeout,
+            cache_path=_cache_path,
+        )
 
     # 4. Optionally enrich input files in-place
     enrichment_stats_total: dict[str, Any] = {

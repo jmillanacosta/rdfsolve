@@ -177,6 +177,18 @@ class MiningReport(BaseModel):
         None,
     )
 
+    # Invalid URI patterns dropped during mining
+    dropped_invalid_uris: int = Field(
+        0,
+        ge=0,
+        description="Patterns dropped because subject/property/object "
+        "contained non-URI values (e.g. unexpanded CURIEs).",
+    )
+    dropped_invalid_uri_samples: list[str] = Field(
+        default_factory=list,
+        description="First few examples of dropped invalid URIs.",
+    )
+
     # Author provenance
     authors: list[dict[str, str]] | None = Field(None)
 
