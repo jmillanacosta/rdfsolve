@@ -271,11 +271,24 @@ def _download_to_tempfile(url: str) -> Path:
     return Path(tmp_path)
 
 
-def _iter_sssom_tsv_from_archive(archive_path: Path) -> Iterator[tuple[str, str]]:
+def _iter_sssom_tsv_from_archive(
+    archive_path: Path,
+    *,
+    original_url: str | None = None,
+) -> Iterator[tuple[str, str]]:
     """Yield ``(filename, content)`` for every ``.sssom.tsv`` in an archive.
 
     Supports ``.tgz``, ``.tar.gz``, ``.tar.bz2``, ``.zip``.  For plain
     ``.tsv`` / ``.sssom.tsv`` inputs (not archives) just reads the file.
+
+    Parameters
+    ----------
+    archive_path:
+        Local (possibly temp) file.
+    original_url:
+        The URL the file was downloaded from.  Used to recover the
+        correct filename for plain ``.tsv`` downloads whose local path
+        is a random temp name.
     """
     name = archive_path.name.lower()
 
@@ -296,7 +309,13 @@ def _iter_sssom_tsv_from_archive(archive_path: Path) -> Iterator[tuple[str, str]
                     yield Path(info.filename).name, content
 
     elif name.endswith(".tsv") or name.endswith(".sssom.tsv"):
-        yield archive_path.name, archive_path.read_text(encoding="utf-8", errors="replace")
+        # Recover the real filename from the URL when the local path is a
+        # random temp name (e.g. ``tmp236gnu93.tsv``).
+        if original_url:
+            real_name = Path(original_url.split("?")[0]).name
+        else:
+            real_name = archive_path.name
+        yield real_name, archive_path.read_text(encoding="utf-8", errors="replace")
 
     else:
         raise ValueError(
@@ -364,7 +383,9 @@ def import_sssom_source(
         }
 
     try:
-        for sssom_filename, content in _iter_sssom_tsv_from_archive(archive_path):
+        for sssom_filename, content in _iter_sssom_tsv_from_archive(
+            archive_path, original_url=url
+        ):
             label = f"{source_name}__{sssom_filename}"
             try:
                 header_meta, curie_map, rows = _parse_sssom_tsv(content)

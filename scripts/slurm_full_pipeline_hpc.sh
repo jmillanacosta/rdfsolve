@@ -1,17 +1,19 @@
 #!/bin/bash
 # slurm_full_pipeline_hpc.sh — Full pipeline (all sources, all steps)
 #
-# Usage: sbatch scripts/slurm_full_pipeline_hpc.sh [extra flags for pipeline]
+# Usage:
+#   export BASE=/trinity/home/$USER/rdfsolve
+#   sbatch scripts/slurm_full_pipeline_hpc.sh [extra flags for pipeline]
 
 #SBATCH --job-name=rdfsolve
 #SBATCH --time=0
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=128G
-#SBATCH --output=/trinity/home/p70085013/rdfsolve/logs/%x-%j.out
-#SBATCH --error=/trinity/home/p70085013/rdfsolve/logs/%x-%j.err
+#SBATCH --output=logs/%x-%j.out
+#SBATCH --error=logs/%x-%j.err
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/_slurm_common.sh"
+BASE="${BASE:?Set BASE to your project root, e.g. export BASE=/trinity/home/\$USER/rdfsolve}"
+source "${BASE}/rdfsolve-2/scripts/_slurm_common.sh"
 
 _notify "Pipeline started" "Job ${SLURM_JOB_ID} on $(hostname) — full pipeline"
 

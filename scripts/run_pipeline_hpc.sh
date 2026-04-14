@@ -21,6 +21,8 @@ SKIP_REMOTE=false
 SKIP_DISCOVERY=false
 SKIP_LOCAL=false
 SKIP_MAPPINGS=false
+SKIP_MINING=false
+SKIP_SEEDING=false
 BENCHMARK=true
 BASE_PORT=7019
 TIMEOUT=1000
@@ -58,7 +60,9 @@ while [[ $# -gt 0 ]]; do
         --skip-remote)        SKIP_REMOTE=true;        shift ;;
         --skip-discovery)     SKIP_DISCOVERY=true;     shift ;;
         --skip-local)         SKIP_LOCAL=true;         shift ;;
+        --skip-mining)        SKIP_MINING=true;        shift ;;
         --skip-mappings)      SKIP_MAPPINGS=true;      shift ;;
+        --skip-seeding)       SKIP_SEEDING=true;       shift ;;
         --data-dir)           DATA_DIR="$2";           shift 2 ;;
         --output-dir)         OUTPUT_DIR="$2";         shift 2 ;;
         --results-dir)        RESULTS_DIR="$2";        shift 2 ;;
@@ -168,6 +172,22 @@ PYEOF
     popd > /dev/null
     [[ ${_overflow_patched} -gt 0 ]] && log "Patched overflowing integers in ${_overflow_patched} file(s)"
 
+    # Workaround: strip control chars (except \t, \n, \r) that break
+    # QLever's IRI / N-Quads parser (e.g. \x01 and \x7F in bio2rdf data).
+    log "Checking for illegal control characters …"
+    local _sanitised=0
+    pushd "${workdir}" > /dev/null
+    for f in ${INPUT_FILES}; do
+        [ -f "$f" ] || continue
+        if grep -qP '[\x00-\x08\x0e-\x1f\x7f]' "$f" 2>/dev/null; then
+            log "  stripping control chars from $(basename "$f")"
+            perl -pi -e 's/[\x00-\x08\x0e-\x1f\x7f]//g' "$f"
+            _sanitised=$(( _sanitised + 1 ))
+        fi
+    done
+    popd > /dev/null
+    [[ ${_sanitised} -gt 0 ]] && log "Sanitised ${_sanitised} file(s)"
+
     if [[ "${use_direct_files}" == true ]]; then
         local file_flags=()
         (cd "${workdir}" && \
@@ -211,7 +231,18 @@ _qlever_start() {
     local name="$1" workdir="$2" port="$3"
     local instance_name="qlever_${name}"
 
+    # --- Ensure port is free before starting ---
+    local _port_pid
+    _port_pid=$(ss -tlnp "sport = :${port}" 2>/dev/null \
+        | awk 'NR>1{match($0,/pid=([0-9]+)/,a); if(a[1]) print a[1]}' | head -1)
+    if [[ -n "${_port_pid}" ]]; then
+        warn "[${name}] Port ${port} occupied by PID ${_port_pid} – killing"
+        kill -9 "${_port_pid}" 2>/dev/null || true
+        sleep 2
+    fi
+
     singularity instance stop "${instance_name}" 2>/dev/null || true
+    sleep 1   # let the OS reclaim resources from the old instance
 
     singularity instance start \
         --bind "${workdir}:${workdir}" \
@@ -221,13 +252,24 @@ _qlever_start() {
         "${instance_name}" \
         > "${workdir}/start.log" 2>&1
 
+    # Clear old server log so we can detect fresh errors
+    : > "${workdir}/server.log"
+
     singularity exec "instance://${instance_name}" \
         bash -c "cd '${workdir}' && exec qlever-server -i '${name}' -j 8 -p '${port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '${name}'" \
         > "${workdir}/server.log" 2>&1 &
 
     local i=0
-    until curl --noproxy '*' -sf "http://localhost:${port}/?query=ASK%7B%7D" >/dev/null 2>&1; do
+    until env http_proxy= https_proxy= HTTP_PROXY= HTTPS_PROXY= \
+          curl --noproxy '*' -sf "http://localhost:${port}/?query=ASK%7B%7D" >/dev/null 2>&1; do
         sleep 2; i=$((i+2))
+        # Detect early fatal errors (e.g. "Address already in use") to fail fast
+        if [[ -s "${workdir}/server.log" ]] \
+            && grep -qi 'Address already in use\|cannot bind\|FATAL' "${workdir}/server.log" 2>/dev/null; then
+            warn "[${name}] QLever failed: $(head -5 "${workdir}/server.log")"
+            singularity instance stop "${instance_name}" 2>/dev/null || true
+            return 1
+        fi
         [[ $i -ge 120 ]] && { warn "[${name}] QLever did not start within 120s"; return 1; }
     done
     log "[${name}] QLever ready on port ${port}"
@@ -430,6 +472,9 @@ if [[ "${SKIP_LOCAL}" == false ]]; then
     log "Qleverfiles ready (SYSTEM=native)"
 
     # Step 4: For each dataset - download > index > start > mine > stop > cleanup
+    if [[ "${SKIP_MINING}" == true ]]; then
+        log "--- Step 4: Mining — SKIPPED (--skip-mining) ---"
+    else
     log "--- Step 4: Download > Index > Mine ---"
 
     PORTS_JSON="${QLEVER_WORKDIRS}/ports.json"
@@ -507,6 +552,7 @@ for name, port in d.items():
             log "[${NAME}] done"
         done <<< "${DS_LINES}"
     fi
+    fi  # end SKIP_MINING
 else
     log "--- Steps 3–4: Local processing - SKIPPED (--skip-local) ---"
 fi
@@ -516,14 +562,16 @@ fi
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_MAPPINGS}" == false ]]; then
 
-# Step 5: Schema selection
-log "--- Step 5: Schema selection ---"
-t0=$(date +%s)
-
 SCHEMAS_DIR="${OUTPUT_DIR}/schemas"
 MAPPINGS_DIR="${OUTPUT_DIR}/mappings"
 PAPER_DATA_DIR="${OUTPUT_DIR}/paper_data"
 mkdir -p "${SCHEMAS_DIR}" "${MAPPINGS_DIR}" "${PAPER_DATA_DIR}"
+
+if [[ "${SKIP_SEEDING}" == false ]]; then
+
+# Step 5: Schema selection
+log "--- Step 5: Schema selection ---"
+t0=$(date +%s)
 
 _sel_args="rdfsolve build-graphs"
 _sel_args+=" --schemas-dir ${OUTPUT_DIR}"
@@ -552,9 +600,14 @@ t0=$(date +%s)
 
 rdfsolve semra seed \
     --sources all \
+    --exclude clo --exclude wikidata \
     --output-dir "${MAPPINGS_DIR}/semra" \
     || warn "SeMRA seeding had failures"
 log "SeMRA seeding done in $(elapsed $(( $(date +%s) - t0 )))"
+
+else
+    log "--- Steps 5–7: Seeding - SKIPPED (--skip-seeding) ---"
+fi  # end SKIP_SEEDING
 
 # ═══════════════════════════════════════════════════════════════════
 # STEPS 8–10 - LSLOD block: start ALL QLever > instance mappings >
@@ -572,6 +625,11 @@ if [[ "${SKIP_LOCAL}" == false ]]; then
     log "--- Steps 8–10: LSLOD block (start QLever > instance match > derive > stop) ---"
     PORTS_JSON="${QLEVER_WORKDIRS}/ports.json"
 
+    # Reinforce proxy bypass for localhost QLever endpoints.
+    # (HPC module loads can reset no_proxy after our initial export.)
+    export no_proxy="localhost,127.0.0.1,${no_proxy:-}"
+    export NO_PROXY="localhost,127.0.0.1,${NO_PROXY:-}"
+
     if [[ -f "${PORTS_JSON}" ]]; then
         DS_LINES_LSLOD=$(python3 -c "
 import json
@@ -587,37 +645,47 @@ for name, port in d.items():
                 continue
             fi
             log "  Starting ${_LNAME} on port ${_LPORT} …"
-            _LINST=$(_qlever_start "${_LNAME}" "${_LWORKDIR}" "${_LPORT}") \
-                && {
-                    LSLOD_INSTANCES+=("${_LINST}")
-                    LSLOD_PORTS+=("${_LPORT}")
-                    [[ -z "${LSLOD_ENDPOINT}" ]] && LSLOD_ENDPOINT="http://localhost:${_LPORT}"
-                } || warn "  [${_LNAME}] Failed to start"
+            if _LINST=$(_qlever_start "${_LNAME}" "${_LWORKDIR}" "${_LPORT}"); then
+                LSLOD_INSTANCES+=("${_LINST}")
+                LSLOD_PORTS+=("${_LPORT}")
+                if [[ -z "${LSLOD_ENDPOINT}" ]]; then
+                    LSLOD_ENDPOINT="http://localhost:${_LPORT}"
+                fi
+            else
+                warn "  [${_LNAME}] Failed to start"
+            fi
+            sleep 1   # brief cooldown between instance starts
         done <<< "${DS_LINES_LSLOD}"
     fi
 
-    if [[ -z "${LSLOD_ENDPOINT}" ]]; then
+    if [[ ${#LSLOD_INSTANCES[@]} -eq 0 ]]; then
         warn "No QLever instances started - skipping steps 8–10"
     else
-        log "LSLOD: ${#LSLOD_INSTANCES[@]} instances running, primary: ${LSLOD_ENDPOINT}"
+        log "LSLOD: ${#LSLOD_INSTANCES[@]} instances running"
 
         # Step 8: Instance mappings (LOCAL QLever only via ports.json)
         log "--- Step 8: Instance mappings (local endpoints) ---"
         t0=$(date +%s)
 
+        # Dynamically discover entity prefixes from all mapping files
+        _pfx_file="${MAPPINGS_DIR}/.discovered_prefixes.txt"
+        _discover_args="rdfsolve instance-match discover-prefixes"
+        _discover_args+=" -d ${MAPPINGS_DIR}/sssom"
+        _discover_args+=" -d ${MAPPINGS_DIR}/semra"
+        _discover_args+=" -o ${_pfx_file}"
+        eval "${_discover_args}" || warn "Prefix discovery had warnings"
+
         _inst_prefixes=()
-        _inst_src_dir="${REPO_ROOT}/docker/mappings/instance_matching"
-        if [[ -d "${_inst_src_dir}" ]]; then
-            while IFS= read -r _f; do
-                _pfx=$(basename "${_f}" _instance_mapping.jsonld)
-                _inst_prefixes+=("${_pfx}")
-            done < <(find "${_inst_src_dir}" -maxdepth 1 -name '*_instance_mapping.jsonld' | sort)
+        if [[ -s "${_pfx_file}" ]]; then
+            while IFS= read -r _pfx_line; do
+                [[ -n "${_pfx_line}" ]] && _inst_prefixes+=("${_pfx_line}")
+            done < "${_pfx_file}"
         fi
         if [[ ${#_inst_prefixes[@]} -eq 0 ]]; then
             _inst_prefixes=(chebi ensembl faldo uniprot)
-            warn "No existing instance_mapping files found; using defaults: ${_inst_prefixes[*]}"
+            warn "Prefix discovery returned 0 prefixes; using defaults: ${_inst_prefixes[*]}"
         fi
-        log "Instance mapping prefixes: ${_inst_prefixes[*]}"
+        log "Instance mapping prefixes (${#_inst_prefixes[@]}): ${_inst_prefixes[*]}"
 
         _inst_args="rdfsolve instance-match seed"
         for _pfx in "${_inst_prefixes[@]}"; do _inst_args+=" --prefixes ${_pfx}"; done
@@ -654,7 +722,7 @@ for name, port in d.items():
                 rdfsolve instance-match derive \
                     --input    "${_f}" \
                     --output   "${_out}" \
-                    --endpoint "${LSLOD_ENDPOINT}" \
+                    --ports-json "${PORTS_JSON}" \
                     --cache-index \
                     --enrich \
                     --timeout  "${TIMEOUT}" \

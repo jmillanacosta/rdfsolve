@@ -41,7 +41,137 @@ from rdfsolve.sparql_helper import SparqlHelper
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["probe_resource", "seed_instance_mappings"]
+__all__ = [
+    "discover_mapping_prefixes",
+    "probe_resource",
+    "seed_instance_mappings",
+]
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Prefix discovery from mapping files
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Prefixes that are structural/metadata and should not be treated as entity
+# namespaces worth probing in instance-matching.
+_STRUCTURAL_PREFIXES: frozenset[str] = frozenset({
+    "rdfsolve", "void", "dcterms", "foaf", "skos", "sd",
+    "rdf", "rdfs", "owl", "xsd", "sh", "shacl",
+    "prov", "dcat", "schema",
+})
+
+
+def _extract_entity_prefixes_from_jsonld(
+    data: dict[str, Any],
+) -> set[str]:
+    """Extract unique entity CURIE prefixes from a mapping JSON-LD document.
+
+    Walks the ``@graph`` array and collects the CURIE prefix part of every
+    ``@id`` that looks like ``prefix:localname`` (i.e. not a full URI and
+    not a structural/metadata prefix).
+
+    Args:
+        data: Parsed JSON-LD dict with ``@context`` and ``@graph``.
+
+    Returns:
+        Set of bioregistry-style prefix strings (e.g. ``{'mesh', 'chebi'}``).
+    """
+    prefixes: set[str] = set()
+
+    def _maybe_add(iri: str) -> None:
+        if not iri or iri.startswith(("http://", "https://", "urn:", "_:")):
+            return
+        if ":" not in iri:
+            return
+        pfx = iri.split(":", 1)[0]
+        if pfx and pfx not in _STRUCTURAL_PREFIXES:
+            prefixes.add(pfx)
+
+    for node in data.get("@graph", []):
+        _maybe_add(node.get("@id", ""))
+        for _key, val in node.items():
+            if _key.startswith("@") or _key in ("void:inDataset", "dcterms:created"):
+                continue
+            targets = val if isinstance(val, list) else [val]
+            for tgt in targets:
+                if isinstance(tgt, dict):
+                    _maybe_add(tgt.get("@id", ""))
+                elif isinstance(tgt, str):
+                    _maybe_add(tgt)
+
+    return prefixes
+
+
+def discover_mapping_prefixes(
+    *mapping_dirs: str,
+    glob_pattern: str = "*.jsonld",
+) -> list[str]:
+    """Discover all unique bioregistry prefixes from mapping JSON-LD files.
+
+    Scans one or more directories for JSON-LD files and extracts the set
+    of entity CURIE prefixes used in ``@graph`` entries.  Prefixes that
+    are purely structural (``void``, ``dcterms``, …) are excluded.
+
+    The returned list is sorted and deduplicated.  Each entry is a
+    bioregistry-compatible prefix string (e.g. ``"mesh"``, ``"chebi"``).
+
+    Typical usage::
+
+        prefixes = discover_mapping_prefixes(
+            "output/mappings/sssom",
+            "output/mappings/semra",
+            "output/mappings/instance_matching",
+        )
+
+    Args:
+        mapping_dirs: One or more directory paths to scan.
+        glob_pattern: Glob pattern for JSON-LD files (default ``*.jsonld``).
+
+    Returns:
+        Sorted list of unique entity prefixes found across all files.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    all_prefixes: set[str] = set()
+    files_scanned = 0
+
+    for dir_str in mapping_dirs:
+        dir_path = _Path(dir_str)
+        if not dir_path.is_dir():
+            logger.warning("discover_mapping_prefixes: %s is not a directory, skipping", dir_str)
+            continue
+        for jsonld_file in sorted(dir_path.rglob(glob_pattern)):
+            try:
+                data = _json.loads(jsonld_file.read_text(encoding="utf-8"))
+                pfxs = _extract_entity_prefixes_from_jsonld(data)
+                all_prefixes.update(pfxs)
+                files_scanned += 1
+            except Exception as exc:
+                logger.warning("discover_mapping_prefixes: skipping %s: %s", jsonld_file, exc)
+
+    # Validate prefixes against bioregistry - keep only those that resolve
+    valid_prefixes: list[str] = []
+    try:
+        import bioregistry
+        for pfx in sorted(all_prefixes):
+            resource = bioregistry.get_resource(pfx)
+            if resource is not None:
+                valid_prefixes.append(pfx)
+            else:
+                logger.debug("Prefix %r not in bioregistry, skipping", pfx)
+    except ImportError:
+        logger.warning("bioregistry not installed; returning all prefixes unvalidated")
+        valid_prefixes = sorted(all_prefixes)
+
+    logger.info(
+        "discover_mapping_prefixes: scanned %d files across %d dirs -> %d valid prefixes (from %d raw)",
+        files_scanned,
+        len(mapping_dirs),
+        len(valid_prefixes),
+        len(all_prefixes),
+    )
+    return valid_prefixes
 
 
 def _get_uri_formats(prefix: str) -> list[str]:

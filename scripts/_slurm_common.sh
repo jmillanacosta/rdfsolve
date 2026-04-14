@@ -3,11 +3,14 @@
 # Source this file, don't run it directly.
 #
 # Provides: _notify, _on_exit trap, repo clone/pull, Python/uv/venv setup
-# Requires: SLURM_JOB_ID, SLURM_JOB_NAME (set by SLURM)
+# Requires: BASE (set by caller before sourcing), SLURM_JOB_ID, SLURM_JOB_NAME
 # Sets:     REPO, DATA_DIR, OUTPUT_DIR, RESULTS_DIR, SINGULARITY_IMAGE
 set -euo pipefail
 
-BASE=/trinity/home/p70085013/rdfsolve
+if [[ -z "${BASE:-}" ]]; then
+    echo "ERROR: BASE must be set before sourcing _slurm_common.sh" >&2
+    exit 1
+fi
 REPO="${BASE}/rdfsolve-2"
 DATA_DIR="${BASE}/data"
 OUTPUT_DIR="${BASE}/output"

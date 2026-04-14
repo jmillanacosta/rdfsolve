@@ -366,11 +366,7 @@ def build_qleverfile(
     if has_nq:
         rdf_format = "nq"
         input_files = f"{rdf_subdir}/*.nq"
-        cat_input_files = (
-            "cat ${INPUT_FILES} | "
-            r"perl -pe 's{<([^<>]*)>}{my $i=$1; $i=~s/\x22/%22/g; qq{<$i>}}ge' | "
-            "grep -v '^$'"
-        )
+        cat_input_files = "cat ${INPUT_FILES}"
     elif has_trig:
         rdf_format = "nq"
         input_files = f"{rdf_subdir}/*.trig* {rdf_subdir}/*.nq*"

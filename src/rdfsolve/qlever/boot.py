@@ -256,6 +256,30 @@ def step_index(
     if patched:
         log.info("[%s] Patched overflowing integers in %d file(s)", name, patched)
 
+    # ── Strip illegal control chars ─────────────────────────────────
+    # Characters like \x01 and \x7F in bio2rdf data break QLever's
+    # IRI / N-Quads parser.  Strip everything except \t \n \r.
+    log.info("[%s] Checking for illegal control characters …", name)
+    sanitised = 0
+    for glob_pat in input_files_raw.split():
+        for fpath in workdir.glob(glob_pat):
+            if not fpath.is_file():
+                continue
+            with open(fpath, "rb") as fh:
+                sample = fh.read(10_000_000)
+            if re.search(rb"[\x00-\x08\x0e-\x1f\x7f]", sample):
+                log.info("  stripping control chars from %s", fpath.name)
+                subprocess.check_call(
+                    [
+                        "perl", "-pi", "-e",
+                        r"s/[\x00-\x08\x0e-\x1f\x7f]//g;",
+                        str(fpath),
+                    ],
+                )
+                sanitised += 1
+    if sanitised:
+        log.info("[%s] Sanitised %d file(s)", name, sanitised)
+
     if use_direct:
         file_list: list[str] = []
         for glob_pat in input_files_raw.split():

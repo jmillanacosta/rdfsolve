@@ -1451,6 +1451,54 @@ def instance_match_group() -> None:
     """
 
 
+@instance_match_group.command("discover-prefixes")
+@click.option(
+    "--mapping-dir",
+    "-d",
+    "mapping_dirs",
+    required=True,
+    multiple=True,
+    help=(
+        "Directory to scan for JSON-LD mapping files (repeatable). "
+        "Pass each of sssom/, semra/, instance_matching/ etc."
+    ),
+)
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    help="Write prefix list to this file (one per line). Default: stdout.",
+)
+def discover_prefixes_cmd(
+    mapping_dirs: tuple[str, ...],
+    output: str | None,
+) -> None:
+    """Discover entity prefixes from mapping JSON-LD files.
+
+    Scans the given directories for *.jsonld files, extracts all unique
+    entity CURIE prefixes (e.g. 'mesh', 'chebi', 'ensembl'), validates
+    them against bioregistry, and prints the sorted list.  Use this to
+    dynamically determine the --prefixes list for ``instance-match seed``.
+
+    Example::
+
+        rdfsolve instance-match discover-prefixes \\
+            -d output/mappings/sssom \\
+            -d output/mappings/semra
+    """
+    from rdfsolve.instance_matcher import discover_mapping_prefixes
+
+    prefixes = discover_mapping_prefixes(*mapping_dirs)
+    text = "\n".join(prefixes)
+    if output:
+        Path(output).parent.mkdir(parents=True, exist_ok=True)
+        Path(output).write_text(text + "\n")
+        click.echo(f"Wrote {len(prefixes)} prefixes to {output}")
+    else:
+        click.echo(text)
+    click.echo(f"  ({len(prefixes)} prefixes discovered)", err=True)
+
+
 @instance_match_group.command("probe")
 @click.option(
     "--prefix",
@@ -1736,6 +1784,17 @@ def semra_import_cmd(
     ),
 )
 @click.option(
+    "--exclude",
+    "-x",
+    "exclude_list",
+    multiple=True,
+    help=(
+        "SeMRA source key to exclude (repeatable). "
+        "Useful with --sources all to skip sources that are known to "
+        "fail (e.g. 'clo' requires Java, 'wikidata' hits 502 errors)."
+    ),
+)
+@click.option(
     "--prefix",
     "-p",
     "prefixes",
@@ -1761,6 +1820,7 @@ def semra_import_cmd(
 )
 def semra_seed_cmd(
     source_list: tuple[str, ...],
+    exclude_list: tuple[str, ...],
     prefixes: tuple[str, ...],
     output_dir: str,
     mapping_type: str,
@@ -1768,14 +1828,18 @@ def semra_seed_cmd(
     """Seed mapping files from multiple SeMRA sources.
 
     Pass ``--sources all`` to import every registered SeMRA source.
+    Use ``--exclude clo --exclude wikidata`` to skip problematic sources.
     """
     from rdfsolve.api import seed_semra_mappings
 
     # Expand "all" to the full registered-source list.
+    # NOTE: 'clo' (requires Java) and 'wikidata' (unreliable SPARQL
+    # endpoint) are excluded from 'all' by default.  Pass them
+    # explicitly with ``--sources clo`` if you really need them.
     _ALL_SOURCES = [
         "fplx", "pubchemmesh", "ncitchebi", "ncithgnc", "ncitgo",
-        "ncituniprot", "biomappingspositive", "gilda", "clo",
-        "wikidata", "omimgene", "cbms2019", "compath", "rdfsolveinstance",
+        "ncituniprot", "biomappingspositive", "gilda",
+        "omimgene", "cbms2019", "compath", "rdfsolve_instance",
     ]
     sources: list[str] = []
     for s in source_list:
@@ -1786,6 +1850,14 @@ def semra_seed_cmd(
     # Deduplicate while preserving order
     seen: set[str] = set()
     sources = [s for s in sources if not (s in seen or seen.add(s))]  # type: ignore[func-returns-value]
+
+    # Apply exclusions
+    if exclude_list:
+        excl = {e.lower() for e in exclude_list}
+        excluded = [s for s in sources if s.lower() in excl]
+        sources = [s for s in sources if s.lower() not in excl]
+        for e in excluded:
+            click.echo(f"  SKIP {e} (excluded via --exclude)")
 
     try:
         result = seed_semra_mappings(
@@ -2222,8 +2294,15 @@ def sssom_seed_cmd(
     "--endpoint",
     "-e",
     "endpoint_url",
-    required=True,
-    help="SPARQL / QLever endpoint URL for class lookup.",
+    default="",
+    help="SPARQL / QLever endpoint URL for class lookup (single-endpoint mode).",
+)
+@click.option(
+    "--ports-json",
+    "ports_json_path",
+    default=None,
+    type=click.Path(exists=True),
+    help="Path to ports.json for multi-endpoint mode (one QLever per dataset).",
 )
 @click.option(
     "--batch-size",
@@ -2282,6 +2361,7 @@ def instance_match_derive_cmd(
     input_paths: tuple[str, ...],
     output_path: str,
     endpoint_url: str,
+    ports_json_path: str | None,
     batch_size: int,
     timeout: float,
     min_instance_count: int,
@@ -2294,11 +2374,15 @@ def instance_match_derive_cmd(
     """Derive class-level mappings from instance-mapping files."""
     from rdfsolve.api import derive_class_mappings_from_instances
 
+    if not endpoint_url and not ports_json_path:
+        raise click.UsageError("Provide either --endpoint or --ports-json.")
+
     try:
         report = derive_class_mappings_from_instances(
             input_paths=list(input_paths),
             output_path=output_path,
             endpoint_url=endpoint_url,
+            ports_json_path=ports_json_path,
             timeout=timeout,
             batch_size=batch_size,
             min_instance_count=min_instance_count,
