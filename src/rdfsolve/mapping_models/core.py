@@ -226,6 +226,64 @@ class Mapping(BaseModel):
                 graph.add_edge(a, b, weight=w)
         return graph
 
+    # ---- Strategy / predicate counting --------------------
+
+    @classmethod
+    def count_edges(
+        cls,
+        paths: Iterable[str | Path],
+        *,
+        skip_keys: frozenset[str] | None = None,
+    ) -> tuple[Counter[str], Counter[str]]:
+        """Count mapping edges by strategy and predicate across *paths*.
+
+        Scans each JSON-LD file without fully deserialising it, so this is
+        fast even over thousands of files.  Uses ``ujson`` automatically if it
+        is installed.
+
+        Parameters
+        ----------
+        paths:
+            Iterable of paths to mapping JSON-LD files.
+        skip_keys:
+            Keys in ``@graph`` nodes to ignore when counting.  Defaults to
+            ``{"void:inDataset", "dcterms:created"}``.
+
+        Returns
+        -------
+        tuple[Counter[str], Counter[str]]
+            ``(strategy_counts, predicate_counts)`` where keys are strategy
+            names / predicate CURIEs and values are total edge counts.
+        """
+        try:
+            import ujson as _fast_json  # type: ignore[import]
+        except ImportError:
+            _fast_json = None  # type: ignore[assignment]
+        fast_json = _fast_json if _fast_json is not None else _json
+
+        _skip = skip_keys if skip_keys is not None else frozenset({"void:inDataset", "dcterms:created"})
+        strategy_counts: Counter[str] = Counter()
+        predicate_counts: Counter[str] = Counter()
+
+        for p in paths:
+            try:
+                raw = fast_json.loads(Path(p).read_bytes())
+            except Exception:
+                _log.debug("Could not read %s", p, exc_info=True)
+                continue
+            strategy: str = raw.get("@about", {}).get("strategy", "unknown")
+            for node in raw.get("@graph", ()):
+                for key, val in node.items():
+                    if key[0] == "@" or key in _skip:
+                        continue
+                    targets = val if isinstance(val, list) else (val,)
+                    n = sum(1 for t in targets if isinstance(t, dict) and t.get("@id"))
+                    if n:
+                        strategy_counts[strategy] += n
+                        predicate_counts[key] += n
+
+        return strategy_counts, predicate_counts
+
     # ---- JSON-LD export ------------------------------------
 
     def to_jsonld(self) -> dict[str, Any]:
