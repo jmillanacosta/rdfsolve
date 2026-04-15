@@ -669,6 +669,40 @@ class SparqlHelper:
                 result[s].append(c)
         return result
 
+    def find_all_classes(self) -> dict[str, list[str]]:
+        """Return all rdf:type classes used in this endpoint, with their instances.
+
+        Runs a direct ``SELECT DISTINCT ?s ?c WHERE { ?s a ?c }`` — no
+        entity-IRI filter.  Used as a fallback when no entity IRIs are
+        available to look up (e.g. instance-mapping files that store only
+        bare CURIEs that could not be resolved).
+
+        Returns:
+            Dict ``{entity_iri: [class_uri, ...]}``.
+        """
+        query = (
+            "SELECT DISTINCT ?s ?c\n"
+            "WHERE {\n"
+            "  ?s a ?c .\n"
+            "}"
+        )
+        try:
+            out = self.select(query)
+        except Exception:
+            return {}
+
+        bindings = out.get("results", {}).get("bindings", [])
+        result: dict[str, list[str]] = {}
+        for b in bindings:
+            s = b.get("s", {}).get("value")
+            c = b.get("c", {}).get("value")
+            if not (s and c):
+                continue
+            result.setdefault(s, [])
+            if c not in result[s]:
+                result[s].append(c)
+        return result
+
     def _execute(
         self,
         query: str,

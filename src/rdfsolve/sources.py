@@ -34,10 +34,7 @@ description, homepage, license, domain, keywords, publications,
 uri_prefix, synonyms, mappings, extra_providers) and can be exported to
 JSON-LD with :func:`sources_to_jsonld`.
 
-Legacy CSV files (``data/sources.csv``) and JSON-LD files are still
-accepted: the reader auto-detects the format by extension.
-
-Typical usage::
+Usage::
 
     from rdfsolve.sources import load_sources, enrich_source_with_bioregistry
 
@@ -84,7 +81,7 @@ class SourceEntry(TypedDict, total=False):
     bioregistry_homepage: str
     bioregistry_license: str
     bioregistry_domain: str
-    bioregistry_keywords: list[str]
+    keywords: list[str]
     bioregistry_publications: list[dict[str, str | None]]
     bioregistry_uri_prefix: str
     bioregistry_uri_prefixes: list[str]
@@ -420,7 +417,7 @@ def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
             _entry_dict[entry_key] = meta[meta_key]
 
     _list_fields = {
-        "bioregistry_keywords": "keywords",
+        "keywords": "keywords",
         "bioregistry_uri_prefixes": "uri_prefixes",
         "bioregistry_synonyms": "synonyms",
         "bioregistry_extra_providers": "extra_providers",
@@ -487,7 +484,7 @@ _JSONLD_SCALAR_BR_FIELDS: list[tuple[str, str]] = [
 ]
 
 _JSONLD_LIST_BR_FIELDS: list[tuple[str, str]] = [
-    ("bioregistry_keywords", "keywords"),
+    ("keywords", "keywords"),
     ("bioregistry_synonyms", "synonyms"),
     ("bioregistry_uri_prefixes", "uri_prefixes"),
 ]

@@ -101,7 +101,7 @@ class SourceModel(BaseModel):
         SPDX license identifier or URL.
     bioregistry_domain:
         Dataset domain (e.g. ``"chemical"``, ``"biology"``).
-    bioregistry_keywords:
+    keywords:
         Keyword tags from Bioregistry.
     bioregistry_publications:
         Literature references from Bioregistry.
@@ -142,7 +142,7 @@ class SourceModel(BaseModel):
     bioregistry_homepage: str = ""
     bioregistry_license: str = ""
     bioregistry_domain: str = ""
-    bioregistry_keywords: list[str] = Field(default_factory=list)
+    keywords: list[str] = Field(default_factory=list)
     bioregistry_publications: list[PublicationRef] = Field(default_factory=list)
     bioregistry_uri_prefix: str = ""
     bioregistry_uri_prefixes: list[str] = Field(default_factory=list)
@@ -158,7 +158,7 @@ class SourceModel(BaseModel):
         "download_ttl",
         "bioregistry_uri_prefixes",
         "bioregistry_synonyms",
-        "bioregistry_keywords",
+        "keywords",
         mode="before",
     )
     @classmethod

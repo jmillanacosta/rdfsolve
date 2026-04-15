@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS sources (
     bioregistry_homepage    TEXT NOT NULL DEFAULT '',
     bioregistry_license     TEXT NOT NULL DEFAULT '',
     bioregistry_domain      TEXT NOT NULL DEFAULT '',
-    bioregistry_keywords    TEXT NOT NULL DEFAULT '[]',     -- JSON array
+    keywords                TEXT NOT NULL DEFAULT '[]',     -- JSON array
     bioregistry_publications TEXT NOT NULL DEFAULT '[]',    -- JSON array
     bioregistry_uri_prefix  TEXT NOT NULL DEFAULT '',
     bioregistry_uri_prefixes TEXT NOT NULL DEFAULT '[]',    -- JSON array
@@ -222,7 +222,7 @@ _NEW_TABLE_MIGRATIONS = [
     bioregistry_homepage    TEXT NOT NULL DEFAULT '',
     bioregistry_license     TEXT NOT NULL DEFAULT '',
     bioregistry_domain      TEXT NOT NULL DEFAULT '',
-    bioregistry_keywords    TEXT NOT NULL DEFAULT '[]',
+    keywords                TEXT NOT NULL DEFAULT '[]',
     bioregistry_publications TEXT NOT NULL DEFAULT '[]',
     bioregistry_uri_prefix  TEXT NOT NULL DEFAULT '',
     bioregistry_uri_prefixes TEXT NOT NULL DEFAULT '[]',
@@ -855,7 +855,7 @@ class Database:
     _SOURCE_JSON_LISTS = (
         "graph_uris",
         "download_ttl",
-        "bioregistry_keywords",
+        "keywords",
         "bioregistry_publications",
         "bioregistry_uri_prefixes",
         "bioregistry_synonyms",
@@ -902,7 +902,7 @@ class Database:
                 counts, unsafe_paging, notes, local_provider, download_ttl,
                 bioregistry_prefix, bioregistry_name, bioregistry_description,
                 bioregistry_homepage, bioregistry_license, bioregistry_domain,
-                bioregistry_keywords, bioregistry_publications,
+                keywords, bioregistry_publications,
                 bioregistry_uri_prefix, bioregistry_uri_prefixes,
                 bioregistry_synonyms, bioregistry_mappings,
                 bioregistry_logo, bioregistry_extra_providers,
@@ -932,7 +932,7 @@ class Database:
                 bioregistry_homepage=excluded.bioregistry_homepage,
                 bioregistry_license=excluded.bioregistry_license,
                 bioregistry_domain=excluded.bioregistry_domain,
-                bioregistry_keywords=excluded.bioregistry_keywords,
+                keywords=excluded.keywords,
                 bioregistry_publications=excluded.bioregistry_publications,
                 bioregistry_uri_prefix=excluded.bioregistry_uri_prefix,
                 bioregistry_uri_prefixes=excluded.bioregistry_uri_prefixes,
@@ -965,7 +965,7 @@ class Database:
                 entry.get("bioregistry_homepage", ""),
                 entry.get("bioregistry_license", ""),
                 entry.get("bioregistry_domain", ""),
-                json.dumps(entry.get("bioregistry_keywords") or []),
+                json.dumps(entry.get("keywords") or []),
                 json.dumps(entry.get("bioregistry_publications") or []),
                 entry.get("bioregistry_uri_prefix", ""),
                 json.dumps(entry.get("bioregistry_uri_prefixes") or []),

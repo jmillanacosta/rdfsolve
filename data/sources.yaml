@@ -45,7 +45,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -190,7 +190,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -316,7 +316,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -442,7 +442,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -568,7 +568,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -694,7 +694,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -820,7 +820,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -1055,7 +1055,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -1181,7 +1181,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -1376,7 +1376,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -1502,7 +1502,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -1628,7 +1628,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -1789,7 +1789,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -1915,7 +1915,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -2067,7 +2067,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -2194,7 +2194,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -2572,7 +2572,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -2698,7 +2698,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -2855,7 +2855,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -3156,7 +3156,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -3283,7 +3283,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -3409,7 +3409,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -3879,7 +3879,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -4058,7 +4058,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -4184,7 +4184,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -4270,7 +4270,7 @@
   - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF-Genes.ttl
   - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF-Void.ttl
   - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF.ttl
-  bioregistry_keywords:
+  keywords:
   - toxicology
   - adverse outcome pathway
   - biology
@@ -4310,7 +4310,7 @@
   - 'https://www.wikipathways.org/index.php/Pathway:'
   - https://www.wikipathways.org/instance/
   bioregistry_logo: https://www.wikipathways.org/assets/img/wikipathways-logo-horizontal.svg
-  bioregistry_keywords:
+  keywords:
   - biological regulation
   - biopax
   - drug interaction
@@ -4431,7 +4431,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -4560,7 +4560,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -4689,7 +4689,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -4776,7 +4776,7 @@
   use_graph: true
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
-  bioregistry_keywords:
+  keywords:
   - chemical
 #
   - organic chemistry
@@ -4830,7 +4830,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -4944,7 +4944,7 @@
   - https://pubchem.ncbi.nlm.nih.gov/assay/assay.cgi?aid=
   - https://pubchem.ncbi.nlm.nih.gov/bioassay/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical compound
   - image/movie
@@ -5013,7 +5013,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/substance/SID
   - https://www.ncbi.nlm.nih.gov/sites/entrez?cmd=search&db=pcsubstance&term=
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical compound
   - chemical structure
@@ -5086,7 +5086,7 @@
   - 'https://n2t.net/drugbank:'
   - https://www.drugbank.ca/drugs/
   bioregistry_logo: https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Drugbank_logo.svg/1280px-Drugbank_logo.svg.png
-  bioregistry_keywords:
+  keywords:
   - chemical structure
   - chemistry databases
   - drug
@@ -5189,7 +5189,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -5315,7 +5315,7 @@
   - https://www.ebi.ac.uk/ols/ontologies/chebi/terms?iri=http://purl.obolibrary.org/obo/CHEBI_
   - 'https://www.iedb.org/antigen/ChEBI:'
   bioregistry_logo: https://www.ebi.ac.uk/chebi/chebi_logo.svg
-  bioregistry_keywords:
+  keywords:
   - biochemistry
   - carbohydrate
   - chemical
@@ -5457,7 +5457,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -5556,7 +5556,7 @@
   - 'https://bioregistry.io/pubchem.cell:'
   - https://pubchem.ncbi.nlm.nih.gov/cell/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bioactivities
   - cell lines
   - chemistry
@@ -5568,7 +5568,7 @@
   use_graph: true
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
-  bioregistry_keywords:
+  keywords:
   - metabolite
   - natural product
   - mass spectrometry
@@ -5622,7 +5622,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -5751,7 +5751,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -5880,7 +5880,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -5967,7 +5967,7 @@
   use_graph: true
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
-  bioregistry_keywords:
+  keywords:
   - metabolite
   - mass spectrometry
   - chemical
@@ -6029,7 +6029,7 @@
   - https://www.ebi.ac.uk/chembl/id_lookup/
   - https://www.ebi.ac.uk/chembl/target_report_card/
   - https://www.ebi.ac.uk/chembldb/index.php/compound/inspect/
-  bioregistry_keywords:
+  keywords:
   - chemical compound
   - chemical structure
   - chemistry databases
@@ -6126,7 +6126,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -6255,7 +6255,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -6384,7 +6384,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -6522,7 +6522,7 @@
     miriam: wikidata
     n2t: wikidata
     wikidata.entity: Q2013
-  bioregistry_keywords:
+  keywords:
 
   - chemical
 
@@ -6576,7 +6576,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -6705,7 +6705,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -6834,7 +6834,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -6963,7 +6963,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -7092,7 +7092,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -7221,7 +7221,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -7350,7 +7350,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -7479,7 +7479,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -7627,14 +7627,8 @@
   - https://www.nlm.nih.gov/cgi/mesh/2008/MB_cgi?field=uid&term=
   - https://www.nlm.nih.gov/cgi/mesh/2013/MB_cgi?field=uid&term=
   bioregistry_logo: https://meshb.nlm.nih.gov/public/img/meshLogo.jpg
-  bioregistry_keywords:
-  - bioinformatics
-  - biomedical science
-  - classification
-  - data retrieval
-  - life science
-  - literature curation
-  - metascience
+  keywords:
+  - literature
 
   terminology_nomenclature:
   - phenotype
@@ -7763,7 +7757,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -7893,7 +7887,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -8022,7 +8016,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -8151,7 +8145,7 @@
   - https://rdf.ncbi.nlm.nih.gov/pubchem/compound/CID
   - https://scholia.toolforge.org/pubchem/
   bioregistry_logo: https://pubchem.ncbi.nlm.nih.gov/pcfe/logo/PubChem_logo_splash.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - chemical
   - chemical compound
@@ -8235,7 +8229,7 @@
   graph_uris:
   - https://nanosafety.rdf.bigcat-bioinformatics.org
   use_graph: true
-  bioregistry_keywords:
+  keywords:
   - toxicology
   - nanomaterial
   - chemical
@@ -8261,7 +8255,7 @@
   void_iri: https://sparql.uniprot.org/.well-known/void
   download_nt: https://rdfportal.org/ntriples/uniprot/latest/core.nt.gz
   use_graph: true
-  bioregistry_keywords:
+  keywords:
   - protein
   - sequence
 
@@ -8353,7 +8347,7 @@
   - https://www.oglcnac.mcw.edu/search/?query_protein=
   - https://www.uniprot.org/uniprot/
   bioregistry_logo: https://www.uniprot.org/uniprot-logo.img.0df091.svg
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - protein
@@ -8556,7 +8550,7 @@
   - https://www.oglcnac.mcw.edu/search/?query_protein=
   - https://www.uniprot.org/uniprot/
   bioregistry_logo: https://www.uniprot.org/uniprot-logo.img.0df091.svg
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - protein
@@ -8759,7 +8753,7 @@
   - https://www.oglcnac.mcw.edu/search/?query_protein=
   - https://www.uniprot.org/uniprot/
   bioregistry_logo: https://www.uniprot.org/uniprot-logo.img.0df091.svg
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - protein
@@ -8962,7 +8956,7 @@
   - https://www.oglcnac.mcw.edu/search/?query_protein=
   - https://www.uniprot.org/uniprot/
   bioregistry_logo: https://www.uniprot.org/uniprot-logo.img.0df091.svg
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - protein
@@ -9121,7 +9115,7 @@
   bioregistry_synonyms:
   - uniprot.database
   - uniprot.db
-  bioregistry_keywords:
+  keywords:
   - protein
   - sequence
 
@@ -9194,7 +9188,7 @@
   - https://www.oglcnac.mcw.edu/search/?query_protein=
   - https://www.uniprot.org/uniprot/
   bioregistry_logo: https://www.uniprot.org/uniprot-logo.img.0df091.svg
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - protein
@@ -9397,7 +9391,7 @@
   - https://www.oglcnac.mcw.edu/search/?query_protein=
   - https://www.uniprot.org/uniprot/
   bioregistry_logo: https://www.uniprot.org/uniprot-logo.img.0df091.svg
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - protein
@@ -9600,7 +9594,7 @@
   - https://www.oglcnac.mcw.edu/search/?query_protein=
   - https://www.uniprot.org/uniprot/
   bioregistry_logo: https://www.uniprot.org/uniprot-logo.img.0df091.svg
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - protein
@@ -9750,7 +9744,7 @@
   - http://purl.uniprot.org/core/
   - 'https://bioregistry.io/uniprot.core:'
   - https://purl.uniprot.org/core/
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - protein
@@ -9827,7 +9821,7 @@
   - https://www.oglcnac.mcw.edu/search/?query_protein=
   - https://www.uniprot.org/uniprot/
   bioregistry_logo: https://www.uniprot.org/uniprot-logo.img.0df091.svg
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - protein
@@ -9968,7 +9962,7 @@
   - https://bgee.org/rdf_v15_2
   use_graph: true
   download_zip: https://www.bgee.org/ftp/current/rdf_easybgee.zip
-  bioregistry_keywords:
+  keywords:
   - gene expression
   - anatomy
   - biology
@@ -10016,7 +10010,7 @@
   - https://www.rhea-db.org/reaction?id=
   - https://www.rhea-db.org/rhea/
   bioregistry_logo: https://www.rhea-db.org/style/images/rhea_logo.png
-  bioregistry_keywords:
+  keywords:
   - biopax
   - interaction/pathway
   - metabolite
@@ -10129,13 +10123,9 @@
   - https://www.rcsb.org/structure/
   - https://www.wwpdb.org/pdb?id=pdb_0000
   bioregistry_logo: https://cdn.rcsb.org/wwpdb/img/core/wwpdb-logo.png
-  bioregistry_keywords:
-  - 3d structure
-  - 3d structure databases
-  - dna
-  - image/movie
+  keywords:
   - protein
-
+  - dna
   - rna
   - structure
   bioregistry_synonyms:
@@ -10271,7 +10261,7 @@
   graph_uris:
   - https://pubcasefinder.dbcls.jp/rdf
   use_graph: true
-  bioregistry_keywords:
+  keywords:
   - health
   - disease
   - phenotype
@@ -10324,7 +10314,7 @@
   - 'https://identifiers.org/medgen:'
   - 'https://n2t.net/medgen:'
   - https://www.ncbi.nlm.nih.gov/medgen/
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - genome/gene
   - health
@@ -10347,7 +10337,7 @@
   graph_uris:
   - http://jpost.org/graph/database
   use_graph: true
-  bioregistry_keywords:
+  keywords:
   - protein
   - proteomics
   - mass spectrometry
@@ -10359,9 +10349,7 @@
   use_graph: true
   download_nq: https://download.bio2rdf.org/files/release/3/affymetrix/affymetrix.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/affymetrix/affymetrix.schema.owl
-  bioregistry_keywords:
-  - gene expression
-  - microarray
+  keywords:
   - protein
 - name: clinicaltrials
   endpoint: https://bio2rdf.org/sparql
@@ -10405,7 +10393,7 @@
   - https://www.clinicaltrials.gov/study/
   - https://www.smartpatients.com/trials/
   bioregistry_logo: https://clinicaltrials.gov/assets/images/ctg-header-logo.svg
-  bioregistry_keywords:
+  keywords:
   - disease
   - drug
   - human
@@ -10454,7 +10442,7 @@
   - https://download.bio2rdf.org/files/release/3/ctd/ctd_genes_pathways.nq.gz
   - https://download.bio2rdf.org/files/release/3/ctd/ctd_pathways.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/ctd/ctd.schema.owl
-  bioregistry_keywords:
+  keywords:
   - toxicology
   - gene
   - chemical
@@ -10504,7 +10492,7 @@
   - https://www.genome.jp/dbget-bin/www_bget?
   - https://www.kegg.jp/entry/
   bioregistry_logo: https://www.kegg.jp/Fig/kegg128.gif
-  bioregistry_keywords:
+  keywords:
   - biopax
   - classification
   - dna
@@ -10553,7 +10541,7 @@
   use_graph: true
   download_nq: https://download.bio2rdf.org/files/release/3/irefindex/irefindex-all.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/irefindex/irefindex.schema.owl
-  bioregistry_keywords:
+  keywords:
   - protein
   - interaction/pathway
   - biology
@@ -10593,7 +10581,7 @@
   - 'https://n2t.net/drugbank:'
   - https://www.drugbank.ca/drugs/
   bioregistry_logo: https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Drugbank_logo.svg/1280px-Drugbank_logo.svg.png
-  bioregistry_keywords:
+  keywords:
   - chemical structure
   - chemistry databases
   - drug
@@ -10677,7 +10665,7 @@
   - 'https://n2t.net/homologene:'
   - https://www.ncbi.nlm.nih.gov/homologene/
   - https://www.ncbi.nlm.nih.gov/homologene?term=
-  bioregistry_keywords:
+  keywords:
   - gene
   - genome
   - genome/gene
@@ -10772,7 +10760,7 @@
   - https://scholia.toolforge.org/ncbi-gene/
   - https://www.ncbi.nlm.nih.gov/gene/
   bioregistry_logo: https://www.ncbi.nlm.nih.gov/corehtml/logo256.gif
-  bioregistry_keywords:
+  keywords:
   - dna
   - gene
   - genome
@@ -10883,7 +10871,7 @@
   - 'https://n2t.net/goa:'
   - https://www.ebi.ac.uk/QuickGO/GProtein?ac=
   - https://www.ebi.ac.uk/QuickGO/GTerm?id=
-  bioregistry_keywords:
+  keywords:
   - gene
 
   terminology_nomenclature:
@@ -10952,7 +10940,7 @@
   - 'https://www.genenames.org/data/gene-symbol-report/#!/hgnc_id/HGNC:'
   - https://www.genenames.org/data/hgnc_data.php?hgnc_id=
   bioregistry_logo: https://www.genenames.org/img/hgnc/logo/hgnc-logo-dark-bckgrnd-large.svg
-  bioregistry_keywords:
+  keywords:
   - classification
   - gene
   - gene name
@@ -11065,7 +11053,7 @@
   - https://www.ebi.ac.uk/interpro/entry/
   - https://www.ebi.ac.uk/interpro/entry/InterPro/
   bioregistry_logo: https://content.embl.org/sites/default/files/03-2025/interpro_newlogo-2-scaled-1.jpg
-  bioregistry_keywords:
+  keywords:
   - classification
   - domain
   - family and domain databases
@@ -11133,7 +11121,7 @@
   use_graph: true
   download_nq: https://download.bio2rdf.org/files/release/3/lsr/lsr.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/lsr/lsr.schema.owl
-  bioregistry_keywords:
+  keywords:
   - life science
 
 
@@ -11189,7 +11177,7 @@
   - 'https://www.informatics.jax.org/marker/MGI:'
   - 'https://www.informatics.jax.org/searches/accession_report.cgi?id=mgi:'
   bioregistry_logo: https://www.informatics.jax.org/webshare/images/mgi_logo.gif
-  bioregistry_keywords:
+  keywords:
   - animal model
   - blast
   - data analysis service
@@ -11368,14 +11356,8 @@
   - https://www.nlm.nih.gov/cgi/mesh/2008/MB_cgi?field=uid&term=
   - https://www.nlm.nih.gov/cgi/mesh/2013/MB_cgi?field=uid&term=
   bioregistry_logo: https://meshb.nlm.nih.gov/public/img/meshLogo.jpg
-  bioregistry_keywords:
-  - bioinformatics
-  - biomedical science
-  - classification
-  - data retrieval
-  - life science
-  - literature curation
-  - metascience
+  keywords:
+  - literature
 
   terminology_nomenclature:
   - phenotype
@@ -11484,7 +11466,7 @@
   - 'https://n2t.net/ndc:'
   - https://ndclist.com/ndc/
   - https://www.hipaaspace.com/Medical_Billing/Coding/National.Drug.Codes/
-  bioregistry_keywords:
+  keywords:
   - chemical
   bioregistry_extra_providers:
   - code: ''
@@ -11555,7 +11537,7 @@
   - https://www.ncbi.nlm.nih.gov/omim/
   - https://www.omim.org/entry/
   bioregistry_logo: https://omim.org/static/omim/icons/OMIM_davinciman.001.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - biomedical science
   - disease
@@ -11568,7 +11550,6 @@
   - genotype
   - health
   - disease
-
   - organism-specific databases
   - phenotype
   bioregistry_synonyms:
@@ -11667,7 +11648,7 @@
   - 'https://bioregistry.io/pharmgkb:'
   - https://www.clinpgx.org/accession/
   - https://www.pharmgkb.org/do/serve?objId=
-  bioregistry_keywords:
+  keywords:
   - biopax
   - classification
   - gene
@@ -11759,7 +11740,7 @@
   - https://www.oglcnac.mcw.edu/search/?query_protein=
   - https://www.uniprot.org/uniprot/
   bioregistry_logo: https://www.uniprot.org/uniprot-logo.img.0df091.svg
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - protein
@@ -11927,7 +11908,7 @@
   - 'https://www.alliancegenome.org/gene/SGD:'
   - https://www.yeastgenome.org/locus/
   bioregistry_logo: https://cherrylab.stanford.edu/sites/g/files/sbiybj20496/files/styles/card_1900x950/public/media/image/sgd-banner-higher_res_0.png
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - bioresource
   - eukaryotic
@@ -12203,20 +12184,8 @@
   - https://purl.obolibrary.org/obo/HP_
   - https://www.ebi.ac.uk/ols/ontologies/hp/terms?iri=http://purl.obolibrary.org/obo/HP_
   bioregistry_logo: https://raw.githubusercontent.com/obophenotype/human-phenotype-ontology/master/logo/HPO-logo-black_small.png
-  bioregistry_keywords:
-  - biomedical science
-  - disease phenotype
-  - disorder
-  - fair data spaces
-  - genetics
-  - genome/gene
-  - health
+  keywords:
   - disease
-  - life sciences, biology
-  - medicine
-  - obo
-  - omics
-
   terminology_nomenclature:
   - pathology
   - phenomics
@@ -12310,21 +12279,8 @@
   - https://www.ebi.ac.uk/ols/ontologies/eco/terms?iri=http://purl.obolibrary.org/obo/ECO_
   - https://www.evidenceontology.org/browse/#ECO_
   bioregistry_logo: https://avatars1.githubusercontent.com/u/12802432
-  bioregistry_keywords:
-  - assay
-  - biocuration
-  - computational biology
-  - curated information
-  - digital curation
-  - evidence
-  - life science
-  - literature curation
-  - obo
-
-  - resource metadata
-  - sample annotation
-  - study design
-  - text mining
+  keywords:
+  - literature
   bioregistry_publications:
   - pubmed: '34986598'
     doi: 10.1093/nar/gkab1025
@@ -12394,18 +12350,8 @@
   - 'https://bioregistry.io/apo:'
   - https://purl.obolibrary.org/obo/APO_
   - https://www.ebi.ac.uk/ols/ontologies/apo/terms?iri=http://purl.obolibrary.org/obo/APO_
-  bioregistry_keywords:
-  - cell biology
-  - genomics
-  - life cycle stage
-  - life science
-  - morphology
-  - mutation
-  - obo
-
-  - phenomics
+  keywords:
   - phenotype
-  - study design
   bioregistry_publications:
   - pubmed: '20157474'
     doi: 10.1093/database/bap001
@@ -12494,7 +12440,7 @@
   - https://www.ebi.ac.uk/ols/ontologies/ncbitaxon/terms?iri=http://purl.obolibrary.org/obo/NCBITaxon_
   - https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=
   - https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=
-  bioregistry_keywords:
+  keywords:
   - biology
   - classification
   - dna
@@ -12609,7 +12555,7 @@
   - https://download.bio2rdf.org/files/release/3/sider/sider-label_mapping.nq.gz
   - https://download.bio2rdf.org/files/release/3/sider/sider-meddra_freq_parsed.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/sider/sider.schema.owl
-  bioregistry_keywords:
+  keywords:
   - drug
   - side effect
   - pharmacology
@@ -12662,7 +12608,7 @@
   - https://www.wormbase.org/get?name=
   - https://www.wormbase.org/species/c_elegans/gene/
   bioregistry_logo: https://wormbase.org/img/logo/logo_wormbase_gradient.svg
-  bioregistry_keywords:
+  keywords:
   - anatomy
   - bibliography/documents
   - bioresource
@@ -12795,7 +12741,7 @@
   notes: Bio2RDF mirror - BioModels
   download_nq: https://download.bio2rdf.org/files/release/3/biomodels/biomodels.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/biomodels/biomodels.schema.owl
-  bioregistry_keywords:
+  keywords:
   - model
   - systems biology
   - interaction/pathway
@@ -13129,7 +13075,7 @@
   - https://identifiers.org/bioportal/
   - 'https://identifiers.org/bioportal:'
   - 'https://n2t.net/bioportal:'
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - health
   - disease
@@ -13213,7 +13159,7 @@
   - https://www.ebi.ac.uk/chembl/id_lookup/
   - https://www.ebi.ac.uk/chembl/target_report_card/
   - https://www.ebi.ac.uk/chembldb/index.php/compound/inspect/
-  bioregistry_keywords:
+  keywords:
   - chemical compound
   - chemical structure
   - chemistry databases
@@ -13289,7 +13235,7 @@
   - 'https://n2t.net/dbsnp:'
   - https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=
   - https://www.ncbi.nlm.nih.gov/snp/
-  bioregistry_keywords:
+  keywords:
   - genetic variation
   - genetic variation databases
   - genome
@@ -13342,7 +13288,7 @@
   - https://download.bio2rdf.org/files/release/3/genage/genage_human.nq.gz
   - https://download.bio2rdf.org/files/release/3/genage/genage_models.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/genage/genage.schema.owl
-  bioregistry_keywords:
+  keywords:
   - gene
   - ageing
   - biology
@@ -13353,7 +13299,7 @@
   - https://download.bio2rdf.org/files/release/3/gendr/gendr_gene_expression.nq.gz
   - https://download.bio2rdf.org/files/release/3/gendr/gendr_gene_manipulations.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/gendr/gendr.schema.owl
-  bioregistry_keywords:
+  keywords:
   - gene
   - dietary restriction
   - biology
@@ -13437,7 +13383,7 @@
   - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.8.nq.gz
   - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.9.nq.gz
   - https://download.bio2rdf.org/files/release/3/iproclass/iproclass.nq.gz
-  bioregistry_keywords:
+  keywords:
   - protein
   - classification
   - sequence
@@ -13446,7 +13392,7 @@
   notes: Bio2RDF mirror - LinkedSPL
   download_owl: https://download.bio2rdf.org/files/release/3/linkedspl/linkedspl.schema.owl
   download_nq: https://download.bio2rdf.org/files/release/3/linkedspl/linkedspl.nt.gz
-  bioregistry_keywords:
+  keywords:
   - drug
   - pharmacology
   - label
@@ -13460,7 +13406,7 @@
   - https://download.bio2rdf.org/files/release/3/orphanet/orphanet-genes.nq.gz
   - https://download.bio2rdf.org/files/release/3/orphanet/orphanet-signs.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/orphanet/orphanet.schema.owl
-  bioregistry_keywords:
+  keywords:
   - health
   - disease
   - rare disease
@@ -13493,7 +13439,7 @@
   - 'https://identifiers.org/pathwaycommons:'
   - 'https://n2t.net/pathwaycommons:'
   - https://www.pathwaycommons.org/pc/record2.do?id=
-  bioregistry_keywords:
+  keywords:
   - enzyme and pathway databases
   - pathway
   bioregistry_publications:
@@ -13565,7 +13511,7 @@
   - https://scholia.toolforge.org/pubmed/
   - https://www.hubmed.org/?term=
   - https://www.ncbi.nlm.nih.gov/pubmed/
-  bioregistry_keywords:
+  keywords:
   - bibliography
   - bibliography/documents
   - biomedical science
@@ -13729,7 +13675,7 @@
   - https://www.reactome.org/cgi-bin/eventbrowser_st_id?FROM_REACTOME=1&ST_ID=
   - https://www.reactome.org/content/detail/
   bioregistry_logo: https://reactome.org/templates/favourite/images/logo/logo.png
-  bioregistry_keywords:
+  keywords:
   - biopax
   - expression
   - human
@@ -13786,7 +13732,7 @@
   notes: Bio2RDF mirror - SABIO-RK
   download_nq: https://download.bio2rdf.org/files/release/3/sabiork/sabiork.nq.gz
   download_owl: https://download.bio2rdf.org/files/release/3/sabiork/sabiork.schema.owl
-  bioregistry_keywords:
+  keywords:
   - reaction
   - enzyme kinetics
   - biochemistry
@@ -13847,7 +13793,7 @@
   - 'https://www.wikipathways.org/index.php/Pathway:'
   - https://www.wikipathways.org/instance/
   bioregistry_logo: https://www.wikipathways.org/assets/img/wikipathways-logo-horizontal.svg
-  bioregistry_keywords:
+  keywords:
   - biological regulation
   - biopax
   - drug interaction
@@ -13922,7 +13868,7 @@
   endpoint: https://sparql.omabrowser.org/sparql/
   void_iri: https://sparql.omabrowser.org/
   download_tgz: https://omabrowser.org/All/oma-rdf-turtle.tgz
-  bioregistry_keywords:
+  keywords:
   - protein
   - orthology
   - genome
@@ -13960,7 +13906,7 @@
   - 'https://n2t.net/swisslipid:'
   - 'https://www.swisslipids.org/#/entity/SLM:'
   bioregistry_logo: https://www.swisslipids.org/images/SL_title_swiss.png
-  bioregistry_keywords:
+  keywords:
   - chemical structure
   - chemistry databases
   - interaction/pathway
@@ -13989,13 +13935,13 @@
 - name: earthmetabolome
   endpoint: https://kg.earthmetabolome.org/metrin/api/
   download_tar_gz: https://zenodo.org/api/records/15689187/files/metrin-kg.tar.gz/content
-  bioregistry_keywords:
+  keywords:
   - metabolite
   - chemical
   - mass spectrometry
 - name: stringdb
   endpoint: https://sparql.string-db.org/sparql
-  bioregistry_keywords:
+  keywords:
   - protein
   - interaction/pathway
   - gene
@@ -14041,10 +13987,10 @@
   - https://www.cellosaurus.org/CVCL_
   - https://www.nextprot.org/term/CVCL_
   bioregistry_logo: https://www.cellosaurus.org/images/cellosaurus/cellosaurus.png
-  bioregistry_keywords:
+  keywords:
   - bioresource
   - cell lines
-  - cellline
+  - cell line
   - controlled vocabularies
   - ontologies
   - organism
@@ -14097,14 +14043,14 @@
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_more_specific_than.nt.gz
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_subclasses.nt.gz
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_subproperties.nt.gz
-  bioregistry_keywords:
+  keywords:
   - cell line
   - biology
 
 - name: sibils
   endpoint: https://sparql.sibils.org/sparql
   download_ttl: https://sparql.sibils.org/ontology.ttl
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - life science
   - biomedical science
@@ -14136,7 +14082,7 @@
   - 'https://identifiers.org/orthodb:'
   - 'https://n2t.net/orthodb:'
   - https://www.orthodb.org/?gene=
-  bioregistry_keywords:
+  keywords:
   - dna
   - eukaryotic
   - phylogenomic databases
@@ -14173,7 +14119,7 @@
     uniprot: DB-0143
 - name: compoundwiki
   endpoint: https://compoundcloud.wikibase.cloud/query/sparql
-  bioregistry_keywords:
+  keywords:
   - chemical
   - chemical compound
   - chemical structure
@@ -14182,7 +14128,7 @@
   graph_uris:
   - http://plantmetwiki.bioinformatics.nl/
   use_graph: true
-  bioregistry_keywords:
+  keywords:
   - metabolite
   - plant biology
   - chemical
@@ -14218,7 +14164,7 @@
   - https://www.ebi.ac.uk/chembl/id_lookup/
   - https://www.ebi.ac.uk/chembl/target_report_card/
   - https://www.ebi.ac.uk/chembldb/index.php/compound/inspect/
-  bioregistry_keywords:
+  keywords:
   - chemical compound
   - chemical structure
   - chemistry databases
@@ -14269,14 +14215,14 @@
   endpoint: http://data.allie.dbcls.jp/sparql
   download_nt:
   - https://ftp.dbcls.jp/allie/allie_rdf/allie_rdf_nt_latest.gz
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - abbreviation
   - literature curation
 - name: polyadenylation.magnaporthe
   endpoint: https://dydra.com/markw/polyadenylation-sites-in-magnaporthe-oryza/sparql
   download_ttl: https://dydra.com/markw/polyadenylation-sites-in-magnaporthe-oryza.ttl
-  bioregistry_keywords:
+  keywords:
   - gene
   - genome
   - fungal biology
@@ -14285,27 +14231,27 @@
   download_nt:
   - https://ftp.dbcls.jp/lsd/lsd_latest.nt.gz
   - https://ftp.dbcls.jp/lsd/lsd.ontology_latest.nt.gz
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - dictionary
   - life science
 - name: rdfportal.pubchem
   endpoint: https://rdfportal.org/pubchem/sparql
   download_nt: https://rdfportal.org/ntriples/pubchem/latest/void.nt.gz
-  bioregistry_keywords:
+  keywords:
   - chemical
   - chemical compound
 
 - name: rdfportal.chebi
   endpoint: https://rdfportal.org/primary/sparql
   download_nt: https://rdfportal.org/ntriples/chebi/latest/chebi.nt.gz
-  bioregistry_keywords:
+  keywords:
   - chemical
 
   - chemical compound
 - name: rdfportal.primary
   endpoint: https://rdfportal.org/primary/sparql
-  bioregistry_keywords:
+  keywords:
 
 
   - biology
@@ -14371,7 +14317,7 @@
   - https://www.nlm.nih.gov/cgi/mesh/2008/MB_cgi?field=uid&term=
   - https://www.nlm.nih.gov/cgi/mesh/2013/MB_cgi?field=uid&term=
   bioregistry_logo: https://meshb.nlm.nih.gov/public/img/meshLogo.jpg
-  bioregistry_keywords:
+  keywords:
   - bioinformatics
   - biomedical science
   - classification
@@ -14569,37 +14515,37 @@
   - https://dumps.glycosmos.org/pathways/reactome/Xenopus_tropicalis.owl.gz
   download_rdf:
   - https://dumps.glycosmos.org/genes/rhea/rhea.rdf.gz
-  bioregistry_keywords:
+  keywords:
   - carbohydrate
   - glycomics
   - biology
 - name: fanavi
   endpoint: http://navi.first.lifesciencedb.jp/fanavi/sparql
-  bioregistry_keywords:
+  keywords:
   - gene expression
   - plant biology
   - genomics
 - name: rdfportal.sib
   endpoint: https://rdfportal.org/sib/sparql
-  bioregistry_keywords:
+  keywords:
   - protein
 
   - biomedical science
 - name: colil
   endpoint: http://colil.dbcls.jp/sparql
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - citation
   - literature curation
 - name: agrold
   endpoint: http://sparql.southgreen.fr/
-  bioregistry_keywords:
+  keywords:
   - agriculture
   - plant biology
   - genomics
 - name: biogateway
   endpoint: https://2407.biogateway.eu/sparql/
-  bioregistry_keywords:
+  keywords:
 
   - biomedical science
 
@@ -14627,7 +14573,7 @@
   - https://idp1.force.cs.is.nagoya-u.ac.jp/IDEAL/idealItem.php?id=
   - 'https://n2t.net/ideal:'
   - https://www.ideal-db.org/ideal.php?id=
-  bioregistry_keywords:
+  keywords:
   - 3d structure
   - family and domain databases
   - image/movie
@@ -14648,62 +14594,62 @@
     uniprot: DB-0251
 - name: rdfportal.kero
   endpoint: https://rdfportal.org/kero/sparql
-  bioregistry_keywords:
+  keywords:
 
   - biology
 
 - name: rdfportal.wikidata
   endpoint: https://rdfportal.org/wikidata/sparql
-  bioregistry_keywords:
+  keywords:
 
 
   - biomedical science
 - name: rdfportal.pdb
   endpoint: https://rdfportal.org/pdb/sparql
   download_nt: https://rdfportal.org/ntriples/pdb/latest/pdbx-v50.nt.gz
-  bioregistry_keywords:
+  keywords:
   - 3d structure
   - protein
   - structure
 - name: rdfportal.ebi
   endpoint: https://rdfportal.org/ebi/sparql
-  bioregistry_keywords:
+  keywords:
 
   - biomedical science
 
 - name: rdfportal.ncbi
   endpoint: https://rdfportal.org/ncbi/sparql
-  bioregistry_keywords:
+  keywords:
   - sequence
 
   - genome
 - name: linkdb
   endpoint: http://www.genome.jp/sparql/linkdb
-  bioregistry_keywords:
+  keywords:
   - database
 
   - life science
 - name: rdfportal.ddbj
   endpoint: https://rdfportal.org/ddbj/sparql
-  bioregistry_keywords:
+  keywords:
   - sequence
   - genome
 
 - name: rdfportal.bioportal
   endpoint: https://rdfportal.org/bioportal/sparql
-  bioregistry_keywords:
+  keywords:
 
 
   - biomedical science
 - name: regulatorycircuits
   endpoint: https://regulatorycircuits-lod.genouest.org/sparql/
-  bioregistry_keywords:
+  keywords:
   - gene expression
   - gene
   - regulation
 - name: forum
   endpoint: https://forum.semantic-metabolomics.fr/sparql/
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - biomedical science
 
@@ -14725,7 +14671,7 @@
   - https://glyconavi.org/hub/?id=
   - https://identifiers.org/glyconavi/
   - 'https://identifiers.org/glyconavi:'
-  bioregistry_keywords:
+  keywords:
   - 3d structure
   - carbohydrate
   - chemical structure
@@ -14746,7 +14692,7 @@
   - https://zenodo.org/api/records/7252155/files/Gga-u.c4-0.n3/content
   - https://zenodo.org/api/records/7252155/files/Cfa-u.c4-0.n3/content
   - https://zenodo.org/api/records/7252155/files/Mcc-u.c4-0.n3/content
-  bioregistry_keywords:
+  keywords:
   - gene expression
   - gene
   - co-expression
@@ -14785,7 +14731,7 @@
   - https://www.lipidmaps.org/data/get_lm_lipids_dbgif.php?LM_ID=
   - https://www.lipidmaps.org/data/structure/LMSDSearch.php?Mode=ProcessClassSearch&LMID=
   bioregistry_logo: https://www.lipidmaps.org/assets/images/logos/lipid_maps_transparent_sm.png
-  bioregistry_keywords:
+  keywords:
   - chemical structure
   - classification
   - interaction/pathway
@@ -14842,7 +14788,7 @@
     wikidata: P2063
 - name: imgtkg
   endpoint: https://www.imgt.org/fuseki/ImgtKg/sparql
-  bioregistry_keywords:
+  keywords:
   - immunology
   - sequence
   - protein
@@ -14874,7 +14820,7 @@
   - 'https://n2t.net/brenda:'
   - https://www.brenda-enzymes.info/enzyme.php?ecno=
   - https://www.brenda-enzymes.org/php/result_flat.php4?ecno=
-  bioregistry_keywords:
+  keywords:
   - enzyme
   - sbml
   bioregistry_publications:
@@ -14934,13 +14880,13 @@
     re3data: r3d100010616
 - name: bioresource.riken
   endpoint: https://knowledge.brc.riken.jp/sparql
-  bioregistry_keywords:
+  keywords:
   - biology
 
   - organism
 - name: riken.metadb
   endpoint: http://metadb.riken.jp/sparql
-  bioregistry_keywords:
+  keywords:
   - database
 
   - life science
@@ -14961,7 +14907,7 @@
   - https://aims.fao.org/aos/agrovoc/
   - https://aims.fao.org/aos/agrovoc/c_
   - 'https://bioregistry.io/agrovoc:'
-  bioregistry_keywords:
+  keywords:
   - agricultural products
   - agriculture
   - agronomy
@@ -15034,7 +14980,7 @@
   - https://www.ebi.ac.uk/ols/ontologies/chebi/terms?iri=http://purl.obolibrary.org/obo/CHEBI_
   - 'https://www.iedb.org/antigen/ChEBI:'
   bioregistry_logo: https://www.ebi.ac.uk/chebi/chebi_logo.svg
-  bioregistry_keywords:
+  keywords:
   - biochemistry
   - carbohydrate
   - chemical
@@ -15129,7 +15075,7 @@
 - name: mediadive
   endpoint: https://sparql.dsmz.de/api/mediadive
   download_nt: https://rdfportal.org/ntriples/mediadive/latest/rdf-mod-r.nt.gz
-  bioregistry_keywords:
+  keywords:
   - microbiology
   - culture medium
   - organism
@@ -15160,7 +15106,7 @@
   - https://identifiers.org/glytoucan/
   - 'https://identifiers.org/glytoucan:'
   - 'https://n2t.net/glytoucan:'
-  bioregistry_keywords:
+  keywords:
   - carbohydrate
   - chemical structure
   - expression
@@ -15197,7 +15143,7 @@
     togoid: Glytoucan
 - name: glyconnect
   endpoint: https://glyconnect.expasy.org/sparql
-  bioregistry_keywords:
+  keywords:
   - carbohydrate
   - glycomics
   - biology
@@ -15232,7 +15178,7 @@
   - https://string-db.org/interactions/
   - https://string-db.org/network/
   - https://string.embl.de/cgi/network?identifier=
-  bioregistry_keywords:
+  keywords:
   - classification
   - interaction
   - interaction/pathway
@@ -15296,7 +15242,7 @@
     uniprot: DB-0141
 - name: attedii
   endpoint: https://atted.jp/sparql
-  bioregistry_keywords:
+  keywords:
   - gene expression
   - co-expression
   - plant biology
@@ -15344,25 +15290,25 @@
     n2t: bacdive
     re3data: r3d100013060
     wikidata: P2946
-  bioregistry_keywords:
+  keywords:
   - microbiology
   - taxonomy
   - organism
 - name: rdfportal.proteinatlas
   endpoint: https://rdfportal.org/proteinatlas/sparql
-  bioregistry_keywords:
+  keywords:
   - protein
   - expression
   - biology
 - name: prokino
   endpoint: http://vulcan.cs.uga.edu/sparql
-  bioregistry_keywords:
+  keywords:
   - protein
   - kinase
   - sequence
 - name: linkeddrugs
   endpoint: http://linkeddata.finki.ukim.mk/sparql
-  bioregistry_keywords:
+  keywords:
   - drug
   - pharmacology
   - health
@@ -15420,7 +15366,7 @@
   - https://www.rcsb.org/structure/
   - https://www.wwpdb.org/pdb?id=pdb_0000
   bioregistry_logo: https://cdn.rcsb.org/wwpdb/img/core/wwpdb-logo.png
-  bioregistry_keywords:
+  keywords:
   - 3d structure
   - 3d structure databases
   - dna
@@ -15558,37 +15504,37 @@
     wikidata: P638
 - name: glic
   endpoint: https://sparql.glycoinfo.org/sparql
-  bioregistry_keywords:
+  keywords:
   - carbohydrate
   - glycomics
   - biology
 - name: metabobank
   endpoint: https://mb2.ddbj.nig.ac.jp/sparql
-  bioregistry_keywords:
+  keywords:
   - metabolite
 
   - mass spectrometry
 - name: linkedlifedata
   endpoint: http://linkedlifedata.com/sparql
-  bioregistry_keywords:
+  keywords:
 
   - biomedical science
 
 - name: microbedb
   endpoint: http://genome.microbedb.jp/sparql
-  bioregistry_keywords:
+  keywords:
   - microbiology
   - genome
   - organism
 - name: mbgd
   endpoint: http://sparql.nibb.ac.jp/sparql
-  bioregistry_keywords:
+  keywords:
   - microbiology
   - genome
   - orthology
 - name: gocam
   endpoint: http://rdf.geneontology.org/blazegraph/sparql
-  bioregistry_keywords:
+  keywords:
   - gene
 
   - interaction/pathway
@@ -15614,7 +15560,7 @@
   - https://identifiers.org/chemdb/
   - 'https://identifiers.org/chemdb:'
   - 'https://n2t.net/chemdb:'
-  bioregistry_keywords:
+  keywords:
   - small molecule
   bioregistry_publications:
   - pubmed: '17599932'
@@ -15639,7 +15585,7 @@
 - name: covidontheweb
   endpoint: https://covidontheweb.inria.fr/sparql
   notes: COVID on the Web - INRIA
-  bioregistry_keywords:
+  keywords:
   - health
   - disease
   - bibliography/documents
@@ -15647,7 +15593,7 @@
 - name: bio2rdf.kegg.cu
   endpoint: http://cu.kegg.bio2rdf.org/sparql
   notes: Bio2RDF KEGG mirror (cu.kegg.bio2rdf.org)
-  bioregistry_keywords:
+  keywords:
   - pathway
   - interaction/pathway
   - chemical
@@ -15658,7 +15604,7 @@
   use_graph: true
   download_nt: https://rdfportal.org/ntriples/nadd/latest/rdf/graph-1/NucleicAcidDrug.nt.gz
   notes: Nucleic Acid Drug Database (NADD) - RDFPortal
-  bioregistry_keywords:
+  keywords:
   - disease
   - drug
 
@@ -15666,7 +15612,7 @@
   endpoint: https://frink.apps.renci.org/biobricks-aopwiki/sparql
   notes: 'KG Registry: BioBricks AOP-Wiki'
   kg_registry_id: biobricks-aopwiki
-  bioregistry_keywords:
+  keywords:
   - toxicology
   - adverse outcome pathway
   - biology
@@ -15674,7 +15620,7 @@
   endpoint: https://frink.apps.renci.org/biobricks-ice/sparql
   notes: 'KG Registry: BioBricks ICE'
   kg_registry_id: biobricks-ice
-  bioregistry_keywords:
+  keywords:
   - toxicology
   - chemical
 
@@ -15682,7 +15628,7 @@
   endpoint: https://frink.apps.renci.org/biobricks-mesh/sparql
   notes: 'KG Registry: BioBricks MeSH'
   kg_registry_id: biobricks-mesh
-  bioregistry_keywords:
+  keywords:
   terminology_nomenclature:
   - health
   - disease
@@ -15691,7 +15637,7 @@
   endpoint: https://frink.apps.renci.org/biobricks-pubchem-annotations/sparql
   notes: 'KG Registry: BioBricks PubChem Annotations'
   kg_registry_id: biobricks-pubchem-annotations
-  bioregistry_keywords:
+  keywords:
   - chemical
   - annotation
   - chemical compound
@@ -15699,7 +15645,7 @@
   endpoint: https://frink.apps.renci.org/biobricks-tox21/sparql
   notes: 'KG Registry: BioBricks Tox21'
   kg_registry_id: biobricks-tox21
-  bioregistry_keywords:
+  keywords:
   - toxicology
   - chemical
   - biology
@@ -15707,7 +15653,7 @@
   endpoint: https://frink.apps.renci.org/biobricks-toxcast/sparql
   notes: 'KG Registry: BioBricks ToxCast'
   kg_registry_id: biobricks-toxcast
-  bioregistry_keywords:
+  keywords:
   - toxicology
   - chemical
   - biology
@@ -15715,7 +15661,7 @@
   endpoint: https://frink.apps.renci.org/biohealth/sparql
   notes: 'KG Registry: Bio-Health KG'
   kg_registry_id: biohealth
-  bioregistry_keywords:
+  keywords:
   - health
   - disease
   - biomedical science
@@ -15724,7 +15670,7 @@
   endpoint: https://stars-app.renci.org/cam/sparql
   notes: 'KG Registry: CAM-KP (Causal Activity Models Knowledge Provider)'
   kg_registry_id: cam-kp
-  bioregistry_keywords:
+  keywords:
 
   - biomedical science
   - reasoning
@@ -15732,7 +15678,7 @@
   endpoint: https://frink.apps.renci.org/climatemodelskg/sparql
   notes: 'KG Registry: Climate Models KG'
   kg_registry_id: climatemodelskg
-  bioregistry_keywords:
+  keywords:
   - climate
   - model
   - environment
@@ -15740,7 +15686,7 @@
   endpoint: https://frink.apps.renci.org/dreamkg/sparql
   notes: 'KG Registry: DREAM-KG'
   kg_registry_id: dreamkg
-  bioregistry_keywords:
+  keywords:
   - health
   - disease
   - social determinants
@@ -15769,7 +15715,7 @@
   - https://www.dbgi.org/earth_metabolome_ontology/#
   bioregistry_mappings:
     ols: emi
-  bioregistry_keywords:
+  keywords:
   - metabolite
   - mass spectrometry
 
@@ -15777,7 +15723,7 @@
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: EMI KG; shares QLever earthmetabolome endpoint'
   kg_registry_id: emikg
-  bioregistry_keywords:
+  keywords:
   - metabolite
   - mass spectrometry
 
@@ -15785,7 +15731,7 @@
   endpoint: https://frink.apps.renci.org/fiokg/sparql
   notes: 'KG Registry: SAWGraph FIO KG'
   kg_registry_id: fiokg
-  bioregistry_keywords:
+  keywords:
   - food
   - agriculture
 
@@ -15793,7 +15739,7 @@
   endpoint: https://frink.apps.renci.org/geoconnex/sparql
   notes: 'KG Registry: GEOCONNEX'
   kg_registry_id: geoconnex
-  bioregistry_keywords:
+  keywords:
   - hydrology
   - geospatial
   - environment
@@ -15802,7 +15748,7 @@
   download_nquads: https://zenodo.org/record/14640564/files/interactions.nq.gz
   notes: 'KG Registry: Global Biotic Interactions (GloBI); shares QLever earthmetabolome endpoint'
   kg_registry_id: globi
-  bioregistry_keywords:
+  keywords:
   - ecology
   - interaction/pathway
   - biodiversity
@@ -15814,7 +15760,7 @@
   - https://www.guidetopharmacology.org/DATA/rdf/2026.1/gtp-rdf.n3
   notes: 'Updates KG Registry: Guide to Pharmacology'
   kg_registry_id: gtopdb
-  bioregistry_keywords:
+  keywords:
   - drug
   - pharmacology
   - receptor
@@ -15846,7 +15792,7 @@
   - https://www.proteinatlas.org/
   - https://www.proteinatlas.org/gene_info.php?ensembl_gene_id=
   - https://www.proteinatlas.org/tissue_profile.php?antibody_id=
-  bioregistry_keywords:
+  keywords:
   - organism-specific databases
   - protein
   - structure
@@ -15900,15 +15846,13 @@
   download_nquads: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.nq
   notes: 'KG Registry: Human Reference Atlas Knowledge Graph (HRA KG)'
   kg_registry_id: hra-kg
-  bioregistry_keywords:
-  - anatomy
-  - atlas
-  - biology
+  keywords:
+  - cell line
 #- name: hydrologykg
 #  endpoint: https://frink.apps.renci.org/hydrologykg/sparql
 #  notes: 'KG Registry: SAWGraph Hydrology KG'
 #  kg_registry_id: hydrologykg
-#  bioregistry_keywords:
+#  keywords:
 #  - hydrology
 #  - geospatial
 #  - environment
@@ -15916,7 +15860,7 @@
 #  endpoint: https://frink.apps.renci.org/identifier-mappings/sparql
 #  notes: 'KG Registry: ID Mappings'
 #  kg_registry_id: identifier-mappings
-#  bioregistry_keywords:
+#  keywords:
 #  - identifier
 #  - mapping
 
@@ -15924,7 +15868,7 @@
 #  endpoint: https://knowwheregraph.org/sparql/
 #  notes: 'KG Registry: KnowWhereGraph'
 #  kg_registry_id: knowwheregraph
-#  bioregistry_keywords:
+#  keywords:
 #  - geospatial
 #  - environment
 
@@ -15952,7 +15896,7 @@
   - https://www.metanetx.org/ftp/latest/examples.ttl
   notes: 'Updates KG Registry: MetaNetX'
   kg_registry_id: metanetx
-  bioregistry_keywords:
+  keywords:
   - metabolite
   - reaction
   - biochemistry
@@ -15960,7 +15904,7 @@
   endpoint: https://frink.apps.renci.org/nasa-gesdisc-kg/sparql
   notes: 'KG Registry: NASA-GESDISC-KG'
   kg_registry_id: nasa-gesdisc-kg
-  bioregistry_keywords:
+  keywords:
   - earth science
   - geospatial
   - environment
@@ -15968,7 +15912,7 @@
   endpoint: https://frink.apps.renci.org/nde/sparql
   notes: 'KG Registry: NIAID Data Ecosystem KG'
   kg_registry_id: nde
-  bioregistry_keywords:
+  keywords:
   - cultural heritage
   - library
 
@@ -15976,7 +15920,7 @@
 #  endpoint: https://frink.apps.renci.org/neighborhood-information-kg/sparql
 #  notes: 'KG Registry: Neighborhood Information KG'
 #  kg_registry_id: nikg
-#  bioregistry_keywords:
+#  keywords:
 #  - cultural heritage
 #  - Japan
 - name: oma
@@ -15984,7 +15928,7 @@
   download_tgz: https://omabrowser.org/All/oma-rdf-turtle.tgz
   notes: 'Updates KG Registry: OMA'
   kg_registry_id: oma
-  bioregistry_keywords:
+  keywords:
   - protein
   - orthology
   - genome
@@ -15993,7 +15937,7 @@
   download_ttl: https://raw.githubusercontent.com/pensoft/OpenBiodiv/refs/heads/master/ontology/openbiodiv-ontology-latest.ttl
   notes: 'KG Registry: OpenBiodiv'
   kg_registry_id: openbiodiv
-  bioregistry_keywords:
+  keywords:
   - biodiversity
   - taxonomy
   - bibliography/documents
@@ -16036,7 +15980,7 @@
   - https://www.ebi.ac.uk/ols4/ontologies/ordo/terms/http%253A%252F%252Fwww.orpha.net%252FORDO%252F
   - https://www.orpha.net/ORDO/Orphanet_
   - https://www.orpha.net/consor/cgi-bin/OC_Exp.php?Lng=en&Expert=
-  bioregistry_keywords:
+  keywords:
   - biomedical science
   - diagnosis
   - disease
@@ -16070,7 +16014,7 @@
   download_nt: http://patho.phenomebrowser.net/media/downloads/patho_pheno_withsymbols.nt
   notes: 'KG Registry: PathoPhenoDB'
   kg_registry_id: pathophenodb
-  bioregistry_keywords:
+  keywords:
   - health
   - disease
   - phenotype
@@ -16079,7 +16023,7 @@
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: pf1600 Dataset; shares QLever earthmetabolome endpoint'
   kg_registry_id: pf1600
-  bioregistry_keywords:
+  keywords:
 
   - swiss history
   - cultural heritage
@@ -16126,7 +16070,7 @@
   - https://www.reactome.org/cgi-bin/eventbrowser_st_id?FROM_REACTOME=1&ST_ID=
   - https://www.reactome.org/content/detail/
   bioregistry_logo: https://reactome.org/templates/favourite/images/logo/logo.png
-  bioregistry_keywords:
+  keywords:
   - biopax
   - expression
   - human
@@ -16182,7 +16126,7 @@
   endpoint: https://frink.apps.renci.org/ruralkg/sparql
   notes: 'KG Registry: Rural Resilience KG'
   kg_registry_id: ruralkg
-  bioregistry_keywords:
+  keywords:
   - geospatial
   - rural
 
@@ -16190,7 +16134,7 @@
   endpoint: https://frink.apps.renci.org/sawgraph/sparql
   notes: 'KG Registry: SAWGraph PFAS graph'
   kg_registry_id: sawgraph
-  bioregistry_keywords:
+  keywords:
   - geospatial
   - water quality
   - environment
@@ -16198,13 +16142,13 @@
   endpoint: https://frink.apps.renci.org/scales/sparql
   notes: 'KG Registry: SCALES'
   kg_registry_id: scales
-  bioregistry_keywords:
+  keywords:
   - benchmark
 - name: securechainkg
   endpoint: https://frink.apps.renci.org/securechainkg/sparql
   notes: 'KG Registry: SecureChain KG'
   kg_registry_id: securechainkg
-  bioregistry_keywords:
+  keywords:
   - supply chain
 
   - security
@@ -16212,7 +16156,7 @@
   endpoint: https://frink.apps.renci.org/semopenalex/sparql
   notes: 'KG Registry: SemOpenAlex'
   kg_registry_id: semopenalex
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - scholarly
 
@@ -16220,7 +16164,7 @@
   endpoint: https://frink.apps.renci.org/sockg/sparql
   notes: 'KG Registry: SOC-KG'
   kg_registry_id: sockg
-  bioregistry_keywords:
+  keywords:
   - agriculture
   - soil
 
@@ -16228,7 +16172,7 @@
   endpoint: https://frink.apps.renci.org/spatialkg/sparql
   notes: 'KG Registry: SAWGraph Spatial KG'
   kg_registry_id: spatialkg
-  bioregistry_keywords:
+  keywords:
   - geospatial
 
   - environment
@@ -16236,14 +16180,14 @@
   endpoint: https://frink.apps.renci.org/spoke-okn/sparql
   notes: 'KG Registry: SPOKE'
   kg_registry_id: spoke
-  bioregistry_keywords:
+  keywords:
   - biomedical science
   - gene
 - name: spoke-genelab
   endpoint: https://frink.apps.renci.org/spoke-genelab/sparql
   notes: 'KG Registry: SPOKE GeneLab'
   kg_registry_id: spoke-genelab
-  bioregistry_keywords:
+  keywords:
   - gene expression
   - space biology
   - gene
@@ -16251,7 +16195,7 @@
   endpoint: https://frink.apps.renci.org/sudokn/sparql
   notes: 'KG Registry: SUDOKN'
   kg_registry_id: sudokn
-  bioregistry_keywords:
+  keywords:
   - urban design
   - engineering
 - name: tera
@@ -16264,7 +16208,7 @@
   - https://zenodo.org/records/4244313/files/traits.nt
   notes: 'KG Registry: TERA: Toxicological Effect and Risk Assessment Knowledge Graph'
   kg_registry_id: tera
-  bioregistry_keywords:
+  keywords:
   - environment
   - ecology
 
@@ -16272,7 +16216,7 @@
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: TRY Plant Trait Database; shares QLever earthmetabolome endpoint'
   kg_registry_id: try
-  bioregistry_keywords:
+  keywords:
   - plant biology
   - ecology
   - trait
@@ -16281,7 +16225,8 @@
   download_nquads: https://ubergraph.apps.renci.org/downloads/current/ubergraph.nq.gz
   notes: 'KG Registry: Ubergraph'
   kg_registry_id: ubergraph
-  bioregistry_keywords:
+  keywords:
+   - biomedical science
 
   terminology_nomenclature:
   - obo
@@ -16289,7 +16234,7 @@
   endpoint: https://frink.apps.renci.org/wildlifekg/sparql
   notes: 'KG Registry: Wildlife-KN'
   kg_registry_id: wildlifekn
-  bioregistry_keywords:
+  keywords:
   - biodiversity
   - ecology
   - wildlife
@@ -16299,7 +16244,7 @@
   - https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/refs/heads/main/src/ontology/doid.owl
   - http://purl.obolibrary.org/obo/doid/obo/ext.owl
   - https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/refs/heads/main/src/ontology/HumanDO.owl
-  bioregistry_keywords:
+  keywords:
   - health
   - disease
   - phenotype
@@ -16307,7 +16252,7 @@
   download_nt:
   - https://ftp.dbcls.jp/allie/allie_rdf/pubmed_rdf_nt_latest.gz
   notes: From ALLIE FTP
-  bioregistry_keywords:
+  keywords:
   - bibliography/documents
   - abbreviation
   - literature curation
@@ -16315,7 +16260,7 @@
   endpoint: https://lsd.spatialepidemiology.net/sparql
   download_nt: https://ftp.dbcls.jp/allie/allie_rdf/lsd_rdf_nt_latest.gz
   notes: Life Science Dictionary
-  bioregistry_keywords:
+  keywords:
   - life science
   - database
 
@@ -16323,7 +16268,7 @@
   download_nt:
   - https://ftp.dbcls.jp/allie/allie_rdf/mesh_rdf_nt_latest.gz
   notes: From ALLIE FTP
-  bioregistry_keywords:
+  keywords:
   - terminology_nomenclature
   - bibliography/documents
   - health
@@ -16336,7 +16281,7 @@
   download_zip:
   - https://zenodo.org/records/7602354/files/rdf.zip
   notes: NanosolveIT RDF datasets
-  bioregistry_keywords:
+  keywords:
   - toxicology
   - nanomaterial
   - chemical

@@ -53,7 +53,10 @@ def uri_to_curie(uri: str) -> tuple[str, str, str]:
             parsed = parse_iri(uri)
             if parsed:
                 pfx, local = parsed
-                ns = _ns_from_uri(uri)
+                # Derive namespace by stripping the local part from the full URI.
+                # This preserves infixes like SIO_, IAO_, BAO_, etc. that
+                # _ns_from_uri() would drop by splitting on the last "#" or "/".
+                ns = uri[: len(uri) - len(local)]
                 curie = curie_from_iri(uri) or f"{pfx}:{local}"
                 return curie, pfx, ns
         except Exception:
@@ -162,6 +165,6 @@ def expand_curie_bioregistry(value: str) -> str:
         if uri_prefix:
             return str(uri_prefix) + local
     except Exception as e:
-        _log.warning("Error expanding %s: %s", uri_prefix, e)
+        _log.warning("Error expanding %s: %s", prefix, e)
         pass
     return str(value)

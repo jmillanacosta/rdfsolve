@@ -328,16 +328,69 @@ def derive_class_mappings_from_instances(
         source_types.add(mt)
 
     # 2. Collect unique entity IRIs
+    #
+    # Instance-mapping JSON-LD stores entities as bare CURIEs in @id fields
+    # (e.g. "CHEBI:12345", "doid:0002116") with the CURIE→namespace map held
+    # in the document's @context.  We expand every @id we find using that
+    # context so that build_class_index_from_ports receives real HTTP IRIs
+    # that bioregistry can further expand to all URI variants.
+    #
+    # Nodes that are already full HTTP/HTTPS IRIs are kept as-is.
+    # Nodes whose prefix is absent from @context (and not http*) are skipped —
+    # they are OWL metaclasses like "owl:Class" that are not entity instances.
+
+    def _expand_curie(curie: str, context: dict[str, str]) -> str | None:
+        """Expand a CURIE to a full IRI using @context, or return None."""
+        if not curie or curie in ("None:None", "null:null"):
+            return None
+        if curie.startswith(("http://", "https://", "urn:")):
+            return curie
+        if ":" not in curie:
+            return None
+        pfx, local = curie.split(":", 1)
+        ns = context.get(pfx)
+        if not ns or not ns.startswith(("http://", "https://")):
+            return None
+        return ns + local
+
+    _EDGE_PRED_KEYS = {
+        "skos:narrowMatch", "skos:exactMatch", "skos:broadMatch",
+        "skos:closeMatch", "skos:relatedMatch",
+        "owl:sameAs", "rdfs:subClassOf",
+    }
+
     entity_iris_set: set[str] = set()
     all_instance_edges: list[MappingEdge] = []
     for raw in input_docs:
+        ctx: dict[str, str] = {
+            k: v for k, v in raw.get("@context", {}).items()
+            if isinstance(v, str) and v.startswith(("http://", "https://"))
+        }
         for e in raw.get("@graph", []):
+            # Expand node @id (subject)
+            src_expanded = _expand_curie(e.get("@id", ""), ctx)
+            if src_expanded:
+                entity_iris_set.add(src_expanded)
+
+            # Expand all mapping-predicate targets (objects)
+            for pred_key in _EDGE_PRED_KEYS:
+                targets = e.get(pred_key, [])
+                if not isinstance(targets, list):
+                    targets = [targets]
+                for tgt in targets:
+                    if isinstance(tgt, dict):
+                        tgt_expanded = _expand_curie(tgt.get("@id", ""), ctx)
+                        if tgt_expanded:
+                            entity_iris_set.add(tgt_expanded)
+
+            # Also honour legacy fields used in other mapping types
             src_iri = e.get("subject_source_iri") or (e.get("subject_source") or {}).get("@id")
             tgt_iri = e.get("object_source_iri") or (e.get("object_source") or {}).get("@id")
-            if src_iri:
+            if src_iri and src_iri.startswith(("http://", "https://")):
                 entity_iris_set.add(src_iri)
-            if tgt_iri:
+            if tgt_iri and tgt_iri.startswith(("http://", "https://")):
                 entity_iris_set.add(tgt_iri)
+
             edge_data = {k: v for k, v in e.items() if k in MappingEdge.model_fields}
             all_instance_edges.append(MappingEdge(**edge_data))
 
