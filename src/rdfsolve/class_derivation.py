@@ -340,7 +340,7 @@ def derive_class_mappings_from_instances(
     # they are OWL metaclasses like "owl:Class" that are not entity instances.
 
     def _expand_curie(curie: str, context: dict[str, str]) -> str | None:
-        """Expand a CURIE to a full IRI using @context, or return None."""
+        """Expand a CURIE to a full IRI using @context + bioregistry fallback."""
         if not curie or curie in ("None:None", "null:null"):
             return None
         if curie.startswith(("http://", "https://", "urn:")):
@@ -349,9 +349,17 @@ def derive_class_mappings_from_instances(
             return None
         pfx, local = curie.split(":", 1)
         ns = context.get(pfx)
-        if not ns or not ns.startswith(("http://", "https://")):
-            return None
-        return ns + local
+        if ns and ns.startswith(("http://", "https://")):
+            return ns + local
+        # Bioregistry fallback for prefixes not in @context
+        try:
+            import bioregistry
+            uri = bioregistry.get_iri(pfx, local)
+            if uri:
+                return uri
+        except Exception:
+            pass
+        return None
 
     _EDGE_PRED_KEYS = {
         "skos:narrowMatch", "skos:exactMatch", "skos:broadMatch",
@@ -372,16 +380,32 @@ def derive_class_mappings_from_instances(
             if src_expanded:
                 entity_iris_set.add(src_expanded)
 
+            src_ds_node = e.get("void:inDataset") or {}
+            src_ds = src_ds_node.get("dcterms:title", "")
+
             # Expand all mapping-predicate targets (objects)
             for pred_key in _EDGE_PRED_KEYS:
                 targets = e.get(pred_key, [])
                 if not isinstance(targets, list):
                     targets = [targets]
                 for tgt in targets:
-                    if isinstance(tgt, dict):
-                        tgt_expanded = _expand_curie(tgt.get("@id", ""), ctx)
-                        if tgt_expanded:
-                            entity_iris_set.add(tgt_expanded)
+                    if not isinstance(tgt, dict):
+                        continue
+                    tgt_expanded = _expand_curie(tgt.get("@id", ""), ctx)
+                    if tgt_expanded:
+                        entity_iris_set.add(tgt_expanded)
+
+                    if src_expanded and tgt_expanded:
+                        tgt_ds_node = tgt.get("void:inDataset") or {}
+                        tgt_ds = tgt_ds_node.get("dcterms:title", "") or src_ds
+                        pred_uri = _expand_curie(pred_key, ctx) or pred_key
+                        all_instance_edges.append(MappingEdge(
+                            source_class=src_expanded,
+                            target_class=tgt_expanded,
+                            predicate=pred_uri,
+                            source_dataset=src_ds,
+                            target_dataset=tgt_ds,
+                        ))
 
             # Also honour legacy fields used in other mapping types
             src_iri = e.get("subject_source_iri") or (e.get("subject_source") or {}).get("@id")
@@ -390,9 +414,6 @@ def derive_class_mappings_from_instances(
                 entity_iris_set.add(src_iri)
             if tgt_iri and tgt_iri.startswith(("http://", "https://")):
                 entity_iris_set.add(tgt_iri)
-
-            edge_data = {k: v for k, v in e.items() if k in MappingEdge.model_fields}
-            all_instance_edges.append(MappingEdge(**edge_data))
 
     # 3. Build class index
     _cache_path: str | None = None

@@ -51,7 +51,9 @@ def uri_to_curie(uri: str) -> tuple[str, str, str]:
             from bioregistry import curie_from_iri, parse_iri
 
             parsed = parse_iri(uri)
-            if parsed:
+            # Guard: parse_iri may return (None, None) which is a truthy
+            # tuple but would yield the invalid CURIE "None:None".
+            if parsed and parsed[0] is not None and parsed[1] is not None:
                 pfx, local = parsed
                 # Derive namespace by stripping the local part from the full URI.
                 # This preserves infixes like SIO_, IAO_, BAO_, etc. that
