@@ -1,3 +1,8 @@
+- name: lipidmaps  # Add graph names
+  local_provider: lipidmaps
+  endpoint: "https://lipidmaps.org/sparql"
+  keywords: 
+  - lipids
 - name: pubchem.ftp.anatomy
   local_provider: pubchem
   graph_uris: []
