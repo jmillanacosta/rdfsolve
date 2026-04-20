@@ -136,6 +136,12 @@ class SourceModel(BaseModel):
     local_provider: str = ""
     download_ttl: list[str] = Field(default_factory=list)
 
+    # ── Endpoint metadata (populated by probe/discovery scripts) ──
+    sparql_engine: str = ""
+    sparql_strategy: str = ""
+    supports_graph: bool | None = None
+    endpoint_down: bool = False
+
     bioregistry_prefix: str = ""
     bioregistry_name: str = ""
     bioregistry_description: str = ""
@@ -211,6 +217,8 @@ class SourceModel(BaseModel):
             "void_iri",
             "notes",
             "local_provider",
+            "sparql_engine",
+            "sparql_strategy",
             "bioregistry_prefix",
             "bioregistry_name",
             "bioregistry_description",

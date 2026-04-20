@@ -74,6 +74,11 @@ class SourceEntry(TypedDict, total=False):
     counts: bool
     unsafe_paging: bool
     notes: str
+    # ── Endpoint metadata (populated by probe/discovery scripts) ──
+    sparql_engine: str
+    sparql_strategy: str
+    supports_graph: bool
+    endpoint_down: bool
     # ── Bioregistry-derived metadata (populated by enrich_source_with_bioregistry) ──
     bioregistry_prefix: str
     bioregistry_name: str

@@ -35,7 +35,10 @@ import time
 import warnings
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, ClassVar, Literal
+
+import yaml
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
@@ -193,6 +196,80 @@ class SparqlHelper:
     _query_registry: ClassVar[list[QueryRecord]] = []
     _collect_queries: ClassVar[bool] = False
 
+    # Strategy discovery: maps source name → winning strategy string.
+    # Populated when the helper discovers a working strategy that differs
+    # from the one configured in sources.yaml.
+    _strategy_updates: ClassVar[dict[str, str]] = {}
+
+    @classmethod
+    def get_strategy_updates(cls) -> dict[str, str]:
+        """Return accumulated strategy updates (source_name → winning strategy)."""
+        return cls._strategy_updates.copy()
+
+    @classmethod
+    def flush_strategy_updates(
+        cls,
+        sources_yaml: str | Path | None = None,
+    ) -> int:
+        """Write accumulated strategy discoveries back to ``sources.yaml``.
+
+        For each source whose winning strategy differs from (or was
+        absent in) the YAML, update ``sparql_strategy`` in-place.
+
+        Parameters
+        ----------
+        sources_yaml:
+            Path to ``sources.yaml``.  Defaults to
+            ``<repo>/data/sources.yaml``.
+
+        Returns
+        -------
+        int
+            Number of entries updated.
+        """
+        if not cls._strategy_updates:
+            return 0
+
+        if sources_yaml is None:
+            sources_yaml = (
+                Path(__file__).resolve().parent.parent.parent
+                / "data"
+                / "sources.yaml"
+            )
+        sources_yaml = Path(sources_yaml)
+
+        with open(sources_yaml, encoding="utf-8") as fh:
+            sources = yaml.safe_load(fh)
+
+        by_name = {s["name"]: s for s in sources}
+        updated = 0
+        for name, strategy in cls._strategy_updates.items():
+            if name in by_name:
+                old = by_name[name].get("sparql_strategy") or ""
+                if old != strategy:
+                    by_name[name]["sparql_strategy"] = strategy
+                    updated += 1
+                    logger.info(
+                        "sources.yaml: %s sparql_strategy %r -> %r",
+                        name,
+                        old,
+                        strategy,
+                    )
+
+        if updated:
+            with open(sources_yaml, "w", encoding="utf-8") as fh:
+                yaml.dump(
+                    sources,
+                    fh,
+                    default_flow_style=False,
+                    sort_keys=False,
+                    width=200,
+                )
+            logger.info("Flushed %d strategy updates to %s", updated, sources_yaml)
+
+        cls._strategy_updates.clear()
+        return updated
+
     @classmethod
     def enable_query_collection(cls) -> None:
         """Enable collection of all executed queries."""
@@ -334,6 +411,9 @@ class SparqlHelper:
         initial_backoff: float = 1.0,
         max_backoff: float = 30.0,
         timeout: float = 10000.0,
+        sparql_engine: str = "",
+        sparql_strategy: str = "",
+        source_name: str = "",
     ) -> None:
         """
         Initialize the SPARQL helper.
@@ -345,6 +425,17 @@ class SparqlHelper:
             initial_backoff: Initial delay between retries (seconds)
             max_backoff: Maximum delay between retries (seconds)
             timeout: Request timeout in seconds (default: 60)
+            sparql_engine: Engine hint from endpoint probes (e.g.
+                ``"virtuoso"``, ``"blazegraph"``, ``"qlever"``).
+                Used for engine-specific workarounds.
+            sparql_strategy: Preferred query strategy from endpoint probes
+                (e.g. ``"get+json"``, ``"post+form+json"``).  When set,
+                the helper starts with this strategy and falls back to
+                the default GET→POST chain only on failure.
+            source_name: Source name from ``sources.yaml``.  When set,
+                winning strategy discoveries are recorded in
+                :attr:`_strategy_updates` for later flush via
+                :meth:`flush_strategy_updates`.
         """
         self.endpoint_url = endpoint_url.rstrip("/")
         self.use_post = use_post
@@ -352,6 +443,15 @@ class SparqlHelper:
         self.initial_backoff = initial_backoff
         self.max_backoff = max_backoff
         self.timeout = timeout
+        self.sparql_engine = sparql_engine
+        self.sparql_strategy = sparql_strategy
+        self.source_name = source_name
+        self._last_winning_strategy: str = ""
+
+        # Derive initial method from strategy hint when available.
+        if sparql_strategy and not use_post:
+            if "post" in sparql_strategy:
+                use_post = True
 
         # Track if we've detected this endpoint requires POST
         self._requires_post = use_post
@@ -368,6 +468,40 @@ class SparqlHelper:
             self._session.trust_env = False
 
         logger.debug(f"SparqlHelper initialized for {self.endpoint_url}")
+
+    @classmethod
+    def from_source_entry(
+        cls,
+        entry: dict[str, Any],
+        *,
+        timeout: float | None = None,
+        max_retries: int = 10,
+    ) -> SparqlHelper:
+        """Create a :class:`SparqlHelper` from a ``sources.yaml`` entry dict.
+
+        Reads ``endpoint``, ``sparql_engine``, ``sparql_strategy``, and
+        ``timeout`` from *entry* and passes them through.
+
+        Args:
+            entry: A single source dict (or SourceEntry / SourceModel).
+            timeout: Override timeout (else uses entry's or default).
+            max_retries: Override max retries.
+
+        Returns:
+            Configured SparqlHelper instance.
+        """
+        endpoint = entry.get("endpoint", "")
+        engine = entry.get("sparql_engine", "") or ""
+        strategy = entry.get("sparql_strategy", "") or ""
+        t = timeout if timeout is not None else entry.get("timeout") or 10000.0
+        return cls(
+            endpoint,
+            timeout=float(t),
+            max_retries=max_retries,
+            sparql_engine=engine,
+            sparql_strategy=strategy,
+            source_name=entry.get("name", ""),
+        )
 
     def select(
         self,
@@ -730,10 +864,16 @@ class SparqlHelper:
         """
         # Try GET first (unless we know POST is required)
         use_post = self._requires_post
+        # Track whether we've tried raw POST (application/sparql-query)
+        _tried_raw_post = False
+        _use_raw_post = "post+raw" in (self.sparql_strategy or "")
 
         for attempt in range(1, self.max_retries + 1):
             try:
-                if use_post:
+                if _use_raw_post:
+                    result = self._post_raw_query(query, accept)
+                    logger.debug(f"Executing {query_type} with raw POST for {purpose}")
+                elif use_post:
                     result = self._post_query(query, accept)
                     logger.debug(f"Executing {query_type} with POST for {purpose}")
                 else:
@@ -742,14 +882,19 @@ class SparqlHelper:
 
                 # Check if we got HTML instead of expected format
                 if self._is_html_response(result):
-                    if not use_post:
+                    if not use_post and not _use_raw_post:
                         logger.debug(f"{purpose} | GET returned HTML, switching to POST")
                         self._requires_post = True
                         use_post = True
                         continue
+                    elif use_post and not _tried_raw_post:
+                        logger.debug(f"{purpose} | form POST returned HTML, trying raw POST")
+                        _use_raw_post = True
+                        _tried_raw_post = True
+                        continue
                     else:
                         raise EndpointError(
-                            "{purpose} | Endpoint returned HTML error even with POST"
+                            f"{purpose} | Endpoint returned HTML error even with POST"
                         )
 
                 # Record successful query
@@ -759,6 +904,33 @@ class SparqlHelper:
                     endpoint_url=self.endpoint_url,
                     success=True,
                 )
+
+                # Determine winning strategy label
+                if _use_raw_post:
+                    winning = "post+raw+json"
+                elif use_post:
+                    winning = "post+form+json"
+                else:
+                    winning = "get+json"
+                self._last_winning_strategy = winning
+
+                # If strategy differs from configured hint, record update
+                if (
+                    self.sparql_strategy
+                    and winning != self.sparql_strategy
+                    and self.source_name
+                ):
+                    SparqlHelper._strategy_updates[self.source_name] = winning
+                    logger.info(
+                        "Strategy update for %s: %s -> %s",
+                        self.source_name,
+                        self.sparql_strategy,
+                        winning,
+                    )
+                # If no strategy was configured, record discovery
+                elif not self.sparql_strategy and self.source_name:
+                    if self.source_name not in SparqlHelper._strategy_updates:
+                        SparqlHelper._strategy_updates[self.source_name] = winning
 
                 # Parse JSON if requested
                 if parse_json:
@@ -770,14 +942,25 @@ class SparqlHelper:
                 status_code = e.response.status_code if e.response is not None else 0
 
                 # Check if this looks like a POST-required error
-                # 405 = Method Not Allowed, 414 = URI Too Long
-                if not use_post and status_code in (405, 414):
+                # 400 = Bad Request (QLever rejects GET), 405 = Method Not Allowed,
+                # 414 = URI Too Long
+                if not use_post and not _use_raw_post and status_code in (400, 405, 414):
                     logger.debug(
                         "GET returned %d, switching to POST",
                         status_code,
                     )
                     self._requires_post = True
                     use_post = True
+                    continue
+
+                # Form-encoded POST rejected → try raw POST body
+                if use_post and not _tried_raw_post and status_code in (400, 405, 415):
+                    logger.debug(
+                        "Form POST returned %d, trying raw POST",
+                        status_code,
+                    )
+                    _use_raw_post = True
+                    _tried_raw_post = True
                     continue
 
                 # Check for retryable status codes
@@ -929,7 +1112,7 @@ class SparqlHelper:
                 )
 
         # Catch anything else?
-        raise EndpointError("Query failed unexpectedly {purpose}")
+        raise EndpointError(f"Query failed unexpectedly [{purpose}]")
 
     # Known database / backend error fragments that indicate the
     # endpoint is alive but its backing store is broken.
@@ -1035,6 +1218,30 @@ class SparqlHelper:
         response = self._session.post(
             self.endpoint_url,
             data=data,
+            headers=headers,
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        self._check_response_health(response)
+
+        return response.text
+
+    def _post_raw_query(self, query: str, accept: str) -> str:
+        """Execute SPARQL query using HTTP POST with raw query body.
+
+        Uses ``application/sparql-query`` content-type (SPARQL 1.1
+        Protocol §2.1.3).  Required by some engines (QLever/DSMZ)
+        that reject form-encoded POST.
+        """
+        headers = {
+            "Accept": accept,
+            "Content-Type": "application/sparql-query",
+            "User-Agent": "rdfsolve/1.0 (SPARQL client)",
+        }
+
+        response = self._session.post(
+            self.endpoint_url,
+            data=query.encode("utf-8"),
             headers=headers,
             timeout=self.timeout,
         )
