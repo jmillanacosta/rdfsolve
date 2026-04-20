@@ -699,20 +699,30 @@ for name, port in d.items():
         log "Instance mappings done in $(elapsed $(( $(date +%s) - t0 )))"
 
         # Step 9: Class derivation + enrichment
+        # Process entity-level mappings from sssom/ and semra/ (these need
+        # QLever lookup to derive class-level mappings).  instance_matching/
+        # files are already class-level so derivation is redundant for them.
         log "--- Step 9: Class derivation + enrichment ---"
         t0=$(date +%s)
 
-        _inst_dir="${MAPPINGS_DIR}/instance_matching"
         _class_out_dir="${MAPPINGS_DIR}/class_derived"
         mkdir -p "${_class_out_dir}"
 
-        _inst_files=$(find "${_inst_dir}" -maxdepth 1 -name '*.jsonld' \
-            ! -name '*.enriched.jsonld' \
-            ! -name '*.class_derived.jsonld' \
-            | sort 2>/dev/null || true)
+        _derive_files=""
+        for _src_dir in "${MAPPINGS_DIR}/sssom" "${MAPPINGS_DIR}/semra"; do
+            if [[ -d "${_src_dir}" ]]; then
+                _found=$(find "${_src_dir}" -maxdepth 1 -name '*.jsonld' \
+                    ! -name '*.enriched.jsonld' \
+                    ! -name '*.class_derived.jsonld' \
+                    | sort 2>/dev/null || true)
+                if [[ -n "${_found}" ]]; then
+                    _derive_files="${_derive_files}${_derive_files:+$'\n'}${_found}"
+                fi
+            fi
+        done
 
-        if [[ -z "${_inst_files}" ]]; then
-            warn "No instance-mapping JSON-LD files in ${_inst_dir}"
+        if [[ -z "${_derive_files}" ]]; then
+            warn "No entity-level JSON-LD files in sssom/ or semra/ for class derivation"
         else
             while IFS= read -r _f; do
                 [[ -z "${_f}" ]] && continue
@@ -727,7 +737,7 @@ for name, port in d.items():
                     --enrich \
                     --timeout  "${TIMEOUT}" \
                     || warn "Derivation failed for $(basename "${_f}")"
-            done <<< "${_inst_files}"
+            done <<< "${_derive_files}"
         fi
         log "Class derivation done in $(elapsed $(( $(date +%s) - t0 )))"
     fi

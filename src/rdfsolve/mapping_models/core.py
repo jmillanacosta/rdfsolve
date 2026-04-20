@@ -54,14 +54,22 @@ class MappingEdge(BaseModel):
     )
     source_dataset: str = Field(
         ...,
-        description=("Dataset name where source_class lives"),
+        description=("Dataset name for source_class"),
     )
     target_dataset: str = Field(
         ...,
-        description=("Dataset name where target_class lives"),
+        description=("Dataset name for target_class"),
     )
     source_endpoint: str | None = Field(None)
     target_endpoint: str | None = Field(None)
+    source_uri_format: str | None = Field(
+        None,
+        description="URI namespace prefix that was actually matched for source_class",
+    )
+    target_uri_format: str | None = Field(
+        None,
+        description="URI namespace prefix that was actually matched for target_class",
+    )
     confidence: float | None = Field(
         None,
         ge=0,
@@ -226,6 +234,64 @@ class Mapping(BaseModel):
                 graph.add_edge(a, b, weight=w)
         return graph
 
+    # ---- Strategy / predicate counting --------------------
+
+    @classmethod
+    def count_edges(
+        cls,
+        paths: Iterable[str | Path],
+        *,
+        skip_keys: frozenset[str] | None = None,
+    ) -> tuple[Counter[str], Counter[str]]:
+        """Count mapping edges by strategy and predicate across *paths*.
+
+        Scans each JSON-LD file without fully deserialising it, so this is
+        fast even over thousands of files.  Uses ``ujson`` automatically if it
+        is installed.
+
+        Parameters
+        ----------
+        paths:
+            Iterable of paths to mapping JSON-LD files.
+        skip_keys:
+            Keys in ``@graph`` nodes to ignore when counting.  Defaults to
+            ``{"void:inDataset", "dcterms:created"}``.
+
+        Returns
+        -------
+        tuple[Counter[str], Counter[str]]
+            ``(strategy_counts, predicate_counts)`` where keys are strategy
+            names / predicate CURIEs and values are total edge counts.
+        """
+        try:
+            import ujson as _fast_json  # type: ignore[import]
+        except ImportError:
+            _fast_json = None  # type: ignore[assignment]
+        fast_json = _fast_json if _fast_json is not None else _json
+
+        _skip = skip_keys if skip_keys is not None else frozenset({"void:inDataset", "dcterms:created"})
+        strategy_counts: Counter[str] = Counter()
+        predicate_counts: Counter[str] = Counter()
+
+        for p in paths:
+            try:
+                raw = fast_json.loads(Path(p).read_bytes())
+            except Exception:
+                _log.debug("Could not read %s", p, exc_info=True)
+                continue
+            strategy: str = raw.get("@about", {}).get("strategy", "unknown")
+            for node in raw.get("@graph", ()):
+                for key, val in node.items():
+                    if key[0] == "@" or key in _skip:
+                        continue
+                    targets = val if isinstance(val, list) else (val,)
+                    n = sum(1 for t in targets if isinstance(t, dict) and t.get("@id"))
+                    if n:
+                        strategy_counts[strategy] += n
+                        predicate_counts[key] += n
+
+        return strategy_counts, predicate_counts
+
     # ---- JSON-LD export ------------------------------------
 
     def to_jsonld(self) -> dict[str, Any]:
@@ -243,6 +309,7 @@ class Mapping(BaseModel):
         }
         grouped: dict[str, dict[str, Any]] = {}
         created_at = self.about.generated_at
+        _strategy = self.mapping_type or None
 
         for edge in self.edges:
             sc, sc_pfx, sc_ns = uri_to_curie(
@@ -267,6 +334,8 @@ class Mapping(BaseModel):
                 "void:inDataset": _dataset_node(
                     edge.target_dataset,
                     edge.target_endpoint,
+                    edge.target_uri_format,
+                    strategy=_strategy,
                 ),
             }
             if edge.confidence is not None:
@@ -278,6 +347,8 @@ class Mapping(BaseModel):
                     "void:inDataset": _dataset_node(
                         edge.source_dataset,
                         edge.source_endpoint,
+                        edge.source_uri_format,
+                        strategy=_strategy,
                     ),
                     "dcterms:created": created_at,
                 }
@@ -298,17 +369,58 @@ class Mapping(BaseModel):
 # -------------------------------------------------------------------
 
 
+def _slugify_dataset_name(name: str) -> str:
+    """Turn *name* into a safe URI local-name.
+
+    If *name* is already a short identifier (e.g. ``"mesh"``) it passes
+    through unchanged.  If it is a full URL we strip the scheme, replace
+    non-alphanumeric chars with ``_`` and collapse.
+    """
+    import re as _re
+
+    if not name:
+        return "unknown"
+    # Strip common URL schemes
+    slug = _re.sub(r"^https?://", "", name)
+    # Replace any character that isn't alphanumeric, dash, dot, or underscore
+    slug = _re.sub(r"[^A-Za-z0-9._-]", "_", slug)
+    # Collapse consecutive underscores / leading/trailing underscores
+    slug = _re.sub(r"_+", "_", slug).strip("_")
+    return slug or "unknown"
+
+
 def _dataset_node(
     name: str,
     homepage: str | None = None,
+    matched_namespace: str | None = None,
+    strategy: str | None = None,
 ) -> dict[str, Any]:
-    """Build a void:inDataset node dict."""
+    """Build a void:inDataset node dict.
+
+    Parameters
+    ----------
+    strategy:
+        If provided (``"semra"``, ``"sssom"``, ``"instance_matcher"`` …)
+        the ``@id`` is minted as ``rdfsolve:{strategy}/{slug}``.
+        Otherwise falls back to ``rdfsolve:dataset/{slug}``.
+    """
+    slug = _slugify_dataset_name(name)
+    # Normalise strategy to a short prefix
+    _STRATEGY_PREFIX = {
+        "semra_import": "semra",
+        "sssom_import": "sssom",
+        "instance_matcher": "instance_matcher",
+        "class_derived": "class_derived",
+    }
+    prefix = _STRATEGY_PREFIX.get(strategy, strategy) if strategy else "dataset"
     node: dict[str, Any] = {
-        "@id": f"rdfsolve:dataset/{name}",
+        "@id": f"rdfsolve:{prefix}/{slug}",
         "dcterms:title": name,
     }
     if homepage:
         node["foaf:homepage"] = {"@id": homepage}
+    if matched_namespace:
+        node["rdfsolve:matchedNamespace"] = matched_namespace
     return node
 
 
@@ -329,6 +441,7 @@ def _parse_mapping_graph(
             src_ds_node.get("void:sparqlEndpoint") or src_ds_node.get("foaf:homepage") or {}
         )
         src_ep = src_ep_raw.get("@id") if isinstance(src_ep_raw, dict) else None
+        src_uri_fmt = src_ds_node.get("rdfsolve:matchedNamespace") or None
 
         for key, val in node.items():
             if key.startswith("@") or key in (_GRAPH_SKIP_KEYS):
@@ -347,6 +460,7 @@ def _parse_mapping_graph(
                     src_uri,
                     src_ds,
                     src_ep,
+                    src_uri_fmt,
                 )
                 if edge:
                     edges.append(edge)
@@ -360,6 +474,7 @@ def _parse_mapping_target(
     src_uri: str,
     src_ds: str,
     src_ep: str | None,
+    src_uri_fmt: str | None = None,
 ) -> MappingEdge | None:
     """Parse one target dict into a MappingEdge or None."""
     tgt_uri = expand(tgt["@id"])
@@ -367,6 +482,7 @@ def _parse_mapping_target(
     tgt_ds = tgt_ds_node.get("dcterms:title", "") or src_ds
     tgt_ep_raw = tgt_ds_node.get("void:sparqlEndpoint") or tgt_ds_node.get("foaf:homepage") or {}
     tgt_ep = tgt_ep_raw.get("@id") if isinstance(tgt_ep_raw, dict) else None
+    tgt_uri_fmt = tgt_ds_node.get("rdfsolve:matchedNamespace") or None
     confidence = tgt.get("rdfsolve:confidence")
     try:
         return MappingEdge(
@@ -377,6 +493,8 @@ def _parse_mapping_target(
             target_dataset=tgt_ds,
             source_endpoint=src_ep,
             target_endpoint=tgt_ep,
+            source_uri_format=src_uri_fmt,
+            target_uri_format=tgt_uri_fmt,
             confidence=(float(confidence) if confidence is not None else None),
         )
     except Exception:

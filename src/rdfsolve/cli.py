@@ -979,7 +979,7 @@ def bioregistry_enrich_cmd(
         "bioregistry_uri_prefix",
         "bioregistry_uri_prefixes",
         "bioregistry_logo",
-        "bioregistry_keywords",
+        "keywords",
         "bioregistry_synonyms",
         "bioregistry_publications",
         "bioregistry_extra_providers",

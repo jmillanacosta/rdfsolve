@@ -341,6 +341,8 @@ def _build_edges(
                     target_dataset=tgt.dataset_name,
                     source_endpoint=src.endpoint_url,
                     target_endpoint=tgt.endpoint_url,
+                    source_uri_format=src.uri_format,
+                    target_uri_format=tgt.uri_format,
                 )
             )
 
