@@ -101,7 +101,7 @@ class SourceModel(BaseModel):
         SPDX license identifier or URL.
     bioregistry_domain:
         Dataset domain (e.g. ``"chemical"``, ``"biology"``).
-    bioregistry_keywords:
+    keywords:
         Keyword tags from Bioregistry.
     bioregistry_publications:
         Literature references from Bioregistry.
@@ -136,13 +136,19 @@ class SourceModel(BaseModel):
     local_provider: str = ""
     download_ttl: list[str] = Field(default_factory=list)
 
+    # ── Endpoint metadata (populated by probe/discovery scripts) ──
+    sparql_engine: str = ""
+    sparql_strategy: str = ""
+    supports_graph: bool | None = None
+    endpoint_down: bool = False
+
     bioregistry_prefix: str = ""
     bioregistry_name: str = ""
     bioregistry_description: str = ""
     bioregistry_homepage: str = ""
     bioregistry_license: str = ""
     bioregistry_domain: str = ""
-    bioregistry_keywords: list[str] = Field(default_factory=list)
+    keywords: list[str] = Field(default_factory=list)
     bioregistry_publications: list[PublicationRef] = Field(default_factory=list)
     bioregistry_uri_prefix: str = ""
     bioregistry_uri_prefixes: list[str] = Field(default_factory=list)
@@ -158,7 +164,7 @@ class SourceModel(BaseModel):
         "download_ttl",
         "bioregistry_uri_prefixes",
         "bioregistry_synonyms",
-        "bioregistry_keywords",
+        "keywords",
         mode="before",
     )
     @classmethod
@@ -211,6 +217,8 @@ class SourceModel(BaseModel):
             "void_iri",
             "notes",
             "local_provider",
+            "sparql_engine",
+            "sparql_strategy",
             "bioregistry_prefix",
             "bioregistry_name",
             "bioregistry_description",

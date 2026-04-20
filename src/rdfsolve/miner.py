@@ -957,6 +957,9 @@ class SchemaMiner:
         authors: list[dict[str, str]] | None = None,
         qlever_version: dict[str, str] | None = None,
         one_shot: bool = False,
+        sparql_engine: str = "",
+        sparql_strategy: str = "",
+        source_name: str = "",
     ) -> None:
         """Initialize a SchemaMiner."""
         self.endpoint_url = endpoint_url
@@ -979,6 +982,9 @@ class SchemaMiner:
         self._helper = SparqlHelper(
             endpoint_url,
             timeout=timeout,
+            sparql_engine=sparql_engine,
+            sparql_strategy=sparql_strategy,
+            source_name=source_name,
         )
         self._report_path = Path(report_path) if report_path else None
         self._rc: _ReportCollector | None = None
@@ -2474,6 +2480,9 @@ def mine_schema(
     authors: list[dict[str, str]] | None = None,
     qlever_version: dict[str, str] | None = None,
     one_shot: bool = False,
+    sparql_engine: str = "",
+    sparql_strategy: str = "",
+    source_name: str = "",
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`.
 
@@ -2543,6 +2552,9 @@ def mine_schema(
         authors=authors,
         qlever_version=qlever_version,
         one_shot=one_shot,
+        sparql_engine=sparql_engine,
+        sparql_strategy=sparql_strategy,
+        source_name=source_name,
     )
     return miner.mine(dataset_name=dataset_name)
 
@@ -2646,12 +2658,11 @@ def _mine_one_source(
     """
     name: str = entry.get("name", "")
     endpoint: str = entry.get("endpoint", "")
-    use_graph: bool = entry.get("use_graph", False)
     row_two_phase: bool = entry.get("two_phase", True)
 
     graph_uris_arg: list[str] | None = None
     entry_graphs = entry.get("graph_uris", [])
-    if use_graph and entry_graphs:
+    if entry_graphs:
         graph_uris_arg = list(entry_graphs)
 
     logger.info("[%d/%d] Mining %r (%s)", idx, total, name, endpoint)
@@ -2682,6 +2693,9 @@ def _mine_one_source(
             filter_service_namespaces=filter_service_namespaces,
             untyped_as_classes=untyped_as_classes,
             authors=authors,
+            sparql_engine=entry.get("sparql_engine", ""),
+            sparql_strategy=entry.get("sparql_strategy", ""),
+            source_name=name,
             **params,
         )
         _write_schema_outputs(
@@ -3071,6 +3085,13 @@ def mine_all_sources(
             skipped.append(name)
             if on_progress:
                 on_progress(name, idx, total, "skipped")
+            continue
+
+        if entry.get("endpoint_down"):
+            logger.info("[%d/%d] Skipping %r: endpoint marked down", idx, total, name)
+            skipped.append(name)
+            if on_progress:
+                on_progress(name, idx, total, "skipped (endpoint down)")
             continue
 
         _mine_one_source(

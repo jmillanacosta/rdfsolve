@@ -685,6 +685,37 @@ def build_class_index_from_ports(
             logger.debug("Skipping unreachable endpoint %s (%s)", ds_name, endpoint_url)
             continue
 
+        if not entities_list:
+            # No entity IRIs to look up (e.g. instance-mapping files stored only
+            # bare CURIEs that could not be expanded).  Fall back to a direct
+            # catalogue query: ask the endpoint for ALL ?s a ?c triples and
+            # populate the index with every entity+class pair found.
+            t0 = time.perf_counter()
+            try:
+                flat_results = sparql.find_all_classes()
+            except Exception as exc:
+                logger.warning(
+                    "Direct class catalogue query failed on %s: %s", ds_name, exc
+                )
+                errors += 1
+                query_times.append(time.perf_counter() - t0)
+                continue
+            query_times.append(time.perf_counter() - t0)
+            for found_iri, classes in flat_results.items():
+                if found_iri not in idx.entities:
+                    idx.entities[found_iri] = EntityClassInfo(
+                        entity_iri=found_iri,
+                        alternative_iris=[found_iri],
+                    )
+                existing = idx.entities[found_iri].graph_classes.setdefault(ds_name, [])
+                for cls in classes:
+                    if cls not in existing:
+                        existing.append(cls)
+            logger.debug(
+                "Direct catalogue: %s -> %d entities", ds_name, len(flat_results)
+            )
+            continue
+
         for batch_start in range(0, len(entities_list), batch_size):
             batch = entities_list[batch_start : batch_start + batch_size]
             all_alts = _collect_batch_alts(batch, entity_to_alts)
