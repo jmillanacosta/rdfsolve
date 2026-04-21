@@ -730,9 +730,14 @@ for name, port in d.items():
             log "  Starting QLever on port ${PORT} …"
             INSTANCE_NAME=$(_qlever_start "${NAME}" "${WORKDIR}" "${PORT}") \
                 || { warn "[${NAME}] Server start failed"; continue; }
+            log "  [${NAME}] QLever started (PID ${SERVER_PID_MAP[qlever_${NAME}]:-?})"
 
             if [[ "${ONE_SHOT}" == true && "${SKIP_MINE}" == false ]]; then
+                log "  [${NAME}] Mining schema …"
                 _mine_local "${NAME}" "${PORT}" "typed" true "${CHUNK_SIZE}" "${CLASS_BATCH_SIZE}"
+                log "  [${NAME}] Mining done"
+            elif [[ "${SKIP_MINE}" == true ]]; then
+                log "  [${NAME}] Schema mining skipped (--skip-mine)"
             fi
 
             # ── Instance matching + class derivation ──────────────
@@ -743,9 +748,18 @@ for name, port in d.items():
                 # Discover prefixes from sssom+semra for this dataset
                 _pfx_file_ds="${_inst_out}/.prefixes_${NAME}.txt"
                 _disc_args="rdfsolve instance-match discover-prefixes"
-                [[ -d "${MAPPINGS_DIR}/sssom" ]]  && _disc_args+=" -d ${MAPPINGS_DIR}/sssom"
-                [[ -d "${MAPPINGS_DIR}/semra" ]]  && _disc_args+=" -d ${MAPPINGS_DIR}/semra"
+                if [[ -d "${MAPPINGS_DIR}/sssom" ]]; then
+                    _disc_args+=" -d ${MAPPINGS_DIR}/sssom"
+                else
+                    warn "  [${NAME}] sssom dir not found: ${MAPPINGS_DIR}/sssom"
+                fi
+                if [[ -d "${MAPPINGS_DIR}/semra" ]]; then
+                    _disc_args+=" -d ${MAPPINGS_DIR}/semra"
+                else
+                    warn "  [${NAME}] semra dir not found: ${MAPPINGS_DIR}/semra"
+                fi
                 _disc_args+=" -o ${_pfx_file_ds}"
+                log "  [${NAME}] Discovering prefixes …"
                 eval "${_disc_args}" || warn "[${NAME}] Prefix discovery had warnings"
 
                 _ds_prefixes=()
@@ -758,6 +772,7 @@ for name, port in d.items():
                     _ds_prefixes=(chebi ensembl faldo uniprot)
                     warn "[${NAME}] Prefix discovery empty; using defaults"
                 fi
+                log "  [${NAME}] Prefixes (${#_ds_prefixes[@]}): ${_ds_prefixes[*]}"
 
                 # Build a single-entry ports JSON for this dataset
                 _ds_ports_json="${_inst_out}/.ports_${NAME}.json"
@@ -773,10 +788,12 @@ for name, port in d.items():
                 if [[ ${#DATASETS[@]} -gt 0 ]]; then
                     for _ds in "${DATASETS[@]}"; do _seed_args+=" --dataset ${_ds}"; done
                 fi
-                eval "${_seed_args}" || warn "[${NAME}] Instance-match seed had failures"
+                log "  [${NAME}] Running: ${_seed_args}"
+                eval "${_seed_args}" \
+                    && log "  [${NAME}] Seed done" \
+                    || warn "[${NAME}] Instance-match seed had failures"
 
                 # Class derivation for entity-level mapping files
-                log "  [${NAME}] Class derivation …"
                 _class_out="${MAPPINGS_DIR}/class_derived"
                 mkdir -p "${_class_out}"
                 _to_derive=$(find "${MAPPINGS_DIR}/sssom" "${MAPPINGS_DIR}/semra" \
@@ -784,11 +801,16 @@ for name, port in d.items():
                     ! -name '*.enriched.jsonld' \
                     ! -name '*.class_derived.jsonld' \
                     2>/dev/null | sort || true)
+                _derive_count=$(echo "${_to_derive}" | grep -c . 2>/dev/null || echo 0)
+                log "  [${NAME}] Class derivation: ${_derive_count} file(s) …"
                 if [[ -n "${_to_derive}" ]]; then
+                    _di=0
                     while IFS= read -r _f; do
                         [[ -z "${_f}" ]] && continue
+                        _di=$(( _di + 1 ))
                         _base=$(basename "${_f}" .jsonld)
                         _out="${_class_out}/${_base}.class_derived.jsonld"
+                        log "  [${NAME}] [${_di}/${_derive_count}] Deriving $(basename "${_f}") …"
                         rdfsolve instance-match derive \
                             --input      "${_f}" \
                             --output     "${_out}" \
@@ -796,6 +818,7 @@ for name, port in d.items():
                             --cache-index \
                             --enrich \
                             --timeout    "${TIMEOUT}" \
+                            && log "  [${NAME}] -> ${_out}" \
                             || warn "[${NAME}] Derivation failed for $(basename "${_f}")"
                     done <<< "${_to_derive}"
                 fi
