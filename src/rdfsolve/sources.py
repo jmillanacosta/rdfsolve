@@ -869,3 +869,69 @@ def load_sources_dataframe(
         )
 
     return df
+
+
+# ── Source mode classification ────────────────────────────────────
+
+# RDF file extensions that indicate a locally-downloadable dump.
+_LOCAL_RDF_EXTENSIONS: frozenset[str] = frozenset({
+    ".ttl", ".nt", ".nq", ".owl", ".rdf", ".n3",
+    ".ttl.gz", ".nt.gz", ".nq.gz", ".owl.gz", ".rdf.gz",
+    ".ttl.xz", ".nt.xz", ".nq.xz",
+    ".trig", ".trig.gz",
+})
+
+
+def _has_rdf_download(entry: "SourceEntry") -> bool:
+    """Return ``True`` if any ``download_*`` field links to an RDF dump.
+
+    A URL is considered an RDF dump when its path (excluding query string)
+    ends with one of the extensions in :data:`_LOCAL_RDF_EXTENSIONS`.
+    """
+    entry_dict: dict[str, Any] = entry  # type: ignore[assignment]
+    for key, val in entry_dict.items():
+        if not key.startswith("download_"):
+            continue
+        urls: list[str] = val if isinstance(val, list) else ([val] if val else [])
+        for url in urls:
+            if not url:
+                continue
+            url_path = url.lower().split("?")[0]
+            for ext in _LOCAL_RDF_EXTENSIONS:
+                if url_path.endswith(ext):
+                    return True
+    return False
+
+
+def classify_source_mode(entry: "SourceEntry") -> str:
+    """Classify a source as ``'local'``, ``'remote'``, ``'both'``, or ``'unknown'``.
+
+    Classification rules (in order):
+
+    * ``'local'``  — at least one ``download_*`` field points to an RDF
+      dump file (``.ttl``, ``.nq``, ``.nt``, ``.owl``, etc.).
+    * ``'remote'`` — ``endpoint`` is set, ``endpoint_down`` is not
+      ``True``, and **no** download links are present.
+    * ``'both'``   — download links *and* a live endpoint are both present.
+    * ``'unknown'``— neither condition holds (no endpoint, no downloads).
+
+    Parameters
+    ----------
+    entry:
+        A :class:`SourceEntry` dict.
+
+    Returns
+    -------
+    str
+        One of ``'local'``, ``'remote'``, ``'both'``, ``'unknown'``.
+    """
+    has_download = _has_rdf_download(entry)
+    has_endpoint = bool(entry.get("endpoint")) and not entry.get("endpoint_down", False)
+
+    if has_download and has_endpoint:
+        return "both"
+    if has_download:
+        return "local"
+    if has_endpoint:
+        return "remote"
+    return "unknown"

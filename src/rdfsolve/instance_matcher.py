@@ -26,6 +26,7 @@ Typical usage::
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 import pandas as pd
@@ -217,6 +218,7 @@ def _probe_dataset(
     endpoint_url: str,
     uri_formats: list[str],
     timeout: float,
+    inter_request_delay: float = 0.0,
 ) -> list[InstanceMatchResult]:
     """Run all URI-format probes against one SPARQL endpoint.
 
@@ -225,6 +227,10 @@ def _probe_dataset(
         endpoint_url: SPARQL endpoint URL.
         uri_formats: List of URI prefix strings to probe.
         timeout: HTTP timeout per request.
+        inter_request_delay: Seconds to sleep before each SPARQL request
+            via :class:`~rdfsolve.sparql_helper.SparqlHelper`.  Use a
+            positive value for remote public endpoints; ``0.0`` (default)
+            disables the delay (suitable for local QLever instances).
 
     Returns:
         One :class:`InstanceMatchResult` per (uri_format, class_uri) hit.
@@ -232,7 +238,11 @@ def _probe_dataset(
     """
     results: list[InstanceMatchResult] = []
     try:
-        sparql = SparqlHelper(endpoint_url, timeout=timeout)
+        sparql = SparqlHelper(
+            endpoint_url,
+            timeout=timeout,
+            inter_request_delay=inter_request_delay,
+        )
     except Exception as exc:
         logger.warning(
             "Could not create SparqlHelper for %s (%s): %s",
@@ -355,6 +365,7 @@ def probe_resource(
     predicate: str = SKOS_NARROW_MATCH,
     dataset_names: list[str] | None = None,
     timeout: float = 60.0,
+    inter_request_delay: float = 0.0,
 ) -> InstanceMapping:
     """Probe SPARQL endpoints for a bioregistry resource.
 
@@ -380,6 +391,10 @@ def probe_resource(
             ``owl:sameAs``, etc. as appropriate.
         dataset_names: If given, only probe these datasets.
         timeout: SPARQL HTTP timeout per request in seconds.
+        inter_request_delay: Seconds to sleep before each SPARQL request
+            (forwarded to :class:`~rdfsolve.sparql_helper.SparqlHelper`).
+            Pass a positive value for remote public endpoints to avoid
+            rate-limiting; use ``0.0`` (default) for local QLever.
 
     Returns:
         :class:`InstanceMapping` with :attr:`edges`, :attr:`match_results`,
@@ -421,7 +436,7 @@ def probe_resource(
             endpoint,
             len(uri_formats),
         )
-        results = _probe_dataset(dataset, endpoint, uri_formats, timeout)
+        results = _probe_dataset(dataset, endpoint, uri_formats, timeout, inter_request_delay)
         logger.info(
             "   dataset=%s  total hits=%d",
             dataset,
@@ -465,6 +480,7 @@ def seed_instance_mappings(
     timeout: float = 60.0,
     skip_existing: bool = False,
     ports_json: str | None = None,
+    inter_request_delay: float = 0.0,
 ) -> dict[str, Any]:
     """Probe multiple bioregistry resources and write mapping JSON-LD files.
 
@@ -488,6 +504,10 @@ def seed_instance_mappings(
             ``{dataset_name: port}``.  When supplied, queries go to
             local QLever (``http://localhost:{port}``) instead of the
             remote endpoints in ``sources.yaml``.
+        inter_request_delay: Seconds to sleep before each SPARQL request
+            (forwarded to :class:`~rdfsolve.sparql_helper.SparqlHelper`).
+            Defaults to ``0.0`` (no delay) — suitable for local QLever.
+            Pass a positive value when querying remote public endpoints.
 
     Returns:
         Summary dict: ``{"succeeded": [...], "failed": [...]}``.
@@ -527,6 +547,7 @@ def seed_instance_mappings(
                 predicate=predicate,
                 dataset_names=dataset_names,
                 timeout=timeout,
+                inter_request_delay=inter_request_delay,
             )
             new_jsonld = mapping.to_jsonld()
 

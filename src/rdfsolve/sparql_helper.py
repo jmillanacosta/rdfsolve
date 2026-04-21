@@ -414,6 +414,7 @@ class SparqlHelper:
         sparql_engine: str = "",
         sparql_strategy: str = "",
         source_name: str = "",
+        inter_request_delay: float = 0.0,
     ) -> None:
         """
         Initialize the SPARQL helper.
@@ -436,6 +437,11 @@ class SparqlHelper:
                 winning strategy discoveries are recorded in
                 :attr:`_strategy_updates` for later flush via
                 :meth:`flush_strategy_updates`.
+            inter_request_delay: Seconds to sleep before each new logical
+                SPARQL request (not between retry attempts).  Use for
+                polite throttling of remote public endpoints.  Zero (the
+                default) disables the delay — suitable for local QLever
+                instances where there is no need to be polite.
         """
         self.endpoint_url = endpoint_url.rstrip("/")
         self.use_post = use_post
@@ -446,6 +452,7 @@ class SparqlHelper:
         self.sparql_engine = sparql_engine
         self.sparql_strategy = sparql_strategy
         self.source_name = source_name
+        self.inter_request_delay = inter_request_delay
         self._last_winning_strategy: str = ""
 
         # Derive initial method from strategy hint when available.
@@ -862,6 +869,11 @@ class SparqlHelper:
         Raises:
             EndpointError: If query fails after all retries
         """
+        # Polite throttling: sleep before each new logical request so remote
+        # public endpoints are not overwhelmed.  Zero (default) = no delay.
+        if self.inter_request_delay > 0:
+            time.sleep(self.inter_request_delay)
+
         # Try GET first (unless we know POST is required)
         use_post = self._requires_post
         # Track whether we've tried raw POST (application/sparql-query)
