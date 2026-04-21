@@ -1,5 +1,5 @@
 #!/bin/bash
-# slurm_remote_mining.sh — Mine all UP remote SPARQL endpoints
+# slurm_remote_mining.sh — Mine remote SPARQL endpoints (excludes idsm)
 #
 # Usage: sbatch scripts/slurm_remote_mining.sh
 #   export BASE=/trinity/home/$USER/rdfsolve; sbatch scripts/slurm_remote_mining.sh
@@ -10,14 +10,17 @@
 #SBATCH --mem=32G
 #SBATCH --output=logs/%x-%j.out
 #SBATCH --error=logs/%x-%j.err
+#SBATCH --signal=USR1@120
 
 BASE="${BASE:?Set BASE to your project root, e.g. export BASE=/trinity/home/\$USER/rdfsolve}"
 source "${BASE}/rdfsolve-2/scripts/_slurm_common.sh"
 
-_notify "Remote mining started" "Job ${SLURM_JOB_ID} on $(hostname) — remote endpoints only"
+_notify "Remote mining started" "Job ${SLURM_JOB_ID} on $(hostname) — remote endpoints, idsm excluded"
 
 bash "${REPO}/scripts/run_pipeline_hpc.sh" \
     --skip-local \
+    --skip-mappings \
+    --exclude-engine idsm \
     --data-dir    "${DATA_DIR}" \
     --output-dir  "${OUTPUT_DIR}" \
     --results-dir "${RESULTS_DIR}" \

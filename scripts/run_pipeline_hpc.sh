@@ -34,12 +34,15 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # ── Defaults ──────────────────────────────────────────────────────
 DATASETS=()
 FILTER=""
+EXCLUDE_ENGINES=()
 SKIP_REMOTE=false
 SKIP_DISCOVERY=false
 SKIP_LOCAL=false
 SKIP_MAPPINGS=false
 SKIP_MINING=false
+SKIP_MINE=false
 SKIP_SEEDING=false
+REMOTE_MAPPINGS=false
 BENCHMARK=true
 BASE_PORT=7019
 TIMEOUT=1000
@@ -74,12 +77,15 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --dataset)            DATASETS+=("$2");        shift 2 ;;
         --filter)             FILTER="$2";             shift 2 ;;
+        --exclude-engine)     EXCLUDE_ENGINES+=("$2"); shift 2 ;;
         --skip-remote)        SKIP_REMOTE=true;        shift ;;
         --skip-discovery)     SKIP_DISCOVERY=true;     shift ;;
         --skip-local)         SKIP_LOCAL=true;         shift ;;
         --skip-mining)        SKIP_MINING=true;        shift ;;
+        --skip-mine)          SKIP_MINE=true;          shift ;;
         --skip-mappings)      SKIP_MAPPINGS=true;      shift ;;
         --skip-seeding)       SKIP_SEEDING=true;       shift ;;
+        --remote-mappings)    REMOTE_MAPPINGS=true;    shift ;;
         --data-dir)           DATA_DIR="$2";           shift 2 ;;
         --output-dir)         OUTPUT_DIR="$2";         shift 2 ;;
         --results-dir)        RESULTS_DIR="$2";        shift 2 ;;
@@ -432,14 +438,20 @@ _mine_local() {
 # ── Dataset name list helper ──────────────────────────────────────
 
 _list_dataset_names() {
-    python3 - "${REPO_ROOT}/data/sources.yaml" "${FILTER}" <<'PYEOF'
+    local _excl_engines="${EXCLUDE_ENGINES[*]:-}"
+    python3 - "${REPO_ROOT}/data/sources.yaml" "${FILTER}" "${_excl_engines}" <<'PYEOF'
 import sys, re, yaml
-yaml_path, filt = sys.argv[1], sys.argv[2]
+yaml_path, filt, excl_engines_str = sys.argv[1], sys.argv[2], sys.argv[3]
 with open(yaml_path) as f:
     sources = yaml.safe_load(f) or []
 rx = re.compile(filt) if filt else None
+excl_engines = set(e.strip() for e in excl_engines_str.split() if e.strip())
 for s in sources:
     name = s.get("name", "")
+    if excl_engines:
+        engine = s.get("sparql_engine", "") or s.get("local_provider", "")
+        if engine in excl_engines:
+            continue
     if rx is None or rx.search(name):
         print(name)
 PYEOF
@@ -516,6 +528,101 @@ if [[ "${SKIP_REMOTE}" == false ]]; then
     log "Remote mining done in $(elapsed $(( $(date +%s) - t0 )))"
 else
     log "--- Step 2: Remote mining - SKIPPED ---"
+fi
+
+# ═══════════════════════════════════════════════════════════════════
+# STEP 2b - Remote instance mapping + class derivation
+#   Queries remote SPARQL endpoints directly (no local QLever).
+#   Enabled via --remote-mappings.
+# ═══════════════════════════════════════════════════════════════════
+if [[ "${REMOTE_MAPPINGS}" == true && "${SKIP_MAPPINGS}" == false ]]; then
+    log "--- Step 2b: Remote instance mapping ---"
+    t0=$(date +%s)
+
+    _remote_names=()
+    while IFS= read -r _n; do
+        [[ -n "${_n}" ]] && _remote_names+=("${_n}")
+    done < <(_list_dataset_names)
+
+    _rem_inst_out="${MAPPINGS_DIR}/instance_matching"
+    mkdir -p "${_rem_inst_out}"
+
+    # Discover prefixes from any existing sssom/semra files
+    _rem_pfx_file="${_rem_inst_out}/.remote_prefixes.txt"
+    _rem_disc="rdfsolve instance-match discover-prefixes"
+    [[ -d "${MAPPINGS_DIR}/sssom" ]] && _rem_disc+=" -d ${MAPPINGS_DIR}/sssom"
+    [[ -d "${MAPPINGS_DIR}/semra" ]] && _rem_disc+=" -d ${MAPPINGS_DIR}/semra"
+    _rem_disc+=" -o ${_rem_pfx_file}"
+    eval "${_rem_disc}" || warn "Remote prefix discovery had warnings"
+
+    _rem_prefixes=()
+    if [[ -s "${_rem_pfx_file}" ]]; then
+        while IFS= read -r _p; do
+            [[ -n "${_p}" ]] && _rem_prefixes+=("${_p}")
+        done < "${_rem_pfx_file}"
+    fi
+    if [[ ${#_rem_prefixes[@]} -eq 0 ]]; then
+        _rem_prefixes=(chebi ensembl faldo uniprot)
+        warn "Remote prefix discovery empty; using defaults"
+    fi
+    log "Remote instance mapping prefixes (${#_rem_prefixes[@]}): ${_rem_prefixes[*]}"
+
+    # Seed: query remote endpoints for each prefix; use --delay to throttle
+    _rem_seed_args="rdfsolve instance-match seed"
+    for _p in "${_rem_prefixes[@]}"; do _rem_seed_args+=" --prefixes ${_p}"; done
+    _rem_seed_args+=" --output-dir ${_rem_inst_out}"
+    _rem_seed_args+=" --timeout    ${TIMEOUT}"
+    _rem_seed_args+=" --delay      2.0"
+    if [[ ${#_remote_names[@]} -gt 0 ]]; then
+        for _rn in "${_remote_names[@]}"; do _rem_seed_args+=" --dataset ${_rn}"; done
+    fi
+    eval "${_rem_seed_args}" || warn "Remote instance-match seed had failures"
+
+    # Class derivation using each source's remote endpoint
+    log "  Remote class derivation …"
+    _rem_class_out="${MAPPINGS_DIR}/class_derived"
+    mkdir -p "${_rem_class_out}"
+    _rem_to_derive=$(find "${MAPPINGS_DIR}/sssom" "${MAPPINGS_DIR}/semra" \
+        -maxdepth 1 -name '*.jsonld' \
+        ! -name '*.enriched.jsonld' \
+        ! -name '*.class_derived.jsonld' \
+        2>/dev/null | sort || true)
+
+    if [[ -n "${_rem_to_derive}" ]]; then
+        # Build a combined remote endpoint list from sources.yaml
+        _rem_endpoints=$(python3 - "${REPO_ROOT}/data/sources.yaml" <<'PYEOF'
+import sys, yaml
+with open(sys.argv[1]) as f:
+    sources = yaml.safe_load(f) or []
+seen = set()
+for s in sources:
+    ep = s.get("endpoint", "")
+    if ep and ep not in seen:
+        seen.add(ep)
+        print(ep)
+PYEOF
+)
+        # Use first available remote endpoint for class lookup
+        _first_remote_ep=$(echo "${_rem_endpoints}" | head -1)
+        if [[ -n "${_first_remote_ep}" ]]; then
+            while IFS= read -r _f; do
+                [[ -z "${_f}" ]] && continue
+                _base=$(basename "${_f}" .jsonld)
+                _out="${_rem_class_out}/${_base}.class_derived.jsonld"
+                rdfsolve instance-match derive \
+                    --input     "${_f}" \
+                    --output    "${_out}" \
+                    --endpoint  "${_first_remote_ep}" \
+                    --cache-index \
+                    --enrich \
+                    --timeout   "${TIMEOUT}" \
+                    || warn "Remote derivation failed for $(basename "${_f}")"
+            done <<< "${_rem_to_derive}"
+        fi
+    fi
+    log "Remote instance mapping done in $(elapsed $(( $(date +%s) - t0 )))"
+else
+    log "--- Step 2b: Remote instance mapping - SKIPPED (pass --remote-mappings to enable) ---"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
@@ -596,7 +703,7 @@ for name, port in d.items():
             INSTANCE_NAME=$(_qlever_start "${NAME}" "${WORKDIR}" "${PORT}") \
                 || { warn "[${NAME}] Server start failed"; continue; }
 
-            if [[ "${ONE_SHOT}" == true ]]; then
+            if [[ "${ONE_SHOT}" == true && "${SKIP_MINE}" == false ]]; then
                 _mine_local "${NAME}" "${PORT}" "typed" true "${CHUNK_SIZE}" "${CLASS_BATCH_SIZE}"
             fi
 
