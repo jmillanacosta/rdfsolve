@@ -25,6 +25,7 @@ _notify "Remote mapping started" "Job ${SLURM_JOB_ID} on $(hostname) — instanc
 
 bash "${REPO}/scripts/run_pipeline_hpc.sh" \
     --skip-local \
+    --skip-discovery \
     --skip-seeding \
     --skip-mining \
     --remote-mappings \
