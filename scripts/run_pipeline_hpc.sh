@@ -543,17 +543,33 @@ if [[ "${REMOTE_MAPPINGS}" == true && "${SKIP_MAPPINGS}" == false ]]; then
     while IFS= read -r _n; do
         [[ -n "${_n}" ]] && _remote_names+=("${_n}")
     done < <(_list_dataset_names)
+    log "  Datasets in scope: ${#_remote_names[@]}"
 
+    MAPPINGS_DIR="${OUTPUT_DIR}/mappings"
+    mkdir -p "${MAPPINGS_DIR}"
     _rem_inst_out="${MAPPINGS_DIR}/instance_matching"
     mkdir -p "${_rem_inst_out}"
+    log "  Output dir: ${_rem_inst_out}"
 
     # Discover prefixes from any existing sssom/semra files
     _rem_pfx_file="${_rem_inst_out}/.remote_prefixes.txt"
     _rem_disc="rdfsolve instance-match discover-prefixes"
-    [[ -d "${MAPPINGS_DIR}/sssom" ]] && _rem_disc+=" -d ${MAPPINGS_DIR}/sssom"
-    [[ -d "${MAPPINGS_DIR}/semra" ]] && _rem_disc+=" -d ${MAPPINGS_DIR}/semra"
+    if [[ -d "${MAPPINGS_DIR}/sssom" ]]; then
+        log "  Scanning sssom dir for prefixes: ${MAPPINGS_DIR}/sssom"
+        _rem_disc+=" -d ${MAPPINGS_DIR}/sssom"
+    else
+        warn "  sssom dir not found: ${MAPPINGS_DIR}/sssom"
+    fi
+    if [[ -d "${MAPPINGS_DIR}/semra" ]]; then
+        log "  Scanning semra dir for prefixes: ${MAPPINGS_DIR}/semra"
+        _rem_disc+=" -d ${MAPPINGS_DIR}/semra"
+    else
+        warn "  semra dir not found: ${MAPPINGS_DIR}/semra"
+    fi
     _rem_disc+=" -o ${_rem_pfx_file}"
+    log "  Running: ${_rem_disc}"
     eval "${_rem_disc}" || warn "Remote prefix discovery had warnings"
+    log "  Prefix file: ${_rem_pfx_file}"
 
     _rem_prefixes=()
     if [[ -s "${_rem_pfx_file}" ]]; then
@@ -565,7 +581,7 @@ if [[ "${REMOTE_MAPPINGS}" == true && "${SKIP_MAPPINGS}" == false ]]; then
         _rem_prefixes=(chebi ensembl faldo uniprot)
         warn "Remote prefix discovery empty; using defaults"
     fi
-    log "Remote instance mapping prefixes (${#_rem_prefixes[@]}): ${_rem_prefixes[*]}"
+    log "  Prefixes (${#_rem_prefixes[@]}): ${_rem_prefixes[*]}"
 
     # Seed: query remote endpoints for each prefix; use --delay to throttle
     _rem_seed_args="rdfsolve instance-match seed"
@@ -576,10 +592,12 @@ if [[ "${REMOTE_MAPPINGS}" == true && "${SKIP_MAPPINGS}" == false ]]; then
     if [[ ${#_remote_names[@]} -gt 0 ]]; then
         for _rn in "${_remote_names[@]}"; do _rem_seed_args+=" --dataset ${_rn}"; done
     fi
+    log "  Running seed: ${_rem_seed_args}"
     eval "${_rem_seed_args}" || warn "Remote instance-match seed had failures"
+    log "  Seed done in $(elapsed $(( $(date +%s) - t0 )))"
 
     # Class derivation using each source's remote endpoint
-    log "  Remote class derivation …"
+    log "  Scanning for entity-level JSON-LD files for class derivation …"
     _rem_class_out="${MAPPINGS_DIR}/class_derived"
     mkdir -p "${_rem_class_out}"
     _rem_to_derive=$(find "${MAPPINGS_DIR}/sssom" "${MAPPINGS_DIR}/semra" \
@@ -588,8 +606,10 @@ if [[ "${REMOTE_MAPPINGS}" == true && "${SKIP_MAPPINGS}" == false ]]; then
         ! -name '*.class_derived.jsonld' \
         2>/dev/null | sort || true)
 
+    _rem_derive_count=$(echo "${_rem_to_derive}" | grep -c . 2>/dev/null || echo 0)
+    log "  Files to derive: ${_rem_derive_count}"
+
     if [[ -n "${_rem_to_derive}" ]]; then
-        # Build a combined remote endpoint list from sources.yaml
         _rem_endpoints=$(python3 - "${REPO_ROOT}/data/sources.yaml" <<'PYEOF'
 import sys, yaml
 with open(sys.argv[1]) as f:
@@ -602,13 +622,16 @@ for s in sources:
         print(ep)
 PYEOF
 )
-        # Use first available remote endpoint for class lookup
         _first_remote_ep=$(echo "${_rem_endpoints}" | head -1)
+        log "  Class derivation endpoint: ${_first_remote_ep}"
         if [[ -n "${_first_remote_ep}" ]]; then
+            _derive_idx=0
             while IFS= read -r _f; do
                 [[ -z "${_f}" ]] && continue
+                _derive_idx=$(( _derive_idx + 1 ))
                 _base=$(basename "${_f}" .jsonld)
                 _out="${_rem_class_out}/${_base}.class_derived.jsonld"
+                log "  [${_derive_idx}/${_rem_derive_count}] Deriving $(basename "${_f}") …"
                 rdfsolve instance-match derive \
                     --input     "${_f}" \
                     --output    "${_out}" \
@@ -616,9 +639,14 @@ PYEOF
                     --cache-index \
                     --enrich \
                     --timeout   "${TIMEOUT}" \
+                    && log "  -> ${_out}" \
                     || warn "Remote derivation failed for $(basename "${_f}")"
             done <<< "${_rem_to_derive}"
+        else
+            warn "  No remote endpoint found in sources.yaml — skipping class derivation"
         fi
+    else
+        warn "  No entity-level JSON-LD files found; skipping class derivation"
     fi
     log "Remote instance mapping done in $(elapsed $(( $(date +%s) - t0 )))"
 else
