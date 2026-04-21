@@ -12,17 +12,37 @@
 #   SINGULARITY_IMAGE  - path to qlever.sif           (optional)
 set -euo pipefail
 
+# ── QLever server PID tracking ────────────────────────────────────────────────
+declare -A SERVER_PID_MAP=()   # instance_name → PID
+SERVER_PIDS=()                 # flat list for bulk cleanup
+
+cleanup() {
+    local _pids=()
+    for _p in "${SERVER_PIDS[@]:-}"; do
+        [[ -n "${_p}" ]] && kill -0 "${_p}" 2>/dev/null && _pids+=("${_p}")
+    done
+    [[ ${#_pids[@]} -eq 0 ]] && return 0
+    echo "[$(date +%H:%M:%S)] cleanup: TERM → ${_pids[*]}"
+    kill -TERM "${_pids[@]}" 2>/dev/null || true
+    sleep 10
+    kill -KILL "${_pids[@]}" 2>/dev/null || true
+}
+trap cleanup EXIT TERM INT USR1
+
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # ── Defaults ──────────────────────────────────────────────────────
 DATASETS=()
 FILTER=""
+EXCLUDE_ENGINES=()
 SKIP_REMOTE=false
 SKIP_DISCOVERY=false
 SKIP_LOCAL=false
 SKIP_MAPPINGS=false
 SKIP_MINING=false
+SKIP_MINE=false
 SKIP_SEEDING=false
+REMOTE_MAPPINGS=false
 BENCHMARK=true
 BASE_PORT=7019
 TIMEOUT=1000
@@ -57,12 +77,15 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --dataset)            DATASETS+=("$2");        shift 2 ;;
         --filter)             FILTER="$2";             shift 2 ;;
+        --exclude-engine)     EXCLUDE_ENGINES+=("$2"); shift 2 ;;
         --skip-remote)        SKIP_REMOTE=true;        shift ;;
         --skip-discovery)     SKIP_DISCOVERY=true;     shift ;;
         --skip-local)         SKIP_LOCAL=true;         shift ;;
         --skip-mining)        SKIP_MINING=true;        shift ;;
+        --skip-mine)          SKIP_MINE=true;          shift ;;
         --skip-mappings)      SKIP_MAPPINGS=true;      shift ;;
         --skip-seeding)       SKIP_SEEDING=true;       shift ;;
+        --remote-mappings)    REMOTE_MAPPINGS=true;    shift ;;
         --data-dir)           DATA_DIR="$2";           shift 2 ;;
         --output-dir)         OUTPUT_DIR="$2";         shift 2 ;;
         --results-dir)        RESULTS_DIR="$2";        shift 2 ;;
@@ -82,6 +105,8 @@ fi
 mkdir -p "${DATA_DIR}" "${OUTPUT_DIR}" "${RESULTS_DIR}"
 QLEVER_WORKDIRS="${DATA_DIR}/qlever_workdirs"
 mkdir -p "${QLEVER_WORKDIRS}"
+MAPPINGS_DIR="${OUTPUT_DIR}/mappings"
+mkdir -p "${MAPPINGS_DIR}"
 
 # ── QLever Singularity helpers ────────────────────────────────────
 
@@ -228,8 +253,24 @@ PYEOF
 }
 
 _qlever_start() {
-    local name="$1" workdir="$2" port="$3"
+    local name="$1" workdir="$2" port="$3" srv_mem="${4:-40G}"
     local instance_name="qlever_${name}"
+
+    # Derive cache/extra budgets proportional to server mem (floor at 1G).
+    # Formula: cache = srv_mem/5, extra = srv_mem/10, each min 1G.
+    local _mem_mb
+    _mem_mb=$(python3 -c "
+import re, sys
+s='${srv_mem}'.upper()
+m=re.match(r'([0-9]+(?:\.[0-9]+)?)\s*([GMK]?)B?$',s)
+if not m: sys.exit(1)
+v,u=float(m.group(1)),m.group(2)
+mb=int(v*(1024 if u=='G' else (1 if u=='M' else 1024*1024 if u=='K' else 1)))
+print(mb)
+" 2>/dev/null || echo "40960")
+    local _cache_mb=$(( _mem_mb / 5 ));  [[ "${_cache_mb}" -lt 1024 ]] && _cache_mb=1024
+    local _extra_mb=$(( _mem_mb / 10 )); [[ "${_extra_mb}" -lt 1024 ]] && _extra_mb=1024
+    local srv_cache="${_cache_mb}M" srv_extra="${_extra_mb}M"
 
     # --- Ensure port is free before starting ---
     local _port_pid
@@ -241,23 +282,31 @@ _qlever_start() {
         sleep 2
     fi
 
-    singularity instance stop "${instance_name}" 2>/dev/null || true
-    sleep 1   # let the OS reclaim resources from the old instance
-
-    singularity instance start \
-        --bind "${workdir}:${workdir}" \
-        --bind "${DATA_DIR}:${DATA_DIR}" \
-        -W "${workdir}" \
-        "${SINGULARITY_IMAGE}" \
-        "${instance_name}" \
-        > "${workdir}/start.log" 2>&1
+    # --- Kill any leftover server for this name ---
+    if [[ -n "${SERVER_PID_MAP[${instance_name}]+x}" ]]; then
+        local _old_pid="${SERVER_PID_MAP[${instance_name}]}"
+        kill -TERM "${_old_pid}" 2>/dev/null || true
+        sleep 2
+        kill -KILL "${_old_pid}" 2>/dev/null || true
+        unset "SERVER_PID_MAP[${instance_name}]"
+    fi
 
     # Clear old server log so we can detect fresh errors
     : > "${workdir}/server.log"
 
-    singularity exec "instance://${instance_name}" \
-        bash -c "cd '${workdir}' && exec qlever-server -i '${name}' -j 8 -p '${port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '${name}'" \
+    # Run QLever in the foreground of a backgrounded singularity exec so
+    # the process stays inside Slurm's cgroup and can be cleanly reaped.
+    singularity exec \
+        --bind "${workdir}:${workdir}" \
+        --bind "${DATA_DIR}:${DATA_DIR}" \
+        -W "${workdir}" \
+        "${SINGULARITY_IMAGE}" \
+        bash -c "cd '${workdir}' && exec qlever-server -i '${name}' -j 8 -p '${port}' -m ${srv_mem} -c ${srv_cache} -e ${srv_extra} -k 200 -s 1000s -a '${name}'" \
         > "${workdir}/server.log" 2>&1 &
+
+    local srv_pid=$!
+    SERVER_PIDS+=("${srv_pid}")
+    SERVER_PID_MAP["${instance_name}"]="${srv_pid}"
 
     local i=0
     until env http_proxy= https_proxy= HTTP_PROXY= HTTPS_PROXY= \
@@ -267,18 +316,41 @@ _qlever_start() {
         if [[ -s "${workdir}/server.log" ]] \
             && grep -qi 'Address already in use\|cannot bind\|FATAL' "${workdir}/server.log" 2>/dev/null; then
             warn "[${name}] QLever failed: $(head -5 "${workdir}/server.log")"
-            singularity instance stop "${instance_name}" 2>/dev/null || true
+            kill -TERM "${srv_pid}" 2>/dev/null || true
+            return 1
+        fi
+        # Detect if the process already died
+        if ! kill -0 "${srv_pid}" 2>/dev/null; then
+            warn "[${name}] QLever process died unexpectedly"
             return 1
         fi
         [[ $i -ge 120 ]] && { warn "[${name}] QLever did not start within 120s"; return 1; }
     done
-    log "[${name}] QLever ready on port ${port}"
+    log "[${name}] QLever ready on port ${port} (PID ${srv_pid}, mem ${srv_mem})"
     echo "${instance_name}"
 }
 
 _qlever_stop() {
     local instance_name="$1" port="$2" workdir="$3"
-    singularity instance stop "${instance_name}" > "${workdir}/stop.log" 2>&1 || true
+    local srv_pid="${SERVER_PID_MAP[${instance_name}]:-}"
+    if [[ -n "${srv_pid}" ]]; then
+        log "  Stopping QLever ${instance_name} (PID ${srv_pid}) …"
+        kill -TERM "${srv_pid}" 2>/dev/null || true
+        local i=0
+        while kill -0 "${srv_pid}" 2>/dev/null && [[ $i -lt 30 ]]; do
+            sleep 1; i=$((i+1))
+        done
+        kill -KILL "${srv_pid}" 2>/dev/null || true
+        unset "SERVER_PID_MAP[${instance_name}]"
+        # Remove from the flat SERVER_PIDS array
+        local _new=()
+        for _p in "${SERVER_PIDS[@]:-}"; do
+            [[ "${_p}" != "${srv_pid}" ]] && _new+=("${_p}")
+        done
+        SERVER_PIDS=("${_new[@]:-}")
+    else
+        warn "  [${instance_name}] No tracked PID – server may already be gone"
+    fi
 }
 
 # ── Disk space check ──────────────────────────────────────────────
@@ -368,14 +440,20 @@ _mine_local() {
 # ── Dataset name list helper ──────────────────────────────────────
 
 _list_dataset_names() {
-    python3 - "${REPO_ROOT}/data/sources.yaml" "${FILTER}" <<'PYEOF'
+    local _excl_engines="${EXCLUDE_ENGINES[*]:-}"
+    python3 - "${REPO_ROOT}/data/sources.yaml" "${FILTER}" "${_excl_engines}" <<'PYEOF'
 import sys, re, yaml
-yaml_path, filt = sys.argv[1], sys.argv[2]
+yaml_path, filt, excl_engines_str = sys.argv[1], sys.argv[2], sys.argv[3]
 with open(yaml_path) as f:
     sources = yaml.safe_load(f) or []
 rx = re.compile(filt) if filt else None
+excl_engines = set(e.strip() for e in excl_engines_str.split() if e.strip())
 for s in sources:
     name = s.get("name", "")
+    if excl_engines:
+        engine = s.get("sparql_engine", "") or s.get("local_provider", "")
+        if engine in excl_engines:
+            continue
     if rx is None or rx.search(name):
         print(name)
 PYEOF
@@ -455,6 +533,129 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════════
+# STEP 2b - Remote instance mapping + class derivation
+#   Queries remote SPARQL endpoints directly (no local QLever).
+#   Enabled via --remote-mappings.
+# ═══════════════════════════════════════════════════════════════════
+if [[ "${REMOTE_MAPPINGS}" == true && "${SKIP_MAPPINGS}" == false ]]; then
+    log "--- Step 2b: Remote instance mapping ---"
+    t0=$(date +%s)
+
+    _remote_names=()
+    while IFS= read -r _n; do
+        [[ -n "${_n}" ]] && _remote_names+=("${_n}")
+    done < <(_list_dataset_names)
+    log "  Datasets in scope: ${#_remote_names[@]}"
+
+    MAPPINGS_DIR="${OUTPUT_DIR}/mappings"
+    mkdir -p "${MAPPINGS_DIR}"
+    _rem_inst_out="${MAPPINGS_DIR}/instance_matching"
+    mkdir -p "${_rem_inst_out}"
+    log "  Output dir: ${_rem_inst_out}"
+
+    # Discover prefixes from any existing sssom/semra files
+    _rem_pfx_file="${_rem_inst_out}/.remote_prefixes.txt"
+    _rem_disc="rdfsolve instance-match discover-prefixes"
+    if [[ -d "${MAPPINGS_DIR}/sssom" ]]; then
+        log "  Scanning sssom dir for prefixes: ${MAPPINGS_DIR}/sssom"
+        _rem_disc+=" -d ${MAPPINGS_DIR}/sssom"
+    else
+        warn "  sssom dir not found: ${MAPPINGS_DIR}/sssom"
+    fi
+    if [[ -d "${MAPPINGS_DIR}/semra" ]]; then
+        log "  Scanning semra dir for prefixes: ${MAPPINGS_DIR}/semra"
+        _rem_disc+=" -d ${MAPPINGS_DIR}/semra"
+    else
+        warn "  semra dir not found: ${MAPPINGS_DIR}/semra"
+    fi
+    _rem_disc+=" -o ${_rem_pfx_file}"
+    log "  Running: ${_rem_disc}"
+    eval "${_rem_disc}" || warn "Remote prefix discovery had warnings"
+    log "  Prefix file: ${_rem_pfx_file}"
+
+    _rem_prefixes=()
+    if [[ -s "${_rem_pfx_file}" ]]; then
+        while IFS= read -r _p; do
+            [[ -n "${_p}" ]] && _rem_prefixes+=("${_p}")
+        done < "${_rem_pfx_file}"
+    fi
+    if [[ ${#_rem_prefixes[@]} -eq 0 ]]; then
+        _rem_prefixes=(chebi ensembl faldo uniprot)
+        warn "Remote prefix discovery empty; using defaults"
+    fi
+    log "  Prefixes (${#_rem_prefixes[@]}): ${_rem_prefixes[*]}"
+
+    # Seed: query remote endpoints for each prefix; use --delay to throttle
+    _rem_seed_args="rdfsolve instance-match seed"
+    for _p in "${_rem_prefixes[@]}"; do _rem_seed_args+=" --prefixes ${_p}"; done
+    _rem_seed_args+=" --output-dir ${_rem_inst_out}"
+    _rem_seed_args+=" --timeout    ${TIMEOUT}"
+    _rem_seed_args+=" --delay      2.0"
+    if [[ ${#_remote_names[@]} -gt 0 ]]; then
+        for _rn in "${_remote_names[@]}"; do _rem_seed_args+=" --dataset ${_rn}"; done
+    fi
+    log "  Running seed: ${_rem_seed_args}"
+    eval "${_rem_seed_args}" || warn "Remote instance-match seed had failures"
+    log "  Seed done in $(elapsed $(( $(date +%s) - t0 )))"
+
+    # Class derivation using each source's remote endpoint
+    log "  Scanning for entity-level JSON-LD files for class derivation …"
+    _rem_class_out="${MAPPINGS_DIR}/class_derived"
+    mkdir -p "${_rem_class_out}"
+    _rem_to_derive=$(find "${MAPPINGS_DIR}/sssom" "${MAPPINGS_DIR}/semra" \
+        -maxdepth 1 -name '*.jsonld' \
+        ! -name '*.enriched.jsonld' \
+        ! -name '*.class_derived.jsonld' \
+        2>/dev/null | sort || true)
+
+    _rem_derive_count=$(echo "${_rem_to_derive}" | grep -c . 2>/dev/null || echo 0)
+    log "  Files to derive: ${_rem_derive_count}"
+
+    if [[ -n "${_rem_to_derive}" ]]; then
+        _rem_endpoints=$(python3 - "${REPO_ROOT}/data/sources.yaml" <<'PYEOF'
+import sys, yaml
+with open(sys.argv[1]) as f:
+    sources = yaml.safe_load(f) or []
+seen = set()
+for s in sources:
+    ep = s.get("endpoint", "")
+    if ep and ep not in seen:
+        seen.add(ep)
+        print(ep)
+PYEOF
+)
+        _first_remote_ep=$(echo "${_rem_endpoints}" | head -1)
+        log "  Class derivation endpoint: ${_first_remote_ep}"
+        if [[ -n "${_first_remote_ep}" ]]; then
+            _derive_idx=0
+            while IFS= read -r _f; do
+                [[ -z "${_f}" ]] && continue
+                _derive_idx=$(( _derive_idx + 1 ))
+                _base=$(basename "${_f}" .jsonld)
+                _out="${_rem_class_out}/${_base}.class_derived.jsonld"
+                log "  [${_derive_idx}/${_rem_derive_count}] Deriving $(basename "${_f}") …"
+                rdfsolve instance-match derive \
+                    --input     "${_f}" \
+                    --output    "${_out}" \
+                    --endpoint  "${_first_remote_ep}" \
+                    --cache-index \
+                    --enrich \
+                    --timeout   "${TIMEOUT}" \
+                    && log "  -> ${_out}" \
+                    || warn "Remote derivation failed for $(basename "${_f}")"
+            done <<< "${_rem_to_derive}"
+        else
+            warn "  No remote endpoint found in sources.yaml — skipping class derivation"
+        fi
+    else
+        warn "  No entity-level JSON-LD files found; skipping class derivation"
+    fi
+    log "Remote instance mapping done in $(elapsed $(( $(date +%s) - t0 )))"
+else
+    log "--- Step 2b: Remote instance mapping - SKIPPED (pass --remote-mappings to enable) ---"
+fi
+
+# ═══════════════════════════════════════════════════════════════════
 # STEPS 3–4 - Local mining (QLever via Singularity)
 # ═══════════════════════════════════════════════════════════════════
 if [[ "${SKIP_LOCAL}" == false ]]; then
@@ -531,15 +732,104 @@ for name, port in d.items():
             log "  Starting QLever on port ${PORT} …"
             INSTANCE_NAME=$(_qlever_start "${NAME}" "${WORKDIR}" "${PORT}") \
                 || { warn "[${NAME}] Server start failed"; continue; }
+            log "  [${NAME}] QLever started (PID ${SERVER_PID_MAP[qlever_${NAME}]:-?})"
 
-            if [[ "${ONE_SHOT}" == true ]]; then
+            if [[ "${ONE_SHOT}" == true && "${SKIP_MINE}" == false ]]; then
+                log "  [${NAME}] Mining schema …"
                 _mine_local "${NAME}" "${PORT}" "typed" true "${CHUNK_SIZE}" "${CLASS_BATCH_SIZE}"
+                log "  [${NAME}] Mining done"
+            elif [[ "${SKIP_MINE}" == true ]]; then
+                log "  [${NAME}] Schema mining skipped (--skip-mine)"
+            fi
+
+            # ── Instance matching + class derivation ──────────────
+            if [[ "${SKIP_MAPPINGS}" == false ]]; then
+                _inst_out="${MAPPINGS_DIR}/instance_matching"
+                mkdir -p "${_inst_out}"
+
+                # Discover prefixes from sssom+semra for this dataset
+                _pfx_file_ds="${_inst_out}/.prefixes_${NAME}.txt"
+                _disc_args="rdfsolve instance-match discover-prefixes"
+                if [[ -d "${MAPPINGS_DIR}/sssom" ]]; then
+                    _disc_args+=" -d ${MAPPINGS_DIR}/sssom"
+                else
+                    warn "  [${NAME}] sssom dir not found: ${MAPPINGS_DIR}/sssom"
+                fi
+                if [[ -d "${MAPPINGS_DIR}/semra" ]]; then
+                    _disc_args+=" -d ${MAPPINGS_DIR}/semra"
+                else
+                    warn "  [${NAME}] semra dir not found: ${MAPPINGS_DIR}/semra"
+                fi
+                _disc_args+=" -o ${_pfx_file_ds}"
+                log "  [${NAME}] Discovering prefixes …"
+                eval "${_disc_args}" || warn "[${NAME}] Prefix discovery had warnings"
+
+                _ds_prefixes=()
+                if [[ -s "${_pfx_file_ds}" ]]; then
+                    while IFS= read -r _p; do
+                        [[ -n "${_p}" ]] && _ds_prefixes+=("${_p}")
+                    done < "${_pfx_file_ds}"
+                fi
+                if [[ ${#_ds_prefixes[@]} -eq 0 ]]; then
+                    _ds_prefixes=(chebi ensembl faldo uniprot)
+                    warn "[${NAME}] Prefix discovery empty; using defaults"
+                fi
+                log "  [${NAME}] Prefixes (${#_ds_prefixes[@]}): ${_ds_prefixes[*]}"
+
+                # Build a single-entry ports JSON for this dataset
+                _ds_ports_json="${_inst_out}/.ports_${NAME}.json"
+                python3 -c "import json; print(json.dumps({'${NAME}': ${PORT}}))" \
+                    > "${_ds_ports_json}"
+
+                log "  [${NAME}] Instance-match seed (local, port ${PORT}) …"
+                _seed_args="rdfsolve instance-match seed"
+                for _p in "${_ds_prefixes[@]}"; do _seed_args+=" --prefixes ${_p}"; done
+                _seed_args+=" --output-dir ${_inst_out}"
+                _seed_args+=" --timeout    ${TIMEOUT}"
+                _seed_args+=" --ports-json ${_ds_ports_json}"
+                if [[ ${#DATASETS[@]} -gt 0 ]]; then
+                    for _ds in "${DATASETS[@]}"; do _seed_args+=" --dataset ${_ds}"; done
+                fi
+                log "  [${NAME}] Running: ${_seed_args}"
+                eval "${_seed_args}" \
+                    && log "  [${NAME}] Seed done" \
+                    || warn "[${NAME}] Instance-match seed had failures"
+
+                # Class derivation for entity-level mapping files
+                _class_out="${MAPPINGS_DIR}/class_derived"
+                mkdir -p "${_class_out}"
+                _to_derive=$(find "${MAPPINGS_DIR}/sssom" "${MAPPINGS_DIR}/semra" \
+                    -maxdepth 1 -name '*.jsonld' \
+                    ! -name '*.enriched.jsonld' \
+                    ! -name '*.class_derived.jsonld' \
+                    2>/dev/null | sort || true)
+                _derive_count=$(echo "${_to_derive}" | grep -c . 2>/dev/null || echo 0)
+                log "  [${NAME}] Class derivation: ${_derive_count} file(s) …"
+                if [[ -n "${_to_derive}" ]]; then
+                    _di=0
+                    while IFS= read -r _f; do
+                        [[ -z "${_f}" ]] && continue
+                        _di=$(( _di + 1 ))
+                        _base=$(basename "${_f}" .jsonld)
+                        _out="${_class_out}/${_base}.class_derived.jsonld"
+                        log "  [${NAME}] [${_di}/${_derive_count}] Deriving $(basename "${_f}") …"
+                        rdfsolve instance-match derive \
+                            --input      "${_f}" \
+                            --output     "${_out}" \
+                            --endpoint   "http://localhost:${PORT}" \
+                            --cache-index \
+                            --enrich \
+                            --timeout    "${TIMEOUT}" \
+                            && log "  [${NAME}] -> ${_out}" \
+                            || warn "[${NAME}] Derivation failed for $(basename "${_f}")"
+                    done <<< "${_to_derive}"
+                fi
             fi
 
             log "  Stopping QLever …"
             _qlever_stop "${INSTANCE_NAME}" "${PORT}" "${WORKDIR}"
 
-            # Cleanup raw RDF (keep index files for LSLOD)
+            # Remove raw RDF dumps and archives; index files are preserved.
             rdf_dir="${WORKDIR}/rdf"
             if [[ -d "${rdf_dir}" ]]; then
                 du -sh "${rdf_dir}" 2>/dev/null && rm -rf "${rdf_dir}"
@@ -609,156 +899,8 @@ else
     log "--- Steps 5–7: Seeding - SKIPPED (--skip-seeding) ---"
 fi  # end SKIP_SEEDING
 
-# ═══════════════════════════════════════════════════════════════════
-# STEPS 8–10 - LSLOD block: start ALL QLever > instance mappings >
-#              class derivation > stop ALL QLever
-#
-# Instance mapping (step 8) queries LOCAL QLever endpoints only.
-# Class derivation (step 9) uses the same running instances.
-# All instances are stopped after step 10.
-# ═══════════════════════════════════════════════════════════════════
-LSLOD_ENDPOINT=""
-declare -a LSLOD_INSTANCES=()
-declare -a LSLOD_PORTS=()
-
-if [[ "${SKIP_LOCAL}" == false ]]; then
-    log "--- Steps 8–10: LSLOD block (start QLever > instance match > derive > stop) ---"
-    PORTS_JSON="${QLEVER_WORKDIRS}/ports.json"
-
-    # Reinforce proxy bypass for localhost QLever endpoints.
-    # (HPC module loads can reset no_proxy after our initial export.)
-    export no_proxy="localhost,127.0.0.1,${no_proxy:-}"
-    export NO_PROXY="localhost,127.0.0.1,${NO_PROXY:-}"
-
-    if [[ -f "${PORTS_JSON}" ]]; then
-        DS_LINES_LSLOD=$(python3 -c "
-import json
-with open('${PORTS_JSON}') as f:
-    d = json.load(f)
-for name, port in d.items():
-    print(f'{name} {port}')
-")
-        while read -r _LNAME _LPORT; do
-            _LWORKDIR="${QLEVER_WORKDIRS}/${_LNAME}"
-            if [[ ! -f "${_LWORKDIR}/.index.done" ]]; then
-                log "  [${_LNAME}] No index - skipping"
-                continue
-            fi
-            log "  Starting ${_LNAME} on port ${_LPORT} …"
-            if _LINST=$(_qlever_start "${_LNAME}" "${_LWORKDIR}" "${_LPORT}"); then
-                LSLOD_INSTANCES+=("${_LINST}")
-                LSLOD_PORTS+=("${_LPORT}")
-                if [[ -z "${LSLOD_ENDPOINT}" ]]; then
-                    LSLOD_ENDPOINT="http://localhost:${_LPORT}"
-                fi
-            else
-                warn "  [${_LNAME}] Failed to start"
-            fi
-            sleep 1   # brief cooldown between instance starts
-        done <<< "${DS_LINES_LSLOD}"
-    fi
-
-    if [[ ${#LSLOD_INSTANCES[@]} -eq 0 ]]; then
-        warn "No QLever instances started - skipping steps 8–10"
-    else
-        log "LSLOD: ${#LSLOD_INSTANCES[@]} instances running"
-
-        # Step 8: Instance mappings (LOCAL QLever only via ports.json)
-        log "--- Step 8: Instance mappings (local endpoints) ---"
-        t0=$(date +%s)
-
-        # Dynamically discover entity prefixes from all mapping files
-        _pfx_file="${MAPPINGS_DIR}/.discovered_prefixes.txt"
-        _discover_args="rdfsolve instance-match discover-prefixes"
-        _discover_args+=" -d ${MAPPINGS_DIR}/sssom"
-        _discover_args+=" -d ${MAPPINGS_DIR}/semra"
-        _discover_args+=" -o ${_pfx_file}"
-        eval "${_discover_args}" || warn "Prefix discovery had warnings"
-
-        _inst_prefixes=()
-        if [[ -s "${_pfx_file}" ]]; then
-            while IFS= read -r _pfx_line; do
-                [[ -n "${_pfx_line}" ]] && _inst_prefixes+=("${_pfx_line}")
-            done < "${_pfx_file}"
-        fi
-        if [[ ${#_inst_prefixes[@]} -eq 0 ]]; then
-            _inst_prefixes=(chebi ensembl faldo uniprot)
-            warn "Prefix discovery returned 0 prefixes; using defaults: ${_inst_prefixes[*]}"
-        fi
-        log "Instance mapping prefixes (${#_inst_prefixes[@]}): ${_inst_prefixes[*]}"
-
-        _inst_args="rdfsolve instance-match seed"
-        for _pfx in "${_inst_prefixes[@]}"; do _inst_args+=" --prefixes ${_pfx}"; done
-        _inst_args+=" --output-dir ${MAPPINGS_DIR}/instance_matching"
-        _inst_args+=" --timeout ${TIMEOUT}"
-        _inst_args+=" --ports-json ${PORTS_JSON}"
-        if [[ ${#DATASETS[@]} -gt 0 ]]; then
-            for _ds in "${DATASETS[@]}"; do _inst_args+=" --dataset ${_ds}"; done
-        fi
-        eval "${_inst_args}" || warn "Instance mapping seeding had failures"
-        log "Instance mappings done in $(elapsed $(( $(date +%s) - t0 )))"
-
-        # Step 9: Class derivation + enrichment
-        # Process entity-level mappings from sssom/ and semra/ (these need
-        # QLever lookup to derive class-level mappings).  instance_matching/
-        # files are already class-level so derivation is redundant for them.
-        log "--- Step 9: Class derivation + enrichment ---"
-        t0=$(date +%s)
-
-        _class_out_dir="${MAPPINGS_DIR}/class_derived"
-        mkdir -p "${_class_out_dir}"
-
-        _derive_files=""
-        for _src_dir in "${MAPPINGS_DIR}/sssom" "${MAPPINGS_DIR}/semra"; do
-            if [[ -d "${_src_dir}" ]]; then
-                _found=$(find "${_src_dir}" -maxdepth 1 -name '*.jsonld' \
-                    ! -name '*.enriched.jsonld' \
-                    ! -name '*.class_derived.jsonld' \
-                    | sort 2>/dev/null || true)
-                if [[ -n "${_found}" ]]; then
-                    _derive_files="${_derive_files}${_derive_files:+$'\n'}${_found}"
-                fi
-            fi
-        done
-
-        if [[ -z "${_derive_files}" ]]; then
-            warn "No entity-level JSON-LD files in sssom/ or semra/ for class derivation"
-        else
-            while IFS= read -r _f; do
-                [[ -z "${_f}" ]] && continue
-                _base=$(basename "${_f}" .jsonld)
-                _out="${_class_out_dir}/${_base}.class_derived.jsonld"
-                log "  Deriving: $(basename "${_f}")"
-                rdfsolve instance-match derive \
-                    --input    "${_f}" \
-                    --output   "${_out}" \
-                    --ports-json "${PORTS_JSON}" \
-                    --cache-index \
-                    --enrich \
-                    --timeout  "${TIMEOUT}" \
-                    || warn "Derivation failed for $(basename "${_f}")"
-            done <<< "${_derive_files}"
-        fi
-        log "Class derivation done in $(elapsed $(( $(date +%s) - t0 )))"
-    fi
-else
-    log "--- Steps 8–10: LSLOD - SKIPPED (--skip-local) ---"
-fi
-
-# Step 10: Stop all LSLOD instances
-if [[ ${#LSLOD_INSTANCES[@]} -gt 0 ]]; then
-    log "--- Step 10: Stopping LSLOD instances ---"
-    for _i in "${!LSLOD_INSTANCES[@]}"; do
-        _inst="${LSLOD_INSTANCES[${_i}]}"
-        _port="${LSLOD_PORTS[${_i}]}"
-        _iname="${_inst#qlever_}"
-        _qlever_stop "${_inst}" "${_port}" "${QLEVER_WORKDIRS}/${_iname}"
-    done
-    log "All LSLOD instances stopped"
-fi
-
-# Step 11: Inference expansion
-log "--- Step 11: Inference expansion ---"
+# Step 8: Inference expansion
+log "--- Step 8: Inference expansion ---"
 t0=$(date +%s)
 
 rdfsolve inference seed \
@@ -767,8 +909,8 @@ rdfsolve inference seed \
     || warn "Inference step had failures"
 log "Inference done in $(elapsed $(( $(date +%s) - t0 )))"
 
-# Step 12: Build connectivity graphs > Parquet
-log "--- Step 12: Build graphs > Parquet ---"
+# Step 9: Build connectivity graphs > Parquet
+log "--- Step 9: Build graphs > Parquet ---"
 t0=$(date +%s)
 
 _bg_args="rdfsolve build-graphs"
@@ -782,13 +924,13 @@ eval "${_bg_args}" || warn "build-graphs had warnings"
 log "Graph build done in $(elapsed $(( $(date +%s) - t0 )))"
 
 else
-    log "--- Steps 5–12: Mappings & graphs - SKIPPED (--skip-mappings) ---"
+    log "--- Steps 5–9: Mappings & graphs - SKIPPED (--skip-mappings) ---"
 fi  # end SKIP_MAPPINGS
 
 # ═══════════════════════════════════════════════════════════════════
-# STEP 13 - Collect results
+# STEP 10 - Collect results
 # ═══════════════════════════════════════════════════════════════════
-log "--- Step 13: Collect results > ${RESULTS_DIR}/ ---"
+log "--- Step 10: Collect results > ${RESULTS_DIR}/ ---"
 rsync -a --info=progress2 "${OUTPUT_DIR}/" "${RESULTS_DIR}/" 2>/dev/null \
     || cp -r "${OUTPUT_DIR}/." "${RESULTS_DIR}/"
 

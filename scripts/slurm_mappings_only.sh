@@ -1,15 +1,12 @@
 #!/bin/bash
-# slurm_mappings_only.sh — Run the mappings pipeline (Steps 8–13)
+# slurm_mappings_only.sh — Run the mappings pipeline (Steps 5–10)
 #
 # Skips remote discovery, local mining, AND seeding (all already done).
-# Starts all 93 indexed QLever instances for LSLOD, runs:
+# Instance matching and class derivation run per-dataset during Step 4.
 #   Step 5–7: SKIPPED (seeding already done)
-#   Step 8:  Instance matching (with dynamically discovered prefixes)
-#   Step 9:  Class derivation + enrichment (multi-endpoint via ports.json)
-#   Step 10: Stop QLever
-#   Step 11: Inference expansion
-#   Step 12: Build graphs > Parquet
-#   Step 13: Collect results
+#   Step 8:  Inference expansion
+#   Step 9:  Build graphs > Parquet
+#   Step 10: Collect results
 #
 # Usage:
 #   export BASE=/trinity/home/$USER/rdfsolve

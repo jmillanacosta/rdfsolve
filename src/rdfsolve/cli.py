@@ -536,6 +536,16 @@ def cmd_local_mine(
     default="docker",
     help="QLever runtime.",
 )
+@click.option(
+    "--server-memory",
+    "server_memory",
+    default="40G",
+    show_default=True,
+    help=(
+        "MEMORY_FOR_QUERIES written into every Qleverfile (-m flag for qlever-server). "
+        "Lower this when many servers run concurrently on one node, e.g. '8G'."
+    ),
+)
 def cmd_qleverfile(
     sources: str,
     output_dir: str,
@@ -547,6 +557,7 @@ def cmd_qleverfile(
     base_port: int,
     test: bool,
     runtime: str,
+    server_memory: str,
 ) -> None:
     r"""Generate Qleverfiles for local QLever mining.
 
@@ -556,6 +567,7 @@ def cmd_qleverfile(
 
         rdfsolve qleverfile --data-dir /data/rdf
         rdfsolve qleverfile --data-dir /data/rdf --test
+        rdfsolve qleverfile --data-dir /data/rdf --server-memory 8G
     """
     from .api import generate_qleverfiles
 
@@ -566,6 +578,7 @@ def cmd_qleverfile(
         runtime=runtime,
         name_filter=name_filter,
         test=test,
+        server_memory=server_memory,
     )
     _print_result(result)
 
@@ -1539,6 +1552,17 @@ def discover_prefixes_cmd(
     help="SPARQL request timeout in seconds.",
 )
 @click.option(
+    "--delay",
+    "inter_request_delay",
+    default=0.0,
+    show_default=True,
+    type=float,
+    help=(
+        "Seconds to sleep between successive SPARQL requests to the same endpoint. "
+        "Set >0 for public remote endpoints; leave 0 for local QLever."
+    ),
+)
+@click.option(
     "--output",
     "-o",
     default=None,
@@ -1551,6 +1575,7 @@ def probe_cmd(
     predicate: str,
     datasets: tuple[str, ...],
     timeout: float,
+    inter_request_delay: float,
     output: str | None,
 ) -> None:
     """Probe endpoints for a single bioregistry resource.
@@ -1570,6 +1595,7 @@ def probe_cmd(
             predicate=predicate,
             dataset_names=list(datasets) if datasets else None,
             timeout=timeout,
+            inter_request_delay=inter_request_delay,
         )
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
@@ -1645,6 +1671,17 @@ def probe_cmd(
         "queries go to local QLever endpoints instead of remote SPARQL."
     ),
 )
+@click.option(
+    "--delay",
+    "inter_request_delay",
+    default=0.0,
+    show_default=True,
+    type=float,
+    help=(
+        "Seconds to sleep between successive SPARQL requests to the same endpoint. "
+        "Set >0 (e.g. 2.0) for public remote endpoints; leave 0 for local QLever."
+    ),
+)
 def seed_cmd(
     prefix_list: tuple[str, ...],
     sources: str | None,
@@ -1655,12 +1692,16 @@ def seed_cmd(
     timeout: float,
     no_skip_existing: bool,
     ports_json: str | None,
+    inter_request_delay: float,
 ) -> None:
     """Seed mapping files for multiple bioregistry resources.
 
     Writes {PREFIX}_instance_mapping.jsonld to OUTPUT_DIR for each
     supplied PREFIX.  Existing files are skipped unless --no-skip-existing
     is passed.
+
+    Use --delay for public remote endpoints to avoid overwhelming them.
+    When --ports-json is given (local QLever), --delay defaults to 0.
     """
     from rdfsolve.api import seed_instance_mappings
 
@@ -1674,6 +1715,7 @@ def seed_cmd(
             timeout=timeout,
             skip_existing=not no_skip_existing,
             ports_json=ports_json,
+            inter_request_delay=inter_request_delay,
         )
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)

@@ -10,6 +10,7 @@
 #SBATCH --mem=400G
 #SBATCH --output=logs/%x-%j.out
 #SBATCH --error=logs/%x-%j.err
+#SBATCH --signal=USR1@120
 
 BASE="${BASE:?Set BASE to your project root, e.g. export BASE=/trinity/home/\$USER/rdfsolve}"
 source "${BASE}/rdfsolve-2/scripts/_slurm_common.sh"
@@ -18,6 +19,7 @@ _notify "Local mining started" "Job ${SLURM_JOB_ID} on $(hostname) — local dow
 
 bash "${REPO}/scripts/run_pipeline_hpc.sh" \
     --skip-remote \
+    --skip-mappings \
     --data-dir    "${DATA_DIR}" \
     --output-dir  "${OUTPUT_DIR}" \
     --results-dir "${RESULTS_DIR}" \
