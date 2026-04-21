@@ -818,6 +818,7 @@ def probe_instance_mapping(
     predicate: str = "http://www.w3.org/2004/02/skos/core#narrowMatch",
     dataset_names: list[str] | None = None,
     timeout: float = 60.0,
+    inter_request_delay: float = 0.0,
 ) -> dict[str, Any]:
     """Probe SPARQL endpoints for a bioregistry resource and return JSON-LD.
 
@@ -826,9 +827,6 @@ def probe_instance_mapping(
     known URI prefixes.  Generates pairwise ``skos:narrowMatch`` edges (or
     *predicate* override) between classes across different datasets and
     returns the result as a JSON-LD mapping document.
-
-    The returned dict has the same structure as a mined schema JSON-LD
-    (``@context`` + ``@graph`` + ``@about``).
 
     Args:
         prefix: Bioregistry prefix, e.g. ``"ensembl"``.
@@ -839,6 +837,9 @@ def probe_instance_mapping(
             ``skos:narrowMatch``.
         dataset_names: Restrict probing to these dataset names.
         timeout: SPARQL request timeout in seconds.
+        inter_request_delay: Seconds to sleep before each SPARQL request.
+            Use a positive value for remote public endpoints; ``0.0``
+            (default) for local QLever.
 
     Returns:
         JSON-LD ``dict`` with ``@context``, ``@graph``, ``@about``.
@@ -857,6 +858,7 @@ def probe_instance_mapping(
         predicate=predicate,
         dataset_names=dataset_names,
         timeout=timeout,
+        inter_request_delay=inter_request_delay,
     )
     return mapping.to_jsonld()
 
@@ -885,6 +887,7 @@ def seed_instance_mappings(
     timeout: float = 60.0,
     skip_existing: bool = False,
     ports_json: str | None = None,
+    inter_request_delay: float = 0.0,
 ) -> dict[str, Any]:
     """Probe multiple bioregistry resources and write mapping JSON-LD files.
 
@@ -902,6 +905,7 @@ def seed_instance_mappings(
         timeout=timeout,
         skip_existing=skip_existing,
         ports_json=ports_json,
+        inter_request_delay=inter_request_delay,
     )
 
 
@@ -1816,6 +1820,7 @@ def generate_qleverfiles(
     runtime: str = "docker",
     name_filter: str | None = None,
     test: bool = False,
+    server_memory: str = "500G",
 ) -> dict[str, Any]:
     """Generate Qleverfiles for all downloadable sources.
 
@@ -1840,16 +1845,23 @@ def generate_qleverfiles(
         Regex to select sources by name.
     test:
         If ``True``, generate only for the 3 smallest sources.
+    server_memory:
+        ``MEMORY_FOR_QUERIES`` written into every Qleverfile (``-m``
+        flag passed to ``qlever-server``).  Defaults to ``"500G"``.
+        Lower this when many servers run concurrently on a single node.
 
     Returns
     -------
     dict with ``generated``, ``skipped``, ``failed`` lists.
     """
     from .qlever import (
+        QleverConfig,
         build_provider_qleverfile as _build_provider,
         build_qleverfile as _build_single,
         detect_data_format as _detect,
     )
+
+    cfg = QleverConfig(memory_for_queries=server_memory)
 
     data_dir = Path(data_dir).resolve()
     entries = load_sources(sources_path, name_filter=name_filter)

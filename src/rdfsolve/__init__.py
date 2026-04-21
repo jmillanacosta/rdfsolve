@@ -55,6 +55,7 @@ from .models import (
 )
 from .parser import VoidParser
 from .query import QueryResult, ResultCell
+from .sources import classify_source_mode
 from .version import VERSION
 
 __all__ = [
@@ -70,6 +71,8 @@ __all__ = [
     "SchemaMiner",
     "SchemaPattern",
     "VoidParser",
+    # ── sources ───────────────────────────────────────────────────
+    "classify_source_mode",
     # ── api ──────────────────────────────────────────────────────
     "build_ontology_index",
     "compose_query_from_paths",

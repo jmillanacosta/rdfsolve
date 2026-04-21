@@ -6,15 +6,12 @@
 #   Step 5:    Schema selection
 #   Step 6:    Seed SSSOM mappings (re-download + parse with curie_map)
 #   Step 7:    Seed SeMRA mappings
-#   Step 8:    Start QLever + instance matching
-#   Step 9:    Class derivation from semra/ + sssom/ entity-level files
-#   Step 10:   Stop QLever
-#   Step 11:   Inference expansion
-#   Step 12:   Build graphs → Parquet
-#   Step 13:   Collect results
+#   Step 8:    Inference expansion
+#   Step 9:    Build graphs → Parquet
+#   Step 10:   Collect results
 #
 # Skips: remote discovery (step 1), remote mining (step 2),
-#        local download/index/mine (steps 3-4).
+#        local download/index/mine/mapping (steps 3-4).
 #
 # Usage:
 #   export BASE=/trinity/home/$USER/rdfsolve
@@ -26,6 +23,7 @@
 #SBATCH --mem=500G
 #SBATCH --output=logs/%x-%j.out
 #SBATCH --error=logs/%x-%j.err
+#SBATCH --signal=USR1@120
 
 BASE="${BASE:?Set BASE to your project root, e.g. export BASE=/trinity/home/\$USER/rdfsolve}"
 source "${BASE}/rdfsolve-2/scripts/_slurm_common.sh"
