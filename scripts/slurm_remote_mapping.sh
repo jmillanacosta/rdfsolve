@@ -24,10 +24,9 @@ source "${BASE}/rdfsolve-2/scripts/_slurm_common.sh"
 _notify "Remote mapping started" "Job ${SLURM_JOB_ID} on $(hostname) — instance match + class derivation (remote)"
 
 bash "${REPO}/scripts/run_pipeline_hpc.sh" \
+    --skip-remote \
     --skip-local \
-    --skip-discovery \
     --skip-seeding \
-    --skip-mining \
     --remote-mappings \
     --data-dir    "${DATA_DIR}" \
     --output-dir  "${OUTPUT_DIR}" \
