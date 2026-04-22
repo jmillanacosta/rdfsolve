@@ -702,8 +702,13 @@ class SparqlHelper:
     def find_classes_for_iris_by_graph(
         self,
         iris: list[str],
+        values_batch_size: int = 50,
     ) -> dict[str, dict[str, list[str]]]:
         """Find rdf:type classes for specific IRIs, grouped by named graph.
+
+        Splits *iris* into chunks of *values_batch_size* to avoid
+        exceeding HTTP header / request-line limits (Beast default is
+        ~8 KB).  Results from all chunks are merged before returning.
 
         Uses a VALUES-based query to resolve multiple IRIs at once::
 
@@ -713,11 +718,9 @@ class SparqlHelper:
               GRAPH ?g { ?s a ?c }
             }
 
-        This is different from :meth:`find_classes_for_uri_pattern` which
-        uses range filters on URI prefixes.  Here we resolve exact IRIs.
-
         Args:
             iris: Full entity IRIs to look up.
+            values_batch_size: Max IRIs per VALUES block (default 50).
 
         Returns:
             Nested dict ``{entity_iri: {graph_uri: [class_uri, ...]}}``.
@@ -726,55 +729,47 @@ class SparqlHelper:
         if not iris:
             return {}
 
-        values_block = "\n    ".join(f"<{iri}>" for iri in iris)
-        query = (
-            "SELECT DISTINCT ?s ?g ?c\n"
-            "WHERE {\n"
-            "  VALUES ?s {\n"
-            f"    {values_block}\n"
-            "  }\n"
-            "  GRAPH ?g { ?s a ?c }\n"
-            "}"
-        )
-        try:
-            out = self.select(query)
-        except Exception:
-            return {}
-
-        bindings = out.get("results", {}).get("bindings", [])
         result: dict[str, dict[str, list[str]]] = {}
-        for b in bindings:
-            s = b.get("s", {}).get("value")
-            g = b.get("g", {}).get("value")
-            c = b.get("c", {}).get("value")
-            if not (s and g and c):
+        for batch_start in range(0, len(iris), values_batch_size):
+            batch = iris[batch_start : batch_start + values_batch_size]
+            values_block = "\n    ".join(f"<{iri}>" for iri in batch)
+            query = (
+                "SELECT DISTINCT ?s ?g ?c\n"
+                "WHERE {\n"
+                "  VALUES ?s {\n"
+                f"    {values_block}\n"
+                "  }\n"
+                "  GRAPH ?g { ?s a ?c }\n"
+                "}"
+            )
+            try:
+                out = self.select(query)
+            except Exception:
                 continue
-            result.setdefault(s, {}).setdefault(g, [])
-            if c not in result[s][g]:
-                result[s][g].append(c)
+            for b in out.get("results", {}).get("bindings", []):
+                s = b.get("s", {}).get("value")
+                g = b.get("g", {}).get("value")
+                c = b.get("c", {}).get("value")
+                if not (s and g and c):
+                    continue
+                result.setdefault(s, {}).setdefault(g, [])
+                if c not in result[s][g]:
+                    result[s][g].append(c)
         return result
 
     def find_classes_for_iris(
         self,
         iris: list[str],
+        values_batch_size: int = 50,
     ) -> dict[str, list[str]]:
         """Find rdf:type classes for specific IRIs (no named-graph grouping).
 
-        Uses a VALUES-based query to resolve multiple IRIs at once::
-
-            SELECT DISTINCT ?s ?c
-            WHERE {
-              VALUES ?s { <iri1> <iri2> ... }
-              ?s a ?c .
-            }
-
-        This is the per-dataset variant of
-        :meth:`find_classes_for_iris_by_graph`.  It queries the default
-        graph, which is what per-dataset QLever instances expose when
-        data was loaded from Turtle (not N-Quads).
+        Splits *iris* into chunks of *values_batch_size* to avoid
+        exceeding HTTP header / request-line limits.
 
         Args:
             iris: Full entity IRIs to look up.
+            values_batch_size: Max IRIs per VALUES block (default 50).
 
         Returns:
             Dict ``{entity_iri: [class_uri, ...]}``.
@@ -783,31 +778,31 @@ class SparqlHelper:
         if not iris:
             return {}
 
-        values_block = "\n    ".join(f"<{iri}>" for iri in iris)
-        query = (
-            "SELECT DISTINCT ?s ?c\n"
-            "WHERE {\n"
-            "  VALUES ?s {\n"
-            f"    {values_block}\n"
-            "  }\n"
-            "  ?s a ?c .\n"
-            "}"
-        )
-        try:
-            out = self.select(query)
-        except Exception:
-            return {}
-
-        bindings = out.get("results", {}).get("bindings", [])
         result: dict[str, list[str]] = {}
-        for b in bindings:
-            s = b.get("s", {}).get("value")
-            c = b.get("c", {}).get("value")
-            if not (s and c):
+        for batch_start in range(0, len(iris), values_batch_size):
+            batch = iris[batch_start : batch_start + values_batch_size]
+            values_block = "\n    ".join(f"<{iri}>" for iri in batch)
+            query = (
+                "SELECT DISTINCT ?s ?c\n"
+                "WHERE {\n"
+                "  VALUES ?s {\n"
+                f"    {values_block}\n"
+                "  }\n"
+                "  ?s a ?c .\n"
+                "}"
+            )
+            try:
+                out = self.select(query)
+            except Exception:
                 continue
-            result.setdefault(s, [])
-            if c not in result[s]:
-                result[s].append(c)
+            for b in out.get("results", {}).get("bindings", []):
+                s = b.get("s", {}).get("value")
+                c = b.get("c", {}).get("value")
+                if not (s and c):
+                    continue
+                result.setdefault(s, [])
+                if c not in result[s]:
+                    result[s].append(c)
         return result
 
     def find_all_classes(self) -> dict[str, list[str]]:
