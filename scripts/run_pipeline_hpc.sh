@@ -105,6 +105,8 @@ fi
 mkdir -p "${DATA_DIR}" "${OUTPUT_DIR}" "${RESULTS_DIR}"
 QLEVER_WORKDIRS="${DATA_DIR}/qlever_workdirs"
 mkdir -p "${QLEVER_WORKDIRS}"
+MAPPINGS_DIR="${OUTPUT_DIR}/mappings"
+mkdir -p "${MAPPINGS_DIR}"
 
 # ── QLever Singularity helpers ────────────────────────────────────
 
