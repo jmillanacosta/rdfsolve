@@ -62,117 +62,81 @@ _STRUCTURAL_PREFIXES: frozenset[str] = frozenset({
 })
 
 
-def _extract_entity_prefixes_from_jsonld(
-    data: dict[str, Any],
-) -> set[str]:
-    """Extract unique entity CURIE prefixes from a mapping JSON-LD document.
-
-    Walks the ``@graph`` array and collects the CURIE prefix part of every
-    ``@id`` that looks like ``prefix:localname`` (i.e. not a full URI and
-    not a structural/metadata prefix).
-
-    Args:
-        data: Parsed JSON-LD dict with ``@context`` and ``@graph``.
-
-    Returns:
-        Set of bioregistry-style prefix strings (e.g. ``{'mesh', 'chebi'}``).
-    """
-    prefixes: set[str] = set()
-
-    def _maybe_add(iri: str) -> None:
-        if not iri or iri.startswith(("http://", "https://", "urn:", "_:")):
-            return
-        if ":" not in iri:
-            return
-        pfx = iri.split(":", 1)[0]
-        if pfx and pfx not in _STRUCTURAL_PREFIXES:
-            prefixes.add(pfx)
-
-    for node in data.get("@graph", []):
-        _maybe_add(node.get("@id", ""))
-        for _key, val in node.items():
-            if _key.startswith("@") or _key in ("void:inDataset", "dcterms:created"):
-                continue
-            targets = val if isinstance(val, list) else [val]
-            for tgt in targets:
-                if isinstance(tgt, dict):
-                    _maybe_add(tgt.get("@id", ""))
-                elif isinstance(tgt, str):
-                    _maybe_add(tgt)
-
-    return prefixes
-
-
 def discover_mapping_prefixes(
     *mapping_dirs: str,
     glob_pattern: str = "*.jsonld",
 ) -> list[str]:
-    """Discover all unique bioregistry prefixes from mapping JSON-LD files.
+    """Discover canonical bioregistry prefixes from mapping JSON-LD files.
 
-    Scans one or more directories for JSON-LD files and extracts the set
-    of entity CURIE prefixes used in ``@graph`` entries.  Prefixes that
-    are purely structural (``void``, ``dcterms``, …) are excluded.
+    For each file, reads the ``@context`` to find CURIE-prefix → namespace
+    mappings (e.g. ``"chebi": "http://purl.obolibrary.org/obo/CHEBI_"``),
+    normalises each prefix via :func:`bioregistry.normalize_prefix`, and
+    returns the deduplicated sorted list of canonical prefixes.
 
-    The returned list is sorted and deduplicated.  Each entry is a
-    bioregistry-compatible prefix string (e.g. ``"mesh"``, ``"chebi"``).
-
-    Typical usage::
-
-        prefixes = discover_mapping_prefixes(
-            "output/mappings/sssom",
-            "output/mappings/semra",
-            "output/mappings/instance_matching",
-        )
+    These are then passed to :func:`probe_resource`, which expands each
+    canonical prefix to *all* its known URI namespaces (via bioregistry)
+    and uses them as ``STRSTARTS`` patterns against SPARQL endpoints.
 
     Args:
-        mapping_dirs: One or more directory paths to scan.
-        glob_pattern: Glob pattern for JSON-LD files (default ``*.jsonld``).
+        mapping_dirs: One or more directory paths to scan for ``*.jsonld``.
+        glob_pattern: Glob pattern for mapping files (default ``*.jsonld``).
 
     Returns:
-        Sorted list of unique entity prefixes found across all files.
+        Sorted, deduplicated list of canonical bioregistry prefix strings.
     """
     import json as _json
     from pathlib import Path as _Path
 
-    all_prefixes: set[str] = set()
+    import bioregistry
+
+    canonical: set[str] = set()
     files_scanned = 0
 
     for dir_str in mapping_dirs:
         dir_path = _Path(dir_str)
         if not dir_path.is_dir():
-            logger.warning("discover_mapping_prefixes: %s is not a directory, skipping", dir_str)
+            logger.warning("discover_mapping_prefixes: not a directory, skipping: %s", dir_str)
             continue
         for jsonld_file in sorted(dir_path.rglob(glob_pattern)):
             try:
                 data = _json.loads(jsonld_file.read_text(encoding="utf-8"))
-                pfxs = _extract_entity_prefixes_from_jsonld(data)
-                all_prefixes.update(pfxs)
-                files_scanned += 1
             except Exception as exc:
                 logger.warning("discover_mapping_prefixes: skipping %s: %s", jsonld_file, exc)
+                continue
 
-    # Validate prefixes against bioregistry - keep only those that resolve
-    valid_prefixes: list[str] = []
-    try:
-        import bioregistry
-        for pfx in sorted(all_prefixes):
-            resource = bioregistry.get_resource(pfx)
-            if resource is not None:
-                valid_prefixes.append(pfx)
-            else:
-                logger.debug("Prefix %r not in bioregistry, skipping", pfx)
-    except ImportError:
-        logger.warning("bioregistry not installed; returning all prefixes unvalidated")
-        valid_prefixes = sorted(all_prefixes)
+            ctx = data.get("@context", {})
+            entity_pfxs: dict[str, str] = {
+                k: v
+                for k, v in ctx.items()
+                if (
+                    isinstance(v, str)
+                    and (v.startswith("http://") or v.startswith("https://"))
+                    and k not in _STRUCTURAL_PREFIXES
+                )
+            }
+            if not entity_pfxs:
+                logger.debug("discover_mapping_prefixes: no entity prefixes in context: %s", jsonld_file)
+                continue
 
+            for curie_pfx in entity_pfxs:
+                norm = bioregistry.normalize_prefix(curie_pfx)
+                if norm:
+                    canonical.add(norm)
+                else:
+                    logger.debug(
+                        "discover_mapping_prefixes: %r not in bioregistry, skipping",
+                        curie_pfx,
+                    )
+            files_scanned += 1
+
+    result = sorted(canonical)
     logger.info(
-        "discover_mapping_prefixes: scanned %d files across %d dirs -> %d valid prefixes (from %d raw)",
+        "discover_mapping_prefixes: scanned %d files -> %d canonical prefix(es): %s",
         files_scanned,
-        len(mapping_dirs),
-        len(valid_prefixes),
-        len(all_prefixes),
+        len(result),
+        ", ".join(result) if result else "(none)",
     )
-    return valid_prefixes
+    return result
 
 
 def _get_uri_formats(prefix: str) -> list[str]:
@@ -252,32 +216,46 @@ def _probe_dataset(
         )
         return results
 
-    for uri_format in uri_formats:
-        logger.info(
-            "Probing  dataset=%-20s  endpoint=%s  pattern=%s",
+    n_formats = len(uri_formats)
+    n_ok = 0
+    n_fail = 0
+    n_hits = 0
+    for fmt_idx, uri_format in enumerate(uri_formats, start=1):
+        logger.debug(
+            "Probing  dataset=%-20s  [%d/%d]  pattern=%s",
             dataset_name,
-            endpoint_url,
+            fmt_idx,
+            n_formats,
             uri_format,
         )
         try:
             classes = sparql.find_classes_for_uri_pattern(uri_format)
+            n_ok += 1
         except Exception as exc:
             logger.warning(
-                "Probe failed - dataset=%s format=%s: %s",
+                "Probe failed - dataset=%s format=%s [%d/%d]: %s",
                 dataset_name,
                 uri_format,
+                fmt_idx,
+                n_formats,
                 exc,
             )
+            n_fail += 1
             continue
 
         if classes:
+            n_hits += len(classes)
             logger.info(
-                "  -> %d hit(s): %s",
+                "  [%d/%d] dataset=%-20s  pattern=%-50s  -> %d hit(s): %s",
+                fmt_idx,
+                n_formats,
+                dataset_name,
+                uri_format,
                 len(classes),
                 ", ".join(classes),
             )
         else:
-            logger.debug("  -> no hits")
+            logger.debug("  [%d/%d] dataset=%s  pattern=%s  -> no hits", fmt_idx, n_formats, dataset_name, uri_format)
 
         for cls_uri in classes:
             results.append(
@@ -289,6 +267,14 @@ def _probe_dataset(
                 )
             )
 
+    logger.info(
+        "dataset=%-30s  queries=%d/%d ok  hits=%d  classes=%d",
+        dataset_name,
+        n_ok,
+        n_formats,
+        n_hits,
+        len(results),
+    )
     return results
 
 
@@ -366,6 +352,7 @@ def probe_resource(
     dataset_names: list[str] | None = None,
     timeout: float = 60.0,
     inter_request_delay: float = 0.0,
+    uri_formats: list[str] | None = None,
 ) -> InstanceMapping:
     """Probe SPARQL endpoints for a bioregistry resource.
 
@@ -403,12 +390,10 @@ def probe_resource(
     Raises:
         ValueError: If *prefix* is unknown to bioregistry.
     """
-    uri_formats = _get_uri_formats(prefix)
+    if uri_formats is None:
+        uri_formats = _get_uri_formats(prefix)
     if not uri_formats:
-        logger.warning(
-            "Bioregistry prefix %r has no URI formats- no probes to run.",
-            prefix,
-        )
+        logger.warning("probe_resource: prefix %r has no URI formats — nothing to probe.", prefix)
 
     # Filter datasources
     df = datasources.copy()
@@ -515,6 +500,8 @@ def seed_instance_mappings(
     import json as _json
     from pathlib import Path as _Path
 
+    import bioregistry as _br
+
     from rdfsolve.mapping_models.instance import merge_instance_jsonld
     from rdfsolve.sources import load_sources_dataframe
 
@@ -524,11 +511,34 @@ def seed_instance_mappings(
     src_path = sources or sources_csv or None
     datasources = load_sources_dataframe(src_path, ports_json=ports_json)
 
+    # Build URI-prefix cache once: canonical_prefix -> sorted list of all
+    # known URI namespace strings (used as STRSTARTS patterns).
+    # This avoids repeated bioregistry lookups inside the per-prefix loop.
+    uri_prefix_cache: dict[str, list[str]] = {}
+    for pfx in prefixes:
+        res = _br.get_resource(pfx)
+        if res is not None:
+            uri_prefix_cache[pfx] = sorted(res.get_uri_prefixes() or [])
+        else:
+            uri_prefix_cache[pfx] = []
+            logger.warning("seed: prefix %r not found in bioregistry, will have no URI patterns", pfx)
+    logger.info(
+        "seed: URI-prefix cache built for %d prefix(es): %s",
+        len(uri_prefix_cache),
+        ", ".join(f"{p}({len(v)})" for p, v in uri_prefix_cache.items()),
+    )
+
     succeeded: list[str] = []
     failed: list[dict[str, str]] = []
+    n_total = len(prefixes)
 
-    for prefix in prefixes:
-        logger.info("Querying prefix: %s", prefix)
+    for pfx_idx, prefix in enumerate(prefixes, start=1):
+        logger.info(
+            "── seed [%d/%d] prefix=%s ──────────────────────────────",
+            pfx_idx,
+            n_total,
+            prefix,
+        )
         outfile = out / f"{prefix}_instance_mapping.jsonld"
 
         if skip_existing and outfile.exists():
@@ -548,6 +558,7 @@ def seed_instance_mappings(
                 dataset_names=dataset_names,
                 timeout=timeout,
                 inter_request_delay=inter_request_delay,
+                uri_formats=uri_prefix_cache.get(prefix),
             )
             new_jsonld = mapping.to_jsonld()
 

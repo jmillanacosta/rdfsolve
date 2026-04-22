@@ -21,6 +21,14 @@ cleanup() {
     for _p in "${SERVER_PIDS[@]:-}"; do
         [[ -n "${_p}" ]] && kill -0 "${_p}" 2>/dev/null && _pids+=("${_p}")
     done
+    # Also sweep any .qlever_server.pid files left behind by _qlever_start
+    # subshell calls that did not propagate PIDs to SERVER_PIDS.
+    if [[ -n "${DATA_DIR:-}" ]]; then
+        while IFS= read -r -d '' _pidfile; do
+            _p=$(< "${_pidfile}" 2>/dev/null) || continue
+            [[ -n "${_p}" ]] && kill -0 "${_p}" 2>/dev/null && _pids+=("${_p}")
+        done < <(find "${DATA_DIR}" -maxdepth 3 -name '.qlever_server.pid' -print0 2>/dev/null)
+    fi
     [[ ${#_pids[@]} -eq 0 ]] && return 0
     echo "[$(date +%H:%M:%S)] cleanup: TERM → ${_pids[*]}"
     kill -TERM "${_pids[@]}" 2>/dev/null || true
@@ -305,6 +313,9 @@ print(mb)
         > "${workdir}/server.log" 2>&1 &
 
     local srv_pid=$!
+    # Write PID to a file so the parent shell (which called us via $(...))
+    # can read it back — subshell assignments don't propagate otherwise.
+    echo "${srv_pid}" > "${workdir}/.qlever_server.pid"
     SERVER_PIDS+=("${srv_pid}")
     SERVER_PID_MAP["${instance_name}"]="${srv_pid}"
 
@@ -333,6 +344,12 @@ print(mb)
 _qlever_stop() {
     local instance_name="$1" port="$2" workdir="$3"
     local srv_pid="${SERVER_PID_MAP[${instance_name}]:-}"
+    # Fall back to the pid file written by _qlever_start (needed when the
+    # function was called from a subshell and the map was not populated).
+    if [[ -z "${srv_pid}" && -f "${workdir}/.qlever_server.pid" ]]; then
+        srv_pid=$(< "${workdir}/.qlever_server.pid")
+        log "  [${instance_name}] PID recovered from pid file: ${srv_pid}"
+    fi
     if [[ -n "${srv_pid}" ]]; then
         log "  Stopping QLever ${instance_name} (PID ${srv_pid}) …"
         kill -TERM "${srv_pid}" 2>/dev/null || true
@@ -692,6 +709,51 @@ for name, port in d.items():
         TOTAL=$(echo "${DS_LINES}" | grep -c . || echo 0)
         IDX=0
 
+        # ── Shared prefix cache (computed once for all datasets) ──────────
+        # discover-prefixes scans the same sssom/semra dirs regardless of
+        # which dataset we're processing, so there is no point repeating it
+        # inside the per-dataset loop.  Compute once, reuse every iteration.
+        _SHARED_PFX_FILE="${MAPPINGS_DIR}/instance_matching/.prefixes_shared.txt"
+        _SHARED_PREFIXES=()
+        if [[ "${SKIP_MAPPINGS}" == false ]]; then
+            _inst_out_pre="${MAPPINGS_DIR}/instance_matching"
+            mkdir -p "${_inst_out_pre}"
+            _disc_pre="rdfsolve instance-match discover-prefixes"
+            _disc_dirs_found=false
+            if [[ -d "${MAPPINGS_DIR}/sssom" ]]; then
+                _disc_pre+=" -d ${MAPPINGS_DIR}/sssom"
+                _disc_dirs_found=true
+            else
+                warn "Step 4 prefix cache: sssom dir not found: ${MAPPINGS_DIR}/sssom"
+            fi
+            if [[ -d "${MAPPINGS_DIR}/semra" ]]; then
+                _disc_pre+=" -d ${MAPPINGS_DIR}/semra"
+                _disc_dirs_found=true
+            else
+                warn "Step 4 prefix cache: semra dir not found: ${MAPPINGS_DIR}/semra"
+            fi
+            _disc_pre+=" -o ${_SHARED_PFX_FILE}"
+            if [[ "${_disc_dirs_found}" == true ]]; then
+                log "  Discovering shared prefix cache …"
+                log "  Running: ${_disc_pre}"
+                eval "${_disc_pre}" || warn "Shared prefix discovery had warnings"
+            else
+                warn "  No mapping dirs found — shared prefix cache will be empty"
+            fi
+            if [[ -s "${_SHARED_PFX_FILE}" ]]; then
+                while IFS= read -r _p; do
+                    [[ -n "${_p}" ]] && _SHARED_PREFIXES+=("${_p}")
+                done < "${_SHARED_PFX_FILE}"
+            fi
+            if [[ ${#_SHARED_PREFIXES[@]} -eq 0 ]]; then
+                _SHARED_PREFIXES=(chebi ensembl faldo uniprot)
+                warn "  Shared prefix cache empty — using defaults: ${_SHARED_PREFIXES[*]}"
+            else
+                log "  Shared prefix cache: ${#_SHARED_PREFIXES[@]} prefix(es): ${_SHARED_PREFIXES[*]}"
+            fi
+        fi
+        # ─────────────────────────────────────────────────────────────────
+
         while read -r NAME PORT; do
             IDX=$((IDX + 1))
             log "[${IDX}/${TOTAL}] ${NAME} (port ${PORT})"
@@ -732,7 +794,18 @@ for name, port in d.items():
             log "  Starting QLever on port ${PORT} …"
             INSTANCE_NAME=$(_qlever_start "${NAME}" "${WORKDIR}" "${PORT}") \
                 || { warn "[${NAME}] Server start failed"; continue; }
-            log "  [${NAME}] QLever started (PID ${SERVER_PID_MAP[qlever_${NAME}]:-?})"
+            # Recover the PID written by _qlever_start — the function ran in a
+            # subshell (command substitution) so SERVER_PID_MAP/SERVER_PIDS were
+            # not populated in this shell.  Read the pid file it left behind.
+            _srv_pid_file="${WORKDIR}/.qlever_server.pid"
+            if [[ -f "${_srv_pid_file}" ]]; then
+                _srv_pid=$(< "${_srv_pid_file}")
+                SERVER_PIDS+=("${_srv_pid}")
+                SERVER_PID_MAP["qlever_${NAME}"]="${_srv_pid}"
+                log "  [${NAME}] QLever started (PID ${_srv_pid})"
+            else
+                warn "  [${NAME}] QLever started but PID file missing — server cannot be tracked"
+            fi
 
             if [[ "${ONE_SHOT}" == true && "${SKIP_MINE}" == false ]]; then
                 log "  [${NAME}] Mining schema …"
@@ -747,34 +820,12 @@ for name, port in d.items():
                 _inst_out="${MAPPINGS_DIR}/instance_matching"
                 mkdir -p "${_inst_out}"
 
-                # Discover prefixes from sssom+semra for this dataset
-                _pfx_file_ds="${_inst_out}/.prefixes_${NAME}.txt"
-                _disc_args="rdfsolve instance-match discover-prefixes"
-                if [[ -d "${MAPPINGS_DIR}/sssom" ]]; then
-                    _disc_args+=" -d ${MAPPINGS_DIR}/sssom"
-                else
-                    warn "  [${NAME}] sssom dir not found: ${MAPPINGS_DIR}/sssom"
-                fi
-                if [[ -d "${MAPPINGS_DIR}/semra" ]]; then
-                    _disc_args+=" -d ${MAPPINGS_DIR}/semra"
-                else
-                    warn "  [${NAME}] semra dir not found: ${MAPPINGS_DIR}/semra"
-                fi
-                _disc_args+=" -o ${_pfx_file_ds}"
-                log "  [${NAME}] Discovering prefixes …"
-                eval "${_disc_args}" || warn "[${NAME}] Prefix discovery had warnings"
-
-                _ds_prefixes=()
-                if [[ -s "${_pfx_file_ds}" ]]; then
-                    while IFS= read -r _p; do
-                        [[ -n "${_p}" ]] && _ds_prefixes+=("${_p}")
-                    done < "${_pfx_file_ds}"
-                fi
-                if [[ ${#_ds_prefixes[@]} -eq 0 ]]; then
-                    _ds_prefixes=(chebi ensembl faldo uniprot)
-                    warn "[${NAME}] Prefix discovery empty; using defaults"
-                fi
-                log "  [${NAME}] Prefixes (${#_ds_prefixes[@]}): ${_ds_prefixes[*]}"
+                # Re-use the shared prefix cache built before the loop.
+                # If new mapping files were added mid-run (rare), the cache
+                # can be invalidated by deleting _SHARED_PFX_FILE before
+                # resubmitting.
+                _ds_prefixes=("${_SHARED_PREFIXES[@]}")
+                log "  [${NAME}] Using ${#_ds_prefixes[@]} cached prefix(es): ${_ds_prefixes[*]}"
 
                 # Build a single-entry ports JSON for this dataset
                 _ds_ports_json="${_inst_out}/.ports_${NAME}.json"
