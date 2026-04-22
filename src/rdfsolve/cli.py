@@ -1506,10 +1506,22 @@ def discover_prefixes_cmd(
     if output:
         Path(output).parent.mkdir(parents=True, exist_ok=True)
         Path(output).write_text(text + "\n")
-        click.echo(f"Wrote {len(prefixes)} prefixes to {output}")
+        click.echo(
+            f"Wrote {len(prefixes)} prefixes to {output}",
+            err=True,
+        )
     else:
         click.echo(text)
-    click.echo(f"  ({len(prefixes)} prefixes discovered)", err=True)
+    # Always print a human-readable summary to stderr so it shows up in logs
+    # regardless of whether --output was used.
+    click.echo(
+        f"discover-prefixes: {len(prefixes)} valid prefixes from {len(mapping_dirs)} dir(s)",
+        err=True,
+    )
+    if prefixes:
+        click.echo(f"  prefixes: {', '.join(prefixes)}", err=True)
+    else:
+        click.echo("  (none found — check that mapping dirs contain *.jsonld files)", err=True)
 
 
 @instance_match_group.command("probe")
@@ -1705,6 +1717,14 @@ def seed_cmd(
     """
     from rdfsolve.api import seed_instance_mappings
 
+    n_total = len(prefix_list)
+    click.echo(
+        f"seed: {n_total} prefix(es) to probe"
+        + (f" against dataset(s): {', '.join(datasets)}" if datasets else "")
+        + (f"  [ports-json={ports_json}]" if ports_json else ""),
+        err=True,
+    )
+
     try:
         result = seed_instance_mappings(
             prefixes=list(prefix_list),
@@ -1721,10 +1741,17 @@ def seed_cmd(
         click.echo(f"Error: {exc}", err=True)
         raise click.Abort()
 
-    for p in result["succeeded"]:
-        click.echo(f"  OK {p}")
+    for i, p in enumerate(result["succeeded"], start=1):
+        click.echo(f"  [{i}/{n_total}] OK   {p}")
     for f in result["failed"]:
         click.echo(f"  FAIL {f['prefix']}: {f['error']}", err=True)
+
+    n_ok = len(result["succeeded"])
+    n_fail = len(result["failed"])
+    click.echo(
+        f"seed complete: {n_ok}/{n_total} succeeded, {n_fail} failed",
+        err=True,
+    )
 
     if result["failed"]:
         raise SystemExit(1)
