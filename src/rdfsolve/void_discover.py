@@ -924,7 +924,7 @@ class VoidParser:
             return float(val) if val else None
 
         # Extract metadata
-        about_data = {}
+        about_data: dict[str, Any] = {}
 
         # Dataset identity
         about_data["dataset_name"] = get_literal(DCTERMS.title)

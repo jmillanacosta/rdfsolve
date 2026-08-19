@@ -18,7 +18,6 @@ Table of Contents
    :caption: API Reference
 
    api
-   parser
    miner
    schema_models
    mapping_models

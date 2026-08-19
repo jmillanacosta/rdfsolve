@@ -10,7 +10,7 @@ graft src
 graft tests
 
 # ── Essential top-level metadata ─────────────────────────────────
-include README.md LICENSE CITATION.cff ENDPOINT_HEALTH.md
+include README.md LICENSE CITATION.cff ENDPOINT_HEALTH.md uv.lock
 
 # ── Source registry (needed at runtime by the package) ───────────
 include data/sources.yaml

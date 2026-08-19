@@ -16,17 +16,6 @@ Mine an RDF schema from a live SPARQL endpoint::
         dataset_name="uniprot",
     )
 
-Loading an existing VoID file
------------------------------
-
-::
-
-    parser = rdfsolve.load_parser_from_file("dataset_void.ttl")
-
-Or from a previously mined JSON-LD::
-
-    parser = rdfsolve.load_parser_from_jsonld("dataset_schema.jsonld")
-
 Converting between formats
 ---------------------------
 
