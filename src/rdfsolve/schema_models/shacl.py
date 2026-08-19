@@ -42,7 +42,7 @@ def to_shacl(
         If *True*, produce closed SHACL shapes (``sh:closed true``).
     suffix:
         Suffix appended to every shape name
-        (e.g. ``"Shape"`` → ``PersonShape``).
+        (e.g. ``"Shape"`` -> ``PersonShape``).
     include_annotations:
         If *True*, carry annotations through to shapes.
 

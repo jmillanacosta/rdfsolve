@@ -1,36 +1,4 @@
-"""
-Schema Miner - extract RDF schema patterns via SELECT queries.
-
-This module runs three lightweight SELECT DISTINCT queries
-and assembles the schema in Python:
-
-1. **Typed-object patterns**::
-
-       SELECT DISTINCT ?sc ?p ?oc WHERE {
-         ?s ?p ?o . ?s a ?sc . ?o a ?oc .
-       }
-
-2. **Literal patterns** (datatype properties)::
-
-       SELECT DISTINCT ?sc ?p (DATATYPE(?o) AS ?dt) WHERE {
-         ?s ?p ?o . ?s a ?sc . FILTER(isLiteral(?o))
-       }
-
-3. **Untyped-URI patterns** (URI objects without ``rdf:type``)::
-
-       SELECT DISTINCT ?sc ?p WHERE {
-         ?s ?p ?o . ?s a ?sc .
-         FILTER(isURI(?o))
-         FILTER NOT EXISTS { ?o a ?any }
-       }
-
-All queries use OFFSET / LIMIT pagination via
-:meth:`SparqlHelper.select_chunked`.
-
-The primary export is :class:`MinedSchema` (-> JSON-LD).  It can also
-be converted to downstream LinkML / SHACL / RDF-config
-exports.
-"""
+"""Extract RDF schema patterns from SPARQL endpoints using SELECT queries for typed objects, literals, URIs, and blank nodes."""
 
 from __future__ import annotations
 
@@ -46,11 +14,13 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
+from rdfsolve._uri import get_local_name, pick_label
 from rdfsolve.models import (
     AboutMetadata,
     MinedSchema,
     MiningReport,
     OneShotQueryResult,
+    PatternType,
     PhaseReport,
     QueryStats,
     SchemaPattern,
@@ -61,7 +31,6 @@ from rdfsolve.sparql_helper import (
     PaginationTruncatedError,
     SparqlHelper,
 )
-from rdfsolve.utils import get_local_name, pick_label
 from rdfsolve.version import VERSION
 
 if TYPE_CHECKING:
@@ -71,22 +40,11 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "SchemaMiner",
-    "_mine_one_source",
-    "_resolve_source_overrides",
-    "_write_schema_outputs",
-    "count_instances",
-    "count_instances_per_class",
-    "extract_partitions_from_void",
-    "generate_void_from_endpoint",
-    "mine_all_sources",
     "mine_schema",
-    "retrieve_void_from_graphs",
 ]
 
 
-# -------------------------------------------------------------------
-# SPARQL query templates (braces pre-escaped for str.format)
-# -------------------------------------------------------------------
+# SPARQL query templates
 
 
 def _graph_clause(
@@ -215,6 +173,52 @@ WHERE {{
 }}"""
 
 
+def _build_blank_node_query(
+    graph_uris: list[str] | None,
+) -> str:
+    """Query 4: blank node patterns (``isBlank(?o)``).
+
+    Captures the subject class and property leading to blank nodes,
+    plus the first predicate the blank node itself has (for structural
+    signature). This helps distinguish different blank node patterns
+    like RDF lists, OWL restrictions, etc.
+    """
+    g_open, g_close = _graph_clause(graph_uris)
+    q = f"""\
+SELECT DISTINCT ?sc ?p ?bnPred
+WHERE {{
+  {g_open}
+    ?s ?p ?o .
+    ?s a ?sc .
+    FILTER(isBlank(?o))
+    OPTIONAL {{ ?o ?bnPred ?bnObj }}
+  {g_close}
+}}"""
+    return SparqlHelper.prepare_paginated_query(q)
+
+
+def _build_blank_node_query_plain(
+    graph_uris: list[str] | None,
+) -> str:
+    """Query 4 - blank node patterns with structural signature.
+
+    Captures ?bnPred (predicates that blank nodes have) to distinguish
+    structural patterns like rdf:first/rdf:rest (lists),
+    owl:onProperty/owl:someValuesFrom (restrictions), etc.
+    """
+    g_open, g_close = _graph_clause(graph_uris)
+    return f"""\
+SELECT DISTINCT ?sc ?p ?bnPred
+WHERE {{
+  {g_open}
+    ?s ?p ?o .
+    ?s a ?sc .
+    FILTER(isBlank(?o))
+    OPTIONAL {{ ?o ?bnPred ?bnObj }}
+  {g_close}
+}}"""
+
+
 def _build_label_query(
     uris: list[str],
     graph_uris: list[str] | None,
@@ -243,9 +247,7 @@ WHERE {{
     return q
 
 
-# -------------------------------------------------------------------
 # Two-phase query builders (class-scoped, for large endpoints)
-# -------------------------------------------------------------------
 
 
 def _build_class_discovery_query(
@@ -277,59 +279,32 @@ WHERE {{
 }}"""
 
 
-def _build_class_typed_object_query(
-    class_uri: str,
+def _build_declared_classes_query(
     graph_uris: list[str] | None,
 ) -> str:
-    """Per-class typed-object patterns."""
+    """Find classes formally declared as owl:Class or rdfs:Class.
+
+    This distinguishes between:
+    - Declared classes: explicitly defined with `?c a owl:Class` or `?c a rdfs:Class`
+    - Used types: URIs that appear as rdf:type values but aren't declared
+
+    Many LOD datasets use external ontology terms as types without importing
+    the class definitions. This query identifies which classes have explicit
+    declarations in the dataset.
+    """
     g_open, g_close = _graph_clause(graph_uris)
     return f"""\
-SELECT DISTINCT ?p ?oc
+SELECT DISTINCT ?class
 WHERE {{
   {g_open}
-    ?s a <{class_uri}> .
-    ?s ?p ?o .
-    ?o a ?oc .
+    {{ ?class a <http://www.w3.org/2002/07/owl#Class> . }}
+    UNION
+    {{ ?class a <http://www.w3.org/2000/01/rdf-schema#Class> . }}
   {g_close}
 }}"""
 
 
-def _build_class_literal_query(
-    class_uri: str,
-    graph_uris: list[str] | None,
-) -> str:
-    """Per-class literal patterns."""
-    g_open, g_close = _graph_clause(graph_uris)
-    return f"""\
-SELECT DISTINCT ?p (DATATYPE(?o) AS ?dt)
-WHERE {{
-  {g_open}
-    ?s a <{class_uri}> .
-    ?s ?p ?o .
-    FILTER(isLiteral(?o))
-  {g_close}
-}}"""
-
-
-def _build_class_untyped_uri_query(
-    class_uri: str,
-    graph_uris: list[str] | None,
-) -> str:
-    """Per-class untyped-URI patterns."""
-    g_open, g_close = _graph_clause(graph_uris)
-    return f"""\
-SELECT DISTINCT ?p
-WHERE {{
-  {g_open}
-    ?s a <{class_uri}> .
-    ?s ?p ?o .
-    FILTER(isURI(?o))
-    FILTER NOT EXISTS {{ ?o a ?any }}
-  {g_close}
-}}"""
-
-
-# ---- batched two-phase query builders (VALUES) --------------------
+# batched two-phase query builders (VALUES)
 
 
 def _build_properties_for_class_query(
@@ -408,9 +383,7 @@ WHERE {{
     return q
 
 
-# Page size for property-first decomposition fallback.  Large enough
-# to collect most property lists in one or two pages, small enough to
-# stay under per-page cost limits on Virtuoso-style endpoints.
+# Page size for property-first decomposition.
 _DECOMP_CHUNK = 1_000  # lmin
 
 
@@ -548,7 +521,48 @@ WHERE {{
     return q
 
 
-# ---- batched count query builders (VALUES) -----------------------
+def _build_batched_blank_node_query(
+    class_uris: list[str],
+    graph_uris: list[str] | None,
+    paginated: bool = False,
+    drop_distinct: bool = False,
+) -> str:
+    """Blank node patterns for a batch of classes.
+
+    ``VALUES`` is inside the ``GRAPH`` block - see
+    :func:`_build_batched_typed_object_query` for rationale.
+
+    Parameters
+    ----------
+    paginated:
+        When ``True`` returns a template with ``{offset}`` /
+        ``{limit}`` placeholders for
+        :meth:`~rdfsolve.sparql_helper.SparqlHelper.select_chunked`.
+    drop_distinct:
+        When ``True`` omits ``DISTINCT`` from paginated queries.
+        See :func:`_build_batched_typed_object_query` for caveats.
+        Only active when ``paginated=True``.
+    """
+    g_open, g_close = _graph_clause(graph_uris)
+    values = _values_block(class_uris)
+    distinct = "" if (paginated and drop_distinct) else "DISTINCT "
+    q = f"""\
+SELECT {distinct}?class ?p ?bnPred
+WHERE {{
+  {g_open}
+    {values}
+    ?s a ?class .
+    ?s ?p ?o .
+    FILTER(isBlank(?o))
+    OPTIONAL {{ ?o ?bnPred ?bnObj }}
+  {g_close}
+}}"""
+    if paginated:
+        return SparqlHelper.prepare_paginated_query(q)
+    return q
+
+
+# batched count query builders (VALUES)
 
 
 def _build_batched_typed_count_query(
@@ -652,9 +666,7 @@ GROUP BY ?class ?p"""
     return q
 
 
-# -------------------------------------------------------------------
 # Report collector
-# -------------------------------------------------------------------
 
 
 class _ReportCollector:
@@ -683,7 +695,7 @@ class _ReportCollector:
         self._io0: dict[str, int] = {}
         self._snapshot_start()
 
-    # ── Resource snapshots ─────────────────────────────────────────
+    # Resource snapshots
 
     @staticmethod
     def _read_proc_io() -> dict[str, int]:
@@ -764,7 +776,7 @@ class _ReportCollector:
             "write_bytes": (io1.get("write_bytes", 0) - self._io0.get("write_bytes", 0)),
         }
 
-    # ── Query tracking ─────────────────────────────────────────────
+    # Query tracking
 
     def record_query(
         self,
@@ -784,8 +796,6 @@ class _ReportCollector:
             stats.failed += 1
             self._report.total_queries_failed += 1
 
-    # ── Dropped URI tracking ───────────────────────────────────────
-
     _MAX_DROPPED_SAMPLES: int = 20
 
     def record_dropped_uri(self, sample: str) -> None:
@@ -798,7 +808,7 @@ class _ReportCollector:
         if len(self._report.dropped_invalid_uri_samples) < self._MAX_DROPPED_SAMPLES:
             self._report.dropped_invalid_uri_samples.append(sample)
 
-    # ── Phase tracking ─────────────────────────────────────────────
+    # Phase tracking
 
     def start_phase(self, name: str) -> PhaseReport:
         """Start a new phase and return its report object."""
@@ -833,8 +843,6 @@ class _ReportCollector:
         self._report.abort_reason = reason
         self.flush()
 
-    # ── Finalisation ───────────────────────────────────────────────
-
     def finalise(
         self,
         pattern_count: int,
@@ -866,7 +874,7 @@ class _ReportCollector:
         self.flush()
         return r
 
-    # ── I/O ────────────────────────────────────────────────────────
+    # I/O
 
     def flush(self) -> None:
         """Write current state to disk (if a path was given)."""
@@ -892,9 +900,7 @@ class _ReportCollector:
         return self._report
 
 
-# -------------------------------------------------------------------
 # SchemaMiner
-# -------------------------------------------------------------------
 
 
 class SchemaMiner:
@@ -925,7 +931,7 @@ class SchemaMiner:
         Use two-phase mining (default).  Phase 1 discovers all
         ``rdf:type`` classes; phase 2 queries properties per
         class.  Much gentler on heavyweight endpoints like
-        QLever/PubChem/UniProt.  Pass ``False`` for the legacy
+        QLever/PubChem/UniProt.  Pass ``False`` for
         single-pass strategy.
     filter_service_namespaces:
         When ``True`` (the default), remove patterns whose
@@ -997,7 +1003,7 @@ class SchemaMiner:
             raise RuntimeError("mine() must be called first")
         return self._rc
 
-    # ---- public API -----------------------------------------------
+    # public API
 
     def _build_strategy_string(self) -> str:
         """Return the strategy tag that describes the active mining flags."""
@@ -1107,20 +1113,52 @@ class SchemaMiner:
             properties.add(p.property_uri)
         return classes, properties
 
+    def _query_declared_classes(self) -> set[str]:
+        """Query for classes formally declared as owl:Class or rdfs:Class.
+
+        Returns a set of class URIs that have explicit class definitions
+        in the dataset. This helps distinguish between:
+        - Declared classes: formally defined in this dataset
+        - Used types: URIs used as rdf:type but defined elsewhere (or not at all)
+        """
+        query = _build_declared_classes_query(self.graph_uris)
+        declared: set[str] = set()
+        try:
+            raw = self._helper.select(query, purpose="declared_classes")
+            bindings = raw.get("results", {}).get("bindings", [])
+            for row in bindings:
+                class_val = row.get("class", {}).get("value")
+                if class_val:
+                    declared.add(str(class_val))
+            logger.info("Found %d declared classes (owl:Class/rdfs:Class)", len(declared))
+        except Exception as e:
+            logger.warning("Could not query declared classes: %s", e)
+        return declared
+
     def _build_about_metadata(
         self,
         dataset_name: str | None,
         strategy: str,
         started_at: str,
         patterns: list[SchemaPattern],
+        declared_class_count: int = 0,
+        used_type_count: int = 0,
     ) -> AboutMetadata:
-        """Construct :class:`AboutMetadata` from the completed mining run."""
+        """Construct :class:`AboutMetadata` from the completed mining run.
+
+        Only uses user-provided metadata. Auto-queried metadata goes to MiningReport.
+        """
         finished_at = self._report.report.finished_at
+        total_classes = declared_class_count + used_type_count
+
         return AboutMetadata.build(
             endpoint=self.endpoint_url,
             dataset_name=dataset_name,
             graph_uris=self.graph_uris,
             pattern_count=len(patterns),
+            class_count=total_classes,
+            declared_class_count=declared_class_count,
+            used_type_count=used_type_count,
             strategy=strategy,
             started_at=started_at,
             finished_at=finished_at,
@@ -1143,6 +1181,12 @@ class SchemaMiner:
                 len(schema.patterns),
             )
         return schema
+
+    def query_dataset_metadata(self) -> dict[str, Any]:
+        """Query endpoint for dataset metadata using multiple patterns."""
+        from rdfsolve.metadata import query_endpoint_metadata
+
+        return query_endpoint_metadata(self._helper)
 
     def mine(
         self,
@@ -1184,6 +1228,19 @@ class SchemaMiner:
         classes, properties = self._collect_class_property_sets(
             patterns,
         )
+
+        # Query for formally declared classes (owl:Class / rdfs:Class)
+        declared_classes = self._query_declared_classes()
+        declared_in_patterns = declared_classes & classes
+        used_types = classes - declared_classes
+
+        logger.info(
+            "Class breakdown: %d declared (in patterns: %d), %d used-only types",
+            len(declared_classes),
+            len(declared_in_patterns),
+            len(used_types),
+        )
+
         self._report.finalise(
             pattern_count=len(patterns),
             class_count=len(classes),
@@ -1195,11 +1252,24 @@ class SchemaMiner:
             self._report.flush()
         self.last_report = self._report.report
 
+        # Query dataset metadata for MiningReport (not VoID)
+        try:
+            logger.info("Querying dataset metadata...")
+            discovered_metadata = self.query_dataset_metadata()
+            if discovered_metadata:
+                logger.info("Discovered metadata: %s", list(discovered_metadata.keys()))
+                self._report.report.discovered_metadata = discovered_metadata
+                self._report.flush()
+        except Exception as e:
+            logger.warning("Could not query dataset metadata: %s", e)
+
         about = self._build_about_metadata(
             dataset_name,
             strategy,
             started_at,
             patterns,
+            declared_class_count=len(declared_in_patterns),
+            used_type_count=len(used_types),
         )
         schema = MinedSchema(patterns=patterns, about=about)
 
@@ -1208,7 +1278,7 @@ class SchemaMiner:
 
         return schema
 
-    # ---- helpers ---------------------------------------------------
+    # helpers
 
     @staticmethod
     def _unique_uris(
@@ -1223,7 +1293,7 @@ class SchemaMiner:
                 uris.add(p.object_class)
         return uris
 
-    # ---- single-pass mining (original) ----------------------------
+    # single-pass mining
 
     def _mine_single_pass(self) -> list[SchemaPattern]:
         """Original three-query mining approach."""
@@ -1252,7 +1322,7 @@ class SchemaMiner:
 
         return patterns
 
-    # ---- one-shot mining (baseline for QLever comparison) ---------
+    # one-shot mining
 
     def _parse_one_shot_bindings(
         self,
@@ -1265,7 +1335,8 @@ class SchemaMiner:
         Parameters
         ----------
         qtype:
-            One of ``"typed-object"``, ``"literal"``, ``"untyped-uri"``.
+            One of ``"typed-object"``, ``"literal"``, ``"untyped-uri"``,
+            ``"blank-node"``.
         bindings:
             The ``results.bindings`` list from a SPARQL JSON response.
         oc_default:
@@ -1285,6 +1356,7 @@ class SchemaMiner:
                                 subject_class=sc,
                                 property_uri=p,
                                 object_class=oc,
+                                pattern_type=PatternType.OBJECT_PROPERTY,
                             )
                         )
                     except (ValueError, ValidationError) as exc:
@@ -1303,11 +1375,40 @@ class SchemaMiner:
                                 property_uri=p,
                                 object_class="Literal",
                                 datatype=dt if dt else None,
+                                pattern_type=PatternType.DATATYPE_PROPERTY,
                             )
                         )
                     except (ValueError, ValidationError) as exc:
                         self._report.record_dropped_uri(f"{sc} {p} Literal")
                         logger.debug("Skipping invalid pattern (%s %s Literal): %s", sc, p, exc)
+        elif qtype == "blank-node":
+            # Group bindings by (sc, p) to collect all blank node predicates
+            bn_map: dict[tuple[str, str], list[str]] = {}
+            for b in bindings:
+                sc = b.get("sc", {}).get("value", "")
+                p = b.get("p", {}).get("value", "")
+                bn_pred = b.get("bnPred", {}).get("value")
+                if sc and p:
+                    key = (sc, p)
+                    if key not in bn_map:
+                        bn_map[key] = []
+                    if bn_pred and bn_pred not in bn_map[key]:
+                        bn_map[key].append(bn_pred)
+            # Create patterns with collected blank node predicates
+            for (sc, p), bn_preds in bn_map.items():
+                try:
+                    patterns.append(
+                        SchemaPattern(
+                            subject_class=sc,
+                            property_uri=p,
+                            object_class="BlankNode",
+                            blank_node_predicates=bn_preds if bn_preds else None,
+                            pattern_type=PatternType.BLANK_NODE_PROPERTY,
+                        )
+                    )
+                except (ValueError, ValidationError) as exc:
+                    self._report.record_dropped_uri(f"{sc} {p} BlankNode")
+                    logger.debug("Skipping invalid pattern (%s %s BlankNode): %s", sc, p, exc)
         else:  # untyped-uri
             for b in bindings:
                 sc = b.get("sc", {}).get("value", "")
@@ -1319,11 +1420,14 @@ class SchemaMiner:
                                 subject_class=sc,
                                 property_uri=p,
                                 object_class=oc_default,
+                                pattern_type=PatternType.OBJECT_PROPERTY,
                             )
                         )
                     except (ValueError, ValidationError) as exc:
                         self._report.record_dropped_uri(f"{sc} {p} {oc_default}")
-                        logger.debug("Skipping invalid pattern (%s %s %s): %s", sc, p, oc_default, exc)
+                        logger.debug(
+                            "Skipping invalid pattern (%s %s %s): %s", sc, p, oc_default, exc
+                        )
         return patterns
 
     def _run_one_shot_query(
@@ -1422,6 +1526,7 @@ class SchemaMiner:
             ("typed-object", _build_typed_object_query_plain(self.graph_uris)),
             ("literal", _build_literal_query_plain(self.graph_uris)),
             ("untyped-uri", _build_untyped_uri_query_plain(self.graph_uris)),
+            ("blank-node", _build_blank_node_query_plain(self.graph_uris)),
         ]
 
         patterns: list[SchemaPattern] = []
@@ -1441,7 +1546,7 @@ class SchemaMiner:
 
         return patterns, results
 
-    # ---- two-phase mining (for large endpoints) -------------------
+    # two-phase mining (for large endpoints)
 
     def _mine_two_phase(self) -> list[SchemaPattern]:
         """Two-phase mining: discover classes, then query per class.
@@ -1509,7 +1614,7 @@ class SchemaMiner:
             self.graph_uris,
         )
 
-        # ── Ontology-graph fallback ───────────────────────────
+        # Ontology-graph fallback
         # If the GRAPH-scoped pass found 0 patterns but Phase 1
         # discovered classes, instances live in the
         # default graph or other named graphs.  Retry without the
@@ -1533,7 +1638,7 @@ class SchemaMiner:
             self._report.set_abort_reason(abort_reason)
         return patterns
 
-    # ---- Bisecting query helper -----------------------------------
+    # Bisecting query helper
 
     def _query_with_bisect(
         self,
@@ -1543,23 +1648,6 @@ class SchemaMiner:
         purpose: str,
     ) -> list[dict[str, Any]]:
         """Run a batched VALUES query with automatic bisection fallback.
-
-        Strategy (in order):
-        1. Single SELECT for the full *classes* list.
-        2. Recursively bisect the list and retry each half independently,
-           down to individual single-class queries.
-        3. For a single-class batch that still fails: paginated SELECT
-           (LIMIT/OFFSET) - the result set itself is just large, so
-           pagination (not batch splitting) is the right tool.
-
-        Bisecting is tried before pagination for multi-class batches
-        because pagination does not reduce join cardinality: every page
-        still joins over the full VALUES block.  Splitting the batch
-        into smaller groups immediately lowers query cost.
-
-        This guarantees that a persistently expensive batch is eventually
-        broken down into single-class queries which always complete,
-        rather than silently dropping data.
 
         Parameters
         ----------
@@ -1579,24 +1667,36 @@ class SchemaMiner:
         list[dict]
             All SPARQL result bindings collected across all sub-queries.
         """
-        # ── attempt 1: single-shot SELECT ──────────────────────────
+        # attempt 1: single-shot SELECT
         label = f"{classes[0]}…" if len(classes) > 1 else classes[0]
         q = build_fn(classes, graph_uris)
         try:
             result = self._helper.select(q, purpose=purpose)
             bindings: list[dict[str, Any]] = result.get("results", {}).get("bindings", [])
             return bindings
-        except EndpointTimeoutError:
-            # Cost/timeout — worth bisecting/paginating, fall through.
-            logger.warning(
-                "  %s single-shot timed out for [%s] (%d classes) - %s",
-                purpose,
-                label,
-                len(classes),
-                "trying paginated" if len(classes) == 1 else "bisecting",
-            )
+        except EndpointTimeoutError as e:
+            # Cost/timeout - worth bisecting/paginating, fall through.
+            # 502 means server overload - wait longer before retrying
+            if getattr(e, "status_code", None) == 502:
+                wait_time = 120.0  # 2 minutes for severe rate limiting
+                logger.warning(
+                    "  %s got 502 for [%s] (%d classes) - server overloaded, waiting %.0fs before retry",
+                    purpose,
+                    label,
+                    len(classes),
+                    wait_time,
+                )
+                time.sleep(wait_time)
+            else:
+                logger.warning(
+                    "  %s single-shot timed out for [%s] (%d classes) - %s",
+                    purpose,
+                    label,
+                    len(classes),
+                    "trying paginated" if len(classes) == 1 else "bisecting",
+                )
         except EndpointError as e:
-            # Hard failure (502, unreachable, etc.) — no point retrying
+            # Hard failure (unreachable, DNS errors, etc.) - no point retrying
             # with smaller batches or pagination against the same dead host.
             logger.warning(
                 "  %s endpoint error for [%s] - skipping all fallbacks: %s",
@@ -1615,14 +1715,8 @@ class SchemaMiner:
                 q,
             )
 
-        # ── attempt 2: bisect (multi-class) or paginate (single-class) ──
-        #
-        # For multi-class batches, bisect immediately: pagination does not
-        # reduce join cardinality (every page still scans the full VALUES
-        # block), so splitting the batch is strictly cheaper.
-        #
-        # For single-class batches the batch can't shrink further, so the
-        # only lever left is pagination of the (potentially large) result set.
+        # attempt 2: bisect (multi-class) or paginate (single-class)
+
         if len(classes) > 1:
             mid = len(classes) // 2
             left = self._query_with_bisect(
@@ -1639,7 +1733,7 @@ class SchemaMiner:
             )
             return left + right
 
-        # ── attempt 3: paginated SELECT (single-class only) ──────────
+        # attempt 3: paginated SELECT (single-class only)
         qt = build_fn(
             classes,
             graph_uris,
@@ -1682,10 +1776,8 @@ class SchemaMiner:
                 qt,
             )
 
-        # ── attempt 4: property-first decomposition (typed-object only) ──
-        # Can't bisect or paginate further. For typed-object queries, enumerate
-        # ?p (cheap, 1-hop), then look up ?oc per property (cheap, 2-hop).
-        # This sidesteps the 3-way join that exceeds Virtuoso's cost limit.
+        # attempt 4: property-first decomposition (typed-object only)
+
         if build_fn is _build_batched_typed_object_query:
             return self._typed_object_by_property(
                 classes[0],
@@ -1699,7 +1791,7 @@ class SchemaMiner:
         )
         return []
 
-    # ---- Property-first typed-object decomposition ---------------
+    # Property-first typed-object decomposition
 
     def _enumerate_properties_for_class(
         self,
@@ -1709,7 +1801,7 @@ class SchemaMiner:
     ) -> list[str] | None:
         """Return distinct property URIs for *class_uri*, or ``None`` on failure.
 
-        Tries a single-shot SELECT first; falls back to paginated retrieval.
+        Tries a single-shot SELECT first; uses paginated retrieval.
         Returns ``None`` (not an empty list) when even the paginated attempt
         fails, so the caller can distinguish "no properties" from "query
         failed".
@@ -1768,7 +1860,7 @@ class SchemaMiner:
     ) -> list[str]:
         """Return distinct object-class URIs for *(class_uri, prop_uri)*.
 
-        Tries a single-shot SELECT first; falls back to paginated retrieval.
+        Tries a single-shot SELECT first; uses paginated retrieval.
         Returns an empty list when both attempts fail (the property is skipped
         silently after a warning).
         """
@@ -1830,26 +1922,7 @@ class SchemaMiner:
         graph_uris: list[str] | None,
         purpose: str,
     ) -> list[dict[str, Any]]:
-        """Typed-object patterns for one class via property-first decomposition.
-
-        Used when the standard 3-way join ``?s a ?class . ?s ?p ?o . ?o a ?oc``
-        exceeds Virtuoso's cost limit even for a single class.
-
-        Strategy
-        --------
-        1. Enumerate distinct ``?p`` for the class (1-hop, cheap).
-        2. For each ``?p``, enumerate distinct ``?oc`` (2-hop, property-indexed,
-           cheap because the property scope drastically reduces the scan).
-
-        Returns synthetic bindings in the same shape as the normal
-        typed-object query so the caller needs no special handling.
-
-        Pagination for decomposed queries uses :data:`_DECOMP_CHUNK`
-        (1 000 rows) - large enough to collect
-        most property lists in one or two pages, small enough to stay
-        under Virtuoso's per-page cost limit.  ``select_chunked`` will
-        adaptively shrink further if individual pages still time out.
-        """
+        """Typed-object patterns for one class via property-first decomposition."""
         logger.info(
             "  %s: <%s> too expensive for 3-way join - trying property-first decomposition",
             purpose,
@@ -1897,14 +1970,14 @@ class SchemaMiner:
         )
         return bindings
 
-    # ---- Phase 2 batch runner -------------------------------------
+    # batch runner
 
     def _run_phase2_batches(
         self,
         classes: list[str],
         graph_uris: list[str] | None,
     ) -> tuple[list[SchemaPattern], str | None]:
-        """Execute Phase 2 batched queries for *classes*.
+        """Execute Phase 2 batched queries for classes.
 
         Parameters
         ----------
@@ -2034,13 +2107,46 @@ class SchemaMiner:
                     except (ValueError, ValidationError):
                         self._report.record_dropped_uri(f"{cls} {p} {untyped_oc}")
 
-            # Polite delay between batches
+            # 2d. Blank node patterns for this batch
+            t0 = time.monotonic()
+            blank_bindings = self._query_with_bisect(
+                batch,
+                graph_uris,
+                _build_batched_blank_node_query,
+                "two-phase/blank-node",
+            )
+            self._report.record_query(
+                "two-phase/blank-node",
+                time.monotonic() - t0,
+            )
+            for b in blank_bindings:
+                cls = b.get("class", {}).get("value", "")
+                p = b.get("p", {}).get("value", "")
+                bn_pred = b.get("bnPred", {}).get("value")
+                if cls and p:
+                    # Represent blank nodes with structural signature if available
+                    if bn_pred:
+                        object_class = f"BlankNode[{bn_pred}]"
+                    else:
+                        object_class = "BlankNode"
+                    try:
+                        patterns.append(
+                            SchemaPattern(
+                                subject_class=cls,
+                                property_uri=p,
+                                object_class=object_class,
+                            )
+                        )
+                    except (ValueError, ValidationError):
+                        self._report.record_dropped_uri(f"{cls} {p} {object_class}")
+
+            # Delay between batches
             if self.delay > 0:
                 time.sleep(self.delay)
 
         return patterns, abort_reason
 
-    # ---- private query runners ------------------------------------
+    # private query runners
 
     def _collect_bindings(
         self,
@@ -2314,7 +2420,7 @@ class SchemaMiner:
             self._fetch_literal_count_batch(batch, label, counts)
             self._fetch_untyped_count_batch(batch, label, counts)
 
-            # Polite delay between batches
+            # Delay between batches
             if self.delay > 0:
                 time.sleep(self.delay)
 
@@ -2351,7 +2457,7 @@ class SchemaMiner:
         batch: list[str],
         label_map: dict[str, str],
     ) -> None:
-        """Query labels for one batch of URIs and update *label_map* in place.
+        """Query labels for one batch of URIs and update label_map in place.
 
         Parameters
         ----------
@@ -2458,9 +2564,7 @@ def _enrich_with_local(
     return enriched
 
 
-# -------------------------------------------------------------------
 # Convenience function
-# -------------------------------------------------------------------
 
 
 def mine_schema(
@@ -2514,7 +2618,7 @@ def mine_schema(
         Fetch triple counts per pattern.
     two_phase:
         Use two-phase mining (default ``True``).  Pass ``False``
-        for the legacy single-pass strategy.
+        for single-pass strategy.
     one_shot:
         Run each pattern query as a single unbounded SELECT with no
         LIMIT/OFFSET and no fallback chain.  Intended for local
@@ -2557,566 +2661,3 @@ def mine_schema(
         source_name=source_name,
     )
     return miner.mine(dataset_name=dataset_name)
-
-
-# -------------------------------------------------------------------
-# Batch-mining helpers (used by api.mine_all_sources)
-# -------------------------------------------------------------------
-
-
-def _resolve_source_overrides(
-    entry: SourceEntry,
-    *,
-    chunk_size: int,
-    class_chunk_size: int | None,
-    class_batch_size: int,
-    delay: float,
-    timeout: float,
-    counts: bool,
-    two_phase: bool,
-    idx: int,
-    total: int,
-    name: str,
-) -> dict[str, Any]:
-    """Return effective per-source mining parameters.
-
-    Values from *entry* take precedence over the function-level
-    defaults.  ``class_chunk_size`` is only forwarded for two-phase
-    rows; a warning is emitted otherwise.
-    """
-    effective_ccs: int | None = None
-    if two_phase:
-        effective_ccs = entry.get("class_chunk_size", class_chunk_size)
-    elif class_chunk_size is not None:
-        logger.info(
-            "[%d/%d] --class-chunk-size ignored for %r (not two-phase)",
-            idx,
-            total,
-            name,
-        )
-    return {
-        "chunk_size": entry.get("chunk_size", chunk_size),
-        "class_chunk_size": effective_ccs,
-        "class_batch_size": entry.get(
-            "class_batch_size",
-            class_batch_size,
-        ),
-        "delay": entry.get("delay", delay),
-        "timeout": entry.get("timeout", timeout),
-        "counts": entry.get("counts", counts),
-    }
-
-
-def _write_schema_outputs(
-    schema: MinedSchema,
-    *,
-    out: Path,
-    name: str,
-    tag: str,
-    fmt: str,
-) -> None:
-    """Serialise *schema* to the requested format(s) under *out*."""
-    if fmt in ("jsonld", "all"):
-        jsonld_path = out / f"{name}_{tag}_schema.jsonld"
-        with open(jsonld_path, "w") as fh:
-            json.dump(schema.to_jsonld(), fh, indent=2)
-        logger.info("  -> %s", jsonld_path)
-
-    if fmt in ("void", "all"):
-        void_path = out / f"{name}_{tag}_void.ttl"
-        void_g = schema.to_void_graph()
-        void_g.serialize(destination=str(void_path), format="turtle")
-        logger.info("  -> %s (%d triples)", void_path, len(void_g))
-
-
-def _mine_one_source(
-    entry: SourceEntry,
-    *,
-    idx: int,
-    total: int,
-    out: Path,
-    fmt: str,
-    chunk_size: int,
-    class_chunk_size: int | None,
-    class_batch_size: int,
-    delay: float,
-    timeout: float,
-    counts: bool,
-    reports: bool,
-    filter_service_namespaces: bool,
-    untyped_as_classes: bool,
-    authors: list[dict[str, str]] | None,
-    on_progress: (Callable[[str, int, int, str | None], None] | None),
-    succeeded: list[str],
-    failed: list[dict[str, str]],
-) -> None:
-    """Mine one source entry, write outputs, update *succeeded*/*failed*.
-
-    All complex logic (parameter resolution, path building, error
-    handling) lives here so that :func:`~rdfsolve.api.mine_all_sources`
-    stays a thin loop.
-    """
-    name: str = entry.get("name", "")
-    endpoint: str = entry.get("endpoint", "")
-    row_two_phase: bool = entry.get("two_phase", True)
-
-    graph_uris_arg: list[str] | None = None
-    entry_graphs = entry.get("graph_uris", [])
-    if entry_graphs:
-        graph_uris_arg = list(entry_graphs)
-
-    logger.info("[%d/%d] Mining %r (%s)", idx, total, name, endpoint)
-
-    params = _resolve_source_overrides(
-        entry,
-        chunk_size=chunk_size,
-        class_chunk_size=class_chunk_size,
-        class_batch_size=class_batch_size,
-        delay=delay,
-        timeout=timeout,
-        counts=counts,
-        two_phase=row_two_phase,
-        idx=idx,
-        total=total,
-        name=name,
-    )
-    tag = "mined_remote_untyped" if untyped_as_classes else "mined_remote"
-    rpt_path: Path | None = out / f"{name}_{tag}_report.json" if reports else None
-
-    try:
-        schema = mine_schema(
-            endpoint_url=endpoint,
-            graph_uris=graph_uris_arg,
-            dataset_name=name,
-            two_phase=row_two_phase,
-            report_path=rpt_path,
-            filter_service_namespaces=filter_service_namespaces,
-            untyped_as_classes=untyped_as_classes,
-            authors=authors,
-            sparql_engine=entry.get("sparql_engine", ""),
-            sparql_strategy=entry.get("sparql_strategy", ""),
-            source_name=name,
-            **params,
-        )
-        _write_schema_outputs(
-            schema,
-            out=out,
-            name=name,
-            tag=tag,
-            fmt=fmt,
-        )
-        succeeded.append(name)
-        if on_progress:
-            on_progress(name, idx, total, None)
-    except Exception as exc:
-        msg = str(exc)
-        logger.warning("  FAIL %s: %s", name, msg)
-        failed.append({"dataset": name, "error": msg})
-        if on_progress:
-            on_progress(name, idx, total, msg)
-
-
-# -------------------------------------------------------------------
-# VoID / instance-counting helpers
-# -------------------------------------------------------------------
-
-
-def count_instances(
-    endpoint_url: str,
-    graph_uris: str | list[str] | None = None,
-    sample_limit: int | None = None,
-    sample_offset: int | None = None,
-    chunk_size: int | None = None,
-    offset_limit_steps: int | None = None,
-    delay_between_chunks: float = 20.0,
-    streaming: bool = False,
-    timeout: float = 120.0,
-) -> dict[str, int] | Any:
-    """Count instances per class at *endpoint_url*.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL.
-        graph_uris: Optional named-graph URI(s) to restrict queries.
-        sample_limit: Maximum number of classes to return.
-        sample_offset: Starting offset for pagination.
-        chunk_size: Page size when paginating.
-        offset_limit_steps: Use this value as both LIMIT and OFFSET
-            step (overrides *chunk_size*).
-        delay_between_chunks: Seconds to sleep between pages.
-        streaming: If ``True`` return a generator of
-            ``(class_uri, count)`` tuples instead of a dict.
-        timeout: HTTP timeout per request.
-
-    Returns:
-        ``{class_uri: count}`` dict, or a generator when
-        *streaming* is ``True``.
-    """
-    helper = SparqlHelper(endpoint_url, timeout=timeout)
-    step = offset_limit_steps or chunk_size
-    offset = sample_offset or 0
-
-    if step is not None:
-
-        def _chunked() -> Any:
-            off = offset
-            seen = 0
-            while True:
-                q = _count_instances_query(
-                    graph_uris,
-                    limit=step,
-                    offset=off,
-                )
-                results = helper.select(q, purpose="coverage/class")
-                bindings = results["results"]["bindings"]
-                if not bindings:
-                    break
-                for row in bindings:
-                    if sample_limit and seen >= sample_limit:
-                        return
-                    yield (
-                        row["class"]["value"],
-                        int(row["count"]["value"]),
-                    )
-                    seen += 1
-                if len(bindings) < step:
-                    break
-                off += step
-                time.sleep(delay_between_chunks)
-
-        gen = _chunked()
-        return gen if streaming else dict(gen)
-
-    q = _count_instances_query(
-        graph_uris,
-        limit=sample_limit,
-        offset=sample_offset,
-    )
-    try:
-        results = helper.select(q, purpose="coverage/class")
-        pairs = (
-            (r["class"]["value"], int(r["count"]["value"])) for r in results["results"]["bindings"]
-        )
-        if streaming:
-            return pairs
-        return dict(pairs)
-    except Exception:
-        return iter([]) if streaming else {}
-
-
-def _count_instances_query(
-    graph_uris: str | list[str] | None,
-    limit: int | None,
-    offset: int | None,
-) -> str:
-    gc = _graph_clause([graph_uris] if isinstance(graph_uris, str) else graph_uris)
-    tail = ""
-    if offset:
-        tail += f"\nOFFSET {offset}"
-    if limit:
-        tail += f"\nLIMIT {limit}"
-    return (
-        f"SELECT ?class (COUNT(DISTINCT ?instance) AS ?count) WHERE {{"
-        f"\n{gc}"
-        f"\n  ?instance a ?class ."
-        f"\n{'}}' if not gc else ''}"
-        f"\n}}\nGROUP BY ?class\nORDER BY DESC(?count){tail}"
-    )
-
-
-def count_instances_per_class(
-    endpoint_url: str,
-    graph_uris: str | list[str] | None = None,
-    sample_limit: int | None = None,
-    exclude_graphs: bool = True,
-    timeout: float = 120.0,
-) -> dict[str, int]:
-    """Return ``{class_uri: instance_count}`` for *endpoint_url*.
-
-    A simplified single-query variant of :func:`count_instances`.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL.
-        graph_uris: Optional named-graph URI(s).
-        sample_limit: Cap on the number of classes returned.
-        exclude_graphs: Unused; kept for backwards-compatibility.
-        timeout: HTTP timeout per request.
-
-    Returns:
-        ``{class_uri: count}`` dict.
-    """
-    result = count_instances(
-        endpoint_url,
-        graph_uris=graph_uris,
-        sample_limit=sample_limit,
-        timeout=timeout,
-    )
-    return result if isinstance(result, dict) else dict(result)
-
-
-def extract_partitions_from_void(
-    endpoint_url: str,
-    void_graph_uris: list[str],
-    timeout: float = 120.0,
-) -> list[dict[str, str]]:
-    """Query partition records from named VoID graphs.
-
-    Runs a SELECT query against each graph URI in *void_graph_uris*
-    and returns the raw partition records suitable for passing to
-    :meth:`~rdfsolve.parser.VoidParser.build_void_graph_from_partitions`.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL.
-        void_graph_uris: Graph URIs that are known to contain VoID.
-        timeout: HTTP timeout per request.
-
-    Returns:
-        List of partition dicts with keys ``subject_class``,
-        ``property``, and optionally ``object_class`` /
-        ``object_datatype``.
-    """
-    helper = SparqlHelper(endpoint_url, timeout=timeout)
-    all_partitions: list[dict[str, str]] = []
-
-    for graph_uri in void_graph_uris:
-        esc = graph_uri.replace("\\", "\\\\").replace('"', '\\"')
-        query = f"""
-        PREFIX void: <http://rdfs.org/ns/void#>
-        PREFIX void-ext: <http://ldf.fi/void-ext#>
-        SELECT DISTINCT ?subjectClass ?prop ?objectClass ?objectDatatype
-        WHERE {{
-          GRAPH <{esc}> {{
-            {{
-              ?cp void:class ?subjectClass ;
-                  void:propertyPartition ?pp .
-              ?pp void:property ?prop .
-              OPTIONAL {{
-                {{
-                  ?pp void:classPartition [ void:class ?objectClass ] .
-                }} UNION {{
-                  ?pp void-ext:datatypePartition
-                      [ void-ext:datatype ?objectDatatype ] .
-                }}
-              }}
-            }} UNION {{
-              ?ls void:subjectsTarget [ void:class ?subjectClass ] ;
-                  void:linkPredicate ?prop ;
-                  void:objectsTarget [ void:class ?objectClass ] .
-            }}
-          }}
-        }}
-        """
-        try:
-            results = helper.select(query, purpose="void/partition-detail")
-            for row in results.get("results", {}).get("bindings", []):
-                rec: dict[str, str] = {
-                    "subject_class": row.get("subjectClass", {}).get("value", ""),
-                    "property": row.get("prop", {}).get("value", ""),
-                }
-                if row.get("objectClass", {}).get("value"):
-                    rec["object_class"] = row["objectClass"]["value"]
-                elif row.get("objectDatatype", {}).get("value"):
-                    rec["object_datatype"] = row["objectDatatype"]["value"]
-                all_partitions.append(rec)
-        except Exception as exc:
-            logger.warning(
-                "Failed to retrieve partitions from %s: %s",
-                graph_uri,
-                exc,
-            )
-
-    return all_partitions
-
-
-def retrieve_void_from_graphs(
-    endpoint_url: str,
-    void_graph_uris: list[str],
-    graph_uris: str | list[str] | None = None,
-    partitions: list[dict[str, str]] | None = None,
-    timeout: float = 120.0,
-) -> Any:
-    """Build an RDF VoID graph from partition records.
-
-    If *partitions* are provided they are used directly; otherwise a
-    fresh discovery query is run via
-    :meth:`~rdfsolve.parser.VoidParser.discover_void_graphs`.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL.
-        void_graph_uris: Graph URIs containing VoID (used as base URI).
-        graph_uris: Unused; kept for backwards-compatibility.
-        partitions: Pre-fetched partition records.
-        timeout: HTTP timeout per request.
-
-    Returns:
-        :class:`~rdflib.Graph` with VoID triples.
-    """
-    from rdflib import Graph as _Graph
-
-    from rdfsolve.parser import VoidParser
-
-    if not partitions:
-        result = VoidParser().discover_void_graphs(endpoint_url)
-        partitions = result.get("partitions", [])
-
-    if partitions:
-        base_uri = void_graph_uris[0] if void_graph_uris else None
-        return VoidParser().build_void_graph_from_partitions(partitions, base_uri=base_uri)
-    return _Graph()
-
-
-def generate_void_from_endpoint(
-    endpoint_url: str,
-    graph_uris: str | list[str] | None = None,
-    output_file: str | None = None,
-    counts: bool = True,
-    offset_limit_steps: int | None = None,
-    exclude_graphs: bool = True,
-    dataset_uri: str | None = None,
-    void_base_uri: str | None = None,
-    timeout: float = 120.0,
-) -> Any:
-    """Mine a VoID description from a SPARQL endpoint.
-
-    .. deprecated::
-        Use :func:`mine_schema` instead.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL.
-        graph_uris: Named-graph URI(s) to restrict queries.
-        output_file: If given, serialise result as Turtle here.
-        counts: Include triple counts (passed to :func:`mine_schema`).
-        offset_limit_steps: Pagination chunk size.
-        exclude_graphs: Unused; kept for backwards-compatibility.
-        dataset_uri: Unused; kept for backwards-compatibility.
-        void_base_uri: Unused; kept for backwards-compatibility.
-        timeout: HTTP timeout per request.
-
-    Returns:
-        :class:`~rdflib.Graph` with VoID triples.
-    """
-    import warnings
-
-    warnings.warn(
-        "generate_void_from_endpoint is deprecated; use mine_schema().",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    schema = mine_schema(
-        endpoint_url=endpoint_url,
-        graph_uris=graph_uris,
-        counts=counts,
-        timeout=timeout,
-    )
-    void_g = schema.to_void_graph()
-    if output_file:
-        void_g.serialize(destination=output_file, format="turtle")
-    return void_g
-
-
-def mine_all_sources(
-    sources_csv: str | None = None,
-    *,
-    sources: str | None = None,
-    output_dir: str = ".",
-    fmt: str = "all",
-    chunk_size: int = 10_000,
-    class_chunk_size: int | None = None,
-    class_batch_size: int = 15,
-    delay: float = 0.5,
-    timeout: float = 120.0,
-    counts: bool = True,
-    reports: bool = True,
-    filter_service_namespaces: bool = True,
-    untyped_as_classes: bool = False,
-    authors: list[dict[str, str]] | None = None,
-    on_progress: Callable[[str, int, int, str | None], None] | None = None,
-) -> dict[str, Any]:
-    """Mine schemas for all sources in a JSON-LD or CSV file.
-
-    Reads a sources file (JSON-LD preferred, CSV still accepted) and runs
-    :func:`mine_schema` for each entry whose *endpoint* is non-empty.
-    Results are written to *output_dir* as ``{name}_schema.jsonld`` and/or
-    ``{name}_void.ttl``.
-
-    Per-source overrides (``chunk_size``, ``class_batch_size``, ``timeout``,
-    etc.) in the JSON-LD file take precedence over the function-level
-    defaults.
-
-    Args:
-        sources_csv: **Deprecated** - use *sources* instead.
-        sources: Path to the sources file (JSON-LD or CSV).
-        output_dir: Directory where outputs are written.
-        fmt: Export format - ``"jsonld"``, ``"void"``, or ``"all"``.
-        chunk_size: Pagination page size for SPARQL queries.
-        class_chunk_size: Page size for Phase-1 class discovery.
-        class_batch_size: Number of classes per VALUES query in Phase-2.
-        delay: Delay between paginated pages (seconds).
-        timeout: HTTP timeout per request (seconds).
-        counts: Whether to fetch triple-count queries.
-        reports: Write per-source analytics JSON reports.
-        filter_service_namespaces: Strip service/system namespace patterns.
-        untyped_as_classes: Treat untyped URI objects as ``owl:Class``.
-        on_progress: Optional callback ``(dataset_name, index, total,
-            status_or_error)``.
-
-    Returns:
-        Summary dict with keys ``"succeeded"``, ``"failed"``, ``"skipped"``.
-    """
-    from rdfsolve.sources import load_sources
-
-    src_path: str | None = sources or sources_csv or None
-
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
-
-    entries = load_sources(src_path)
-
-    succeeded: list[str] = []
-    failed: list[dict[str, str]] = []
-    skipped: list[str] = []
-
-    total = len(entries)
-    for idx, entry in enumerate(entries, 1):
-        name = entry.get("name", "")
-        endpoint = entry.get("endpoint", "")
-
-        if not endpoint:
-            logger.info("[%d/%d] Skipping %r: no endpoint", idx, total, name)
-            skipped.append(name)
-            if on_progress:
-                on_progress(name, idx, total, "skipped")
-            continue
-
-        if entry.get("endpoint_down"):
-            logger.info("[%d/%d] Skipping %r: endpoint marked down", idx, total, name)
-            skipped.append(name)
-            if on_progress:
-                on_progress(name, idx, total, "skipped (endpoint down)")
-            continue
-
-        _mine_one_source(
-            entry,
-            idx=idx,
-            total=total,
-            out=out,
-            fmt=fmt,
-            chunk_size=chunk_size,
-            class_chunk_size=class_chunk_size,
-            class_batch_size=class_batch_size,
-            delay=delay,
-            timeout=timeout,
-            counts=counts,
-            reports=reports,
-            filter_service_namespaces=filter_service_namespaces,
-            untyped_as_classes=untyped_as_classes,
-            authors=authors,
-            on_progress=on_progress,
-            succeeded=succeeded,
-            failed=failed,
-        )
-
-    return {
-        "succeeded": succeeded,
-        "failed": failed,
-        "skipped": skipped,
-    }

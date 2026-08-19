@@ -25,7 +25,19 @@ _RESOURCE_URIS = frozenset(
         "Resource",
     }
 )
-_SENTINEL_OBJECTS = frozenset({"Literal", "Resource"})
+_BLANK_NODE_URIS = frozenset(
+    {
+        "BlankNode",
+        "_:BlankNode",
+    }
+)
+_SENTINEL_OBJECTS = frozenset({"Literal", "Resource", "BlankNode"})
+"""Special object_class values that are not actual URIs.
+
+- Literal: Object is an RDF literal (datatype should be set)
+- Resource: Object is an untyped URI (no rdf:type discovered)
+- BlankNode: Object is a blank node (anonymous resource)
+"""
 _URI_SCHEMES = ("http://", "https://", "urn:")
 _GRAPH_SKIP_KEYS = frozenset(
     {

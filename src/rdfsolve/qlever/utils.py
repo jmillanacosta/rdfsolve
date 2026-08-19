@@ -1,10 +1,4 @@
-"""QLever utilities -- Qleverfile generation from sources.yaml entries.
-
-Public API (re-exported from ``rdfsolve.qlever.__init__``):
-    QleverConfig, build_qleverfile, build_provider_qleverfile,
-    detect_data_format, urls_from_field, graph_uri_to_tar_folder,
-    tar_source_qleverfile_parts, QLEVERFILE_TEMPLATE, FORMAT_REGISTRY
-"""
+"""QLever Qleverfile generation from sources.yaml entries."""
 
 from __future__ import annotations
 
@@ -14,24 +8,23 @@ from pathlib import Path
 from typing import Any
 
 __all__ = [
-    "QleverConfig",
-    "QLEVERFILE_TEMPLATE",
     "FORMAT_REGISTRY",
+    "QLEVERFILE_TEMPLATE",
     "FormatSpec",
+    "QleverConfig",
     "SourceAnalysis",
-    "detect_data_format",
     "analyse_source",
-    "urls_from_field",
+    "build_provider_qleverfile",
+    "build_qleverfile",
+    "detect_data_format",
     "graph_uri_to_tar_folder",
     "tar_source_qleverfile_parts",
-    "build_qleverfile",
-    "build_provider_qleverfile",
+    "urls_from_field",
 ]
 
 
-# ===================================================================
 # Configuration
-# ===================================================================
+
 
 @dataclass
 class QleverConfig:
@@ -50,6 +43,7 @@ class QleverConfig:
 
     @property
     def settings_json(self) -> str:
+        """Return SETTINGS_JSON value for Qleverfile."""
         return (
             '{ "ascii-prefixes-only": false, '
             f'"num-triples-per-batch": {self.num_triples_per_batch}, '
@@ -58,19 +52,17 @@ class QleverConfig:
         )
 
 
-# ===================================================================
 # Qleverfile template
-# ===================================================================
 
 QLEVERFILE_TEMPLATE = """\
 # Qleverfile for {name}
 # Auto-generated with rdfsolve
 #
 # Usage:
-#   cd {workdir}
-#   qlever index
-#   qlever start
-#   qlever stop
+#  cd {workdir}
+#  qlever index
+#  qlever start
+#  qlever stop
 
 
 [data]
@@ -101,13 +93,12 @@ UI_CONFIG = default
 """
 
 
-# ===================================================================
 # Format registry -- the single source of truth
-# ===================================================================
+
 
 @dataclass(frozen=True)
 class FormatSpec:
-    """How QLever should ingest a given RDF serialisation.
+    """How QLever should ingest a given RDF serialization.
 
     Attributes
     ----------
@@ -130,7 +121,7 @@ class FormatSpec:
 
 # Order matters: first match wins when multiple download_* keys exist.
 FORMAT_REGISTRY: dict[str, FormatSpec] = {
-    # -- Quad formats ---------------------------------------------------
+    # Quad formats
     "nq": FormatSpec(
         qlever_format="nq",
         glob="*.nq",
@@ -146,7 +137,7 @@ FORMAT_REGISTRY: dict[str, FormatSpec] = {
         glob="*.trig* *.nq*",
         cat="( zcat ${INPUT_FILES} 2>/dev/null || cat ${INPUT_FILES} 2>/dev/null ) | grep -v '^$'",
     ),
-    # -- Triple formats -------------------------------------------------
+    # Triple formats
     "nt": FormatSpec(
         qlever_format="nt",
         glob="*.nt*",
@@ -162,51 +153,82 @@ FORMAT_REGISTRY: dict[str, FormatSpec] = {
         glob="*.n3",
         cat="cat ${INPUT_FILES}",
     ),
-    # -- Formats requiring conversion -----------------------------------
+    # Formats requiring conversion
     "rdf": FormatSpec(
-        qlever_format="nq", glob="*.nq", cat="cat ${INPUT_FILES}",
+        qlever_format="nq",
+        glob="*.nq",
+        cat="cat ${INPUT_FILES}",
         needs_conversion=True,
     ),
     "rdfxml": FormatSpec(
-        qlever_format="nq", glob="*.nq", cat="cat ${INPUT_FILES}",
+        qlever_format="nq",
+        glob="*.nq",
+        cat="cat ${INPUT_FILES}",
         needs_conversion=True,
     ),
     "owl": FormatSpec(
-        qlever_format="nq", glob="*.nq", cat="cat ${INPUT_FILES}",
+        qlever_format="nq",
+        glob="*.nq",
+        cat="cat ${INPUT_FILES}",
         needs_conversion=True,
     ),
     "obo": FormatSpec(
-        qlever_format="ttl", glob="*.ttl", cat="cat ${INPUT_FILES}",
+        qlever_format="ttl",
+        glob="*.ttl",
+        cat="cat ${INPUT_FILES}",
         needs_conversion=True,
     ),
     "jsonld": FormatSpec(
-        qlever_format="ttl", glob="*.ttl", cat="cat ${INPUT_FILES}",
+        qlever_format="ttl",
+        glob="*.ttl",
+        cat="cat ${INPUT_FILES}",
         needs_conversion=True,
     ),
-    # -- Archive-only keys (format decided by archive contents) ---------
+    # Archive-only keys (format decided by archive contents)
     "tar_gz": FormatSpec(
-        qlever_format="ttl", glob="*.ttl", cat="cat ${INPUT_FILES}",
+        qlever_format="ttl",
+        glob="*.ttl",
+        cat="cat ${INPUT_FILES}",
     ),
     "tgz": FormatSpec(
-        qlever_format="ttl", glob="*.ttl", cat="cat ${INPUT_FILES}",
+        qlever_format="ttl",
+        glob="*.ttl",
+        cat="cat ${INPUT_FILES}",
     ),
     "zip": FormatSpec(
-        qlever_format="ttl", glob="*.ttl", cat="cat ${INPUT_FILES}",
+        qlever_format="ttl",
+        glob="*.ttl",
+        cat="cat ${INPUT_FILES}",
     ),
 }
 
 # Extensions we recognise in a URL for smart wget naming.
 _RDF_EXTS = (
-    ".ttl", ".ttl.gz", ".nt", ".nt.gz", ".nq", ".nq.gz",
-    ".trig", ".trig.gz", ".n3", ".owl", ".rdf", ".rdf.gz",
-    ".rdf.xz", ".owl.xz", ".xml.gz", ".jsonld", ".obo",
-    ".tar.gz", ".tgz", ".zip",
+    ".ttl",
+    ".ttl.gz",
+    ".nt",
+    ".nt.gz",
+    ".nq",
+    ".nq.gz",
+    ".trig",
+    ".trig.gz",
+    ".n3",
+    ".owl",
+    ".rdf",
+    ".rdf.gz",
+    ".rdf.xz",
+    ".owl.xz",
+    ".xml.gz",
+    ".jsonld",
+    ".obo",
+    ".tar.gz",
+    ".tgz",
+    ".zip",
 )
 
 
-# ===================================================================
-# Source analysis -- one pass, no booleans
-# ===================================================================
+# Source analysis
+
 
 @dataclass
 class SourceAnalysis:
@@ -232,18 +254,22 @@ class SourceAnalysis:
 
     @property
     def needs_rdfxml_conversion(self) -> bool:
+        """Check if source requires RDF/XML to NQuads conversion."""
         return bool(self.suffixes & {"rdf", "rdfxml", "owl"})
 
     @property
     def needs_obo_conversion(self) -> bool:
+        """Check if source requires OBO to Turtle conversion."""
         return "obo" in self.suffixes
 
     @property
     def needs_jsonld_conversion(self) -> bool:
+        """Check if source requires JSON-LD to Turtle conversion."""
         return "jsonld" in self.suffixes
 
     @property
     def needs_decompression(self) -> bool:
+        """Check if source requires decompression step."""
         return self.needs_gz or self.needs_archive
 
     def pick_format_spec(self) -> FormatSpec:
@@ -260,11 +286,11 @@ class SourceAnalysis:
         for suffix, spec in FORMAT_REGISTRY.items():
             if suffix in self.suffixes:
                 return spec
-        # Fallback -- unreachable if caller checked detect_data_format first.
+        # Fallback
         return FormatSpec(qlever_format="ttl", glob="*.ttl", cat="cat ${INPUT_FILES}")
 
 
-def analyse_source(entry: dict) -> SourceAnalysis:
+def analyse_source(entry: dict[str, Any]) -> SourceAnalysis:
     """Scan all download_* fields on entry in a single pass."""
     urls: list[str] = []
     suffixes: set[str] = set()
@@ -301,24 +327,24 @@ def analyse_source(entry: dict) -> SourceAnalysis:
     )
 
 
-# ===================================================================
 # Small helpers
-# ===================================================================
+
 
 def detect_data_format(entry: Any) -> str | None:
     """Return a short format label, or None if no download is available."""
     if entry.get("local_tar_url"):
         return "trig"
-    dl_keys = [k for k in entry if k.startswith("download_") and entry.get(k)]
+    dl_keys: list[str] = [k for k in entry if k.startswith("download_") and entry.get(k)]
     if not dl_keys:
         return None
     for suffix in FORMAT_REGISTRY:
         if f"download_{suffix}" in dl_keys:
             return suffix
-    return dl_keys[0].removeprefix("download_")
+    first_key: str = dl_keys[0]
+    return first_key.removeprefix("download_")
 
 
-def urls_from_field(entry: dict, field_name: str) -> list[str]:
+def urls_from_field(entry: dict[str, Any], field_name: str) -> list[str]:
     """Extract a flat URL list from a YAML field (string or list)."""
     raw = entry.get(field_name, "")
     if not raw:
@@ -333,20 +359,18 @@ def graph_uri_to_tar_folder(uri: str) -> str:
     return "http_" + no_scheme.replace("/", "_")
 
 
-# ===================================================================
-# Shell-step builders -- each returns list[str] of shell fragments
-# ===================================================================
+# Shell-step builders returning list[str] of shell fragments
+
 
 def _wget_cmd(url: str) -> str:
     """Return a single wget command string for url."""
     fname = url.rsplit("/", 1)[-1]
     if any(fname.lower().endswith(ext) for ext in _RDF_EXTS):
         return f'wget -c -q "{url}"'
-    # Try to derive a recognisable filename from the URL path.
+    # Derive a filename from the URL path.
     parts = url.rstrip("/").split("/")
     derived = next(
-        (p for p in reversed(parts)
-         if any(p.lower().endswith(e) for e in _RDF_EXTS)),
+        (p for p in reversed(parts) if any(p.lower().endswith(e) for e in _RDF_EXTS)),
         None,
     )
     if derived:
@@ -465,7 +489,7 @@ def _convert_obo_steps() -> list[str]:
     return [
         "echo 'Converting OBO -> Turtle via ROBOT ...'",
         (
-            '[ -f robot.jar ] || wget -q -O robot.jar '
+            "[ -f robot.jar ] || wget -q -O robot.jar "
             '"https://github.com/ontodev/robot/releases/download/v1.9.10/robot.jar"'
         ),
         (
@@ -483,7 +507,7 @@ def _convert_jsonld_steps() -> list[str]:
     return [
         "echo 'Converting JSON-LD -> Turtle ...'",
         (
-            "python3 -c \""
+            'python3 -c "'
             "import glob, os; "
             "from rdflib import Graph; "
             "[Graph().parse(f,format='json-ld')"
@@ -495,9 +519,8 @@ def _convert_jsonld_steps() -> list[str]:
     ]
 
 
-# ===================================================================
 # subdir tar helpers
-# ===================================================================
+
 
 def tar_source_qleverfile_parts(
     tar_url: str,
@@ -512,12 +535,14 @@ def tar_source_qleverfile_parts(
         f"mkdir -p {src_data_dir}",
         f"cd {src_data_dir}",
         # Discover tar root prefix from the first header block.
-        f'TAR_ROOT=$(curl -s --range 0-511 "{tar_url}" | '
-        "python3 -c \""
-        "import sys; b=sys.stdin.buffer.read(512); "
-        "print(b[:100].rstrip(b'\\x00').decode('utf-8','replace').split('/')[0]) "
-        "if len(b)==512 else print('')"
-        "\")",
+        (
+            f'TAR_ROOT=$(curl -s --range 0-511 "{tar_url}" | '
+            'python3 -c "'
+            "import sys; b=sys.stdin.buffer.read(512); "
+            "print(b[:100].rstrip(b'\\x00').decode('utf-8','replace').split('/')[0]) "
+            "if len(b)==512 else print('')"
+            '")'
+        ),
     ]
     for subdir in tar_subdirs:
         steps.append(
@@ -535,9 +560,8 @@ def tar_source_qleverfile_parts(
     )
 
 
-# ===================================================================
 # GET_DATA_CMD assembly
-# ===================================================================
+
 
 def _build_get_data_steps(
     analysis: SourceAnalysis,
@@ -572,9 +596,8 @@ def _build_get_data_steps(
     return steps
 
 
-# ===================================================================
 # Qleverfile rendering
-# ===================================================================
+
 
 def _render_qleverfile(
     *,
@@ -613,9 +636,8 @@ def _render_qleverfile(
     )
 
 
-# ===================================================================
 # Public builders
-# ===================================================================
+
 
 def build_qleverfile(
     entry: Any,
@@ -635,20 +657,25 @@ def build_qleverfile(
     rdf_subdir = "rdf"
     src_data_dir = f"{workdir}/{rdf_subdir}"
 
-    # -- Bulk-tar path --------------------------------------
+    # Bulk-tar path
     local_tar_url = entry.get("local_tar_url", "")
     if local_tar_url:
         graph_uris: list[str] = entry.get("graph_uris") or []
         if not graph_uris:
             raise ValueError(f"Source '{name}' has local_tar_url but no graph_uris")
         tar_subdirs = [graph_uri_to_tar_folder(g) for g in graph_uris]
-        get_data_cmd, rdf_format, input_files, cat_input_files = (
-            tar_source_qleverfile_parts(local_tar_url, tar_subdirs, src_data_dir, rdf_subdir)
+        get_data_cmd, rdf_format, input_files, cat_input_files = tar_source_qleverfile_parts(
+            local_tar_url, tar_subdirs, src_data_dir, rdf_subdir
         )
         return _render_qleverfile(
-            name=name, workdir=workdir, port=port, runtime=runtime,
-            rdf_format=rdf_format, input_files=input_files,
-            cat_input_files=cat_input_files, get_data_cmd=get_data_cmd,
+            name=name,
+            workdir=workdir,
+            port=port,
+            runtime=runtime,
+            rdf_format=rdf_format,
+            input_files=input_files,
+            cat_input_files=cat_input_files,
+            get_data_cmd=get_data_cmd,
             cfg=cfg,
         )
 
@@ -661,7 +688,10 @@ def build_qleverfile(
     steps = _build_get_data_steps(analysis, src_data_dir)
 
     return _render_qleverfile(
-        name=name, workdir=workdir, port=port, runtime=runtime,
+        name=name,
+        workdir=workdir,
+        port=port,
+        runtime=runtime,
         rdf_format=spec.qlever_format,
         input_files=f"{rdf_subdir}/{spec.glob}",
         cat_input_files=spec.cat,
@@ -686,9 +716,9 @@ def build_provider_qleverfile(
 
     tar_members = [m for m in members if m.get("local_tar_url")]
     dl_members = [
-        m for m in members
-        if not m.get("local_tar_url")
-        and any(k.startswith("download_") for k in m)
+        m
+        for m in members
+        if not m.get("local_tar_url") and any(k.startswith("download_") for k in m)
     ]
 
     tar_url = tar_members[0].get("local_tar_url", "") if tar_members else ""
@@ -703,15 +733,16 @@ def build_provider_qleverfile(
                 new_urls = urls_from_field(m, key)
                 existing = merged.get(key)
                 if existing is None:
-                    merged[key] = new_urls if len(new_urls) > 1 else (new_urls[0] if new_urls else "")
+                    merged[key] = (
+                        new_urls if len(new_urls) > 1 else (new_urls[0] if new_urls else "")
+                    )
                 else:
                     merged[key] = (
-                        (existing if isinstance(existing, list) else [existing])
-                        + new_urls
-                    )
+                        existing if isinstance(existing, list) else [existing]
+                    ) + new_urls
         return build_qleverfile(merged, data_dir, port, runtime, cfg=cfg)
 
-    # -- Tar-based provider
+    # Tar-based provider
     all_subdirs: list[str] = []
     for m in tar_members:
         for g in m.get("graph_uris") or []:
@@ -719,11 +750,11 @@ def build_provider_qleverfile(
             if folder not in all_subdirs:
                 all_subdirs.append(folder)
 
-    get_data_cmd, rdf_format, input_files, cat_input_files = (
-        tar_source_qleverfile_parts(tar_url, all_subdirs, src_data_dir, rdf_subdir)
+    get_data_cmd, rdf_format, input_files, cat_input_files = tar_source_qleverfile_parts(
+        tar_url, all_subdirs, src_data_dir, rdf_subdir
     )
 
-    # Append download steps for non-tar members (e.g. chebi inside IDSM).
+    # Append download steps for non-tar members.
     if dl_members:
         extra: list[str] = []
         for m in dl_members:
@@ -739,8 +770,13 @@ def build_provider_qleverfile(
             get_data_cmd += " && " + " && ".join(extra)
 
     return _render_qleverfile(
-        name=provider, workdir=workdir, port=port, runtime=runtime,
-        rdf_format=rdf_format, input_files=input_files,
-        cat_input_files=cat_input_files, get_data_cmd=get_data_cmd,
+        name=provider,
+        workdir=workdir,
+        port=port,
+        runtime=runtime,
+        rdf_format=rdf_format,
+        input_files=input_files,
+        cat_input_files=cat_input_files,
+        get_data_cmd=get_data_cmd,
         cfg=cfg,
     )

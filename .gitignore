@@ -944,6 +944,7 @@ Qleverfile
 *.index.done
 .index.done
 *.partial-vocab.*
+data/qlever_workdirs/ports.json
 
 # ---------------------------------------------------------------------------
 # JSON-LD schema and mapping files
