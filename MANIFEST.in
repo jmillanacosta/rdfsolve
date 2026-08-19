@@ -10,7 +10,7 @@ graft src
 graft tests
 
 # ── Essential top-level metadata ─────────────────────────────────
-include README.md LICENSE CITATION.cff
+include README.md LICENSE CITATION.cff ENDPOINT_HEALTH.md
 
 # ── Source registry (needed at runtime by the package) ───────────
 include data/sources.yaml
@@ -22,6 +22,7 @@ prune docs
 prune notebooks
 prune scripts
 prune data/rdf
+prune data/qlever_workdirs
 prune results
 prune paper
 prune frontend

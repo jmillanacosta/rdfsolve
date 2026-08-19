@@ -1,216 +1,116 @@
-# Pipeline scripts
+# RDFSolve Scripts
 
-These are the scripts used to produce and analyze the materials for the rdfsolve paper.
+Workflow scripts for mining, mapping, and analyzing RDF schemas.
 
-The catalog used to identify resources, their endpoints and RDF dump URLs is [sources.yaml](../data/sources.yaml).
+## Mining Scripts
 
-All pipeline logic lives in the `rdfsolve` Python package; the remaining
-shell scripts in this directory orchestrate HPC (SLURM) and utility workflows.
+### `pipeline.py`
+Main pipeline for mining schemas from SPARQL endpoints.
 
----
-
-## Mining (via `rdfsolve` CLI)
-
-The mining commands are built into the `rdfsolve` package.
-
-### Discover VoID descriptions from remote endpoints
 ```bash
-rdfsolve discover
+# Mine all remote endpoints
+python scripts/pipeline.py --remote-only
+
+# Mine specific sources
+python scripts/pipeline.py --sources wikipathways aopwikirdf
+
+# Full pipeline
+python scripts/pipeline.py
 ```
 
-### Mine schemas from remote SPARQL endpoints
-```bash
-rdfsolve mine
-```
-Filter to specific sources:
-```bash
-rdfsolve mine --filter "chembl|drugbank"
-```
-
-### Mine schemas from a local QLever endpoint
-```bash
-rdfsolve local-mine \
-    --endpoint http://localhost:7001 \
-    --name drugbank
-```
-With VoID discovery first:
-```bash
-rdfsolve local-mine \
-    --endpoint http://localhost:7001 \
-    --name drugbank \
-    --discover-first
-```
-
-### Generate Qleverfiles
-```bash
-rdfsolve qleverfile --data-dir /data/rdf
-```
-
----
-
-## Seeding (via `rdfsolve` CLI)
-
-### Enrich sources.yaml with Bioregistry metadata
-```bash
-rdfsolve bioregistry-enrich
-```
-Dry-run (preview only):
-```bash
-rdfsolve bioregistry-enrich --dry-run
-```
-Specific sources:
-```bash
-rdfsolve bioregistry-enrich --names drugbank chebi
-```
-
-### Seed schemas from endpoints
-```bash
-rdfsolve mine
-```
-Specific sources:
-```bash
-rdfsolve mine --filter "aopwikirdf|wikipathways"
-```
-
-### Seed instance mappings
-```bash
-rdfsolve instance-match seed --prefixes ensembl
-```
-Multiple prefixes, restrict to specific datasets:
-```bash
-rdfsolve instance-match seed \
-    --prefixes ensembl uniprot chebi \
-    --datasets aopwikirdf wikipathways
-```
-
-### Seed SeMRA mappings
-```bash
-rdfsolve semra seed --sources fplx
-```
-Import all registered sources:
-```bash
-rdfsolve semra seed --sources all
-```
-
-### Seed SSSOM mappings
-```bash
-rdfsolve sssom seed
-```
-List available sources (dry-run):
-```bash
-rdfsolve sssom seed --list
-```
-
-### Run inference over mappings
-```bash
-rdfsolve inference seed
-```
-Skip transitivity, enable generalisation:
-```bash
-rdfsolve inference seed --no-transitivity --generalisation
-```
-
----
-
-## Graph building (via `rdfsolve` CLI)
-
-### Build connectivity graphs and export to Parquet
-```bash
-rdfsolve build-graphs
-```
-Filter to specific datasets:
-```bash
-rdfsolve build-graphs --datasets aopwikirdf wikipathways chembl
-```
-Schema selection only (no graph build):
-```bash
-rdfsolve build-graphs --schema-only
-```
-
-### Build ontology index from OLS4
-```bash
-rdfsolve ontology-index
-```
-Specific ontologies:
-```bash
-rdfsolve ontology-index --ontologies chebi go
-```
-From schema files:
-```bash
-rdfsolve ontology-index --from-schemas docker/schemas
-```
-
----
-
-## QLever boot (via `rdfsolve` CLI)
-
-### Boot QLever endpoints from sources.yaml
-```bash
-rdfsolve qlever-boot --source drugbank
-```
-List downloadable sources:
-```bash
-rdfsolve qlever-boot --list-sources
-```
-Filter by pattern:
-```bash
-rdfsolve qlever-boot --filter "chebi|drugbank"
-```
-
----
-
-## Full pipeline (HPC / Singularity)
+### `test_metadata_endpoints.py`
+Test metadata capture across all endpoints.
 
 ```bash
-bash scripts/run_pipeline_hpc.sh
-```
-Single dataset:
-```bash
-bash scripts/run_pipeline_hpc.sh --dataset aopwikirdf --skip-remote
+python scripts/test_metadata_endpoints.py
 ```
 
----
+## Mapping Scripts
 
-## SLURM jobs
+### `convert_semra.py`
+Convert SeMRA/SSSOM files to rdfsolve format. Preserves `mapping_justification` field.
 
-### Full pipeline
 ```bash
-sbatch scripts/slurm_full_pipeline_hpc.sh
+python scripts/convert_semra.py mappings.sssom.tsv -o output.jsonld
 ```
 
-### Mining only (reuse existing indexes)
+### `infer_mappings.py`
+Run inference on mapping files (inversion, transitivity). Preserves `mapping_justification`.
+
 ```bash
-sbatch scripts/slurm_mine_only_hpc.sh
+python scripts/infer_mappings.py \
+    mappings/*.jsonld \
+    -o inferenced.jsonld \
+    --inversion \
+    --transitivity \
+    --chain-cutoff 3
 ```
 
-### Single source (or multiple)
+## Graph Scripts
+
+### `build_graphs.py`
+Build connectivity graphs from mined schemas.
+
 ```bash
-sbatch scripts/slurm_single_source.sh cellosaurus
-sbatch scripts/slurm_single_source.sh chebi rdfportal.chebi
-sbatch scripts/slurm_single_source.sh "aopwikirdf|drugbank"
+python scripts/build_graphs.py \
+    output/schemas/ \
+    --output results/graphs/ \
+    --mappings output/mappings/
 ```
 
-### Test job (aopwikirdf)
-AOPWiki RDF is used as a test job since it is a relatively small dataset.
+## SLURM Jobs
+
+Set SLURM parameters (cpus, mem, time) from the slurm `.sh` files.
+
+### `slurm_remote.sh`
+Mine remote SPARQL endpoints.
+
 ```bash
-sbatch scripts/slurm_aopwikirdf_test.sh
+sbatch scripts/slurm_remote.sh
 ```
 
----
+### `slurm_local.sh`
+Download and index local RDF dumps with QLever.
 
-## Utilities
-
-### Estimate download sizes (no actual download)
 ```bash
-bash scripts/estimate_download_sizes.sh
-```
-For a specific source:
-```bash
-bash scripts/estimate_download_sizes.sh --source glycosmos
+sbatch scripts/slurm_local.sh
 ```
 
-### Fix broken IRIs in N-Quads streams
-Used to fix large integers in some graphs that made the Qlever indexer choke.
+### `slurm_inference.sh`
+Run mapping inference pipeline.
+
 ```bash
-cat broken.nq | python scripts/nq_iri_fix.py > fixed.nq
+sbatch scripts/slurm_inference.sh
+```
+
+### `slurm_graphs.sh`
+Build connectivity graphs.
+
+```bash
+sbatch scripts/slurm_graphs.sh
+```
+
+### `slurm_full.sh`
+Run complete pipeline.
+
+```bash
+sbatch scripts/slurm_full.sh
+```
+
+### `slurm_void_discovery.sh`
+Discover VoID descriptions.
+
+```bash
+sbatch scripts/slurm_void_discovery.sh
+```
+
+## Environment Variables
+
+Override defaults via environment:
+
+```bash
+export RDFSOLVE_BASE=/path/to/rdfsolve
+export OUTPUT_DIR=/path/to/output
+export TIMEOUT=600
+sbatch scripts/slurm_remote.sh
 ```

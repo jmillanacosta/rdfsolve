@@ -58,5 +58,4 @@ JSON-LD back to VoID graph::
 
     void_graph = rdfsolve.to_void_from_file("dataset_schema.jsonld")
 
-See :doc:`api` for the full function reference and :doc:`cli` for the
-command-line interface.
+See :doc:`api` for the full function reference.

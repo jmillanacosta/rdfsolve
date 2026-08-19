@@ -1,7 +1,7 @@
 """LinkML schema generation from JSON-LD.
 
 Converts a rdfsolve JSON-LD schema dict (``@context`` + ``@graph``)
-into a LinkML ``SchemaDefinition`` or its YAML serialisation.
+into a LinkML ``SchemaDefinition`` or its YAML serialization.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 
-# ── Name-cleaning helpers ────────────────────────────────────────
+# Name-cleaning helpers
 
 
 def _clean_local_part(local: str) -> str:
@@ -89,7 +89,7 @@ def make_valid_linkml_name(uri_or_curie: str) -> str:
     return _finalize_linkml_name(name)
 
 
-# ── Core conversion ──────────────────────────────────────────────
+# Core conversion
 
 
 def _derive_schema_meta(
@@ -102,10 +102,13 @@ def _derive_schema_meta(
     if not schema_name:
         about = jsonld.get("@about", {})
         schema_name = about.get("dataset_name", "rdf_schema")
-        schema_name = re.sub(r"[^a-zA-Z0-9_]", "_", schema_name)
+
+    # Sanitize schema_name for use in URIs (no spaces)
+    sanitized_for_uri = re.sub(r"\s+", "_", schema_name)
+    sanitized_for_uri = re.sub(r"[^a-zA-Z0-9_]", "_", sanitized_for_uri)
 
     schema_uri = (
-        f"https://w3id.org/{schema_name}/"
+        f"https://w3id.org/{sanitized_for_uri}/"
         if not schema_base_uri
         else schema_base_uri.rstrip("/") + "/"
     )
@@ -135,14 +138,80 @@ def _build_empty_schema(
     schema_uri: str,
     description: str,
     prefixes: dict[str, str],
+    about: dict[str, Any] | None = None,
+    original_name: str | None = None,
 ) -> SchemaDefinition:
-    """Construct a :class:`SchemaDefinition` with types pre-populated."""
+    """Construct a :class:`SchemaDefinition` with types and metadata.
+
+    Args:
+        schema_name: Sanitized NCName-compatible schema name
+        schema_uri: Schema URI
+        description: Schema description
+        prefixes: Prefix mappings
+        about: AboutMetadata dict from JSON-LD
+        original_name: Original schema name (before sanitization) for title
+    """
+    about = about or {}
+    original_name = original_name or schema_name
+
+    # Build annotations from AboutMetadata
+    annotations = {}
+    if about.get("pattern_count"):
+        annotations["rdfsolve:pattern_count"] = str(about["pattern_count"])
+    if about.get("class_count"):
+        annotations["void:classes"] = str(about["class_count"])
+    if about.get("property_count"):
+        annotations["void:properties"] = str(about["property_count"])
+    if about.get("strategy"):
+        annotations["rdfsolve:strategy"] = about["strategy"]
+
+    # Store generated_by as annotation instead of created_by (which requires URI/CURIE)
+    if about.get("generated_by"):
+        annotations["rdfsolve:generated_by"] = about["generated_by"]
+
+    # Additional metadata annotations
+    if about.get("homepage"):
+        annotations["foaf:homepage"] = about["homepage"]
+    if about.get("source_creator"):
+        # Store creators as comma-separated list
+        creators = about["source_creator"]
+        if isinstance(creators, list):
+            annotations["dcterms:creator"] = ", ".join(creators)
+        else:
+            annotations["dcterms:creator"] = str(creators)
+    if about.get("source_publisher"):
+        annotations["dcterms:publisher"] = about["source_publisher"]
+    if about.get("source_version"):
+        annotations["dcterms:hasVersion"] = about["source_version"]
+    if about.get("source_version_iri"):
+        annotations["owl:versionIRI"] = about["source_version_iri"]
+    if about.get("source_issued"):
+        annotations["dcterms:issued"] = about["source_issued"]
+    if about.get("source_modified"):
+        annotations["dcterms:modified"] = about["source_modified"]
+
+    # Title: prefer explicit title from metadata, fallback to dataset_name
+    title_value = about.get("title") or about.get("dataset_name") or original_name
+
+    # Description: prefer explicit description from metadata
+    description_value = (
+        about.get("description")
+        or description
+        or f"Schema mined from {about.get('endpoint', 'unknown endpoint')}"
+    )
+
     return SchemaDefinition(
-        id=schema_uri,
+        id=about.get("schema_uri") or schema_uri,
         name=schema_name,
-        description=description,
+        version=about.get("schema_version") or "0.0.0",
+        title=title_value,
+        description=description_value,
         default_prefix=schema_name,
         prefixes=prefixes,
+        source=about.get("endpoint"),
+        license=about.get("source_license"),
+        created_on=about.get("generated_at"),
+        annotations=annotations if annotations else None,
         types={
             "string": TypeDefinition(
                 name="string",
@@ -365,16 +434,26 @@ def to_linkml(
         schema_description,
         schema_base_uri,
     )
+
+    # Sanitize schema_name for LinkML NCName requirements
+    sanitized_name = re.sub(r"\s+", "_", schema_name)
+    sanitized_name = re.sub(r"[^a-zA-Z0-9_]", "_", sanitized_name)
+    if sanitized_name and sanitized_name[0].isdigit():
+        sanitized_name = f"schema_{sanitized_name}"
+
     prefixes = _build_prefixes(
-        schema_name,
+        sanitized_name,
         schema_uri,
         jsonld.get("@context", {}),
     )
+    about = jsonld.get("@about", {})
     schema = _build_empty_schema(
-        schema_name,
+        sanitized_name,
         schema_uri,
         description,
         prefixes,
+        about=about,
+        original_name=schema_name,
     )
 
     items = _collect_graph_items(jsonld)
@@ -431,7 +510,7 @@ def _expand_uri(
     return uri_or_curie
 
 
-# ── YAML serialisation ───────────────────────────────────────────
+# YAML serialization
 
 
 def to_linkml_yaml(

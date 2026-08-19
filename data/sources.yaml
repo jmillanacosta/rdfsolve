@@ -120,6 +120,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.author
   local_provider: pubchem
   graph_uris: []
@@ -261,6 +268,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.bioassay
   local_provider: pubchem
   graph_uris: []
@@ -383,6 +397,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.book
   local_provider: pubchem
   graph_uris: []
@@ -505,6 +526,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.cell
   local_provider: pubchem
   graph_uris: []
@@ -627,6 +655,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.concept
   local_provider: pubchem
   graph_uris: []
@@ -749,6 +784,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.conserveddomain
   local_provider: pubchem
   graph_uris: []
@@ -871,6 +913,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.cooccurrence
   local_provider: pubchem
   graph_uris: []
@@ -1102,6 +1151,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.disease
   local_provider: pubchem
   graph_uris: []
@@ -1224,6 +1280,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.endpoint
   local_provider: pubchem
   graph_uris: []
@@ -1415,6 +1478,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.gene
   local_provider: pubchem
   graph_uris: []
@@ -1537,6 +1607,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.grant
   local_provider: pubchem
   graph_uris: []
@@ -1659,6 +1736,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.inchikey
   local_provider: pubchem
   graph_uris: []
@@ -1816,6 +1900,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.journal
   local_provider: pubchem
   graph_uris: []
@@ -1938,6 +2029,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.measuregroup
   local_provider: pubchem
   graph_uris: []
@@ -2086,6 +2184,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.organization
   local_provider: pubchem
   graph_uris: []
@@ -2209,6 +2314,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.patent
   local_provider: pubchem
   graph_uris: []
@@ -2583,6 +2695,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.pathway
   local_provider: pubchem
   graph_uris: []
@@ -2705,6 +2824,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.protein
   local_provider: pubchem
   graph_uris: []
@@ -2858,6 +2984,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.reference
   local_provider: pubchem
   graph_uris: []
@@ -3155,6 +3288,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.schema
   local_provider: pubchem
   graph_uris: []
@@ -3278,6 +3418,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.source
   local_provider: pubchem
   graph_uris: []
@@ -3400,6 +3547,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.substance
   local_provider: pubchem
   graph_uris: []
@@ -3866,6 +4020,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.synonym
   local_provider: pubchem
   graph_uris: []
@@ -4041,6 +4202,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.ftp.taxonomy
   local_provider: pubchem
   graph_uris: []
@@ -4163,6 +4331,13 @@
     re3data: r3d100010129
     togoid: PubchemCompound
     wikidata: P662
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: aopwikirdf
   endpoint: https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
   void_iri: http://aopwiki.org/
@@ -4177,15 +4352,22 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: wikipathways
   endpoint: https://sparql.wikipathways.org/sparql/
   void_iri: http://rdf.wikipathways.org/
   in_kamdar: true
   download_ttl:
-  - https://data.wikipathways.org/current/rdf/wikipathways-20260310-rdf-wp.zip
+  - https://data.wikipathways.org/current/rdf/wikipathways-20260810-rdf-wp.zip
   - https://data.wikipathways.org/current/rdf/wikipathways-rdf-void.ttl
-  - https://data.wikipathways.org/current/rdf/wikipathways-20260310-rdf-gpml.zip
-  - https://data.wikipathways.org/current/rdf/wikipathways-20260310-rdf-authors.zip
+  - https://data.wikipathways.org/current/rdf/wikipathways-20260810-rdf-gpml.zip
+  - https://data.wikipathways.org/current/rdf/wikipathways-20260810-rdf-authors.zip
   bioregistry_prefix: wikipathways
   bioregistry_name: WikiPathways
   bioregistry_description: WikiPathways is a database of biological pathways maintained by and for the scientific community.
@@ -4284,6 +4466,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.taxonomy
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
@@ -4413,6 +4602,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.endpoint
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint
@@ -4542,6 +4738,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.measuregroup
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup
@@ -4671,6 +4874,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: iocb.ontology
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://bioinfo.iocb.cz/dataset/ontology
@@ -4685,6 +4895,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.gene
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/gene
@@ -4814,6 +5031,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.bioassay
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay
@@ -4882,6 +5106,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.substance
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/substance
@@ -4956,6 +5187,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: drugbank.drugs
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/
@@ -5047,6 +5285,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.descriptor.substance
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance
@@ -5176,6 +5421,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: chebi
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ebi.ac.uk/dataset/chebi
@@ -5314,6 +5566,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.pathway
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/pathway
@@ -5443,6 +5702,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.cell
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cell
@@ -5470,6 +5736,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: isdb
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: https://idsm.elixir-czech.cz/rdf/isdb/
@@ -5485,6 +5758,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.anatomy
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy
@@ -5614,6 +5894,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.conserveddomain
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain
@@ -5743,6 +6030,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.organization
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/organization
@@ -5872,6 +6166,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: mona
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: https://idsm.elixir-czech.cz/rdf/mona/
@@ -5887,6 +6188,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: chembl
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ebi.ac.uk/dataset/chembl
@@ -5993,6 +6301,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.journal
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/journal
@@ -6122,6 +6437,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.author
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/author
@@ -6251,6 +6573,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.disease
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/disease
@@ -6380,6 +6709,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: wikidata.idsm.entity
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://www.wikidata.org/entity/
@@ -6443,6 +6779,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.book
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/book
@@ -6572,6 +6915,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.inchikey
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey
@@ -6701,6 +7051,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.descriptor.compound
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/compound
@@ -6830,6 +7187,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.grant
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/grant
@@ -6959,6 +7323,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.concept
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/concept
@@ -7088,6 +7459,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.source
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/source
@@ -7217,6 +7595,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.protein
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/protein
@@ -7346,6 +7731,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.reference
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/reference
@@ -7475,6 +7867,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: mesh.heading
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://id.nlm.nih.gov/mesh/heading
@@ -7623,6 +8022,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.synonym
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/synonym
@@ -7752,6 +8158,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.compound
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/compound
@@ -7882,6 +8295,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.cooccurrence
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence
@@ -8011,6 +8431,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pubchem.patent
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/patent
@@ -8140,6 +8567,13 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: nanosafetyrdf
   endpoint: https://nanosafety.rdf.bigcat-bioinformatics.org/sparql//
   graph_uris: []
@@ -8151,6 +8585,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.uniprot
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
@@ -8179,6 +8620,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: uniprot
   void_iri: https://sparql.uniprot.org/
   endpoint: https://sparql.uniprot.org/sparql/
@@ -8398,6 +8846,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: uniprot.chebi
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/chebi
@@ -8598,6 +9053,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: uniprot.citationmapping
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/citationmapping
@@ -8798,6 +9260,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: uniprot.citations
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/citations
@@ -8998,6 +9467,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: uniprot.database
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/database
@@ -9029,6 +9505,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: uniprot.diseases
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/diseases
@@ -9229,6 +9712,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: uniprot.enzymes
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/enzymes
@@ -9429,6 +9919,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: uniprot.go
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/go
@@ -9629,6 +10126,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: uniprot.core
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://purl.uniprot.org/core
@@ -9655,6 +10159,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: uniprot.uniparc
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/uniparc
@@ -9855,6 +10366,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: bgee
   endpoint: https://www.bgee.org/sparql/
   void_iri: https://bgee.org/rdf_v15_2
@@ -9868,6 +10386,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rhea
   endpoint: https://sparql.rhea-db.org/sparql/
   void_iri: https://sparql.rhea-db.org/
@@ -9961,6 +10486,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.pdb
   endpoint: http://rdfportal.org/pdb/sparql
   void_iri: http://rdfportal.org/dataset/pdbj
@@ -10147,6 +10679,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.pubcasefinder
   endpoint: http://rdfportal.org/pdb/sparql
   void_iri: https://pubcasefinder.dbcls.jp/rdf
@@ -10161,6 +10700,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.medgen
   endpoint: http://rdfportal.org/pdb/sparql
   void_iri: http://rdfportal.org/dataset/medgen
@@ -10228,6 +10774,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.jpost
   endpoint: http://rdfportal.org/pdb/sparql
   void_iri: http://jpost.org/graph/database
@@ -10241,6 +10794,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.affymetrix
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/affymetrix_resource:bio2rdf.dataset.affymetrix.R3
@@ -10254,6 +10814,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: clinicaltrials
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/clinicaltrials_resource:bio2rdf.dataset.clinicaltrials.R3
@@ -10324,6 +10891,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: ctd
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ctd_resource:bio2rdf.dataset.ctd.R3
@@ -10351,6 +10925,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: kegg
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/kegg_resource:bio2rdf.dataset.kegg.R3
@@ -10437,6 +11018,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: irefindex
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/irefindex_resource:bio2rdf.dataset.irefindex.R3
@@ -10452,6 +11040,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: drugbank
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/drugbank_resource:bio2rdf.dataset.drugbank.R3
@@ -10542,6 +11137,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: homologene
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/homologene_resource:bio2rdf.dataset.homologene.R3
@@ -10608,6 +11210,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: ncbigene
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ncbigene_resource:bio2rdf.dataset.ncbigene.R3
@@ -10735,6 +11344,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: goa
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/goa_resource:bio2rdf.dataset.goa.R3
@@ -10809,6 +11425,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: hgnc
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3
@@ -10887,10 +11510,10 @@
     name: The Gene Curation Coalition
     uri_format: https://search.thegencc.org/genes/HGNC:$1
     homepage: https://thegencc.org
-    description: "The GenCC DB provides information pertaining to the validity of gene-disease relationships, with a current focus on Mendelian diseases. Curated gene-disease relationships are submitted\
-      \ by GenCC member organizations. The GenCC comprises organizations that currently provide online resources (e.g. ClinGen, DECIPHER, Genomics England PanelApp, OMIM, Orphanet, PanelApp Australia, TGMI\u2019\
-      s G2P), as well as diagnostic laboratories that have committed to sharing their internal curated gene-level knowledge (e.g. Ambry, Illumina, Invitae, Myriad Women\u2019s Health, Mass General Brigham\
-      \ Laboratory for Molecular Medicine)."
+    description: The GenCC DB provides information pertaining to the validity of gene-disease relationships, with a current focus on Mendelian diseases. Curated gene-disease relationships are submitted
+      by GenCC member organizations. The GenCC comprises organizations that currently provide online resources (e.g. ClinGen, DECIPHER, Genomics England PanelApp, OMIM, Orphanet, PanelApp Australia, TGMI’s
+      G2P), as well as diagnostic laboratories that have committed to sharing their internal curated gene-level knowledge (e.g. Ambry, Illumina, Invitae, Myriad Women’s Health, Mass General Brigham Laboratory
+      for Molecular Medicine).
   - code: indra
     name: INDRA Database
     uri_format: https://db.indra.bio/statements/from_agents?&format=html&agent0=$1@HGNC
@@ -10917,6 +11540,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: interpro
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/interpro_resource:bio2rdf.dataset.interpro.R3
@@ -11019,6 +11649,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: lsr
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3
@@ -11032,6 +11669,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: mgi
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/mgi_resource:bio2rdf.dataset.mgi.R3
@@ -11192,6 +11836,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: mesh
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/mesh_resource:bio2rdf.dataset.mesh.R3
@@ -11342,6 +11993,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: ndc
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ndc_resource:bio2rdf.dataset.ndc.R3
@@ -11396,6 +12054,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: omim
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/omim_resource:bio2rdf.dataset.omim.R3
@@ -11468,7 +12133,7 @@
   - pubmed: '25428349'
     doi: 10.1093/nar/gku1205
     pmc: PMC4383985
-    title: "OMIM.org: Online Mendelian Inheritance in Man (OMIM\xAE), an online catalog of human genes and genetic disorders"
+    title: 'OMIM.org: Online Mendelian Inheritance in Man (OMIM®), an online catalog of human genes and genetic disorders'
   - pubmed: '15608251'
     doi: 10.1093/nar/gki033
     pmc: PMC539987
@@ -11529,6 +12194,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pharmgkb
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/pharmgkb_resource:bio2rdf.dataset.pharmgkb.R3
@@ -11582,6 +12254,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: bio2rdf.uniprot
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://sparql.uniprot.org/
@@ -11782,6 +12461,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: sgd
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/sgd_resource:bio2rdf.dataset.sgd.R3
@@ -12046,6 +12732,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: hp
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/hp_resource:bio2rdf.dataset.hp.R3
@@ -12146,6 +12839,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: eco
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/eco_resource:bio2rdf.dataset.eco.R3
@@ -12237,6 +12937,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: apo
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/apo_resource:bio2rdf.dataset.apo.R3
@@ -12277,6 +12984,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: taxonomy
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3
@@ -12453,6 +13167,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: sider
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3
@@ -12472,6 +13193,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: wormbase
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/wormbase_resource:bio2rdf.dataset.wormbase.R3
@@ -12648,6 +13376,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: bio2rdf.biomodels
   endpoint: http://cu.biomodels.bio2rdf.org/sparql
   notes: Bio2RDF mirror - BioModels
@@ -12657,8 +13392,14 @@
   - model
   - systems biology
   - interaction/pathway
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.bioportal
   endpoint: http://cu.bioportal.bio2rdf.org/sparql
   notes: Bio2RDF mirror - BioPortal
@@ -12972,8 +13713,8 @@
   download_nt: https://download.bio2rdf.org/files/release/3/bioportalbio2rdf-bioportal.nt
   bioregistry_prefix: bioportal
   bioregistry_name: BioPortal
-  bioregistry_description: "BioPortal is an open repository of biomedical ontologies that provides access via Web services and Web browsers to ontologies developed in OWL, RDF, OBO format and Prot\xE9g\xE9\
-    \ frames. BioPortal functionality includes the ability to browse, search and visualize ontologies."
+  bioregistry_description: BioPortal is an open repository of biomedical ontologies that provides access via Web services and Web browsers to ontologies developed in OWL, RDF, OBO format and Protégé frames.
+    BioPortal functionality includes the ability to browse, search and visualize ontologies.
   bioregistry_homepage: http://bioportal.bioontology.org/
   bioregistry_uri_prefix: http://bioportal.bioontology.org/ontologies/
   bioregistry_uri_prefixes:
@@ -13018,8 +13759,14 @@
     n2t: bioportal
     prefixcommons: bioportal
     re3data: r3d100012344
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.chembl
   endpoint: http://cu.chembl.bio2rdf.org/sparql
   notes: Bio2RDF mirror - ChEMBL
@@ -13117,8 +13864,14 @@
     prefixcommons: chembl
     re3data: r3d100010539
     uniprot: DB-0174
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.dbsnp
   endpoint: http://cu.dbsnp.bio2rdf.org/sparql
   notes: Bio2RDF mirror - dbSNP
@@ -13193,8 +13946,14 @@
     togoid: Dbsnp
     uniprot: DB-0013
     wikidata: P6861
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.genage
   endpoint: http://cu.genage.bio2rdf.org/sparql
   notes: Bio2RDF mirror - GenAge
@@ -13207,8 +13966,14 @@
   - gene
   - ageing
   - biology
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.gendr
   endpoint: http://cu.gendr.bio2rdf.org/sparql
   notes: Bio2RDF mirror - GenDR
@@ -13221,8 +13986,14 @@
   - gene
   - dietary restriction
   - biology
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.iproclass
   endpoint: http://cu.iproclass.bio2rdf.org/sparql
   notes: Bio2RDF mirror - iProClass
@@ -13307,8 +14078,14 @@
   - protein
   - classification
   - sequence
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.linkedspl
   endpoint: http://cu.linkedspl.bio2rdf.org/sparql
   notes: Bio2RDF mirror - LinkedSPL
@@ -13319,8 +14096,14 @@
   - drug
   - pharmacology
   - label
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.orphanet
   endpoint: http://cu.orphanet.bio2rdf.org/sparql
   notes: Bio2RDF mirror - Orphanet
@@ -13336,8 +14119,14 @@
   - disease
   - rare disease
   - phenotype
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.pathwaycommons
   endpoint: http://cu.pathwaycommons.bio2rdf.org/sparql
   notes: Bio2RDF mirror - Pathway Commons
@@ -13388,8 +14177,14 @@
     prefixcommons: pathwaycommons
     re3data: r3d100012731
     uniprot: DB-0253
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.pubmed
   endpoint: http://cu.pubmed.bio2rdf.org/sparql
   notes: Bio2RDF mirror - PubMed
@@ -13502,8 +14297,14 @@
     togoid: Pubmed
     wikidata: P698
     wikidata.entity: Q2082879
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.reactome
   endpoint: http://cu.reactome.bio2rdf.org/sparql
   notes: Bio2RDF mirror - Reactome
@@ -13649,8 +14450,14 @@
     re3data: r3d100010861
     togoid: ReactomePathway
     wikidata: P3937
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.sabiork
   endpoint: http://cu.sabiork.bio2rdf.org/sparql
   notes: Bio2RDF mirror - SABIO-RK
@@ -13660,8 +14467,14 @@
   - reaction
   - enzyme kinetics
   - biochemistry
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.wikipathways
   endpoint: http://cu.wikipathways.bio2rdf.org/sparql
   notes: Bio2RDF mirror - WikiPathways
@@ -13787,8 +14600,14 @@
     togoid: Wikipathways
     wikidata: P2410
     wikidata.entity: Q7999828
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: omabrowser
   endpoint: https://sparql.omabrowser.org/sparql/
   void_iri: https://sparql.omabrowser.org/
@@ -13800,6 +14619,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: swisslipids
   endpoint: https://beta.sparql.swisslipids.org/
   bioregistry_prefix: swisslipids
@@ -13860,6 +14686,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: earthmetabolome
   endpoint: https://kg.earthmetabolome.org/metrin/api/
   download_tar_gz: https://zenodo.org/api/records/15689187/files/metrin-kg.tar.gz/content
@@ -13870,6 +14703,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: stringdb
   endpoint: https://sparql.string-db.org/sparql
   keywords:
@@ -13879,6 +14719,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: cellosaurus
   endpoint: https://sparql.cellosaurus.org/sparql
   download_obo:
@@ -13972,6 +14819,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.cellosaurus
   download_nt:
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_more_specific_than.nt.gz
@@ -13983,6 +14837,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: sibils
   endpoint: https://sparql.sibils.org/sparql
   download_ttl: https://sparql.sibils.org/ontology.ttl
@@ -13993,6 +14854,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: orthodb
   endpoint: https://sparql.orthodb.org/sparql
   bioregistry_prefix: orthodb
@@ -14055,6 +14923,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: compoundwiki
   endpoint: https://compoundcloud.wikibase.cloud/query
   keywords:
@@ -14064,6 +14939,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: plantmetwiki
   endpoint: https://plantmetwiki.bioinformatics.nl/sparql
   graph_uris: []
@@ -14075,6 +14957,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: chembl.bigcat
   endpoint: https://chemblmirror.rdf.bigcat-bioinformatics.org/sparql/
   void_iri: https://chemblmirror.rdf.bigcat-bioinformatics.org/
@@ -14154,6 +15043,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: allie
   endpoint: http://data.allie.dbcls.jp/sparql
   download_nt:
@@ -14165,6 +15061,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: polyadenylation.magnaporthe
   endpoint: https://dydra.com/markw/polyadenylation-sites-in-magnaporthe-oryza/sparql
   download_ttl: https://dydra.com/markw/polyadenylation-sites-in-magnaporthe-oryza.ttl
@@ -14175,6 +15078,13 @@
   sparql_engine: dydra
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: lifesciencedict
   endpoint: http://lsd.dbcls.jp/sparql
   download_nt:
@@ -14187,6 +15097,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.pubchem
   endpoint: https://rdfportal.org/pubchem/sparql
   download_nt: https://rdfportal.org/ntriples/pubchem/latest/void.nt.gz
@@ -14196,6 +15113,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.chebi
   endpoint: https://rdfportal.org/primary/sparql
   download_nt: https://rdfportal.org/ntriples/chebi/latest/chebi.nt.gz
@@ -14205,6 +15129,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.primary
   endpoint: https://rdfportal.org/primary/sparql
   keywords:
@@ -14212,6 +15143,13 @@
   sparql_engine: virtuoso
   sparql_strategy: post+form+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: mesh.nlm
   endpoint: https://id.nlm.nih.gov/mesh/sparql
   bioregistry_prefix: mesh
@@ -14359,6 +15297,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: glycosmos
   endpoint: https://ts.glycosmos.org/sparql
   download_ttl:
@@ -14478,6 +15423,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: fanavi
   endpoint: http://navi.first.lifesciencedb.jp/fanavi/sparql
   keywords:
@@ -14487,6 +15439,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.sib
   endpoint: https://rdfportal.org/sib/sparql
   keywords:
@@ -14495,6 +15454,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: colil
   endpoint: http://colil.dbcls.jp/sparql
   keywords:
@@ -14504,14 +15470,27 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: agrold
   endpoint: http://sparql.southgreen.fr/sparql
   keywords:
   - agriculture
   - plant biology
   - genomics
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: biogateway
   endpoint: https://2407.biogateway.eu/sparql/
   keywords:
@@ -14519,6 +15498,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: ideal
   endpoint: https://ideal-rdf.dbcls.jp/sparql
   bioregistry_prefix: ideal
@@ -14563,6 +15549,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.kero
   endpoint: https://rdfportal.org/kero/sparql
   keywords:
@@ -14570,6 +15563,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.wikidata
   endpoint: https://rdfportal.org/wikidata/sparql
   keywords:
@@ -14577,6 +15577,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.pdb
   endpoint: https://rdfportal.org/pdb/sparql
   download_nt: https://rdfportal.org/ntriples/pdb/latest/pdbx-v50.nt.gz
@@ -14587,6 +15594,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.ebi
   endpoint: https://rdfportal.org/ebi/sparql
   keywords:
@@ -14594,6 +15608,13 @@
   sparql_engine: virtuoso
   sparql_strategy: post+form+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.ncbi
   endpoint: https://rdfportal.org/ncbi/sparql
   keywords:
@@ -14602,6 +15623,13 @@
   sparql_engine: virtuoso
   sparql_strategy: post+form+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: linkdb
   endpoint: http://www.genome.jp/sparql/linkdb
   keywords:
@@ -14610,6 +15638,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.ddbj
   endpoint: https://rdfportal.org/ddbj/sparql
   keywords:
@@ -14618,6 +15653,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.bioportal
   endpoint: https://rdfportal.org/bioportal/sparql
   keywords:
@@ -14625,6 +15667,13 @@
   sparql_engine: virtuoso
   sparql_strategy: post+form+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: regulatorycircuits
   endpoint: https://regulatorycircuits-lod.genouest.org/sparql/
   keywords:
@@ -14634,6 +15683,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: forum
   endpoint: https://forum.semantic-metabolomics.fr/sparql/
   keywords:
@@ -14641,6 +15697,13 @@
   - biomedical science
   sparql_engine: virtuoso
   sparql_strategy: get+json
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: glyconavi
   endpoint: https://sparql.glyconavi.org/sparql
   bioregistry_prefix: glyconavi
@@ -14668,6 +15731,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: coxpresdb
   endpoint: https://coxpresdb.jp/sparql
   download_n3:
@@ -14689,6 +15759,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: lipidmaps
   endpoint: https://lipidmaps.org/sparql
   bioregistry_prefix: lipidmaps
@@ -14779,6 +15856,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: imgtkg
   endpoint: https://www.imgt.org/fuseki/ImgtKg/sparql
   keywords:
@@ -14788,21 +15872,49 @@
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: imgt.mabkg
   endpoint: https://www.imgt.org/fuseki/MabkgKg/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: imgt.genekg
   endpoint: https://www.imgt.org/fuseki/GENEKG/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: imgt.inferences
   endpoint: https://www.imgt.org/fuseki/IMGTKGINFERENCES/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: brenda
   endpoint: https://sparql.dsmz.de/api/brenda
   download_nt:
@@ -14888,6 +16000,13 @@
     re3data: r3d100010616
   sparql_engine: qlever
   sparql_strategy: get+json
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: bioresource.riken
   endpoint: https://knowledge.brc.riken.jp/sparql
   keywords:
@@ -14896,13 +16015,26 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: riken.metadb
   endpoint: http://metadb.riken.jp/sparql
   keywords:
   - database
   - life science
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: agrovoc
   endpoint: https://agrovoc.fao.org/sparql
   bioregistry_prefix: agrovoc
@@ -14953,6 +16085,13 @@
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: chebi
   download_owl: https://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi.owl
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/chebi
@@ -15086,8 +16225,22 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.mediadive
   download_nt: https://rdfportal.org/ntriples/mediadive/latest/rdf-mod-r.nt.gz
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: mediadive
   endpoint: https://sparql.dsmz.de/api/mediadive
   keywords:
@@ -15096,12 +16249,26 @@
   - organism
   sparql_engine: qlever
   sparql_strategy: get+json
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.glytoucan
   download_nt:
   - https://rdfportal.org/ntriples/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-09042015.nt.gz
   - https://rdfportal.org/ntriples/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-Monosaccharide-09042015.nt.gz
   - https://rdfportal.org/ntriples/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-Motif-09042015.nt.gz
   - https://rdfportal.org/ntriples/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-SaccharideSeeAlso-09072015.nt.gz
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: glytoucan
   endpoint: https://ts.glytoucan.org/sparql
   bioregistry_prefix: glytoucan
@@ -15162,6 +16329,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: glyconnect
   endpoint: https://glyconnect.expasy.org/sparql
   keywords:
@@ -15171,6 +16345,13 @@
   sparql_engine: graphdb
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: string
   endpoint: https://sparql.string-db.org/
   bioregistry_prefix: string
@@ -15262,6 +16443,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: attedii
   endpoint: https://atted.jp/sparql
   keywords:
@@ -15271,6 +16459,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.bacdive
   endpoint: https://sparql.dsmz.de/api/bacdive
   download_nt:
@@ -15278,7 +16473,7 @@
   - https://rdfportal.org/ntriples/bacdive/latest/rdf-mod-r.1.nt.gz
   bioregistry_prefix: bacdive
   bioregistry_name: BacDive
-  bioregistry_description: "BacDive\u2014the Bacterial Diversity Metadatabase merges detailed strain-linked information on the different aspects of bacterial and archaeal biodiversity."
+  bioregistry_description: BacDive—the Bacterial Diversity Metadatabase merges detailed strain-linked information on the different aspects of bacterial and archaeal biodiversity.
   bioregistry_homepage: https://bacdive.dsmz.de/
   bioregistry_uri_prefix: https://bacdive.dsmz.de/strain/
   bioregistry_uri_prefixes:
@@ -15319,6 +16514,13 @@
   - organism
   sparql_engine: qlever
   sparql_strategy: get+json
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: rdfportal.proteinatlas
   endpoint: https://rdfportal.org/proteinatlas/sparql
   keywords:
@@ -15328,13 +16530,26 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: prokino
   endpoint: http://vulcan.cs.uga.edu/sparql
   keywords:
   - protein
   - kinase
   - sequence
-  endpoint_down: true
+  endpoint_down: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: linkeddrugs
   endpoint: http://linkeddata.finki.ukim.mk/sparql
   keywords:
@@ -15342,7 +16557,13 @@
   - pharmacology
   - health
   - disease
-  endpoint_down: true
+  endpoint_down: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: pdbj.bmrb
   endpoint: https://bmrbpub.pdbj.org/search/rdf
   bioregistry_prefix: pdbj
@@ -15524,8 +16745,14 @@
     togoid: Pdb
     uniprot: DB-0172
     wikidata: P638
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: glic
   endpoint: https://sparql.glycoinfo.org/sparql
   keywords:
@@ -15535,34 +16762,65 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: metabobank
   endpoint: https://mb2.ddbj.nig.ac.jp/sparql
   keywords:
   - metabolite
   - mass spectrometry
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: linkedlifedata
   endpoint: http://linkedlifedata.com/sparql
   keywords:
   - biomedical science
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: microbedb
   endpoint: http://genome.microbedb.jp/sparql
   keywords:
   - microbiology
   - genome
   - organism
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: mbgd
   endpoint: http://sparql.nibb.ac.jp/sparql
   keywords:
   - microbiology
   - genome
   - orthology
-  endpoint_down: true
+  endpoint_down: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: gocam
   endpoint: http://rdf.geneontology.org/blazegraph/sparql
   keywords:
@@ -15571,6 +16829,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: chemdb
   endpoint: http://chemdb.semweb.csdb.cn/sparql
   notes: ChemDB - phase transition dataset
@@ -15617,6 +16882,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: covidontheweb
   endpoint: https://covidontheweb.inria.fr/sparql
   notes: COVID on the Web - INRIA
@@ -15625,8 +16897,14 @@
   - disease
   - bibliography/documents
   - virology
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: bio2rdf.kegg.cu
   endpoint: http://cu.kegg.bio2rdf.org/sparql
   notes: Bio2RDF KEGG mirror (cu.kegg.bio2rdf.org)
@@ -15634,8 +16912,14 @@
   - pathway
   - interaction/pathway
   - chemical
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: virtuoso
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: rdfportal.nadd
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -15649,6 +16933,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: biobricks-aopwiki
   endpoint: https://frink.apps.renci.org/biobricks-aopwiki/sparql
   notes: 'KG Registry: BioBricks AOP-Wiki'
@@ -15660,6 +16951,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: biobricks-ice
   endpoint: https://frink.apps.renci.org/biobricks-ice/sparql
   notes: 'KG Registry: BioBricks ICE'
@@ -15670,6 +16968,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: biobricks-mesh
   endpoint: https://frink.apps.renci.org/biobricks-mesh/sparql
   notes: 'KG Registry: BioBricks MeSH'
@@ -15682,6 +16987,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: biobricks-pubchem-annotations
   endpoint: https://frink.apps.renci.org/biobricks-pubchem-annotations/sparql
   notes: 'KG Registry: BioBricks PubChem Annotations'
@@ -15693,6 +17005,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: biobricks-tox21
   endpoint: https://frink.apps.renci.org/biobricks-tox21/sparql
   notes: 'KG Registry: BioBricks Tox21'
@@ -15704,6 +17023,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: biobricks-toxcast
   endpoint: https://frink.apps.renci.org/biobricks-toxcast/sparql
   notes: 'KG Registry: BioBricks ToxCast'
@@ -15715,6 +17041,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: biohealth
   endpoint: https://frink.apps.renci.org/biohealth/sparql
   notes: 'KG Registry: Bio-Health KG'
@@ -15726,6 +17059,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: cam-kp
   endpoint: https://stars-app.renci.org/cam/sparql
   notes: 'KG Registry: CAM-KP (Causal Activity Models Knowledge Provider)'
@@ -15733,8 +17073,14 @@
   keywords:
   - biomedical science
   - reasoning
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: blazegraph
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: climatemodelskg
   endpoint: https://frink.apps.renci.org/climatemodelskg/sparql
   notes: 'KG Registry: Climate Models KG'
@@ -15746,6 +17092,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: dreamkg
   endpoint: https://frink.apps.renci.org/dreamkg/sparql
   notes: 'KG Registry: DREAM-KG'
@@ -15757,6 +17110,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: emi
   endpoint: https://qlever.earthmetabolome.org/metrin-kg
   download_tar_gz: https://zenodo.org/records/18652487/files/metrin-kg.tar.gz
@@ -15785,6 +17145,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: emikg
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: EMI KG; shares QLever earthmetabolome endpoint'
@@ -15795,6 +17162,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: fiokg
   endpoint: https://frink.apps.renci.org/fiokg/sparql
   notes: 'KG Registry: SAWGraph FIO KG'
@@ -15805,6 +17179,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: geoconnex
   endpoint: https://frink.apps.renci.org/geoconnex/sparql
   notes: 'KG Registry: GEOCONNEX'
@@ -15815,6 +17196,13 @@
   - environment
   sparql_engine: qlever
   sparql_strategy: get+json
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: globi
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   download_nquads: https://zenodo.org/record/14640564/files/interactions.nq.gz
@@ -15827,6 +17215,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: gtopdb
   download_ttl:
   - https://www.guidetopharmacology.org/DATA/rdf/2026.1/gtp.ttl
@@ -15839,6 +17234,13 @@
   - drug
   - pharmacology
   - receptor
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: hpa
   download_trig: https://v19.proteinatlas.org/download/proteinatlas.trig.gz
   notes: 'Updates KG Registry: Human Protein Atlas'
@@ -15880,7 +17282,7 @@
   - pubmed: '27044256'
     doi: 10.15252/msb.20155865
     pmc: PMC4848759
-    title: "Transcriptomics resources of human tissues and\_organs"
+    title: Transcriptomics resources of human tissues and organs
   - pubmed: '25613900'
     doi: 10.1126/science.1260419
     title: Proteomics. Tissue-based map of the human proteome
@@ -15911,6 +17313,13 @@
     prefixcommons: hpa
     re3data: r3d100010931
     uniprot: DB-0046
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: hra-kg
   download_ttl: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.ttl
   download_jsonld: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.json
@@ -15921,6 +17330,13 @@
   kg_registry_id: hra-kg
   keywords:
   - cell line
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: metanetx
   endpoint: https://rdf.metanetx.org/sparql
   download_ttl:
@@ -15952,6 +17368,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: nasa-gesdisc-kg
   endpoint: https://frink.apps.renci.org/nasa-gesdisc-kg/sparql
   notes: 'KG Registry: NASA-GESDISC-KG'
@@ -15963,6 +17386,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: nde
   endpoint: https://frink.apps.renci.org/nde/sparql
   notes: 'KG Registry: NIAID Data Ecosystem KG'
@@ -15973,6 +17403,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: oma
   endpoint: https://sparql.omabrowser.org/lode/sparql
   download_tgz: https://omabrowser.org/All/oma-rdf-turtle.tgz
@@ -15985,6 +17422,13 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: openbiodiv
   endpoint: http://graph.openbiodiv.net/
   download_ttl: https://raw.githubusercontent.com/pensoft/OpenBiodiv/refs/heads/master/ontology/openbiodiv-ontology-latest.ttl
@@ -15994,8 +17438,14 @@
   - biodiversity
   - taxonomy
   - bibliography/documents
-  endpoint_down: true
+  endpoint_down: false
   sparql_engine: graphdb
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: ordo
   endpoint: https://www.orphadata.com/ordo-sparql-endpoint/
   notes: 'KG Registry: Orphanet Rare Disease Ontology (ORDO)'
@@ -16065,6 +17515,13 @@
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pathophenodb
   download_nt: http://patho.phenomebrowser.net/media/downloads/patho_pheno_withsymbols.nt
   notes: 'KG Registry: PathoPhenoDB'
@@ -16074,6 +17531,13 @@
   - disease
   - phenotype
   - pathogen
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: pf1600
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: pf1600 Dataset; shares QLever earthmetabolome endpoint'
@@ -16084,6 +17548,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: reactome
   download_rdfxml:
   - https://download.reactome.org/95/biopax.zip
@@ -16176,6 +17647,13 @@
     re3data: r3d100010861
     togoid: ReactomePathway
     wikidata: P3937
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: ruralkg
   endpoint: https://frink.apps.renci.org/ruralkg/sparql
   notes: 'KG Registry: Rural Resilience KG'
@@ -16186,6 +17664,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: sawgraph
   endpoint: https://frink.apps.renci.org/sawgraph/sparql
   notes: 'KG Registry: SAWGraph PFAS graph'
@@ -16197,6 +17682,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: scales
   endpoint: https://frink.apps.renci.org/scales/sparql
   notes: 'KG Registry: SCALES'
@@ -16206,6 +17698,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: securechainkg
   endpoint: https://frink.apps.renci.org/securechainkg/sparql
   notes: 'KG Registry: SecureChain KG'
@@ -16216,6 +17715,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: semopenalex
   endpoint: https://frink.apps.renci.org/semopenalex/sparql
   notes: 'KG Registry: SemOpenAlex'
@@ -16226,6 +17732,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: sockg
   endpoint: https://frink.apps.renci.org/sockg/sparql
   notes: 'KG Registry: SOC-KG'
@@ -16236,6 +17749,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: spatialkg
   endpoint: https://frink.apps.renci.org/spatialkg/sparql
   notes: 'KG Registry: SAWGraph Spatial KG'
@@ -16246,6 +17766,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: spoke
   endpoint: https://frink.apps.renci.org/spoke-okn/sparql
   notes: 'KG Registry: SPOKE'
@@ -16256,6 +17783,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: spoke-genelab
   endpoint: https://frink.apps.renci.org/spoke-genelab/sparql
   notes: 'KG Registry: SPOKE GeneLab'
@@ -16267,6 +17801,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: sudokn
   endpoint: https://frink.apps.renci.org/sudokn/sparql
   notes: 'KG Registry: SUDOKN'
@@ -16277,6 +17818,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: tera
   download_nt:
   - https://zenodo.org/records/4244313/files/ecotox_chemical.nt
@@ -16290,6 +17838,13 @@
   keywords:
   - environment
   - ecology
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: try
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: TRY Plant Trait Database; shares QLever earthmetabolome endpoint'
@@ -16301,6 +17856,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: ubergraph
   endpoint: https://ubergraph.apps.renci.org/sparql
   download_nquads: https://ubergraph.apps.renci.org/downloads/current/ubergraph.nq.gz
@@ -16313,6 +17875,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: wildlifekn
   endpoint: https://frink.apps.renci.org/wildlifekg/sparql
   notes: 'KG Registry: Wildlife-KN'
@@ -16324,6 +17893,13 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: diseaseontology
   endpoint: https://sparql.disease-ontology.org
   download_owl:
@@ -16337,6 +17913,13 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: dbcls.allie.pubmed
   download_nt:
   - https://ftp.dbcls.jp/allie/allie_rdf/pubmed_rdf_nt_latest.gz
@@ -16345,6 +17928,13 @@
   - bibliography/documents
   - abbreviation
   - literature curation
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: lsd
   endpoint: https://lsd.spatialepidemiology.net/sparql
   download_nt: https://ftp.dbcls.jp/allie/allie_rdf/lsd_rdf_nt_latest.gz
@@ -16352,7 +17942,13 @@
   keywords:
   - life science
   - database
-  endpoint_down: true
+  endpoint_down: false
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  avg_response_time: null
 - name: dbcls.mesh
   download_nt:
   - https://ftp.dbcls.jp/allie/allie_rdf/mesh_rdf_nt_latest.gz
@@ -16362,6 +17958,13 @@
   - bibliography/documents
   - health
   - disease
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
 - name: nanosolveit.rdf
   download_nquads:
   - https://zenodo.org/records/13955050/files/dataset.nq
@@ -16374,3 +17977,10 @@
   - toxicology
   - nanomaterial
   - chemical
+  endpoint_status: unknown
+  last_checked: ''
+  last_success: ''
+  last_error: ''
+  failure_count: 0
+  endpoint_down: false
+  avg_response_time: null
