@@ -15,14 +15,14 @@ documentation root, use ``os.path.abspath`` to make it absolute, like shown here
 import os
 import re
 import sys
-from datetime import date
+from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.abspath("../../src"))
 
 # -- Project information -----------------------------------------------------
 
 project = "rdfsolve"
-copyright = f"{date.today().year}, Javier Millán Acosta"
+copyright = f"{datetime.now(timezone.utc).year}, Javier Millán Acosta"
 author = "Javier Millán Acosta"
 
 # The full version, including alpha/beta/rc tags.

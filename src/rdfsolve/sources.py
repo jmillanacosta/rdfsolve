@@ -1,47 +1,4 @@
-"""Load data-source definitions from ``data/sources.yaml``.
-
-The canonical source registry is a YAML file containing a flat list
-of mappings, one per SPARQL data source.  Each mapping carries:
-
-* **name** - unique human-readable identifier.
-* **endpoint** - SPARQL endpoint URL.
-* **graph_uris** - named graphs to query.
-* **use_graph** - whether to wrap queries in a ``GRAPH`` clause.
-* **two_phase** - use two-phase mining (default ``True``).
-* Optional tuning knobs: *chunk_size*, *class_batch_size*,
-  *class_chunk_size*, *timeout*, *delay*, *counts*, *unsafe_paging*.
-
-Each entry can be enriched with Bioregistry metadata via
-:func:`enrich_source_with_bioregistry`, which resolves the canonical
-Bioregistry prefix for the underlying dataset (regardless of how rdfsolve
-serialises or partitions it) and populates ``bioregistry_*`` fields.
-
-The resolution strategy handles four cases:
-
-1. **Exact match** — source ``name`` is itself a valid Bioregistry prefix
-   (e.g. ``"chebi"``, ``"hgnc"``).
-2. **Root-prefix match** — the first dot-separated segment of ``name``
-   resolves (e.g. ``"drugbank.drugs"`` → ``"drugbank"``).
-3. **local_provider field** — the entry declares ``local_provider`` which
-   is itself a Bioregistry prefix (e.g. ``local_provider: pubchem``).
-4. **Extra-provider reverse lookup** — source name follows the pattern
-   ``"{provider}.{dataset}"`` (e.g. ``"bio2rdf.uniprot"``) and the
-   dataset resource lists that provider code in its extra providers.
-
-The full metadata dict returned by :func:`get_bioregistry_metadata`
-mirrors the fields shown on the Bioregistry resource page (name,
-description, homepage, license, domain, keywords, publications,
-uri_prefix, synonyms, mappings, extra_providers) and can be exported to
-JSON-LD with :func:`sources_to_jsonld`.
-
-Usage::
-
-    from rdfsolve.sources import load_sources, enrich_source_with_bioregistry
-
-    for src in load_sources("data/sources.yaml"):
-        enrich_source_with_bioregistry(src)
-        print(src["name"], src.get("bioregistry_name"))
-"""
+"""Load and enrich SPARQL data source definitions from YAML with Bioregistry metadata."""
 
 from __future__ import annotations
 
@@ -63,6 +20,7 @@ class SourceEntry(TypedDict, total=False):
     name: str
     endpoint: str
     void_iri: str
+    void_uri_base: str
     graph_uris: list[str]
     use_graph: bool
     two_phase: bool
@@ -74,12 +32,12 @@ class SourceEntry(TypedDict, total=False):
     counts: bool
     unsafe_paging: bool
     notes: str
-    # ── Endpoint metadata (populated by probe/discovery scripts) ──
+    # Endpoint metadata (populated by probe/discovery scripts)
     sparql_engine: str
     sparql_strategy: str
     supports_graph: bool
     endpoint_down: bool
-    # ── Bioregistry-derived metadata (populated by enrich_source_with_bioregistry) ──
+    # Bioregistry-derived metadata (populated by enrich_source_with_bioregistry)
     bioregistry_prefix: str
     bioregistry_name: str
     bioregistry_description: str
@@ -96,7 +54,7 @@ class SourceEntry(TypedDict, total=False):
     bioregistry_extra_providers: list[dict[str, str | None]]
 
 
-# ── default path ──────────────────────────────────────────────────
+# default path
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_SOURCES_YAML = _REPO_ROOT / "data" / "sources.yaml"
@@ -125,16 +83,16 @@ def _default_sources_path() -> Path:
     )
 
 
-# ── Bioregistry enrichment ────────────────────────────────────────
+# Bioregistry enrichment
 
 
-# Lazily populated reverse index: extra-provider code → list of BR prefixes
+# Lazily populated reverse index: extra-provider code -> list of BR prefixes
 # whose resource lists that code in get_extra_providers().
 _EXTRA_PROVIDER_INDEX: dict[str, list[str]] | None = None
 
 
 def _build_extra_provider_index() -> dict[str, list[str]]:
-    """Build a mapping from provider code → [bioregistry prefix, ...].
+    """Build a mapping from provider code -> [bioregistry prefix, ...].
 
     This allows resolving names like ``"bio2rdf.uniprot"`` to ``"uniprot"``
     by looking up which resource has ``bio2rdf`` as an extra provider.
@@ -165,16 +123,16 @@ def _resolve_bioregistry_prefix(entry: SourceEntry) -> str | None:
 
     Resolution is attempted in the following order, stopping at the first hit:
 
-    1. **Exact name** — the source ``name`` is itself a valid Bioregistry
-       prefix (e.g. ``"chebi"`` → ``"chebi"``).
-    2. **Root-prefix** — the first dot-separated segment of ``name``
-       resolves (e.g. ``"drugbank.drugs"`` → ``"drugbank"``).
-    3. **local_provider field** — the entry declares ``local_provider``
+    1. **Exact name** - the source ``name`` is itself a valid Bioregistry
+       prefix (e.g. ``"chebi"`` -> ``"chebi"``).
+    2. **Root-prefix** - the first dot-separated segment of ``name``
+       resolves (e.g. ``"drugbank.drugs"`` -> ``"drugbank"``).
+    3. **local_provider field** - the entry declares ``local_provider``
        which is a valid Bioregistry prefix (e.g. ``local_provider: pubchem``).
-    4. **Extra-provider reverse lookup** — the name follows
+    4. **Extra-provider reverse lookup** - the name follows
        ``"{provider}.{dataset}"`` and the dataset resource lists that
        provider code among its extra providers (e.g. ``"bio2rdf.uniprot"``
-       → ``"uniprot"`` because ``uniprot`` has ``bio2rdf`` as an extra
+       -> ``"uniprot"`` because ``uniprot`` has ``bio2rdf`` as an extra
        provider).
 
     Returns ``None`` when no match is found.
@@ -182,7 +140,7 @@ def _resolve_bioregistry_prefix(entry: SourceEntry) -> str | None:
     try:
         import bioregistry
     except ImportError:
-        logger.debug("bioregistry not installed — skipping prefix resolution")
+        logger.debug("bioregistry not installed - skipping prefix resolution")
         return None
 
     name: str = entry.get("name", "") or ""
@@ -204,7 +162,6 @@ def _resolve_bioregistry_prefix(entry: SourceEntry) -> str | None:
         return local_provider
 
     # 4. Extra-provider reverse lookup: "{provider_code}.{dataset_name}"
-    #    e.g. "bio2rdf.uniprot" -> provider_code="bio2rdf", dataset_name="uniprot"
     if len(parts) == 2:
         provider_code, dataset_name = parts[0], parts[1]
         index = _get_extra_provider_index()
@@ -221,7 +178,7 @@ def _resolve_bioregistry_prefix(entry: SourceEntry) -> str | None:
     return None
 
 
-# ── Bioregistry metadata helpers ──────────────────────────────────
+# Bioregistry metadata helpers
 
 
 def _extract_publications(resource: Any) -> list[dict[str, str | None]]:
@@ -314,32 +271,6 @@ def _extract_collection_metadata(resource: Any, meta: dict[str, Any]) -> None:
 def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
     """Return a structured metadata dict for a Bioregistry prefix.
 
-    The returned dictionary includes all fields visible on the Bioregistry
-    resource page and suitable for embedding in JSON-LD or YAML:
-
-    .. code-block:: python
-
-        {
-            "prefix": "drugbank",
-            "name": "DrugBank",
-            "description": "...",
-            "homepage": "http://www.drugbank.ca",
-            "license": None,
-            "domain": "chemical",
-            "keywords": ["drug", "chemical structure", ...],
-            "publications": [{"pubmed": "...", "doi": "...", "title": "..."}, ...],
-            "uri_prefix": "https://go.drugbank.com/drugs/",
-            "uri_prefixes": ["https://go.drugbank.com/drugs/", ...],
-            "synonyms": ["DrugBank", "DRUGBANK_ID"],
-            "mappings": {"wikidata": "P715", ...},
-            "logo": "https://...",
-            "extra_providers": [
-                {"code": "bio2rdf", "name": "Bio2RDF",
-                 "uri_format": "http://bio2rdf.org/drugbank:$1"},
-                ...
-            ],
-        }
-
     Parameters
     ----------
     br_prefix:
@@ -371,10 +302,7 @@ def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
 
 
 def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
-    """Populate ``bioregistry_*`` fields on *entry* in-place.
-
-    Resolves the canonical Bioregistry prefix for the source's underlying
-    dataset and writes all available metadata into the entry dict.
+    """Resolve the canonical Bioregistry prefix for the source and write all available metadata into the entry dict.
 
     Parameters
     ----------
@@ -385,15 +313,6 @@ def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
     -------
     str or None
         The resolved Bioregistry prefix, or ``None`` if no match was found.
-
-    Example
-    -------
-    ::
-
-        src = load_sources()[0]  # e.g. name="drugbank.drugs"
-        prefix = enrich_source_with_bioregistry(src)
-        print(prefix)  # "drugbank"
-        print(src["bioregistry_name"])  # "DrugBank"
     """
     br_prefix = _resolve_bioregistry_prefix(entry)
     if br_prefix is None:
@@ -438,7 +357,7 @@ def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
     return br_prefix
 
 
-# ── JSON-LD export ────────────────────────────────────────────────
+# JSON-LD export
 
 # JSON-LD context for source entries
 _SOURCES_JSONLD_CONTEXT: dict[str, Any] = {
@@ -560,11 +479,7 @@ def sources_to_jsonld(
     *,
     enrich: bool = False,
 ) -> dict[str, Any]:
-    """Serialise a list of source entries to a JSON-LD document.
-
-    Each entry becomes a node in the ``@graph`` array. Bioregistry-derived
-    fields (``bioregistry_*``) are mapped to standard vocabulary predicates
-    using a compact JSON-LD context.
+    """Serialize a list of source entries to a JSON-LD document.
 
     Parameters
     ----------
@@ -572,7 +487,7 @@ def sources_to_jsonld(
         Source entries, typically returned by :func:`load_sources`.
     enrich:
         When ``True``, call :func:`enrich_source_with_bioregistry` on each
-        entry before serialisation (entries are **not** modified in place
+        entry before serialization (entries are **not** modified in place
         when ``enrich=True``; a shallow copy is used per entry).
 
     Returns
@@ -580,18 +495,6 @@ def sources_to_jsonld(
     dict
         A JSON-LD document with ``@context`` and ``@graph`` keys, ready for
         :func:`json.dump`.
-
-    Example
-    -------
-    ::
-
-        import json
-        from rdfsolve.sources import load_sources, sources_to_jsonld
-
-        entries = load_sources()
-        doc = sources_to_jsonld(entries, enrich=True)
-        with open("sources.jsonld", "w") as f:
-            json.dump(doc, f, indent=2)
     """
     graph: list[dict[str, Any]] = []
 
@@ -607,7 +510,7 @@ def sources_to_jsonld(
     return {"@context": _SOURCES_JSONLD_CONTEXT, "@graph": graph}
 
 
-# ── loading ───────────────────────────────────────────────────────
+# loading
 
 
 def load_sources(
@@ -626,8 +529,6 @@ def load_sources(
     -------
     list[SourceEntry]
         One dict per data source, keys normalised to snake_case.
-        Sources without an ``endpoint`` are included (callers may
-        skip them).
     """
     p = Path(path) if path is not None else _default_sources_path()
     suffix = p.suffix.lower()
@@ -636,14 +537,12 @@ def load_sources(
         return _load_yaml(p)
     if suffix in (".jsonld", ".json"):
         return _load_jsonld(p)
-    if suffix == ".csv":
-        return _load_csv(p)
     raise ValueError(
-        f"Unsupported sources file format {suffix!r}: expected .yaml, .yml, .jsonld, .json, or .csv"
+        f"Unsupported sources file format {suffix!r}: expected .yaml, .yml, .jsonld, .json"
     )
 
 
-# ── YAML reader ───────────────────────────────────────────────────
+# YAML reader
 
 
 def _load_yaml(path: Path) -> list[SourceEntry]:
@@ -695,8 +594,7 @@ def _yaml_node_to_entry(node: dict[str, Any]) -> SourceEntry:
     if "notes" in node:
         e["notes"] = str(node["notes"])
 
-    # Pass through download_*, local_endpoint, and provider fields so
-    # that the CLI (e.g. rdfsolve qleverfile) can see them.
+    # Pass through download_*, local_endpoint, and provider fields
     passthrough = {"local_endpoint", "local_provider", "local_tar_url"}
     e_dict: dict[str, Any] = e  # type: ignore[assignment]
     for key in node:
@@ -706,7 +604,7 @@ def _yaml_node_to_entry(node: dict[str, Any]) -> SourceEntry:
     return e
 
 
-# ── JSON-LD reader ────────────────────────────────────────────────
+# JSON-LD reader
 
 
 def _load_jsonld(path: Path) -> list[SourceEntry]:
@@ -769,37 +667,7 @@ def _node_to_entry(node: dict[str, Any]) -> SourceEntry:
     return e
 
 
-# ── CSV reader (deprecated now) ──────────────────────────────────────────
-
-
-def _load_csv(path: Path) -> list[SourceEntry]:
-    with open(path, newline="", encoding="utf-8") as fh:
-        reader = csv.DictReader(fh)
-        rows = list(reader)
-
-    entries: list[SourceEntry] = []
-    for row in rows:
-        e: SourceEntry = {}
-
-        e["name"] = (row.get("dataset_name") or "").strip()
-        e["endpoint"] = (row.get("endpoint_url") or "").strip()
-        e["void_iri"] = (row.get("void_iri") or "").strip()
-
-        graph_uri = (row.get("graph_uri") or "").strip()
-        e["graph_uris"] = [graph_uri] if graph_uri else []
-
-        e["use_graph"] = (row.get("use_graph") or "").strip().lower() in ("true", "1", "yes")
-        # two_phase defaults to True unless explicitly off
-        tp = (row.get("two_phase") or "").strip().lower()
-        e["two_phase"] = tp not in ("false", "0", "no")
-
-        entries.append(e)
-
-    logger.info("Loaded %d sources from CSV %s", len(entries), path)
-    return entries
-
-
-# ── DataFrame conversion (for instance_matcher compat) ────────────
+# DataFrame conversion (for instance_matcher compat)
 
 
 def load_sources_dataframe(
@@ -845,7 +713,7 @@ def load_sources_dataframe(
 
         ports_path = Path(ports_json)
         if not ports_path.exists():
-            logger.warning("ports_json %s does not exist — ignoring.", ports_path)
+            logger.warning("ports_json %s does not exist - ignoring.", ports_path)
             return df
 
         port_map: dict[str, int] = _json.loads(ports_path.read_text(encoding="utf-8"))
@@ -856,9 +724,11 @@ def load_sources_dataframe(
 
         # Override endpoint_url for datasets in port_map
         df["endpoint_url"] = df.apply(
-            lambda row: f"http://localhost:{port_map[row['dataset_name']]}"
-            if row["dataset_name"] in port_map
-            else "",
+            lambda row: (
+                f"http://localhost:{port_map[row['dataset_name']]}"
+                if row["dataset_name"] in port_map
+                else ""
+            ),
             axis=1,
         )
         # Keep only datasets that have a local endpoint
@@ -871,18 +741,32 @@ def load_sources_dataframe(
     return df
 
 
-# ── Source mode classification ────────────────────────────────────
+# Source mode classification
 
 # RDF file extensions that indicate a locally-downloadable dump.
-_LOCAL_RDF_EXTENSIONS: frozenset[str] = frozenset({
-    ".ttl", ".nt", ".nq", ".owl", ".rdf", ".n3",
-    ".ttl.gz", ".nt.gz", ".nq.gz", ".owl.gz", ".rdf.gz",
-    ".ttl.xz", ".nt.xz", ".nq.xz",
-    ".trig", ".trig.gz",
-})
+_LOCAL_RDF_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        ".ttl",
+        ".nt",
+        ".nq",
+        ".owl",
+        ".rdf",
+        ".n3",
+        ".ttl.gz",
+        ".nt.gz",
+        ".nq.gz",
+        ".owl.gz",
+        ".rdf.gz",
+        ".ttl.xz",
+        ".nt.xz",
+        ".nq.xz",
+        ".trig",
+        ".trig.gz",
+    }
+)
 
 
-def _has_rdf_download(entry: "SourceEntry") -> bool:
+def _has_rdf_download(entry: SourceEntry) -> bool:
     """Return ``True`` if any ``download_*`` field links to an RDF dump.
 
     A URL is considered an RDF dump when its path (excluding query string)
@@ -903,17 +787,17 @@ def _has_rdf_download(entry: "SourceEntry") -> bool:
     return False
 
 
-def classify_source_mode(entry: "SourceEntry") -> str:
+def classify_source_mode(entry: SourceEntry) -> str:
     """Classify a source as ``'local'``, ``'remote'``, ``'both'``, or ``'unknown'``.
 
     Classification rules (in order):
 
-    * ``'local'``  — at least one ``download_*`` field points to an RDF
+    * ``'local'``  - at least one ``download_*`` field points to an RDF
       dump file (``.ttl``, ``.nq``, ``.nt``, ``.owl``, etc.).
-    * ``'remote'`` — ``endpoint`` is set, ``endpoint_down`` is not
+    * ``'remote'`` - ``endpoint`` is set, ``endpoint_down`` is not
       ``True``, and **no** download links are present.
-    * ``'both'``   — download links *and* a live endpoint are both present.
-    * ``'unknown'``— neither condition holds (no endpoint, no downloads).
+    * ``'both'``   - download links *and* a live endpoint are both present.
+    * ``'unknown'``- neither condition holds (no endpoint, no downloads).
 
     Parameters
     ----------

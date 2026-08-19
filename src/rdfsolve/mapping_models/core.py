@@ -5,13 +5,14 @@ Base class and helpers for all mapping types.
 
 from __future__ import annotations
 
-import json as _json
+import json
 import logging
 from collections import Counter
 from collections.abc import Callable, Collection, Iterable
 from pathlib import Path
 from typing import Any
 
+import ujson
 from pydantic import BaseModel, Field
 
 from rdfsolve._uri import (
@@ -76,6 +77,10 @@ class MappingEdge(BaseModel):
         le=1,
         description="Optional match confidence score 0-1",
     )
+    mapping_justification: str | None = Field(
+        None,
+        description="Mapping justification URI (e.g., semapv:ManualMappingCuration, semapv:LexicalMatching)",
+    )
 
 
 class InstanceMatchResult(BaseModel):
@@ -112,7 +117,7 @@ class Mapping(BaseModel):
         description="Mapping strategy identifier",
     )
 
-    # ---- JSON-LD import ------------------------------------
+    # JSON-LD import ------------------------------------
 
     @classmethod
     def from_jsonld(cls, path: str | Path) -> Mapping:
@@ -122,13 +127,13 @@ class Mapping(BaseModel):
         file's own ``@context`` block.
         """
         br_map = _build_br_prefix_map()
-        raw = _json.loads(
+        raw = json.loads(
             Path(path).read_text(encoding="utf-8"),
         )
         context: dict[str, str] = raw.get("@context", {})
         about_data = raw.get("@about", {})
 
-        # Legacy SSSOM files store curie_map in @about
+        # SSSOM files store curie_map in @about
         curie_map: dict[str, str] = about_data.get("curie_map") or {}
         merged = {**curie_map, **context} if curie_map else context
         expand = make_expander(merged, br_map)
@@ -145,7 +150,7 @@ class Mapping(BaseModel):
             mapping_type=strategy,
         )
 
-    # ---- NetworkX export -----------------------------------
+    # NetworkX export -----------------------------------
 
     def to_networkx(self) -> Any:
         """Export the mapping as an ``nx.MultiDiGraph``."""
@@ -175,7 +180,7 @@ class Mapping(BaseModel):
             )
         return graph
 
-    # ---- Dataset-level graph export ------------------------
+    # Dataset-level graph export ------------------------
 
     @classmethod
     def dataset_graph(
@@ -199,13 +204,6 @@ class Mapping(BaseModel):
                 "networkx is required for dataset_graph(); install it with: pip install networkx",
             ) from exc
 
-        # ujson is ~3-5x faster for large files
-        try:
-            import ujson as _fast_json
-        except ImportError:
-            _fast_json = None  # type: ignore[assignment]
-        fast_json = _fast_json if _fast_json is not None else _json
-
         br_map = _build_br_prefix_map()
         skip_keys = frozenset(
             {
@@ -218,7 +216,7 @@ class Mapping(BaseModel):
         for p in paths:
             _process_mapping_file(
                 p,
-                fast_json,
+                ujson,
                 br_map,
                 skip_keys,
                 class_to_datasets,
@@ -234,7 +232,7 @@ class Mapping(BaseModel):
                 graph.add_edge(a, b, weight=w)
         return graph
 
-    # ---- Strategy / predicate counting --------------------
+    # Strategy / predicate counting --------------------
 
     @classmethod
     def count_edges(
@@ -263,19 +261,15 @@ class Mapping(BaseModel):
             ``(strategy_counts, predicate_counts)`` where keys are strategy
             names / predicate CURIEs and values are total edge counts.
         """
-        try:
-            import ujson as _fast_json  # type: ignore[import]
-        except ImportError:
-            _fast_json = None  # type: ignore[assignment]
-        fast_json = _fast_json if _fast_json is not None else _json
-
-        _skip = skip_keys if skip_keys is not None else frozenset({"void:inDataset", "dcterms:created"})
+        _skip = (
+            skip_keys if skip_keys is not None else frozenset({"void:inDataset", "dcterms:created"})
+        )
         strategy_counts: Counter[str] = Counter()
         predicate_counts: Counter[str] = Counter()
 
         for p in paths:
             try:
-                raw = fast_json.loads(Path(p).read_bytes())
+                raw = ujson.loads(Path(p).read_bytes())
             except Exception:
                 _log.debug("Could not read %s", p, exc_info=True)
                 continue
@@ -292,7 +286,7 @@ class Mapping(BaseModel):
 
         return strategy_counts, predicate_counts
 
-    # ---- JSON-LD export ------------------------------------
+    # JSON-LD export ------------------------------------
 
     def to_jsonld(self) -> dict[str, Any]:
         """Export as JSON-LD with @context, @graph, @about.
@@ -402,7 +396,7 @@ def _dataset_node(
     strategy:
         If provided (``"semra"``, ``"sssom"``, ``"instance_matcher"`` …)
         the ``@id`` is minted as ``rdfsolve:{strategy}/{slug}``.
-        Otherwise falls back to ``rdfsolve:dataset/{slug}``.
+        Otherwise uses ``rdfsolve:dataset/{slug}``.
     """
     slug = _slugify_dataset_name(name)
     # Normalise strategy to a short prefix
@@ -480,6 +474,10 @@ def _parse_mapping_target(
     tgt_uri = expand(tgt["@id"])
     tgt_ds_node = tgt.get("void:inDataset") or {}
     tgt_ds = tgt_ds_node.get("dcterms:title", "") or src_ds
+
+    if not src_uri or not tgt_uri or not src_ds or not tgt_ds:
+        return None
+
     tgt_ep_raw = tgt_ds_node.get("void:sparqlEndpoint") or tgt_ds_node.get("foaf:homepage") or {}
     tgt_ep = tgt_ep_raw.get("@id") if isinstance(tgt_ep_raw, dict) else None
     tgt_uri_fmt = tgt_ds_node.get("rdfsolve:matchedNamespace") or None
@@ -498,10 +496,6 @@ def _parse_mapping_target(
             confidence=(float(confidence) if confidence is not None else None),
         )
     except Exception:
-        _log.debug(
-            "Skipping invalid mapping edge",
-            exc_info=True,
-        )
         return None
 
 

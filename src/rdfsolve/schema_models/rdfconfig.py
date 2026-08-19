@@ -1,9 +1,4 @@
-"""RDF-config YAML generation from JSON-LD.
-
-Converts a rdfsolve JSON-LD schema dict to the three YAML files
-expected by the `rdf-config <https://github.com/dbcls/rdf-config>`_
-tool: ``model.yaml``, ``prefix.yaml``, ``endpoint.yaml``.
-"""
+"""RDF-config YAML generation (model, prefix, endpoint) from rdfsolve JSON-LD schemas."""
 
 from __future__ import annotations
 
@@ -13,7 +8,7 @@ from typing import Any
 __all__ = ["to_rdfconfig"]
 
 
-# ── Public API ───────────────────────────────────────────────────
+# Public API
 
 
 def to_rdfconfig(
@@ -55,7 +50,7 @@ def to_rdfconfig(
     }
 
 
-# ── prefix.yaml ─────────────────────────────────────────────────
+# prefix.yaml
 
 
 def _generate_prefix(prefixes: dict[str, str]) -> str:
@@ -63,7 +58,7 @@ def _generate_prefix(prefixes: dict[str, str]) -> str:
     return "\n".join(lines) + "\n"
 
 
-# ── endpoint.yaml ───────────────────────────────────────────────
+# endpoint.yaml
 
 
 def _generate_endpoint(
@@ -81,7 +76,7 @@ def _generate_endpoint(
     return "\n".join(lines) + "\n"
 
 
-# ── model.yaml ───────────────────────────────────────────────────
+# model.yaml
 
 
 def _generate_model(
@@ -122,7 +117,7 @@ def _generate_model(
     return _format_yaml(classes, class_name_map)
 
 
-# ── helpers ──────────────────────────────────────────────────────
+# helpers
 
 
 def _class_name(uri_or_curie: str) -> str:

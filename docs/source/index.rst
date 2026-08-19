@@ -12,14 +12,12 @@ Table of Contents
 
    installation
    usage
-   cli
 
 .. toctree::
    :maxdepth: 2
    :caption: API Reference
 
    api
-   parser
    miner
    schema_models
    mapping_models
@@ -28,19 +26,11 @@ Table of Contents
    :maxdepth: 2
    :caption: Format Converters
 
-   shapes
-   compose
-   codegen
-
 .. toctree::
    :maxdepth: 2
    :caption: Mappings & Integration
 
-   semra_converter
-   semra_source
-   sssom_importer
    instance_matcher
-   inference
 
 .. toctree::
    :maxdepth: 2
@@ -48,10 +38,8 @@ Table of Contents
 
    sparql_helper
    query
-   iri
    uri
    sources
-   tools
 
 Indices and Tables
 ------------------

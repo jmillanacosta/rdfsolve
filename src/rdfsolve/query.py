@@ -1,15 +1,4 @@
-"""SPARQL query execution - pure-library module (no Flask dependency).
-
-This module provides structured SPARQL query execution built on top of
-:class:`~rdfsolve.sparql_helper.SparqlHelper`.  It adds:
-
-* Pydantic result models (:class:`ResultCell`, :class:`QueryResult`)
-  that give strongly-typed access to SPARQL JSON result bindings.
-* A single :func:`execute_sparql` convenience function with a clean
-  dict-return signature suitable for the public API.
-
-All HTTP / retry / GET->POST logic is delegated to ``SparqlHelper``.
-"""
+"""Structured SPARQL query execution with Pydantic result models."""
 
 from __future__ import annotations
 
@@ -20,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from rdfsolve.sparql_helper import SparqlHelper
 
-# ── Result models ─────────────────────────────────────────────────
+# Result models
 
 
 class ResultCell(BaseModel):
@@ -45,7 +34,7 @@ class QueryResult(BaseModel):
     error: str | None = None
 
 
-# ── Public helper ─────────────────────────────────────────────────
+# Public helper
 
 
 def execute_sparql(
