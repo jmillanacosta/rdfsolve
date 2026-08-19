@@ -1,7 +1,0 @@
-Models
-======
-
-.. automodule:: rdfsolve.models
-   :members:
-   :undoc-members:
-   :show-inheritance:
