@@ -8,7 +8,7 @@ from collections.abc import Callable
 
 _log = logging.getLogger(__name__)
 
-_URI_SCHEMES: tuple[str, ...] = ("http://", "https://", "urn:")
+_URI_SCHEMES: tuple[str, ...] = ("http://", "https://", "urn:", "_:")
 
 
 # Namespace / prefix extraction

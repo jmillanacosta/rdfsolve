@@ -60,6 +60,8 @@ from typing import Any
 
 import yaml
 
+from rdfsolve.qlever import QleverConfig, build_provider_qleverfile, build_qleverfile
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -183,6 +185,13 @@ class PipelineConfig:
     # Parallelism
     parallelism: int = 4
 
+    # Output naming
+    output_suffix: str = ""
+
+    # Health check files
+    endpoint_status_file: Path | None = None
+    download_status_file: Path | None = None
+
     def __post_init__(self):
         if self.repo_dir is None:
             self.repo_dir = self.base_dir / "rdfsolve-2"
@@ -237,8 +246,38 @@ class PipelineConfig:
             if skipped:
                 log.info(f"Skipped {skipped} sources from providers: {skip_providers}")
 
+        sources = self._filter_by_health_checks(sources)
+
         self.sources = sources
         return sources
+
+    def _filter_by_health_checks(self, sources: list[Source]) -> list[Source]:
+        filtered = sources
+
+        if self.endpoint_status_file and self.endpoint_status_file.exists():
+            with open(self.endpoint_status_file) as f:
+                status = json.load(f)
+            down = {name for name, data in status["endpoints"].items() if data["status"] != "up"}
+            before = len(filtered)
+            filtered = [s for s in filtered if s.name not in down]
+            skipped = before - len(filtered)
+            if skipped:
+                log.info(f"Skipped {skipped} sources with down endpoints")
+
+        if self.download_status_file and self.download_status_file.exists():
+            with open(self.download_status_file) as f:
+                status = json.load(f)
+            broken = {
+                name for name, data in status["downloads"].items()
+                if data["status"] not in ("accessible", "redirect")
+            }
+            before = len(filtered)
+            filtered = [s for s in filtered if s.name not in broken]
+            skipped = before - len(filtered)
+            if skipped:
+                log.info(f"Skipped {skipped} sources with broken downloads")
+
+        return filtered
 
     def get_remote_sources(self) -> list[Source]:
         """Get sources that can be mined remotely."""
@@ -353,11 +392,11 @@ class RemoteMiningStage(Stage):
                 log.info(f"  Using {polite_delay}s inter-request delay")
 
             try:
-                # Create output directory for this source
                 source_output_dir = output_dir / source.name
                 source_output_dir.mkdir(parents=True, exist_ok=True)
 
-                report_path = source_output_dir / f"{source.name}_report.json"
+                suffix = self.config.output_suffix
+                report_path = source_output_dir / f"{source.name}{suffix}_report.json"
                 miner = SchemaMiner(
                     endpoint_url=source.endpoint,
                     source_name=source.name,
@@ -375,15 +414,13 @@ class RemoteMiningStage(Stage):
                 source.failure_count = 0
                 source.endpoint_down = False
 
-                # Save schema as JSON-LD
-                schema_path = source_output_dir / f"{source.name}_schema.jsonld"
+                schema_path = source_output_dir / f"{source.name}{suffix}_schema.jsonld"
                 schema_path.write_text(
                     json.dumps(schema.to_jsonld(), indent=2),
                     encoding="utf-8",
                 )
 
-                # Save VoID
-                void_path = source_output_dir / f"{source.name}_void.ttl"
+                void_path = source_output_dir / f"{source.name}{suffix}_void.ttl"
                 try:
                     void_graph = schema.to_void_graph()
                     if void_graph:
@@ -454,24 +491,22 @@ class LocalMiningStage(Stage):
             workdir.mkdir(parents=True, exist_ok=True)
 
             try:
-                # Download data
-                if not self._check_data_exists(workdir, source):
-                    log.info("  Downloading data...")
-                    self._download_data(workdir, source)
+                qleverfile = workdir / "Qleverfile"
+                if not qleverfile.exists():
+                    self._prepare_qleverfile(workdir, source, port)
 
-                # Index with QLever
                 index_done = workdir / ".index.done"
                 if not index_done.exists():
-                    log.info("  Indexing with QLever...")
+                    log.info("  Executing Qleverfile (download + index)...")
                     try:
-                        self._qlever_index(workdir, source)
+                        self._execute_qleverfile(workdir, source)
                         index_done.touch()
                         results["indexed"].append(source.name)
                     except Exception as idx_err:
-                        log.error(f"  -> Indexing failed: {idx_err}")
+                        log.error(f"  -> Failed: {idx_err}")
                         log.warning(f"  -> Skipping {source.name}")
                         results["failed"].append(
-                            {"name": source.name, "error": f"Index failed: {idx_err}"}
+                            {"name": source.name, "error": f"Qleverfile execution failed: {idx_err}"}
                         )
                         continue
 
@@ -527,55 +562,74 @@ class LocalMiningStage(Stage):
                 return True
         return False
 
-    def _download_data(self, workdir: Path, source: Source):
-        """Download RDF data files."""
-        for url in source.download_urls:
-            filename = url.split("/")[-1]
-            output_path = workdir / filename
+    def _prepare_qleverfile(self, workdir: Path, source: Source, port: int):
+        """Generate Qleverfile for source."""
+        entry = {
+            "name": source.name,
+            **{k: getattr(source, k) for k in dir(source) if k.startswith("download_") and getattr(source, k)},
+        }
+        if hasattr(source, "local_tar_url") and source.local_tar_url:
+            entry["local_tar_url"] = source.local_tar_url
+        if hasattr(source, "graph_uris") and source.graph_uris:
+            entry["graph_uris"] = source.graph_uris
 
-            if output_path.exists():
-                continue
+        cfg = QleverConfig(
+            memory_for_queries="30G",
+            timeout="600s",
+            parser_buffer_size="2GB",
+            parallel_parsing=False,
+            num_triples_per_batch=1_000_000,
+        )
 
-            log.info(f"    Downloading {filename}...")
-            subprocess.run(
-                ["curl", "-L", "-o", str(output_path), url], check=True, capture_output=True
-            )
+        qleverfile_content = build_qleverfile(
+            entry, self.config.data_dir, port, runtime="singularity", cfg=cfg
+        )
 
-    def _qlever_index(self, workdir: Path, source: Source):
-        """Index data with QLever."""
-        image_path = self.config.data_dir / "qlever.sif"
+        qleverfile_path = workdir / "Qleverfile"
+        qleverfile_path.write_text(qleverfile_content)
+        log.info(f"    Generated Qleverfile")
 
-        # Find input files
-        input_files = []
-        for ext in ["*.ttl", "*.nt", "*.nq"]:
-            input_files.extend(workdir.glob(ext))
+    def _execute_qleverfile(self, workdir: Path, source: Source, skip_download: bool = False):
+        """Execute Qleverfile data download and indexing."""
+        qleverfile_path = workdir / "Qleverfile"
+        if not qleverfile_path.exists():
+            raise ValueError(f"Qleverfile not found in {workdir}")
 
-        # Decompress if needed
-        for gz in workdir.glob("*.gz"):
-            subprocess.run(["gunzip", "-f", str(gz)], check=True)
-            input_files.append(gz.with_suffix(""))
+        import configparser
+        config = configparser.ConfigParser()
+        config.read(qleverfile_path)
+
+        rdf_dir = workdir / "rdf"
+        rdf_dir.mkdir(exist_ok=True)
+
+        input_files_pattern = config.get("index", "INPUT_FILES")
+        rdf_format = config.get("data", "FORMAT")
+        settings_json = config.get("index", "SETTINGS_JSON")
+
+        input_files = list(workdir.glob(input_files_pattern.replace("rdf/", "")))
+        if not input_files:
+            input_files = list(rdf_dir.glob(input_files_pattern.split("/")[-1]))
+
+        if not input_files and not skip_download:
+            get_data_cmd = config.get("data", "GET_DATA_CMD")
+            log.info(f"    Downloading data...")
+            subprocess.run(["bash", "-c", get_data_cmd], check=True, cwd=workdir)
+
+            input_files = list(workdir.glob(input_files_pattern.replace("rdf/", "")))
+            if not input_files:
+                input_files = list(rdf_dir.glob(input_files_pattern.split("/")[-1]))
 
         if not input_files:
-            raise ValueError(f"No input files found in {workdir}")
+            raise ValueError(f"No files found matching {input_files_pattern}")
 
-        # Detect format
-        rdf_format = "ttl"
-        if any(f.suffix == ".nt" for f in input_files):
-            rdf_format = "nt"
-        elif any(f.suffix == ".nq" for f in input_files):
-            rdf_format = "nq"
-
-        # Create settings.json
-        settings = {"languages-internal": [], "locale": {"language": "en", "country": "US"}}
         settings_path = workdir / f"{source.name}.settings.json"
-        settings_path.write_text(json.dumps(settings))
+        settings_path.write_text(settings_json)
 
-        # Build file flags
         file_flags = []
         for f in input_files:
             file_flags.extend(["-f", str(f)])
 
-        # Run qlever-index
+        image_path = self.config.data_dir / "qlever.sif"
         cmd = [
             "singularity",
             "exec",
@@ -591,9 +645,10 @@ class LocalMiningStage(Stage):
             rdf_format,
             *file_flags,
             "-p",
-            "false",
+            config.get("index", "PARALLEL_PARSING"),
         ]
 
+        log.info(f"    Indexing {len(input_files)} files...")
         subprocess.run(cmd, cwd=workdir, check=True)
 
     def _kill_existing_qlever_on_port(self, port: int):
@@ -688,11 +743,11 @@ class LocalMiningStage(Stage):
 
         endpoint = f"http://localhost:{port}"
 
-        # Create output directory for this source
         output_dir = self.config.output_dir / source.name
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        report_path = output_dir / f"{source.name}_report.json"
+        suffix = self.config.output_suffix
+        report_path = output_dir / f"{source.name}{suffix}_report.json"
 
         # Use unlimited timeout for local QLever (we control the server)
         miner = SchemaMiner(
@@ -705,12 +760,10 @@ class LocalMiningStage(Stage):
 
         schema = miner.mine(dataset_name=source.name)
 
-        # Save schema as JSON-LD
-        schema_path = output_dir / f"{source.name}_schema.jsonld"
+        schema_path = output_dir / f"{source.name}{suffix}_schema.jsonld"
         schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
 
-        # Save VoID
-        void_path = output_dir / f"{source.name}_void.ttl"
+        void_path = output_dir / f"{source.name}{suffix}_void.ttl"
         try:
             void_graph = schema.to_void_graph()
             if void_graph:
@@ -760,11 +813,15 @@ class GroupedMiningStage(Stage):
                     results["skipped"].append(group_name)
                     continue
 
+                qleverfile = workdir / "Qleverfile"
+                if not qleverfile.exists():
+                    self._prepare_group_qleverfile(workdir, group_name, group_sources, port)
+
                 index_done = workdir / ".index.done"
                 if not index_done.exists():
-                    log.info(f"  Indexing {len(source_data)} sources with QLever...")
+                    log.info(f"  Indexing {len(source_data)} sources...")
                     try:
-                        self._qlever_index_group(workdir, group_name, source_data)
+                        self._execute_group_qleverfile(workdir, group_name, source_data)
                         index_done.touch()
                     except Exception as idx_err:
                         log.error(f"  -> Indexing failed: {idx_err}")
@@ -799,6 +856,7 @@ class GroupedMiningStage(Stage):
 
     def _identify_groups(self, sources: list[Source]) -> dict[str, list[Source]]:
         import re
+        from urllib.parse import urlparse
 
         groups = {}
         endpoint_to_name = {}
@@ -806,17 +864,35 @@ class GroupedMiningStage(Stage):
         for source in sources:
             group_name = None
 
-            if source.endpoint:
+            if source.download_urls:
+                first_url = source.download_urls[0] if isinstance(source.download_urls, list) else source.download_urls
+                hostname = urlparse(first_url).hostname
+                if hostname:
+                    if "pubchem" in hostname or "pubchem" in source.name:
+                        group_name = "pubchem.ftp"
+                    elif "bio2rdf" in hostname or "bio2rdf" in source.name:
+                        group_name = "bio2rdf"
+                    elif "rdfportal" in hostname or "rdfportal" in source.name:
+                        group_name = "rdfportal"
+                    elif "dbcls" in hostname or "dbcls" in source.name:
+                        group_name = "dbcls"
+                    else:
+                        group_name = hostname.replace(".", "_")
+
+            if not group_name and source.endpoint:
                 if source.endpoint not in endpoint_to_name:
                     domain = re.sub(r"https?://", "", source.endpoint)
                     domain = domain.split("/")[0].replace(":", "_").replace(".", "_")
                     endpoint_to_name[source.endpoint] = f"endpoint_{domain}"
                 group_name = endpoint_to_name[source.endpoint]
-            elif source.local_provider:
+
+            if not group_name and source.local_provider:
                 group_name = source.local_provider
-            elif source.bioregistry_prefix:
+
+            if not group_name and source.bioregistry_prefix:
                 group_name = source.bioregistry_prefix
-            else:
+
+            if not group_name:
                 parts = source.name.split(".")
                 group_name = parts[0]
 
@@ -826,10 +902,52 @@ class GroupedMiningStage(Stage):
 
         return {k: v for k, v in groups.items() if len(v) > 1}
 
-    def _qlever_index_group(
+    def _prepare_group_qleverfile(
+        self, workdir: Path, group_name: str, group_sources: list[Source], port: int
+    ):
+        """Generate provider Qleverfile for grouped sources."""
+        members = []
+        for source in group_sources:
+            entry = {
+                "name": source.name,
+                **{k: getattr(source, k) for k in dir(source) if k.startswith("download_") and getattr(source, k)},
+            }
+            if hasattr(source, "local_tar_url") and source.local_tar_url:
+                entry["local_tar_url"] = source.local_tar_url
+            if hasattr(source, "graph_uris") and source.graph_uris:
+                entry["graph_uris"] = source.graph_uris
+            members.append(entry)
+
+        cfg = QleverConfig(
+            memory_for_queries="80G",
+            timeout="1200s",
+            parser_buffer_size="4GB",
+            parallel_parsing=False,
+            num_triples_per_batch=1_000_000,
+        )
+
+        qleverfile_content = build_provider_qleverfile(
+            group_name, members, self.config.data_dir, port, runtime="singularity", cfg=cfg
+        )
+
+        qleverfile_path = workdir / "Qleverfile"
+        qleverfile_path.write_text(qleverfile_content)
+        log.info(f"  Generated provider Qleverfile")
+
+    def _execute_group_qleverfile(
         self, workdir: Path, group_name: str, source_data: list[tuple[Source, Path]]
     ):
-        image_path = self.config.data_dir / "qlever.sif"
+        """Execute group Qleverfile indexing using existing data."""
+        import configparser
+        qleverfile_path = workdir / "Qleverfile"
+        config = configparser.ConfigParser()
+        config.read(qleverfile_path)
+
+        rdf_format = config.get("data", "FORMAT")
+        settings_json = config.get("index", "SETTINGS_JSON")
+
+        settings_path = workdir / f"{group_name}.settings.json"
+        settings_path.write_text(settings_json)
 
         input_files = []
         for source, source_workdir in source_data:
@@ -841,22 +959,11 @@ class GroupedMiningStage(Stage):
         if not input_files:
             raise ValueError(f"No input files found for group {group_name}")
 
-        first_file = input_files[0][0]
-        if first_file.suffix == ".nt":
-            rdf_format = "nt"
-        elif first_file.suffix == ".nq":
-            rdf_format = "nq"
-        else:
-            rdf_format = "ttl"
-
-        settings = {"languages-internal": [], "locale": {"language": "en", "country": "US"}}
-        settings_path = workdir / f"{group_name}.settings.json"
-        settings_path.write_text(json.dumps(settings))
-
         file_flags = []
         for file_path, graph_uri in input_files:
             file_flags.extend(["-f", str(file_path), "-g", graph_uri])
 
+        image_path = self.config.data_dir / "qlever.sif"
         cmd = [
             "singularity",
             "exec",
@@ -872,9 +979,10 @@ class GroupedMiningStage(Stage):
             rdf_format,
             *file_flags,
             "-p",
-            "false",
+            config.get("index", "PARALLEL_PARSING"),
         ]
 
+        log.info(f"  Indexing {len(input_files)} files from {len(source_data)} sources...")
         subprocess.run(cmd, cwd=workdir, check=True)
 
     def _kill_existing_qlever_on_port(self, port: int):
@@ -1049,17 +1157,21 @@ class LsLodCloudStage(Stage):
             results["sources_included"] = len(source_data)
             log.info(f"  Including {len(source_data)} sources in LSLOD Cloud")
 
+            port = self.config.base_port + 2000
+            qleverfile = workdir / "Qleverfile"
+            if not qleverfile.exists():
+                self._prepare_cloud_qleverfile(workdir, sources, port)
+
             index_done = workdir / ".index.done"
             if not index_done.exists():
                 log.info(f"  Indexing all {len(source_data)} sources...")
                 try:
-                    self._qlever_index_cloud(workdir, source_data)
+                    self._execute_cloud_qleverfile(workdir, source_data)
                     index_done.touch()
                 except Exception as idx_err:
                     log.error(f"  -> Indexing failed: {idx_err}")
                     return results
 
-            port = self.config.base_port + 2000
             log.info(f"  Starting LSLOD Cloud QLever on port {port}...")
             server_pid = self._qlever_start(workdir, "lslod_cloud", port)
 
@@ -1081,11 +1193,51 @@ class LsLodCloudStage(Stage):
 
         return results
 
-    def _qlever_index_cloud(self, workdir: Path, source_data: list[tuple[Source, Path]]):
-        """Index all local sources as named graphs in one mega-QLever instance."""
-        image_path = self.config.data_dir / "qlever.sif"
+    def _prepare_cloud_qleverfile(
+        self, workdir: Path, all_sources: list[Source], port: int
+    ):
+        """Generate Qleverfile for LSLOD Cloud."""
+        members = []
+        for source in all_sources:
+            entry = {
+                "name": source.name,
+                **{k: getattr(source, k) for k in dir(source) if k.startswith("download_") and getattr(source, k)},
+            }
+            if hasattr(source, "local_tar_url") and source.local_tar_url:
+                entry["local_tar_url"] = source.local_tar_url
+            if hasattr(source, "graph_uris") and source.graph_uris:
+                entry["graph_uris"] = source.graph_uris
+            members.append(entry)
 
-        # Collect all input files with their graph URIs
+        cfg = QleverConfig(
+            memory_for_queries="250G",
+            timeout="3600s",
+            parser_buffer_size="8GB",
+            parallel_parsing=False,
+            num_triples_per_batch=1_000_000,
+        )
+
+        qleverfile_content = build_provider_qleverfile(
+            "lslod_cloud", members, self.config.data_dir, port, runtime="singularity", cfg=cfg
+        )
+
+        qleverfile_path = workdir / "Qleverfile"
+        qleverfile_path.write_text(qleverfile_content)
+        log.info("  Generated LSLOD Cloud Qleverfile")
+
+    def _execute_cloud_qleverfile(self, workdir: Path, source_data: list[tuple[Source, Path]]):
+        """Execute LSLOD Cloud indexing using existing data."""
+        import configparser
+        qleverfile_path = workdir / "Qleverfile"
+        config = configparser.ConfigParser()
+        config.read(qleverfile_path)
+
+        rdf_format = config.get("data", "FORMAT")
+        settings_json = config.get("index", "SETTINGS_JSON")
+
+        settings_path = workdir / "lslod_cloud.settings.json"
+        settings_path.write_text(settings_json)
+
         input_files = []
         for source, source_workdir in source_data:
             for ext in ["*.ttl", "*.nt", "*.nq"]:
@@ -1096,28 +1248,13 @@ class LsLodCloudStage(Stage):
         if not input_files:
             raise ValueError("No input files found for LSLOD Cloud")
 
-        log.info(f"  Found {len(input_files)} RDF files across all sources")
+        log.info(f"  Found {len(input_files)} RDF files across {len(source_data)} sources")
 
-        # Detect format (use first file)
-        first_file = input_files[0][0]
-        if first_file.suffix == ".nt":
-            rdf_format = "nt"
-        elif first_file.suffix == ".nq":
-            rdf_format = "nq"
-        else:
-            rdf_format = "ttl"
-
-        # Create settings.json
-        settings = {"languages-internal": [], "locale": {"language": "en", "country": "US"}}
-        settings_path = workdir / "lslod_cloud.settings.json"
-        settings_path.write_text(json.dumps(settings))
-
-        # Build file flags with graph URIs
         file_flags = []
         for file_path, graph_uri in input_files:
             file_flags.extend(["-f", str(file_path), "-g", graph_uri])
 
-        # Run qlever-index with more memory for large cloud
+        image_path = self.config.data_dir / "qlever.sif"
         cmd = [
             "singularity",
             "exec",
@@ -1133,7 +1270,7 @@ class LsLodCloudStage(Stage):
             rdf_format,
             *file_flags,
             "-p",
-            "false",
+            config.get("index", "PARALLEL_PARSING"),
         ]
 
         subprocess.run(cmd, cwd=workdir, check=True)
@@ -1229,34 +1366,30 @@ class LsLodCloudStage(Stage):
 
         endpoint = f"http://localhost:{port}"
 
-        # Get all graph URIs
         graph_uris = [f"http://rdfsolve.org/graph/{s.name}" for s, _ in source_data]
+        sources_map = {f"http://rdfsolve.org/graph/{s.name}": s for s, _ in source_data}
 
         log.info(f"  Mining with {len(graph_uris)} named graphs")
 
-        # Create output directory
         output_dir = self.config.output_dir / "lslod_cloud"
         output_dir.mkdir(parents=True, exist_ok=True)
 
         report_path = output_dir / "lslod_cloud_report.json"
 
-        # Mine with graph awareness
         miner = SchemaMiner(
             endpoint_url=endpoint,
             source_name="lslod_cloud",
             graph_uris=graph_uris,
-            timeout=86400.0,  # Unlimited for local QLever
+            timeout=86400.0,
             delay=self.config.delay,
             report_path=str(report_path),
         )
 
         schema = miner.mine(dataset_name="lslod_cloud")
 
-        # Save schema as JSON-LD
         schema_path = output_dir / "lslod_cloud_schema.jsonld"
         schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
 
-        # Save VoID
         void_path = output_dir / "lslod_cloud_void.ttl"
         try:
             void_graph = schema.to_void_graph()
@@ -1268,21 +1401,123 @@ class LsLodCloudStage(Stage):
 
         log.info(f"  -> Saved LSLOD Cloud schema to {schema_path}")
 
-        # Also save connectivity analysis
-        self._analyze_connectivity(schema, output_dir)
+        log.info("  Generating SSSOM class mappings...")
+        self._generate_sssom_mappings(source_data, output_dir)
 
-    def _analyze_connectivity(self, schema, output_dir: Path):
+    def _generate_sssom_mappings(self, source_data: list[tuple[Source, Path]], output_dir: Path) -> None:
+        """Generate SSSOM class mapping files for cross-dataset interoperability."""
+        from rdfsolve.mapping_discovery import discover_schema_pattern_mappings
+        from rdfsolve.schema_models.core import MinedSchema
+        from rdfsolve.sssom_generator import write_sssom_rdf, write_sssom_tsv
+
+        # Load schemas and build VoID URI map
+        schemas = []
+        dataset_void_uris = {}
+        for source, workdir in source_data:
+            schema_path = self.config.output_dir / source.name / f"{source.name}_schema.jsonld"
+            if schema_path.exists():
+                schema = MinedSchema.from_jsonld(schema_path)
+                schemas.append((source.name, schema))
+                dataset_void_uris[source.name] = f"https://rdfsolve.bigcat-bioinformatics.nl/dataset/{source.name}"
+
+        # Discover schema pattern mappings
+        sssom_sets = discover_schema_pattern_mappings(
+            schemas,
+            dataset_void_uris,
+            creator_id="https://orcid.org/0000-0001-5608-781X",
+            creator_label="Javier Millan Acosta",
+        )
+
+        if not sssom_sets:
+            log.info("  -> No cross-dataset mappings found")
+            return
+
+        # Export SSSOM files
+        mappings_dir = output_dir / "mappings"
+        mappings_dir.mkdir(exist_ok=True)
+
+        total_mappings = 0
+        for (ds1, ds2), msdf in sssom_sets.items():
+            # TSV export (primary SSSOM format)
+            tsv_path = mappings_dir / f"{ds1}-{ds2}-schema-patterns.sssom.tsv"
+            write_sssom_tsv(msdf, tsv_path)
+
+            # RDF export (Turtle format) - best effort, requires strict CURIE compliance
+            rdf_path = mappings_dir / f"{ds1}-{ds2}-schema-patterns.sssom.ttl"
+            try:
+                write_sssom_rdf(msdf, rdf_path, format="turtle")
+            except Exception as e:
+                log.warning(f"  -> Skipping RDF export for {ds1}-{ds2}: {e}")
+
+            num_mappings = len(msdf.df)
+            total_mappings += num_mappings
+            log.info(f"  -> Saved {num_mappings} mappings: {tsv_path.name}")
+
+        log.info(f"  -> Total: {total_mappings} mappings across {len(sssom_sets)} dataset pairs")
+
+    def _query_class_graphs(self, endpoint: str, graph_uris: list[str], access_token: str = "lslod_cloud") -> dict[str, list[str]]:
+        """Query which graphs each class appears in."""
+        from SPARQLWrapper import SPARQLWrapper, JSON
+
+        sparql = SPARQLWrapper(endpoint)
+        sparql.setReturnFormat(JSON)
+        sparql.addCustomHttpHeader("Authorization", f"Bearer {access_token}")
+
+        query = """
+        SELECT DISTINCT ?class ?graph WHERE {
+            GRAPH ?graph {
+                ?s a ?class .
+            }
+        }
+        """
+        sparql.setQuery(query)
+
+        try:
+            results = sparql.query().convert()
+            class_graphs = {}
+
+            for result in results["results"]["bindings"]:
+                cls = result["class"]["value"]
+                graph = result["graph"]["value"]
+
+                if graph in graph_uris:
+                    graph_name = graph.split("/")[-1]
+                    if cls not in class_graphs:
+                        class_graphs[cls] = []
+                    if graph_name not in class_graphs[cls]:
+                        class_graphs[cls].append(graph_name)
+
+            log.info(f"  Found {len(class_graphs)} classes across graphs")
+            return class_graphs
+
+        except Exception as e:
+            log.warning(f"  Could not query class-graph mappings: {e}")
+            return {}
+
+    def _analyze_connectivity(
+        self,
+        schema,
+        output_dir: Path,
+        class_graphs: dict[str, list[str]],
+        sources_map: dict[str, Source],
+    ):
         """Analyze cross-dataset connectivity in the cloud."""
         log.info("  Analyzing cross-dataset connectivity...")
 
-        # Extract patterns and analyze which properties connect datasets
-        # This will be expanded with more sophisticated connectivity analysis
         stats = {
             "total_patterns": len(schema.patterns),
             "total_classes": schema.about.class_count,
             "total_properties": schema.about.property_count,
+            "sources": len(sources_map),
+            "classes_per_source": {},
             "timestamp": datetime.now().isoformat(),
         }
+
+        for cls, graphs in class_graphs.items():
+            for graph_name in graphs:
+                if graph_name not in stats["classes_per_source"]:
+                    stats["classes_per_source"][graph_name] = 0
+                stats["classes_per_source"][graph_name] += 1
 
         stats_path = output_dir / "connectivity_stats.json"
         stats_path.write_text(json.dumps(stats, indent=2))
@@ -1309,29 +1544,64 @@ class LsLodCloudStage(Stage):
 
 
 class SSSOMSeedingStage(Stage):
-    """Seed SSSOM mappings from external sources."""
+    """Seed and enrich SSSOM mappings from external sources.
+
+    Downloads external SSSOM files (e.g., OLS mappings) and enriches them
+    by adding subject_source/object_source pointing to our VoID dataset URIs.
+    """
 
     name = "sssom_seeding"
 
     def _execute(self) -> dict[str, Any]:
+        from rdfsolve.schema_models.core import MinedSchema
+        from rdfsolve.sssom_enrichment import enrich_external_sssom_sources
 
-        mappings_dir = self.config.output_dir / "mappings" / "sssom"
-        mappings_dir.mkdir(parents=True, exist_ok=True)
-
-        log.info(f"Seeding SSSOM mappings to {mappings_dir}")
-
-        # Load SSSOM sources configuration
+        # Check if SSSOM sources config exists
         if not self.config.sssom_sources_file.exists():
             log.warning(f"SSSOM sources file not found: {self.config.sssom_sources_file}")
-            return {"files": 0, "edges": 0}
+            return {"sources": 0, "enriched_mappings": 0}
 
-        # This would call the SSSOM seeding logic
-        # For now, just check what exists
-        existing = list(mappings_dir.glob("*.jsonld"))
+        log.info(f"Loading SSSOM sources from {self.config.sssom_sources_file}")
+
+        # Load all mined schemas to build class index
+        schemas: list[tuple[str, MinedSchema]] = []
+        dataset_void_uris: dict[str, str] = {}
+
+        for source in self.config.sources:
+            schema_path = self.config.output_dir / source.name / f"{source.name}_schema.jsonld"
+            if schema_path.exists():
+                schema = MinedSchema.from_jsonld(schema_path)
+                schemas.append((source.name, schema))
+                dataset_void_uris[source.name] = (
+                    f"https://rdfsolve.bigcat-bioinformatics.nl/dataset/{source.name}"
+                )
+
+        if not schemas:
+            log.warning("No schemas found - run mining stages first")
+            return {"sources": 0, "enriched_mappings": 0, "error": "no_schemas"}
+
+        log.info(f"Loaded {len(schemas)} schemas for class indexing")
+
+        # Download and enrich external SSSOM files
+        results = enrich_external_sssom_sources(
+            sssom_sources_file=self.config.sssom_sources_file,
+            schemas=schemas,
+            dataset_void_uris=dataset_void_uris,
+            output_dir=self.config.output_dir,
+            creator_id="https://orcid.org/0000-0001-5608-781X",
+            creator_label="Javier Millan Acosta",
+        )
+
+        total_enriched = sum(v for v in results.values() if v > 0)
+        errors = sum(1 for v in results.values() if v < 0)
+
+        log.info(f"Enriched {total_enriched} mappings from {len(results)} sources ({errors} errors)")
 
         return {
-            "output_dir": str(mappings_dir),
-            "existing_files": len(existing),
+            "sources": len(results),
+            "enriched_mappings": total_enriched,
+            "errors": errors,
+            "details": results,
         }
 
 
@@ -1455,8 +1725,8 @@ class AnalysisStage(Stage):
 
         output_dir = self.config.output_dir
 
-        # Find all schema files
-        schema_files = list(output_dir.glob("*_schema.jsonld"))
+        # Find all schema files (in subdirectories per source)
+        schema_files = list(output_dir.glob("**/*_schema.jsonld"))
         log.info(f"Analyzing {len(schema_files)} schema files")
 
         schemas = {}
@@ -1620,8 +1890,11 @@ Examples:
     parser.add_argument("--skip-inference", action="store_true", help="Skip inference")
     parser.add_argument("--skip-analysis", action="store_true", help="Skip analysis stage")
     parser.add_argument("--output-dir", type=Path, help="Output directory")
+    parser.add_argument("--output-suffix", type=str, default="", help="Suffix for output files (e.g., _local, _remote)")
     parser.add_argument("--data-dir", type=Path, help="Data directory")
     parser.add_argument("--timeout", type=float, default=300.0, help="Query timeout")
+    parser.add_argument("--endpoint-status-file", type=Path, help="Endpoint health check JSON")
+    parser.add_argument("--download-status-file", type=Path, help="Download health check JSON")
 
     args = parser.parse_args()
 
@@ -1633,6 +1906,9 @@ Examples:
     if args.data_dir:
         config.data_dir = args.data_dir
     config.timeout = args.timeout
+    config.output_suffix = args.output_suffix
+    config.endpoint_status_file = args.endpoint_status_file
+    config.download_status_file = args.download_status_file
     config.skip_mining = args.skip_mining
     config.skip_mappings = args.skip_mappings
     config.skip_inference = args.skip_inference

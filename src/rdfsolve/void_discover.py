@@ -200,11 +200,13 @@ class VoidParser:
         # Try to extract metadata from the VoID graph
         void_dataset_type = URIRef("http://rdfs.org/ns/void#Dataset")
         void_sparql_endpoint = URIRef("http://rdfs.org/ns/void#sparqlEndpoint")
+        void_vocabulary = URIRef("http://rdfs.org/ns/void#vocabulary")
         dcterms_title = URIRef("http://purl.org/dc/terms/title")
 
         graph_endpoint = None
         graph_title = None
         graph_graph_uris: list[str] = []
+        vocabularies: list[str] = []
 
         for s, p, o in self.graph:
             if (
@@ -217,6 +219,8 @@ class VoidParser:
                         graph_endpoint = str(obj)
                     elif pred == dcterms_title:
                         graph_title = str(obj)
+                    elif pred == void_vocabulary:
+                        vocabularies.append(str(obj))
 
         # Collect graph URIs from the parser
         if self.graph_uris:
@@ -236,6 +240,9 @@ class VoidParser:
         effective_graph_uris = graph_uris if graph_uris else graph_graph_uris
         if effective_graph_uris:
             about["graphURIs"] = effective_graph_uris
+
+        if vocabularies:
+            about["vocabularies"] = vocabularies
 
         if self.void_file_path:
             about["voidFile"] = self.void_file_path

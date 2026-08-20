@@ -4,8 +4,18 @@
 #SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --output=logs/inference_%j.out
-#SBATCH --error=logs/inference_%j.err
+#SBATCH --output=/home/javier.millanacosta/rdfsolve/logs/inference_%j.out
+#SBATCH --error=/home/javier.millanacosta/rdfsolve/logs/inference_%j.err
+
+# =============================================================================
+# PHASE 3 (Optional): Mapping Inference
+# =============================================================================
+# Apply reasoning rules to mappings (inversion, transitivity)
+# NOTE: Currently works with JSON-LD mappings. For SSSOM-based inference,
+#       use the sssom library's built-in inference capabilities.
+#
+# Dependencies: Mappings must exist
+# =============================================================================
 
 set -euo pipefail
 
@@ -15,10 +25,10 @@ VENV_PATH="${VENV_PATH:-$RDFSOLVE_REPO/.venv}"
 MAPPINGS_DIR="${MAPPINGS_DIR:-$RDFSOLVE_BASE/output/mappings}"
 OUTPUT_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/output/mappings/inferenced}"
 
-mkdir -p "$RDFSOLVE_BASE/logs"
+mkdir -p "$RDFSOLVE_BASE/logs" "$OUTPUT_DIR"
 
 echo "=========================================="
-echo "RDFSolve Mapping Inference"
+echo "RDFSolve Mapping Inference (Phase 3)"
 echo "=========================================="
 echo "Date: $(date)"
 echo "Job ID: ${SLURM_JOB_ID:-local}"
@@ -28,12 +38,19 @@ echo "=========================================="
 
 source "$VENV_PATH/bin/activate"
 
-python "$RDFSOLVE_REPO/scripts/infer_mappings.py" \
-    "$MAPPINGS_DIR"/*.jsonld \
-    -o "$OUTPUT_DIR/inferenced_mappings.jsonld" \
-    --inversion \
-    --transitivity \
-    --chain-cutoff 3
+# Check for JSON-LD mappings
+JSONLD_FILES=$(find "$MAPPINGS_DIR" -name "*.jsonld" 2>/dev/null | head -1)
+if [ -n "$JSONLD_FILES" ]; then
+    python "$RDFSOLVE_REPO/scripts/infer_mappings.py" \
+        "$MAPPINGS_DIR"/*.jsonld \
+        -o "$OUTPUT_DIR/inferenced_mappings.jsonld" \
+        --inversion \
+        --transitivity \
+        --chain-cutoff 3
+else
+    echo "No JSON-LD mapping files found."
+    echo "For SSSOM files, use the sssom library's inference tools directly."
+fi
 
 echo "=========================================="
 echo "Inference complete: $(date)"

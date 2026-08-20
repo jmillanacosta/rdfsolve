@@ -832,8 +832,6 @@ class MinedSchema(BaseModel):
             g.add((dataset_uri, FOAF.homepage, URIRef(self.about.homepage)))
 
         # Version info
-        if self.about.source_version:
-            g.add((dataset_uri, void.vocabulary, RdfLiteral(self.about.source_version)))
         if self.about.source_version_iri:
             g.add((dataset_uri, OWL.versionIRI, URIRef(self.about.source_version_iri)))
 
@@ -860,6 +858,40 @@ class MinedSchema(BaseModel):
                     RdfLiteral(self.about.property_count, datatype=XSD.integer),
                 )
             )
+
+        # Extract vocabularies and classes from patterns
+        vocabs = set()
+        classes = set()
+        for pat in self.patterns:
+            if pat.subject_class:
+                classes.add(pat.subject_class)
+            if pat.object_class and pat.object_class not in _SENTINEL_OBJECTS:
+                classes.add(pat.object_class)
+
+            for uri in [pat.subject_class, pat.property_uri, pat.object_class]:
+                if uri and uri not in _SENTINEL_OBJECTS:
+                    # Extract namespace
+                    if "#" in uri:
+                        vocab = uri.rsplit("#", 1)[0] + "#"
+                    elif "/" in uri:
+                        vocab = uri.rsplit("/", 1)[0] + "/"
+                    else:
+                        continue
+                    # Skip W3C vocabularies
+                    if not vocab.startswith("http://www.w3.org/"):
+                        vocabs.add(vocab)
+
+        # Add vocabulary declarations
+        for vocab_uri in sorted(vocabs):
+            g.add((dataset_uri, void.vocabulary, URIRef(vocab_uri)))
+
+        # Add class partitions
+        for cls_uri in sorted(classes):
+            cls_hash = md5(cls_uri.encode(), usedforsecurity=False).hexdigest()[:8]
+            cp_uri = URIRef(f"{base}class-{cls_hash}")
+            g.add((dataset_uri, void.classPartition, cp_uri))
+            g.add((cp_uri, RDF.type, void.Dataset))
+            g.add((cp_uri, void["class"], URIRef(cls_uri)))
 
         # Get dataset identifier for hash uniqueness
         # Use dataset_name if available, otherwise "default"

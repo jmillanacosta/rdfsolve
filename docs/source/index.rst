@@ -21,6 +21,7 @@ Table of Contents
    miner
    schema_models
    mapping_models
+   void_discover
 
 .. toctree::
    :maxdepth: 2
