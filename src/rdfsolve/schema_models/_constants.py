@@ -38,7 +38,7 @@ _SENTINEL_OBJECTS = frozenset({"Literal", "Resource", "BlankNode"})
 - Resource: Object is an untyped URI (no rdf:type discovered)
 - BlankNode: Object is a blank node (anonymous resource)
 """
-_URI_SCHEMES = ("http://", "https://", "urn:")
+_URI_SCHEMES = ("http://", "https://", "urn:", "_:")
 _GRAPH_SKIP_KEYS = frozenset(
     {
         "void:inDataset",
