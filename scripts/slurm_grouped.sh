@@ -55,6 +55,7 @@ python "$RDFSOLVE_REPO/scripts/check_downloads.py" --output "$OUTPUT_DIR/downloa
 
 python "$RDFSOLVE_REPO/scripts/pipeline.py" \
     --grouped-only \
+    --skip-completed \
     --output-dir "$OUTPUT_DIR" \
     --data-dir "$DATA_DIR" \
     --download-status-file "$OUTPUT_DIR/download_status.json" \

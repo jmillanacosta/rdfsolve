@@ -181,6 +181,7 @@ class PipelineConfig:
     skip_mappings: bool = False
     skip_seeding: bool = False
     skip_inference: bool = False
+    skip_completed: bool = False  # Skip sources with existing output files
 
     # Parallelism
     parallelism: int = 4
@@ -328,133 +329,62 @@ class Stage:
 
 
 class RemoteMiningStage(Stage):
-    """Mine schemas from remote SPARQL endpoints with health checking and rate limiting."""
+    """Mine schemas from remote SPARQL endpoints with health checking and rate limiting.
+
+    Mines different hosts concurrently, but endpoints on the same host sequentially.
+    """
 
     name = "remote_mining"
 
     def _execute(self) -> dict[str, Any]:
-        from rdfsolve import SchemaMiner
-        from rdfsolve.endpoint_health import (
-            check_endpoint_health,
-            get_polite_delay,
-            update_endpoint_status,
-        )
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from urllib.parse import urlparse
 
         sources = self.config.get_remote_sources()
         log.info(f"Mining {len(sources)} remote endpoints")
 
-        results = {"mined": [], "failed": [], "skipped": []}
-        output_dir = self.config.output_dir
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        for i, source in enumerate(sources, 1):
-            log.info(f"[{i}/{len(sources)}] {source.name}")
-
+        # Group sources by host for concurrent mining
+        host_groups: dict[str, list[Source]] = {}
+        for source in sources:
             if not source.endpoint:
-                results["skipped"].append(source.name)
                 continue
+            host = urlparse(source.endpoint).netloc
+            if host not in host_groups:
+                host_groups[host] = []
+            host_groups[host].append(source)
 
-            # Skip endpoints known to be down (failed health check recently)
-            if source.endpoint_down and source.failure_count >= 3:
-                log.warning(
-                    f"  Skipping: endpoint marked as down ({source.failure_count} failures)"
-                )
-                results["skipped"].append(source.name)
-                continue
+        log.info(f"Grouped into {len(host_groups)} hosts for concurrent mining")
 
-            # Quick health check before mining (unless recently checked)
-            needs_health_check = True
-            if source.last_checked:
-                from datetime import datetime, timezone
+        # Thread-safe results collection
+        from threading import Lock
+        results = {"mined": [], "failed": [], "skipped": []}
+        results_lock = Lock()
 
+        def mine_host_sources(host: str, host_sources: list[Source]) -> None:
+            """Mine all sources on a single host sequentially."""
+            for source in host_sources:
+                result = self._mine_single_source(source)
+                with results_lock:
+                    if result["status"] == "mined":
+                        results["mined"].append(result["data"])
+                    elif result["status"] == "failed":
+                        results["failed"].append(result["data"])
+                    else:
+                        results["skipped"].append(result["data"])
+
+        # Mine hosts concurrently
+        max_workers = min(self.config.parallelism or 8, len(host_groups))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(mine_host_sources, host, host_sources): host
+                for host, host_sources in host_groups.items()
+            }
+            for future in as_completed(futures):
+                host = futures[future]
                 try:
-                    last_check = datetime.fromisoformat(source.last_checked)
-                    age = (datetime.now(timezone.utc) - last_check).total_seconds()
-                    if age < 3600:  # Within last hour
-                        needs_health_check = False
-                except ValueError:
-                    pass
-
-            if needs_health_check:
-                log.info(f"  Checking endpoint health...")
-                health = check_endpoint_health(source.endpoint, timeout=30)
-                update_endpoint_status(source, health)
-                log.info(f"  Status: {health.status}")
-
-                if health.status != "up":
-                    log.warning(f"  Skipping: endpoint is {health.status}")
-                    results["skipped"].append(source.name)
-                    continue
-
-            # Determine polite delay
-            polite_delay = get_polite_delay(source)
-            if polite_delay > 0:
-                log.info(f"  Using {polite_delay}s inter-request delay")
-
-            try:
-                source_output_dir = output_dir / source.name
-                source_output_dir.mkdir(parents=True, exist_ok=True)
-
-                suffix = self.config.output_suffix
-                report_path = source_output_dir / f"{source.name}{suffix}_report.json"
-                miner = SchemaMiner(
-                    endpoint_url=source.endpoint,
-                    source_name=source.name,
-                    timeout=self.config.timeout or source.timeout or 300,
-                    delay=polite_delay,
-                    report_path=str(report_path),
-                )
-
-                schema = miner.mine(dataset_name=source.name)
-
-                from datetime import datetime, timezone
-
-                source.endpoint_status = "up"
-                source.last_success = datetime.now(timezone.utc).isoformat()
-                source.failure_count = 0
-                source.endpoint_down = False
-
-                schema_path = source_output_dir / f"{source.name}{suffix}_schema.jsonld"
-                schema_path.write_text(
-                    json.dumps(schema.to_jsonld(), indent=2),
-                    encoding="utf-8",
-                )
-
-                void_path = source_output_dir / f"{source.name}{suffix}_void.ttl"
-                try:
-                    void_graph = schema.to_void_graph()
-                    if void_graph:
-                        void_ttl = void_graph.serialize(format="turtle")
-                        void_path.write_text(void_ttl, encoding="utf-8")
+                    future.result()
                 except Exception as e:
-                    log.warning(f"  Could not generate VoID: {e}")
-
-                if miner.last_report:
-                    report = {
-                        "name": source.name,
-                        "endpoint": source.endpoint,
-                        "classes": miner.last_report.class_count,
-                        "properties": miner.last_report.property_count,
-                        "patterns": miner.last_report.pattern_count,
-                        "queries_sent": miner.last_report.total_queries_sent,
-                        "queries_failed": miner.last_report.total_queries_failed,
-                    }
-                    results["mined"].append(report)
-                    log.info(
-                        f"  -> {report['classes']} classes, {report['properties']} props, {report['queries_sent']} queries"
-                    )
-                else:
-                    results["mined"].append({"name": source.name, "endpoint": source.endpoint})
-
-            except Exception as e:
-                # Update failure status
-                source.failure_count += 1
-                source.last_error = str(e)[:500]
-                if source.failure_count >= 3:
-                    source.endpoint_down = True
-
-                log.error(f"  -> FAILED: {e}")
-                results["failed"].append({"name": source.name, "error": str(e)})
+                    log.error(f"Host {host} mining failed: {e}")
 
         # Log summary
         log.info(
@@ -463,6 +393,115 @@ class RemoteMiningStage(Stage):
         )
 
         return results
+
+    def _mine_single_source(self, source: Source) -> dict[str, Any]:
+        """Mine a single source. Returns dict with status and data."""
+        from rdfsolve import SchemaMiner
+        from rdfsolve.endpoint_health import (
+            check_endpoint_health,
+            get_polite_delay,
+            update_endpoint_status,
+        )
+        from datetime import datetime, timezone
+
+        log.info(f"[{source.name}] Starting...")
+
+        if not source.endpoint:
+            return {"status": "skipped", "data": source.name}
+
+        # Skip endpoints known to be down
+        if source.endpoint_down and source.failure_count >= 3:
+            log.warning(f"[{source.name}] Skipping: endpoint marked as down")
+            return {"status": "skipped", "data": source.name}
+
+        # Health check
+        needs_health_check = True
+        if source.last_checked:
+            try:
+                last_check = datetime.fromisoformat(source.last_checked)
+                age = (datetime.now(timezone.utc) - last_check).total_seconds()
+                if age < 3600:
+                    needs_health_check = False
+            except ValueError:
+                pass
+
+        if needs_health_check:
+            health = check_endpoint_health(source.endpoint, timeout=30)
+            update_endpoint_status(source, health)
+            if health.status != "up":
+                log.warning(f"[{source.name}] Skipping: endpoint is {health.status}")
+                return {"status": "skipped", "data": source.name}
+
+        # Check if output already exists
+        output_dir = self.config.output_dir
+        source_output_dir = output_dir / source.name
+        source_output_dir.mkdir(parents=True, exist_ok=True)
+        suffix = self.config.output_suffix
+        schema_path = source_output_dir / f"{source.name}{suffix}_schema.jsonld"
+
+        if self.config.skip_completed and schema_path.exists():
+            log.info(f"[{source.name}] Skipping: output already exists")
+            return {"status": "skipped", "data": source.name}
+
+        # Mine
+        polite_delay = get_polite_delay(source)
+        try:
+            report_path = source_output_dir / f"{source.name}{suffix}_report.json"
+            miner = SchemaMiner(
+                endpoint_url=source.endpoint,
+                source_name=source.name,
+                timeout=self.config.timeout or source.timeout or 300,
+                delay=polite_delay,
+                report_path=str(report_path),
+            )
+
+            schema = miner.mine(dataset_name=source.name)
+
+            source.endpoint_status = "up"
+            source.last_success = datetime.now(timezone.utc).isoformat()
+            source.failure_count = 0
+            source.endpoint_down = False
+
+            schema_path.write_text(
+                json.dumps(schema.to_jsonld(), indent=2),
+                encoding="utf-8",
+            )
+
+            void_path = source_output_dir / f"{source.name}{suffix}_void.ttl"
+            try:
+                void_graph = schema.to_void_graph()
+                if void_graph:
+                    void_ttl = void_graph.serialize(format="turtle")
+                    void_path.write_text(void_ttl, encoding="utf-8")
+            except Exception as e:
+                log.warning(f"[{source.name}] Could not generate VoID: {e}")
+
+            if miner.last_report:
+                report = {
+                    "name": source.name,
+                    "endpoint": source.endpoint,
+                    "classes": miner.last_report.class_count,
+                    "properties": miner.last_report.property_count,
+                    "patterns": miner.last_report.pattern_count,
+                    "queries_sent": miner.last_report.total_queries_sent,
+                    "queries_failed": miner.last_report.total_queries_failed,
+                }
+                log.info(
+                    f"[{source.name}] -> {report['classes']} classes, "
+                    f"{report['properties']} props, {report['queries_sent']} queries"
+                )
+                return {"status": "mined", "data": report}
+            else:
+                return {"status": "mined", "data": {"name": source.name, "endpoint": source.endpoint}}
+
+        except Exception as e:
+            source.failure_count += 1
+            source.last_error = str(e)[:500]
+            if source.failure_count >= 3:
+                source.endpoint_down = True
+
+            log.error(f"[{source.name}] -> FAILED: {e}")
+            return {"status": "failed", "data": {"name": source.name, "error": str(e)}}
 
 
 class LocalMiningStage(Stage):
@@ -489,6 +528,15 @@ class LocalMiningStage(Stage):
 
             workdir = qlever_workdir / source.name
             workdir.mkdir(parents=True, exist_ok=True)
+
+            # Skip if output already exists
+            suffix = self.config.output_suffix
+            source_output_dir = self.config.output_dir / source.name
+            schema_path = source_output_dir / f"{source.name}{suffix}_schema.jsonld"
+            if self.config.skip_completed and schema_path.exists():
+                log.info(f"  Skipping: output already exists")
+                results["skipped"].append(source.name)
+                continue
 
             try:
                 qleverfile = workdir / "Qleverfile"
@@ -562,6 +610,11 @@ class LocalMiningStage(Stage):
                 return True
         return False
 
+    def _has_qlever_index(self, workdir: Path, source_name: str) -> bool:
+        """Check if a pre-existing QLever index exists in workdir."""
+        index_spo = workdir / f"{source_name}.index.spo"
+        return index_spo.exists()
+
     def _prepare_qleverfile(self, workdir: Path, source: Source, port: int):
         """Generate Qleverfile for source."""
         entry = {
@@ -588,6 +641,33 @@ class LocalMiningStage(Stage):
         qleverfile_path = workdir / "Qleverfile"
         qleverfile_path.write_text(qleverfile_content)
         log.info(f"    Generated Qleverfile")
+
+    def _preprocess_rdf_files(self, input_files: list[Path]):
+        """Fix malformed RDF literals that cause QLever parse errors."""
+        import re
+        for rdf_file in input_files:
+            try:
+                content = rdf_file.read_text(encoding='utf-8', errors='replace')
+                original = content
+                # Fix Yes/No boolean literals
+                content = re.sub(
+                    r'"(Yes|YES|yes)"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
+                    '"true"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
+                content = re.sub(
+                    r'"(No|NO|no)"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
+                    '"false"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
+                # Fix numeric boolean literals (non-zero = true, 0 = false)
+                content = re.sub(
+                    r'"([1-9]\d*)"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
+                    '"true"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
+                content = re.sub(
+                    r'"0"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
+                    '"false"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
+                if content != original:
+                    log.info(f"    Fixed malformed literals in {rdf_file.name}")
+                    rdf_file.write_text(content, encoding='utf-8')
+            except Exception as e:
+                log.warning(f"    Could not preprocess {rdf_file.name}: {e}")
 
     def _execute_qleverfile(self, workdir: Path, source: Source, skip_download: bool = False):
         """Execute Qleverfile data download and indexing."""
@@ -621,6 +701,9 @@ class LocalMiningStage(Stage):
 
         if not input_files:
             raise ValueError(f"No files found matching {input_files_pattern}")
+
+        # Fix malformed boolean literals before indexing
+        self._preprocess_rdf_files(input_files)
 
         settings_path = workdir / f"{source.name}.settings.json"
         settings_path.write_text(settings_json)
@@ -773,10 +856,11 @@ class LocalMiningStage(Stage):
             log.warning(f"  Could not generate VoID: {e}")
 
 
-class GroupedMiningStage(Stage):
+class GroupedMiningStage(LocalMiningStage):
     """Mine schemas from grouped local sources.
 
     Loads multiple related sources into ONE QLever instance with named graphs.
+    Inherits from LocalMiningStage to reuse download/indexing methods.
     """
 
     name = "grouped_mining"
@@ -786,7 +870,9 @@ class GroupedMiningStage(Stage):
         groups = self._identify_groups(sources)
         log.info(f"Identified {len(groups)} source groups for combined mining")
 
-        results = {"groups_mined": [], "failed": [], "skipped": []}
+        results = {"groups_mined": [], "failed": [], "skipped": [], "indexed_individually": []}
+        # Track sources with existing indices but no RDF (to mine individually)
+        sources_with_existing_index: list[tuple[Source, Path]] = []
         self._ensure_qlever_image()
 
         qlever_workdir = self.config.data_dir / "qlever_groups"
@@ -799,12 +885,49 @@ class GroupedMiningStage(Stage):
             workdir = qlever_workdir / group_name
             workdir.mkdir(parents=True, exist_ok=True)
 
+            # Skip if output already exists
+            output_dir = self.config.output_dir / f"grouped_{group_name}"
+            schema_path = output_dir / f"{group_name}_schema.jsonld"
+            if self.config.skip_completed and schema_path.exists():
+                log.info(f"  Skipping: output already exists")
+                results["skipped"].append(group_name)
+                continue
+
             try:
                 source_data = []
                 for source in group_sources:
                     source_workdir = self.config.data_dir / "qlever_workdirs" / source.name
-                    if not source_workdir.exists():
-                        log.warning(f"  -> Data for {source.name} not found, skipping")
+                    source_workdir.mkdir(parents=True, exist_ok=True)
+
+                    # Check if workdir has RDF files
+                    has_files = any(
+                        list(source_workdir.glob(ext))
+                        for ext in ["*.ttl", "*.nt", "*.nq", "rdf/*.ttl", "rdf/*.nt", "rdf/*.nq"]
+                    )
+
+                    # Download if no files exist and source has download URLs
+                    if not has_files and source.download_urls:
+                        log.info(f"  -> Downloading data for {source.name}...")
+                        try:
+                            qleverfile = source_workdir / "Qleverfile"
+                            if not qleverfile.exists():
+                                self._prepare_qleverfile(source_workdir, source, self.config.base_port)
+                            self._execute_qleverfile(source_workdir, source)
+                            # Re-check for files
+                            has_files = any(
+                                list(source_workdir.glob(ext))
+                                for ext in ["*.ttl", "*.nt", "*.nq", "rdf/*.ttl", "rdf/*.nt", "rdf/*.nq"]
+                            )
+                        except Exception as dl_err:
+                            log.warning(f"  -> Download failed for {source.name}: {dl_err}")
+
+                    if not has_files:
+                        # Check if there's a pre-existing QLever index we can use
+                        if self._has_qlever_index(source_workdir, source.name):
+                            log.info(f"  -> No RDF files but found existing QLever index for {source.name}")
+                            sources_with_existing_index.append((source, source_workdir))
+                        else:
+                            log.warning(f"  -> No RDF files in {source.name} workdir, skipping")
                         continue
                     source_data.append((source, source_workdir))
 
@@ -852,22 +975,65 @@ class GroupedMiningStage(Stage):
                 log.error(f"  -> FAILED: {e}")
                 results["failed"].append({"group": group_name, "error": str(e)})
 
+        # Mine sources with existing indices individually (fallback for failed downloads)
+        if sources_with_existing_index:
+            log.info(f"\n=== Mining {len(sources_with_existing_index)} sources with existing indices ===")
+            individual_port = port + 100  # Use different port range
+
+            for source, workdir in sources_with_existing_index:
+                # Skip if output already exists
+                suffix = self.config.output_suffix
+                source_output_dir = self.config.output_dir / source.name
+                schema_path = source_output_dir / f"{source.name}{suffix}_schema.jsonld"
+                if self.config.skip_completed and schema_path.exists():
+                    log.info(f"[{source.name}] Skipping: output already exists")
+                    results["skipped"].append(source.name)
+                    continue
+
+                log.info(f"[{source.name}] Mining from existing index...")
+                try:
+                    server_pid = self._qlever_start(workdir, source.name, individual_port)
+                    if server_pid:
+                        try:
+                            self._mine_local(source, individual_port)
+                            results["indexed_individually"].append(source.name)
+                            log.info(f"[{source.name}] -> Mined successfully")
+                        finally:
+                            self._qlever_stop(server_pid)
+                    else:
+                        log.warning(f"[{source.name}] -> Server failed to start")
+                        results["failed"].append(
+                            {"name": source.name, "error": "Server failed to start for existing index"}
+                        )
+                    individual_port += 1
+                except Exception as e:
+                    log.error(f"[{source.name}] -> FAILED: {e}")
+                    results["failed"].append({"name": source.name, "error": str(e)})
+
         return results
 
     def _identify_groups(self, sources: list[Source]) -> dict[str, list[Source]]:
-        import re
+        """Identify groups of sources that can be mined together locally.
+
+        Only sources with download_urls or local_provider are included -
+        endpoint-only sources cannot be grouped for local mining.
+        """
         from urllib.parse import urlparse
 
-        groups = {}
-        endpoint_to_name = {}
+        groups: dict[str, list[Source]] = {}
 
         for source in sources:
+            # Skip endpoint-only sources - they can't be locally indexed
+            if not source.download_urls and not source.local_provider:
+                continue
+
             group_name = None
 
             if source.download_urls:
                 first_url = source.download_urls[0] if isinstance(source.download_urls, list) else source.download_urls
                 hostname = urlparse(first_url).hostname
                 if hostname:
+                    # Only group known multi-file providers
                     if "pubchem" in hostname or "pubchem" in source.name:
                         group_name = "pubchem.ftp"
                     elif "bio2rdf" in hostname or "bio2rdf" in source.name:
@@ -876,25 +1042,15 @@ class GroupedMiningStage(Stage):
                         group_name = "rdfportal"
                     elif "dbcls" in hostname or "dbcls" in source.name:
                         group_name = "dbcls"
-                    else:
-                        group_name = hostname.replace(".", "_")
-
-            if not group_name and source.endpoint:
-                if source.endpoint not in endpoint_to_name:
-                    domain = re.sub(r"https?://", "", source.endpoint)
-                    domain = domain.split("/")[0].replace(":", "_").replace(".", "_")
-                    endpoint_to_name[source.endpoint] = f"endpoint_{domain}"
-                group_name = endpoint_to_name[source.endpoint]
+                    # Don't group other hosts (e.g., raw.githubusercontent.com)
+                    # They should be mined individually via LocalMiningStage
 
             if not group_name and source.local_provider:
                 group_name = source.local_provider
 
-            if not group_name and source.bioregistry_prefix:
-                group_name = source.bioregistry_prefix
-
+            # Skip sources that don't belong to a known group
             if not group_name:
-                parts = source.name.split(".")
-                group_name = parts[0]
+                continue
 
             if group_name not in groups:
                 groups[group_name] = []
@@ -1145,7 +1301,16 @@ class LsLodCloudStage(Stage):
             for source in sources:
                 source_workdir = self.config.data_dir / "qlever_workdirs" / source.name
                 if not source_workdir.exists():
-                    log.warning(f"  -> Data for {source.name} not found, skipping")
+                    log.warning(f"  -> Workdir for {source.name} not found, skipping")
+                    results["sources_skipped"] += 1
+                    continue
+                # Check if workdir actually has RDF files
+                has_files = any(
+                    list(source_workdir.glob(ext))
+                    for ext in ["*.ttl", "*.nt", "*.nq"]
+                )
+                if not has_files:
+                    log.warning(f"  -> No RDF files in {source.name} workdir, skipping")
                     results["sources_skipped"] += 1
                     continue
                 source_data.append((source, source_workdir))
@@ -1889,6 +2054,7 @@ Examples:
     parser.add_argument("--skip-mappings", action="store_true", help="Skip mapping stages")
     parser.add_argument("--skip-inference", action="store_true", help="Skip inference")
     parser.add_argument("--skip-analysis", action="store_true", help="Skip analysis stage")
+    parser.add_argument("--skip-completed", action="store_true", help="Skip sources with existing schema output files")
     parser.add_argument("--output-dir", type=Path, help="Output directory")
     parser.add_argument("--output-suffix", type=str, default="", help="Suffix for output files (e.g., _local, _remote)")
     parser.add_argument("--data-dir", type=Path, help="Data directory")
@@ -1912,6 +2078,7 @@ Examples:
     config.skip_mining = args.skip_mining
     config.skip_mappings = args.skip_mappings
     config.skip_inference = args.skip_inference
+    config.skip_completed = args.skip_completed
     config.skip_remote = args.local_only or args.grouped_only or args.lslod_cloud_only
     config.skip_local = args.remote_only or args.grouped_only or args.lslod_cloud_only
 
