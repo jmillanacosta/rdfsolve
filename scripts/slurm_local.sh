@@ -65,6 +65,7 @@ if [ -n "$SKIP_PROVIDERS" ]; then
     python "$RDFSOLVE_REPO/scripts/pipeline.py" \
         --local-only \
         --skip-providers $SKIP_PROVIDERS \
+        --skip-completed \
         --output-dir "$OUTPUT_DIR" \
         --output-suffix _local \
         --data-dir "$DATA_DIR" \
@@ -76,6 +77,7 @@ if [ -n "$SKIP_PROVIDERS" ]; then
 else
     python "$RDFSOLVE_REPO/scripts/pipeline.py" \
         --local-only \
+        --skip-completed \
         --output-dir "$OUTPUT_DIR" \
         --output-suffix _local \
         --data-dir "$DATA_DIR" \

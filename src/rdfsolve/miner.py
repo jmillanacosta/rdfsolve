@@ -1602,8 +1602,19 @@ class SchemaMiner:
                 purpose="two-phase/classes",
                 chunk_size=ccs,
             )
-        classes = [b.get("class", {}).get("value", "") for b in class_bindings]
-        classes = [c for c in classes if c]
+        # Extract class URIs - only keep IRI bindings, skip literals/bnodes
+        classes = []
+        non_iri_count = 0
+        for b in class_bindings:
+            binding = b.get("class", {})
+            if binding.get("type") == "uri":
+                value = binding.get("value", "")
+                if value:
+                    classes.append(value)
+            else:
+                non_iri_count += 1
+        if non_iri_count:
+            logger.info(f"  -> Skipped {non_iri_count} non-IRI type values")
         logger.info(f"  -> {len(classes)} classes found")
         self._report.finish_phase(p1, items=len(classes))
 

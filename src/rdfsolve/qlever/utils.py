@@ -470,7 +470,9 @@ def _decompress_gz_steps(*, include_data_formats: bool = False) -> list[str]:
             'case "$f" in *.tar.gz) continue;; esac; '
             'gunzip -fk "$f" 2>/dev/null || true; done'
         )
-    return ["echo 'Decompressing .gz files ...'", loop]
+    # Fix extensionless files (e.g., *_nt_latest -> *_nt_latest.nt)
+    fix_extensions = 'for f in *_nt_latest *_nt; do [ -f "$f" ] && [ ! -f "${f}.nt" ] && mv "$f" "${f}.nt"; done 2>/dev/null || true'
+    return ["echo 'Decompressing .gz files ...'", loop, fix_extensions]
 
 
 def _convert_rdfxml_steps() -> list[str]:

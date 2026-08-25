@@ -1,4 +1,4 @@
-"""Unified models for schemas, mappings, connections, endpoints, quality, and sources."""
+"""Unified models for schemas, mappings, endpoints, and sources."""
 
 # URI helper (used by a few internal callers via models)
 from rdfsolve._uri import (
@@ -14,27 +14,11 @@ from rdfsolve._uri import (
 # Mapping models
 from rdfsolve.mapping_models import *  # noqa: F403
 
-# Connection models
-from rdfsolve.models.connection import (
-    Connection,
-    ConnectionType,
-    EvidenceSource,
-    EvidenceSourceType,
-)
-
 # Endpoint models
 from rdfsolve.models.endpoint import (
     Endpoint,
     EndpointHealth,
     EndpointStatus,
-)
-
-# Quality models
-from rdfsolve.models.quality import (
-    QualityMetrics,
-    ValidationIssue,
-    ValidationResult,
-    ValidationSeverity,
 )
 
 # Source model

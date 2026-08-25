@@ -54,8 +54,9 @@ def main():
 
     # Load sources
     log.info("Loading sources from %s", args.sources)
-    sources_data = load_sources(args.sources)
-    sources = sources_data.get("sources", {})
+    sources_list = load_sources(args.sources)
+    # Convert list to dict keyed by name
+    sources = {src["name"]: src for src in sources_list if src.get("name")}
 
     # Filter sources with endpoints
     endpoint_sources = {

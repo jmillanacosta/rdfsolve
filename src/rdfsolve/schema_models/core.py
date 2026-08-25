@@ -1156,40 +1156,141 @@ def _parse_schema_graph(
     expand: Callable[[str], str],
     labels: dict[str, str],
 ) -> list[SchemaPattern]:
-    """Parse @graph nodes into a list of SchemaPattern objects."""
+    """Parse @graph nodes into a list of SchemaPattern objects.
+
+    Supports two formats:
+    1. VoID format: nodes have void-ext:subjectClass, void-ext:objectClass, void:property
+    2. Legacy format: @id is subject class, properties map to object classes
+    """
     patterns: list[SchemaPattern] = []
+
+    # VoID vocabulary URIs
+    void_ext_subject = "http://ldf.fi/void-ext#subjectClass"
+    void_ext_object = "http://ldf.fi/void-ext#objectClass"
+    void_property = "http://rdfs.org/ns/void#property"
+    void_triples = "http://rdfs.org/ns/void#triples"
+
     for node in graph_nodes:
-        sc_curie = node.get("@id", "")
-        if not sc_curie:
+        node_id = node.get("@id", "")
+        if not node_id:
             continue
-        sc_uri = expand(sc_curie)
-        if not sc_uri.startswith(_URI_SCHEMES):
-            continue
-        counts_map: dict[str, dict[str, int]] = node.get(
-            "_counts",
-            {},
-        )
-        for key, val in node.items():
-            if key.startswith(("@", "_")) or key in (_GRAPH_SKIP_KEYS):
+
+        # Check if this is a VoID partition node
+        has_void_subject = any(expand(k) == void_ext_subject for k in node if not k.startswith("@"))
+
+        if has_void_subject:
+            # VoID format: extract from void-ext predicates
+            pat = _parse_void_partition(
+                node, expand, labels, void_ext_subject, void_ext_object, void_property, void_triples
+            )
+            if pat:
+                patterns.append(pat)
+        else:
+            # Legacy format: @id is subject class
+            sc_curie = node_id
+            sc_uri = expand(sc_curie)
+            if not sc_uri.startswith(_URI_SCHEMES):
                 continue
-            p_uri = expand(key)
-            if not p_uri.startswith(_URI_SCHEMES):
-                continue
-            entries = val if isinstance(val, list) else [val]
-            for entry in entries:
-                pat = _parse_schema_entry(
-                    entry,
-                    sc_uri,
-                    p_uri,
-                    key,
-                    sc_curie,
-                    expand,
-                    labels,
-                    counts_map,
-                )
-                if pat:
-                    patterns.append(pat)
+
+            counts_map: dict[str, dict[str, int]] = node.get("_counts", {})
+
+            for key, val in node.items():
+                if key.startswith(("@", "_")) or key in (_GRAPH_SKIP_KEYS):
+                    continue
+                p_uri = expand(key)
+                if not p_uri.startswith(_URI_SCHEMES):
+                    continue
+                entries = val if isinstance(val, list) else [val]
+                for entry in entries:
+                    pat = _parse_schema_entry(
+                        entry, sc_uri, p_uri, key, sc_curie, expand, labels, counts_map
+                    )
+                    if pat:
+                        patterns.append(pat)
+
     return patterns
+
+
+def _parse_void_partition(
+    node: dict[str, Any],
+    expand: Callable[[str], str],
+    labels: dict[str, str],
+    void_ext_subject: str,
+    void_ext_object: str,
+    void_property: str,
+    void_triples: str,
+) -> SchemaPattern | None:
+    """Parse a VoID partition node into a SchemaPattern."""
+    subject_class: str | None = None
+    object_class: str | None = None
+    property_uri: str | None = None
+    count: int | None = None
+    datatype: str | None = None
+
+    for key, val in node.items():
+        if key.startswith("@"):
+            continue
+
+        expanded_key = expand(key)
+
+        # Extract the @id from nested objects
+        if isinstance(val, dict):
+            val_id = val.get("@id")
+        elif isinstance(val, list) and val and isinstance(val[0], dict):
+            val_id = val[0].get("@id")
+        else:
+            val_id = val
+
+        if expanded_key == void_ext_subject and val_id:
+            subject_class = expand(val_id)
+
+        elif expanded_key == void_ext_object and val_id:
+            obj_uri = expand(val_id)
+            # Check for sentinel objects
+            if obj_uri == "http://www.w3.org/2000/01/rdf-schema#Literal":
+                object_class = "Literal"
+            elif obj_uri == "http://www.w3.org/2000/01/rdf-schema#Resource":
+                object_class = "Resource"
+            else:
+                object_class = obj_uri
+
+        elif expanded_key == void_property and val_id:
+            property_uri = expand(val_id)
+
+        elif expanded_key == void_triples:
+            # Count can be a literal value
+            if isinstance(val, dict) and "@value" in val:
+                try:
+                    count = int(val["@value"])
+                except (ValueError, TypeError):
+                    pass
+            elif isinstance(val, (int, float)):
+                count = int(val)
+
+        elif expanded_key == "http://ldf.fi/void-ext#datatype":
+            # Datatype for literals
+            if isinstance(val, dict) and "@id" in val:
+                datatype = expand(val["@id"])
+            elif isinstance(val, str):
+                datatype = expand(val)
+
+    # Validate required fields
+    if not subject_class or not property_uri or not object_class:
+        return None
+
+    if not subject_class.startswith(_URI_SCHEMES):
+        return None
+
+    return SchemaPattern(
+        subject_class=subject_class,
+        property_uri=property_uri,
+        object_class=object_class,
+        count=count,
+        datatype=datatype,
+        subject_label=labels.get(subject_class),
+        property_label=labels.get(property_uri),
+        object_label=labels.get(object_class) if object_class not in _SENTINEL_OBJECTS else None,
+    )
 
 
 def _parse_schema_entry(

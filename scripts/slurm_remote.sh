@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=rdfsolve-remote
 #SBATCH --partition=defq
-#SBATCH --time=24:00:00
+#SBATCH --time=72:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
 #SBATCH --output=/home/javier.millanacosta/rdfsolve/logs/remote_%j.out
@@ -50,6 +50,7 @@ if [ -f "$ENDPOINT_STATUS" ]; then
     python "$RDFSOLVE_REPO/scripts/pipeline.py" \
         --remote-only \
         --skip-providers $SKIP_PROVIDERS \
+        --skip-completed \
         --output-dir "$OUTPUT_DIR" \
         --output-suffix _remote \
         --timeout "$TIMEOUT" \
@@ -62,6 +63,7 @@ else
     python "$RDFSOLVE_REPO/scripts/pipeline.py" \
         --remote-only \
         --skip-providers $SKIP_PROVIDERS \
+        --skip-completed \
         --output-dir "$OUTPUT_DIR" \
         --output-suffix _remote \
         --timeout "$TIMEOUT" \
