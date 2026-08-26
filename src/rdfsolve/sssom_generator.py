@@ -7,7 +7,7 @@ sssom library.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -48,7 +48,7 @@ def create_sssom_mappings(
         MappingSetDataFrame ready for serialization
     """
     if mapping_set_version is None:
-        mapping_set_version = str(datetime.now(UTC).date())
+        mapping_set_version = str(datetime.now(timezone.utc).date())
 
     if creator_id is None:
         creator_id = "https://orcid.org/0000-0001-5608-781X"
@@ -66,7 +66,7 @@ def create_sssom_mappings(
         "creator_id": creator_id,
         "creator_label": creator_label,
         "license": license_uri,
-        "mapping_date": str(datetime.now(UTC).date()),
+        "mapping_date": str(datetime.now(timezone.utc).date()),
         "mapping_provider": mapping_provider,
         "mapping_tool": mapping_tool,
         "mapping_tool_version": mapping_tool_version,

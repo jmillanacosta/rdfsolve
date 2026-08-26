@@ -11,7 +11,7 @@ import logging
 import tarfile
 import tempfile
 import zipfile
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -158,7 +158,7 @@ def enrich_sssom_file(
     return create_sssom_mappings(
         mappings=enriched_mappings,
         mapping_set_id=f"https://w3id.org/rdfsolve/mappings/enriched-{sssom_file.stem}",
-        mapping_set_version=str(datetime.now(UTC).date()),
+        mapping_set_version=str(datetime.now(timezone.utc).date()),
         creator_id=creator_id,
         creator_label=creator_label,
     )
