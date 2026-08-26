@@ -6,7 +6,7 @@ generates SSSOM mapping sets documenting interoperability points.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from sssom import Mapping, MappingSetDataFrame
@@ -180,7 +180,7 @@ def discover_schema_pattern_mappings(
         msdf = create_sssom_mappings(
             mappings=mappings,
             mapping_set_id=mapping_set_id,
-            mapping_set_version=str(datetime.now(UTC).date()),
+            mapping_set_version=str(datetime.now(timezone.utc).date()),
             subject_source=dataset_void_uris.get(pair_key[0]),
             object_source=dataset_void_uris.get(pair_key[1]),
             creator_id=creator_id,
