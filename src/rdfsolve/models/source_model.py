@@ -1,20 +1,4 @@
-"""Pydantic model for a single rdfsolve data-source entry.
-
-Mirrors the :class:`~rdfsolve.sources.SourceEntry` TypedDict but adds
-validation, coercion, and serialisation helpers.  Used throughout the
-backend to validate data read from ``sources.yaml`` before it is stored
-in the database and returned from API routes.
-
-Typical usage::
-
-    from rdfsolve.models.source_model import SourceModel, SourcesRegistry
-
-    models = SourcesRegistry.from_yaml("data/sources.yaml")
-    first = models.sources[0]
-    print(first.name, first.bioregistry_domain)
-
-    d = first.model_dump()  # round-trip to plain dict
-"""
+"""Pydantic models for data source entries with validation and serialization."""
 
 from __future__ import annotations
 
@@ -136,11 +120,17 @@ class SourceModel(BaseModel):
     local_provider: str = ""
     download_ttl: list[str] = Field(default_factory=list)
 
-    # ── Endpoint metadata (populated by probe/discovery scripts) ──
+    # Endpoint metadata (populated by probe/discovery scripts)
     sparql_engine: str = ""
     sparql_strategy: str = ""
     supports_graph: bool | None = None
     endpoint_down: bool = False
+    endpoint_status: str = "unknown"  # "up", "down", "timeout", "rate_limited", "unknown"
+    last_checked: str = ""  # ISO timestamp
+    last_success: str = ""  # ISO timestamp
+    last_error: str = ""  # Last error message
+    failure_count: int = 0  # Consecutive failures
+    avg_response_time: float | None = None  # Seconds
 
     bioregistry_prefix: str = ""
     bioregistry_name: str = ""
@@ -169,7 +159,7 @@ class SourceModel(BaseModel):
     )
     @classmethod
     def _coerce_list(cls, v: Any) -> list[Any]:
-        """Ensure list fields are always lists (None → [])."""
+        """Ensure list fields are always lists (None -> [])."""
         if v is None:
             return []
         if isinstance(v, str):
@@ -179,7 +169,7 @@ class SourceModel(BaseModel):
     @field_validator("bioregistry_publications", mode="before")
     @classmethod
     def _coerce_publications(cls, v: Any) -> list[Any]:
-        """Coerce publication entries; None → []."""
+        """Coerce publication entries; None -> []."""
         if v is None:
             return []
         if isinstance(v, list):
@@ -189,7 +179,7 @@ class SourceModel(BaseModel):
     @field_validator("bioregistry_mappings", mode="before")
     @classmethod
     def _coerce_mappings(cls, v: Any) -> dict[str, str]:
-        """Coerce mappings; None → {}."""
+        """Coerce mappings; None -> {}."""
         if v is None:
             return {}
         if isinstance(v, dict):
@@ -199,7 +189,7 @@ class SourceModel(BaseModel):
     @field_validator("bioregistry_extra_providers", mode="before")
     @classmethod
     def _coerce_extra_providers(cls, v: Any) -> list[dict[str, str | None]]:
-        """Coerce extra_providers; None → []."""
+        """Coerce extra_providers; None -> []."""
         if v is None:
             return []
         if isinstance(v, list):
@@ -219,6 +209,10 @@ class SourceModel(BaseModel):
             "local_provider",
             "sparql_engine",
             "sparql_strategy",
+            "endpoint_status",
+            "last_checked",
+            "last_success",
+            "last_error",
             "bioregistry_prefix",
             "bioregistry_name",
             "bioregistry_description",

@@ -80,7 +80,7 @@ class InstanceMapping(Mapping):
         )
 
 
-# ── JSON-LD merge helper ──────────────────────────────────────────
+# JSON-LD merge helper
 
 
 _STRUCTURAL_KEYS = frozenset(
@@ -109,12 +109,12 @@ def merge_instance_jsonld(
     Returns:
         The mutated *existing* dict (also returned for convenience).
     """
-    # ── context ──────────────────────────────────────────────
+    # context
     existing.setdefault("@context", {})
     for k, v in new.get("@context", {}).items():
         existing["@context"].setdefault(k, v)
 
-    # ── graph - merge by @id ─────────────────────────────────
+    # graph - merge by @id
     existing_nodes: dict[str, dict[str, Any]] = {}
     for node in existing.get("@graph", []):
         nid = node.get("@id")
@@ -130,7 +130,7 @@ def merge_instance_jsonld(
 
     existing["@graph"] = list(existing_nodes.values())
 
-    # ── @about ───────────────────────────────────────────────
+    # @about
     about_ex = existing.setdefault("@about", {})
     about_new = new.get("@about", {})
 
