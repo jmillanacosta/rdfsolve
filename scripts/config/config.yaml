@@ -1,0 +1,15 @@
+# RDFSolve pipeline configuration
+
+# Base URI for VoID documents and schema artifacts
+# Used as namespace for generated VoID URIs
+base_uri: https://rdfsolve.bigcat-bioinformatics.nl
+
+# Timeout settings (seconds)
+timeout: 300
+delay: 0.5
+
+# QLever settings
+qlever:
+  image: docker://docker.io/adfreiburg/qlever:latest
+  startup_timeout: 10000
+  base_port: 7019

@@ -168,6 +168,12 @@ class MiningReport(BaseModel):
     # Configuration snapshot
     config: dict[str, Any] = Field(default_factory=dict)
 
+    # Discovered metadata (from endpoint queries, not authoritative)
+    discovered_metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Metadata discovered from endpoint (may be from sub-components)",
+    )
+
     # Benchmark / resource usage
     machine: dict[str, Any] | None = Field(None)
     benchmark: dict[str, Any] | None = Field(None)

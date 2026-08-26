@@ -1,29 +1,4 @@
-"""
-SPARQL Helper, Centralized SPARQL query execution with automatic fallback.
-
-This module is a SPARQL client that handles:
-- Automatic GET -> POST fallback for endpoints that require POST
-- Exponential backoff retry logic for transient failures
-- Support for SELECT (JSON) and CONSTRUCT (Turtle/N3) queries
-- HTML error detection in responses
-- Consistent logging across all SPARQL operations
-- Support for pagination (limit and offset usage)
-
-Usage:
-    from rdfsolve.sparql_helper import SparqlHelper
-
-    # Create a helper for an endpoint
-    helper = SparqlHelper("https://sparql.example.org/")
-
-    # Execute SELECT query (returns dict)
-    results = helper.select("SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 10")
-
-    # Execute CONSTRUCT query (returns bytes/string)
-    turtle_data = helper.construct("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }")
-
-    # Execute ASK query (returns bool)
-    exists = helper.ask("ASK { ?s a <http://example.org/Class> }")
-"""
+"""SPARQL query execution with automatic GET/POST fallback and retry logic."""
 
 from __future__ import annotations
 
@@ -44,6 +19,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
     import requests
 from rdflib import Graph
+from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
 
@@ -63,25 +39,24 @@ class QueryRecord:
     def query_id(self) -> str:
         """Generate a unique ID for this query based on content hash."""
         content = f"{self.query_type}:{self.query}"
-        return hashlib.md5(content.encode()).hexdigest()[:12]
+        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
 
 
 class SparqlHelperError(Exception):
     """Base exception for SPARQL helper errors."""
 
-    pass
-
 
 class EndpointError(SparqlHelperError):
     """Raised when the endpoint returns an error."""
-
-    pass
 
 
 class EndpointTimeoutError(EndpointError):
     """Raised when the endpoint times out (read / connect)."""
 
-    pass
+    def __init__(self, msg: str, status_code: int | None = None) -> None:
+        """Initialize with error message and optional HTTP status code."""
+        super().__init__(msg)
+        self.status_code = status_code
 
 
 class EndpointUnhealthyError(EndpointError):
@@ -90,8 +65,6 @@ class EndpointUnhealthyError(EndpointError):
     Typical examples: database in recovery mode, backend proxy errors,
     maintenance pages returned as ``text/plain`` or ``text/html``.
     """
-
-    pass
 
 
 class PaginationTruncatedError(EndpointTimeoutError):
@@ -103,20 +76,13 @@ class PaginationTruncatedError(EndpointTimeoutError):
     """
 
     def __init__(self, msg: str, offset: int = 0) -> None:
-        """Initialize a pagination truncation error.
-
-        Args:
-            msg: Error message.
-            offset: Offset at which pagination stopped.
-        """
+        """Initialize with error message and offset where pagination stopped."""
         super().__init__(msg)
         self.offset = offset
 
 
 class QueryError(SparqlHelperError):
     """Raised when the query itself is invalid."""
-
-    pass
 
 
 # MIME types for SPARQL responses
@@ -175,10 +141,7 @@ class SparqlHelper:
     # HTTP status codes that warrant a retry
     RETRY_STATUS_CODES = (500, 502, 503, 504, 429)
 
-    # Response body fragments that indicate a query-cost / timeout
-    # rejection from the endpoint (not a transient server error).
-    # These 500s should NOT be retried - raise EndpointTimeoutError
-    # immediately so callers can fall back to pagination.
+    # rejection from the endpoint (not a transient server error) raise EndpointTimeoutError.
     COST_LIMIT_PATTERNS: ClassVar[tuple[str, ...]] = (
         "estimated execution time",
         "exceeds the limit",
@@ -196,14 +159,12 @@ class SparqlHelper:
     _query_registry: ClassVar[list[QueryRecord]] = []
     _collect_queries: ClassVar[bool] = False
 
-    # Strategy discovery: maps source name → winning strategy string.
-    # Populated when the helper discovers a working strategy that differs
-    # from the one configured in sources.yaml.
+    # Strategy discovery: maps source name -> winning strategy string.
     _strategy_updates: ClassVar[dict[str, str]] = {}
 
     @classmethod
     def get_strategy_updates(cls) -> dict[str, str]:
-        """Return accumulated strategy updates (source_name → winning strategy)."""
+        """Return accumulated strategy updates (source_name -> winning strategy)."""
         return cls._strategy_updates.copy()
 
     @classmethod
@@ -211,31 +172,16 @@ class SparqlHelper:
         cls,
         sources_yaml: str | Path | None = None,
     ) -> int:
-        """Write accumulated strategy discoveries back to ``sources.yaml``.
+        """Write accumulated strategy discoveries to sources.yaml.
 
-        For each source whose winning strategy differs from (or was
-        absent in) the YAML, update ``sparql_strategy`` in-place.
-
-        Parameters
-        ----------
-        sources_yaml:
-            Path to ``sources.yaml``.  Defaults to
-            ``<repo>/data/sources.yaml``.
-
-        Returns
-        -------
-        int
+        Returns:
             Number of entries updated.
         """
         if not cls._strategy_updates:
             return 0
 
         if sources_yaml is None:
-            sources_yaml = (
-                Path(__file__).resolve().parent.parent.parent
-                / "data"
-                / "sources.yaml"
-            )
+            sources_yaml = Path(__file__).resolve().parent.parent.parent / "data" / "sources.yaml"
         sources_yaml = Path(sources_yaml)
 
         with open(sources_yaml, encoding="utf-8") as fh:
@@ -322,16 +268,10 @@ class SparqlHelper:
         base_uri: str = "https://example.org/sparql-queries/",
         dataset_name: str = "dataset",
     ) -> str:
-        """
-        Export collected queries as TTL using SHACL SPARQL representation.
-
-        Args:
-            output_file: Optional file path to write TTL
-            base_uri: Base URI for query IRIs
-            dataset_name: Name of the dataset for namespacing
+        """Export collected queries as TTL with SHACL SPARQL representation.
 
         Returns:
-            TTL string with all collected queries
+            TTL string with all collected queries.
         """
         # Deduplicate queries by content hash
         seen_hashes: set[str] = set()
@@ -416,33 +356,7 @@ class SparqlHelper:
         source_name: str = "",
         inter_request_delay: float = 0.0,
     ) -> None:
-        """
-        Initialize the SPARQL helper.
-
-        Args:
-            endpoint_url: SPARQL endpoint URL
-            use_post: Always use POST (default: False, tries GET first)
-            max_retries: Maximum retry attempts for transient failures
-            initial_backoff: Initial delay between retries (seconds)
-            max_backoff: Maximum delay between retries (seconds)
-            timeout: Request timeout in seconds (default: 60)
-            sparql_engine: Engine hint from endpoint probes (e.g.
-                ``"virtuoso"``, ``"blazegraph"``, ``"qlever"``).
-                Used for engine-specific workarounds.
-            sparql_strategy: Preferred query strategy from endpoint probes
-                (e.g. ``"get+json"``, ``"post+form+json"``).  When set,
-                the helper starts with this strategy and falls back to
-                the default GET→POST chain only on failure.
-            source_name: Source name from ``sources.yaml``.  When set,
-                winning strategy discoveries are recorded in
-                :attr:`_strategy_updates` for later flush via
-                :meth:`flush_strategy_updates`.
-            inter_request_delay: Seconds to sleep before each new logical
-                SPARQL request (not between retry attempts).  Use for
-                polite throttling of remote public endpoints.  Zero (the
-                default) disables the delay — suitable for local QLever
-                instances where there is no need to be polite.
-        """
+        """Initialize SPARQL helper with retry logic and optional strategy hints."""
         self.endpoint_url = endpoint_url.rstrip("/")
         self.use_post = use_post
         self.max_retries = max_retries
@@ -456,9 +370,8 @@ class SparqlHelper:
         self._last_winning_strategy: str = ""
 
         # Derive initial method from strategy hint when available.
-        if sparql_strategy and not use_post:
-            if "post" in sparql_strategy:
-                use_post = True
+        if sparql_strategy and not use_post and "post" in sparql_strategy:
+            use_post = True
 
         # Track if we've detected this endpoint requires POST
         self._requires_post = use_post
@@ -484,19 +397,7 @@ class SparqlHelper:
         timeout: float | None = None,
         max_retries: int = 10,
     ) -> SparqlHelper:
-        """Create a :class:`SparqlHelper` from a ``sources.yaml`` entry dict.
-
-        Reads ``endpoint``, ``sparql_engine``, ``sparql_strategy``, and
-        ``timeout`` from *entry* and passes them through.
-
-        Args:
-            entry: A single source dict (or SourceEntry / SourceModel).
-            timeout: Override timeout (else uses entry's or default).
-            max_retries: Override max retries.
-
-        Returns:
-            Configured SparqlHelper instance.
-        """
+        """Create SparqlHelper from sources.yaml entry with endpoint and strategy configuration."""
         endpoint = entry.get("endpoint", "")
         engine = entry.get("sparql_engine", "") or ""
         strategy = entry.get("sparql_strategy", "") or ""
@@ -515,22 +416,7 @@ class SparqlHelper:
         query: str,
         purpose: str = "",
     ) -> dict[str, Any]:
-        """Execute a SELECT query and return JSON results.
-
-        Args:
-            query: SPARQL SELECT query string.
-            purpose: Caller context for logs, e.g.
-                ``"mining/typed-object"``.
-
-        Returns:
-            Dictionary with SPARQL JSON results format containing
-            ``"head"`` and ``"results"`` keys.
-
-        Raises:
-            EndpointError: If the endpoint returns an error after
-                all retries.
-            QueryError: If the query is malformed.
-        """
+        """Execute SELECT query and return SPARQL JSON results."""
         result: dict[str, Any] = self._execute(
             query,
             accept=MimeTypes.SELECT_ACCEPT,
@@ -541,19 +427,7 @@ class SparqlHelper:
         return result
 
     def construct(self, query: str) -> str:
-        """
-        Execute a CONSTRUCT query and return Turtle RDF data.
-
-        Args:
-            query: SPARQL CONSTRUCT query string
-
-        Returns:
-            Turtle-formatted RDF string
-
-        Raises:
-            EndpointError: If the endpoint returns an error after all retries
-            QueryError: If the query is malformed
-        """
+        """Execute CONSTRUCT query and return Turtle RDF data."""
         result: str = self._execute(
             query,
             accept=MimeTypes.CONSTRUCT_ACCEPT,
@@ -563,23 +437,7 @@ class SparqlHelper:
         return result
 
     def construct_graph(self, query: str) -> Graph:
-        """
-        Execute a CONSTRUCT query and return an RDFLib Graph.
-
-        The CONSTRUCT method internally uses _execute which handles
-        GET->POST fallback automatically when HTML is detected in the
-        response string.
-
-        Args:
-            query: SPARQL CONSTRUCT query string
-
-        Returns:
-            RDFLib Graph containing the constructed triples
-
-        Raises:
-            EndpointError: If the endpoint returns an error after all retries
-            QueryError: If the query is malformed
-        """
+        """Execute CONSTRUCT query and return RDFLib Graph."""
         # construct() calls _execute which handles GET->POST fallback
         turtle_data = self.construct(query)
 
@@ -598,19 +456,7 @@ class SparqlHelper:
         return graph
 
     def ask(self, query: str) -> bool:
-        """
-        Execute an ASK query and return boolean result.
-
-        Args:
-            query: SPARQL ASK query string
-
-        Returns:
-            True if the pattern exists, False otherwise
-
-        Raises:
-            EndpointError: If the endpoint returns an error after all retries
-            QueryError: If the query is malformed
-        """
+        """Execute ASK query and return boolean result."""
         result: dict[str, Any] = self._execute(
             query, accept=MimeTypes.SELECT_ACCEPT, query_type="ASK", parse_json=True
         )
@@ -626,11 +472,7 @@ class SparqlHelper:
     _IRI_UNSAFE_CHARS = frozenset('<>"{}|^`\\ \t\n\r')
 
     def _next_safe_char(self, ch: str) -> str | None:
-        """Return the next codepoint after *ch* that is safe inside ``<…>``.
-
-        Scans up to 16 codepoints forward.  Returns ``None`` when no
-        safe character can be found (extremely unlikely in practice).
-        """
+        """Return next codepoint safe inside IRI literal (scans up to 16 forward)."""
         for offset in range(1, 17):
             candidate = chr(ord(ch) + offset)
             if candidate not in self._IRI_UNSAFE_CHARS:
@@ -638,44 +480,14 @@ class SparqlHelper:
         return None
 
     def find_classes_for_uri_pattern(self, uri_prefix: str) -> list[str]:
-        """Find all ``rdf:type`` classes whose instances match *uri_prefix*.
-
-        Uses an IRI-range filter (index-friendly on QLever and most
-        SPARQL engines)::
-
-            SELECT DISTINCT ?c
-            WHERE {
-              ?s a ?c .
-              FILTER(
-                ?s >= <uri_prefix> &&
-                ?s <  <uri_prefix_next>
-              )
-            }
-
-        The upper-bound ``uri_prefix_next`` is derived by incrementing the
-        last character of *uri_prefix* to the next IRI-safe codepoint
-        (e.g. ``"…/obo/AAO_"`` → ``"…/obo/AAOa"`` because ``_`` + 1 =
-        backtick which is IRI-unsafe, so we skip to ``a``).
-
-        Falls back to ``STRSTARTS`` only if *no* safe upper-bound
-        character can be found within 16 codepoints (virtually never
-        happens).  ``STRSTARTS`` forces a full table scan and can take
-        minutes on large datasets.
-
-        Args:
-            uri_prefix: URI prefix string, e.g.
-                ``"https://identifiers.org/ensembl/"``.
-
-        Returns:
-            Deduplicated list of class URIs (may be empty).
-        """
+        """Find rdf:type classes for instances matching URI prefix using IRI-range filter."""
         if not uri_prefix:
             return []
 
         # Build the exclusive upper bound by finding the next IRI-safe char.
         next_char = self._next_safe_char(uri_prefix[-1])
         if next_char is None:
-            # Extremely rare: no safe char found — STRSTARTS fallback.
+            # Extremely rare: no safe char found - STRSTARTS fallback.
             escaped = uri_prefix.replace("\\", "\\\\").replace('"', '\\"')
             query = (
                 f'SELECT DISTINCT ?c WHERE {{ ?s a ?c . FILTER(STRSTARTS(STR(?s), "{escaped}")) }}'
@@ -704,28 +516,7 @@ class SparqlHelper:
         iris: list[str],
         values_batch_size: int = 50,
     ) -> dict[str, dict[str, list[str]]]:
-        """Find rdf:type classes for specific IRIs, grouped by named graph.
-
-        Splits *iris* into chunks of *values_batch_size* to avoid
-        exceeding HTTP header / request-line limits (Beast default is
-        ~8 KB).  Results from all chunks are merged before returning.
-
-        Uses a VALUES-based query to resolve multiple IRIs at once::
-
-            SELECT DISTINCT ?s ?g ?c
-            WHERE {
-              VALUES ?s { <iri1> <iri2> ... }
-              GRAPH ?g { ?s a ?c }
-            }
-
-        Args:
-            iris: Full entity IRIs to look up.
-            values_batch_size: Max IRIs per VALUES block (default 50).
-
-        Returns:
-            Nested dict ``{entity_iri: {graph_uri: [class_uri, ...]}}``.
-            Only IRIs found in at least one graph are included.
-        """
+        """Find rdf:type classes for IRIs grouped by named graph using VALUES batching."""
         if not iris:
             return {}
 
@@ -762,19 +553,7 @@ class SparqlHelper:
         iris: list[str],
         values_batch_size: int = 50,
     ) -> dict[str, list[str]]:
-        """Find rdf:type classes for specific IRIs (no named-graph grouping).
-
-        Splits *iris* into chunks of *values_batch_size* to avoid
-        exceeding HTTP header / request-line limits.
-
-        Args:
-            iris: Full entity IRIs to look up.
-            values_batch_size: Max IRIs per VALUES block (default 50).
-
-        Returns:
-            Dict ``{entity_iri: [class_uri, ...]}``.
-            Only IRIs found in the endpoint are included.
-        """
+        """Find rdf:type classes for IRIs using VALUES batching (no graph grouping)."""
         if not iris:
             return {}
 
@@ -806,22 +585,8 @@ class SparqlHelper:
         return result
 
     def find_all_classes(self) -> dict[str, list[str]]:
-        """Return all rdf:type classes used in this endpoint, with their instances.
-
-        Runs a direct ``SELECT DISTINCT ?s ?c WHERE { ?s a ?c }`` — no
-        entity-IRI filter.  Used as a fallback when no entity IRIs are
-        available to look up (e.g. instance-mapping files that store only
-        bare CURIEs that could not be resolved).
-
-        Returns:
-            Dict ``{entity_iri: [class_uri, ...]}``.
-        """
-        query = (
-            "SELECT DISTINCT ?s ?c\n"
-            "WHERE {\n"
-            "  ?s a ?c .\n"
-            "}"
-        )
+        """Return all rdf:type classes from endpoint with their instances (no filters)."""
+        query = "SELECT DISTINCT ?s ?c\nWHERE {\n  ?s a ?c .\n}"
         try:
             out = self.select(query)
         except Exception:
@@ -847,25 +612,9 @@ class SparqlHelper:
         parse_json: bool = True,
         purpose: str = "",
     ) -> Any:
-        """
-        Execute a SPARQL query with automatic GET/POST fallback and retry.
-
-        Args:
-            query: SPARQL query string
-            accept: Accept header value for content negotiation
-            query_type: Type of query for logging
-            parse_json: Whether to parse response as JSON
-            purpose: Human-readable context, e.g. "mining/typed-object",
-                     "label-enrichment", "coverage".  Included in logs.
-
-        Returns:
-            Query results (dict for JSON, str for RDF formats)
-
-        Raises:
-            EndpointError: If query fails after all retries
-        """
-        # Polite throttling: sleep before each new logical request so remote
-        # public endpoints are not overwhelmed.  Zero (default) = no delay.
+        """Execute SPARQL query with GET/POST fallback and retry logic."""
+        # Throttling: sleep before each new logical request so remote
+        # public endpoints are not overloaded.  Zero (default) = no delay.
         if self.inter_request_delay > 0:
             time.sleep(self.inter_request_delay)
 
@@ -922,11 +671,7 @@ class SparqlHelper:
                 self._last_winning_strategy = winning
 
                 # If strategy differs from configured hint, record update
-                if (
-                    self.sparql_strategy
-                    and winning != self.sparql_strategy
-                    and self.source_name
-                ):
+                if self.sparql_strategy and winning != self.sparql_strategy and self.source_name:
                     SparqlHelper._strategy_updates[self.source_name] = winning
                     logger.info(
                         "Strategy update for %s: %s -> %s",
@@ -960,7 +705,7 @@ class SparqlHelper:
                     use_post = True
                     continue
 
-                # Form-encoded POST rejected → try raw POST body
+                # Form-encoded POST rejected -> try raw POST body
                 if use_post and not _tried_raw_post and status_code in (400, 405, 415):
                     logger.debug(
                         "Form POST returned %d, trying raw POST",
@@ -972,23 +717,24 @@ class SparqlHelper:
 
                 # Check for retryable status codes
                 if status_code in self.RETRY_STATUS_CODES:
-                    # A 502 Bad Gateway almost always means the upstream
-                    # host is permanently down (not a transient spike).
-                    # Retrying the same endpoint repeatedly wastes time.
-                    # Raise immediately so the caller moves on.
+                    # 502 Bad Gateway often means rate limiting or temporary overload
+                    # Treat as timeout so miner can reduce batch size and retry
                     if status_code == 502:
                         tag = f"{query_type}[{purpose}]" if purpose else query_type
                         logger.warning(
-                            "%s 502 Bad Gateway from %s - endpoint appears"
-                            " permanently unreachable, not retrying",
+                            "%s 502 Bad Gateway from %s - server overloaded, will retry with backoff",
                             tag,
                             self.endpoint_url,
                         )
-                        raise EndpointError(f"HTTP 502 Bad Gateway: {e}") from e
+                        # Treat as timeout to trigger batch size reduction
+                        raise EndpointTimeoutError(
+                            f"HTTP 502 Bad Gateway (overload): {e}",
+                            status_code=502,
+                        ) from e
                     # 429 from a local QLever means the server is at capacity
                     # (query too expensive / concurrent limit hit).
                     # Raise as EndpointTimeoutError immediately so the miner
-                    # falls back to chunked/paginated queries instead of
+                    # uses chunked/paginated queries instead of
                     # retrying the same heavy one-shot query 10 more times —
                     # each of which will also run for many minutes before 429.
                     if status_code == 429:
@@ -999,13 +745,16 @@ class SparqlHelper:
                             tag,
                             self.endpoint_url,
                         )
-                        raise EndpointTimeoutError(f"QLever 429 (at capacity): {e}") from e
+                        raise EndpointTimeoutError(
+                            f"QLever 429 (at capacity): {e}",
+                            status_code=429,
+                        ) from e
                     # A 500/504 whose body signals "query too expensive"
                     # (Virtuoso cost limit, statement timeout, gateway
                     # timeout, etc.) is not a transient server error -
                     # retrying the identical query will always fail.
                     # Raise as EndpointTimeoutError so callers (e.g.
-                    # the two-phase miner) can fall back to pagination.
+                    # the two-phase miner) can use pagination.
                     if status_code in (500, 504):
                         body = e.response.text.lower() if e.response is not None else ""
                         is_cost_limit = status_code == 504 or any(
@@ -1047,9 +796,7 @@ class SparqlHelper:
             except requests.exceptions.RequestException as e:
                 error_msg = str(e).lower()
 
-                # ── Permanent failures: fail fast, don't retry ────
-                # DNS resolution failure or connection refused are not
-                # transient - the host doesn't exist or isn't listening.
+                # Permanent failures: fail fast, don't retry
                 if self._is_permanent_failure(e):
                     tag = f"{query_type}[{purpose}]" if purpose else query_type
                     logger.warning(
@@ -1075,25 +822,18 @@ class SparqlHelper:
                 )
 
             except json.JSONDecodeError as e:
-                # JSON parse error — could be malformed response or
-                # corrupted data (e.g. control characters in literals).
-                # If the response contains control characters there is
-                # nothing we can do by retrying: the server will return
-                # the same broken JSON every time.  Raise immediately.
+                # JSON parse error raises fast.
                 err_msg = str(e).lower()
                 if "control character" in err_msg or "invalid" in err_msg:
                     tag = f"{query_type}[{purpose}]" if purpose else query_type
                     logger.warning(
-                        "%s JSON parse error (invalid/control-char) from %s"
-                        " - not retrying: %s",
+                        "%s JSON parse error (invalid/control-char) from %s - not retrying: %s",
                         tag,
                         self.endpoint_url,
                         e,
                     )
-                    raise EndpointTimeoutError(
-                        f"JSON decode error (non-retriable): {e}"
-                    ) from e
-                # Other JSON parse error, might be HTML response — retry.
+                    raise EndpointTimeoutError(f"JSON decode error (non-retriable): {e}") from e
+                # Other JSON parse error, is HTML response - retry.
                 self._handle_retry(
                     attempt,
                     query_type,
@@ -1121,8 +861,7 @@ class SparqlHelper:
         # Catch anything else?
         raise EndpointError(f"Query failed unexpectedly [{purpose}]")
 
-    # Known database / backend error fragments that indicate the
-    # endpoint is alive but its backing store is broken.
+    # Known database / backend error fragments.
     _UNHEALTHY_PATTERNS: ClassVar[tuple[str, ...]] = (
         "recovery mode",
         "database system is",
@@ -1382,7 +1121,7 @@ class SparqlHelper:
 
         Uses **adaptive pagination**: when the endpoint times out, the
         chunk (LIMIT) is reduced by ~15 % and the *same* offset is
-        retried after a cooldown pause.  The chunk size will never
+        retried after a wait period.  The chunk size will never
         shrink below 60 % of the original value (i.e. a maximum
         cumulative reduction of ~40 %).  Up to 3 consecutive shrinks
         are attempted per offset before giving up on that page.
@@ -1397,21 +1136,20 @@ class SparqlHelper:
             chunk_size: Initial number of results per chunk.
             max_total_results: Cap on total results (``None`` = all).
             delay_between_chunks:
-                Polite pause between pages (seconds).
+                Pause between pages in seconds.
             purpose: Caller context for log messages.
 
         Yields:
             List of bindings (dicts) from each chunk.
         """
-        # ---- adaptive-pagination tunables -------------------------
+        # adaptive pagination
         shrink_factor = 0.85  # reduce LIMIT by 15 % each time
         min_chunk_size = max(  # never go below 60 % of original
             int(chunk_size * 0.60),
             1,
         )
-        max_shrinks_per_offset = 3  # give up after 3 reductions
-        cooldown_after_timeout = 5.0  # seconds to wait after a timeout
-        # -----------------------------------------------------------
+        max_shrinks_per_offset = 3  # stop after 3 reductions
+        wait_after_timeout = 5.0  # seconds to wait after a timeout
 
         current_offset = 0
         total_fetched = 0
@@ -1433,7 +1171,7 @@ class SparqlHelper:
                 limit=effective_limit,
             )
 
-            # --- attempt this page (with adaptive retries) ---------
+            # attempt this page (with adaptive retries)
             shrink_attempts = 0
             success = False
 
@@ -1461,17 +1199,17 @@ class SparqlHelper:
                         elapsed,
                     )
                     success = True
-                    break  # out of the while
+                    break
 
                 except EndpointTimeoutError:
-                    # --- adaptive reduction -----------------------
+                    # adaptive reduction
                     new_limit = max(
                         int(effective_limit * shrink_factor),
                         min_chunk_size,
                     )
 
                     if new_limit >= effective_limit:
-                        # Already at floor - cannot shrink further
+                        # Can't shrink more
                         logger.warning(
                             "Timeout at offset %d; chunk size already at minimum (%d) - skipping",
                             current_offset,
@@ -1488,7 +1226,7 @@ class SparqlHelper:
                         new_limit,
                         shrink_attempts,
                         max_shrinks_per_offset,
-                        int(cooldown_after_timeout),
+                        int(wait_after_timeout),
                     )
                     effective_limit = new_limit
                     current_chunk_size = new_limit  # sticky
@@ -1496,7 +1234,7 @@ class SparqlHelper:
                         offset=current_offset,
                         limit=effective_limit,
                     )
-                    time.sleep(cooldown_after_timeout)
+                    time.sleep(wait_after_timeout)
 
                 except Exception as e:
                     logger.warning(
@@ -1507,12 +1245,11 @@ class SparqlHelper:
                     break  # non-timeout error -> stop paging
 
             if not success:
-                # Could not fetch this page even with reduced size.
                 # Raise so callers know the result set is incomplete.
                 raise PaginationTruncatedError(
                     f"Pagination abandoned at offset {current_offset}"
                     f" after {max_shrinks_per_offset} chunk-size"
-                    " reductions - results are incomplete",
+                    " reductions, results might be incomplete",
                     offset=current_offset,
                 )
 
@@ -1541,7 +1278,7 @@ class SparqlHelper:
                 )
                 break
 
-            # Polite delay between pages
+            # Delay between pages
             if delay_between_chunks > 0:
                 time.sleep(delay_between_chunks)
 
@@ -1556,24 +1293,12 @@ class SparqlHelper:
         """
         Prepare a SPARQL query for use with select_chunked by escaping braces.
 
-        SPARQL queries contain curly braces {} which conflict with Python's
-        str.format() used for pagination placeholders. This method:
-        1. Escapes all existing braces ({{ and }})
-        2. Appends OFFSET {offset} and LIMIT {limit} placeholders
-
         Args:
             base_query: SPARQL query WITHOUT OFFSET/LIMIT clauses.
                         Should be a complete query ready to execute.
 
         Returns:
             Query template safe for use with str.format(offset=N, limit=M)
-
-        Example:
-            >>> query = "SELECT ?s WHERE { ?s a ?class }"
-            >>> template = SparqlHelper.prepare_paginated_query(query)
-            >>> # template is now safe for: template.format(offset=0, limit=100)
-            >>> for bindings in helper.select_chunked(template):
-            ...     process(bindings)
         """
         # Escape existing braces for .format() compatibility
         escaped = base_query.replace("{", "{{").replace("}", "}}")
@@ -1593,14 +1318,6 @@ class SparqlHelper:
 
         Returns:
             Query with braces doubled for .format() compatibility
-
-        Example:
-            >>> q = "SELECT ?s WHERE { ?s a <{class_uri}> }"  # Won't work!
-            >>> # Instead:
-            >>> q = SparqlHelper.escape_sparql_for_format(
-            ...     "SELECT ?s WHERE { ?s a <CLASS_PLACEHOLDER> }"
-            ... )
-            >>> q = q.replace("CLASS_PLACEHOLDER", "{class_uri}")
         """
         return query.replace("{", "{{").replace("}", "}}")
 
@@ -1608,7 +1325,7 @@ class SparqlHelper:
         """Close the underlying requests session."""
         self._session.close()
 
-    def __enter__(self) -> SparqlHelper:
+    def __enter__(self) -> Self:
         """Context manager entry."""
         return self
 

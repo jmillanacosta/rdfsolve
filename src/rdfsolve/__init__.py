@@ -1,50 +1,32 @@
-"""RDFSolve: A library for RDF schema analysis and VoID generation.
-
-Main modules:
-- api: High-level API functions (all re-exported here)
-- parser: VoidParser class for parsing VoID descriptions and schemas
-- miner: SchemaMiner class for direct SPARQL schema mining
-- query: SPARQL query execution with structured results
-- iri: IRI resolution against SPARQL endpoints
-- compose: SPARQL query composition from diagram paths
-"""
+"""RDF schema mining and LOD analysis toolkit."""
 
 from .api import (
-    build_ontology_index,
-    compose_query_from_paths,
+    discover_void_graphs,
+    discover_void_source,
     enrich_source_with_bioregistry,
     execute_sparql,
+    export_schema_artifacts,
     get_bioregistry_metadata,
     graph_to_jsonld,
-    graph_to_linkml,
     graph_to_schema,
-    graph_to_shacl,
-    import_semra_source,
-    import_sssom_source,
-    infer_mappings,
     load_mapping_jsonld,
-    load_ontology_index,
-    load_ontology_index_from_db,
     load_parser_from_file,
     load_parser_from_graph,
     load_parser_from_jsonld,
-    mine_all_sources,
+    load_sources,
     mine_schema,
-    probe_instance_mapping,
-    resolve_iris,
-    save_ontology_index,
-    save_ontology_index_to_db,
-    seed_inferenced_mappings,
-    seed_instance_mappings,
-    seed_semra_mappings,
-    seed_sssom_mappings,
+    query_metadata,
+    resolve_void_uri_base,
     sources_to_jsonld,
     to_jsonld_from_file,
-    to_linkml_from_file,
     to_rdfconfig_from_file,
-    to_shacl_from_file,
     to_void_from_file,
 )
+from .class_derivation import ClassPair, derive_class_mappings
+
+# Inference modules
+from .class_index import ClassIndex, EntityClassInfo
+from .instance_matcher import probe_endpoint, probe_resource
 from .miner import SchemaMiner
 from .models import (
     AboutMetadata,
@@ -53,16 +35,17 @@ from .models import (
     MinedSchema,
     SchemaPattern,
 )
-from .parser import VoidParser
 from .query import QueryResult, ResultCell
 from .sources import classify_source_mode
 from .version import VERSION
+from .void_discover import VoidParser
 
 __all__ = [
-    # ── version ──────────────────────────────────────────────────
     "VERSION",
-    # ── models ───────────────────────────────────────────────────
     "AboutMetadata",
+    "ClassIndex",
+    "ClassPair",
+    "EntityClassInfo",
     "Mapping",
     "MappingEdge",
     "MinedSchema",
@@ -71,41 +54,28 @@ __all__ = [
     "SchemaMiner",
     "SchemaPattern",
     "VoidParser",
-    # ── sources ───────────────────────────────────────────────────
     "classify_source_mode",
-    # ── api ──────────────────────────────────────────────────────
-    "build_ontology_index",
-    "compose_query_from_paths",
+    "derive_class_mappings",
+    "discover_void_graphs",
+    "discover_void_source",
     "enrich_source_with_bioregistry",
     "execute_sparql",
+    "export_schema_artifacts",
     "get_bioregistry_metadata",
     "graph_to_jsonld",
-    "graph_to_linkml",
     "graph_to_schema",
-    "graph_to_shacl",
-    "import_semra_source",
-    "import_sssom_source",
-    "infer_mappings",
     "load_mapping_jsonld",
-    "load_ontology_index",
-    "load_ontology_index_from_db",
     "load_parser_from_file",
     "load_parser_from_graph",
     "load_parser_from_jsonld",
-    "mine_all_sources",
+    "load_sources",
     "mine_schema",
-    "probe_instance_mapping",
-    "resolve_iris",
-    "save_ontology_index",
-    "save_ontology_index_to_db",
-    "seed_inferenced_mappings",
-    "seed_instance_mappings",
-    "seed_semra_mappings",
-    "seed_sssom_mappings",
+    "probe_endpoint",
+    "probe_resource",
+    "query_metadata",
+    "resolve_void_uri_base",
     "sources_to_jsonld",
     "to_jsonld_from_file",
-    "to_linkml_from_file",
     "to_rdfconfig_from_file",
-    "to_shacl_from_file",
     "to_void_from_file",
 ]

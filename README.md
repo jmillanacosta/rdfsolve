@@ -1,4 +1,4 @@
-# RDFSolve
+# rdfsolve
 
 <p align="center">
     <a href="https://github.com/jmillanacosta/rdfsolve/actions/workflows/tests.yml">
@@ -13,84 +13,163 @@
         <img src='https://readthedocs.org/projects/rdfsolve/badge/?version=latest' alt='Documentation Status' /></a>
 </p>
 
-Extract RDF schemas from SPARQL endpoints, convert between formats
-(JSON-LD, LinkML, SHACL, VoID, RDF-config), and derive cross-dataset mappings.
-
-Dashboard (static demo): [jmillanacosta.github.io/rdfsolve-frontend](https://jmillanacosta.github.io/rdfsolve-frontend)
+Mine typed RDF schemas, convert between formats, and derive cross-dataset mappings.
 
 ## Installation
 
 ```bash
-uv pip install rdfsolve
+pip install rdfsolve
 ```
 
-## CLI
+## Quick Start
 
-```text
-rdfsolve [--verbose] <group> <command> [OPTIONS]
-```
-
-### Schema mining (`pipeline`)
-
-```bash
-# Mine schemas from remote SPARQL endpoints listed in sources.yaml
-rdfsolve pipeline mine --sources data/sources.yaml
-
-# Mine a single source from a local QLever endpoint
-rdfsolve pipeline local-mine --name drugbank --endpoint http://localhost:7026
-
-# Generate Qleverfiles for local QLever instances
-rdfsolve pipeline qleverfile --data-dir /data/rdf
-```
-
-### Format conversion (`export`)
-
-Convert any VoID `.ttl` or rdfsolve `.jsonld` schema to another format
-(auto-detected from extension):
-
-```bash
-rdfsolve export csv       schema.jsonld
-rdfsolve export jsonld    void.ttl
-rdfsolve export void      schema.jsonld
-rdfsolve export linkml    schema.jsonld -o ./out
-rdfsolve export shacl     schema.jsonld --closed
-rdfsolve export rdfconfig void.ttl --endpoint-url https://sparql.example.org
-```
-
-### Web backend
-
-A Flask REST API exposes schemas, SPARQL query generation, IRI resolution, export,
-mappings, and SHACL/LinkML conversion over HTTP. It can also serve the
-[rdfsolve-frontend](https://github.com/jmillanacosta/rdfsolve-frontend) app.
-
-```bash
-# Quick start with Docker
-docker compose up --build        # http://localhost:8000
-
-# Or run directly
-python -m rdfsolve.backend.app   # uses env vars for config
-```
-
-Key endpoints: `/api/schemas`, `/api/sparql`, `/api/export`, `/api/shapes`,
-`/api/mappings`, `/api/linkml`, `/api/compose`.
-
-## Python API
+### Mine an endpoint
 
 ```python
-from rdfsolve.api import mine_schema, load_parser_from_file
+from rdfsolve import SchemaMiner
 
-# Mine a schema from a SPARQL endpoint
-result = mine_schema(
-    name="rhea",
-    endpoint_url="https://sparql.rhea-db.org/sparql",
+# Mine any SPARQL endpoint
+miner = SchemaMiner(endpoint_url="https://sparql.uniprot.org/sparql", source_name="uniprot")
+schema = miner.mine(dataset_name="uniprot")
+
+# Export formats
+schema.to_void_graph()  # VoID RDF graph
+schema.to_jsonld()  # JSON-LD dict
+schema.to_linkml_yaml()  # LinkML YAML string
+schema.to_shacl()  # SHACL shapes
+
+# Save to disk
+import json
+
+with open("uniprot_schema.jsonld", "w") as f:
+    json.dump(schema.to_jsonld(), f, indent=2)
+```
+
+### Load and convert existing schemas
+
+```python
+from rdfsolve import VoidParser
+
+# Load VoID Turtle or JSON-LD
+parser = VoidParser(void_source="schema.ttl")
+schema = parser.to_mined_schema()
+
+# Convert between formats
+schema.to_jsonld()  # To JSON-LD
+schema.to_linkml_yaml()  # To LinkML
+schema.to_shacl()  # To SHACL
+```
+
+### Batch mining
+
+Mine multiple endpoints from a YAML file:
+
+**Create `sources.yaml`:**
+```yaml
+sources:
+  uniprot:
+    endpoint: https://sparql.uniprot.org/sparql
+
+  rhea:
+    endpoint: https://sparql.rhea-db.org/sparql
+```
+
+**Run batch mining:**
+```bash
+python scripts/pipeline.py --sources sources.yaml --remote-only
+```
+
+**Output:**
+```
+output/
+├── uniprot/
+│   ├── uniprot_schema.jsonld
+│   ├── uniprot_void.ttl
+│   └── uniprot_report.json
+└── rhea/
+    ├── rhea_schema.jsonld
+    ├── rhea_void.ttl
+    └── rhea_report.json
+```
+
+### Local RDF Files (with QLever)
+
+Mine local RDF dumps using QLever:
+
+```yaml
+sources:
+  drugbank:
+    download_urls:
+      - https://example.org/drugbank.nt.gz
+    local_provider: qlever
+```
+
+```bash
+# Download, index, and mine
+python scripts/pipeline.py --sources sources.yaml --local-only
+```
+
+
+### Query metadata without mining
+
+Extract dataset metadata (license, publisher, version) without full schema extraction:
+
+```python
+from rdfsolve.api import query_metadata
+
+metadata = query_metadata("https://sparql.uniprot.org/sparql")
+```
+
+### Discover existing VoID descriptions
+
+Find and export pre-existing VoID descriptions at an endpoint:
+
+```python
+from rdfsolve.api import discover_void_source
+
+result = discover_void_source(
+    endpoint="https://sparql.uniprot.org/sparql", name="uniprot", output_dir="output/"
 )
+```
 
-# Load a previously mined schema and convert
-parser = load_parser_from_file("rhea_schema.jsonld")
-parser.to_schema()       # pandas DataFrame
-parser.to_jsonld()       # JSON-LD dict
-parser.to_linkml_yaml()  # LinkML YAML string
-parser.to_shacl()        # SHACL Turtle string
+### Probe endpoints for entity matching
+
+Match URI patterns across endpoints to find datasets containing specific entity types:
+
+```python
+from rdfsolve.instance_matcher import probe_endpoint
+
+match = probe_endpoint(
+    endpoint_url="https://sparql.uniprot.org/sparql",
+    uri_prefix="http://identifiers.org/ncbigene/",
+    limit=100,
+)
+```
+
+### Check endpoint health
+
+Test endpoint availability and response times:
+
+```python
+from rdfsolve.endpoint_health import check_endpoint_health
+
+status = check_endpoint_health("https://sparql.uniprot.org/sparql")
+```
+
+### Infer cross-dataset mappings
+
+Derive new mappings through inversion and transitivity:
+
+```bash
+python scripts/infer_mappings.py mappings/*.jsonld -o inferred.jsonld --transitivity
+```
+
+### Build connectivity graphs
+
+Create graphs showing dataset relationships via shared classes and mappings:
+
+```bash
+python scripts/build_graphs.py output/schemas/ --mappings output/mappings/
 ```
 
 ## Documentation
