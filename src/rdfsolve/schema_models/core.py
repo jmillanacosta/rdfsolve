@@ -14,6 +14,7 @@ from hashlib import md5
 from pathlib import Path
 from typing import Any, Literal
 
+from linkml_runtime.linkml_model import SchemaDefinition
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # PatternType enum
@@ -155,6 +156,40 @@ class SchemaPattern(BaseModel):
     object_label: str | None = Field(
         None,
         description="Human-readable label for the object class",
+    )
+    subject_description: str | None = Field(
+        None,
+        description="Description of subject class",
+    )
+    property_description: str | None = Field(
+        None,
+        description="Description of property",
+    )
+    object_description: str | None = Field(
+        None,
+        description="Description of object class",
+    )
+    min_count: int | None = Field(
+        None,
+        ge=0,
+        description="Minimum occurrences per subject",
+    )
+    max_count: int | None = Field(
+        None,
+        ge=0,
+        description="Maximum occurrences per subject",
+    )
+    observed_datatypes: list[str] | None = Field(
+        None,
+        description="All datatypes observed for this property",
+    )
+    subject_examples: list[str] | None = Field(
+        None,
+        description="Sample instance URIs of subject class",
+    )
+    value_examples: list[str] | None = Field(
+        None,
+        description="Sample values for this property",
     )
 
     @field_validator("subject_class", "property_uri")
@@ -1000,16 +1035,18 @@ class MinedSchema(BaseModel):
         self,
         schema_name: str | None = None,
         schema_description: str | None = None,
-    ) -> Any:
+    ) -> SchemaDefinition:
         """Convert to LinkML SchemaDefinition with full metadata.
+
+        Builds LinkML schema directly from mined patterns without
+        going through JSON-LD or VoID intermediates.
 
         Returns LinkML SchemaDefinition object.
         """
-        from rdfsolve.schema_models.linkml import to_linkml
+        from rdfsolve.schema_models.linkml import mined_schema_to_linkml
 
-        jsonld = self.to_jsonld()
-        return to_linkml(
-            jsonld,
+        return mined_schema_to_linkml(
+            self,
             schema_name=schema_name or self.about.dataset_name,
             schema_description=schema_description,
         )
@@ -1030,23 +1067,125 @@ class MinedSchema(BaseModel):
         linkml_schema = self.to_linkml(schema_name, schema_description)
         return cast(str, YAMLGenerator(linkml_schema).serialize())
 
-    def to_shacl(
+    def to_owl(
         self,
         schema_name: str | None = None,
         schema_description: str | None = None,
     ) -> str:
+        """Convert to OWL ontology via LinkML.
+
+        Builds OWL class and property declarations directly from mined patterns.
+
+        Parameters
+        ----------
+        schema_name : str, optional
+            Name for the underlying LinkML schema
+        schema_description : str, optional
+            Human-readable description
+
+        Returns
+        -------
+        str
+            OWL ontology serialized as Turtle
+
+        Notes
+        -----
+        LinkML's OWL generator uses synthetic class names (e.g., schema:PersonClass)
+        but includes `skos:exactMatch` links to original URIs. For validation,
+        prefer :meth:`to_shacl` which uses original URIs directly.
+        """
+        from typing import cast
+
+        from linkml.generators.owlgen import OwlSchemaGenerator
+        from linkml.generators.yamlgen import YAMLGenerator
+
+        linkml_schema = self.to_linkml(schema_name, schema_description)
+        linkml_yaml = YAMLGenerator(linkml_schema).serialize()
+        owl_gen = OwlSchemaGenerator(schema=linkml_yaml)
+        return cast(str, owl_gen.serialize())
+
+    def to_shacl(
+        self,
+        schema_name: str | None = None,
+        schema_description: str | None = None,
+        suffix: str | None = None,
+        closed: bool = True,
+    ) -> str:
         """Convert to SHACL shapes via LinkML.
 
-        Returns SHACL Turtle string.
-        """
-        from rdfsolve.schema_models.shacl import to_shacl
+        Builds SHACL shapes directly from mined patterns without
+        going through JSON-LD or VoID intermediates.
 
-        jsonld = self.to_jsonld()
-        return to_shacl(
-            jsonld,
+        Shape URIs are generated in a configurable shapes namespace
+        (defaults to ``http://example.com/shapes/{dataset}/ClassName``),
+        while ``sh:targetClass`` uses the original class URIs.
+
+        Parameters
+        ----------
+        schema_name : str, optional
+            Name for the underlying LinkML schema
+        schema_description : str, optional
+            Human-readable description
+        suffix : str, optional
+            Optional suffix appended to shape names (e.g., "Shape" -> "PersonShape").
+            By default (None), shapes use the base namespace without suffix.
+        closed : bool, default=True
+            If True, produce closed SHACL shapes (sh:closed true)
+
+        Returns
+        -------
+        str
+            SHACL shapes serialized as Turtle
+
+        Notes
+        -----
+        LinkML's SHACL generator only produces shape definitions, not OWL/RDFS
+        class declarations. If you need class declarations, use :meth:`to_owl`
+        or combine outputs.
+
+        The shapes namespace is derived from the base URI configured via
+        RDFSOLVE_BASE_URI environment variable or config file by appending
+        /shapes/{dataset}/ (default base: http://example.com/void).
+
+        Examples
+        --------
+        >>> schema.to_shacl()  # Shapes in {base_uri}/shapes/{dataset}/ namespace
+        >>> schema.to_shacl(suffix="Shape")  # Add suffix to shape names
+        """
+        from rdfsolve.schema_models.shacl import mined_schema_to_shacl
+
+        return mined_schema_to_shacl(
+            self,
             schema_name=schema_name or self.about.dataset_name,
             schema_description=schema_description,
+            suffix=suffix,
+            closed=closed,
         )
+
+    def to_pydantic_models(self) -> dict[str, type]:
+        """Build Pydantic models in memory from mined patterns."""
+        from rdfsolve.schema_models.jsonschema import mined_schema_to_pydantic_models
+
+        return mined_schema_to_pydantic_models(self)
+
+    def to_jsonschema(
+        self,
+        schema_name: str | None = None,
+    ) -> dict[str, Any]:
+        """Generate JSON Schema from mined patterns via Pydantic."""
+        from rdfsolve.schema_models.jsonschema import mined_schema_to_jsonschema
+
+        return mined_schema_to_jsonschema(self, schema_name)
+
+    def to_pydantic_file(
+        self,
+        output_path: str | Path,
+        schema_name: str | None = None,
+    ) -> None:
+        """Generate .py file with Pydantic models via datamodel-codegen."""
+        from rdfsolve.schema_models.jsonschema import mined_schema_to_pydantic_file
+
+        mined_schema_to_pydantic_file(self, output_path, schema_name)
 
 
 # VoID graph helpers

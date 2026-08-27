@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "make_valid_linkml_name",
+    "mined_schema_to_linkml",
     "to_linkml",
     "to_linkml_yaml",
 ]
@@ -208,9 +209,9 @@ def _build_empty_schema(
         description=description_value,
         default_prefix=schema_name,
         prefixes=prefixes,
-        source=about.get("endpoint"),
-        license=about.get("source_license"),
-        created_on=about.get("generated_at"),
+        source=about.get("endpoint") or None,
+        license=about.get("source_license") or None,
+        created_on=about.get("generated_at") or None,
         annotations=annotations if annotations else None,
         types={
             "string": TypeDefinition(
@@ -531,3 +532,250 @@ def to_linkml_yaml(
         schema_base_uri=schema_base_uri,
     )
     return cast(str, YAMLGenerator(linkml_schema).serialize())
+
+
+def mined_schema_to_linkml(
+    mined_schema: Any,  # MinedSchema, but avoiding circular import
+    schema_name: str | None = None,
+    schema_description: str | None = None,
+) -> SchemaDefinition:
+    """Generate LinkML SchemaDefinition directly from MinedSchema patterns.
+
+    This builds the LinkML schema from the core model without going through
+    JSON-LD or VoID, ensuring the schema represents the mined patterns
+    directly.
+
+    Parameters
+    ----------
+    mined_schema:
+        MinedSchema object with patterns and metadata
+    schema_name:
+        Name for the schema (defaults to dataset_name from metadata)
+    schema_description:
+        Human-readable description
+
+    Returns
+    -------
+    SchemaDefinition
+        LinkML schema built from patterns
+    """
+    from collections import defaultdict
+
+    # Get schema name from metadata if not provided
+    schema_name = schema_name or mined_schema.about.dataset_name or "rdf_schema"
+
+    # Sanitize for LinkML NCName requirements
+    sanitized_name = re.sub(r"\s+", "_", schema_name)
+    sanitized_name = re.sub(r"[^a-zA-Z0-9_]", "_", sanitized_name)
+    if sanitized_name and sanitized_name[0].isdigit():
+        sanitized_name = f"schema_{sanitized_name}"
+
+    # Build schema URI - use configurable base URI for shapes
+    # This ensures SHACL shapes are in a separate namespace from
+    # the original class URIs (which appear in sh:targetClass)
+    from rdfsolve.config import get_base_uri
+
+    base_uri = get_base_uri()
+    schema_uri = f"{base_uri}/shapes/{sanitized_name}/"
+
+    # Build description
+    if not schema_description:
+        if mined_schema.about.description:
+            schema_description = mined_schema.about.description
+        elif mined_schema.about.endpoint:
+            schema_description = f"Schema mined from {mined_schema.about.endpoint}"
+        else:
+            schema_description = f"LinkML schema generated from {schema_name}"
+
+    # Build prefixes - collect from patterns
+    # Use "rdfsolve_shapes" as the default prefix for the shapes namespace
+    shapes_prefix = (
+        f"rdfsolve_shapes_{sanitized_name}" if sanitized_name != "rdf_schema" else "rdfsolve_shapes"
+    )
+    prefixes: dict[str, str] = {
+        shapes_prefix: schema_uri,
+        "linkml": "https://w3id.org/linkml/",
+        "schema": "http://schema.org/",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+    }
+
+    # Extract prefixes from URIs in patterns
+    for pat in mined_schema.patterns:
+        for uri in [pat.subject_class, pat.property_uri, pat.object_class]:
+            if uri and not uri.startswith(("http://", "https://")):
+                continue
+            if uri in ("Literal", "Resource", "BlankNode"):
+                continue
+            # Try to get CURIE and extract prefix
+            curie = curie_from_iri(uri)
+            if curie and ":" in curie:
+                prefix, _ = curie.split(":", 1)
+                # Get namespace by removing local part
+                if "#" in uri:
+                    ns = uri.rsplit("#", 1)[0] + "#"
+                elif "/" in uri:
+                    ns = uri.rsplit("/", 1)[0] + "/"
+                else:
+                    continue
+                if prefix and ns:
+                    prefixes[prefix] = ns
+
+    # Build empty schema with metadata
+    about_dict = (
+        mined_schema.about.model_dump() if hasattr(mined_schema.about, "model_dump") else {}
+    )
+    # Use sanitized_name as schema name (preserves dataset identity)
+    # but shapes_prefix as default_prefix (ensures shapes use rdfsolve namespace)
+    schema = _build_empty_schema(
+        sanitized_name,  # Use dataset name as schema name
+        schema_uri,
+        schema_description,
+        prefixes,
+        about=about_dict,
+        original_name=schema_name,
+    )
+    # Override default_prefix to use shapes namespace
+    schema.default_prefix = shapes_prefix
+
+    # Build classes and slots from patterns
+    # Group patterns by subject class
+    class_slots: dict[str, set[str]] = defaultdict(set)
+    slot_ranges: dict[str, set[str]] = defaultdict(set)
+    slot_domains: dict[str, set[str]] = defaultdict(set)
+    all_classes: set[str] = set()
+    slot_labels: dict[str, str] = {}
+    class_labels: dict[str, str] = {}
+
+    for pat in mined_schema.patterns:
+        # Convert URIs to valid LinkML names
+        subject_name = make_valid_linkml_name(pat.subject_class)
+        property_name = make_valid_linkml_name(pat.property_uri)
+
+        all_classes.add(subject_name)
+        class_slots[subject_name].add(property_name)
+        slot_domains[property_name].add(subject_name)
+
+        # Store labels
+        if pat.subject_label:
+            class_labels[subject_name] = pat.subject_label
+        if pat.property_label:
+            slot_labels[property_name] = pat.property_label
+
+        # Determine range based on object_class
+        if pat.object_class == "Literal":
+            # Map XSD datatype to LinkML type
+            if pat.datatype:
+                dt_curie = (
+                    curie_from_iri(pat.datatype)
+                    if pat.datatype.startswith("http")
+                    else pat.datatype
+                )
+                if "string" in dt_curie.lower():
+                    slot_ranges[property_name].add("string")
+                elif "integer" in dt_curie.lower() or "int" in dt_curie.lower():
+                    slot_ranges[property_name].add("integer")
+                elif "boolean" in dt_curie.lower():
+                    slot_ranges[property_name].add("boolean")
+                elif "float" in dt_curie.lower() or "double" in dt_curie.lower():
+                    slot_ranges[property_name].add("float")
+                elif "date" in dt_curie.lower():
+                    slot_ranges[property_name].add("date")
+                else:
+                    slot_ranges[property_name].add("string")
+            else:
+                slot_ranges[property_name].add("string")
+        elif pat.object_class == "Resource":
+            # Untyped URI - use uriorcurie
+            slot_ranges[property_name].add("uriorcurie")
+        elif pat.object_class == "BlankNode":
+            # Blank node - use string for now
+            slot_ranges[property_name].add("string")
+        else:
+            # Typed object - use the class name
+            object_name = make_valid_linkml_name(pat.object_class)
+            all_classes.add(object_name)
+            slot_ranges[property_name].add(object_name)
+            if pat.object_label:
+                class_labels[object_name] = pat.object_label
+
+    # Build ClassDefinition objects
+    classes: dict[str, ClassDefinition] = {}
+    for class_name in all_classes:
+        slots = sorted(class_slots.get(class_name, set()))
+
+        # Get original URI for class_uri
+        original_uri = None
+        for pat in mined_schema.patterns:
+            if make_valid_linkml_name(pat.subject_class) == class_name:
+                original_uri = pat.subject_class
+                break
+            if (
+                pat.object_class not in ("Literal", "Resource", "BlankNode")
+                and make_valid_linkml_name(pat.object_class) == class_name
+            ):
+                original_uri = pat.object_class
+                break
+
+        classes[class_name] = ClassDefinition(
+            name=class_name,
+            description=class_labels.get(class_name, f"Class {class_name}"),
+            slots=slots,
+            class_uri=original_uri,
+        )
+
+    # Build SlotDefinition objects
+    # Collect all slot names from the dictionaries
+    all_slot_names: set[str] = set()
+    for slots_set in class_slots.values():
+        all_slot_names.update(slots_set)
+    all_slot_names.update(slot_ranges.keys())
+    all_slot_names.update(slot_domains.keys())
+
+    slots_dict: dict[str, SlotDefinition] = {}
+
+    for slot_name in all_slot_names:
+        # Determine range - if multiple ranges, pick most specific
+        ranges = slot_ranges.get(slot_name, {"string"})
+        if len(ranges) == 1:
+            range_val = next(iter(ranges))
+        else:
+            # Multiple ranges - prefer class names over primitives
+            class_ranges = [
+                r
+                for r in ranges
+                if r not in ("string", "integer", "boolean", "float", "date", "uriorcurie")
+            ]
+            if class_ranges:
+                range_val = class_ranges[0]  # Pick first class
+            else:
+                range_val = "string"  # Default to string
+
+        # Get original URI for slot_uri
+        original_uri = None
+        for pat in mined_schema.patterns:
+            if make_valid_linkml_name(pat.property_uri) == slot_name:
+                original_uri = pat.property_uri
+                break
+
+        slot_def = SlotDefinition(
+            name=slot_name,
+            description=slot_labels.get(slot_name, f"Property {slot_name}"),
+            range=range_val,
+            slot_uri=original_uri,
+        )
+
+        # Add domain info
+        domains = sorted(slot_domains.get(slot_name, set()))
+        if domains:
+            slot_def.domain_of = domains
+            slot_def.owner = domains[0]
+
+        slots_dict[slot_name] = slot_def
+
+    schema.classes = classes
+    schema.slots = slots_dict
+
+    return schema
