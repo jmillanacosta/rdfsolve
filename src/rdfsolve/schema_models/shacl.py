@@ -1,19 +1,25 @@
-"""SHACL shape generation from JSON-LD.
+"""SHACL shape generation from mined patterns.
 
-Converts a rdfsolve JSON-LD schema dict to SHACL Turtle via the
-LinkML -> ShaclGenerator pipeline.
+Direct SHACL generation using rdflib, with support for:
+- Cardinality constraints (sh:minCount, sh:maxCount)
+- Datatype constraints (sh:datatype)
+- Node kind constraints (sh:nodeKind)
+- Class constraints (sh:class)
 """
 
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Any, cast
 
 from linkml.generators.shaclgen import ShaclGenerator
 from linkml.generators.yamlgen import YAMLGenerator
+from rdflib import XSD, Graph, Literal, Namespace, URIRef
+from rdflib.namespace import RDF, RDFS, SH
 
 from rdfsolve.schema_models.linkml import mined_schema_to_linkml, to_linkml
 
-__all__ = ["mined_schema_to_shacl", "to_shacl"]
+__all__ = ["mined_schema_to_shacl", "to_shacl", "mined_schema_to_shacl_direct"]
 
 
 def to_shacl(
@@ -74,11 +80,12 @@ def mined_schema_to_shacl(
     closed: bool = True,
     suffix: str | None = None,
     include_annotations: bool = False,
+    use_direct: bool = True,
 ) -> str:
-    """Generate SHACL shapes directly from MinedSchema patterns.
+    """Generate SHACL shapes from MinedSchema patterns.
 
-    This builds SHACL via LinkML without going through JSON-LD or VoID,
-    ensuring the shapes represent the mined patterns directly.
+    By default uses direct rdflib generation with full constraint support.
+    Can optionally use LinkML generation for compatibility.
 
     Shape URIs are generated in a configurable shapes namespace (defaults to
     http://example.com/shapes/{dataset}/) while sh:targetClass uses the
@@ -89,21 +96,32 @@ def mined_schema_to_shacl(
     mined_schema:
         MinedSchema object with patterns and metadata
     schema_name:
-        Name for the underlying LinkML schema
+        Name for the underlying schema
     schema_description:
         Human-readable description
     closed:
         If *True*, produce closed SHACL shapes (``sh:closed true``)
     suffix:
-        Suffix appended to every shape name
+        Suffix appended to every shape name (LinkML only)
     include_annotations:
-        If *True*, carry annotations through to shapes
+        If *True*, carry annotations through to shapes (LinkML only)
+    use_direct:
+        If *True*, use direct rdflib generation with full constraints
 
     Returns
     -------
     str
         SHACL shapes serialised as Turtle
     """
+    if use_direct:
+        # Use new direct generator with full constraint support
+        return mined_schema_to_shacl_direct(
+            mined_schema,
+            schema_name=schema_name,
+            closed=closed,
+        )
+
+    # Legacy LinkML-based generation
     from rdfsolve.schema_models.linkml import make_valid_linkml_name
 
     linkml_schema = mined_schema_to_linkml(
@@ -186,3 +204,129 @@ def mined_schema_to_shacl(
 
     # Serialize back to Turtle
     return cast(str, new_g.serialize(format="turtle"))
+
+
+def mined_schema_to_shacl_direct(
+    mined_schema: Any,
+    schema_name: str | None = None,
+    closed: bool = True,
+) -> str:
+    """Generate SHACL shapes directly using rdflib from mined patterns.
+
+    Creates SHACL shapes with full constraint support including:
+    - sh:minCount, sh:maxCount from pattern cardinality
+    - sh:datatype for literal properties
+    - sh:nodeKind for distinguishing IRIs from literals
+    - sh:class for object property ranges
+    - sh:description from pattern descriptions
+
+    Parameters
+    ----------
+    mined_schema:
+        MinedSchema object with patterns and metadata
+    schema_name:
+        Name for the schema (uses dataset_name if not provided)
+    closed:
+        If True, produce closed SHACL shapes
+
+    Returns
+    -------
+    str
+        SHACL shapes serialized as Turtle
+    """
+    from rdfsolve.config import get_base_uri
+
+    g = Graph()
+    g.bind("sh", SH)
+    g.bind("rdf", RDF)
+    g.bind("rdfs", RDFS)
+    g.bind("xsd", XSD)
+
+    # Group patterns by subject class
+    class_patterns: dict[str, list] = defaultdict(list)
+    for pat in mined_schema.patterns:
+        class_patterns[pat.subject_class].append(pat)
+
+    # Create shape namespace
+    base_uri = get_base_uri()
+    name = schema_name or mined_schema.about.dataset_name
+    shapes_base = f"{base_uri}/shapes/{name}/"
+
+    for class_uri, patterns in class_patterns.items():
+        # Create NodeShape
+        class_local = _get_local_name(class_uri)
+        shape_uri = URIRef(f"{shapes_base}{class_local}Shape")
+
+        g.add((shape_uri, RDF.type, SH.NodeShape))
+        g.add((shape_uri, SH.targetClass, URIRef(class_uri)))
+
+        # Add class label and description if available
+        for pat in patterns:
+            if pat.subject_label:
+                g.add((shape_uri, RDFS.label, Literal(f"{pat.subject_label} Shape")))
+                break
+
+        for pat in patterns:
+            if pat.subject_description:
+                g.add((shape_uri, SH.description, Literal(pat.subject_description)))
+                break
+
+        # Add closed constraint if requested
+        if closed:
+            g.add((shape_uri, SH.closed, Literal(True)))
+            g.add((shape_uri, SH.ignoredProperties, RDF.type))
+
+        # Create property shapes
+        for pat in patterns:
+            prop_uri = URIRef(pat.property_uri)
+            prop_shape_uri = URIRef(f"{shape_uri}/{_get_local_name(pat.property_uri)}")
+
+            g.add((shape_uri, SH.property, prop_shape_uri))
+            g.add((prop_shape_uri, SH.path, prop_uri))
+
+            # Add property label
+            if pat.property_label:
+                g.add((prop_shape_uri, RDFS.label, Literal(pat.property_label)))
+
+            # Add property description
+            if pat.property_description:
+                g.add((prop_shape_uri, SH.description, Literal(pat.property_description)))
+
+            # Add cardinality constraints
+            if pat.min_count is not None:
+                g.add((prop_shape_uri, SH.minCount, Literal(pat.min_count)))
+
+            if pat.max_count is not None:
+                g.add((prop_shape_uri, SH.maxCount, Literal(pat.max_count)))
+
+            # Add type constraints based on object class
+            if pat.object_class == "Literal":
+                # Literal value
+                g.add((prop_shape_uri, SH.nodeKind, SH.Literal))
+
+                # Add datatype if available
+                if pat.datatype:
+                    g.add((prop_shape_uri, SH.datatype, URIRef(pat.datatype)))
+
+            elif pat.object_class in ("Resource", "BlankNode"):
+                # URI or blank node
+                if pat.object_class == "Resource":
+                    g.add((prop_shape_uri, SH.nodeKind, SH.IRI))
+                else:
+                    g.add((prop_shape_uri, SH.nodeKind, SH.BlankNode))
+
+            else:
+                # Object property - reference to a class
+                g.add((prop_shape_uri, SH.nodeKind, SH.IRI))
+                g.add((prop_shape_uri, SH["class"], URIRef(pat.object_class)))
+
+    return cast(str, g.serialize(format="turtle"))
+
+
+def _get_local_name(uri: str) -> str:
+    """Extract local name from URI."""
+    if "#" in uri:
+        return uri.split("#")[-1]
+    elif "/" in uri:
+        return uri.split("/")[-1]
+    return uri
