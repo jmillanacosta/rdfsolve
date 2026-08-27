@@ -155,12 +155,50 @@ def mined_schema_to_jsonschema(
     mined_schema: Any,
     schema_name: str | None = None,
 ) -> dict[str, Any]:
-    """Generate JSON Schema from mined patterns via Pydantic."""
-    models = mined_schema_to_pydantic_models(mined_schema)
+    """Generate JSON Schema directly from mined patterns.
 
+    Builds proper $ref references for object properties.
+    """
+    class_patterns = _group_by_class(mined_schema.patterns)
     definitions = {}
-    for class_name, model in models.items():
-        definitions[class_name] = model.model_json_schema()
+
+    for class_uri, patterns in class_patterns.items():
+        class_name = _make_class_name(class_uri)
+
+        # Get class description
+        class_desc = None
+        for pat in patterns:
+            if pat.subject_description:
+                class_desc = pat.subject_description
+                break
+
+        # Build properties
+        properties = {}
+        required = []
+
+        for pat in patterns:
+            prop_name = _make_property_name(pat.property_uri)
+            prop_schema = _pattern_to_jsonschema_property(pat)
+            properties[prop_name] = prop_schema
+
+            # Add to required if min_count > 0
+            if pat.min_count and pat.min_count > 0:
+                required.append(prop_name)
+
+        # Build class schema
+        class_schema = {
+            "type": "object",
+            "title": class_name,
+            "properties": properties,
+        }
+
+        if class_desc:
+            class_schema["description"] = class_desc
+
+        if required:
+            class_schema["required"] = required
+
+        definitions[class_name] = class_schema
 
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -168,6 +206,86 @@ def mined_schema_to_jsonschema(
         "description": mined_schema.about.description,
         "$defs": definitions,
     }
+
+
+def _pattern_to_jsonschema_property(pat) -> dict[str, Any]:
+    """Convert a pattern to a JSON Schema property definition."""
+    prop_schema: dict[str, Any] = {}
+
+    # Determine base type
+    if pat.object_class == "Literal":
+        # Literal value - use datatype
+        json_type = _xsd_to_json_type(pat.datatype)
+        base_schema = {"type": json_type}
+    elif pat.object_class in ("Resource", "BlankNode"):
+        # URI or blank node - use string
+        base_schema = {"type": "string"}
+    else:
+        # Object property - reference to another class
+        class_name = _make_class_name(pat.object_class)
+        base_schema = {"$ref": f"#/$defs/{class_name}"}
+
+    # Handle cardinality
+    if pat.max_count == 1:
+        # Single value
+        prop_schema = base_schema.copy()
+        if pat.min_count is None or pat.min_count == 0:
+            # Optional - use anyOf with null
+            prop_schema = {
+                "anyOf": [base_schema, {"type": "null"}],
+                "default": None,
+            }
+    else:
+        # Array
+        prop_schema = {
+            "type": "array",
+            "items": base_schema,
+        }
+        if pat.min_count is None or pat.min_count == 0:
+            prop_schema["default"] = None
+
+    # Add title
+    prop_name = _make_property_name(pat.property_uri)
+    prop_schema["title"] = _camel_to_title(prop_name)
+
+    # Add description
+    if pat.property_description:
+        prop_schema["description"] = pat.property_description
+
+    # Add examples
+    if pat.value_examples:
+        prop_schema["examples"] = pat.value_examples[:3]
+
+    return prop_schema
+
+
+def _xsd_to_json_type(datatype: str | None) -> str:
+    """Map XSD datatype to JSON Schema type."""
+    if not datatype:
+        return "string"
+
+    mapping = {
+        "http://www.w3.org/2001/XMLSchema#string": "string",
+        "http://www.w3.org/2001/XMLSchema#integer": "integer",
+        "http://www.w3.org/2001/XMLSchema#int": "integer",
+        "http://www.w3.org/2001/XMLSchema#long": "integer",
+        "http://www.w3.org/2001/XMLSchema#float": "number",
+        "http://www.w3.org/2001/XMLSchema#double": "number",
+        "http://www.w3.org/2001/XMLSchema#decimal": "number",
+        "http://www.w3.org/2001/XMLSchema#boolean": "boolean",
+        "http://www.w3.org/2001/XMLSchema#date": "string",
+        "http://www.w3.org/2001/XMLSchema#dateTime": "string",
+        "http://www.w3.org/2001/XMLSchema#anyURI": "string",
+    }
+    return mapping.get(datatype, "string")
+
+
+def _camel_to_title(name: str) -> str:
+    """Convert camelCase or snake_case to Title Case."""
+    # Replace underscores with spaces
+    name = name.replace("_", " ")
+    # Capitalize first letter of each word
+    return " ".join(word.capitalize() for word in name.split())
 
 
 def mined_schema_to_pydantic_file(
