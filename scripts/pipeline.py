@@ -1272,7 +1272,9 @@ class GroupedMiningStage(LocalMiningStage):
         from rdfsolve import SchemaMiner
 
         endpoint = f"http://localhost:{port}"
-        graph_uris = [f"http://rdfsolve.org/graph/{s.name}" for s in sources]
+        # NOTE: Grouped QLever instances load all data into the DEFAULT graph,
+        # so we DON'T pass graph_uris here - the miner will query the default graph
+        # which contains all the combined data from all sources in this group.
 
         # Create output directory for this group
         output_dir = self.config.output_dir / f"grouped_{group_name}"
@@ -1283,7 +1285,6 @@ class GroupedMiningStage(LocalMiningStage):
         miner = SchemaMiner(
             endpoint_url=endpoint,
             source_name=group_name,
-            graph_uris=graph_uris,
             timeout=86400.0,
             delay=self.config.delay,
             report_path=str(report_path),

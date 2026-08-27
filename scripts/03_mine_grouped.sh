@@ -22,6 +22,7 @@ RDFSOLVE_REPO="${RDFSOLVE_REPO:-$RDFSOLVE_BASE/rdfsolve-2}"
 VENV_PATH="${VENV_PATH:-$RDFSOLVE_REPO/.venv}"
 OUTPUT_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/output_$(date +%Y-%m-%d)}"
 DATA_DIR="${DATA_DIR:-$RDFSOLVE_BASE/data}"
+SKIP_COMPLETED="${SKIP_COMPLETED:-false}"
 
 export SINGULARITY_CACHEDIR="${SINGULARITY_CACHEDIR:-$HOME/.singularity/cache}"
 export SINGULARITY_TMPDIR="${SINGULARITY_TMPDIR:-$HOME/.singularity/tmp}"
@@ -57,15 +58,12 @@ echo ""
 echo "=========================================="
 echo "Step 3a: Grouped Mining (Provider-Level)"
 echo "=========================================="
-python "$RDFSOLVE_REPO/scripts/pipeline.py" \
-    --grouped-only \
-    --skip-completed \
-    --output-dir "$OUTPUT_DIR" \
-    --data-dir "$DATA_DIR" \
-    --download-status-file "$OUTPUT_DIR/download_status.json" \
-    --skip-mappings \
-    --skip-inference \
-    --skip-analysis
+PIPELINE_ARGS="--grouped-only --output-dir $OUTPUT_DIR --data-dir $DATA_DIR --download-status-file $OUTPUT_DIR/download_status.json --skip-mappings --skip-inference --skip-analysis"
+if [ "$SKIP_COMPLETED" = "true" ]; then
+    PIPELINE_ARGS="$PIPELINE_ARGS --skip-completed"
+fi
+
+python "$RDFSOLVE_REPO/scripts/pipeline.py" $PIPELINE_ARGS
 
 echo ""
 echo "Step 3a complete: $(date)"

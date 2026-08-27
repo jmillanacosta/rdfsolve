@@ -23,6 +23,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/output_$(date +%Y-%m-%d)}"
 DATA_DIR="${DATA_DIR:-$RDFSOLVE_BASE/data}"
 TIMEOUT="${TIMEOUT:-600}"
 SKIP_PROVIDERS="${SKIP_PROVIDERS:-}"
+SKIP_COMPLETED="${SKIP_COMPLETED:-false}"
 
 export SINGULARITY_CACHEDIR="${SINGULARITY_CACHEDIR:-$HOME/.singularity/cache}"
 export SINGULARITY_TMPDIR="${SINGULARITY_TMPDIR:-$HOME/.singularity/tmp}"
@@ -56,30 +57,15 @@ echo "Running download health check..."
 python "$RDFSOLVE_REPO/scripts/check_downloads.py" --output "$OUTPUT_DIR/download_status.json"
 
 # Run pipeline - local only
+PIPELINE_ARGS="--local-only --output-dir $OUTPUT_DIR --data-dir $DATA_DIR --timeout $TIMEOUT --download-status-file $OUTPUT_DIR/download_status.json --skip-mappings --skip-inference --skip-analysis"
 if [ -n "$SKIP_PROVIDERS" ]; then
-    python "$RDFSOLVE_REPO/scripts/pipeline.py" \
-        --local-only \
-        --skip-providers $SKIP_PROVIDERS \
-        --skip-completed \
-        --output-dir "$OUTPUT_DIR" \
-        --data-dir "$DATA_DIR" \
-        --timeout "$TIMEOUT" \
-        --download-status-file "$OUTPUT_DIR/download_status.json" \
-        --skip-mappings \
-        --skip-inference \
-        --skip-analysis
-else
-    python "$RDFSOLVE_REPO/scripts/pipeline.py" \
-        --local-only \
-        --skip-completed \
-        --output-dir "$OUTPUT_DIR" \
-        --data-dir "$DATA_DIR" \
-        --timeout "$TIMEOUT" \
-        --download-status-file "$OUTPUT_DIR/download_status.json" \
-        --skip-mappings \
-        --skip-inference \
-        --skip-analysis
+    PIPELINE_ARGS="$PIPELINE_ARGS --skip-providers $SKIP_PROVIDERS"
 fi
+if [ "$SKIP_COMPLETED" = "true" ]; then
+    PIPELINE_ARGS="$PIPELINE_ARGS --skip-completed"
+fi
+
+python "$RDFSOLVE_REPO/scripts/pipeline.py" $PIPELINE_ARGS
 
 echo "=========================================="
 echo "Step 02 complete: $(date)"

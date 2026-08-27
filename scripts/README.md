@@ -141,6 +141,7 @@ export RDFSOLVE_BASE=/path/to/rdfsolve
 export OUTPUT_DIR=/path/to/output
 export DATA_DIR=/path/to/data
 export TIMEOUT=600
+export SKIP_COMPLETED=true  # Skip sources with existing output
 sbatch 01_mine_remote.sh
 ```
 
@@ -148,4 +149,7 @@ Default values:
 - `RDFSOLVE_BASE`: `$(pwd)/..` (parent of scripts directory)
 - `OUTPUT_DIR`: `$RDFSOLVE_BASE/output_YYYY-MM-DD`
 - `DATA_DIR`: `$RDFSOLVE_BASE/data`
+- `SKIP_COMPLETED`: `false` (re-mine all sources)
+- `TIMEOUT`: `300` (remote), `600` (local)
+- `SKIP_PROVIDERS`: Space-separated list to exclude (e.g., `"idsm bio2rdf"`)
 - SLURM logs: `logs/%x_%j.out` (relative to execution directory)

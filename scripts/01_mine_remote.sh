@@ -22,6 +22,7 @@ VENV_PATH="${VENV_PATH:-$RDFSOLVE_REPO/.venv}"
 OUTPUT_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/output_$(date +%Y-%m-%d)}"
 TIMEOUT="${TIMEOUT:-300}"
 SKIP_PROVIDERS="${SKIP_PROVIDERS:-idsm}"
+SKIP_COMPLETED="${SKIP_COMPLETED:-false}"
 
 mkdir -p "$RDFSOLVE_BASE/logs" "$OUTPUT_DIR"
 
@@ -42,16 +43,12 @@ echo "Running endpoint health check..."
 python "$RDFSOLVE_REPO/scripts/check_endpoints.py" --output "$OUTPUT_DIR/endpoint_status.json"
 
 # Run pipeline - remote only
-python "$RDFSOLVE_REPO/scripts/pipeline.py" \
-    --remote-only \
-    --skip-providers $SKIP_PROVIDERS \
-    --skip-completed \
-    --output-dir "$OUTPUT_DIR" \
-    --timeout "$TIMEOUT" \
-    --endpoint-status-file "$OUTPUT_DIR/endpoint_status.json" \
-    --skip-mappings \
-    --skip-inference \
-    --skip-analysis
+PIPELINE_ARGS="--remote-only --skip-providers $SKIP_PROVIDERS --output-dir $OUTPUT_DIR --timeout $TIMEOUT --endpoint-status-file $OUTPUT_DIR/endpoint_status.json --skip-mappings --skip-inference --skip-analysis"
+if [ "$SKIP_COMPLETED" = "true" ]; then
+    PIPELINE_ARGS="$PIPELINE_ARGS --skip-completed"
+fi
+
+python "$RDFSOLVE_REPO/scripts/pipeline.py" $PIPELINE_ARGS
 
 echo "=========================================="
 echo "Step 01 complete: $(date)"
