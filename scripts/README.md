@@ -114,11 +114,20 @@ sbatch 03_mine_grouped.sh
 
 Mines multi-file provider groups and creates mega-QLever instance for cross-dataset SSSOM mapping generation.
 
-### `04_analysis.sh`
+### `04_mappings.sh`
+Generate cross-dataset mappings.
+
+```bash
+sbatch 04_mappings.sh
+```
+
+Runs the mapping pipeline: external mappings, cross-references with classes, class mapping inference, and consolidation with semra.
+
+### `05_analysis.sh`
 Analysis and visualization.
 
 ```bash
-sbatch 04_analysis.sh
+sbatch 05_analysis.sh
 ```
 
 Generates cross-dataset analysis, graphs, and reports.

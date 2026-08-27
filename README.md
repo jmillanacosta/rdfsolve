@@ -120,54 +120,6 @@ output/
     └── rhea_report.json
 ```
 
-### Local RDF Files (with QLever)
-
-Mine local RDF dumps using QLever:
-
-```yaml
-sources:
-  drugbank:
-    download_urls:
-      - https://example.org/drugbank.nt.gz
-    local_provider: qlever
-```
-
-```bash
-# Download, index, and mine
-python scripts/pipeline.py --sources sources.yaml --local-only
-```
-
-### Large-Scale SLURM Pipeline
-
-For large-scale mining on HPC clusters, use the numbered SLURM scripts:
-
-**Step 01: Mine remote SPARQL endpoints**
-```bash
-sbatch scripts/01_mine_remote.sh
-```
-Queries remote SPARQL endpoints and generates all output formats (JSON-LD, VoID, JSON Schema, Pydantic, SHACL).
-
-**Step 02: Mine local RDF dumps**
-```bash
-sbatch scripts/02_mine_local.sh
-```
-Downloads RDF dumps, indexes them with QLever, and mines schemas locally.
-
-**Step 03: Grouped mining + LSLOD cloud**
-```bash
-sbatch scripts/03_mine_grouped.sh
-```
-Mines multi-file provider groups and creates a mega-QLever instance with all sources for cross-dataset SSSOM mapping generation.
-
-**Step 04: Analysis and visualization**
-```bash
-sbatch scripts/04_analysis.sh
-```
-Generates cross-dataset analysis, graphs, and reports.
-
-**Output directory:** `$RDFSOLVE_BASE/output_YYYY-MM-DD/` (configurable via environment variables)
-
-
 ### Query metadata without mining
 
 Extract dataset metadata (license, publisher, version) without full schema extraction:

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=04-analysis
+#SBATCH --job-name=05-analysis
 #SBATCH --partition=defq
 #SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=8
@@ -8,7 +8,7 @@
 #SBATCH --error=logs/%x_%j.err
 
 # =============================================================================
-# STEP 04: Analysis + Visualization
+# STEP 05: Analysis + Visualization
 # =============================================================================
 # Generate cross-dataset analysis, graphs, and reports
 # =============================================================================
@@ -23,7 +23,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/output_$(date +%Y-%m-%d)}"
 mkdir -p "$RDFSOLVE_BASE/logs" "$OUTPUT_DIR"
 
 echo "=========================================="
-echo "RDFSolve Step 04: Analysis"
+echo "RDFSolve Step 05: Analysis"
 echo "=========================================="
 echo "Date: $(date)"
 echo "Job ID: ${SLURM_JOB_ID:-local}"
@@ -40,7 +40,7 @@ python "$RDFSOLVE_REPO/scripts/pipeline.py" \
 
 echo ""
 echo "=========================================="
-echo "Step 04 complete: $(date)"
+echo "Step 05 complete: $(date)"
 echo "=========================================="
 echo ""
 echo "All pipeline steps complete!"
