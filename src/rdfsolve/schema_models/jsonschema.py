@@ -131,7 +131,7 @@ def _make_class_name(uri: str) -> str:
         name = uri
 
     name = name.replace("-", "_").replace(".", "_")
-    if not name[0].isalpha():
+    if not name or not name[0].isalpha():
         name = "C_" + name
     return name
 
