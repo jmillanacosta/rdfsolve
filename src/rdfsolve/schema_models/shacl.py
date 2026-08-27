@@ -10,7 +10,7 @@ Direct SHACL generation using rdflib, with support for:
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from linkml.generators.shaclgen import ShaclGenerator
 from linkml.generators.yamlgen import YAMLGenerator
@@ -19,7 +19,10 @@ from rdflib.namespace import RDF, RDFS, SH
 
 from rdfsolve.schema_models.linkml import mined_schema_to_linkml, to_linkml
 
-__all__ = ["mined_schema_to_shacl", "to_shacl", "mined_schema_to_shacl_direct"]
+if TYPE_CHECKING:
+    from rdfsolve.schema_models.core import SchemaPattern
+
+__all__ = ["mined_schema_to_shacl", "mined_schema_to_shacl_direct", "to_shacl"]
 
 
 def to_shacl(
@@ -114,14 +117,14 @@ def mined_schema_to_shacl(
         SHACL shapes serialised as Turtle
     """
     if use_direct:
-        # Use new direct generator with full constraint support
+        # Use generator constraint support
         return mined_schema_to_shacl_direct(
             mined_schema,
             schema_name=schema_name,
             closed=closed,
         )
 
-    # Legacy LinkML-based generation
+    # LinkML-based generation
     from rdfsolve.schema_models.linkml import make_valid_linkml_name
 
     linkml_schema = mined_schema_to_linkml(
@@ -139,8 +142,6 @@ def mined_schema_to_shacl(
     shacl_turtle = cast(str, shacl_gen.serialize())
 
     # Post-process: Replace shape URIs with configurable namespace URIs
-    # LinkML uses class_uri as the shape URI, but we want shapes in a separate namespace
-    # Build a mapping from original class URIs to shape URIs
     from rdfsolve.config import get_base_uri
 
     shape_uri_map = {}
@@ -169,7 +170,7 @@ def mined_schema_to_shacl(
 
     # Replace shape URIs in the SHACL Turtle
     # We need to replace shape declarations but keep sh:targetClass unchanged
-    from rdflib import Graph, Namespace
+    from rdflib import Graph
     from rdflib.namespace import RDF, SH
 
     # Parse the SHACL graph
@@ -243,7 +244,7 @@ def mined_schema_to_shacl_direct(
     g.bind("xsd", XSD)
 
     # Group patterns by subject class
-    class_patterns: dict[str, list] = defaultdict(list)
+    class_patterns: dict[str, list[SchemaPattern]] = defaultdict(list)
     for pat in mined_schema.patterns:
         class_patterns[pat.subject_class].append(pat)
 

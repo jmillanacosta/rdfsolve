@@ -256,7 +256,7 @@ WHERE {{
     return q
 
 
-def pick_description(row: dict) -> str | None:
+def pick_description(row: dict[str, Any]) -> str | None:
     """Pick description from query results in priority order.
 
     Tries description predicates in order:
@@ -272,7 +272,7 @@ def pick_description(row: dict) -> str | None:
         "dcDesc",
     ):
         val = row.get(key, {}).get("value")
-        if val:
+        if val and isinstance(val, str):
             return val
     return None
 

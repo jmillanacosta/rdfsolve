@@ -1,9 +1,0 @@
-{
-  "dataset_name": "example_dataset",
-  "pattern_count": 7,
-  "class_count": 2,
-  "property_count": 7,
-  "patterns_with_descriptions": 7,
-  "patterns_with_cardinality": 7,
-  "patterns_with_examples": 4
-}

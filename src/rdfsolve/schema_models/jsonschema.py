@@ -6,16 +6,56 @@ import json
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field, create_model
 
+if TYPE_CHECKING:
+    from rdfsolve.schema_models.core import MinedSchema, SchemaPattern
+
+
+def _is_metadata_class(class_uri: str) -> bool:
+    """Check if a class URI is metadata rather than domain data."""
+    metadata_patterns = [
+        "void:Dataset",
+        "void:Linkset",
+        "rdfs:Literal",
+        "rdfs:Resource",
+        "rdf:Property",
+        "/schema#",  # partition: namespace
+        "http://rdfs.org/ns/void",
+        "https://rdfsolve.bigcat-bioinformatics.nl/schema",
+    ]
+    return any(pattern in class_uri for pattern in metadata_patterns)
+
+
+def _filter_metadata(patterns: list[SchemaPattern]) -> list[SchemaPattern]:
+    """Remove patterns involving metadata classes."""
+    return [
+        p
+        for p in patterns
+        if not _is_metadata_class(p.subject_class)
+        and not (p.object_class and _is_metadata_class(p.object_class))
+    ]
+
 
 def mined_schema_to_pydantic_models(
-    mined_schema: Any,
+    mined_schema: MinedSchema,
+    exclude_metadata: bool = True,
 ) -> dict[str, type[BaseModel]]:
-    """Build Pydantic models in memory from mined patterns."""
-    class_patterns = _group_by_class(mined_schema.patterns)
+    """Build Pydantic models in memory from mined patterns.
+
+    Parameters
+    ----------
+    mined_schema
+        Schema with patterns to convert.
+    exclude_metadata
+        If True, filters out metadata classes (void:Dataset, partition:*, etc.).
+    """
+    patterns = (
+        _filter_metadata(mined_schema.patterns) if exclude_metadata else mined_schema.patterns
+    )
+    class_patterns = _group_by_class(patterns)
     models: dict[str, type[BaseModel]] = {}
 
     for class_uri, patterns in class_patterns.items():
@@ -28,22 +68,28 @@ def mined_schema_to_pydantic_models(
                 class_desc = pat.subject_description
                 break
 
-        model = create_model(
-            class_name,
-            __doc__=class_desc,
-            **fields,
-        )
+        if class_desc:
+            model = create_model(  # type: ignore[call-overload]
+                class_name,
+                __doc__=class_desc,
+                **fields,
+            )
+        else:
+            model = create_model(  # type: ignore[call-overload,misc]
+                class_name,
+                **fields,
+            )
         models[class_name] = model
 
     return models
 
 
 def _build_fields(
-    patterns: list,
+    patterns: list[SchemaPattern],
     existing_models: dict[str, type[BaseModel]],
-) -> dict[str, tuple[type, Any]]:
+) -> dict[str, tuple[Any, Any]]:
     """Build field definitions for create_model()."""
-    fields = {}
+    fields: dict[str, tuple[Any, Any]] = {}
 
     for pat in patterns:
         prop_name = _make_property_name(pat.property_uri)
@@ -55,9 +101,9 @@ def _build_fields(
 
 
 def _pattern_to_type(
-    pat,
+    pat: SchemaPattern,
     existing_models: dict[str, type[BaseModel]],
-) -> type:
+) -> Any:
     """Map pattern to Python type."""
     if pat.object_class == "Literal":
         base_type = _datatype_to_python_type(pat.datatype)
@@ -72,12 +118,24 @@ def _pattern_to_type(
             return base_type
         return base_type | None
     else:
-        return list[base_type]
+        # Use list type with generic parameter
+        from typing import get_args
+
+        if base_type is str:
+            return list[str]
+        elif base_type is int:
+            return list[int]
+        elif base_type is float:
+            return list[float]
+        elif base_type is bool:
+            return list[bool]
+        else:
+            return list[Any]
 
 
-def _build_field_default(pat) -> Any:
+def _build_field_default(pat: SchemaPattern) -> Any:
     """Build Field() with metadata."""
-    kwargs = {}
+    kwargs: dict[str, Any] = {}
 
     if pat.min_count is None or pat.min_count == 0:
         kwargs["default"] = None
@@ -108,14 +166,14 @@ def _datatype_to_python_type(datatype: str | None) -> type:
         "http://www.w3.org/2001/XMLSchema#dateTime": str,
         "http://www.w3.org/2001/XMLSchema#anyURI": str,
     }
-    return mapping.get(datatype, str)
+    return mapping.get(datatype or "", str)
 
 
-def _group_by_class(patterns: list) -> dict[str, list]:
+def _group_by_class(patterns: list[SchemaPattern]) -> dict[str, list[SchemaPattern]]:
     """Group patterns by subject class."""
     from collections import defaultdict
 
-    grouped: dict[str, list] = defaultdict(list)
+    grouped: dict[str, list[SchemaPattern]] = defaultdict(list)
     for pat in patterns:
         grouped[pat.subject_class].append(pat)
     return dict(grouped)
@@ -152,14 +210,27 @@ def _make_property_name(uri: str) -> str:
 
 
 def mined_schema_to_jsonschema(
-    mined_schema: Any,
+    mined_schema: MinedSchema,
     schema_name: str | None = None,
+    exclude_metadata: bool = True,
 ) -> dict[str, Any]:
     """Generate JSON Schema directly from mined patterns.
 
     Builds proper $ref references for object properties.
+
+    Parameters
+    ----------
+    mined_schema
+        Schema with patterns to convert.
+    schema_name
+        Name for the schema.
+    exclude_metadata
+        If True, filters out metadata classes (void:Dataset, partition:*, etc.).
     """
-    class_patterns = _group_by_class(mined_schema.patterns)
+    patterns = (
+        _filter_metadata(mined_schema.patterns) if exclude_metadata else mined_schema.patterns
+    )
+    class_patterns = _group_by_class(patterns)
     definitions = {}
 
     for class_uri, patterns in class_patterns.items():
@@ -208,7 +279,7 @@ def mined_schema_to_jsonschema(
     }
 
 
-def _pattern_to_jsonschema_property(pat) -> dict[str, Any]:
+def _pattern_to_jsonschema_property(pat: Any) -> dict[str, Any]:
     """Convert a pattern to a JSON Schema property definition."""
     prop_schema: dict[str, Any] = {}
 
@@ -289,12 +360,27 @@ def _camel_to_title(name: str) -> str:
 
 
 def mined_schema_to_pydantic_file(
-    mined_schema: Any,
+    mined_schema: MinedSchema,
     output_path: str | Path,
     schema_name: str | None = None,
+    exclude_metadata: bool = True,
 ) -> None:
-    """Generate .py file with Pydantic models from mined patterns."""
-    json_schema = mined_schema_to_jsonschema(mined_schema, schema_name)
+    """Generate .py file with Pydantic models from mined patterns.
+
+    Parameters
+    ----------
+    mined_schema
+        Schema with patterns to convert.
+    output_path
+        Path to output .py file.
+    schema_name
+        Name for the schema.
+    exclude_metadata
+        If True, filters out metadata classes (void:Dataset, partition:*, etc.).
+    """
+    json_schema = mined_schema_to_jsonschema(
+        mined_schema, schema_name, exclude_metadata=exclude_metadata
+    )
 
     with tempfile.NamedTemporaryFile(
         mode="w",

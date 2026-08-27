@@ -1162,30 +1162,58 @@ class MinedSchema(BaseModel):
             closed=closed,
         )
 
-    def to_pydantic_models(self) -> dict[str, type]:
-        """Build Pydantic models in memory from mined patterns."""
+    def to_pydantic_models(self, exclude_metadata: bool = True) -> dict[str, type]:
+        r"""Build Pydantic models in memory from mined patterns.
+
+        Parameters
+        ----------
+        exclude_metadata
+            If True, filters out metadata classes (void\:Dataset, partition\:\*, etc.).
+        """
         from rdfsolve.schema_models.jsonschema import mined_schema_to_pydantic_models
 
-        return mined_schema_to_pydantic_models(self)
+        return mined_schema_to_pydantic_models(self, exclude_metadata=exclude_metadata)
 
     def to_jsonschema(
         self,
         schema_name: str | None = None,
+        exclude_metadata: bool = True,
     ) -> dict[str, Any]:
-        """Generate JSON Schema from mined patterns via Pydantic."""
+        r"""Generate JSON Schema from mined patterns via Pydantic.
+
+        Parameters
+        ----------
+        schema_name
+            Name for the schema.
+        exclude_metadata
+            If True, filters out metadata classes (void\:Dataset, partition\:\*, etc.).
+        """
         from rdfsolve.schema_models.jsonschema import mined_schema_to_jsonschema
 
-        return mined_schema_to_jsonschema(self, schema_name)
+        return mined_schema_to_jsonschema(self, schema_name, exclude_metadata=exclude_metadata)
 
     def to_pydantic_file(
         self,
         output_path: str | Path,
         schema_name: str | None = None,
+        exclude_metadata: bool = True,
     ) -> None:
-        """Generate .py file with Pydantic models via datamodel-codegen."""
+        r"""Generate .py file with Pydantic models via datamodel-codegen.
+
+        Parameters
+        ----------
+        output_path
+            Path to output .py file.
+        schema_name
+            Name for the schema.
+        exclude_metadata
+            If True, filters out metadata classes (void\:Dataset, partition\:\*, etc.).
+        """
         from rdfsolve.schema_models.jsonschema import mined_schema_to_pydantic_file
 
-        mined_schema_to_pydantic_file(self, output_path, schema_name)
+        mined_schema_to_pydantic_file(
+            self, output_path, schema_name, exclude_metadata=exclude_metadata
+        )
 
 
 # VoID graph helpers
