@@ -19,7 +19,7 @@ def get_hostname(url: str) -> str:
 
 def check_url(name: str, url: str) -> dict:
     try:
-        resp = requests.head(url, timeout=3, allow_redirects=True)
+        resp = requests.head(url, timeout=10, allow_redirects=True)
         length = resp.headers.get("content-length")
         status = "accessible" if resp.status_code == 200 else \
                  "redirect" if resp.status_code in (301, 302) else "broken"

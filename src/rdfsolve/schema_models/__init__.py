@@ -16,6 +16,7 @@ from rdfsolve.schema_models._constants import (
 from rdfsolve.schema_models.core import (
     AboutMetadata,
     MinedSchema,
+    MiningResult,
     PatternType,
     SchemaPattern,
     _merge_into_list,
@@ -23,12 +24,47 @@ from rdfsolve.schema_models.core import (
     _parse_schema_entry,
     _parse_schema_graph,
 )
+from rdfsolve.schema_models.metadata import (
+    DatasetDescription,
+    MetadataPatterns,
+    ServiceDescription,
+)
+from rdfsolve.schema_models.ontology import (
+    DomainAssertion,
+    InverseRelation,
+    OntologyStructure,
+    PropertyCharacteristic,
+    RangeAssertion,
+    Restriction,
+    SubClassRelation,
+)
 from rdfsolve.schema_models.rdfconfig import to_rdfconfig
 from rdfsolve.schema_models.report import (
     MiningReport,
     OneShotQueryResult,
     PhaseReport,
     QueryStats,
+)
+from rdfsolve.schema_models.shacl_convert import (
+    minedschema_to_shacl,
+    shacl_to_minedschema,
+)
+from rdfsolve.schema_models.shacl_model import (
+    ShaclNodeShape,
+    ShaclPropertyShape,
+    ShaclShapesGraph,
+)
+from rdfsolve.schema_models.void_convert import (
+    minedschema_to_void,
+    void_to_minedschema,
+)
+from rdfsolve.schema_models.void_model import (
+    VoidClassPartition,
+    VoidDataset,
+    VoidDatasetDescription,
+    VoidDatatypePartition,
+    VoidLinkset,
+    VoidPropertyPartition,
 )
 
 # Names that should be resolved lazily via __getattr__
@@ -38,18 +74,11 @@ _LAZY_LINKML = {
     "to_linkml_yaml": "rdfsolve.schema_models.linkml",
 }
 
-_LAZY_SHACL = {
-    "to_shacl": "rdfsolve.schema_models.shacl",
-}
-
 
 def __getattr__(name: str) -> object:
-    """Lazily import LinkML/SHACL-dependent symbols on first access."""
+    """Lazily import LinkML-dependent symbols on first access."""
     if name in _LAZY_LINKML:
         module = importlib.import_module(_LAZY_LINKML[name])
-        return getattr(module, name)
-    if name in _LAZY_SHACL:
-        module = importlib.import_module(_LAZY_SHACL[name])
         return getattr(module, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
@@ -65,24 +94,50 @@ __all__ = [
     "_URI_SCHEMES",
     # core
     "AboutMetadata",
+    # metadata
+    "DatasetDescription",
+    # ontology
+    "DomainAssertion",
+    "InverseRelation",
+    "MetadataPatterns",
     "MinedSchema",
     # report
     "MiningReport",
+    "MiningResult",
     "OneShotQueryResult",
+    "OntologyStructure",
     "PatternType",
     "PhaseReport",
+    "PropertyCharacteristic",
     "QueryStats",
+    "RangeAssertion",
+    "Restriction",
     "SchemaPattern",
+    "ServiceDescription",
+    # shacl models
+    "ShaclNodeShape",
+    "ShaclPropertyShape",
+    "ShaclShapesGraph",
+    "SubClassRelation",
+    # void models
+    "VoidClassPartition",
+    "VoidDataset",
+    "VoidDatasetDescription",
+    "VoidDatatypePartition",
+    "VoidLinkset",
+    "VoidPropertyPartition",
     "_merge_into_list",
     "_object_value_and_key",
     "_parse_schema_entry",
     "_parse_schema_graph",
     # linkml
     "make_valid_linkml_name",
+    "minedschema_to_shacl",
+    "minedschema_to_void",
+    "shacl_to_minedschema",
     "to_linkml",
     "to_linkml_yaml",
     # conversions
     "to_rdfconfig",
-    # shacl
-    "to_shacl",
+    "void_to_minedschema",
 ]

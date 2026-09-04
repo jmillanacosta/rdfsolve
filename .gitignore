@@ -917,3 +917,4 @@ notes/*
 
 .vscode/settings.json
 data/*
+/src/logs/

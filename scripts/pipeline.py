@@ -168,6 +168,7 @@ class PipelineConfig:
     chunk_size: int = 50000
     class_batch_size: int = 50
     benchmark: bool = True
+    void_base_url: str = "https://rdfsolve.bigcat-bioinformatics.nl"
 
     # QLever settings (for local mining)
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
@@ -183,11 +184,18 @@ class PipelineConfig:
     skip_inference: bool = False
     skip_completed: bool = False  # Skip sources with existing output files
 
+    # Ontology/metadata extraction
+    extract_ontology: bool = False
+    extract_metadata: bool = False
+
     # Parallelism
     parallelism: int = 4
 
     # Output naming
     output_suffix: str = ""
+
+    # Output formats
+    output_formats: list[str] = field(default_factory=lambda: ["json-ld", "void"])
 
     # Health check files
     endpoint_status_file: Path | None = None
@@ -327,6 +335,79 @@ class Stage:
     def _execute(self) -> dict[str, Any]:
         raise NotImplementedError
 
+    def _save_schema_outputs(
+        self,
+        schema: Any,
+        output_dir: Path,
+        name: str,
+        suffix: str,
+    ) -> None:
+        """Save schema in requested output formats.
+
+        Args:
+            schema: MinedSchema object to save
+            output_dir: Directory to save outputs
+            name: Source name
+            suffix: Output file suffix
+        """
+        formats = self.config.output_formats
+
+        # JSON-LD format
+        if "json-ld" in formats:
+            path = output_dir / f"{name}{suffix}_schema.jsonld"
+            path.write_text(json.dumps(schema.to_jsonld(), indent=2), encoding="utf-8")
+
+        # VoID format
+        if "void" in formats:
+            path = output_dir / f"{name}{suffix}_void.ttl"
+            try:
+                void_graph = schema.to_void_graph(base_url=self.config.void_base_url)
+                if void_graph:
+                    void_ttl = void_graph.serialize(format="turtle")
+                    path.write_text(void_ttl, encoding="utf-8")
+            except Exception as e:
+                log.warning(f"[{name}] Could not generate VoID: {e}")
+
+        # SHACL format
+        if "shacl" in formats:
+            path = output_dir / f"{name}{suffix}_shacl.ttl"
+            try:
+                shacl_ttl = schema.to_shacl()
+                path.write_text(shacl_ttl, encoding="utf-8")
+            except Exception as e:
+                log.warning(f"[{name}] Could not generate SHACL: {e}")
+
+        # Pydantic format (Python code)
+        if "pydantic" in formats:
+            path = output_dir / f"{name}{suffix}_schema.py"
+            try:
+                pydantic_code = schema.to_pydantic(schema_name=name)
+                path.write_text(pydantic_code, encoding="utf-8")
+            except Exception as e:
+                log.warning(f"[{name}] Could not generate Pydantic: {e}")
+
+        # JSON format (simplified, not JSON-LD)
+        if "json" in formats:
+            path = output_dir / f"{name}{suffix}_schema.json"
+            try:
+                simple_json = {
+                    "name": name,
+                    "pattern_count": len(schema.patterns),
+                    "patterns": [
+                        {
+                            "subject_class": p.subject_class,
+                            "property": p.property_uri,
+                            "object_class": p.object_class,
+                            "datatype": p.datatype,
+                            "count": p.count,
+                        }
+                        for p in schema.patterns
+                    ],
+                }
+                path.write_text(json.dumps(simple_json, indent=2), encoding="utf-8")
+            except Exception as e:
+                log.warning(f"[{name}] Could not generate JSON: {e}")
+
 
 class RemoteMiningStage(Stage):
     """Mine schemas from remote SPARQL endpoints with health checking and rate limiting.
@@ -455,26 +536,45 @@ class RemoteMiningStage(Stage):
                 report_path=str(report_path),
             )
 
-            schema = miner.mine(dataset_name=source.name)
+            # Use mine_with_ontology if ontology extraction enabled
+            if self.config.extract_ontology or self.config.extract_metadata:
+                from rdfsolve.mining import mine_with_ontology
+                result = mine_with_ontology(
+                    miner,
+                    extract_ontology=self.config.extract_ontology,
+                    extract_metadata=self.config.extract_metadata,
+                    dataset_name=source.name,
+                )
+                schema = result.data_schema
+                # Export ontology and metadata if extracted
+                if result.ontology:
+                    ontology_path = source_output_dir / f"{source.name}{suffix}_ontology.ttl"
+                    try:
+                        ontology_graph = result.ontology.to_rdf_graph()
+                        if ontology_graph:
+                            ont_ttl = ontology_graph.serialize(format="turtle")
+                            ontology_path.write_text(ont_ttl, encoding="utf-8")
+                    except Exception as e:
+                        log.warning(f"[{source.name}] Could not generate ontology.ttl: {e}")
+                if result.metadata:
+                    metadata_path = source_output_dir / f"{source.name}{suffix}_metadata.ttl"
+                    try:
+                        metadata_graph = result.metadata.to_rdf_graph()
+                        if metadata_graph:
+                            meta_ttl = metadata_graph.serialize(format="turtle")
+                            metadata_path.write_text(meta_ttl, encoding="utf-8")
+                    except Exception as e:
+                        log.warning(f"[{source.name}] Could not generate metadata.ttl: {e}")
+            else:
+                schema = miner.mine(dataset_name=source.name)
 
             source.endpoint_status = "up"
             source.last_success = datetime.now(timezone.utc).isoformat()
             source.failure_count = 0
             source.endpoint_down = False
 
-            schema_path.write_text(
-                json.dumps(schema.to_jsonld(), indent=2),
-                encoding="utf-8",
-            )
-
-            void_path = source_output_dir / f"{source.name}{suffix}_void.ttl"
-            try:
-                void_graph = schema.to_void_graph()
-                if void_graph:
-                    void_ttl = void_graph.serialize(format="turtle")
-                    void_path.write_text(void_ttl, encoding="utf-8")
-            except Exception as e:
-                log.warning(f"[{source.name}] Could not generate VoID: {e}")
+            # Save schema in requested formats
+            self._save_schema_outputs(schema, source_output_dir, source.name, suffix)
 
             if miner.last_report:
                 report = {
@@ -841,7 +941,37 @@ class LocalMiningStage(Stage):
             report_path=str(report_path),
         )
 
-        schema = miner.mine(dataset_name=source.name)
+        # Use mine_with_ontology if ontology extraction enabled
+        if self.config.extract_ontology or self.config.extract_metadata:
+            from rdfsolve.mining import mine_with_ontology
+            result = mine_with_ontology(
+                miner,
+                extract_ontology=self.config.extract_ontology,
+                extract_metadata=self.config.extract_metadata,
+                dataset_name=source.name,
+            )
+            schema = result.data_schema
+            # Export ontology and metadata if extracted
+            if result.ontology:
+                ontology_path = output_dir / f"{source.name}{suffix}_ontology.ttl"
+                try:
+                    ontology_graph = result.ontology.to_rdf_graph()
+                    if ontology_graph:
+                        ont_ttl = ontology_graph.serialize(format="turtle")
+                        ontology_path.write_text(ont_ttl, encoding="utf-8")
+                except Exception as e:
+                    log.warning(f"  Could not generate ontology.ttl: {e}")
+            if result.metadata:
+                metadata_path = output_dir / f"{source.name}{suffix}_metadata.ttl"
+                try:
+                    metadata_graph = result.metadata.to_rdf_graph()
+                    if metadata_graph:
+                        meta_ttl = metadata_graph.serialize(format="turtle")
+                        metadata_path.write_text(meta_ttl, encoding="utf-8")
+                except Exception as e:
+                    log.warning(f"  Could not generate metadata.ttl: {e}")
+        else:
+            schema = miner.mine(dataset_name=source.name)
 
         schema_path = output_dir / f"{source.name}{suffix}_schema.jsonld"
         schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
@@ -1242,7 +1372,37 @@ class GroupedMiningStage(LocalMiningStage):
             report_path=str(report_path),
         )
 
-        schema = miner.mine(dataset_name=group_name)
+        # Use mine_with_ontology if ontology extraction enabled
+        if self.config.extract_ontology or self.config.extract_metadata:
+            from rdfsolve.mining import mine_with_ontology
+            result = mine_with_ontology(
+                miner,
+                extract_ontology=self.config.extract_ontology,
+                extract_metadata=self.config.extract_metadata,
+                dataset_name=group_name,
+            )
+            schema = result.data_schema
+            # Export ontology and metadata if extracted
+            if result.ontology:
+                ontology_path = output_dir / f"{group_name}_ontology.ttl"
+                try:
+                    ontology_graph = result.ontology.to_rdf_graph()
+                    if ontology_graph:
+                        ont_ttl = ontology_graph.serialize(format="turtle")
+                        ontology_path.write_text(ont_ttl, encoding="utf-8")
+                except Exception as e:
+                    log.warning(f"  Could not generate ontology.ttl: {e}")
+            if result.metadata:
+                metadata_path = output_dir / f"{group_name}_metadata.ttl"
+                try:
+                    metadata_graph = result.metadata.to_rdf_graph()
+                    if metadata_graph:
+                        meta_ttl = metadata_graph.serialize(format="turtle")
+                        metadata_path.write_text(meta_ttl, encoding="utf-8")
+                except Exception as e:
+                    log.warning(f"  Could not generate metadata.ttl: {e}")
+        else:
+            schema = miner.mine(dataset_name=group_name)
 
         # Save schema as JSON-LD
         schema_path = output_dir / f"{group_name}_schema.jsonld"
@@ -2013,9 +2173,12 @@ class Pipeline:
         log.info(f"PIPELINE COMPLETE in {elapsed:.1f}s ({elapsed / 60:.1f} min)")
         log.info("=" * 70)
 
-        # Save results
-        results_path = self.config.output_dir / "pipeline_results.json"
+        # Save results (with suffix to avoid overwriting between jobs)
+        suffix = self.config.output_suffix or ""
+        results_filename = f"pipeline_results{suffix}.json"
+        results_path = self.config.output_dir / results_filename
         results_path.write_text(json.dumps(self.results, indent=2, default=str))
+        log.info(f"Results saved to: {results_path}")
 
         return self.results
 
@@ -2055,9 +2218,18 @@ Examples:
     parser.add_argument("--skip-inference", action="store_true", help="Skip inference")
     parser.add_argument("--skip-analysis", action="store_true", help="Skip analysis stage")
     parser.add_argument("--skip-completed", action="store_true", help="Skip sources with existing schema output files")
+    parser.add_argument("--extract-ontology", action="store_true", help="Extract ontology structure (TBox: rdfs:subClassOf, domain/range)")
+    parser.add_argument("--extract-metadata", action="store_true", help="Extract infrastructure metadata (VoID/DCAT)")
     parser.add_argument("--output-dir", type=Path, help="Output directory")
     parser.add_argument("--output-suffix", type=str, default="", help="Suffix for output files (e.g., _local, _remote)")
-    parser.add_argument("--data-dir", type=Path, help="Data directory")
+    parser.add_argument(
+        "--output-formats",
+        nargs="+",
+        choices=["void", "json-ld", "shacl", "pydantic", "json"],
+        default=["json-ld", "void"],
+        help="Output format(s) to generate (default: json-ld void)",
+    )
+    parser.add_argument("--data-dir", type=Path, help="Data-directory")
     parser.add_argument("--timeout", type=float, default=300.0, help="Query timeout")
     parser.add_argument("--endpoint-status-file", type=Path, help="Endpoint health check JSON")
     parser.add_argument("--download-status-file", type=Path, help="Download health check JSON")
@@ -2073,6 +2245,7 @@ Examples:
         config.data_dir = args.data_dir
     config.timeout = args.timeout
     config.output_suffix = args.output_suffix
+    config.output_formats = args.output_formats
     config.endpoint_status_file = args.endpoint_status_file
     config.download_status_file = args.download_status_file
     config.skip_mining = args.skip_mining
@@ -2081,6 +2254,8 @@ Examples:
     config.skip_completed = args.skip_completed
     config.skip_remote = args.local_only or args.grouped_only or args.lslod_cloud_only
     config.skip_local = args.remote_only or args.grouped_only or args.lslod_cloud_only
+    config.extract_ontology = args.extract_ontology
+    config.extract_metadata = args.extract_metadata
 
     # Load sources
     config.load_sources(args.sources, skip_providers=args.skip_providers)

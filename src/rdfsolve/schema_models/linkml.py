@@ -72,6 +72,7 @@ def make_valid_linkml_name(uri_or_curie: str) -> str:
         "aopo:KeyEvent"           -> "aopo_KeyEvent"
         "edam.data1025"           -> "edam_data_1025"
         "http://example.org/Cls"  -> prefix_Cls  (via bioregistry)
+        "40:Something"            -> "item_40_Something"
     """
     if uri_or_curie.startswith(("http://", "https://")):
         curie = curie_from_iri(uri_or_curie)
@@ -80,8 +81,11 @@ def make_valid_linkml_name(uri_or_curie: str) -> str:
 
     if ":" in uri_or_curie:
         prefix, local = uri_or_curie.split(":", 1)
+        # Clean prefix and ensure it starts with letter/underscore
         prefix = re.sub(r"[^a-zA-Z0-9_]", "_", prefix)
+        prefix = _finalize_linkml_name(prefix)  # Fix invalid prefix names
         local = _clean_local_part(local)
+        local = _finalize_linkml_name(local)  # Fix invalid local parts
         name = f"{prefix}_{local}"
     else:
         name = _clean_local_part(uri_or_curie)
@@ -116,12 +120,25 @@ def _derive_schema_meta(
     return schema_name, schema_uri, description
 
 
+def _is_valid_ncname(name: str) -> bool:
+    """Check if a string is a valid NCName (XML name without colon).
+
+    NCName must start with letter or underscore, followed by letters, digits, dots, hyphens, or underscores.
+    """
+    if not name or not (name[0].isalpha() or name[0] == "_"):
+        return False
+    return all(c.isalnum() or c in ("_", "-", ".") for c in name)
+
+
 def _build_prefixes(
     schema_name: str,
     schema_uri: str,
     jsonld_context: dict[str, Any],
 ) -> dict[str, str]:
-    """Merge base prefixes with JSON-LD ``@context`` entries."""
+    """Merge base prefixes with JSON-LD ``@context`` entries.
+
+    Filters out invalid NCName prefixes (e.g., starting with digits).
+    """
     base: dict[str, str] = {
         schema_name: schema_uri,
         "linkml": "https://w3id.org/linkml/",
@@ -130,7 +147,13 @@ def _build_prefixes(
         "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
         "xsd": "http://www.w3.org/2001/XMLSchema#",
     }
-    return {**base, **jsonld_context}
+
+    # Filter valid prefixes from JSON-LD context
+    valid_context = {
+        k: v for k, v in jsonld_context.items() if _is_valid_ncname(k) and isinstance(v, str)
+    }
+
+    return {**base, **valid_context}
 
 
 def _build_empty_schema(
@@ -350,6 +373,22 @@ def _build_classes(
         class_slots = [slot_name_mapping.get(p, p) for p in class_properties.get(class_name, [])]
         original_uri = original_class_uris.get(class_name, class_name)
         class_uri = _expand_uri(original_uri, prefixes)
+
+        # Validate class_uri is a valid URI or CURIE
+        # Skip blank nodes, invalid URIs, and CURIEs with invalid prefixes
+        if class_uri.startswith("_:") or original_uri.startswith("_:"):
+            logger.debug(f"Skipping blank node class: {class_uri}")
+            continue
+        if not class_uri.startswith(("http://", "https://", "urn:")):
+            if ":" not in class_uri:
+                logger.warning(f"Skipping class with invalid URI (no scheme): {class_uri}")
+                continue
+            # Check if it's a CURIE with invalid prefix (e.g., "40:Something")
+            prefix = class_uri.split(":", 1)[0]
+            if not _is_valid_ncname(prefix):
+                logger.warning(f"Skipping class with invalid CURIE prefix: {class_uri}")
+                continue
+
         classes[class_name] = ClassDefinition(
             name=class_name,
             description=label_map.get(
@@ -369,7 +408,7 @@ def _build_slots(
     property_descriptions: dict[str, str],
     original_slot_uris: dict[str, str],
     class_properties: dict[str, list[str]],
-    all_class_names: set[str],
+    actual_classes: dict[str, Any],  # Changed from all_class_names to actual_classes
     prefixes: dict[str, str],
 ) -> dict[str, SlotDefinition]:
     """Build :class:`SlotDefinition` objects for every slot."""
@@ -377,7 +416,8 @@ def _build_slots(
     for orig_slot in all_slot_names:
         final = slot_name_mapping[orig_slot]
         rng = property_ranges.get(orig_slot, "string")
-        if rng not in all_class_names and rng not in (
+        # Check if range exists in actual classes (after filtering), not just all_class_names
+        if rng not in actual_classes and rng not in (
             "string",
             "uriorcurie",
         ):
@@ -385,6 +425,20 @@ def _build_slots(
 
         original_uri = original_slot_uris.get(orig_slot, orig_slot)
         slot_uri = _expand_uri(original_uri, prefixes)
+
+        # Validate slot_uri is valid - skip blank nodes, invalid URIs, and CURIEs with invalid prefixes
+        if slot_uri.startswith("_:") or original_uri.startswith("_:"):
+            logger.debug(f"Skipping blank node slot: {slot_uri}")
+            continue
+        if not slot_uri.startswith(("http://", "https://", "urn:")):
+            if ":" not in slot_uri:
+                logger.warning(f"Skipping slot with invalid URI (no scheme): {slot_uri}")
+                continue
+            # Check if it's a CURIE with invalid prefix (e.g., "40:prop")
+            prefix = slot_uri.split(":", 1)[0]
+            if not _is_valid_ncname(prefix):
+                logger.warning(f"Skipping slot with invalid CURIE prefix: {slot_uri}")
+                continue
 
         slot_def = SlotDefinition(
             name=final,
@@ -482,6 +536,7 @@ def to_linkml(
         label_map,
         prefixes,
     )
+    # Pass the actual classes dict to slots builder so it can validate ranges
     schema.slots = _build_slots(
         all_slot_names,
         slot_name_mapping,
@@ -489,7 +544,7 @@ def to_linkml(
         property_descriptions,
         original_slot_uris,
         class_properties,
-        all_class_names,
+        schema.classes,  # Pass actual classes, not all_class_names
         prefixes,
     )
     return schema

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=rdfsolve-grouped
+#SBATCH --job-name=grouped-mining
 #SBATCH --partition=defq
 #SBATCH --time=24:00:00
 #SBATCH --cpus-per-task=16
@@ -18,10 +18,15 @@
 
 set -euo pipefail
 
+# Compute nodes cannot resolve proxy hostname - use IP address
+export http_proxy=http://137.120.13.46:3128
+export https_proxy=http://137.120.13.46:3128
+
 RDFSOLVE_BASE="${RDFSOLVE_BASE:-/home/javier.millanacosta/rdfsolve}"
 RDFSOLVE_REPO="${RDFSOLVE_REPO:-$RDFSOLVE_BASE/rdfsolve-2}"
 VENV_PATH="${VENV_PATH:-$RDFSOLVE_REPO/.venv}"
-OUTPUT_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/output}"
+TODAY=$(date +%Y-%m-%d)
+OUTPUT_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/output_$TODAY}"
 DATA_DIR="${DATA_DIR:-$RDFSOLVE_BASE/data}"
 
 export SINGULARITY_CACHEDIR="${SINGULARITY_CACHEDIR:-$HOME/.singularity/cache}"
@@ -60,6 +65,8 @@ python "$RDFSOLVE_REPO/scripts/pipeline.py" \
     --data-dir "$DATA_DIR" \
     --download-status-file "$OUTPUT_DIR/download_status.json" \
     --output-suffix _grouped \
+    --extract-ontology \
+    --extract-metadata \
     --skip-mappings \
     --skip-inference \
     --skip-analysis
