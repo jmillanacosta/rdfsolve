@@ -414,7 +414,7 @@ class AboutMetadata(BaseModel):
         total_duration_s: float | None = None,
         authors: list[dict[str, str]] | None = None,
         qlever_version: dict[str, str] | None = None,
-        # New version fields
+        # Version fields
         schema_version: str = "1.0.0",
         source_version: str | None = None,
         source_version_iri: str | None = None,
@@ -668,6 +668,46 @@ class MinedSchema(BaseModel):
             Path(path).read_text(encoding="utf-8"),
         )
         return cls.from_dict(raw)
+
+    @classmethod
+    def from_void(cls, void_ttl: str) -> MinedSchema:
+        """Parse VoID Turtle into MinedSchema.
+
+        Args:
+            void_ttl: VoID document in Turtle format
+
+        Returns:
+            MinedSchema with patterns reconstructed from VoID
+
+        Example:
+            >>> void_ttl = Path("dataset_void.ttl").read_text()
+            >>> schema = MinedSchema.from_void(void_ttl)
+            >>> print(len(schema.patterns))
+            435
+        """
+        from rdfsolve.schema_models.void_convert import void_to_minedschema
+
+        return void_to_minedschema(void_ttl)
+
+    @classmethod
+    def from_shacl(cls, shacl_ttl: str) -> MinedSchema:
+        """Parse SHACL Turtle into MinedSchema.
+
+        Args:
+            shacl_ttl: SHACL shapes in Turtle format
+
+        Returns:
+            MinedSchema with patterns reconstructed from shapes
+
+        Example:
+            >>> shacl_ttl = Path("shapes.ttl").read_text()
+            >>> schema = MinedSchema.from_shacl(shacl_ttl)
+            >>> print(len(schema.patterns))
+            10
+        """
+        from rdfsolve.schema_models.shacl_convert import shacl_to_minedschema
+
+        return shacl_to_minedschema(shacl_ttl)
 
     # NetworkX export
 
@@ -1154,21 +1194,25 @@ class MinedSchema(BaseModel):
 
     def to_shacl(
         self,
-        schema_name: str | None = None,
-        schema_description: str | None = None,
+        base_uri: str = "http://example.org/shapes/",
     ) -> str:
-        """Convert to SHACL shapes via LinkML.
+        """Convert to SHACL shapes.
 
         Returns SHACL Turtle string.
-        """
-        from rdfsolve.schema_models.shacl import to_shacl
 
-        jsonld = self.to_jsonld()
-        return to_shacl(
-            jsonld,
-            schema_name=schema_name or self.about.dataset_name,
-            schema_description=schema_description,
-        )
+        Args:
+            base_uri: Base URI for shape URIs
+
+        Example:
+            >>> schema = MinedSchema.from_jsonld("schema.jsonld")
+            >>> shacl_ttl = schema.to_shacl()
+            >>> print(shacl_ttl[:100])
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+        """
+        from rdfsolve.schema_models.shacl_convert import minedschema_to_shacl
+
+        shapes = minedschema_to_shacl(self, base_uri=base_uri)
+        return shapes.to_rdf().serialize(format="turtle")
 
 
 # VoID graph helpers

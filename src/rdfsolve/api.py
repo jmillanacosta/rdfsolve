@@ -143,12 +143,7 @@ def to_linkml_from_file(
 def to_shacl_from_file(
     void_file_path: str,
     filter_void_nodes: bool = True,
-    schema_name: str | None = None,
-    schema_description: str | None = None,
-    schema_base_uri: str | None = None,
-    closed: bool = True,
-    suffix: str | None = None,
-    include_annotations: bool = False,
+    schema_base_uri: str = "http://example.org/shapes/",
 ) -> str:
     """Convert a VoID file to SHACL shapes.
 
@@ -159,12 +154,7 @@ def to_shacl_from_file(
     Args:
         void_file_path: Path to VoID file
         filter_void_nodes: Remove VoID-specific nodes
-        schema_name: Name for the schema
-        schema_description: Description for the schema
-        schema_base_uri: Base URI for the schema
-        closed: Generate closed shapes (only allow defined properties)
-        suffix: Optional suffix for shape names (e.g., "Shape")
-        include_annotations: Include class/slot annotations in shapes
+        schema_base_uri: Base URI for the SHACL shapes (default: http://example.org/shapes/)
 
     Returns:
         SHACL shapes as Turtle/RDF string
@@ -172,12 +162,7 @@ def to_shacl_from_file(
     parser = load_parser_from_file(void_file_path)
     return parser.to_shacl(
         filter_void_nodes=filter_void_nodes,
-        schema_name=schema_name,
-        schema_description=schema_description,
         schema_base_uri=schema_base_uri,
-        closed=closed,
-        suffix=suffix,
-        include_annotations=include_annotations,
     )
 
 
@@ -261,12 +246,7 @@ def graph_to_shacl(
     graph: Graph,
     graph_uris: str | list[str] | None = None,
     filter_void_nodes: bool = True,
-    schema_name: str | None = None,
-    schema_description: str | None = None,
-    schema_base_uri: str | None = None,
-    closed: bool = True,
-    suffix: str | None = None,
-    include_annotations: bool = False,
+    schema_base_uri: str = "http://example.org/shapes/",
 ) -> str:
     """Convert a VoID graph to SHACL shapes.
 
@@ -278,12 +258,7 @@ def graph_to_shacl(
         graph: RDFLib Graph with VoID data
         graph_uris: Graph URIs to filter extraction
         filter_void_nodes: Remove VoID-specific nodes
-        schema_name: Name for the schema
-        schema_description: Description for the schema
-        schema_base_uri: Base URI for the schema
-        closed: Generate closed shapes (only allow defined properties)
-        suffix: Optional suffix for shape names (e.g., "Shape")
-        include_annotations: Include class/slot annotations in shapes
+        schema_base_uri: Base URI for the SHACL shapes (default: http://example.org/shapes/)
 
     Returns:
         SHACL shapes as Turtle/RDF string
@@ -291,12 +266,7 @@ def graph_to_shacl(
     parser = load_parser_from_graph(graph, graph_uris=graph_uris)
     return parser.to_shacl(
         filter_void_nodes=filter_void_nodes,
-        schema_name=schema_name,
-        schema_description=schema_description,
         schema_base_uri=schema_base_uri,
-        closed=closed,
-        suffix=suffix,
-        include_annotations=include_annotations,
     )
 
 
