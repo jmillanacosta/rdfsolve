@@ -864,7 +864,8 @@ class VoidParser:
         # Convert to MinedSchema
         mined_schema = self.to_mined_schema()
         # Use SHACL conversion
-        return mined_schema.to_shacl(base_uri=schema_base_uri)
+        result: str = mined_schema.to_shacl(base_uri=schema_base_uri)
+        return result
 
     def to_mined_schema(self) -> Any:
         """Parse VoID graph to MinedSchema for round-trip conversion.

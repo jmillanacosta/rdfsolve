@@ -194,6 +194,9 @@ class PipelineConfig:
     # Output naming
     output_suffix: str = ""
 
+    # Output formats
+    output_formats: list[str] = field(default_factory=lambda: ["json-ld", "void"])
+
     # Health check files
     endpoint_status_file: Path | None = None
     download_status_file: Path | None = None
@@ -331,6 +334,79 @@ class Stage:
 
     def _execute(self) -> dict[str, Any]:
         raise NotImplementedError
+
+    def _save_schema_outputs(
+        self,
+        schema: Any,
+        output_dir: Path,
+        name: str,
+        suffix: str,
+    ) -> None:
+        """Save schema in requested output formats.
+
+        Args:
+            schema: MinedSchema object to save
+            output_dir: Directory to save outputs
+            name: Source name
+            suffix: Output file suffix
+        """
+        formats = self.config.output_formats
+
+        # JSON-LD format
+        if "json-ld" in formats:
+            path = output_dir / f"{name}{suffix}_schema.jsonld"
+            path.write_text(json.dumps(schema.to_jsonld(), indent=2), encoding="utf-8")
+
+        # VoID format
+        if "void" in formats:
+            path = output_dir / f"{name}{suffix}_void.ttl"
+            try:
+                void_graph = schema.to_void_graph(base_url=self.config.void_base_url)
+                if void_graph:
+                    void_ttl = void_graph.serialize(format="turtle")
+                    path.write_text(void_ttl, encoding="utf-8")
+            except Exception as e:
+                log.warning(f"[{name}] Could not generate VoID: {e}")
+
+        # SHACL format
+        if "shacl" in formats:
+            path = output_dir / f"{name}{suffix}_shacl.ttl"
+            try:
+                shacl_ttl = schema.to_shacl()
+                path.write_text(shacl_ttl, encoding="utf-8")
+            except Exception as e:
+                log.warning(f"[{name}] Could not generate SHACL: {e}")
+
+        # Pydantic format (Python code)
+        if "pydantic" in formats:
+            path = output_dir / f"{name}{suffix}_schema.py"
+            try:
+                pydantic_code = schema.to_pydantic(schema_name=name)
+                path.write_text(pydantic_code, encoding="utf-8")
+            except Exception as e:
+                log.warning(f"[{name}] Could not generate Pydantic: {e}")
+
+        # JSON format (simplified, not JSON-LD)
+        if "json" in formats:
+            path = output_dir / f"{name}{suffix}_schema.json"
+            try:
+                simple_json = {
+                    "name": name,
+                    "pattern_count": len(schema.patterns),
+                    "patterns": [
+                        {
+                            "subject_class": p.subject_class,
+                            "property": p.property_uri,
+                            "object_class": p.object_class,
+                            "datatype": p.datatype,
+                            "count": p.count,
+                        }
+                        for p in schema.patterns
+                    ],
+                }
+                path.write_text(json.dumps(simple_json, indent=2), encoding="utf-8")
+            except Exception as e:
+                log.warning(f"[{name}] Could not generate JSON: {e}")
 
 
 class RemoteMiningStage(Stage):
@@ -497,19 +573,8 @@ class RemoteMiningStage(Stage):
             source.failure_count = 0
             source.endpoint_down = False
 
-            schema_path.write_text(
-                json.dumps(schema.to_jsonld(), indent=2),
-                encoding="utf-8",
-            )
-
-            void_path = source_output_dir / f"{source.name}{suffix}_void.ttl"
-            try:
-                void_graph = schema.to_void_graph(base_url=self.config.void_base_url)
-                if void_graph:
-                    void_ttl = void_graph.serialize(format="turtle")
-                    void_path.write_text(void_ttl, encoding="utf-8")
-            except Exception as e:
-                log.warning(f"[{source.name}] Could not generate VoID: {e}")
+            # Save schema in requested formats
+            self._save_schema_outputs(schema, source_output_dir, source.name, suffix)
 
             if miner.last_report:
                 report = {
@@ -2157,7 +2222,14 @@ Examples:
     parser.add_argument("--extract-metadata", action="store_true", help="Extract infrastructure metadata (VoID/DCAT)")
     parser.add_argument("--output-dir", type=Path, help="Output directory")
     parser.add_argument("--output-suffix", type=str, default="", help="Suffix for output files (e.g., _local, _remote)")
-    parser.add_argument("--data-dir", type=Path, help="Data directory")
+    parser.add_argument(
+        "--output-formats",
+        nargs="+",
+        choices=["void", "json-ld", "shacl", "pydantic", "json"],
+        default=["json-ld", "void"],
+        help="Output format(s) to generate (default: json-ld void)",
+    )
+    parser.add_argument("--data-dir", type=Path, help="Data-directory")
     parser.add_argument("--timeout", type=float, default=300.0, help="Query timeout")
     parser.add_argument("--endpoint-status-file", type=Path, help="Endpoint health check JSON")
     parser.add_argument("--download-status-file", type=Path, help="Download health check JSON")
@@ -2173,6 +2245,7 @@ Examples:
         config.data_dir = args.data_dir
     config.timeout = args.timeout
     config.output_suffix = args.output_suffix
+    config.output_formats = args.output_formats
     config.endpoint_status_file = args.endpoint_status_file
     config.download_status_file = args.download_status_file
     config.skip_mining = args.skip_mining

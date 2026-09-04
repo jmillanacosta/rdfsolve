@@ -470,8 +470,7 @@ def _build_batched_typed_object_query(
     paginated: bool = False,
     drop_distinct: bool = False,
 ) -> str:
-    """Typed-object patterns for a batch of classes.
-    """
+    """Typed-object patterns for a batch of classes."""
     g_open, g_close = _graph_clause(graph_uris)
     values = _values_block(class_uris)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "

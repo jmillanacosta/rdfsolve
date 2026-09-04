@@ -64,7 +64,8 @@ class MetadataPatterns(BaseModel):
     def to_turtle(self, base_uri: str = "http://example.org/metadata/") -> str:
         """Export as DCAT/VoID Turtle."""
         g = self.to_rdf_graph(base_uri)
-        return g.serialize(format="turtle")
+        result: str = g.serialize(format="turtle")
+        return result
 
 
 __all__ = ["DatasetDescription", "MetadataPatterns", "ServiceDescription"]

@@ -230,6 +230,7 @@ def health_check_all_endpoints(
     logger.info(f"Checking health of {len(sources_with_endpoints)} endpoints concurrently...")
 
     def check_source(source: SourceModel) -> tuple[SourceModel, EndpointHealthCheck]:
+        """Return health for a source."""
         health = check_endpoint_health(source.endpoint)
         update_endpoint_status(source, health)
         return source, health

@@ -131,12 +131,14 @@ def mine_with_ontology(
         object_patterns = mine_ontology_as_data_patterns(
             miner._helper,
             miner.graph_uris,
+            superclasses=superclasses,
         )
 
         # Mine patterns where owl:Class instances are subjects (attributed to superclass)
         subject_patterns = mine_ontology_as_data_subject_patterns(
             miner._helper,
             miner.graph_uris,
+            superclasses=superclasses,
         )
 
         # Merge with existing patterns
@@ -144,8 +146,12 @@ def mine_with_ontology(
         logger.info(f"Adding {len(all_patterns)} ontology-as-data patterns to schema")
         data_schema.patterns.extend(all_patterns)
 
-        # Update pattern count in metadata
+        # Update metadata to reflect ontology-as-data strategy
         data_schema.about.pattern_count = len(data_schema.patterns)
+        if data_schema.about.strategy:
+            data_schema.about.strategy += "+ontology-as-data"
+        else:
+            data_schema.about.strategy = "ontology-as-data"
 
     metadata = None
     if extract_metadata:

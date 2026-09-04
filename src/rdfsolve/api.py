@@ -345,12 +345,21 @@ def mine_schema(
     delay: float = 0.5,
     timeout: float = 120.0,
     counts: bool = True,
-    two_phase: bool = True,
+    strategy: str | None = None,
     report_path: str | None = None,
     filter_service_namespaces: bool = True,
     authors: list[dict[str, str]] | None = None,
+    # Deprecated parameter
+    two_phase: bool | None = None,
 ) -> MinedSchema:
     """Mine RDF schema from a SPARQL endpoint using SELECT queries.
+
+    Parameters
+    ----------
+    strategy
+        Mining strategy to use. Can be "two-phase" (default), "single-pass", or "one-shot".
+    two_phase
+        (Deprecated) Use strategy="two-phase" instead.
 
     Returns
     -------
@@ -373,10 +382,11 @@ def mine_schema(
         delay=delay,
         timeout=timeout,
         counts=counts,
-        two_phase=two_phase,
+        strategy=strategy,
         report_path=report_path,
         filter_service_namespaces=filter_service_namespaces,
         authors=authors,
+        two_phase=two_phase,
     )
 
 

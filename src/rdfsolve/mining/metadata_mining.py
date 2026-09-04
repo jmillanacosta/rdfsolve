@@ -25,6 +25,12 @@ class MetadataMiner:
         helper: SparqlHelper,
         graph_uris: list[str] | None = None,
     ) -> None:
+        """Initialize metadata miner.
+
+        Args:
+            helper: SPARQL helper for query execution
+            graph_uris: Named graphs to restrict queries to
+        """
         self.helper = helper
         self.graph_uris = graph_uris
 

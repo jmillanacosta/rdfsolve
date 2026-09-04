@@ -28,8 +28,9 @@ class ShaclPropertyShape(BaseModel):
 
     def to_rdf(self, graph: Graph) -> URIRef:
         """Serialize to RDF graph."""
-        from rdflib import BNode, Namespace, URIRef as Ref
+        from rdflib import BNode, Namespace
         from rdflib import Literal as RdfLiteral
+        from rdflib import URIRef as Ref
         from rdflib.namespace import RDF, XSD
 
         sh = Namespace("http://www.w3.org/ns/shacl#")
@@ -118,8 +119,9 @@ class ShaclNodeShape(BaseModel):
 
     def to_rdf(self, graph: Graph) -> URIRef:
         """Serialize to RDF graph."""
-        from rdflib import Namespace, URIRef as Ref
         from rdflib import Literal as RdfLiteral
+        from rdflib import Namespace
+        from rdflib import URIRef as Ref
         from rdflib.namespace import RDF
 
         sh = Namespace("http://www.w3.org/ns/shacl#")
@@ -177,7 +179,8 @@ class ShaclShapesGraph(BaseModel):
 
     def to_rdf(self, graph: Graph | None = None) -> Graph:
         """Serialize all shapes to RDF graph."""
-        from rdflib import Graph as RdfGraph, Namespace
+        from rdflib import Graph as RdfGraph
+        from rdflib import Namespace
 
         if graph is None:
             graph = RdfGraph()

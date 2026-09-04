@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from typing import Any
+
 from pydantic import BaseModel, Field
 from rdflib import OWL, RDF, RDFS, Graph, Namespace, URIRef
 from rdflib import Literal as RDFLiteral
@@ -89,12 +92,15 @@ class OntologyStructure(BaseModel):
     def to_turtle(self, base_uri: str = "http://example.org/ontology/") -> str:
         """Export as RDFS/OWL Turtle."""
         g = self.to_rdf_graph(base_uri)
-        return g.serialize(format="turtle")
+        result: str = g.serialize(format="turtle")
+        return result
 
-    def to_jsonld(self, base_uri: str = "http://example.org/ontology/") -> dict:
+    def to_jsonld(self, base_uri: str = "http://example.org/ontology/") -> dict[str, Any]:
         """Export as JSON-LD."""
         g = self.to_rdf_graph(base_uri)
-        return g.serialize(format="json-ld", indent=2)
+        serialized: str = g.serialize(format="json-ld", indent=2)
+        result: dict[str, Any] = json.loads(serialized)
+        return result
 
 
 __all__ = [

@@ -23,8 +23,9 @@ class VoidDatatypePartition(BaseModel):
 
     def to_rdf(self, graph: Graph) -> URIRef:
         """Serialize to RDF graph."""
-        from rdflib import Namespace, URIRef as Ref
         from rdflib import Literal as RdfLiteral
+        from rdflib import Namespace
+        from rdflib import URIRef as Ref
         from rdflib.namespace import XSD
 
         void = Namespace("http://rdfs.org/ns/void#")
@@ -65,8 +66,9 @@ class VoidPropertyPartition(BaseModel):
 
     def to_rdf(self, graph: Graph) -> URIRef:
         """Serialize to RDF graph."""
-        from rdflib import Namespace, URIRef as Ref
         from rdflib import Literal as RdfLiteral
+        from rdflib import Namespace
+        from rdflib import URIRef as Ref
         from rdflib.namespace import RDF, XSD
 
         void = Namespace("http://rdfs.org/ns/void#")
@@ -128,8 +130,9 @@ class VoidClassPartition(BaseModel):
 
     def to_rdf(self, graph: Graph) -> URIRef:
         """Serialize to RDF graph."""
-        from rdflib import Namespace, URIRef as Ref
         from rdflib import Literal as RdfLiteral
+        from rdflib import Namespace
+        from rdflib import URIRef as Ref
         from rdflib.namespace import RDF, XSD
 
         void = Namespace("http://rdfs.org/ns/void#")
@@ -184,8 +187,9 @@ class VoidLinkset(BaseModel):
 
     def to_rdf(self, graph: Graph) -> URIRef:
         """Serialize to RDF graph."""
-        from rdflib import BNode, Namespace, URIRef as Ref
+        from rdflib import BNode, Namespace
         from rdflib import Literal as RdfLiteral
+        from rdflib import URIRef as Ref
         from rdflib.namespace import RDF, XSD
 
         void = Namespace("http://rdfs.org/ns/void#")
@@ -256,8 +260,9 @@ class VoidDataset(BaseModel):
 
     def to_rdf(self, graph: Graph) -> URIRef:
         """Serialize to RDF graph."""
-        from rdflib import Namespace, URIRef as Ref
         from rdflib import Literal as RdfLiteral
+        from rdflib import Namespace
+        from rdflib import URIRef as Ref
         from rdflib.namespace import DCTERMS, RDF, XSD
 
         void = Namespace("http://rdfs.org/ns/void#")
@@ -274,11 +279,19 @@ class VoidDataset(BaseModel):
         if self.classes_count is not None:
             graph.add((uri, void.classes, RdfLiteral(self.classes_count, datatype=XSD.integer)))
         if self.properties_count is not None:
-            graph.add((uri, void.properties, RdfLiteral(self.properties_count, datatype=XSD.integer)))
+            graph.add(
+                (uri, void.properties, RdfLiteral(self.properties_count, datatype=XSD.integer))
+            )
         if self.triples is not None:
             graph.add((uri, void.triples, RdfLiteral(self.triples, datatype=XSD.integer)))
         if self.distinct_subjects is not None:
-            graph.add((uri, void.distinctSubjects, RdfLiteral(self.distinct_subjects, datatype=XSD.integer)))
+            graph.add(
+                (
+                    uri,
+                    void.distinctSubjects,
+                    RdfLiteral(self.distinct_subjects, datatype=XSD.integer),
+                )
+            )
 
         for vocab in self.vocabularies:
             graph.add((uri, void.vocabulary, Ref(vocab)))
@@ -345,8 +358,9 @@ class VoidDatasetDescription(BaseModel):
 
     def to_rdf(self, graph: Graph) -> URIRef:
         """Serialize to RDF graph."""
-        from rdflib import Namespace, URIRef as Ref
         from rdflib import Literal as RdfLiteral
+        from rdflib import Namespace
+        from rdflib import URIRef as Ref
         from rdflib.namespace import DCTERMS, FOAF, RDF
 
         void = Namespace("http://rdfs.org/ns/void#")
@@ -371,7 +385,7 @@ class VoidDatasetDescription(BaseModel):
         from rdflib import Namespace
         from rdflib.namespace import DCTERMS, FOAF
 
-        void = Namespace("http://rdfs.org/ns/void#")
+        Namespace("http://rdfs.org/ns/void#")
 
         title = graph.value(uri, DCTERMS.title)
         creator = graph.value(uri, DCTERMS.creator)

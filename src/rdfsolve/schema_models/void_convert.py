@@ -7,14 +7,11 @@ from rdflib import Graph, Namespace, URIRef
 from rdfsolve.schema_models.core import AboutMetadata, MinedSchema, SchemaPattern
 from rdfsolve.schema_models.void_model import VoidDataset
 
-
 VOID = Namespace("http://rdfs.org/ns/void#")
 VOID_EXT = Namespace("http://ldf.fi/void-ext#")
 
 
-def minedschema_to_void(
-    schema: MinedSchema, base_url: str = "https://example.org"
-) -> VoidDataset:
+def minedschema_to_void(schema: MinedSchema, base_url: str = "https://example.org") -> VoidDataset:
     """Convert MinedSchema to VoID Dataset.
 
     Groups patterns by subject class, creates nested partitions.
@@ -158,7 +155,14 @@ def void_to_minedschema(void_ttl: str) -> MinedSchema:
 
 def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
     """Extract SchemaPattern list from VoID graph."""
+    from rdflib.namespace import RDFS
+
     patterns = []
+
+    # Extract all rdfs:label triples for URIs
+    labels: dict[str, str] = {}
+    for s, _, o in g.triples((None, RDFS.label, None)):
+        labels[str(s)] = str(o)
 
     # Query nested class partitions with property partitions
     query = """
@@ -199,12 +203,16 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
 
         if row.get("objectClass"):
             # Typed object pattern
+            object_class = str(row.objectClass)
             patterns.append(
                 SchemaPattern(
                     subject_class=subject_class,
                     property_uri=property_uri,
-                    object_class=str(row.objectClass),
+                    object_class=object_class,
                     count=count,
+                    subject_label=labels.get(subject_class),
+                    property_label=labels.get(property_uri),
+                    object_label=labels.get(object_class),
                 )
             )
         elif row.get("datatype"):
@@ -216,6 +224,8 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
                     object_class="Literal",
                     datatype=str(row.datatype),
                     count=count,
+                    subject_label=labels.get(subject_class),
+                    property_label=labels.get(property_uri),
                 )
             )
         else:
@@ -245,12 +255,18 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
         for row in g.query(linkset_query):
             count_val = row.get("count")
             count = int(count_val) if count_val is not None else None
+            subject_class = str(row.subjectClass)
+            property_uri = str(row.predicate)
+            object_class = str(row.objectClass)
             patterns.append(
                 SchemaPattern(
-                    subject_class=str(row.subjectClass),
-                    property_uri=str(row.predicate),
-                    object_class=str(row.objectClass),
+                    subject_class=subject_class,
+                    property_uri=property_uri,
+                    object_class=object_class,
                     count=count,
+                    subject_label=labels.get(subject_class),
+                    property_label=labels.get(property_uri),
+                    object_label=labels.get(object_class),
                 )
             )
 

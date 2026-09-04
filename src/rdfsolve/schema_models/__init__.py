@@ -114,23 +114,11 @@ __all__ = [
     "Restriction",
     "SchemaPattern",
     "ServiceDescription",
-    "SubClassRelation",
-    "_merge_into_list",
-    "_object_value_and_key",
-    "_parse_schema_entry",
-    "_parse_schema_graph",
-    # linkml
-    "make_valid_linkml_name",
-    "to_linkml",
-    "to_linkml_yaml",
-    # conversions
-    "to_rdfconfig",
     # shacl models
     "ShaclNodeShape",
     "ShaclPropertyShape",
     "ShaclShapesGraph",
-    "minedschema_to_shacl",
-    "shacl_to_minedschema",
+    "SubClassRelation",
     # void models
     "VoidClassPartition",
     "VoidDataset",
@@ -138,6 +126,18 @@ __all__ = [
     "VoidDatatypePartition",
     "VoidLinkset",
     "VoidPropertyPartition",
+    "_merge_into_list",
+    "_object_value_and_key",
+    "_parse_schema_entry",
+    "_parse_schema_graph",
+    # linkml
+    "make_valid_linkml_name",
+    "minedschema_to_shacl",
     "minedschema_to_void",
+    "shacl_to_minedschema",
+    "to_linkml",
+    "to_linkml_yaml",
+    # conversions
+    "to_rdfconfig",
     "void_to_minedschema",
 ]

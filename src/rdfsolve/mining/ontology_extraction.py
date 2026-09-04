@@ -29,6 +29,12 @@ class OntologyMiner:
         helper: SparqlHelper,
         graph_uris: list[str] | None = None,
     ) -> None:
+        """Initialize ontology extractor.
+
+        Args:
+            helper: SPARQL helper for query execution
+            graph_uris: Named graphs to restrict queries to
+        """
         self.helper = helper
         self.graph_uris = graph_uris
 
