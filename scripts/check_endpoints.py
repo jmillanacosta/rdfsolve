@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Check SPARQL endpoint availability with rate limiting."""
 
+import argparse
 import json
 import time
 from collections import defaultdict
@@ -56,8 +57,13 @@ def check_server_group(endpoints: list[tuple[str, str]], delay: float = 1.5) -> 
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Check SPARQL endpoint health")
+    parser.add_argument("--output", type=Path, help="Output JSON file path")
+    parser.add_argument("--sources", type=Path, help="Sources YAML file")
+    args = parser.parse_args()
+
     repo = Path(__file__).parent.parent
-    sources_file = repo / "data" / "sources.yaml"
+    sources_file = args.sources or (repo / "data" / "sources.yaml")
 
     with open(sources_file) as f:
         sources = yaml.safe_load(f) or []
@@ -90,7 +96,7 @@ def main():
         "endpoints": results
     }
 
-    output = repo / "output" / "endpoint_status.json"
+    output = args.output or (repo / "output" / "endpoint_status.json")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2))
 

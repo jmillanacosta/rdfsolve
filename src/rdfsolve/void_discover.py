@@ -845,12 +845,7 @@ class VoidParser:
     def to_shacl(
         self,
         filter_void_nodes: bool = True,
-        schema_name: str | None = None,
-        schema_description: str | None = None,
-        schema_base_uri: str | None = None,
-        closed: bool = True,
-        suffix: str | None = None,
-        include_annotations: bool = False,
+        schema_base_uri: str = "http://example.org/shapes/",
     ) -> str:
         """Generate SHACL shapes (Turtle) from VoID triples.
 
@@ -859,28 +854,18 @@ class VoidParser:
 
         Args:
             filter_void_nodes: Remove VoID-specific nodes from the schema
-            schema_name: Name for the LinkML schema (base for SHACL shapes)
-            schema_description: Human-readable description
-            schema_base_uri: Base URI for the schema
-            closed: If True, generate closed shapes (sh:closed true)
-            suffix: Optional suffix for shape names (e.g., "Shape")
-            include_annotations: Include class/slot annotations in shapes
+            schema_base_uri: Base URI for the SHACL shapes (default: http://example.org/shapes/)
 
         Returns:
             SHACL shapes as Turtle string
         """
-        from rdfsolve.schema_models.shacl import to_shacl
-
-        jsonld = self.to_jsonld(filter_void_admin_nodes=filter_void_nodes)
-        return to_shacl(
-            jsonld,
-            schema_name=schema_name,
-            schema_description=schema_description,
-            schema_base_uri=schema_base_uri,
-            closed=closed,
-            suffix=suffix,
-            include_annotations=include_annotations,
-        )
+        # Extract schema triples first
+        self._extract_schema_triples()
+        # Convert to MinedSchema
+        mined_schema = self.to_mined_schema()
+        # Use SHACL conversion
+        result: str = mined_schema.to_shacl(base_uri=schema_base_uri)
+        return result
 
     def to_mined_schema(self) -> Any:
         """Parse VoID graph to MinedSchema for round-trip conversion.
