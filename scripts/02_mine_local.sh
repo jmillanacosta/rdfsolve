@@ -1,38 +1,37 @@
 #!/bin/bash
-#SBATCH --job-name=rdfsolve-full
+#SBATCH --job-name=02-local
 #SBATCH --partition=defq
-#SBATCH --time=96:00:00
+#SBATCH --time=72:00:00
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
-#SBATCH --output=/home/javier.millanacosta/rdfsolve/logs/full_%j.out
-#SBATCH --error=/home/javier.millanacosta/rdfsolve/logs/full_%j.err
+#SBATCH --output=logs/%x_%j.out
+#SBATCH --error=logs/%x_%j.err
 
 # =============================================================================
-# FULL PIPELINE (All Phases)
+# STEP 02: Local Mining
 # =============================================================================
-# Complete LOD cloud analysis: mining + SSSOM mappings + analysis
-# NOTE: For faster execution, submit slurm_remote.sh and slurm_local.sh
-#       concurrently, then run slurm_lslod_cloud.sh
+# Download RDF dumps, index with QLever, mine locally
+# Generates: JSON-LD, VoID, JSON Schema, Pydantic, SHACL per dataset
 # =============================================================================
 
 set -euo pipefail
 
-RDFSOLVE_BASE="${RDFSOLVE_BASE:-/home/javier.millanacosta/rdfsolve}"
+RDFSOLVE_BASE="${RDFSOLVE_BASE:-$(pwd)/..}"
 RDFSOLVE_REPO="${RDFSOLVE_REPO:-$RDFSOLVE_BASE/rdfsolve-2}"
 VENV_PATH="${VENV_PATH:-$RDFSOLVE_REPO/.venv}"
-OUTPUT_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/output}"
+OUTPUT_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/output_$(date +%Y-%m-%d)}"
 DATA_DIR="${DATA_DIR:-$RDFSOLVE_BASE/data}"
-TIMEOUT="${TIMEOUT:-300}"
-SKIP_PROVIDERS="${SKIP_PROVIDERS:-idsm}"
+TIMEOUT="${TIMEOUT:-600}"
+SKIP_PROVIDERS="${SKIP_PROVIDERS:-}"
+SKIP_COMPLETED="${SKIP_COMPLETED:-false}"
 
 export SINGULARITY_CACHEDIR="${SINGULARITY_CACHEDIR:-$HOME/.singularity/cache}"
 export SINGULARITY_TMPDIR="${SINGULARITY_TMPDIR:-$HOME/.singularity/tmp}"
 mkdir -p "$SINGULARITY_CACHEDIR" "$SINGULARITY_TMPDIR"
-
-mkdir -p "$RDFSOLVE_BASE/logs" "$DATA_DIR"
+mkdir -p "$RDFSOLVE_BASE/logs" "$OUTPUT_DIR" "$DATA_DIR"
 
 echo "=========================================="
-echo "RDFSolve Full Pipeline"
+echo "RDFSolve Step 02: Local Mining"
 echo "=========================================="
 echo "Date: $(date)"
 echo "Job ID: ${SLURM_JOB_ID:-local}"
@@ -53,14 +52,22 @@ if [ ! -f "$QLEVER_IMAGE" ]; then
     singularity pull --disable-cache "$QLEVER_IMAGE" docker://docker.io/adfreiburg/qlever:latest
 fi
 
-# Run full pipeline
-python "$RDFSOLVE_REPO/scripts/pipeline.py" \
-    --skip-providers $SKIP_PROVIDERS \
-    --output-dir "$OUTPUT_DIR" \
-    --data-dir "$DATA_DIR" \
-    --timeout "$TIMEOUT"
+# Health check: test downloads before mining
+echo "Running download health check..."
+python "$RDFSOLVE_REPO/scripts/check_downloads.py" --output "$OUTPUT_DIR/download_status.json"
+
+# Run pipeline - local only
+PIPELINE_ARGS="--local-only --output-dir $OUTPUT_DIR --data-dir $DATA_DIR --timeout $TIMEOUT --download-status-file $OUTPUT_DIR/download_status.json --skip-mappings --skip-inference --skip-analysis"
+if [ -n "$SKIP_PROVIDERS" ]; then
+    PIPELINE_ARGS="$PIPELINE_ARGS --skip-providers $SKIP_PROVIDERS"
+fi
+if [ "$SKIP_COMPLETED" = "true" ]; then
+    PIPELINE_ARGS="$PIPELINE_ARGS --skip-completed"
+fi
+
+python "$RDFSOLVE_REPO/scripts/pipeline.py" $PIPELINE_ARGS
 
 echo "=========================================="
-echo "Full pipeline complete: $(date)"
-echo "Results: $OUTPUT_DIR"
+echo "Step 02 complete: $(date)"
+echo "Output: $OUTPUT_DIR"
 echo "=========================================="

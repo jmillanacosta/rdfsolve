@@ -71,6 +71,7 @@ dependencies = [
     "linkml-runtime>=1.10.0",  # Must match linkml major.minor — 1.9.x removed Format.JSON used by linkml<1.10
     "deprecated>=1.2.13",  # Required by linkml-runtime
     "pyld",
+    "datamodel-code-generator>=0.25.0",  # Pydantic code generation from JSON Schema
     # Utility libraries
     "more_itertools", # missing from itertools in stdlib
     "tqdm", # progress bars

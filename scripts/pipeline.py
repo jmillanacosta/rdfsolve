@@ -71,6 +71,73 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
+# Schema export helper
+
+
+def export_all_formats(schema, output_dir: Path, base_name: str, suffix: str = "") -> None:
+    """Export schema to all supported formats with enrichment features.
+
+    Generates:
+    - JSON-LD schema (with descriptions, cardinality, examples)
+    - VoID Turtle
+    - JSON Schema (domain classes only, no metadata)
+    - Pydantic models (domain classes only)
+    - SHACL shapes (with constraints)
+
+    Parameters
+    ----------
+    schema
+        Mined schema object
+    output_dir
+        Directory to write outputs
+    base_name
+        Base filename (e.g., "aopwikirdf")
+    suffix
+        Optional suffix (e.g., "_remote", "_local")
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1. JSON-LD (with all enrichments)
+    schema_path = output_dir / f"{base_name}{suffix}_schema.jsonld"
+    schema_path.write_text(
+        json.dumps(schema.to_jsonld(), indent=2),
+        encoding="utf-8",
+    )
+
+    # 2. VoID Turtle
+    void_path = output_dir / f"{base_name}{suffix}_void.ttl"
+    try:
+        void_graph = schema.to_void_graph()
+        if void_graph:
+            void_ttl = void_graph.serialize(format="turtle")
+            void_path.write_text(void_ttl, encoding="utf-8")
+    except Exception as e:
+        log.warning(f"[{base_name}] Could not generate VoID: {e}")
+
+    # 3. JSON Schema (exclude metadata classes by default)
+    jsonschema_path = output_dir / f"{base_name}{suffix}_schema.json"
+    try:
+        jsonschema = schema.to_jsonschema(schema_name=base_name, exclude_metadata=True)
+        jsonschema_path.write_text(json.dumps(jsonschema, indent=2), encoding="utf-8")
+    except Exception as e:
+        log.warning(f"[{base_name}] Could not generate JSON Schema: {e}")
+
+    # 4. Pydantic models (exclude metadata classes by default)
+    pydantic_path = output_dir / f"{base_name}{suffix}_models.py"
+    try:
+        schema.to_pydantic_file(str(pydantic_path), schema_name=base_name, exclude_metadata=True)
+    except Exception as e:
+        log.warning(f"[{base_name}] Could not generate Pydantic models: {e}")
+
+    # 5. SHACL shapes (direct rdflib generation with constraints)
+    shacl_path = output_dir / f"{base_name}{suffix}_shapes.ttl"
+    try:
+        shacl_ttl = schema.to_shacl(schema_name=base_name, closed=True)
+        shacl_path.write_text(shacl_ttl, encoding="utf-8")
+    except Exception as e:
+        log.warning(f"[{base_name}] Could not generate SHACL shapes: {e}")
+
+
 # Configuration
 
 
@@ -462,19 +529,8 @@ class RemoteMiningStage(Stage):
             source.failure_count = 0
             source.endpoint_down = False
 
-            schema_path.write_text(
-                json.dumps(schema.to_jsonld(), indent=2),
-                encoding="utf-8",
-            )
-
-            void_path = source_output_dir / f"{source.name}{suffix}_void.ttl"
-            try:
-                void_graph = schema.to_void_graph()
-                if void_graph:
-                    void_ttl = void_graph.serialize(format="turtle")
-                    void_path.write_text(void_ttl, encoding="utf-8")
-            except Exception as e:
-                log.warning(f"[{source.name}] Could not generate VoID: {e}")
+            # Export all formats (JSON-LD, VoID, JSON Schema, Pydantic, SHACL)
+            export_all_formats(schema, source_output_dir, source.name, suffix)
 
             if miner.last_report:
                 report = {
@@ -843,17 +899,8 @@ class LocalMiningStage(Stage):
 
         schema = miner.mine(dataset_name=source.name)
 
-        schema_path = output_dir / f"{source.name}{suffix}_schema.jsonld"
-        schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
-
-        void_path = output_dir / f"{source.name}{suffix}_void.ttl"
-        try:
-            void_graph = schema.to_void_graph()
-            if void_graph:
-                void_ttl = void_graph.serialize(format="turtle")
-                void_path.write_text(void_ttl, encoding="utf-8")
-        except Exception as e:
-            log.warning(f"  Could not generate VoID: {e}")
+        # Export all formats (JSON-LD, VoID, JSON Schema, Pydantic, SHACL)
+        export_all_formats(schema, output_dir, source.name, suffix)
 
 
 class GroupedMiningStage(LocalMiningStage):
@@ -1225,7 +1272,9 @@ class GroupedMiningStage(LocalMiningStage):
         from rdfsolve import SchemaMiner
 
         endpoint = f"http://localhost:{port}"
-        graph_uris = [f"http://rdfsolve.org/graph/{s.name}" for s in sources]
+        # NOTE: Grouped QLever instances load all data into the DEFAULT graph,
+        # so we DON'T pass graph_uris here - the miner will query the default graph
+        # which contains all the combined data from all sources in this group.
 
         # Create output directory for this group
         output_dir = self.config.output_dir / f"grouped_{group_name}"
@@ -1236,7 +1285,6 @@ class GroupedMiningStage(LocalMiningStage):
         miner = SchemaMiner(
             endpoint_url=endpoint,
             source_name=group_name,
-            graph_uris=graph_uris,
             timeout=86400.0,
             delay=self.config.delay,
             report_path=str(report_path),
@@ -1244,21 +1292,9 @@ class GroupedMiningStage(LocalMiningStage):
 
         schema = miner.mine(dataset_name=group_name)
 
-        # Save schema as JSON-LD
-        schema_path = output_dir / f"{group_name}_schema.jsonld"
-        schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
-
-        # Save VoID
-        void_path = output_dir / f"{group_name}_void.ttl"
-        try:
-            void_graph = schema.to_void_graph()
-            if void_graph:
-                void_ttl = void_graph.serialize(format="turtle")
-                void_path.write_text(void_ttl, encoding="utf-8")
-        except Exception as e:
-            log.warning(f"  Could not generate VoID: {e}")
-
-        log.info(f"  -> Saved grouped schema to {schema_path}")
+        # Export all formats (JSON-LD, VoID, JSON Schema, Pydantic, SHACL)
+        export_all_formats(schema, output_dir, group_name, "")
+        log.info(f"  -> Saved grouped schema to {output_dir}")
 
     def _ensure_qlever_image(self):
         image_path = self.config.data_dir / "qlever.sif"
@@ -1552,19 +1588,9 @@ class LsLodCloudStage(Stage):
 
         schema = miner.mine(dataset_name="lslod_cloud")
 
-        schema_path = output_dir / "lslod_cloud_schema.jsonld"
-        schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
-
-        void_path = output_dir / "lslod_cloud_void.ttl"
-        try:
-            void_graph = schema.to_void_graph()
-            if void_graph:
-                void_ttl = void_graph.serialize(format="turtle")
-                void_path.write_text(void_ttl, encoding="utf-8")
-        except Exception as e:
-            log.warning(f"  Could not generate VoID: {e}")
-
-        log.info(f"  -> Saved LSLOD Cloud schema to {schema_path}")
+        # Export all formats (JSON-LD, VoID, JSON Schema, Pydantic, SHACL)
+        export_all_formats(schema, output_dir, "lslod_cloud", "")
+        log.info(f"  -> Saved LSLOD Cloud schema to {output_dir}")
 
         log.info("  Generating SSSOM class mappings...")
         self._generate_sssom_mappings(source_data, output_dir)

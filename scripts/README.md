@@ -14,15 +14,40 @@ python scripts/pipeline.py --remote-only
 # Mine specific sources
 python scripts/pipeline.py --sources wikipathways aopwikirdf
 
+# Mine local RDF dumps
+python scripts/pipeline.py --local-only
+
 # Full pipeline
 python scripts/pipeline.py
 ```
 
-### `test_metadata_endpoints.py`
+**Outputs per source:**
+- `{source}_schema.jsonld` - JSON-LD with descriptions, cardinality, examples
+- `{source}_void.ttl` - VoID metadata
+- `{source}_schema.json` - JSON Schema with `$ref` (domain classes only)
+- `{source}_models.py` - Pydantic models (domain classes only)
+- `{source}_shapes.ttl` - SHACL shapes with constraints
+- `{source}_report.json` - Mining statistics
+
+### `check_metadata_endpoints.py`
 Test metadata capture across all endpoints.
 
 ```bash
-python scripts/test_metadata_endpoints.py
+python scripts/check_metadata_endpoints.py
+```
+
+### `check_endpoints.py`
+Health check for SPARQL endpoints.
+
+```bash
+python scripts/check_endpoints.py --output endpoint_status.json
+```
+
+### `check_downloads.py`
+Health check for downloadable RDF dumps.
+
+```bash
+python scripts/check_downloads.py --output download_status.json
 ```
 
 ## Mapping Scripts
@@ -60,49 +85,52 @@ python scripts/build_graphs.py \
 
 ## SLURM Jobs
 
-Set SLURM parameters (cpus, mem, time) from the slurm `.sh` files.
+Numbered pipeline for large-scale HPC mining. Run from `scripts/` directory:
 
-### `slurm_remote.sh`
+### `01_mine_remote.sh`
 Mine remote SPARQL endpoints.
 
 ```bash
-sbatch scripts/slurm_remote.sh
+sbatch 01_mine_remote.sh
 ```
 
-### `slurm_local.sh`
+Queries remote SPARQL endpoints and generates all output formats.
+
+### `02_mine_local.sh`
 Download and index local RDF dumps with QLever.
 
 ```bash
-sbatch scripts/slurm_local.sh
+sbatch 02_mine_local.sh
 ```
 
-### `slurm_inference.sh`
-Run mapping inference pipeline.
+Downloads RDF dumps, indexes with QLever, mines schemas.
+
+### `03_mine_grouped.sh`
+Grouped mining + LSLOD cloud.
 
 ```bash
-sbatch scripts/slurm_inference.sh
+sbatch 03_mine_grouped.sh
 ```
 
-### `slurm_graphs.sh`
-Build connectivity graphs.
+Mines multi-file provider groups and creates mega-QLever instance for cross-dataset SSSOM mapping generation.
+
+### `04_mappings.sh`
+Generate cross-dataset mappings.
 
 ```bash
-sbatch scripts/slurm_graphs.sh
+sbatch 04_mappings.sh
 ```
 
-### `slurm_full.sh`
-Run complete pipeline.
+Runs the mapping pipeline: external mappings, cross-references with classes, class mapping inference, and consolidation with semra.
+
+### `05_analysis.sh`
+Analysis and visualization.
 
 ```bash
-sbatch scripts/slurm_full.sh
+sbatch 05_analysis.sh
 ```
 
-### `slurm_void_discovery.sh`
-Discover VoID descriptions.
-
-```bash
-sbatch scripts/slurm_void_discovery.sh
-```
+Generates cross-dataset analysis, graphs, and reports.
 
 ## Environment Variables
 
@@ -111,6 +139,17 @@ Override defaults via environment:
 ```bash
 export RDFSOLVE_BASE=/path/to/rdfsolve
 export OUTPUT_DIR=/path/to/output
+export DATA_DIR=/path/to/data
 export TIMEOUT=600
-sbatch scripts/slurm_remote.sh
+export SKIP_COMPLETED=true  # Skip sources with existing output
+sbatch 01_mine_remote.sh
 ```
+
+Default values:
+- `RDFSOLVE_BASE`: `$(pwd)/..` (parent of scripts directory)
+- `OUTPUT_DIR`: `$RDFSOLVE_BASE/output_YYYY-MM-DD`
+- `DATA_DIR`: `$RDFSOLVE_BASE/data`
+- `SKIP_COMPLETED`: `false` (re-mine all sources)
+- `TIMEOUT`: `300` (remote), `600` (local)
+- `SKIP_PROVIDERS`: Space-separated list to exclude (e.g., `"idsm bio2rdf"`)
+- SLURM logs: `logs/%x_%j.out` (relative to execution directory)

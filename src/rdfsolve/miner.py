@@ -223,16 +223,19 @@ def _build_label_query(
     uris: list[str],
     graph_uris: list[str] | None,
 ) -> str:
-    """Fetch labels for a set of URIs.
+    """Fetch labels and descriptions for a set of URIs.
 
     Returns bindings with ``?uri``, ``?rdfsLabel``, ``?dcTitle``,
-    ``?iaoLabel``, ``?skosPrefLabel``, ``?skosAltLabel``.
-    Priority is resolved in Python via :func:`pick_label`.
+    ``?iaoLabel``, ``?skosPrefLabel``, ``?skosAltLabel``,
+    ``?rdfsComment``, ``?dcDescription``, ``?skosDefinition``,
+    ``?schemaDescription``, ``?iaoDefinition``, ``?dcDesc``.
+    Priority is resolved in Python via :func:`pick_label` and :func:`pick_description`.
     """
     values = " ".join(f"(<{u}>)" for u in uris)
     g_open, g_close = _graph_clause(graph_uris)
     q = f"""\
 SELECT ?uri ?rdfsLabel ?dcTitle ?iaoLabel ?skosPrefLabel ?skosAltLabel
+       ?rdfsComment ?dcDescription ?skosDefinition ?schemaDescription ?iaoDefinition ?dcDesc
 WHERE {{
   VALUES (?uri) {{ {values} }}
   {g_open}
@@ -242,9 +245,86 @@ WHERE {{
     OPTIONAL {{ ?uri <http://purl.obolibrary.org/obo/IAO_0000118> ?iaoLabel . }}
     OPTIONAL {{ ?uri <http://www.w3.org/2004/02/skos/core#prefLabel> ?skosPrefLabel . }}
     OPTIONAL {{ ?uri <http://www.w3.org/2004/02/skos/core#altLabel> ?skosAltLabel . }}
+    OPTIONAL {{ ?uri <http://www.w3.org/2000/01/rdf-schema#comment> ?rdfsComment . }}
+    OPTIONAL {{ ?uri <http://purl.org/dc/terms/description> ?dcDescription . }}
+    OPTIONAL {{ ?uri <http://www.w3.org/2004/02/skos/core#definition> ?skosDefinition . }}
+    OPTIONAL {{ ?uri <http://schema.org/description> ?schemaDescription . }}
+    OPTIONAL {{ ?uri <http://purl.obolibrary.org/obo/IAO_0000115> ?iaoDefinition . }}
+    OPTIONAL {{ ?uri <http://purl.org/dc/elements/1.1/description> ?dcDesc . }}
   {g_close}
 }}"""
     return q
+
+
+def pick_description(row: dict[str, Any]) -> str | None:
+    """Pick description from query results in priority order.
+
+    Tries description predicates in order:
+    rdfs:comment, dcterms:description, skos:definition,
+    schema:description, obo:IAO_0000115, dc:description.
+    """
+    for key in (
+        "rdfsComment",
+        "dcDescription",
+        "skosDefinition",
+        "schemaDescription",
+        "iaoDefinition",
+        "dcDesc",
+    ):
+        val = row.get(key, {}).get("value")
+        if val and isinstance(val, str):
+            return val
+    return None
+
+
+def _build_cardinality_query(
+    subject_class: str,
+    graph_uris: list[str] | None,
+) -> str:
+    """Build query to get min and max count per property for a class.
+
+    Returns min and max occurrences of each property across all subjects
+    of the given class.
+    """
+    g_open, g_close = _graph_clause(graph_uris)
+    return f"""\
+SELECT ?p (MIN(?cnt) AS ?minCnt) (MAX(?cnt) AS ?maxCnt)
+WHERE {{
+  {{
+    SELECT ?s ?p (COUNT(?o) AS ?cnt)
+    WHERE {{
+      {g_open}
+        ?s a <{subject_class}> .
+        ?s ?p ?o .
+      {g_close}
+    }}
+    GROUP BY ?s ?p
+  }}
+}}
+GROUP BY ?p"""
+
+
+def _build_example_query(
+    subject_class: str,
+    property_uri: str,
+    graph_uris: list[str] | None,
+    limit: int = 5,
+) -> str:
+    """Build query to get example instances and values.
+
+    Returns sample subject URIs and object values for a given
+    class-property pair.
+    """
+    g_open, g_close = _graph_clause(graph_uris)
+    return f"""\
+SELECT DISTINCT ?s ?o
+WHERE {{
+  {g_open}
+    ?s a <{subject_class}> .
+    ?s <{property_uri}> ?o .
+  {g_close}
+}}
+LIMIT {limit}"""
 
 
 # Two-phase query builders (class-scoped, for large endpoints)
@@ -1087,6 +1167,21 @@ class SchemaMiner:
             raise
         return patterns
 
+    def _run_cardinality_phase(
+        self,
+        patterns: list[SchemaPattern],
+    ) -> list[SchemaPattern]:
+        """Run the cardinality phase and return enriched patterns."""
+        phase = self._report.start_phase("cardinality")
+        logger.info("Fetching cardinality …")
+        try:
+            patterns = self._enrich_cardinality(patterns)
+            self._report.finish_phase(phase, items=len(patterns))
+        except Exception as exc:
+            self._report.finish_phase(phase, error=str(exc))
+            raise
+        return patterns
+
     def _run_labels_phase(
         self,
         patterns: list[SchemaPattern],
@@ -1098,6 +1193,21 @@ class SchemaMiner:
         patterns = self._enrich_labels(patterns)
         self._report.finish_phase(phase, items=len(uris_before))
         return patterns, uris_before
+
+    def _run_examples_phase(
+        self,
+        patterns: list[SchemaPattern],
+    ) -> list[SchemaPattern]:
+        """Run the examples phase and return enriched patterns."""
+        phase = self._report.start_phase("examples")
+        logger.info("Fetching examples …")
+        try:
+            patterns = self._enrich_examples(patterns)
+            self._report.finish_phase(phase, items=len(patterns))
+        except Exception as exc:
+            self._report.finish_phase(phase, error=str(exc))
+            raise
+        return patterns
 
     @staticmethod
     def _collect_class_property_sets(
@@ -1216,7 +1326,9 @@ class SchemaMiner:
         if self.counts:
             patterns = self._run_counts_phase(patterns)
 
+        patterns = self._run_cardinality_phase(patterns)
         patterns, uris_before = self._run_labels_phase(patterns)
+        patterns = self._run_examples_phase(patterns)
 
         dt = time.monotonic() - t0
         logger.info(
@@ -2463,12 +2575,144 @@ class SchemaMiner:
 
         return enriched
 
+    def _enrich_cardinality(
+        self,
+        patterns: list[SchemaPattern],
+    ) -> list[SchemaPattern]:
+        """Fetch min and max cardinality for properties per class.
+
+        Groups patterns by subject_class, queries cardinality per class,
+        and updates patterns with min_count and max_count.
+        """
+        from collections import defaultdict
+
+        class_patterns: dict[str, list[SchemaPattern]] = defaultdict(list)
+        for pat in patterns:
+            class_patterns[pat.subject_class].append(pat)
+
+        cardinality_map: dict[tuple[str, str], tuple[int, int]] = {}
+
+        for subject_class in class_patterns:
+            t0 = time.monotonic()
+            try:
+                q = _build_cardinality_query(subject_class, self.graph_uris)
+                result = self._helper.select(q, purpose="cardinality")
+                if hasattr(self, "_rc"):
+                    self._report.record_query(
+                        "cardinality",
+                        time.monotonic() - t0,
+                    )
+                bindings = result.get("results", {}).get("bindings", [])
+                for b in bindings:
+                    prop = b.get("p", {}).get("value", "")
+                    min_val = b.get("minCnt", {}).get("value")
+                    max_val = b.get("maxCnt", {}).get("value")
+                    if prop and min_val is not None and max_val is not None:
+                        try:
+                            cardinality_map[(subject_class, prop)] = (
+                                int(min_val),
+                                int(max_val),
+                            )
+                        except (ValueError, TypeError):
+                            pass
+            except Exception as e:
+                if hasattr(self, "_rc"):
+                    self._report.record_query(
+                        "cardinality",
+                        time.monotonic() - t0,
+                        success=False,
+                    )
+                logger.warning(
+                    "Cardinality query failed for class %s: %s",
+                    subject_class,
+                    e,
+                )
+
+        enriched = []
+        for pat in patterns:
+            key = (pat.subject_class, pat.property_uri)
+            if key in cardinality_map:
+                min_c, max_c = cardinality_map[key]
+                enriched.append(pat.model_copy(update={"min_count": min_c, "max_count": max_c}))
+            else:
+                enriched.append(pat)
+        return enriched
+
+    def _enrich_examples(
+        self,
+        patterns: list[SchemaPattern],
+    ) -> list[SchemaPattern]:
+        """Fetch example instances and values for each pattern.
+
+        Queries sample subject-object pairs for each class-property
+        combination and stores them as examples.
+        """
+        enriched = []
+        for pat in patterns:
+            t0 = time.monotonic()
+            try:
+                q = _build_example_query(
+                    pat.subject_class,
+                    pat.property_uri,
+                    self.graph_uris,
+                    limit=5,
+                )
+                result = self._helper.select(q, purpose="examples")
+                if hasattr(self, "_rc"):
+                    self._report.record_query(
+                        "examples",
+                        time.monotonic() - t0,
+                    )
+                bindings = result.get("results", {}).get("bindings", [])
+
+                subject_examples: list[str] = []
+                value_examples: list[str] = []
+
+                for b in bindings:
+                    s_val = b.get("s", {}).get("value")
+                    o_val = b.get("o", {}).get("value")
+
+                    if s_val and s_val not in subject_examples:
+                        subject_examples.append(s_val)
+
+                    if o_val and o_val not in value_examples:
+                        value_examples.append(o_val)
+
+                updates = {}
+                if subject_examples:
+                    updates["subject_examples"] = subject_examples[:5]
+                if value_examples:
+                    updates["value_examples"] = value_examples[:5]
+
+                if updates:
+                    enriched.append(pat.model_copy(update=updates))
+                else:
+                    enriched.append(pat)
+
+            except Exception as e:
+                if hasattr(self, "_rc"):
+                    self._report.record_query(
+                        "examples",
+                        time.monotonic() - t0,
+                        success=False,
+                    )
+                logger.debug(
+                    "Examples query failed for %s / %s: %s",
+                    pat.subject_class,
+                    pat.property_uri,
+                    e,
+                )
+                enriched.append(pat)
+
+        return enriched
+
     def _fetch_label_batch(
         self,
         batch: list[str],
         label_map: dict[str, str],
+        description_map: dict[str, str] | None = None,
     ) -> None:
-        """Query labels for one batch of URIs and update label_map in place.
+        """Query labels and descriptions for one batch of URIs.
 
         Parameters
         ----------
@@ -2477,6 +2721,8 @@ class SchemaMiner:
         label_map:
             Mapping that will be updated with ``{uri: label}`` entries.
             URIs already present in the map are skipped.
+        description_map:
+            Mapping that will be updated with ``{uri: description}`` entries.
         """
         t0 = time.monotonic()
         try:
@@ -2505,6 +2751,10 @@ class SchemaMiner:
                     skos_pref_label=skos_pref,
                     skos_alt_label=skos_alt,
                 )
+                if description_map is not None:
+                    desc = pick_description(b)
+                    if desc:
+                        description_map[uri] = desc
         except Exception as e:
             if hasattr(self, "_rc"):
                 self._report.record_query(
@@ -2518,7 +2768,7 @@ class SchemaMiner:
         self,
         patterns: list[SchemaPattern],
     ) -> list[SchemaPattern]:
-        """Fetch rdfs:label / dc:title for all URIs in patterns.
+        """Fetch labels and descriptions for all URIs in patterns.
 
         URIs are queried in batches (max 50 per request) to avoid
         HTTP 414 URI-too-long errors on endpoints that reject large
@@ -2535,25 +2785,29 @@ class SchemaMiner:
         if not all_uris:
             return patterns
 
-        # Fetch labels in batches to keep query size small
+        # Fetch labels and descriptions in batches
         label_map: dict[str, str] = {}
+        description_map: dict[str, str] = {}
         batch_size = 50
         uri_list = sorted(all_uris)
 
         for start in range(0, len(uri_list), batch_size):
             batch = uri_list[start : start + batch_size]
-            self._fetch_label_batch(batch, label_map)
+            self._fetch_label_batch(batch, label_map, description_map)
 
-        # Fill in labels using local name as fallback
-        enriched = _enrich_with_local(patterns, label_map)
+        # Fill in labels and descriptions
+        enriched = _enrich_with_local(patterns, label_map, description_map)
 
         return enriched
 
 
 def _enrich_with_local(
-    patterns: list[SchemaPattern], label_map: dict[str, str]
+    patterns: list[SchemaPattern],
+    label_map: dict[str, str],
+    description_map: dict[str, str] | None = None,
 ) -> list[SchemaPattern]:
     enriched: list[SchemaPattern] = []
+    desc_map = description_map or {}
     for pat in patterns:
         updates: dict[str, Any] = {}
         updates["subject_label"] = label_map.get(
@@ -2571,6 +2825,10 @@ def _enrich_with_local(
                 pat.object_class,
                 get_local_name(pat.object_class),
             )
+        updates["subject_description"] = desc_map.get(pat.subject_class)
+        updates["property_description"] = desc_map.get(pat.property_uri)
+        if pat.object_class not in ("Literal", "Resource"):
+            updates["object_description"] = desc_map.get(pat.object_class)
         enriched.append(pat.model_copy(update=updates))
     return enriched
 
