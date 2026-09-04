@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from rdfsolve.sparql_helper import SparqlHelper
 
@@ -54,7 +54,10 @@ class ClassIndex(BaseModel):
         description="Map from entity IRI to class info",
     )
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    class Config:
+        """Pydantic config."""
+
+        arbitrary_types_allowed = True
 
     def get_classes(self, entity_iri: str) -> set[str]:
         """Get all classes for an entity, or empty set if not indexed."""
