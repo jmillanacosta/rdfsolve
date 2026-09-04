@@ -2,6 +2,8 @@
 
 Converts a rdfsolve JSON-LD schema dict to SHACL Turtle via the
 LinkML -> ShaclGenerator pipeline.
+
+To be deprecated in favor of s SHACL-first conversion from MinedSchema.
 """
 
 from __future__ import annotations

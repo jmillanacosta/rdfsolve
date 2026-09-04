@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -47,7 +48,7 @@ DEFAULT_DELAYS = {
 }
 
 # Timeout for health checks (shorter than mining timeout)
-HEALTH_CHECK_TIMEOUT = 3.0
+HEALTH_CHECK_TIMEOUT = 1.0
 
 # Simple ASK query for health check
 HEALTH_CHECK_QUERY = "ASK WHERE { ?s ?p ?o }"
@@ -208,12 +209,14 @@ def get_polite_delay(source: SourceModel) -> float:
 def health_check_all_endpoints(
     sources_yaml: str | Path,
     save: bool = True,
+    max_workers: int = 20,
 ) -> dict[str, EndpointHealthCheck]:
-    """Check health of all endpoints and optionally save status to sources.yaml.
+    """Check health of all endpoints concurrently and save status to sources.yaml.
 
     Args:
         sources_yaml: Path to sources.yaml file.
         save: Save updated status to file if True.
+        max_workers: Maximum number of concurrent health checks.
 
     Returns:
         Dict mapping source name to health check result.
@@ -224,25 +227,38 @@ def health_check_all_endpoints(
     # Only check sources with endpoints (skip local-only sources)
     sources_with_endpoints = [s for s in registry.sources if s.endpoint]
 
-    logger.info(f"Checking health of {len(sources_with_endpoints)} endpoints...")
+    logger.info(f"Checking health of {len(sources_with_endpoints)} endpoints concurrently...")
 
-    for i, source in enumerate(sources_with_endpoints, 1):
-        logger.info(f"[{i}/{len(sources_with_endpoints)}] {source.name}")
-
+    def check_source(source: SourceModel) -> tuple[SourceModel, EndpointHealthCheck]:
         health = check_endpoint_health(source.endpoint)
-        results[source.name] = health
-
-        logger.info(
-            f"  Status: {health.status}, Response time: {health.response_time:.2f}s"
-            if health.response_time
-            else f"  Status: {health.status}"
-        )
-
-        # Update source model
         update_endpoint_status(source, health)
+        return source, health
 
-        # Delay between health checks
-        time.sleep(0.5)
+    # Run health checks concurrently
+    completed = 0
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_source = {
+            executor.submit(check_source, source): source for source in sources_with_endpoints
+        }
+
+        for future in as_completed(future_to_source):
+            source = future_to_source[future]
+            try:
+                _, health = future.result()
+                results[source.name] = health
+                completed += 1
+
+                status_msg = f"{health.status}"
+                if health.response_time:
+                    status_msg += f" ({health.response_time:.2f}s)"
+
+                logger.info(
+                    f"[{completed}/{len(sources_with_endpoints)}] {source.name}: {status_msg}"
+                )
+
+            except Exception as e:
+                logger.error(f"Health check failed for {source.name}: {e}")
+                completed += 1
 
     if save:
         # Write back to YAML

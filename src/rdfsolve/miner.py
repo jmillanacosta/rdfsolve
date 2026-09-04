@@ -15,6 +15,37 @@ from typing import TYPE_CHECKING, Any
 from pydantic import ValidationError
 
 from rdfsolve._uri import get_local_name, pick_label
+from rdfsolve.mining.query_builders import (
+    _DECOMP_CHUNK,
+    _build_batched_blank_node_query,
+    _build_batched_literal_count_query,
+    _build_batched_literal_query,
+    _build_batched_typed_count_query,
+    _build_batched_typed_object_query,
+    _build_batched_untyped_count_query,
+    _build_batched_untyped_uri_query,
+    _build_blank_node_query,
+    _build_blank_node_query_plain,
+    _build_cardinality_query,
+    _build_class_discovery_query,
+    _build_class_discovery_query_plain,
+    _build_declared_classes_query,
+    _build_example_query,
+    _build_label_query,
+    _build_literal_for_class_property_query,
+    _build_literal_query,
+    _build_literal_query_plain,
+    _build_properties_for_class_query,
+    _build_typed_object_for_class_property_query,
+    _build_typed_object_query,
+    _build_typed_object_query_plain,
+    _build_untyped_uri_query,
+    _build_untyped_uri_query_plain,
+    _graph_clause,
+    _values_block,
+    pick_description,
+)
+from rdfsolve.mining.types import ONTOLOGY_METACLASSES
 from rdfsolve.models import (
     AboutMetadata,
     MinedSchema,
@@ -43,11 +74,17 @@ __all__ = [
     "mine_schema",
 ]
 
+# SPARQL query templates moved to rdfsolve.mining.query_builders
 
-# SPARQL query templates
+# _ReportCollector - report accumulator
 
 
-def _graph_clause(
+# Kept for backward compatibility - now imported from mining.query_builders above
+# All query builder functions (_graph_clause, _build_*_query, etc.) have been
+# moved to rdfsolve.mining.query_builders for better modularity
+
+
+def _graph_clause_REMOVED_SEE_IMPORTS(
     graph_uris: list[str] | None,
 ) -> tuple[str, str]:
     """Return (open, close) strings for an optional GRAPH clause.
@@ -1143,13 +1180,21 @@ class SchemaMiner:
         patterns: list[SchemaPattern],
         declared_class_count: int = 0,
         used_type_count: int = 0,
+        discovered_metadata: dict[str, Any] | None = None,
     ) -> AboutMetadata:
         """Construct :class:`AboutMetadata` from the completed mining run.
 
-        Only uses user-provided metadata. Auto-queried metadata goes to MiningReport.
+        Merges user-provided metadata with auto-discovered metadata from the endpoint.
         """
         finished_at = self._report.report.finished_at
         total_classes = declared_class_count + used_type_count
+
+        # Calculate unique property count from patterns
+        unique_properties = {p.property_uri for p in patterns}
+        property_count = len(unique_properties)
+
+        # Merge discovered metadata (prefer discovered over None)
+        discovered = discovered_metadata or {}
 
         return AboutMetadata.build(
             endpoint=self.endpoint_url,
@@ -1159,12 +1204,23 @@ class SchemaMiner:
             class_count=total_classes,
             declared_class_count=declared_class_count,
             used_type_count=used_type_count,
+            property_count=property_count,
             strategy=strategy,
             started_at=started_at,
             finished_at=finished_at,
             total_duration_s=self._report.report.total_duration_s,
             authors=self.authors,
             qlever_version=self.qlever_version,
+            # Discovered metadata
+            title=discovered.get("title"),
+            description=discovered.get("description"),
+            source_license=discovered.get("source_license"),
+            source_version=discovered.get("source_version"),
+            source_issued=discovered.get("source_issued"),
+            source_modified=discovered.get("source_modified"),
+            source_publisher=discovered.get("source_publisher"),
+            source_creator=discovered.get("source_creator"),
+            homepage=discovered.get("homepage"),
         )
 
     @staticmethod
@@ -1270,6 +1326,7 @@ class SchemaMiner:
             patterns,
             declared_class_count=len(declared_in_patterns),
             used_type_count=len(used_types),
+            discovered_metadata=discovered_metadata if discovered_metadata else {},
         )
         schema = MinedSchema(patterns=patterns, about=about)
 
@@ -1603,19 +1660,42 @@ class SchemaMiner:
                 chunk_size=ccs,
             )
         # Extract class URIs - only keep IRI bindings, skip literals/bnodes
+        # Filter out ontology metaclasses (owl:Class, rdfs:Class, etc.)
         classes = []
         non_iri_count = 0
+        metaclass_count = 0
         for b in class_bindings:
             binding = b.get("class", {})
             if binding.get("type") == "uri":
                 value = binding.get("value", "")
                 if value:
-                    classes.append(value)
+                    if value in ONTOLOGY_METACLASSES:
+                        metaclass_count += 1
+                    else:
+                        classes.append(value)
             else:
                 non_iri_count += 1
         if non_iri_count:
             logger.info(f"  -> Skipped {non_iri_count} non-IRI type values")
-        logger.info(f"  -> {len(classes)} classes found")
+        if metaclass_count:
+            logger.info(f"  -> Filtered {metaclass_count} ontology metaclasses")
+        logger.info(f"  -> {len(classes)} data classes found")
+
+        # Merge with ontology classes if available
+        if hasattr(self, "_ontology_classes") and self._ontology_classes:
+            ontology_classes = self._ontology_classes
+            # Filter out metaclasses from ontology classes too
+            ontology_classes_filtered = [
+                c for c in ontology_classes if c not in ONTOLOGY_METACLASSES
+            ]
+            # Merge, keeping unique classes
+            classes_set = set(classes)
+            new_from_ontology = [c for c in ontology_classes_filtered if c not in classes_set]
+            if new_from_ontology:
+                logger.info(f"  -> Adding {len(new_from_ontology)} classes from ontology structure")
+                classes.extend(new_from_ontology)
+            logger.info(f"  -> {len(classes)} total classes (data + ontology)")
+
         self._report.finish_phase(p1, items=len(classes))
 
         # Phase 2 - batched per-class pattern discovery

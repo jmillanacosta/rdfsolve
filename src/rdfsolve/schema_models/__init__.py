@@ -16,12 +16,27 @@ from rdfsolve.schema_models._constants import (
 from rdfsolve.schema_models.core import (
     AboutMetadata,
     MinedSchema,
+    MiningResult,
     PatternType,
     SchemaPattern,
     _merge_into_list,
     _object_value_and_key,
     _parse_schema_entry,
     _parse_schema_graph,
+)
+from rdfsolve.schema_models.metadata import (
+    DatasetDescription,
+    MetadataPatterns,
+    ServiceDescription,
+)
+from rdfsolve.schema_models.ontology import (
+    DomainAssertion,
+    InverseRelation,
+    OntologyStructure,
+    PropertyCharacteristic,
+    RangeAssertion,
+    Restriction,
+    SubClassRelation,
 )
 from rdfsolve.schema_models.rdfconfig import to_rdfconfig
 from rdfsolve.schema_models.report import (
@@ -65,14 +80,27 @@ __all__ = [
     "_URI_SCHEMES",
     # core
     "AboutMetadata",
+    # metadata
+    "DatasetDescription",
+    # ontology
+    "DomainAssertion",
+    "InverseRelation",
+    "MetadataPatterns",
     "MinedSchema",
     # report
     "MiningReport",
+    "MiningResult",
     "OneShotQueryResult",
+    "OntologyStructure",
     "PatternType",
     "PhaseReport",
+    "PropertyCharacteristic",
     "QueryStats",
+    "RangeAssertion",
+    "Restriction",
     "SchemaPattern",
+    "ServiceDescription",
+    "SubClassRelation",
     "_merge_into_list",
     "_object_value_and_key",
     "_parse_schema_entry",

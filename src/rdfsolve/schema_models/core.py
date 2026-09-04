@@ -342,6 +342,11 @@ class AboutMetadata(BaseModel):
         ge=0,
         description="COUNT(DISTINCT ?p) across all patterns",
     )
+    document_count: int | None = Field(
+        None,
+        ge=0,
+        description="Number of RDF documents in the dataset (for local/downloaded datasets, void:documents)",
+    )
 
     # Quality Metrics
     coverage_score: float | None = Field(
@@ -424,6 +429,7 @@ class AboutMetadata(BaseModel):
         triple_count_estimate: int | None = None,
         distinct_subject_count: int | None = None,
         distinct_predicate_count: int | None = None,
+        document_count: int | None = None,
         coverage_score: float | None = None,
         confidence_score: float | None = None,
     ) -> AboutMetadata:
@@ -478,6 +484,7 @@ class AboutMetadata(BaseModel):
             triple_count_estimate=triple_count_estimate,
             distinct_subject_count=distinct_subject_count,
             distinct_predicate_count=distinct_predicate_count,
+            document_count=document_count,
             # Quality
             coverage_score=coverage_score,
             confidence_score=confidence_score,
@@ -729,8 +736,12 @@ class MinedSchema(BaseModel):
 
     # VoID graph export
 
-    def to_void_graph(self) -> Any:
+    def to_void_graph(self, base_url: str | None = None) -> Any:
         """Build an rdflib VoID Graph from the mined patterns.
+
+        Args:
+            base_url: Base URL for void:dataDump (e.g., "https://rdfsolve.bigcat-bioinformatics.nl").
+                     If provided, generates dataDump URL as {base_url}/{dataset_name}/void.ttl
 
         Allows feeding the result into VoidParser for downstream
         conversion to LinkML, SHACL, RDF-config, etc.
@@ -746,11 +757,13 @@ class MinedSchema(BaseModel):
         # Configure namespaces
         base_uri = get_base_uri()
         void = Namespace("http://rdfs.org/ns/void#")
-        void_ext = Namespace("http://ldf.fi/void-ext#")
         vocab_ns = Namespace(f"{base_uri}/vocab#")
         partition_ns = Namespace(f"{base_uri}/schema#")
 
         g = Graph()
+
+        # void-ext namespace for datatype partitions
+        void_ext = Namespace("http://ldf.fi/void-ext#")
 
         # Bind standard namespaces
         for pfx, ns in (
@@ -784,6 +797,23 @@ class MinedSchema(BaseModel):
             # Use schema namespace for partitions
             base = str(partition_ns)
 
+        # void:DatasetDescription wrapper (W3C VoID spec section 3.1)
+        # The VoID document itself is described as a resource
+        from rdfsolve.version import VERSION
+
+        void_doc_uri = URIRef("")  # <> represents this document
+        g.add((void_doc_uri, RDF.type, void.DatasetDescription))
+
+        # DatasetDescription title includes the source name
+        dataset_display_name = self.about.title or self.about.dataset_name or "Unknown Dataset"
+        g.add(
+            (void_doc_uri, DCTERMS.title, RdfLiteral(f"VoID Description of {dataset_display_name}"))
+        )
+        g.add((void_doc_uri, DCTERMS.creator, RdfLiteral(f"rdfsolve {VERSION}")))
+        if self.about.generated_at:
+            g.add((void_doc_uri, DCTERMS.created, RdfLiteral(self.about.generated_at)))
+        g.add((void_doc_uri, FOAF.primaryTopic, dataset_uri))
+
         # void:Dataset represents the source RDF dataset
         g.add((dataset_uri, RDF.type, void.Dataset))
 
@@ -791,14 +821,44 @@ class MinedSchema(BaseModel):
         if endpoint and not endpoint.startswith(("http://localhost", "http://127.0.0.1")):
             g.add((dataset_uri, void.sparqlEndpoint, URIRef(endpoint)))
 
+        # void:dataDump URL (only for local/downloaded datasets with base_url)
+        if (
+            base_url
+            and self.about.dataset_name
+            and (not endpoint or endpoint.startswith(("http://localhost", "http://127.0.0.1")))
+        ):
+            # Generate dataDump URL pointing to the dump file location
+            datadump_url = f"{base_url.rstrip('/')}/{self.about.dataset_name}/void.ttl"
+            g.add((dataset_uri, void.dataDump, URIRef(datadump_url)))
+
+        # void:documents (only for local/downloaded datasets)
+        if (
+            not endpoint or endpoint.startswith(("http://localhost", "http://127.0.0.1"))
+        ) and self.about.document_count:
+            g.add(
+                (
+                    dataset_uri,
+                    void.documents,
+                    RdfLiteral(self.about.document_count, datatype=XSD.integer),
+                )
+            )
+
         # Title: prefer explicit title from metadata, fallback to dataset_name
         title_value = self.about.title or self.about.dataset_name
         if title_value:
             g.add((dataset_uri, DCTERMS.title, RdfLiteral(title_value)))
 
-        # Description
+        # Description: combine discovered description with provenance info
+        provenance_desc = (
+            f"Mined with rdfsolve {VERSION} on {self.about.generated_at or 'unknown date'}"
+        )
         if self.about.description:
-            g.add((dataset_uri, DCTERMS.description, RdfLiteral(self.about.description)))
+            # Strip trailing period from discovered description if present
+            desc_clean = self.about.description.rstrip(".")
+            full_desc = f"{desc_clean}. {provenance_desc}"
+        else:
+            full_desc = provenance_desc
+        g.add((dataset_uri, DCTERMS.description, RdfLiteral(full_desc)))
 
         # License
         if self.about.source_license:
@@ -858,16 +918,26 @@ class MinedSchema(BaseModel):
                     RdfLiteral(self.about.property_count, datatype=XSD.integer),
                 )
             )
+        if self.about.triple_count_estimate:
+            g.add(
+                (
+                    dataset_uri,
+                    void.triples,
+                    RdfLiteral(self.about.triple_count_estimate, datatype=XSD.integer),
+                )
+            )
+        if self.about.distinct_subject_count:
+            g.add(
+                (
+                    dataset_uri,
+                    void.distinctSubjects,
+                    RdfLiteral(self.about.distinct_subject_count, datatype=XSD.integer),
+                )
+            )
 
-        # Extract vocabularies and classes from patterns
+        # Extract vocabularies from patterns
         vocabs = set()
-        classes = set()
         for pat in self.patterns:
-            if pat.subject_class:
-                classes.add(pat.subject_class)
-            if pat.object_class and pat.object_class not in _SENTINEL_OBJECTS:
-                classes.add(pat.object_class)
-
             for uri in [pat.subject_class, pat.property_uri, pat.object_class]:
                 if uri and uri not in _SENTINEL_OBJECTS:
                     # Extract namespace
@@ -885,111 +955,163 @@ class MinedSchema(BaseModel):
         for vocab_uri in sorted(vocabs):
             g.add((dataset_uri, void.vocabulary, URIRef(vocab_uri)))
 
-        # Add class partitions
-        for cls_uri in sorted(classes):
-            cls_hash = md5(cls_uri.encode(), usedforsecurity=False).hexdigest()[:8]
-            cp_uri = URIRef(f"{base}class-{cls_hash}")
-            g.add((dataset_uri, void.classPartition, cp_uri))
-            g.add((cp_uri, RDF.type, void.Dataset))
-            g.add((cp_uri, void["class"], URIRef(cls_uri)))
+        # Group patterns by subject class for nested VoID structure
+        # Structure: class partition -> property partition -> object/datatype partition
+        from collections import defaultdict
 
-        # Get dataset identifier for hash uniqueness
-        # Use dataset_name if available, otherwise "default"
-        if self.about.dataset_name:
-            dataset_id = self.about.dataset_name
-        else:
-            # No dataset name: use "default" for readable URIs
-            # Still include full dataset_uri in hash for uniqueness
-            dataset_id = "default"
-
-        def _extract_local_name(uri: str) -> str:
-            """Extract local name from URI for readability."""
-            if "#" in uri:
-                return uri.split("#")[-1]
-            elif "/" in uri:
-                return uri.split("/")[-1]
-            return uri
-
-        def _pid(s: str, p: str, o: str) -> URIRef:
-            """Generate partition URI with dataset-scoped hash and explanatory name.
-
-            Inspired by UniProt VoID, using hyphens as separators for Turtle compatibility.
-            Format: {dataset}-{hash}-{description}
-            E.g., aopwiki-a1b2c3d4-KeyEvent-has_name-String
-
-            This makes URIs human-readable, debuggable, and serializes cleanly
-            as Turtle QNames (partition:aopwiki-a1b2c3d4-...).
-            """
-            # Extract local names for readability
-            s_name = _extract_local_name(s)
-            p_name = _extract_local_name(p)
-            o_name = _extract_local_name(o)
-
-            # Build descriptive pattern name
-            # Limit each part to avoid excessively long URIs
-            s_short = s_name[:30] if len(s_name) > 30 else s_name
-            p_short = p_name[:30] if len(p_name) > 30 else p_name
-            o_short = o_name[:30] if len(o_name) > 30 else o_name
-
-            # Create pattern description
-            desc = f"{s_short}-{p_short}-{o_short}"
-            # Clean up for URI safety (remove spaces, special chars)
-            desc = desc.replace(" ", "_").replace(":", "_")
-
-            # Generate hash for uniqueness
-            # Include dataset_uri (not just dataset_id) to ensure uniqueness
-            # even when multiple datasets use dataset_id="default"
-            hash_input = f"{dataset_uri!s}|{s}|{p}|{o}"
-            h = md5(hash_input.encode(), usedforsecurity=False).hexdigest()[:8]
-
-            # Format: {dataset}-{hash}-{description}
-            # Use safe dataset name for readability (replace special chars with hyphen)
-            dataset_safe = (
-                dataset_id.replace("/", "-")
-                .replace(":", "-")
-                .replace(".", "-")
-                .replace("_", "-")[:30]
-            )
-            return URIRef(f"{base}{dataset_safe}-{h}-{desc}")
+        # subject_class -> property_uri -> [(object_class, datatype, count), ...]
+        class_prop_objects: dict[str, dict[str, list[tuple[str, str | None, int | None]]]] = (
+            defaultdict(lambda: defaultdict(list))
+        )
 
         for pat in self.patterns:
-            pp = _pid(
-                pat.subject_class,
-                pat.property_uri,
-                pat.object_class,
-            )
-            g.add((pp, void.property, URIRef(pat.property_uri)))
-            g.add(
-                (
-                    pp,
-                    void_ext.subjectClass,
-                    URIRef(pat.subject_class),
-                )
+            if not pat.subject_class or pat.subject_class in _SENTINEL_OBJECTS:
+                continue
+            if not pat.property_uri:
+                continue
+
+            class_prop_objects[pat.subject_class][pat.property_uri].append(
+                (pat.object_class, pat.datatype, pat.count)
             )
 
-            _add_void_object(
-                g,
-                pp,
-                pat,
-                void_ext,
-                RDFS,
-                XSD,
-                base,
-            )
+        # Generate nested VoID class partitions per void-generator spec
+        for subject_class in sorted(class_prop_objects.keys()):
+            # Create class partition URI
+            cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
+            class_partition_uri = URIRef(f"{base}class-{cls_hash}")
 
-            if pat.count is not None:
+            # Add class partition to dataset
+            g.add((dataset_uri, void.classPartition, class_partition_uri))
+            g.add((class_partition_uri, RDF.type, void.Dataset))
+            g.add((class_partition_uri, void["class"], URIRef(subject_class)))
+
+            # Calculate total triples for this class (sum across all properties)
+            class_triple_count = 0
+            for _prop_uri, objects in class_prop_objects[subject_class].items():
+                for _, _, count in objects:
+                    if count is not None:
+                        class_triple_count += count
+
+            if class_triple_count > 0:
                 g.add(
                     (
-                        pp,
+                        class_partition_uri,
                         void.triples,
-                        RdfLiteral(
-                            pat.count,
-                            datatype=XSD.integer,
-                        ),
+                        RdfLiteral(class_triple_count, datatype=XSD.integer),
                     )
                 )
 
-            _add_void_labels(g, pat, URIRef, RdfLiteral, RDFS)
+            # Add property partitions within this class partition
+            for prop_uri in sorted(class_prop_objects[subject_class].keys()):
+                prop_hash = md5(prop_uri.encode(), usedforsecurity=False).hexdigest()[:8]
+                prop_partition_uri = URIRef(f"{base}class-{cls_hash}-prop-{prop_hash}")
+
+                g.add((class_partition_uri, void.propertyPartition, prop_partition_uri))
+                g.add((prop_partition_uri, RDF.type, void.Dataset))
+                g.add((prop_partition_uri, void.property, URIRef(prop_uri)))
+
+                # Calculate triples for this subject_class + property combination
+                prop_triple_count = 0
+                for _, _, count in class_prop_objects[subject_class][prop_uri]:
+                    if count is not None:
+                        prop_triple_count += count
+
+                if prop_triple_count > 0:
+                    g.add(
+                        (
+                            prop_partition_uri,
+                            void.triples,
+                            RdfLiteral(prop_triple_count, datatype=XSD.integer),
+                        )
+                    )
+
+                # Add object class partitions or datatype partitions
+                for object_class, datatype, count in class_prop_objects[subject_class][prop_uri]:
+                    if object_class == "Literal":
+                        # Add datatype partition for literals
+                        if datatype:
+                            dt_hash = md5(datatype.encode(), usedforsecurity=False).hexdigest()[:8]
+                            dt_partition_uri = URIRef(
+                                f"{base}class-{cls_hash}-prop-{prop_hash}-dt-{dt_hash}"
+                            )
+
+                            g.add(
+                                (prop_partition_uri, void_ext.datatypePartition, dt_partition_uri)
+                            )
+                            g.add((dt_partition_uri, void_ext.datatype, URIRef(datatype)))
+
+                            if count is not None and count > 0:
+                                g.add(
+                                    (
+                                        dt_partition_uri,
+                                        void.triples,
+                                        RdfLiteral(count, datatype=XSD.integer),
+                                    )
+                                )
+
+                    elif (
+                        object_class
+                        and object_class != "Resource"
+                        and object_class not in _SENTINEL_OBJECTS
+                    ):
+                        # Add nested class partition for typed objects
+                        obj_hash = md5(object_class.encode(), usedforsecurity=False).hexdigest()[:8]
+                        obj_partition_uri = URIRef(
+                            f"{base}class-{cls_hash}-prop-{prop_hash}-obj-{obj_hash}"
+                        )
+
+                        g.add((prop_partition_uri, void.classPartition, obj_partition_uri))
+                        g.add((obj_partition_uri, RDF.type, void.Dataset))
+                        g.add((obj_partition_uri, void["class"], URIRef(object_class)))
+
+                        if count is not None and count > 0:
+                            g.add(
+                                (
+                                    obj_partition_uri,
+                                    void.triples,
+                                    RdfLiteral(count, datatype=XSD.integer),
+                                )
+                            )
+
+        # Generate void:Linksets for connections between classes
+        # LinkSets provide an alternative representation showing subject -> predicate -> object
+        # This complements the nested partition structure above
+        for subject_class in class_prop_objects:
+            for prop_uri, objects in class_prop_objects[subject_class].items():
+                for object_class, _datatype, count in objects:
+                    # Only create LinkSets for typed object connections (not literals or Resources)
+                    if (
+                        object_class
+                        and object_class not in ("Literal", "Resource")
+                        and object_class not in _SENTINEL_OBJECTS
+                    ):
+                        # Create unique LinkSet URI based on subject + property + object
+                        linkset_hash = md5(
+                            f"{subject_class}|{prop_uri}|{object_class}".encode(),
+                            usedforsecurity=False,
+                        ).hexdigest()[:12]
+                        linkset_uri = URIRef(f"{base}linkset-{linkset_hash}")
+
+                        g.add((linkset_uri, RDF.type, void.Linkset))
+
+                        # subjectsTarget: blank node with void:class
+                        from rdflib import BNode
+
+                        subject_target = BNode()
+                        g.add((linkset_uri, void.subjectsTarget, subject_target))
+                        g.add((subject_target, void["class"], URIRef(subject_class)))
+
+                        # linkPredicate
+                        g.add((linkset_uri, void.linkPredicate, URIRef(prop_uri)))
+
+                        # objectsTarget: blank node with void:class
+                        object_target = BNode()
+                        g.add((linkset_uri, void.objectsTarget, object_target))
+                        g.add((object_target, void["class"], URIRef(object_class)))
+
+                        # Add triple count if available
+                        if count is not None and count > 0:
+                            g.add((linkset_uri, void.triples, RdfLiteral(count, datatype=XSD.integer)))
 
         _bind_discovered_prefixes(g, self.patterns)
         return g
@@ -1354,3 +1476,33 @@ def _parse_schema_entry(
         )
 
     return None
+
+
+# MiningResult - complete mining output
+
+
+class MiningResult(BaseModel):
+    """Complete mining output with data patterns, ontology, and metadata."""
+
+    data_schema: MinedSchema
+    """VoID partitions for instance data patterns (ABox)."""
+
+    ontology: Any | None = None
+    """Class hierarchies and property metadata (TBox)."""
+
+    metadata: Any | None = None
+    """Infrastructure descriptions (DCAT/VoID)."""
+
+    def export(self, output_dir: Path) -> None:
+        """Export three separate files."""
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        (output_dir / "schema.ttl").write_text(
+            self.data_schema.to_void_graph().serialize(format="turtle")
+        )
+
+        if self.ontology is not None:
+            (output_dir / "ontology.ttl").write_text(self.ontology.to_turtle())
+
+        if self.metadata is not None:
+            (output_dir / "metadata.ttl").write_text(self.metadata.to_turtle())

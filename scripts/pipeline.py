@@ -168,6 +168,7 @@ class PipelineConfig:
     chunk_size: int = 50000
     class_batch_size: int = 50
     benchmark: bool = True
+    void_base_url: str = "https://rdfsolve.bigcat-bioinformatics.nl"
 
     # QLever settings (for local mining)
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
@@ -182,6 +183,10 @@ class PipelineConfig:
     skip_seeding: bool = False
     skip_inference: bool = False
     skip_completed: bool = False  # Skip sources with existing output files
+
+    # Ontology/metadata extraction
+    extract_ontology: bool = False
+    extract_metadata: bool = False
 
     # Parallelism
     parallelism: int = 4
@@ -455,7 +460,37 @@ class RemoteMiningStage(Stage):
                 report_path=str(report_path),
             )
 
-            schema = miner.mine(dataset_name=source.name)
+            # Use mine_with_ontology if ontology extraction enabled
+            if self.config.extract_ontology or self.config.extract_metadata:
+                from rdfsolve.mining import mine_with_ontology
+                result = mine_with_ontology(
+                    miner,
+                    extract_ontology=self.config.extract_ontology,
+                    extract_metadata=self.config.extract_metadata,
+                    dataset_name=source.name,
+                )
+                schema = result.data_schema
+                # Export ontology and metadata if extracted
+                if result.ontology:
+                    ontology_path = source_output_dir / f"{source.name}{suffix}_ontology.ttl"
+                    try:
+                        ontology_graph = result.ontology.to_rdf_graph()
+                        if ontology_graph:
+                            ont_ttl = ontology_graph.serialize(format="turtle")
+                            ontology_path.write_text(ont_ttl, encoding="utf-8")
+                    except Exception as e:
+                        log.warning(f"[{source.name}] Could not generate ontology.ttl: {e}")
+                if result.metadata:
+                    metadata_path = source_output_dir / f"{source.name}{suffix}_metadata.ttl"
+                    try:
+                        metadata_graph = result.metadata.to_rdf_graph()
+                        if metadata_graph:
+                            meta_ttl = metadata_graph.serialize(format="turtle")
+                            metadata_path.write_text(meta_ttl, encoding="utf-8")
+                    except Exception as e:
+                        log.warning(f"[{source.name}] Could not generate metadata.ttl: {e}")
+            else:
+                schema = miner.mine(dataset_name=source.name)
 
             source.endpoint_status = "up"
             source.last_success = datetime.now(timezone.utc).isoformat()
@@ -469,7 +504,7 @@ class RemoteMiningStage(Stage):
 
             void_path = source_output_dir / f"{source.name}{suffix}_void.ttl"
             try:
-                void_graph = schema.to_void_graph()
+                void_graph = schema.to_void_graph(base_url=self.config.void_base_url)
                 if void_graph:
                     void_ttl = void_graph.serialize(format="turtle")
                     void_path.write_text(void_ttl, encoding="utf-8")
@@ -841,7 +876,37 @@ class LocalMiningStage(Stage):
             report_path=str(report_path),
         )
 
-        schema = miner.mine(dataset_name=source.name)
+        # Use mine_with_ontology if ontology extraction enabled
+        if self.config.extract_ontology or self.config.extract_metadata:
+            from rdfsolve.mining import mine_with_ontology
+            result = mine_with_ontology(
+                miner,
+                extract_ontology=self.config.extract_ontology,
+                extract_metadata=self.config.extract_metadata,
+                dataset_name=source.name,
+            )
+            schema = result.data_schema
+            # Export ontology and metadata if extracted
+            if result.ontology:
+                ontology_path = output_dir / f"{source.name}{suffix}_ontology.ttl"
+                try:
+                    ontology_graph = result.ontology.to_rdf_graph()
+                    if ontology_graph:
+                        ont_ttl = ontology_graph.serialize(format="turtle")
+                        ontology_path.write_text(ont_ttl, encoding="utf-8")
+                except Exception as e:
+                    log.warning(f"  Could not generate ontology.ttl: {e}")
+            if result.metadata:
+                metadata_path = output_dir / f"{source.name}{suffix}_metadata.ttl"
+                try:
+                    metadata_graph = result.metadata.to_rdf_graph()
+                    if metadata_graph:
+                        meta_ttl = metadata_graph.serialize(format="turtle")
+                        metadata_path.write_text(meta_ttl, encoding="utf-8")
+                except Exception as e:
+                    log.warning(f"  Could not generate metadata.ttl: {e}")
+        else:
+            schema = miner.mine(dataset_name=source.name)
 
         schema_path = output_dir / f"{source.name}{suffix}_schema.jsonld"
         schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
@@ -1242,7 +1307,37 @@ class GroupedMiningStage(LocalMiningStage):
             report_path=str(report_path),
         )
 
-        schema = miner.mine(dataset_name=group_name)
+        # Use mine_with_ontology if ontology extraction enabled
+        if self.config.extract_ontology or self.config.extract_metadata:
+            from rdfsolve.mining import mine_with_ontology
+            result = mine_with_ontology(
+                miner,
+                extract_ontology=self.config.extract_ontology,
+                extract_metadata=self.config.extract_metadata,
+                dataset_name=group_name,
+            )
+            schema = result.data_schema
+            # Export ontology and metadata if extracted
+            if result.ontology:
+                ontology_path = output_dir / f"{group_name}_ontology.ttl"
+                try:
+                    ontology_graph = result.ontology.to_rdf_graph()
+                    if ontology_graph:
+                        ont_ttl = ontology_graph.serialize(format="turtle")
+                        ontology_path.write_text(ont_ttl, encoding="utf-8")
+                except Exception as e:
+                    log.warning(f"  Could not generate ontology.ttl: {e}")
+            if result.metadata:
+                metadata_path = output_dir / f"{group_name}_metadata.ttl"
+                try:
+                    metadata_graph = result.metadata.to_rdf_graph()
+                    if metadata_graph:
+                        meta_ttl = metadata_graph.serialize(format="turtle")
+                        metadata_path.write_text(meta_ttl, encoding="utf-8")
+                except Exception as e:
+                    log.warning(f"  Could not generate metadata.ttl: {e}")
+        else:
+            schema = miner.mine(dataset_name=group_name)
 
         # Save schema as JSON-LD
         schema_path = output_dir / f"{group_name}_schema.jsonld"
@@ -2013,9 +2108,12 @@ class Pipeline:
         log.info(f"PIPELINE COMPLETE in {elapsed:.1f}s ({elapsed / 60:.1f} min)")
         log.info("=" * 70)
 
-        # Save results
-        results_path = self.config.output_dir / "pipeline_results.json"
+        # Save results (with suffix to avoid overwriting between jobs)
+        suffix = self.config.output_suffix or ""
+        results_filename = f"pipeline_results{suffix}.json"
+        results_path = self.config.output_dir / results_filename
         results_path.write_text(json.dumps(self.results, indent=2, default=str))
+        log.info(f"Results saved to: {results_path}")
 
         return self.results
 
@@ -2055,6 +2153,8 @@ Examples:
     parser.add_argument("--skip-inference", action="store_true", help="Skip inference")
     parser.add_argument("--skip-analysis", action="store_true", help="Skip analysis stage")
     parser.add_argument("--skip-completed", action="store_true", help="Skip sources with existing schema output files")
+    parser.add_argument("--extract-ontology", action="store_true", help="Extract ontology structure (TBox: rdfs:subClassOf, domain/range)")
+    parser.add_argument("--extract-metadata", action="store_true", help="Extract infrastructure metadata (VoID/DCAT)")
     parser.add_argument("--output-dir", type=Path, help="Output directory")
     parser.add_argument("--output-suffix", type=str, default="", help="Suffix for output files (e.g., _local, _remote)")
     parser.add_argument("--data-dir", type=Path, help="Data directory")
@@ -2081,6 +2181,8 @@ Examples:
     config.skip_completed = args.skip_completed
     config.skip_remote = args.local_only or args.grouped_only or args.lslod_cloud_only
     config.skip_local = args.remote_only or args.grouped_only or args.lslod_cloud_only
+    config.extract_ontology = args.extract_ontology
+    config.extract_metadata = args.extract_metadata
 
     # Load sources
     config.load_sources(args.sources, skip_providers=args.skip_providers)
