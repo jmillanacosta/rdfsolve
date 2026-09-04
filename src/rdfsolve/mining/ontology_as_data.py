@@ -79,21 +79,28 @@ LIMIT 10000"""
 def mine_ontology_as_data_patterns(
     helper: SparqlHelper,
     graph_uris: list[str] | None = None,
+    superclasses: list[str] | None = None,
     bnode_namespace: str = "http://example.com/.well-known/genid/",
 ) -> list[SchemaPattern]:
     """Mine patterns where owl:Class instances are used as data.
 
     Queries for properties that have owl:Class instances as objects,
     and attributes them to the object's superclass for aggregation.
+    Aggregates at superclass level to avoid per-instance bloat.
 
     Args:
         helper: SPARQL helper instance
         graph_uris: Optional list of graph URIs to restrict query
+        superclasses: List of superclass URIs to aggregate into
         bnode_namespace: Namespace for blank nodes (default: example.com)
 
     Returns:
         List of schema patterns showing superclass-level usage
     """
+    if not superclasses:
+        logger.info("No superclasses provided, skipping ontology-as-data object patterns")
+        return []
+
     g_clause = ""
     if graph_uris:
         if len(graph_uris) == 1:
@@ -102,58 +109,73 @@ def mine_ontology_as_data_patterns(
             values = " ".join(f"(<{u}>)" for u in graph_uris)
             g_clause = f"VALUES (?_g) {{ {values} }} GRAPH ?_g {{"
 
-    # Query for properties with owl:Class objects, attributed to superclass
+    # Build VALUES clause for superclasses (limit to prevent query explosion)
+    sc_values = " ".join(f"(<{sc}>)" for sc in superclasses[:500])
+
+    # Query aggregated at superclass level for OBJECTS
+    # Now includes ?subjectClass for better granularity
     query = f"""\
-SELECT DISTINCT ?property ?objectSuperclass (COUNT(*) as ?count)
+SELECT ?subjectClass ?property ?objectSuperclass (SUM(?cnt) as ?count)
 WHERE {{
-  {g_clause}
-    ?subject ?property ?object .
-    ?object a <http://www.w3.org/2002/07/owl#Class> .
-    ?object <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?objectSuperclass .
-    FILTER(?property NOT IN (
-      <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>,
-      <http://www.w3.org/2000/01/rdf-schema#subClassOf>,
-      <http://www.w3.org/2000/01/rdf-schema#label>,
-      <http://www.w3.org/2000/01/rdf-schema#comment>
-    ))
-  {"}}" if g_clause else ""}
+  {{
+    SELECT ?subjectClass ?property ?objectSuperclass (COUNT(*) as ?cnt)
+    WHERE {{
+      {g_clause}
+        VALUES (?objectSuperclass) {{ {sc_values} }}
+        ?subject a ?subjectClass .
+        ?subject ?property ?object .
+        ?object a <http://www.w3.org/2002/07/owl#Class> .
+        ?object <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?objectSuperclass .
+        FILTER(?property NOT IN (
+          <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>,
+          <http://www.w3.org/2000/01/rdf-schema#subClassOf>,
+          <http://www.w3.org/2000/01/rdf-schema#label>,
+          <http://www.w3.org/2000/01/rdf-schema#comment>
+        ))
+        FILTER(isURI(?subjectClass))
+        FILTER(?subjectClass NOT IN (
+          <http://www.w3.org/2002/07/owl#Class>,
+          <http://www.w3.org/2000/01/rdf-schema#Class>
+        ))
+      {"}}" if g_clause else ""}
+    }}
+    GROUP BY ?subjectClass ?property ?objectSuperclass
+  }}
 }}
-GROUP BY ?property ?objectSuperclass
-ORDER BY DESC(?count)"""
+GROUP BY ?subjectClass ?property ?objectSuperclass
+ORDER BY DESC(?count)
+LIMIT 1000"""
 
     try:
-        logger.info(
-            "Querying ontology-as-data patterns (owl:Class objects with superclass attribution)..."
-        )
-        result = helper.select(query, purpose="ontology-as-data-patterns")
+        logger.info("Mining ontology-as-data patterns (aggregated at superclass level)...")
+        result = helper.select(query, purpose="ontology-as-data-aggregated")
         bindings = result.get("results", {}).get("bindings", [])
 
         patterns = []
         for row in bindings:
+            subject_class = row.get("subjectClass", {}).get("value")
             property_uri = row.get("property", {}).get("value")
             object_class = row.get("objectSuperclass", {}).get("value")
             count_str = row.get("count", {}).get("value", "1")
 
-            if not property_uri or not object_class:
+            if not subject_class or not property_uri or not object_class:
                 continue
 
-            # Handle blank nodes
+            # Skip blank nodes
             if object_class.startswith("_:") or "genid" in object_class.lower():
-                # Replace blank node with namespace
-                bnode_id = object_class.split(":")[-1].split("/")[-1]
-                object_class = f"{bnode_namespace}{bnode_id}"
+                continue
+            if subject_class.startswith("_:") or "genid" in subject_class.lower():
+                continue
 
-            # Create pattern: rdfs:Resource --property--> objectSuperclass
-            # Subject is rdfs:Resource since we don't track subject types in this query
             pattern = SchemaPattern(
-                subject_class="http://www.w3.org/2000/01/rdf-schema#Resource",
+                subject_class=subject_class,
                 property_uri=property_uri,
                 object_class=object_class,
                 count=int(count_str),
             )
             patterns.append(pattern)
 
-        logger.info(f"Found {len(patterns)} ontology-as-data patterns")
+        logger.info(f"Found {len(patterns)} aggregated ontology-as-data patterns")
         return patterns
 
     except Exception as e:
@@ -164,18 +186,26 @@ ORDER BY DESC(?count)"""
 def mine_ontology_as_data_subject_patterns(
     helper: SparqlHelper,
     graph_uris: list[str] | None = None,
+    superclasses: list[str] | None = None,
     bnode_namespace: str = "http://example.com/.well-known/genid/",
 ) -> list[SchemaPattern]:
-    """Mine patterns where owl:Class instances are subjects with literal/resource objects.
+    """Mine patterns where owl:Class instances are subjects.
+
+    Aggregates at superclass level to avoid per-instance bloat.
 
     Args:
         helper: SPARQL helper instance
         graph_uris: Optional list of graph URIs to restrict query
+        superclasses: List of superclass URIs to aggregate into
         bnode_namespace: Namespace for blank nodes
 
     Returns:
         List of schema patterns
     """
+    if not superclasses:
+        logger.info("No superclasses provided, skipping ontology-as-data subject patterns")
+        return []
+
     g_clause = ""
     if graph_uris:
         if len(graph_uris) == 1:
@@ -184,15 +214,18 @@ def mine_ontology_as_data_subject_patterns(
             values = " ".join(f"(<{u}>)" for u in graph_uris)
             g_clause = f"VALUES (?_g) {{ {values} }} GRAPH ?_g {{"
 
-    # Query for properties where owl:Class instances are subjects
-    # Attribute to subject's superclass
+    # Build VALUES clause for superclasses
+    sc_values = " ".join(f"(<{sc}>)" for sc in superclasses[:500])
+
     query = f"""\
-SELECT DISTINCT ?subjectSuperclass ?property (SAMPLE(?o) as ?sampleObject) (COUNT(*) as ?count)
+SELECT ?subjectSuperclass ?property (SAMPLE(?objType) as ?objectType) (COUNT(*) as ?count)
 WHERE {{
   {g_clause}
+    VALUES (?subjectSuperclass) {{ {sc_values} }}
     ?subject a <http://www.w3.org/2002/07/owl#Class> .
     ?subject <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?subjectSuperclass .
     ?subject ?property ?o .
+    BIND(IF(isLiteral(?o), "literal", "uri") as ?objType)
     FILTER(?property NOT IN (
       <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>,
       <http://www.w3.org/2000/01/rdf-schema#subClassOf>,
@@ -202,34 +235,33 @@ WHERE {{
   {"}}" if g_clause else ""}
 }}
 GROUP BY ?subjectSuperclass ?property
-ORDER BY DESC(?count)"""
+ORDER BY DESC(?count)
+LIMIT 1000"""
 
     try:
-        logger.info("Querying ontology-as-data subject patterns...")
-        result = helper.select(query, purpose="ontology-as-data-subject")
+        logger.info("Mining ontology-as-data subject patterns (aggregated)...")
+        result = helper.select(query, purpose="ontology-as-data-subject-aggregated")
         bindings = result.get("results", {}).get("bindings", [])
 
         patterns = []
         for row in bindings:
             subject_class = row.get("subjectSuperclass", {}).get("value")
             property_uri = row.get("property", {}).get("value")
-            sample_obj = row.get("sampleObject", {})
+            obj_type = row.get("objectType", {}).get("value", "uri")
             count_str = row.get("count", {}).get("value", "1")
 
             if not subject_class or not property_uri:
                 continue
 
-            # Handle blank nodes in subject class
+            # Skip blank nodes
             if subject_class.startswith("_:") or "genid" in subject_class.lower():
-                bnode_id = subject_class.split(":")[-1].split("/")[-1]
-                subject_class = f"{bnode_namespace}{bnode_id}"
+                continue
 
             # Determine object class
-            obj_type = sample_obj.get("type", "uri")
             if obj_type == "literal":
-                object_class = "http://www.w3.org/2000/01/rdf-schema#Literal"
+                object_class = "Literal"
             else:
-                object_class = "http://www.w3.org/2000/01/rdf-schema#Resource"
+                object_class = "Resource"
 
             pattern = SchemaPattern(
                 subject_class=subject_class,
@@ -239,7 +271,7 @@ ORDER BY DESC(?count)"""
             )
             patterns.append(pattern)
 
-        logger.info(f"Found {len(patterns)} ontology-as-data subject patterns")
+        logger.info(f"Found {len(patterns)} aggregated ontology-as-data subject patterns")
         return patterns
 
     except Exception as e:
