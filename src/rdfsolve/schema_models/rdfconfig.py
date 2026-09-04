@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-__all__ = ["to_rdfconfig"]
+__all__ = ["mined_schema_to_rdfconfig", "to_rdfconfig"]
 
 
 # Public API
@@ -256,3 +256,121 @@ def _format_yaml(
                 f"    - {p['variable']}: {p['range']}",
             )
     return "\n".join(lines) + "\n"
+
+
+# Direct conversion from MinedSchema
+
+
+def mined_schema_to_rdfconfig(
+    mined_schema: Any,  # MinedSchema, but avoiding circular import
+    endpoint_url: str | None = None,
+    endpoint_name: str | None = None,
+    graph_uri: str | None = None,
+) -> dict[str, str]:
+    """Generate RDF-config YAML files directly from MinedSchema patterns.
+
+    This builds RDF-config without going through JSON-LD or VoID,
+    ensuring the config represents the mined patterns directly.
+
+    Parameters
+    ----------
+    mined_schema:
+        MinedSchema object with patterns and metadata
+    endpoint_url:
+        SPARQL endpoint URL for ``endpoint.yaml``
+    endpoint_name:
+        Label for the endpoint (defaults to ``"endpoint"``)
+    graph_uri:
+        Optional named-graph URI for ``endpoint.yaml``
+
+    Returns
+    -------
+    dict
+        Keys ``model``, ``prefix``, ``endpoint`` -> YAML strings
+    """
+    from collections import defaultdict
+
+    from bioregistry import curie_from_iri
+
+    # Build prefixes from patterns
+    prefixes: dict[str, str] = {}
+    for pat in mined_schema.patterns:
+        for uri in [pat.subject_class, pat.property_uri, pat.object_class]:
+            if not uri or uri in ("Literal", "Resource", "BlankNode"):
+                continue
+            if not uri.startswith(("http://", "https://")):
+                continue
+
+            # Try to get CURIE and extract prefix
+            curie = curie_from_iri(uri)
+            if curie and ":" in curie:
+                prefix, _ = curie.split(":", 1)
+                # Get namespace by removing local part
+                if "#" in uri:
+                    ns = uri.rsplit("#", 1)[0] + "#"
+                elif "/" in uri:
+                    ns = uri.rsplit("/", 1)[0] + "/"
+                else:
+                    continue
+                if prefix and ns:
+                    prefixes[prefix] = ns
+
+    # Build class URIs set
+    class_uris: set[str] = set()
+    for pat in mined_schema.patterns:
+        class_uris.add(pat.subject_class)
+        if pat.object_class not in ("Literal", "Resource", "BlankNode"):
+            class_uris.add(pat.object_class)
+
+    # Build unique class names
+    class_name_map = _build_unique_class_names(class_uris, prefixes)
+
+    # Group patterns by subject class
+    classes: dict[str, list[dict[str, Any]]] = defaultdict(list)
+
+    for pat in mined_schema.patterns:
+        subject_uri = pat.subject_class
+        unique_name = class_name_map.get(subject_uri, _class_name(subject_uri))
+        class_var = _variable_name(unique_name)
+
+        prop_uri = pat.property_uri
+        prop_base = _variable_name(prop_uri)
+        prop_var = f"{class_var}_{prop_base}"
+
+        # Determine range based on object_class
+        if pat.object_class in ("Literal", "Resource", "BlankNode"):
+            # Literal or untyped value
+            prop_info = {
+                "property": prop_uri,
+                "variable": prop_var,
+                "range": f'"{prop_var}_value"',
+            }
+        else:
+            # Object reference
+            target_name = class_name_map.get(
+                pat.object_class,
+                _class_name(pat.object_class),
+            )
+            prop_info = {
+                "property": prop_uri,
+                "variable": prop_var,
+                "range": target_name,
+            }
+
+        # Avoid duplicates
+        if prop_info not in classes[subject_uri]:
+            classes[subject_uri].append(prop_info)
+
+    # Use endpoint from metadata if not provided
+    if not endpoint_url and mined_schema.about.endpoint:
+        endpoint_url = mined_schema.about.endpoint
+
+    # Use graph URIs from metadata if not provided
+    if not graph_uri and mined_schema.about.graph_uris:
+        graph_uri = mined_schema.about.graph_uris[0]
+
+    return {
+        "model": _format_yaml(dict(classes), class_name_map),
+        "prefix": _generate_prefix(prefixes),
+        "endpoint": _generate_endpoint(endpoint_url, endpoint_name, graph_uri),
+    }

@@ -26,26 +26,35 @@ pip install rdfsolve
 ### Mine an endpoint
 
 ```python
-from rdfsolve import SchemaMiner
+from rdfsolve.api import mine_schema
 
-# Mine any SPARQL endpoint
-miner = SchemaMiner(endpoint_url="https://sparql.uniprot.org/sparql", source_name="uniprot")
-schema = miner.mine(dataset_name="uniprot")
-
-# Export formats
-schema.to_void_graph()  # VoID RDF graph
-schema.to_jsonld()  # JSON-LD dict
-schema.to_linkml_yaml()  # LinkML YAML string
-schema.to_shacl()  # SHACL shapes
-
-# Save to disk
-import json
-
-with open("uniprot_schema.jsonld", "w") as f:
-    json.dump(schema.to_jsonld(), f, indent=2)
+# Mine any SPARQL endpoint (with descriptions, cardinality, examples)
+schema = mine_schema("https://sparql.uniprot.org/sparql", dataset_name="uniprot")
 ```
 
+### Export all formats
+
+```python
+schema.to_jsonld()  # JSON-LD with enrichments
+schema.to_void_graph()  # VoID RDF graph
+schema.to_jsonschema()  # JSON Schema with $ref
+schema.to_pydantic_models()  # Pydantic models (in-memory)
+schema.to_pydantic_file("models.py")  # Generate .py file
+schema.to_shacl()  # SHACL shapes with constraints
+
+# Models automatically filter metadata classes (void:Dataset, etc.)
+# To include everything: exclude_metadata=False
+schema.to_pydantic_file("all.py", exclude_metadata=False)
+```
+
+**Output includes:**
+- **Descriptions** from rdfs:comment, dcterms:description, skos:definition, etc.
+- **Cardinality** constraints (min/max counts per property)
+- **Examples** (sample values from actual data)
+
 ### Load and convert existing schemas
+
+From a `VoID` document:
 
 ```python
 from rdfsolve import VoidParser
@@ -58,6 +67,19 @@ schema = parser.to_mined_schema()
 schema.to_jsonld()  # To JSON-LD
 schema.to_linkml_yaml()  # To LinkML
 schema.to_shacl()  # To SHACL
+```
+
+From a JSON-LD VoID schema (generated with this package):
+
+```python
+from rdfsolve.schema_models.core import MinedSchema
+
+# Load previously mined schema
+schema = MinedSchema.from_jsonld("aopwikirdf_schema.jsonld")
+
+# Export to any format
+schema.to_pydantic_file("models.py")
+schema.to_shacl()
 ```
 
 ### Batch mining
@@ -83,32 +105,20 @@ python scripts/pipeline.py --sources sources.yaml --remote-only
 ```
 output/
 ├── uniprot/
-│   ├── uniprot_schema.jsonld
-│   ├── uniprot_void.ttl
-│   └── uniprot_report.json
+│   ├── uniprot_schema.jsonld      # JSON-LD with descriptions/cardinality/examples
+│   ├── uniprot_void.ttl           # VoID graph
+│   ├── uniprot_schema.json        # JSON Schema (domain classes only)
+│   ├── uniprot_models.py          # Pydantic models (domain classes only)
+│   ├── uniprot_shapes.ttl         # SHACL shapes with constraints
+│   └── uniprot_report.json        # Mining statistics
 └── rhea/
     ├── rhea_schema.jsonld
     ├── rhea_void.ttl
+    ├── rhea_schema.json
+    ├── rhea_models.py
+    ├── rhea_shapes.ttl
     └── rhea_report.json
 ```
-
-### Local RDF Files (with QLever)
-
-Mine local RDF dumps using QLever:
-
-```yaml
-sources:
-  drugbank:
-    download_urls:
-      - https://example.org/drugbank.nt.gz
-    local_provider: qlever
-```
-
-```bash
-# Download, index, and mine
-python scripts/pipeline.py --sources sources.yaml --local-only
-```
-
 
 ### Query metadata without mining
 
