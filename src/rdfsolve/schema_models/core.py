@@ -649,24 +649,28 @@ class MinedSchema(BaseModel):
     # JSON-LD import
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any]) -> MinedSchema:
-        """Reconstruct from a JSON-LD dict (e.g. returned by :meth:`to_jsonld`).
+    def from_dict(cls, raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
+        """Read canonical JSON, marked legacy adjacency, or VoID JSON-LD.
 
-        Inverse of :meth:`to_jsonld`.  Expands CURIEs using the
-        dict's own ``@context`` block.
+        Only canonical JSON preserves all model fields. RDF imports use
+        their adapter's supported fields. External contexts are rejected.
         """
-        context: dict[str, str] = raw.get("@context", {})
-        about_data = raw.get("@about", {})
-        labels: dict[str, str] = raw.get("_labels", {})
-        expand = make_expander(context)
+        from rdfsolve.schema_models._serialization import read_schema
 
-        patterns = _parse_schema_graph(
-            raw.get("@graph", []),
-            expand,
-            labels,
-        )
-        about = AboutMetadata.model_validate(about_data)
-        return cls(patterns=patterns, about=about)
+        return read_schema(raw)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return the versioned, lossless internal storage document."""
+        return {
+            "format": "rdfsolve.mined-schema",
+            "version": 1,
+            "schema": self.model_dump(mode="json"),
+        }
+
+    @classmethod
+    def from_json(cls, path: str | Path) -> MinedSchema:
+        """Read a saved schema through format detection and validation."""
+        return cls.from_dict(_json.loads(Path(path).read_text(encoding="utf-8")))
 
     @classmethod
     def from_jsonld(cls, path: str | Path) -> MinedSchema:
@@ -675,10 +679,7 @@ class MinedSchema(BaseModel):
         Convenience wrapper around :meth:`from_dict` that reads and
         parses the file first.
         """
-        raw = _json.loads(
-            Path(path).read_text(encoding="utf-8"),
-        )
-        return cls.from_dict(raw)
+        return cls.from_json(path)
 
     @classmethod
     def from_void(cls, void_ttl: str) -> MinedSchema:
@@ -765,9 +766,9 @@ class MinedSchema(BaseModel):
     def to_jsonld(self) -> dict[str, Any]:
         """Export schema as JSON-LD by serializing the VoID graph.
 
-        This produces proper semantic RDF using VoID vocabulary,
-        serialized as JSON-LD. The result is fully interconvertible
-        with other RDF formats.
+        This is an RDF export, not the internal storage format. VoID
+        does not preserve every model field. Use :meth:`to_dict` for
+        lossless storage and :meth:`from_dict` to read either profile.
 
         Returns a JSON-LD document with:
         - void:Dataset for the schema metadata
@@ -1268,9 +1269,8 @@ class MinedSchema(BaseModel):
         """
         from rdfsolve.schema_models.linkml import to_linkml
 
-        jsonld = self.to_jsonld()
         return to_linkml(
-            jsonld,
+            self.to_dict(),
             schema_name=schema_name or self.about.dataset_name,
             schema_description=schema_description,
         )

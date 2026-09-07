@@ -38,12 +38,24 @@ schema.to_jsonld()  # JSON-LD dict
 schema.to_linkml_yaml()  # LinkML YAML string
 schema.to_shacl()  # SHACL shapes
 
-# Save to disk
+# Save the complete model for later analysis
 import json
 
-with open("uniprot_schema.jsonld", "w") as f:
-    json.dump(schema.to_jsonld(), f, indent=2)
+with open("uniprot_schema.json", "w", encoding="utf-8") as f:
+    json.dump(schema.to_dict(), f, indent=2)
 ```
+
+### Read saved analysis data
+
+```python
+from rdfsolve import MinedSchema
+
+schema = MinedSchema.from_json("uniprot_schema.json")
+```
+
+Canonical JSON uses `format: rdfsolve.mined-schema`, a format `version`, and a `schema` object. It preserves all model fields, including unknown counts, object kinds, labels, and provenance metadata. The pipeline writes this record for every new mined result, regardless of the requested export formats.
+
+`to_jsonld()` is a VoID RDF export, not the canonical record. `from_json()` and `from_dict()` also read VoID JSON-LD and legacy adjacency documents marked with `@about`. Unknown versions, unmarked adjacency, and external JSON-LD contexts are rejected. VoID imports preserve only fields supported by the adapter; mixed-object partitions and some metadata still need repair. Use canonical JSON for internal analysis. Reading a file does not establish that its mining run was complete or comparable.
 
 ### Load and convert existing schemas
 

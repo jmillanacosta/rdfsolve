@@ -233,7 +233,7 @@ def _build_empty_schema(
         prefixes=prefixes,
         source=about.get("endpoint"),
         license=about.get("source_license"),
-        created_on=about.get("generated_at"),
+        created_on=about.get("generated_at") or None,
         annotations=annotations if annotations else None,
         types={
             "string": TypeDefinition(
@@ -464,13 +464,12 @@ def to_linkml(
     schema_description: str | None = None,
     schema_base_uri: str | None = None,
 ) -> SchemaDefinition:
-    """Generate a LinkML ``SchemaDefinition`` from a JSON-LD dict.
+    """Generate a LinkML ``SchemaDefinition`` from a saved schema.
 
     Parameters
     ----------
     jsonld:
-        JSON-LD document with ``@context``, ``@graph``, and
-        optionally ``_labels``.
+        Canonical JSON, VoID JSON-LD, or marked legacy adjacency.
     schema_name:
         Name for the schema (also used as default prefix).
     schema_description:
@@ -482,6 +481,26 @@ def to_linkml(
     -------
     SchemaDefinition
     """
+    from rdfsolve.schema_models.core import MinedSchema, _merge_into_list, _object_value_and_key
+
+    mined = MinedSchema.from_dict(jsonld)
+    context: dict[str, str] = {}
+    labels: dict[str, str] = {}
+    nodes: dict[str, dict[str, Any]] = {}
+    for pattern in mined.patterns:
+        value, _ = _object_value_and_key(pattern, context, labels)
+        _merge_into_list(nodes, pattern.subject_class, pattern.property_uri, value)
+        if pattern.subject_label:
+            labels[pattern.subject_class] = pattern.subject_label
+        if pattern.property_label:
+            labels[pattern.property_uri] = pattern.property_label
+    jsonld = {
+        "@context": context,
+        "@about": mined.about.model_dump(mode="json"),
+        "@graph": list(nodes.values()),
+        "_labels": labels,
+    }
+
     schema_name, schema_uri, description = _derive_schema_meta(
         jsonld,
         schema_name,
