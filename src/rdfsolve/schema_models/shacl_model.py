@@ -33,6 +33,22 @@ def _count(graph: Graph, shape: Node, predicate: URIRef) -> int | None:
     return optional_count(value)
 
 
+def _boolean(graph: Graph, shape: Node, predicate: URIRef) -> bool:
+    """Read one SHACL boolean without treating nonempty text as true."""
+    from rdflib import XSD
+    from rdflib import Literal as RdfLiteral
+
+    value = graph.value(shape, predicate, any=False)
+    if value is None:
+        return False
+    if not isinstance(value, RdfLiteral) or value.datatype != XSD.boolean:
+        raise ValueError(f"{predicate} requires an xsd:boolean literal")
+    parsed = value.toPython()
+    if not isinstance(parsed, bool):
+        raise ValueError(f"{predicate} requires true or false")
+    return parsed
+
+
 def _text(graph: Graph, shape: Node, predicate: URIRef) -> tuple[str | None, str | None]:
     """Read a preferred display text and retain its language tag."""
     import logging
@@ -66,6 +82,7 @@ class ShaclPropertyShape(BaseModel):
     datatype: str | None = Field(None, description="sh:datatype")
     class_constraint: str | None = Field(None, description="sh:class")
     node_kind: NodeKind | None = None
+    deactivated: bool = False
     min_count: int | None = Field(None, description="sh:minCount")
     max_count: int | None = Field(None, description="sh:maxCount")
     qualified_shape: ShaclPropertyShape | None = None
@@ -122,6 +139,8 @@ class ShaclPropertyShape(BaseModel):
             }
             if self.node_kind in nk_map:
                 graph.add((node, sh.nodeKind, nk_map[self.node_kind]))
+        if self.deactivated:
+            graph.add((node, sh.deactivated, RdfLiteral(True)))
         if self.min_count is not None:
             graph.add((node, sh.minCount, RdfLiteral(self.min_count, datatype=XSD.integer)))
         if self.max_count is not None:
@@ -221,7 +240,8 @@ class ShaclPropertyShape(BaseModel):
             else None,
             qualified_min_count=_count(graph, uri, sh.qualifiedMinCount),
             qualified_max_count=_count(graph, uri, sh.qualifiedMaxCount),
-            qualified_disjoint=bool(graph.value(uri, sh.qualifiedValueShapesDisjoint)),
+            qualified_disjoint=_boolean(graph, uri, sh.qualifiedValueShapesDisjoint),
+            deactivated=_boolean(graph, uri, sh.deactivated),
             name=name,
             description=description,
             name_language=name_language,
@@ -240,6 +260,7 @@ class ShaclNodeShape(BaseModel):
     uri: str
     target_class: str | None = Field(None, description="sh:targetClass")
     closed: bool = Field(False, description="sh:closed")
+    deactivated: bool = False
     ignored_properties: list[str] = Field(default_factory=list, description="sh:ignoredProperties")
     property_shapes: list[ShaclPropertyShape] = Field(default_factory=list)
     name: str | None = Field(None, description="sh:name")
@@ -263,6 +284,8 @@ class ShaclNodeShape(BaseModel):
 
         if self.target_class:
             graph.add((uri, sh.targetClass, Ref(self.target_class)))
+        if self.deactivated:
+            graph.add((uri, sh.deactivated, RdfLiteral(True)))
         if self.closed:
             graph.add((uri, sh.closed, RdfLiteral(True)))
         if self.name is not None:
@@ -296,7 +319,6 @@ class ShaclNodeShape(BaseModel):
         from rdflib import BNode
 
         target_class = graph.value(uri, sh.targetClass, any=False)
-        closed = graph.value(uri, sh.closed)
         name, name_language = _text(graph, uri, sh.name)
         description, description_language = _text(graph, uri, sh.description)
 
@@ -307,7 +329,8 @@ class ShaclNodeShape(BaseModel):
         return cls(
             uri=("_:" + str(uri)) if isinstance(uri, BNode) else str(uri),
             target_class=str(target_class) if target_class else None,
-            closed=bool(closed) if closed else False,
+            closed=_boolean(graph, uri, sh.closed),
+            deactivated=_boolean(graph, uri, sh.deactivated),
             ignored_properties=[
                 str(item)
                 for head in graph.objects(uri, sh.ignoredProperties)
@@ -354,6 +377,7 @@ class ShaclShapesGraph(BaseModel):
         import logging
 
         supported = {
+            "deactivated",
             "path",
             "datatype",
             "class",

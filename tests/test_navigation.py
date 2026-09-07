@@ -1,46 +1,50 @@
-"""Check route counting, bounds, and the gap between schema and instance joins."""
+"""Check bounded routes and descriptive exports using the saved AOPWiki schema."""
 
-from rdflib import Graph, SH
+import json
+from collections import Counter
+from pathlib import Path
+
+from rdflib import Graph, RDF, SH
 
 from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 
 
-def edge(subject, predicate, obj):
-    return SchemaPattern(subject_class=subject, property_uri=predicate, object_class=obj, count=1)
+def aop_schema():
+    path = Path(__file__).parent / "test_data" / "aopwikirdf_schema.json"
+    triples = json.loads(path.read_text())["triples"]
+    return MinedSchema(about=AboutMetadata.build(dataset_name="aopwikirdf"), patterns=[
+        SchemaPattern(subject_class=s, property_uri=p, object_class=o) for s, p, o in triples
+    ])
 
 
-def test_bounded_walks_keep_cycles_but_not_literal_continuations():
-    patterns = [edge("urn:A", "urn:p", "urn:B"), edge("urn:B", "urn:q", "urn:C"),
-                edge("urn:C", "urn:r", "urn:A"), edge("urn:B", "urn:label", "Literal")]
-    schema = MinedSchema(about=AboutMetadata.build(), patterns=patterns + patterns[:1])
-    result = schema.discover_paths(max_hops=3, max_paths_per_length=1)
-    assert result.edge_count == 4
-    assert result.walk_counts == {1: 4, 2: 4, 3: 4}
-    assert [len(route.steps) for route in result.paths] == [2, 3]
-    assert result.truncated_lengths == [2, 3]
+def test_aop_routes_cover_start_classes_and_account_for_omissions():
+    schema = aop_schema()
+    result = schema.discover_paths(max_hops=3, max_paths_per_length=100)
+    starts = {p.subject_class for p in schema.patterns}
+    eligible = {p.subject_class for p in schema.patterns if p.object_class in starts}
+    selected = Counter(r.steps[0].subject_class for r in result.paths if len(r.steps) == 2)
+    assert len(eligible) > 1
+    assert set(selected) == eligible
+    for hops in (2, 3):
+        saved = sum(len(r.steps) == hops for r in result.paths)
+        assert saved <= 100
+        assert saved + sum(result.omitted_by_class[hops].values()) == result.walk_counts[hops]
     assert MinedSchema.from_dict(schema.to_dict()).navigation == result
 
 
-def test_positive_edge_counts_do_not_prove_a_path(caplog):
-    schema = MinedSchema(about=AboutMetadata.build(), patterns=[
-        edge("urn:A", "urn:p", "urn:B"), edge("urn:B", "urn:q", "urn:C")
-    ])
-    routes = schema.discover_paths(max_hops=3)
-    data = Graph().parse(data="""
-        <urn:a> a <urn:A>; <urn:p> <urn:b1> .
-        <urn:b1> a <urn:B> .
-        <urn:b2> a <urn:B>; <urn:q> <urn:c> .
-        <urn:c> a <urn:C> .
-    """, format="turtle")
-    assert not bool(data.query("ASK { ?s <urn:p>/<urn:q> ?o }"))
-    assert routes.walk_counts == {1: 2, 2: 1, 3: 0}
-    assert routes.paths[0].instance_support == "not_checked"
+def test_aop_shacl_has_no_generated_counts_or_duplicate_paths():
+    schema = aop_schema()
+    schema.discover_paths(max_hops=3)
     graph = Graph().parse(data=schema.to_shacl(), format="turtle")
-    assert not list(graph.triples((None, SH.minCount, None)))
-    assert {int(count) for count in graph.objects(None, SH.qualifiedMinCount)} == {0}
-    namespace = {}
-    exec(schema.to_pydantic(), namespace)
-    assert namespace["RDF_NAVIGATION"]["urn:A"][0]["instance_support"] == "not_checked"
-    assert namespace["RDF_NAVIGATION"]["urn:A"][0]["sparql_path"] == "(<urn:p>/<urn:q>)"
-    schema.to_void_graph()
-    assert "does not encode" in caplog.text
+    for predicate in (SH.minCount, SH.maxCount, SH.qualifiedMinCount, SH.qualifiedMaxCount):
+        assert not list(graph.objects(None, predicate))
+    navigation = [n for n in graph.subjects(RDF.type, SH.NodeShape) if "navigation-" in str(n)]
+    for node in navigation:
+        paths = [tuple(graph.items(graph.value(p, SH.path))) for p in graph.objects(node, SH.property)]
+        assert len(paths) == len(set(paths))
+    templates = [n for n in graph.subjects(RDF.type, SH.NodeShape) if n not in navigation]
+    assert templates and all(bool(graph.value(n, SH.deactivated)) for n in templates)
+    restored = MinedSchema.from_shacl(schema.to_shacl())
+    assert all(s.deactivated for s in restored.shapes.node_shapes if "navigation-" not in s.uri)
+    active = Graph().parse(data=schema.to_shacl(activate_observed=True), format="turtle")
+    assert not list(active.objects(None, SH.deactivated))

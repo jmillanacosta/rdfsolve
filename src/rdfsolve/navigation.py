@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict, deque
 from collections.abc import Iterator
-from itertools import islice
 from typing import TYPE_CHECKING
 
 from rdfsolve.schema_models.navigation import NavigationPath, NavigationSummary
@@ -22,7 +21,8 @@ def discover_paths(
     No endpoint requests are made. Cycles are allowed up to max_hops.
     A shared class is a possible join, not evidence of shared entities.
     Counts are exact for the supplied schema graph, not the source dataset.
-    Samples use deterministic lexical order and are not representative.
+    Samples rotate across starting classes, with lexical order within each class.
+    They are bounded coverage samples, not frequency estimates.
     """
     if not 2 <= max_hops <= 6 or max_paths_per_length < 0:
         raise ValueError("Use 2..6 hops and a nonnegative path limit")
@@ -71,15 +71,29 @@ def discover_paths(
 
     totals = {hops: sum(suffix[hops].values()) for hops in range(1, max_hops + 1)}
     paths: list[NavigationPath] = []
+    omitted: dict[int, dict[str, int]] = {}
     for hops in range(2, max_hops + 1):
-        candidates = (path for start in sorted(outgoing) for path in walks(start, hops, ()))
-        paths.extend(islice(candidates, max_paths_per_length))
+        pending = deque(walks(start, hops, ()) for start in sorted(outgoing) if suffix[hops][start])
+        selected: Counter[str] = Counter()
+        while pending and sum(selected.values()) < max_paths_per_length:
+            iterator = pending.popleft()
+            route = next(iterator, None)
+            if route is not None:
+                paths.append(route)
+                selected[route.steps[0].subject_class] += 1
+                pending.append(iterator)
+        omitted[hops] = {
+            start: count - selected[start]
+            for start, count in suffix[hops].items()
+            if count > selected[start]
+        }
     return NavigationSummary(
         max_hops=max_hops,
         max_paths_per_length=max_paths_per_length,
         edge_count=len(unique),
         walk_counts=totals,
         paths=paths,
+        omitted_by_class=omitted,
         truncated_lengths=[
             hops for hops in range(2, max_hops + 1) if totals[hops] > max_paths_per_length
         ],

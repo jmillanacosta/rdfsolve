@@ -290,6 +290,8 @@ class MinedSchema(BaseModel):
     def to_shacl(
         self,
         base_uri: str = "http://example.org/shapes/",
+        *,
+        activate_observed: bool = False,
     ) -> str:
         """Convert to SHACL shapes.
 
@@ -297,6 +299,7 @@ class MinedSchema(BaseModel):
 
         Args:
             base_uri: Base URI for shape URIs
+            activate_observed: Enforce generated one-hop templates; source profiles stay unchanged.
 
         Example:
             >>> schema = MinedSchema.from_jsonld("schema.jsonld")
@@ -306,7 +309,7 @@ class MinedSchema(BaseModel):
         """
         from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 
-        shapes = minedschema_to_shacl(self, base_uri=base_uri)
+        shapes = minedschema_to_shacl(self, base_uri=base_uri, activate_observed=activate_observed)
         graph = shapes.to_rdf()
         # VoID statistics remain dataset metadata, not validation constraints.
         from rdfsolve.schema_models.exporters.void import to_void_graph

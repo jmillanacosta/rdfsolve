@@ -13,6 +13,8 @@ from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShap
 def minedschema_to_shacl(
     schema: MinedSchema,
     base_uri: str = "http://example.org/shapes/",
+    *,
+    activate_observed: bool = False,
 ) -> ShaclShapesGraph:
     """Convert MinedSchema to SHACL shapes.
 
@@ -91,8 +93,20 @@ def minedschema_to_shacl(
             ShaclNodeShape(
                 uri=f"{base_uri}ns-{cls_hash}",
                 target_class=subject_class,
+                deactivated=not activate_observed,
                 name=by_subject[subject_class][0].subject_label,
-                description=schema.enrichment.description(subject_class),
+                description=" ".join(
+                    filter(
+                        None,
+                        [
+                            schema.enrichment.description(subject_class),
+                            (
+                                "Observed value-type template, not a source constraint. "
+                                "No required fields or per-entity cardinalities were inferred."
+                            ),
+                        ],
+                    )
+                ),
                 property_shapes=property_shapes,
             )
         )
@@ -105,48 +119,73 @@ def minedschema_to_shacl(
 def _add_navigation(
     schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str
 ) -> ShaclShapesGraph:
-    """Add nonrestrictive path hints. Zero is a lower bound, not an observed count."""
+    """Describe candidate paths without adding validation constraints."""
     import logging
     from collections import defaultdict
     from hashlib import sha256
 
+    from rdfsolve.schema_models.navigation import NavigationPath
+
     if schema.navigation is None or not schema.navigation.paths:
         return shapes
-    by_class: dict[str, list[ShaclPropertyShape]] = defaultdict(list)
+    grouped: dict[tuple[str, tuple[str, ...]], list[NavigationPath]] = defaultdict(list)
     for route in schema.navigation.paths:
-        end = route.steps[-1]
-        hint = ShaclPropertyShape(path="")
-        if end.object_class == "Literal":
-            hint.node_kind = "Literal"
-            hint.datatype = end.datatype
-        elif end.object_class in ("Resource", "BlankNode"):
-            hint.node_kind = "IRI" if end.object_class == "Resource" else "BlankNode"
-        else:
-            hint.class_constraint = end.object_class
-        by_class[route.steps[0].subject_class].append(
+        grouped[
+            (
+                route.steps[0].subject_class,
+                tuple(step.property_uri for step in route.steps),
+            )
+        ].append(route)
+
+    by_class: dict[str, list[ShaclPropertyShape]] = defaultdict(list)
+    for (start, predicates), routes in sorted(grouped.items()):
+        descriptions = []
+        for route in routes:
+            steps = []
+            for step in route.steps:
+                value = step.datatype or step.object_class
+                count = str(step.count) if step.count is not None else "unknown"
+                steps.append(
+                    f"{step.subject_class} --{step.property_uri}--> {value} (edge triples: {count})"
+                )
+            descriptions.append("; ".join(steps))
+        identifier = sha256(repr((start, predicates)).encode()).hexdigest()[:20]
+        by_class[start].append(
             ShaclPropertyShape(
-                path=route.property_path(),
-                name=" / ".join(step.property_label or step.property_uri for step in route.steps),
-                description=(
-                    "Schema-composed navigation candidate. Instance joins were not checked. "
-                    "The zero qualified lower bound does not assert a path occurrence. "
-                    "Intermediate class filters and step counts remain in canonical JSON."
+                uri=f"{base_uri}route-{identifier}",
+                path=routes[0].property_path(),
+                name=" / ".join(
+                    step.property_label or step.property_uri for step in routes[0].steps
                 ),
-                qualified_shape=hint,
-                qualified_min_count=0,
+                description="Candidate class-qualified routes: "
+                + " | ".join(sorted(set(descriptions))),
             )
         )
+
     for class_iri, properties in sorted(by_class.items()):
         identifier = sha256(class_iri.encode()).hexdigest()[:16]
+        uri = f"{base_uri}navigation-{identifier}"
+        omitted = "; ".join(
+            f"{hops} hops: {counts.get(class_iri, 0)} omitted"
+            for hops, counts in sorted(schema.navigation.omitted_by_class.items())
+        )
+        shapes.node_shapes = [shape for shape in shapes.node_shapes if shape.uri != uri]
         shapes.node_shapes.append(
             ShaclNodeShape(
-                uri=f"{base_uri}navigation-{identifier}",
+                uri=uri,
                 target_class=class_iri,
+                name=f"Candidate navigation: {class_iri}",
+                description=(
+                    "Schema-composed paths. Instance support and coverage are unknown. "
+                    "Edge triple counts are not joined counts or per-entity cardinalities. "
+                    "The path omits intermediate class filters listed in each description. "
+                    "Value types are candidate endpoints, not enforced constraints. " + omitted
+                ),
                 property_shapes=properties,
             )
         )
     logging.getLogger(__name__).warning(
-        "SHACL navigation keeps predicate sequences and final-value type hints, not intermediate "
-        "class filters, step statistics, or schema-walk totals. Keep canonical JSON for those."
+        "SHACL navigation describes class routes and edge counts as text. "
+        "Keep canonical JSON for machine-readable filters, statistics, and route provenance."
     )
     return shapes
