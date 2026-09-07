@@ -185,8 +185,9 @@ class PipelineConfig:
     # Mining settings
     timeout: float | None = None  # Override the source timeout only when set.
     delay: float = 1.0
-    chunk_size: int = 50000
-    class_batch_size: int = 50
+    chunk_size: int = 10000
+    class_batch_size: int = 15
+    max_response_bytes: int = 64 * 1024 * 1024
     benchmark: bool = True
     enrich: bool = True
     examples_per_pattern: int = 2
@@ -466,7 +467,7 @@ class RemoteMiningStage(Stage):
         for source in sources:
             if not source.endpoint:
                 continue
-            host = urlparse(source.endpoint).netloc
+            host = urlparse(source.endpoint).hostname or source.endpoint
             if host not in host_groups:
                 host_groups[host] = []
             host_groups[host].append(source)
@@ -494,7 +495,7 @@ class RemoteMiningStage(Stage):
             return {"mined": [], "failed": [], "skipped": ["No remote sources selected"]}
 
         # Mine hosts concurrently
-        max_workers = min(self.config.parallelism or 8, len(host_groups))
+        max_workers = min(max(1, self.config.parallelism), len(host_groups))
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
                 executor.submit(mine_host_sources, host, host_sources): host
@@ -582,6 +583,7 @@ class RemoteMiningStage(Stage):
                 class_batch_size=self.config.class_batch_size,
             enrich=self.config.enrich,
             examples_per_pattern=self.config.examples_per_pattern,
+            max_response_bytes=self.config.max_response_bytes,
                 report_path=str(report_path),
             )
 
@@ -750,15 +752,9 @@ class LocalMiningStage(Stage):
 
     def _has_qlever_index(self, workdir: Path, source_name: str) -> bool:
         """Reuse existing indices; do not overwrite partial index files."""
-        from rdfsolve.qlever.lifecycle import index_name
+        from rdfsolve.qlever.index_check import has_cached_index
 
-        source_name = index_name(workdir, source_name)
-        index_spo = workdir / f"{source_name}.index.spo"
-        if index_spo.is_file():
-            return True
-        if any(workdir.glob(f"{source_name}.index.*")):
-            raise ValueError(f"Incomplete index in {workdir}; inspect it before rebuilding")
-        return False
+        return has_cached_index(workdir, source_name)
 
     def _prepare_qleverfile(self, workdir: Path, source: Source, port: int):
         """Generate Qleverfile for source."""
@@ -873,13 +869,14 @@ class LocalMiningStage(Stage):
         miner = SchemaMiner(
             endpoint_url=endpoint,
             source_name=source.name,
-            timeout=self.config.timeout if self.config.timeout is not None else 86400.0,
+            timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,
             sparql_engine="qlever",
             chunk_size=self.config.chunk_size,
             class_batch_size=self.config.class_batch_size,
             enrich=self.config.enrich,
             examples_per_pattern=self.config.examples_per_pattern,
+            max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
         )
 
@@ -1277,13 +1274,14 @@ class GroupedMiningStage(LocalMiningStage):
             endpoint_url=endpoint,
             source_name=group_name,
             graph_uris=graph_uris,
-            timeout=self.config.timeout if self.config.timeout is not None else 86400.0,
+            timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,
             sparql_engine="qlever",
             chunk_size=self.config.chunk_size,
             class_batch_size=self.config.class_batch_size,
             enrich=self.config.enrich,
             examples_per_pattern=self.config.examples_per_pattern,
+            max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
         )
 
@@ -1504,13 +1502,14 @@ class LsLodCloudStage(LocalMiningStage):
             endpoint_url=endpoint,
             source_name="lslod_cloud",
             graph_uris=graph_uris,
-            timeout=self.config.timeout if self.config.timeout is not None else 86400.0,
+            timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,
             sparql_engine="qlever",
             chunk_size=self.config.chunk_size,
             class_batch_size=self.config.class_batch_size,
             enrich=self.config.enrich,
             examples_per_pattern=self.config.examples_per_pattern,
+            max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
         )
 
@@ -1854,6 +1853,9 @@ class Pipeline:
 
 def preflight(config: PipelineConfig, *, grouped: bool, remote: bool) -> None:
     """Check configuration and cached inputs. Do not query or start servers."""
+    log.info("Query budgets: %d rows/page, %d classes/batch, %d MiB/response, %d remote hosts",
+             config.chunk_size, config.class_batch_size, config.max_response_bytes // (1024 * 1024),
+             config.parallelism)
     if remote:
         selected = config.get_remote_sources()
         if not selected:
@@ -1952,6 +1954,10 @@ Examples:
     parser.add_argument("--data-dir", type=Path, help="Data-directory")
     parser.add_argument("--no-download", action="store_true",
                         help="Use existing RDF and indices; do not fetch source data")
+    parser.add_argument("--parallelism", type=int, default=4, help="Maximum concurrent remote hosts")
+    parser.add_argument("--chunk-size", type=int, default=10000, help="Rows per query page")
+    parser.add_argument("--class-batch-size", type=int, default=15, help="Classes per query batch")
+    parser.add_argument("--max-response-mb", type=int, default=64, help="Decompressed response limit in MiB")
     parser.add_argument("--timeout", type=float, default=None,
                         help="Override query timeout in seconds (default: source setting)")
     parser.add_argument("--endpoint-status-file", type=Path, help="Endpoint health check JSON")
@@ -1981,6 +1987,14 @@ Examples:
         parser.error("--qlever-startup-timeout must be positive")
     config.base_port = args.base_port
     config.qlever_startup_timeout = args.qlever_startup_timeout
+    if min(args.parallelism, args.chunk_size, args.class_batch_size, args.max_response_mb) < 1:
+        parser.error("Request and concurrency limits must be positive")
+    if args.timeout is not None and args.timeout <= 0:
+        parser.error("--timeout must be positive")
+    config.parallelism = args.parallelism
+    config.chunk_size = args.chunk_size
+    config.class_batch_size = args.class_batch_size
+    config.max_response_bytes = args.max_response_mb * 1024 * 1024
     config.timeout = args.timeout
     config.no_download = args.no_download
     config.no_index = args.no_index
