@@ -19,7 +19,9 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 
-def to_void_graph(schema: MinedSchema, base_url: str | None = None) -> Graph:
+def to_void_graph(
+    schema: MinedSchema, base_url: str | None = None, *, trim_descriptions: int | None = None
+) -> Graph:
     """Build an rdflib VoID Graph from the mined patterns.
 
     Args:
@@ -143,7 +145,15 @@ def to_void_graph(schema: MinedSchema, base_url: str | None = None) -> Graph:
         full_desc = f"{desc_clean}. {provenance_desc}"
     else:
         full_desc = provenance_desc
-    g.add((dataset_uri, DCTERMS.description, RdfLiteral(full_desc)))
+    from rdfsolve.schema_models.exporters.text import clip_description
+
+    g.add(
+        (
+            dataset_uri,
+            DCTERMS.description,
+            RdfLiteral(clip_description(full_desc, trim_descriptions)),
+        )
+    )
 
     # License
     if schema.about.source_license:

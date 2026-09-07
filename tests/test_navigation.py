@@ -35,7 +35,12 @@ def test_aop_routes_cover_start_classes_and_account_for_omissions():
 def test_aop_shacl_has_no_generated_counts_or_duplicate_paths():
     schema = aop_schema()
     schema.discover_paths(max_hops=3)
+    before = schema.to_dict()
+    compact = Graph().parse(data=schema.to_shacl(trim_descriptions=20), format="turtle")
+    assert all(len(str(text)) <= 20 for text in compact.objects(None, SH.description))
+    assert schema.to_dict() == before
     graph = Graph().parse(data=schema.to_shacl(), format="turtle")
+    assert MinedSchema.from_shacl(compact.serialize(format="turtle")).patterns == MinedSchema.from_shacl(graph.serialize(format="turtle")).patterns
     for predicate in (SH.minCount, SH.maxCount, SH.qualifiedMinCount, SH.qualifiedMaxCount):
         assert not list(graph.objects(None, predicate))
     navigation = [n for n in graph.subjects(RDF.type, SH.NodeShape) if "navigation-" in str(n)]

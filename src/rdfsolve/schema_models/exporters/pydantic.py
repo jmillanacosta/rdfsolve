@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from rdfsolve._uri import uri_to_curie
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
+from rdfsolve.schema_models.exporters.text import clip_description
 
 if TYPE_CHECKING:
     from rdfsolve.schema_models.core import MinedSchema
@@ -74,7 +75,9 @@ def _value_type(pattern: SchemaPattern, names: dict[str, str]) -> str:
     }.get(datatype, "str")
 
 
-def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
+def to_pydantic(
+    schema: MinedSchema, schema_name: str | None = None, *, trim_descriptions: int | None = None
+) -> str:
     """Use labels for names and retain IRIs in schema metadata."""
     labels: dict[str, set[str]] = defaultdict(set)
     grouped: dict[str, dict[str, list[SchemaPattern]]] = defaultdict(lambda: defaultdict(list))
@@ -180,7 +183,7 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
         lines.extend(
             [
                 f"class {name}(RDFResource):",
-                f"    {(schema.enrichment.description(iri) or ('Observed type ' + iri))!r}",
+                f"    {clip_description(schema.enrichment.description(iri) or ('Observed type ' + iri), trim_descriptions)!r}",
                 f"    rdf_class_iri: ClassVar[str] = {iri!r}",
                 f"    rdf_navigation: ClassVar[list[dict[str, Any]]] = RDF_NAVIGATION.get({iri!r}, [])",
                 f"    rdf_shapes: ClassVar[list[dict[str, Any]]] = SHACL_PROFILES.get({iri!r}, [])",
@@ -203,6 +206,7 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
             description = schema.enrichment.description(prop) or "; ".join(
                 sorted({p.property_label for p in patterns if p.property_label})
             )
+            description = clip_description(description, trim_descriptions) or ""
             # Mining shows values, not a maximum count per subject.
             examples = [
                 example.value.json_value()

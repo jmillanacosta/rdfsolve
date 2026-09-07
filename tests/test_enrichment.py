@@ -72,6 +72,18 @@ def test_enrichment_keeps_language_and_scope(source):
     assert result.class_examples[str(EX.B)][0].value == str(EX.two)
     schema.enrichment = result
     assert MinedSchema.from_dict(schema.to_dict()) == schema
+    compact = MinedSchema.from_dict(schema.to_dict(trim_descriptions=4))
+    assert compact.enrichment.description(str(EX.A)) == 'A "u'
+    assert compact.enrichment.examples == schema.enrichment.examples
+    assert compact.enrichment.labels == schema.enrichment.labels
+    assert schema.enrichment.description(str(EX.A)) == 'A "useful" definition.'
+    graph = schema.to_void_graph(trim_descriptions=4)
+    assert (EX.one, EX.p, Literal("hello", lang="en")) in graph
+    assert (EX.A, SKOS.definition, Literal('A "u', lang="en")) in graph
+    assert all(not item.text.value for item in
+               MinedSchema.from_dict(schema.to_dict(trim_descriptions=0)).enrichment.definitions)
+    with pytest.raises(ValueError, match="trim_descriptions"):
+        schema.to_shacl(trim_descriptions=-1)
 
 
 def test_enrichment_failure_is_not_missing_text(source):

@@ -61,6 +61,7 @@ from typing import Any
 import yaml
 
 from rdfsolve.qlever import QleverConfig, build_provider_qleverfile, build_qleverfile
+from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
 # Configure logging
 logging.basicConfig(
@@ -190,7 +191,8 @@ class PipelineConfig:
     max_response_bytes: int = 64 * 1024 * 1024
     benchmark: bool = True
     enrich: bool = True
-    examples_per_pattern: int = 2
+    examples_per_pattern: int = 1
+    trim_descriptions: int | None = None
     navigation_hops: int = 2
     navigation_limit: int = 100
     void_base_url: str = "https://rdfsolve.bigcat-bioinformatics.nl"
@@ -404,24 +406,27 @@ class Stage:
             suffix: Output file suffix
         """
         formats = self.config.output_formats
+        if self.config.trim_descriptions is not None:
+            log.warning("[%s] Export descriptions are truncated to %s characters; text is lossy",
+                        name, self.config.trim_descriptions)
         if self.config.navigation_hops:
             schema.discover_paths(max_hops=self.config.navigation_hops,
                                   max_paths_per_length=self.config.navigation_limit)
 
-        # Keep a complete internal record, regardless of export formats.
+        # Keep canonical data for every run. Text trimming, if requested, is lossy.
         path = output_dir / f"{name}{suffix}_schema.json"
-        path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
+        path.write_text(json.dumps(schema.to_dict(trim_descriptions=self.config.trim_descriptions), indent=2), encoding="utf-8")
 
         # JSON-LD format
         if "json-ld" in formats:
             path = output_dir / f"{name}{suffix}_schema.jsonld"
-            path.write_text(json.dumps(schema.to_jsonld(), indent=2), encoding="utf-8")
+            path.write_text(json.dumps(schema.to_jsonld(trim_descriptions=self.config.trim_descriptions), indent=2), encoding="utf-8")
 
         # VoID format
         if "void" in formats:
             path = output_dir / f"{name}{suffix}_void.ttl"
             try:
-                void_graph = schema.to_void_graph(base_url=self.config.void_base_url)
+                void_graph = schema.to_void_graph(base_url=self.config.void_base_url, trim_descriptions=self.config.trim_descriptions)
                 if void_graph:
                     void_ttl = void_graph.serialize(format="turtle")
                     path.write_text(void_ttl, encoding="utf-8")
@@ -432,7 +437,7 @@ class Stage:
         if "shacl" in formats:
             path = output_dir / f"{name}{suffix}_shacl.ttl"
             try:
-                shacl_ttl = schema.to_shacl()
+                shacl_ttl = schema.to_shacl(trim_descriptions=self.config.trim_descriptions)
                 path.write_text(shacl_ttl, encoding="utf-8")
             except Exception as e:
                 raise RuntimeError(f"[{name}] Could not generate SHACL: {e}") from e
@@ -441,7 +446,7 @@ class Stage:
         if "pydantic" in formats:
             path = output_dir / f"{name}{suffix}_schema.py"
             try:
-                pydantic_code = schema.to_pydantic(schema_name=name)
+                pydantic_code = schema.to_pydantic(schema_name=name, trim_descriptions=self.config.trim_descriptions)
                 path.write_text(pydantic_code, encoding="utf-8")
             except Exception as e:
                 raise RuntimeError(f"[{name}] Could not generate Pydantic: {e}") from e
@@ -603,9 +608,9 @@ class RemoteMiningStage(Stage):
                 if result.ontology:
                     ontology_path = source_output_dir / f"{source.name}{suffix}_ontology.ttl"
                     try:
-                        ontology_graph = result.ontology.to_rdf_graph()
+                        ontology_graph = trim_export_text(result.ontology, self.config.trim_descriptions).to_rdf_graph()
                         if ontology_graph:
-                            schema.annotate_rdf(ontology_graph, include_examples=False)
+                            schema.annotate_rdf(ontology_graph, include_examples=False, trim_descriptions=self.config.trim_descriptions)
                             ont_ttl = ontology_graph.serialize(format="turtle")
                             ontology_path.write_text(ont_ttl, encoding="utf-8")
                     except Exception as e:
@@ -613,7 +618,7 @@ class RemoteMiningStage(Stage):
                 if result.metadata:
                     metadata_path = source_output_dir / f"{source.name}{suffix}_metadata.ttl"
                     try:
-                        metadata_graph = result.metadata.to_rdf_graph()
+                        metadata_graph = trim_export_text(result.metadata, self.config.trim_descriptions).to_rdf_graph()
                         if metadata_graph:
                             meta_ttl = metadata_graph.serialize(format="turtle")
                             metadata_path.write_text(meta_ttl, encoding="utf-8")
@@ -896,9 +901,9 @@ class LocalMiningStage(Stage):
             if result.ontology:
                 ontology_path = output_dir / f"{source.name}{suffix}_ontology.ttl"
                 try:
-                    ontology_graph = result.ontology.to_rdf_graph()
+                    ontology_graph = trim_export_text(result.ontology, self.config.trim_descriptions).to_rdf_graph()
                     if ontology_graph:
-                        schema.annotate_rdf(ontology_graph, include_examples=False)
+                        schema.annotate_rdf(ontology_graph, include_examples=False, trim_descriptions=self.config.trim_descriptions)
                         ont_ttl = ontology_graph.serialize(format="turtle")
                         ontology_path.write_text(ont_ttl, encoding="utf-8")
                 except Exception as e:
@@ -906,7 +911,7 @@ class LocalMiningStage(Stage):
             if result.metadata:
                 metadata_path = output_dir / f"{source.name}{suffix}_metadata.ttl"
                 try:
-                    metadata_graph = result.metadata.to_rdf_graph()
+                    metadata_graph = trim_export_text(result.metadata, self.config.trim_descriptions).to_rdf_graph()
                     if metadata_graph:
                         meta_ttl = metadata_graph.serialize(format="turtle")
                         metadata_path.write_text(meta_ttl, encoding="utf-8")
@@ -1307,9 +1312,9 @@ class GroupedMiningStage(LocalMiningStage):
             if result.ontology:
                 ontology_path = output_dir / f"{group_name}_ontology.ttl"
                 try:
-                    ontology_graph = result.ontology.to_rdf_graph()
+                    ontology_graph = trim_export_text(result.ontology, self.config.trim_descriptions).to_rdf_graph()
                     if ontology_graph:
-                        schema.annotate_rdf(ontology_graph, include_examples=False)
+                        schema.annotate_rdf(ontology_graph, include_examples=False, trim_descriptions=self.config.trim_descriptions)
                         ont_ttl = ontology_graph.serialize(format="turtle")
                         ontology_path.write_text(ont_ttl, encoding="utf-8")
                 except Exception as e:
@@ -1317,7 +1322,7 @@ class GroupedMiningStage(LocalMiningStage):
             if result.metadata:
                 metadata_path = output_dir / f"{group_name}_metadata.ttl"
                 try:
-                    metadata_graph = result.metadata.to_rdf_graph()
+                    metadata_graph = trim_export_text(result.metadata, self.config.trim_descriptions).to_rdf_graph()
                     if metadata_graph:
                         meta_ttl = metadata_graph.serialize(format="turtle")
                         metadata_path.write_text(meta_ttl, encoding="utf-8")
@@ -1943,8 +1948,10 @@ Examples:
                         help="Compose schema routes locally; 0 disables (no endpoint queries)")
     parser.add_argument("--navigation-limit", type=int, default=100,
                         help="Maximum saved candidate routes per hop length")
-    parser.add_argument("--examples-per-pattern", type=int, default=2, choices=range(0, 21),
-                        help="Examples per class and pattern (0: definitions only; default: 2)")
+    parser.add_argument("--examples-per-pattern", type=int, default=1, choices=range(0, 21),
+                        help="Examples per class and pattern (0: definitions only; default: 1)")
+    parser.add_argument("--trim-descriptions", type=int, default=None,
+                        help="Maximum description characters in exports; omit to keep full text (lossy)")
     parser.add_argument("--ontology-scope", choices=["schema", "full"], default="schema",
                         help="Export schema-relevant ontology or all queried axioms")
     parser.add_argument("--output-dir", type=Path, help="Output directory")
@@ -2022,6 +2029,9 @@ Examples:
     config.extract_metadata = args.extract_metadata
     config.enrich = not args.no_enrichment
     config.examples_per_pattern = args.examples_per_pattern
+    config.trim_descriptions = args.trim_descriptions
+    if config.trim_descriptions is not None and config.trim_descriptions < 0:
+        parser.error("--trim-descriptions must be nonnegative")
     config.navigation_hops = args.navigation_hops
     config.navigation_limit = args.navigation_limit
     if config.navigation_limit < 0:

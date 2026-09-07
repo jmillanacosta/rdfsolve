@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, SERVICE_NAMESPACE_PREFIXES
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
+from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 from rdfsolve.schema_models.navigation import NavigationSummary
 from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
@@ -118,12 +119,12 @@ class MinedSchema(BaseModel):
 
         return read_schema(raw)
 
-    def to_dict(self) -> dict[str, Any]:
-        """Return the versioned, lossless internal storage document."""
+    def to_dict(self, *, trim_descriptions: int | None = None) -> dict[str, Any]:
+        """Return canonical JSON. Optional text trimming is lossy."""
         return {
             "format": "rdfsolve.mined-schema",
             "version": 1,
-            "schema": self.model_dump(mode="json"),
+            "schema": trim_export_text(self, trim_descriptions).model_dump(mode="json"),
         }
 
     @classmethod
@@ -182,13 +183,13 @@ class MinedSchema(BaseModel):
 
     # NetworkX export
 
-    def to_networkx(self) -> Any:
+    def to_networkx(self, *, trim_descriptions: int | None = None) -> Any:
         """Export typed class relationships."""
         from rdfsolve.schema_models.exporters.networkx import to_networkx
 
-        return to_networkx(self)
+        return to_networkx(trim_export_text(self, trim_descriptions))
 
-    def to_jsonld(self) -> dict[str, Any]:
+    def to_jsonld(self, *, trim_descriptions: int | None = None) -> dict[str, Any]:
         """Export schema as JSON-LD by serializing the VoID graph.
 
         This is an RDF export, not the internal storage format. VoID
@@ -204,7 +205,7 @@ class MinedSchema(BaseModel):
         import json
 
         # Get the VoID graph (proper semantic RDF)
-        void_graph = self.to_void_graph()
+        void_graph = self.to_void_graph(trim_descriptions=trim_descriptions)
 
         # Serialize as JSON-LD
         jsonld_str = void_graph.serialize(format="json-ld", auto_compact=True)
@@ -213,7 +214,9 @@ class MinedSchema(BaseModel):
 
     # VoID graph export
 
-    def to_void_graph(self, base_url: str | None = None) -> Graph:
+    def to_void_graph(
+        self, base_url: str | None = None, *, trim_descriptions: int | None = None
+    ) -> Graph:
         """Export the supported VoID fields."""
         from rdfsolve.schema_models.exporters.void import to_void_graph
 
@@ -223,29 +226,36 @@ class MinedSchema(BaseModel):
             logging.getLogger(__name__).warning(
                 "VoID does not encode SHACL profiles or composed navigation. Keep canonical JSON."
             )
-        return to_void_graph(self, base_url)
+        return to_void_graph(
+            trim_export_text(self, trim_descriptions), base_url, trim_descriptions=trim_descriptions
+        )
 
     def to_linkml(
         self,
         schema_name: str | None = None,
         schema_description: str | None = None,
+        *,
+        trim_descriptions: int | None = None,
     ) -> Any:
         """Convert to LinkML SchemaDefinition with full metadata.
 
         Returns LinkML SchemaDefinition object.
         """
         from rdfsolve.schema_models.exporters.linkml import to_linkml
+        from rdfsolve.schema_models.exporters.text import clip_description
 
         return to_linkml(
-            self,
+            trim_export_text(self, trim_descriptions),
             schema_name=schema_name or self.about.dataset_name,
-            schema_description=schema_description,
+            schema_description=clip_description(schema_description, trim_descriptions),
         )
 
     def to_linkml_yaml(
         self,
         schema_name: str | None = None,
         schema_description: str | None = None,
+        *,
+        trim_descriptions: int | None = None,
     ) -> str:
         """Convert to LinkML YAML with full metadata.
 
@@ -255,7 +265,9 @@ class MinedSchema(BaseModel):
 
         from linkml.generators.yamlgen import YAMLGenerator
 
-        linkml_schema = self.to_linkml(schema_name, schema_description)
+        linkml_schema = self.to_linkml(
+            schema_name, schema_description, trim_descriptions=trim_descriptions
+        )
         return cast(str, YAMLGenerator(linkml_schema).serialize())
 
     def to_rdfconfig(
@@ -264,34 +276,46 @@ class MinedSchema(BaseModel):
         endpoint_url: str | None = None,
         endpoint_name: str | None = None,
         graph_uri: str | None = None,
+        trim_descriptions: int | None = None,
     ) -> dict[str, str]:
         """Export RDF-config from canonical patterns and source examples."""
         from rdfsolve.schema_models.exporters.rdfconfig import to_rdfconfig
 
         return to_rdfconfig(
-            self,
+            trim_export_text(self, trim_descriptions),
             endpoint_url=endpoint_url,
             endpoint_name=endpoint_name,
             graph_uri=graph_uri,
         )
 
-    def to_pydantic(self, schema_name: str | None = None) -> str:
+    def to_pydantic(
+        self, schema_name: str | None = None, *, trim_descriptions: int | None = None
+    ) -> str:
         """Generate label-named Pydantic views of observed RDF patterns."""
         from rdfsolve.schema_models.exporters.pydantic import to_pydantic
 
-        return to_pydantic(self, schema_name)
+        return to_pydantic(
+            trim_export_text(self, trim_descriptions),
+            schema_name,
+            trim_descriptions=trim_descriptions,
+        )
 
-    def annotate_rdf(self, graph: Graph, *, include_examples: bool = True) -> None:
+    def annotate_rdf(
+        self, graph: Graph, *, include_examples: bool = True, trim_descriptions: int | None = None
+    ) -> None:
         """Attach source annotations and provenance."""
         from rdfsolve.schema_models.exporters.rdf import annotate_rdf
 
-        annotate_rdf(self, graph, include_examples=include_examples)
+        annotate_rdf(
+            trim_export_text(self, trim_descriptions), graph, include_examples=include_examples
+        )
 
     def to_shacl(
         self,
         base_uri: str = "http://example.org/shapes/",
         *,
         activate_observed: bool = False,
+        trim_descriptions: int | None = None,
     ) -> str:
         """Convert to SHACL shapes.
 
@@ -309,13 +333,16 @@ class MinedSchema(BaseModel):
         """
         from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 
-        shapes = minedschema_to_shacl(self, base_uri=base_uri, activate_observed=activate_observed)
-        graph = shapes.to_rdf()
+        schema = trim_export_text(self, trim_descriptions)
+        shapes = minedschema_to_shacl(
+            schema, base_uri=base_uri, activate_observed=activate_observed
+        )
+        graph = trim_export_text(shapes, trim_descriptions).to_rdf()
         # VoID statistics remain dataset metadata, not validation constraints.
         from rdfsolve.schema_models.exporters.void import to_void_graph
 
-        graph += to_void_graph(self)
-        self.annotate_rdf(graph)
+        graph += to_void_graph(schema, trim_descriptions=trim_descriptions)
+        schema.annotate_rdf(graph)
         result: str = graph.serialize(format="turtle")
         return result
 
