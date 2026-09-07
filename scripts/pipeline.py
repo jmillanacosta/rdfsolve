@@ -1156,7 +1156,10 @@ class GroupedMiningStage(LocalMiningStage):
                 hostname = urlparse(first_url).hostname
                 if hostname:
                     # Only group known multi-file providers
-                    if "pubchem" in hostname or "pubchem" in source.name:
+                    if source.name.startswith("pubchem.ftp.") or (
+                        hostname == "ftp.ncbi.nlm.nih.gov"
+                        and urlparse(first_url).path.lower().startswith("/pubchem/")
+                    ):
                         group_name = "pubchem.ftp"
                     elif "bio2rdf" in hostname or "bio2rdf" in source.name:
                         group_name = "bio2rdf"
@@ -1284,6 +1287,9 @@ class GroupedMiningStage(LocalMiningStage):
             max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
         )
+
+        from rdfsolve.qlever.index_check import verify_named_graphs
+        verify_named_graphs(miner._helper, graph_uris)
 
         # Use mine_with_ontology if ontology extraction enabled
         if self.config.extract_ontology or self.config.extract_metadata:
@@ -1513,6 +1519,8 @@ class LsLodCloudStage(LocalMiningStage):
             report_path=str(report_path),
         )
 
+        from rdfsolve.qlever.index_check import verify_named_graphs
+        verify_named_graphs(miner._helper, graph_uris)
         schema = miner.mine(dataset_name="lslod_cloud")
 
         self._save_schema_outputs(schema, output_dir, "lslod_cloud", self.config.output_suffix)

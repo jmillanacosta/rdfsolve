@@ -55,3 +55,24 @@ def test_stop_escalates_only_for_owned_process():
     process.terminate.assert_called_once_with()
     process.kill.assert_called_once_with()
     assert process.wait.call_count == 2
+
+
+def test_graph_membership_check_uses_real_aop_rdf():
+    from rdflib import Dataset
+    from rdfsolve.qlever.index_check import verify_named_graphs
+
+    dataset = Dataset()
+    uri = "http://rdfsolve.org/graph/aopwikirdf"
+    graph = dataset.graph(uri)
+    graph.parse(Path(__file__).parent / "test_data" / "aopwikirdf_generated_void.ttl")
+    helper = Mock()
+
+    def select(query, **kwargs):
+        return {"results": {"bindings": [
+            {"graph": {"type": "uri", "value": str(row.graph)}} for row in dataset.query(query)
+        ]}}
+
+    helper.select.side_effect = select
+    verify_named_graphs(helper, [uri])
+    with pytest.raises(ValueError, match="lacks nonempty graphs"):
+        verify_named_graphs(helper, [uri, "http://rdfsolve.org/graph/wikipathways"])

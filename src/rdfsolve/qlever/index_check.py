@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from rdfsolve.qlever.lifecycle import index_name
+
+if TYPE_CHECKING:
+    from rdfsolve.sparql_helper import SparqlHelper
 
 
 def has_cached_index(workdir: Path, fallback: str) -> bool:
@@ -53,3 +57,35 @@ def has_cached_index(workdir: Path, fallback: str) -> bool:
     if missing_files:
         raise ValueError(f"Incomplete index in {workdir}: missing or empty {missing_files}")
     return True
+
+
+def verify_named_graphs(helper: SparqlHelper, graph_uris: list[str]) -> None:
+    """Require at least one triple in each selected cached graph."""
+    from rdflib import URIRef
+
+    for offset in range(0, len(graph_uris), 50):
+        expected = set(graph_uris[offset : offset + 50])
+        terms = " ".join(URIRef(iri).n3() for iri in sorted(expected))
+        query = (
+            "SELECT DISTINCT ?graph WHERE { VALUES ?graph { "
+            + terms
+            + " } FILTER EXISTS { GRAPH ?graph { ?s ?p ?o } } }"
+        )
+        response = helper.select(query, purpose="cached_named_graphs")
+        bindings = response.get("results", {}).get("bindings")
+        if not isinstance(bindings, list):
+            raise ValueError("Cached graph check returned invalid SELECT bindings")
+        present = {
+            row["graph"]["value"]
+            for row in bindings
+            if isinstance(row, dict)
+            and isinstance(row.get("graph"), dict)
+            and row["graph"].get("type") == "uri"
+            and "value" in row["graph"]
+        }
+        missing = sorted(expected - present)
+        if missing:
+            raise ValueError(
+                f"Cached index lacks nonempty graphs: {missing}. "
+                "Select matching cached inputs; no unscoped fallback was run."
+            )
