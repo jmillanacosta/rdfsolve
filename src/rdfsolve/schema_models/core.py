@@ -1198,7 +1198,7 @@ class MinedSchema(BaseModel):
                             )
                             g.add((dt_partition_uri, void_ext.datatype, URIRef(datatype)))
 
-                            if count is not None and count > 0:
+                            if count is not None:
                                 g.add(
                                     (
                                         dt_partition_uri,
@@ -1222,7 +1222,7 @@ class MinedSchema(BaseModel):
                         g.add((obj_partition_uri, RDF.type, void.Dataset))
                         g.add((obj_partition_uri, void["class"], URIRef(object_class)))
 
-                        if count is not None and count > 0:
+                        if count is not None:
                             g.add(
                                 (
                                     obj_partition_uri,
@@ -1268,7 +1268,7 @@ class MinedSchema(BaseModel):
                         g.add((object_target, void["class"], URIRef(object_class)))
 
                         # Add triple count if available
-                        if count is not None and count > 0:
+                        if count is not None:
                             g.add(
                                 (linkset_uri, void.triples, RdfLiteral(count, datatype=XSD.integer))
                             )
