@@ -36,3 +36,4 @@ class NavigationSummary(BaseModel):
     walk_counts: dict[int, int]
     paths: list[NavigationPath] = Field(default_factory=list)
     truncated_lengths: list[int] = Field(default_factory=list)
+    omitted_by_class: dict[int, dict[str, int]] = Field(default_factory=dict)
