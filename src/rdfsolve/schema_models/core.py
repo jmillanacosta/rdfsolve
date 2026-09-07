@@ -12,6 +12,7 @@ from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, SERVICE_NAMESPA
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
+from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 
 if TYPE_CHECKING:
     from rdflib import Graph
@@ -32,6 +33,9 @@ class MinedSchema(BaseModel):
         description="Schema patterns",
     )
     enrichment: SchemaEnrichment = Field(default_factory=SchemaEnrichment)
+    shapes: ShaclShapesGraph | None = Field(
+        None, description="Imported SHACL profile, separate from observed triple patterns"
+    )
     about: AboutMetadata = Field(
         ...,
         description="Provenance metadata",
@@ -73,6 +77,8 @@ class MinedSchema(BaseModel):
     def get_classes(self) -> list[str]:
         """Return sorted unique subject/object class URIs."""
         classes: set[str] = set()
+        if self.shapes is not None:
+            classes.update(shape.target_class for shape in self.shapes.node_shapes if shape.target_class)
         for p in self.patterns:
             classes.add(p.subject_class)
             if p.object_class not in _SENTINEL_OBJECTS:
@@ -280,6 +286,8 @@ class MinedSchema(BaseModel):
 
         shapes = minedschema_to_shacl(self, base_uri=base_uri)
         graph = shapes.to_rdf()
+        # VoID statistics remain dataset metadata, not validation constraints.
+        graph += self.to_void_graph()
         self.annotate_rdf(graph)
         result: str = graph.serialize(format="turtle")
         return result

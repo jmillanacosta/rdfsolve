@@ -1,4 +1,4 @@
-"""SHACL to MinedSchema conversion functions."""
+"""Export observed patterns or a retained source SHACL profile."""
 
 from __future__ import annotations
 
@@ -25,6 +25,9 @@ def minedschema_to_shacl(
     Returns:
         ShaclShapesGraph with NodeShape per class
     """
+    if schema.shapes is not None:
+        return schema.shapes.model_copy(deep=True)
+
     from collections import defaultdict
     from hashlib import md5
 
