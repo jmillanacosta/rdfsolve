@@ -35,7 +35,7 @@ class MinedSchema(BaseModel):
     )
     enrichment: SchemaEnrichment = Field(default_factory=SchemaEnrichment)
     shapes: ShaclShapesGraph | None = Field(
-        None, description="Imported SHACL profile, separate from observed triple patterns"
+        None, description="Supported source SHACL profile, separate from observed triple patterns"
     )
     about: AboutMetadata = Field(
         ...,

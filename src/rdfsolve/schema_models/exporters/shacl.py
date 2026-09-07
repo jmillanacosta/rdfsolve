@@ -25,6 +25,22 @@ def minedschema_to_shacl(
     Returns:
         ShaclShapesGraph with NodeShape per class
     """
+    import logging
+
+    lost_counts = sum(
+        pattern.count is not None
+        and (
+            pattern.object_class in ("Resource", "BlankNode")
+            or (pattern.object_class == "Literal" and not pattern.datatype)
+        )
+        for pattern in schema.patterns
+    )
+    if lost_counts:
+        logging.getLogger(__name__).warning(
+            "SHACL plus VoID metadata cannot retain %d pattern counts with unspecified "
+            "classes or datatypes. Keep canonical JSON; these are not sh:minCount values.",
+            lost_counts,
+        )
     if schema.shapes is not None:
         return _add_navigation(schema, schema.shapes.model_copy(deep=True), base_uri)
 
@@ -130,7 +146,7 @@ def _add_navigation(
             )
         )
     logging.getLogger(__name__).warning(
-        "SHACL navigation keeps predicate sequences and endpoint-type hints, not intermediate "
+        "SHACL navigation keeps predicate sequences and final-value type hints, not intermediate "
         "class filters, step statistics, or schema-walk totals. Keep canonical JSON for those."
     )
     return shapes

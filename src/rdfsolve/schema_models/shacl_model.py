@@ -33,6 +33,31 @@ def _count(graph: Graph, shape: Node, predicate: URIRef) -> int | None:
     return optional_count(value)
 
 
+def _text(graph: Graph, shape: Node, predicate: URIRef) -> tuple[str | None, str | None]:
+    """Read a preferred display text and retain its language tag."""
+    import logging
+
+    from rdflib import Literal as RdfLiteral
+
+    values = list(graph.objects(shape, predicate))
+    if not values:
+        return None, None
+    if not all(isinstance(value, RdfLiteral) for value in values):
+        raise ValueError(f"{predicate} requires literal text")
+    texts = [value for value in values if isinstance(value, RdfLiteral)]
+    texts.sort(
+        key=lambda value: (value.language not in ("en", None), value.language or "", str(value))
+    )
+    if len(texts) > 1:
+        logging.getLogger(__name__).warning(
+            "SHACL profile retains one display text for %s on %s; %d alternatives are omitted.",
+            predicate,
+            shape,
+            len(texts) - 1,
+        )
+    return str(texts[0]), texts[0].language
+
+
 class ShaclPropertyShape(BaseModel):
     """Represents sh:PropertyShape."""
 
@@ -49,6 +74,8 @@ class ShaclPropertyShape(BaseModel):
     qualified_disjoint: bool = False
     name: str | None = Field(None, description="sh:name")
     description: str | None = Field(None, description="sh:description")
+    name_language: str | None = None
+    description_language: str | None = None
     alternatives: list[ShaclPropertyShape] = Field(
         default_factory=list,
         description="Value constraints combined with sh:or; paths are ignored in these alternatives",
@@ -99,14 +126,18 @@ class ShaclPropertyShape(BaseModel):
             graph.add((node, sh.minCount, RdfLiteral(self.min_count, datatype=XSD.integer)))
         if self.max_count is not None:
             graph.add((node, sh.maxCount, RdfLiteral(self.max_count, datatype=XSD.integer)))
-        if self.name:
-            graph.add((node, sh.name, RdfLiteral(self.name)))
-        if self.description:
-            graph.add((node, sh.description, RdfLiteral(self.description)))
+        if self.name is not None:
+            graph.add((node, sh.name, RdfLiteral(self.name, lang=self.name_language)))
+        if self.description is not None:
+            graph.add(
+                (node, sh.description, RdfLiteral(self.description, lang=self.description_language))
+            )
         if self.alternatives:
             from rdflib.collection import Collection
 
-            alternatives: list[Node] = [alternative.to_rdf(graph) for alternative in self.alternatives]
+            alternatives: list[Node] = [
+                alternative.to_rdf(graph) for alternative in self.alternatives
+            ]
             head = BNode()
             Collection(graph, head, alternatives)
             graph.add((node, sh["or"], head))
@@ -160,8 +191,8 @@ class ShaclPropertyShape(BaseModel):
         datatype = graph.value(uri, sh.datatype)
         class_constraint = graph.value(uri, sh["class"])
         node_kind_uri = graph.value(uri, sh.nodeKind)
-        name = graph.value(uri, sh.name)
-        description = graph.value(uri, sh.description)
+        name, name_language = _text(graph, uri, sh.name)
+        description, description_language = _text(graph, uri, sh.description)
 
         node_kind = None
         if node_kind_uri is not None:
@@ -191,8 +222,10 @@ class ShaclPropertyShape(BaseModel):
             qualified_min_count=_count(graph, uri, sh.qualifiedMinCount),
             qualified_max_count=_count(graph, uri, sh.qualifiedMaxCount),
             qualified_disjoint=bool(graph.value(uri, sh.qualifiedValueShapesDisjoint)),
-            name=str(name) if name else None,
-            description=str(description) if description else None,
+            name=name,
+            description=description,
+            name_language=name_language,
+            description_language=description_language,
             alternatives=[
                 cls.from_rdf(graph, branch, active)
                 for head in graph.objects(uri, sh["or"])
@@ -211,6 +244,8 @@ class ShaclNodeShape(BaseModel):
     property_shapes: list[ShaclPropertyShape] = Field(default_factory=list)
     name: str | None = Field(None, description="sh:name")
     description: str | None = Field(None, description="sh:description")
+    name_language: str | None = None
+    description_language: str | None = None
 
     def to_rdf(self, graph: Graph) -> URIRef | BNode:
         """Serialize to RDF graph."""
@@ -230,10 +265,12 @@ class ShaclNodeShape(BaseModel):
             graph.add((uri, sh.targetClass, Ref(self.target_class)))
         if self.closed:
             graph.add((uri, sh.closed, RdfLiteral(True)))
-        if self.name:
-            graph.add((uri, sh.name, RdfLiteral(self.name)))
-        if self.description:
-            graph.add((uri, sh.description, RdfLiteral(self.description)))
+        if self.name is not None:
+            graph.add((uri, sh.name, RdfLiteral(self.name, lang=self.name_language)))
+        if self.description is not None:
+            graph.add(
+                (uri, sh.description, RdfLiteral(self.description, lang=self.description_language))
+            )
 
         if self.ignored_properties:
             from rdflib.collection import Collection
@@ -260,8 +297,8 @@ class ShaclNodeShape(BaseModel):
 
         target_class = graph.value(uri, sh.targetClass, any=False)
         closed = graph.value(uri, sh.closed)
-        name = graph.value(uri, sh.name)
-        description = graph.value(uri, sh.description)
+        name, name_language = _text(graph, uri, sh.name)
+        description, description_language = _text(graph, uri, sh.description)
 
         property_shapes = []
         for ps_uri in graph.objects(uri, sh.property):
@@ -277,8 +314,10 @@ class ShaclNodeShape(BaseModel):
                 for item in graph.items(head)
             ],
             property_shapes=property_shapes,
-            name=str(name) if name else None,
-            description=str(description) if description else None,
+            name=name,
+            description=description,
+            name_language=name_language,
+            description_language=description_language,
         )
 
 
@@ -312,6 +351,43 @@ class ShaclShapesGraph(BaseModel):
 
         sh = Namespace("http://www.w3.org/ns/shacl#")
 
+        import logging
+
+        supported = {
+            "path",
+            "datatype",
+            "class",
+            "nodeKind",
+            "minCount",
+            "maxCount",
+            "name",
+            "description",
+            "or",
+            "qualifiedValueShape",
+            "qualifiedMinCount",
+            "qualifiedMaxCount",
+            "qualifiedValueShapesDisjoint",
+            "targetClass",
+            "closed",
+            "ignoredProperties",
+            "property",
+            "alternativePath",
+            "inversePath",
+            "zeroOrMorePath",
+            "oneOrMorePath",
+            "zeroOrOnePath",
+        }
+        unknown = sorted(
+            {
+                str(predicate)
+                for predicate in graph.predicates()
+                if str(predicate).startswith(str(sh))
+                and str(predicate)[len(str(sh)) :] not in supported
+            }
+        )
+        logger = logging.getLogger(__name__)
+        if unknown:
+            logger.warning("SHACL reader does not retain these predicates: %s", unknown)
         node_shapes = []
         for ns_uri in graph.subjects(RDF.type, sh.NodeShape):
             node_shapes.append(ShaclNodeShape.from_rdf(graph, ns_uri))
