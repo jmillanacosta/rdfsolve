@@ -7,6 +7,24 @@ from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
 from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 
 
+def test_unknown_kind_is_not_an_iri_and_union_kinds_are_not_collapsed():
+    import pytest
+
+    source = """
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        <urn:shape> a sh:NodeShape; sh:targetClass <urn:A>;
+            sh:property [sh:path <urn:p>; sh:nodeKind sh:BlankNodeOrLiteral],
+                [sh:path <urn:q>] .
+    """
+    with pytest.warns(UserWarning, match="omits object constraints"):
+        schema = shacl_to_minedschema(source)
+    assert {(p.property_uri, p.object_class) for p in schema.patterns} == {
+        ("urn:p", "BlankNode"), ("urn:p", "Literal")
+    }
+    with pytest.raises(ValueError, match="Invalid sh:nodeKind"):
+        shacl_to_minedschema(source.replace("sh:BlankNodeOrLiteral", "<urn:NotLiteral>"))
+
+
 def test_roundtrip():
     """Test MinedSchema -> SHACL -> MinedSchema roundtrip."""
     original = MinedSchema(

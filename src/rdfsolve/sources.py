@@ -25,7 +25,6 @@ class SourceEntry(TypedDict, total=False):
     void_schema: list[str]  # VoID graphs with mineable partitions
     graph_uris: list[str]
     use_graph: bool
-    two_phase: bool
     chunk_size: int
     class_batch_size: int
     class_chunk_size: int | None
@@ -577,7 +576,6 @@ def _yaml_node_to_entry(node: dict[str, Any]) -> SourceEntry:
     e["graph_uris"] = list(raw_g)
 
     e["use_graph"] = bool(node.get("use_graph", False))
-    e["two_phase"] = bool(node.get("two_phase", True))
     e["counts"] = bool(node.get("counts", True))
     e["unsafe_paging"] = bool(node.get("unsafe_paging", False))
 
@@ -650,7 +648,6 @@ def _node_to_entry(node: dict[str, Any]) -> SourceEntry:
 
     # booleans
     e["use_graph"] = bool(node.get("use_graph", False))
-    e["two_phase"] = bool(node.get("two_phase", True))
     e["counts"] = bool(node.get("counts", True))
     e["unsafe_paging"] = bool(node.get("unsafe_paging", False))
 

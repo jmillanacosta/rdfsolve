@@ -116,12 +116,8 @@ class SchemaMiner:
         HTTP timeout per request (seconds).
     counts:
         Whether to also run COUNT queries for triple counts.
-    two_phase:
-        Use two-phase mining (default).  Phase 1 discovers all
-        ``rdf:type`` classes; phase 2 queries properties per
-        class.  Much gentler on heavyweight endpoints like
-        QLever/PubChem/UniProt.  Pass ``False`` for
-        single-pass strategy.
+    strategy:
+        Choose two-phase, single-pass, or one-shot mining.
     filter_service_namespaces:
         When ``True`` (the default), remove patterns whose
         subject, property, or object URI belongs to a
@@ -154,9 +150,6 @@ class SchemaMiner:
         sparql_engine: str = "",
         sparql_strategy: str = "",
         source_name: str = "",
-        # Deprecated parameters (kept for backward compatibility)
-        two_phase: bool | None = None,
-        one_shot: bool | None = None,
         enrich: bool = False,
         examples_per_pattern: int = 2,
     ) -> None:
@@ -167,8 +160,6 @@ class SchemaMiner:
                 - A string: "two-phase" (default), "single-pass", or "one-shot"
                 - A MiningStrategy instance for custom strategies
                 - None (uses "two-phase" as default)
-            two_phase: (Deprecated) Use strategy="two-phase" instead
-            one_shot: (Deprecated) Use strategy="one-shot" instead
         """
         self.endpoint_url = endpoint_url
         if not 0 <= examples_per_pattern <= 20:
@@ -191,7 +182,7 @@ class SchemaMiner:
         self.qlever_version = qlever_version
 
         # Handle strategy parameter - resolve string names to strategy instances
-        self._strategy = self._resolve_strategy(strategy, two_phase, one_shot)
+        self._strategy = self._resolve_strategy(strategy)
 
         self._helper = SparqlHelper(
             endpoint_url,
@@ -209,26 +200,8 @@ class SchemaMiner:
     def _resolve_strategy(
         self,
         strategy: str | MiningStrategy | None,
-        two_phase: bool | None,
-        one_shot: bool | None,
     ) -> MiningStrategy:
-        """Resolve strategy parameter to a MiningStrategy instance.
-
-        Handles backward compatibility with deprecated two_phase/one_shot flags.
-        """
-        # Handle deprecated parameters
-        if two_phase is not None or one_shot is not None:
-            logger.warning(
-                "Parameters 'two_phase' and 'one_shot' are deprecated. "
-                "Use strategy='two-phase', strategy='single-pass', or strategy='one-shot' instead."
-            )
-            if one_shot:
-                return OneShotStrategy()
-            elif two_phase:
-                return TwoPhaseStrategy()
-            else:
-                return SinglePassStrategy()
-
+        """Resolve a strategy name or use the supplied strategy."""
         # Handle strategy parameter
         if strategy is None:
             # Default to two-phase
@@ -793,9 +766,6 @@ def mine_schema(
     sparql_engine: str = "",
     sparql_strategy: str = "",
     source_name: str = "",
-    # Deprecated parameters
-    two_phase: bool | None = None,
-    one_shot: bool | None = None,
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`.
 
@@ -828,10 +798,6 @@ def mine_schema(
     strategy:
         Mining strategy to use. Can be "two-phase" (default),
         "single-pass", "one-shot", or a MiningStrategy instance.
-    two_phase:
-        (Deprecated) Use strategy="two-phase" instead.
-    one_shot:
-        (Deprecated) Use strategy="one-shot" instead.
     report_path:
         If given, write an analytics JSON report to this path.
         The file is updated incrementally after each mining phase.
@@ -867,7 +833,5 @@ def mine_schema(
         sparql_engine=sparql_engine,
         sparql_strategy=sparql_strategy,
         source_name=source_name,
-        two_phase=two_phase,
-        one_shot=one_shot,
     )
     return miner.mine(dataset_name=dataset_name)
