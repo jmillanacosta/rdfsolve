@@ -11,6 +11,8 @@ from pydantic import BaseModel, Field
 from rdflib import OWL, RDF, RDFS, Graph, Namespace, URIRef
 from rdflib import Literal as RDFLiteral
 
+from rdfsolve.schema_models.enrichment import TermAnnotation
+
 
 class SubClassRelation(BaseModel):
     """rdfs:subClassOf relation."""
@@ -61,6 +63,7 @@ class OntologyStructure(BaseModel):
     """Selected ontology classes and axioms, not a complete OWL model."""
 
     classes: list[str] = Field(default_factory=list)
+    annotations: list[TermAnnotation] = Field(default_factory=list)
     subclass_relations: list[SubClassRelation] = []
     domain_assertions: list[DomainAssertion] = []
     range_assertions: list[RangeAssertion] = []
@@ -99,6 +102,7 @@ class OntologyStructure(BaseModel):
                 pending.append(parent)
         return OntologyStructure(
             classes=sorted(selected),
+            annotations=self.annotations,
             subclass_relations=[item for item in self.subclass_relations if item.child in selected],
             domain_assertions=domains,
             range_assertions=ranges,
@@ -138,7 +142,32 @@ class OntologyStructure(BaseModel):
         for char in self.property_characteristics:
             g.add((URIRef(char.property), RDF.type, URIRef(char.characteristic)))
 
+        terms = set(self.term_iris())
+        for annotation in self.annotations:
+            if annotation.term_iri in terms:
+                g.add(
+                    (
+                        URIRef(annotation.term_iri),
+                        URIRef(annotation.predicate),
+                        annotation.text.to_rdf(),
+                    )
+                )
+
         return g
+
+    def term_iris(self) -> list[str]:
+        """Return retained terms, without adding unused descendants."""
+        terms = set(self.classes)
+        for relation in self.subclass_relations:
+            terms.update((relation.child, relation.parent))
+        for domain in self.domain_assertions:
+            terms.update((domain.property, domain.domain))
+        for range_ in self.range_assertions:
+            terms.update((range_.property, range_.range))
+        for inverse in self.inverse_properties:
+            terms.update((inverse.property1, inverse.property2))
+        terms.update(item.property for item in self.property_characteristics)
+        return sorted(terms)
 
     def to_turtle(self, base_uri: str = "http://example.org/ontology/") -> str:
         """Export as RDFS/OWL Turtle."""

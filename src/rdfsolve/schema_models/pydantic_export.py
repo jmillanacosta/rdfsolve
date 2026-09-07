@@ -86,6 +86,9 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
             if iri not in _SENTINEL_OBJECTS and label:
                 labels[iri].add(label)
 
+    for annotation in schema.enrichment.labels:
+        labels[annotation.term_iri].add(annotation.text.value)
+
     used = {
         "RDFResource",
         "BaseModel",

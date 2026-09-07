@@ -130,7 +130,33 @@ def mine_with_ontology(
                     inverse_properties=len(result.ontology.inverse_properties),
                     property_characteristics=len(result.ontology.property_characteristics),
                 )
-        result.data_schema = miner._finish_schema(result.data_schema)
+        ontology_iris = result.ontology.term_iris() if result.ontology else []
+        annotations = None
+        shared_scope = ontology_graph_uris is None or ontology_graph_uris == miner.graph_uris
+        if ontology_iris and (not miner.enrich or not shared_scope):
+            from rdfsolve.mining.enrichment import query_enrichment
+            from rdfsolve.schema_models.core import MinedSchema
+
+            annotations = query_enrichment(
+                MinedSchema(patterns=[], about=result.data_schema.about),
+                miner._helper,
+                ontology_graph_uris if ontology_graph_uris is not None else miner.graph_uris,
+                examples_per_pattern=0,
+                delay=miner.delay,
+                report=miner._report,
+                annotation_iris=ontology_iris,
+            )
+        result.data_schema = miner._finish_schema(
+            result.data_schema, annotation_iris=ontology_iris if shared_scope else None
+        )
+        if result.ontology is not None:
+            annotations = annotations or result.data_schema.enrichment
+            terms = set(ontology_iris)
+            result.ontology.annotations = [
+                annotation
+                for annotation in annotations.labels + annotations.definitions
+                if annotation.term_iri in terms
+            ]
         return result
 
 

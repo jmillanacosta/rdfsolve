@@ -552,12 +552,14 @@ class SchemaMiner:
             )
             raise
 
-    def _finish_schema(self, schema: MinedSchema) -> MinedSchema:
+    def _finish_schema(
+        self, schema: MinedSchema, annotation_iris: list[str] | None = None
+    ) -> MinedSchema:
         """Filter the result and set final counts and times once."""
         if self.filter_service_namespaces:
             schema = self._apply_namespace_filter(schema)
         if self.enrich:
-            schema.enrichment = self.query_enrichment(schema)
+            schema.enrichment = self.query_enrichment(schema, annotation_iris=annotation_iris)
         classes, properties = self._collect_class_property_sets(schema.patterns)
         report = self._report.report
         report.strategy = schema.about.strategy or report.strategy
@@ -578,7 +580,9 @@ class SchemaMiner:
         )
         return schema
 
-    def query_enrichment(self, schema: MinedSchema) -> SchemaEnrichment:
+    def query_enrichment(
+        self, schema: MinedSchema, *, annotation_iris: list[str] | None = None
+    ) -> SchemaEnrichment:
         """Query definitions and observed examples with this miner's settings.
 
         Assign the return value to ``schema.enrichment`` when called after mining.
@@ -593,6 +597,7 @@ class SchemaMiner:
             examples_per_pattern=self.examples_per_pattern,
             delay=self.delay,
             report=self._rc,
+            annotation_iris=annotation_iris,
         )
 
     def _mine_schema(self, dataset_name: str | None) -> MinedSchema:
