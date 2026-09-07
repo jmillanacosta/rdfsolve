@@ -188,6 +188,8 @@ class PipelineConfig:
     chunk_size: int = 50000
     class_batch_size: int = 50
     benchmark: bool = True
+    enrich: bool = True
+    examples_per_pattern: int = 2
     void_base_url: str = "https://rdfsolve.bigcat-bioinformatics.nl"
 
     # QLever settings (for local mining)
@@ -543,6 +545,8 @@ class RemoteMiningStage(Stage):
                 sparql_strategy=source.sparql_strategy,
                 chunk_size=self.config.chunk_size,
                 class_batch_size=self.config.class_batch_size,
+            enrich=self.config.enrich,
+            examples_per_pattern=self.config.examples_per_pattern,
                 report_path=str(report_path),
             )
 
@@ -563,6 +567,7 @@ class RemoteMiningStage(Stage):
                     try:
                         ontology_graph = result.ontology.to_rdf_graph()
                         if ontology_graph:
+                            schema.annotate_rdf(ontology_graph, include_examples=False)
                             ont_ttl = ontology_graph.serialize(format="turtle")
                             ontology_path.write_text(ont_ttl, encoding="utf-8")
                     except Exception as e:
@@ -934,6 +939,8 @@ class LocalMiningStage(Stage):
             sparql_engine="qlever",
             chunk_size=self.config.chunk_size,
             class_batch_size=self.config.class_batch_size,
+            enrich=self.config.enrich,
+            examples_per_pattern=self.config.examples_per_pattern,
             report_path=str(report_path),
         )
 
@@ -954,6 +961,7 @@ class LocalMiningStage(Stage):
                 try:
                     ontology_graph = result.ontology.to_rdf_graph()
                     if ontology_graph:
+                        schema.annotate_rdf(ontology_graph, include_examples=False)
                         ont_ttl = ontology_graph.serialize(format="turtle")
                         ontology_path.write_text(ont_ttl, encoding="utf-8")
                 except Exception as e:
@@ -1371,6 +1379,8 @@ class GroupedMiningStage(LocalMiningStage):
             sparql_engine="qlever",
             chunk_size=self.config.chunk_size,
             class_batch_size=self.config.class_batch_size,
+            enrich=self.config.enrich,
+            examples_per_pattern=self.config.examples_per_pattern,
             report_path=str(report_path),
         )
 
@@ -1391,6 +1401,7 @@ class GroupedMiningStage(LocalMiningStage):
                 try:
                     ontology_graph = result.ontology.to_rdf_graph()
                     if ontology_graph:
+                        schema.annotate_rdf(ontology_graph, include_examples=False)
                         ont_ttl = ontology_graph.serialize(format="turtle")
                         ontology_path.write_text(ont_ttl, encoding="utf-8")
                 except Exception as e:
@@ -1695,6 +1706,8 @@ class LsLodCloudStage(Stage):
             sparql_engine="qlever",
             chunk_size=self.config.chunk_size,
             class_batch_size=self.config.class_batch_size,
+            enrich=self.config.enrich,
+            examples_per_pattern=self.config.examples_per_pattern,
             report_path=str(report_path),
         )
 
@@ -2198,6 +2211,9 @@ Examples:
     parser.add_argument("--skip-completed", action="store_true", help="Skip sources with existing schema output files")
     parser.add_argument("--extract-ontology", action="store_true", help="Extract ontology structure (TBox: rdfs:subClassOf, domain/range)")
     parser.add_argument("--extract-metadata", action="store_true", help="Extract infrastructure metadata (VoID/DCAT)")
+    parser.add_argument("--no-enrichment", action="store_true", help="Skip definitions and observed examples")
+    parser.add_argument("--examples-per-pattern", type=int, default=2, choices=range(0, 21),
+                        help="Examples per class and pattern (0: definitions only; default: 2)")
     parser.add_argument("--ontology-scope", choices=["schema", "full"], default="schema",
                         help="Export schema-relevant ontology or all queried axioms")
     parser.add_argument("--output-dir", type=Path, help="Output directory")
@@ -2241,6 +2257,8 @@ Examples:
     config.extract_ontology = args.extract_ontology
     config.ontology_scope = args.ontology_scope
     config.extract_metadata = args.extract_metadata
+    config.enrich = not args.no_enrichment
+    config.examples_per_pattern = args.examples_per_pattern
 
     # Load sources
     config.load_sources(args.sources, skip_providers=args.skip_providers)

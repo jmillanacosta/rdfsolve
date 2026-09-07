@@ -58,6 +58,7 @@ from rdfsolve.schema_models._constants import (
     _URI_SCHEMES,
     SERVICE_NAMESPACE_PREFIXES,
 )
+from rdfsolve.schema_models.enrichment import SchemaEnrichment
 
 _log = logging.getLogger(__name__)
 
@@ -604,6 +605,7 @@ class MinedSchema(BaseModel):
         default_factory=list,
         description="Schema patterns",
     )
+    enrichment: SchemaEnrichment = Field(default_factory=SchemaEnrichment)
     about: AboutMetadata = Field(
         ...,
         description="Provenance metadata",
@@ -1272,6 +1274,11 @@ class MinedSchema(BaseModel):
                             )
 
         _bind_discovered_prefixes(g, self.patterns)
+        self.annotate_rdf(g)
+        for partition, class_iri in g.subject_objects(void["class"]):
+            for example in self.enrichment.class_examples.get(str(class_iri), []):
+                if example.kind == "uri":
+                    g.add((partition, void.exampleResource, example.to_rdf()))
         return g
 
     # LinkML export
@@ -1315,6 +1322,33 @@ class MinedSchema(BaseModel):
 
         return to_pydantic(self, schema_name)
 
+    def annotate_rdf(self, graph: Graph, *, include_examples: bool = True) -> None:
+        """Add source text, example triples, and document provenance to RDF."""
+        from rdflib import Literal as RdfLiteral
+        from rdflib import URIRef
+        from rdflib.namespace import DCTERMS, OWL
+
+        if include_examples:
+            graph += self.enrichment.to_rdf_graph()
+        else:
+            terms = {str(term) for triple in graph for term in triple}
+            for definition in self.enrichment.definitions:
+                if definition.term_iri in terms:
+                    graph.add(
+                        (
+                            URIRef(definition.term_iri),
+                            URIRef(definition.predicate),
+                            definition.text.to_rdf(),
+                        )
+                    )
+        document = URIRef("")
+        if self.about.schema_version:
+            graph.add((document, OWL.versionInfo, RdfLiteral(self.about.schema_version)))
+        if self.about.source_version_iri:
+            graph.add((document, DCTERMS.source, URIRef(self.about.source_version_iri)))
+        if self.about.generated_at:
+            graph.add((document, DCTERMS.created, RdfLiteral(self.about.generated_at)))
+
     def to_shacl(
         self,
         base_uri: str = "http://example.org/shapes/",
@@ -1335,7 +1369,9 @@ class MinedSchema(BaseModel):
         from rdfsolve.schema_models.shacl_convert import minedschema_to_shacl
 
         shapes = minedschema_to_shacl(self, base_uri=base_uri)
-        result: str = shapes.to_rdf().serialize(format="turtle")
+        graph = shapes.to_rdf()
+        self.annotate_rdf(graph)
+        result: str = graph.serialize(format="turtle")
         return result
 
 

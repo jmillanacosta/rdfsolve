@@ -293,3 +293,26 @@ def test_partial_index_is_not_overwritten(pipeline, tmp_path):
     stage = pipeline.LocalMiningStage(pipeline.PipelineConfig(base_dir=tmp_path))
     with pytest.raises(ValueError, match="Incomplete index"):
         stage._has_qlever_index(tmp_path, "test")
+
+
+@pytest.mark.parametrize("mode", ["remote", "local", "grouped", "cloud"])
+def test_pipeline_enables_enrichment_in_every_mining_mode(pipeline, tmp_path, monkeypatch, mode):
+    config = pipeline.PipelineConfig(base_dir=tmp_path, examples_per_pattern=3)
+    source = pipeline.Source(
+        name="test",
+        endpoint="https://example.org/sparql",
+        last_checked=datetime.now(timezone.utc).isoformat(),
+    )
+    constructor = Mock()
+    monkeypatch.setattr("rdfsolve.SchemaMiner", constructor)
+    monkeypatch.setattr(pipeline.Stage, "_save_schema_outputs", lambda *args: None)
+    if mode == "remote":
+        pipeline.RemoteMiningStage(config)._mine_single_source(source)
+    elif mode == "local":
+        pipeline.LocalMiningStage(config)._mine_local(source, 7019)
+    elif mode == "grouped":
+        pipeline.GroupedMiningStage(config)._mine_grouped("test", [source], 7019)
+    else:
+        pipeline.LsLodCloudStage(config)._mine_cloud([(source, tmp_path)], 7019)
+    assert constructor.call_args.kwargs["enrich"] is True
+    assert constructor.call_args.kwargs["examples_per_pattern"] == 3

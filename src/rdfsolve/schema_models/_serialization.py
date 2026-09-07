@@ -48,7 +48,11 @@ def read_schema(raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
         if set(raw) != {"format", "version", "schema"}:
             raise ValueError("Expected format, version, and schema fields")
         schema = raw["schema"]
-        if not isinstance(schema, dict) or set(schema) != {"patterns", "about"}:
+        if (
+            not isinstance(schema, dict)
+            or not {"patterns", "about"} <= set(schema)
+            or set(schema) - {"patterns", "about", "enrichment"}
+        ):
             raise ValueError("Expected patterns and about fields in canonical schema")
         if isinstance(schema["patterns"], list):
             for pattern in schema["patterns"]:

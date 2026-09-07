@@ -7,6 +7,22 @@ Workflow scripts for mining, mapping, and analyzing RDF schemas.
 ### `pipeline.py`
 Main pipeline for mining schemas from SPARQL endpoints.
 
+All mining modes retrieve source definitions and up to two examples per class
+and observed pattern before export. Set `--examples-per-pattern N` (0–20), or
+`--no-enrichment` to skip these queries. Zero retrieves definitions only. Queries
+use the mining graph scope and timeout. Ten sample queries share each request.
+Samples follow endpoint order; they are not random or representative.
+
+Canonical `*_schema.json` keeps RDF node kinds, literal datatypes, languages,
+definitions, examples, and query failures. Pydantic uses class labels as names,
+definitions as docstrings, and observed values as field examples. Examples are
+not defaults. Missing source definitions remain missing.
+
+The JSON envelope's `version` identifies the storage format. `schema_version`
+identifies the source release: version IRI, release label, source date, then a
+dated mining snapshot. A snapshot is not an upstream release. Metadata from an
+unrelated imported ontology is not used as the dataset's metadata.
+
 To reuse local data when upstream sources are unavailable:
 
 ```bash

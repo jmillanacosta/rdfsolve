@@ -136,11 +136,15 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
         "",
     ]
     for iri, name in names.items():
+        class_examples = [
+            {"@id": term.json_value()} for term in schema.enrichment.class_examples.get(iri, [])
+        ]
         lines.extend(
             [
                 f"class {name}(RDFResource):",
+                f"    {(schema.enrichment.description(iri) or ('Observed type ' + iri))!r}",
                 f"    rdf_class_iri: ClassVar[str] = {iri!r}",
-                f"    model_config = ConfigDict(json_schema_extra={{'rdf_class_iri': {iri!r}, **DATASET_METADATA}})",
+                f"    model_config = ConfigDict(json_schema_extra={{'rdf_class_iri': {iri!r}, 'examples': {class_examples!r}, **DATASET_METADATA}})",
             ]
         )
         fields = set(dir(BaseModel)) | used | {"uri", "rdf_type", "rdf_class_iri"}
@@ -152,13 +156,18 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
             field = _unique_name(field, prop, fields)
             types = sorted({part for p in patterns for part in _value_type(p, names).split(" | ")})
             value_type = " | ".join(types)
-            description = "; ".join(
+            description = schema.enrichment.description(prop) or "; ".join(
                 sorted({p.property_label for p in patterns if p.property_label})
             )
             # Mining shows values, not a maximum count per subject.
+            examples = [
+                example.value.json_value()
+                for example in schema.enrichment.examples
+                if example.subject_class == iri and example.property_uri == prop
+            ]
             lines.append(
                 f"    {field}: {value_type} | list[{value_type}] | None = Field(None, "
-                f"alias={prop!r}, description={description!r}, json_schema_extra={{'rdf_property_iri': {prop!r}}})"
+                f"alias={prop!r}, description={description!r}, examples={examples!r}, json_schema_extra={{'rdf_property_iri': {prop!r}}})"
             )
         lines.append("")
     for name in names.values():

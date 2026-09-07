@@ -67,6 +67,7 @@ from rdfsolve.models import (
     QueryStats,
     SchemaPattern,
 )
+from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.sparql_helper import (
     EndpointError,
     EndpointTimeoutError,
@@ -156,6 +157,8 @@ class SchemaMiner:
         # Deprecated parameters (kept for backward compatibility)
         two_phase: bool | None = None,
         one_shot: bool | None = None,
+        enrich: bool = False,
+        examples_per_pattern: int = 2,
     ) -> None:
         """Initialize a SchemaMiner.
 
@@ -168,6 +171,10 @@ class SchemaMiner:
             one_shot: (Deprecated) Use strategy="one-shot" instead
         """
         self.endpoint_url = endpoint_url
+        if not 0 <= examples_per_pattern <= 20:
+            raise ValueError("examples_per_pattern must be between 0 and 20")
+        self.enrich = enrich
+        self.examples_per_pattern = examples_per_pattern
         self.graph_uris: list[str] | None = (
             [graph_uris] if isinstance(graph_uris, str) else graph_uris
         )
@@ -306,6 +313,8 @@ class SchemaMiner:
                 "untyped_as_classes": self.untyped_as_classes,
                 "unsafe_paging": self.unsafe_paging,
                 "filter_service_namespaces": self.filter_service_namespaces,
+                "enrich": self.enrich,
+                "examples_per_pattern": self.examples_per_pattern,
             },
         )
         self._rc = ReportCollector(report, self._report_path)
@@ -547,6 +556,8 @@ class SchemaMiner:
         """Filter the result and set final counts and times once."""
         if self.filter_service_namespaces:
             schema = self._apply_namespace_filter(schema)
+        if self.enrich:
+            schema.enrichment = self.query_enrichment(schema)
         classes, properties = self._collect_class_property_sets(schema.patterns)
         report = self._report.report
         report.strategy = schema.about.strategy or report.strategy
@@ -566,6 +577,23 @@ class SchemaMiner:
             discovered_metadata=report.discovered_metadata,
         )
         return schema
+
+    def query_enrichment(self, schema: MinedSchema) -> SchemaEnrichment:
+        """Query definitions and observed examples with this miner's settings.
+
+        Assign the return value to ``schema.enrichment`` when called after mining.
+        No ontology or external vocabulary download is attempted.
+        """
+        from rdfsolve.mining.enrichment import query_enrichment
+
+        return query_enrichment(
+            schema,
+            self._helper,
+            self.graph_uris,
+            examples_per_pattern=self.examples_per_pattern,
+            delay=self.delay,
+            report=self._rc,
+        )
 
     def _mine_schema(self, dataset_name: str | None) -> MinedSchema:
         """Mine data patterns within the active report session."""
