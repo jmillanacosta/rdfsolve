@@ -613,23 +613,27 @@ class SchemaMiner:
         all_bindings: list[dict[str, Any]] = []
         has_rc = hasattr(self, "_rc")
         page = 0
-        for chunk in self._helper.select_chunked(
-            query_template,
-            chunk_size=effective,
-            delay_between_chunks=self.delay,
-            purpose=purpose,
-        ):
-            page += 1
-            all_bindings.extend(chunk)
-            if has_rc:
-                self._report.record_query(purpose, 0.0)
-            logger.info(
-                "  %s page %d: +%d rows (%d total)",
-                purpose,
-                page,
-                len(chunk),
-                len(all_bindings),
-            )
+        try:
+            for chunk in self._helper.select_chunked(
+                query_template,
+                chunk_size=effective,
+                delay_between_chunks=self.delay,
+                purpose=purpose,
+            ):
+                page += 1
+                all_bindings.extend(chunk)
+                if has_rc:
+                    self._report.record_query(purpose, 0.0)
+                logger.info(
+                    "  %s page %d: +%d rows (%d total)",
+                    purpose,
+                    page,
+                    len(chunk),
+                    len(all_bindings),
+                )
+        except PaginationTruncatedError as error:
+            error.partial_rows = all_bindings + error.partial_rows
+            raise
         return all_bindings
 
     def _run_typed_object(self) -> list[SchemaPattern]:

@@ -75,10 +75,13 @@ class PaginationTruncatedError(EndpointTimeoutError):
     records where pagination stopped.
     """
 
-    def __init__(self, msg: str, offset: int = 0) -> None:
+    def __init__(
+        self, msg: str, offset: int = 0, partial_rows: list[dict[str, Any]] | None = None
+    ) -> None:
         """Initialize with error message and offset where pagination stopped."""
         super().__init__(msg)
         self.offset = offset
+        self.partial_rows = partial_rows if partial_rows is not None else []
 
 
 class QueryError(SparqlHelperError):
@@ -1108,6 +1111,7 @@ class SparqlHelper:
         max_total_results: int | None = None,
         delay_between_chunks: float = 0.5,
         purpose: str = "",
+        max_pages: int = 10000,
     ) -> Any:
         """Execute a SELECT query in chunks using OFFSET/LIMIT pagination.
 
@@ -1130,6 +1134,7 @@ class SparqlHelper:
             delay_between_chunks:
                 Pause between pages in seconds.
             purpose: Caller context for log messages.
+            max_pages: Stop with an incomplete result after this many pages.
 
         Yields:
             List of bindings (dicts) from each chunk.
@@ -1146,7 +1151,9 @@ class SparqlHelper:
         current_offset = 0
         total_fetched = 0
         current_chunk_size = chunk_size
-        max_iterations = 10_000  # safety limit
+        if max_pages < 1:
+            raise ValueError("max_pages must be positive")
+        max_iterations = max_pages
 
         for _ in range(max_iterations):
             # Honour max_total_results cap
@@ -1166,6 +1173,7 @@ class SparqlHelper:
             # attempt this page (with adaptive retries)
             shrink_attempts = 0
             success = False
+            last_error: SparqlHelperError | None = None
 
             while shrink_attempts <= max_shrinks_per_offset:
                 try:
@@ -1179,10 +1187,12 @@ class SparqlHelper:
                     results = self.select(query, purpose=purpose)
                     elapsed = time.monotonic() - t0
 
-                    bindings = results.get(
-                        "results",
-                        {},
-                    ).get("bindings", [])
+                    result_body = results.get("results")
+                    bindings = result_body.get("bindings") if isinstance(result_body, dict) else None
+                    if not isinstance(bindings, list) or any(
+                        not isinstance(row, dict) for row in bindings
+                    ):
+                        raise EndpointUnhealthyError("Expected SELECT result bindings")
                     logger.debug(
                         "Chunked %s: offset=%d returned %d rows in %.1fs",
                         purpose or "query",
@@ -1193,7 +1203,8 @@ class SparqlHelper:
                     success = True
                     break
 
-                except EndpointTimeoutError:
+                except EndpointTimeoutError as error:
+                    last_error = error
                     # adaptive reduction
                     new_limit = max(
                         int(effective_limit * shrink_factor),
@@ -1228,7 +1239,8 @@ class SparqlHelper:
                     )
                     time.sleep(wait_after_timeout)
 
-                except Exception as e:
+                except SparqlHelperError as e:
+                    last_error = e
                     logger.warning(
                         "Chunk query failed at offset %d: %s",
                         current_offset,
@@ -1240,10 +1252,9 @@ class SparqlHelper:
                 # Raise so callers know the result set is incomplete.
                 raise PaginationTruncatedError(
                     f"Pagination abandoned at offset {current_offset}"
-                    f" after {max_shrinks_per_offset} chunk-size"
-                    " reductions, results might be incomplete",
+                    f": {last_error}",
                     offset=current_offset,
-                )
+                ) from last_error
 
             if not bindings:
                 logger.debug("No more results, pagination complete")
@@ -1275,9 +1286,9 @@ class SparqlHelper:
                 time.sleep(delay_between_chunks)
 
         else:
-            logger.warning(
-                "Chunked query hit max iterations (%d)",
-                max_iterations,
+            raise PaginationTruncatedError(
+                f"Pagination reached the limit of {max_pages} pages",
+                offset=current_offset,
             )
 
     @staticmethod

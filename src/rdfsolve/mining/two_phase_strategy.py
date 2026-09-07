@@ -5,10 +5,10 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Callable
-from typing import Any
 
 from pydantic import ValidationError
 
+from rdfsolve._outcomes import QueryOutcome
 from rdfsolve.mining.query_builders import (
     _build_batched_blank_node_query,
     _build_batched_literal_query,
@@ -138,7 +138,7 @@ class TwoPhaseStrategy(MiningStrategy):
             )
 
         logger.info(f"  -> {len(patterns)} total patterns from {len(classes)} classes")
-        context.report.finish_phase(p2, items=len(patterns))
+        context.report.finish_phase(p2, items=len(patterns), error=abort_reason)
         if abort_reason:
             context.report.set_abort_reason(abort_reason)
         return patterns
@@ -170,9 +170,10 @@ class TwoPhaseStrategy(MiningStrategy):
             batch: list[str],
             build_fn: Callable[[list[str], list[str] | None, bool, bool], str],
             purpose: str,
-        ) -> list[dict[str, Any]]:
-            """Help call query_with_bisect with context-specific parameters."""
-            return query_with_bisect(
+        ) -> QueryOutcome:
+            """Run a query group and record unresolved failures."""
+            nonlocal abort_reason
+            outcome = query_with_bisect(
                 batch,
                 graph_uris,
                 build_fn,
@@ -184,6 +185,10 @@ class TwoPhaseStrategy(MiningStrategy):
                 context.class_chunk_size or 10000,
                 unsafe_paging=False,
             )
+            context.report.record_outcome(outcome)
+            if outcome.state != "complete":
+                abort_reason = context.report.report.abort_reason
+            return outcome
 
         for batch_idx in range(n_batches):
             batch_start = batch_idx * bs
@@ -200,8 +205,12 @@ class TwoPhaseStrategy(MiningStrategy):
             typed_bindings = query_bisect(
                 batch, _build_batched_typed_object_query, "two-phase/typed-object"
             )
-            context.report.record_query("two-phase/typed-object", time.monotonic() - t0)
-            for b in typed_bindings:
+            context.report.record_query(
+                "two-phase/typed-object",
+                time.monotonic() - t0,
+                success=typed_bindings.state == "complete",
+            )
+            for b in typed_bindings.rows:
                 cls = b.get("class", {}).get("value", "")
                 p = b.get("p", {}).get("value", "")
                 oc = b.get("oc", {}).get("value", "")
@@ -222,8 +231,12 @@ class TwoPhaseStrategy(MiningStrategy):
             literal_bindings = query_bisect(
                 batch, _build_batched_literal_query, "two-phase/literal"
             )
-            context.report.record_query("two-phase/literal", time.monotonic() - t0)
-            for b in literal_bindings:
+            context.report.record_query(
+                "two-phase/literal",
+                time.monotonic() - t0,
+                success=literal_bindings.state == "complete",
+            )
+            for b in literal_bindings.rows:
                 cls = b.get("class", {}).get("value", "")
                 p = b.get("p", {}).get("value", "")
                 dt = b.get("dt", {}).get("value")
@@ -245,11 +258,15 @@ class TwoPhaseStrategy(MiningStrategy):
             untyped_bindings = query_bisect(
                 batch, _build_batched_untyped_uri_query, "two-phase/untyped-uri"
             )
-            context.report.record_query("two-phase/untyped-uri", time.monotonic() - t0)
+            context.report.record_query(
+                "two-phase/untyped-uri",
+                time.monotonic() - t0,
+                success=untyped_bindings.state == "complete",
+            )
             untyped_oc = (
                 "http://www.w3.org/2002/07/owl#Class" if context.untyped_as_classes else "Resource"
             )
-            for b in untyped_bindings:
+            for b in untyped_bindings.rows:
                 cls = b.get("class", {}).get("value", "")
                 p = b.get("p", {}).get("value", "")
                 if cls and p:
@@ -269,8 +286,12 @@ class TwoPhaseStrategy(MiningStrategy):
             blank_bindings = query_bisect(
                 batch, _build_batched_blank_node_query, "two-phase/blank-node"
             )
-            context.report.record_query("two-phase/blank-node", time.monotonic() - t0)
-            for b in blank_bindings:
+            context.report.record_query(
+                "two-phase/blank-node",
+                time.monotonic() - t0,
+                success=blank_bindings.state == "complete",
+            )
+            for b in blank_bindings.rows:
                 cls = b.get("class", {}).get("value", "")
                 p = b.get("p", {}).get("value", "")
                 bn_pred = b.get("bnPred", {}).get("value")

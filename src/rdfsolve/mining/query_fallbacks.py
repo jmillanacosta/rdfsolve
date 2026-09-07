@@ -1,106 +1,141 @@
-"""Query fallback strategies for handling large/expensive queries."""
+"""Bounded query decomposition with explicit incomplete outcomes."""
 
 from __future__ import annotations
 
+import json
 import logging
-import time
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
+from rdfsolve._outcomes import Bindings, FailureCategory, QueryFailure, QueryOutcome
 from rdfsolve.mining.query_builders import (
     _DECOMP_CHUNK,
     _build_batched_typed_object_query,
     _build_properties_for_class_query,
     _build_typed_object_for_class_property_query,
 )
-from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError, PaginationTruncatedError
+from rdfsolve.sparql_helper import (
+    EndpointError,
+    EndpointTimeoutError,
+    PaginationTruncatedError,
+    SparqlHelperError,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from rdfsolve.sparql_helper import SparqlHelper
 
 logger = logging.getLogger(__name__)
+CollectBindings = Callable[[str, str, int | None], Bindings]
 
 __all__ = [
+    "collect_outcome",
     "enumerate_oc_for_class_property",
     "enumerate_properties_for_class",
     "query_with_bisect",
+    "select_outcome",
     "typed_object_by_property",
 ]
+
+
+def _failure(
+    error: SparqlHelperError,
+    purpose: str,
+    classes: list[str],
+    graph_uris: list[str] | None,
+) -> QueryOutcome:
+    category: FailureCategory
+    if isinstance(error, PaginationTruncatedError):
+        category = "truncated"
+    elif isinstance(error, EndpointTimeoutError):
+        category = "timeout"
+    elif isinstance(error, EndpointError):
+        category = "endpoint"
+    else:
+        category = "query"
+    rows = error.partial_rows if isinstance(error, PaginationTruncatedError) else []
+    return QueryOutcome(
+        rows,
+        "partial" if rows else "failed",
+        [QueryFailure(category, str(error), purpose, list(classes), graph_uris)],
+    )
+
+
+def _deduplicate(rows: Bindings) -> Bindings:
+    seen: set[str] = set()
+    result: Bindings = []
+    for row in rows:
+        # Include datatype, language, and node kind in the identity.
+        key = json.dumps(row, sort_keys=True)
+        if key not in seen:
+            seen.add(key)
+            result.append(row)
+    return result
+
+
+def select_outcome(
+    query: str,
+    purpose: str,
+    helper: SparqlHelper,
+    classes: list[str] | None = None,
+    graph_uris: list[str] | None = None,
+) -> QueryOutcome:
+    """Run one SELECT. Do not turn malformed responses into empty results."""
+    scope = classes or []
+    try:
+        raw = helper.select(query, purpose=purpose)
+    except SparqlHelperError as error:
+        return _failure(error, purpose, scope, graph_uris)
+    results = raw.get("results")
+    rows = results.get("bindings") if isinstance(results, dict) else None
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        return QueryOutcome(
+            state="failed",
+            failures=[
+                QueryFailure(
+                    "invalid_response",
+                    "Expected SELECT result bindings",
+                    purpose,
+                    scope,
+                    graph_uris,
+                )
+            ],
+        )
+    return QueryOutcome(rows)
+
+
+def collect_outcome(
+    query: str,
+    purpose: str,
+    collect_bindings: CollectBindings,
+    chunk_size: int,
+    classes: list[str] | None = None,
+    graph_uris: list[str] | None = None,
+) -> QueryOutcome:
+    """Collect pages and retain rows when a later page fails."""
+    try:
+        return QueryOutcome(_deduplicate(collect_bindings(query, purpose, chunk_size)))
+    except SparqlHelperError as error:
+        return _failure(error, purpose, classes or [], graph_uris)
 
 
 def query_with_bisect(
     classes: list[str],
     graph_uris: list[str] | None,
-    build_fn: Any,
+    build_fn: Callable[..., str],
     purpose: str,
     helper: SparqlHelper,
-    collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
+    collect_bindings: CollectBindings,
     chunk_size: int,
     unsafe_paging: bool = False,
-) -> list[dict[str, Any]]:
-    """Run a batched VALUES query with automatic bisection fallback.
+) -> QueryOutcome:
+    """Retry timed-out class queries with smaller groups, then pages."""
+    if not classes:
+        return QueryOutcome()
+    outcome = select_outcome(build_fn(classes, graph_uris), purpose, helper, classes, graph_uris)
+    if not outcome.failures or outcome.failures[0].category != "timeout":
+        return outcome
 
-    Args:
-        classes: Class URIs to include in VALUES block
-        graph_uris: Named graphs to restrict queries to
-        build_fn: One of the _build_batched_* functions
-        purpose: Label for logging and tracking
-        helper: SPARQL helper for query execution
-        collect_bindings: Function to collect paginated results
-        chunk_size: Page size for pagination
-        unsafe_paging: Drop DISTINCT for faster paging
-
-    Returns:
-        All SPARQL result bindings collected across all sub-queries
-    """
-    # Attempt 1: single-shot SELECT
-    label = f"{classes[0]}…" if len(classes) > 1 else classes[0]
-    q = build_fn(classes, graph_uris)
-    try:
-        result = helper.select(q, purpose=purpose)
-        bindings: list[dict[str, Any]] = result.get("results", {}).get("bindings", [])
-        return bindings
-    except EndpointTimeoutError as e:
-        # 502 means server overload - wait longer before retrying
-        if getattr(e, "status_code", None) == 502:
-            wait_time = 120.0  # 2 minutes for severe rate limiting
-            logger.warning(
-                "  %s got 502 for [%s] (%d classes) - server overloaded, waiting %.0fs before retry",
-                purpose,
-                label,
-                len(classes),
-                wait_time,
-            )
-            time.sleep(wait_time)
-        else:
-            logger.warning(
-                "  %s single-shot timed out for [%s] (%d classes) - %s",
-                purpose,
-                label,
-                len(classes),
-                "trying paginated" if len(classes) == 1 else "bisecting",
-            )
-    except EndpointError as e:
-        # Hard failure - no point retrying
-        logger.warning(
-            "  %s endpoint error for [%s] - skipping all fallbacks: %s",
-            purpose,
-            label,
-            e,
-        )
-        return []
-    except Exception:
-        logger.warning(
-            "  %s single-shot failed for [%s] (%d classes) - %s\n    query: %s",
-            purpose,
-            label,
-            len(classes),
-            "trying paginated" if len(classes) == 1 else "bisecting",
-            q,
-        )
-
-    # Attempt 2: bisect (multi-class) or paginate (single-class)
+    logger.warning("%s timed out for %d classes; retrying smaller queries", purpose, len(classes))
     if len(classes) > 1:
         mid = len(classes) // 2
         left = query_with_bisect(
@@ -123,63 +158,50 @@ def query_with_bisect(
             chunk_size,
             unsafe_paging,
         )
-        return left + right
+        return left.merge(right)
 
-    # Attempt 3: paginated SELECT (single-class only)
-    qt = build_fn(
-        classes,
+    query = build_fn(classes, graph_uris, paginated=True, drop_distinct=unsafe_paging)
+    paged = collect_outcome(query, purpose, collect_bindings, chunk_size, classes, graph_uris)
+    if paged.state == "complete" or build_fn is not _build_batched_typed_object_query:
+        return paged
+
+    decomposed = typed_object_by_property(
+        classes[0],
         graph_uris,
-        paginated=True,
-        drop_distinct=unsafe_paging,
+        purpose,
+        helper,
+        collect_bindings,
+        chunk_size,
+        unsafe_paging,
     )
-    try:
-        raw = collect_bindings(qt, purpose, chunk_size)
-        # Deduplicate in Python
-        seen: set[tuple[tuple[str, str], ...]] = set()
-        deduped: list[dict[str, Any]] = []
-        for b in raw:
-            key = tuple(sorted((k, v.get("value", "")) for k, v in b.items()))
-            if key not in seen:
-                seen.add(key)
-                deduped.append(b)
-        return deduped
-    except PaginationTruncatedError as e2:
-        logger.warning(
-            "  %s pagination truncated at offset %d"
-            " for <%s> - trying property decomposition\n"
-            "    query template: %s",
-            purpose,
-            e2.offset,
-            classes[0],
-            qt,
-        )
-    except Exception as e2:
-        logger.warning(
-            "  %s paginated fallback failed for <%s>: %s"
-            " - trying property decomposition\n    query template: %s",
-            purpose,
-            classes[0],
-            e2,
-            qt,
-        )
+    if decomposed.state == "complete":
+        return decomposed
+    combined = paged.merge(decomposed)
+    combined.rows = _deduplicate(combined.rows)
+    return combined
 
-    # Attempt 4: property-first decomposition (typed-object only)
-    if build_fn is _build_batched_typed_object_query:
-        return typed_object_by_property(
-            classes[0],
-            graph_uris,
+
+def _select_or_page(
+    query: str,
+    paged_query: str,
+    purpose: str,
+    helper: SparqlHelper,
+    collect_bindings: CollectBindings,
+    chunk_size: int,
+    class_uri: str,
+    graph_uris: list[str] | None,
+) -> QueryOutcome:
+    result = select_outcome(query, purpose, helper, [class_uri], graph_uris)
+    if result.failures and result.failures[0].category == "timeout":
+        return collect_outcome(
+            paged_query,
             purpose,
-            helper,
             collect_bindings,
             chunk_size,
-            unsafe_paging,
+            [class_uri],
+            graph_uris,
         )
-    logger.warning(
-        "  %s: all strategies exhausted for <%s> - skipping",
-        purpose,
-        classes[0],
-    )
-    return []
+    return result
 
 
 def enumerate_properties_for_class(
@@ -187,50 +209,27 @@ def enumerate_properties_for_class(
     graph_uris: list[str] | None,
     purpose: str,
     helper: SparqlHelper,
-    collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
+    collect_bindings: CollectBindings,
     unsafe_paging: bool = False,
-) -> list[str] | None:
-    """Return distinct property URIs for class_uri, or None on failure."""
-    prop_q = _build_properties_for_class_query(class_uri, graph_uris)
-    try:
-        prop_result = helper.select(prop_q, purpose=purpose)
-        return [
-            b["p"]["value"]
-            for b in prop_result.get("results", {}).get("bindings", [])
-            if b.get("p", {}).get("value")
-        ]
-    except Exception as e:
-        logger.warning(
-            "  %s: property single-shot for <%s> failed: %s - retrying paginated",
-            purpose,
+    *,
+    chunk_size: int = _DECOMP_CHUNK,
+) -> QueryOutcome:
+    """Return property bindings and the completion state of their enumeration."""
+    return _select_or_page(
+        _build_properties_for_class_query(class_uri, graph_uris),
+        _build_properties_for_class_query(
             class_uri,
-            e,
-        )
-
-    prop_qt = _build_properties_for_class_query(
+            graph_uris,
+            paginated=True,
+            drop_distinct=unsafe_paging,
+        ),
+        f"{purpose}/properties",
+        helper,
+        collect_bindings,
+        chunk_size,
         class_uri,
         graph_uris,
-        paginated=True,
-        drop_distinct=unsafe_paging,
     )
-    try:
-        raw = collect_bindings(prop_qt, purpose, _DECOMP_CHUNK)
-        seen: set[str] = set()
-        props: list[str] = []
-        for b in raw:
-            p_val = b.get("p", {}).get("value", "")
-            if p_val and p_val not in seen:
-                seen.add(p_val)
-                props.append(p_val)
-        return props
-    except Exception as e2:
-        logger.warning(
-            "  %s: property enumeration for <%s> failed even paginated: %s - skipping",
-            purpose,
-            class_uri,
-            e2,
-        )
-        return None
 
 
 def enumerate_oc_for_class_property(
@@ -239,57 +238,28 @@ def enumerate_oc_for_class_property(
     graph_uris: list[str] | None,
     purpose: str,
     helper: SparqlHelper,
-    collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
+    collect_bindings: CollectBindings,
     unsafe_paging: bool = False,
-) -> list[str]:
-    """Return distinct object-class URIs for (class_uri, prop_uri)."""
-    oc_q = _build_typed_object_for_class_property_query(
-        class_uri,
-        prop_uri,
-        graph_uris,
-    )
-    try:
-        oc_result = helper.select(oc_q, purpose=purpose)
-        return [
-            b.get("oc", {}).get("value", "")
-            for b in oc_result.get("results", {}).get("bindings", [])
-            if b.get("oc", {}).get("value")
-        ]
-    except Exception as e:
-        logger.warning(
-            "  %s: oc single-shot for <%s>/<%s> failed: %s - retrying paginated",
-            purpose,
+    *,
+    chunk_size: int = _DECOMP_CHUNK,
+) -> QueryOutcome:
+    """Return object-class bindings without hiding a failed property query."""
+    return _select_or_page(
+        _build_typed_object_for_class_property_query(class_uri, prop_uri, graph_uris),
+        _build_typed_object_for_class_property_query(
             class_uri,
             prop_uri,
-            e,
-        )
-
-    oc_qt = _build_typed_object_for_class_property_query(
+            graph_uris,
+            paginated=True,
+            drop_distinct=unsafe_paging,
+        ),
+        f"{purpose}/property/{prop_uri}",
+        helper,
+        collect_bindings,
+        chunk_size,
         class_uri,
-        prop_uri,
         graph_uris,
-        paginated=True,
-        drop_distinct=unsafe_paging,
     )
-    try:
-        raw_oc = collect_bindings(oc_qt, purpose, _DECOMP_CHUNK)
-        seen: set[str] = set()
-        oc_vals: list[str] = []
-        for b in raw_oc:
-            v = b.get("oc", {}).get("value", "")
-            if v and v not in seen:
-                seen.add(v)
-                oc_vals.append(v)
-        return oc_vals
-    except Exception as e2:
-        logger.warning(
-            "  %s: oc query for <%s>/<%s> failed even paginated: %s - skipping this property",
-            purpose,
-            class_uri,
-            prop_uri,
-            e2,
-        )
-        return []
 
 
 def typed_object_by_property(
@@ -297,18 +267,11 @@ def typed_object_by_property(
     graph_uris: list[str] | None,
     purpose: str,
     helper: SparqlHelper,
-    collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
+    collect_bindings: CollectBindings,
     chunk_size: int,
     unsafe_paging: bool = False,
-) -> list[dict[str, Any]]:
-    """Typed-object patterns for one class via property-first decomposition."""
-    logger.info(
-        "  %s: <%s> too expensive for 3-way join - trying property-first decomposition",
-        purpose,
-        class_uri,
-    )
-
-    # Step 1: enumerate properties
+) -> QueryOutcome:
+    """Combine independent property queries and retain unresolved failures."""
     props = enumerate_properties_for_class(
         class_uri,
         graph_uris,
@@ -316,21 +279,13 @@ def typed_object_by_property(
         helper,
         collect_bindings,
         unsafe_paging,
+        chunk_size=chunk_size,
     )
-    if props is None:
-        return []
-
-    logger.info(
-        "  %s: <%s> has %d distinct properties - querying each",
-        purpose,
-        class_uri,
-        len(props),
-    )
-
-    # Step 2: for each property, collect typed-object classes
-    bindings: list[dict[str, Any]] = []
-    for prop_uri in props:
-        for oc in enumerate_oc_for_class_property(
+    combined = QueryOutcome(state=props.state, failures=props.failures) if props.failures else None
+    for prop_uri in dict.fromkeys(
+        row["p"]["value"] for row in props.rows if row.get("p", {}).get("value")
+    ):
+        result = enumerate_oc_for_class_property(
             class_uri,
             prop_uri,
             graph_uris,
@@ -338,19 +293,16 @@ def typed_object_by_property(
             helper,
             collect_bindings,
             unsafe_paging,
-        ):
-            bindings.append(
-                {
-                    "class": {"type": "uri", "value": class_uri},
-                    "p": {"type": "uri", "value": prop_uri},
-                    "oc": {"type": "uri", "value": oc},
-                }
-            )
-
-    logger.info(
-        "  %s: property-first decomposition for <%s> yielded %d bindings",
-        purpose,
-        class_uri,
-        len(bindings),
-    )
-    return bindings
+            chunk_size=chunk_size,
+        )
+        result.rows = [
+            {
+                "class": {"type": "uri", "value": class_uri},
+                "p": {"type": "uri", "value": prop_uri},
+                "oc": row["oc"],
+            }
+            for row in result.rows
+            if row.get("oc", {}).get("value")
+        ]
+        combined = result if combined is None else combined.merge(result)
+    return combined if combined is not None else QueryOutcome()
