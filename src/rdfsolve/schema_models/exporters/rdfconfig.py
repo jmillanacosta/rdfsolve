@@ -37,6 +37,12 @@ def to_rdfconfig(
     supply; reject them instead of emitting an empty, unusable branch.
     Definitions and release identity use YAML comments, not new RDF-config keys.
     """
+    if schema.shapes is not None or schema.navigation is not None:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "RDF-config does not retain source SHACL profiles or composed navigation. Keep canonical JSON."
+        )
     if any(p.object_class == "BlankNode" for p in schema.patterns):
         raise ValueError(
             "RDF-config needs nested models for blank nodes. "

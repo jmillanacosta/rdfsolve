@@ -7,17 +7,17 @@ from rdfsolve.schema_models.readers.void import void_to_minedschema
 from rdfsolve.schema_models.exporters.void import minedschema_to_void
 
 
-def test_bare_partition_does_not_invent_an_iri_object():
+def test_bare_partition_does_not_invent_an_iri_object(caplog):
     import pytest
 
-    with pytest.warns(UserWarning, match="omits object kinds"):
-        schema = void_to_minedschema("""
+    schema = void_to_minedschema("""
             @prefix void: <http://rdfs.org/ns/void#> .
             <urn:dataset> a void:Dataset; void:classPartition [
                 void:class <urn:A>; void:propertyPartition [void:property <urn:p>]
             ] .
         """)
     assert schema.patterns == []
+    assert "omits object kinds" in caplog.text
 
 
 def test_roundtrip_simple():

@@ -190,6 +190,8 @@ class PipelineConfig:
     benchmark: bool = True
     enrich: bool = True
     examples_per_pattern: int = 2
+    navigation_hops: int = 2
+    navigation_limit: int = 100
     void_base_url: str = "https://rdfsolve.bigcat-bioinformatics.nl"
 
     # QLever settings (for local mining)
@@ -401,6 +403,9 @@ class Stage:
             suffix: Output file suffix
         """
         formats = self.config.output_formats
+        if self.config.navigation_hops:
+            schema.discover_paths(max_hops=self.config.navigation_hops,
+                                  max_paths_per_length=self.config.navigation_limit)
 
         # Keep a complete internal record, regardless of export formats.
         path = output_dir / f"{name}{suffix}_schema.json"
@@ -1924,6 +1929,10 @@ Examples:
     parser.add_argument("--extract-ontology", action="store_true", help="Extract ontology structure (TBox: rdfs:subClassOf, domain/range)")
     parser.add_argument("--extract-metadata", action="store_true", help="Extract infrastructure metadata (VoID/DCAT)")
     parser.add_argument("--no-enrichment", action="store_true", help="Skip definitions and observed examples")
+    parser.add_argument("--navigation-hops", type=int, choices=[0, 2, 3, 4, 5, 6], default=2,
+                        help="Compose schema routes locally; 0 disables (no endpoint queries)")
+    parser.add_argument("--navigation-limit", type=int, default=100,
+                        help="Maximum saved candidate routes per hop length")
     parser.add_argument("--examples-per-pattern", type=int, default=2, choices=range(0, 21),
                         help="Examples per class and pattern (0: definitions only; default: 2)")
     parser.add_argument("--ontology-scope", choices=["schema", "full"], default="schema",
@@ -1991,6 +2000,8 @@ Examples:
     config.extract_metadata = args.extract_metadata
     config.enrich = not args.no_enrichment
     config.examples_per_pattern = args.examples_per_pattern
+    config.navigation_hops = args.navigation_hops
+    config.navigation_limit = args.navigation_limit
 
     # Load sources
     config.load_sources(args.sources, skip_providers=args.skip_providers)
