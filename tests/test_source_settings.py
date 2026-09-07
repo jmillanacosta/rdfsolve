@@ -157,3 +157,35 @@ def test_pattern_fallback_uses_pattern_page_settings(monkeypatch):
     assert fallback.call_count == 4
     assert all(call.args[6] == 17 for call in fallback.call_args_list)
     assert all(call.kwargs["unsafe_paging"] for call in fallback.call_args_list)
+
+
+@pytest.mark.parametrize("mode", ["export", "local", "grouped", "cloud"])
+def test_pipeline_always_saves_canonical_schema(pipeline, tmp_path, monkeypatch, mode):
+    from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
+
+    schema = MinedSchema(
+        patterns=[
+            SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="Resource")
+        ],
+        about=AboutMetadata(dataset_name="test", graph_uris=["urn:g"]),
+    )
+    source = pipeline.Source(name="test")
+    config = pipeline.PipelineConfig(base_dir=tmp_path, output_formats=[])
+    miner = Mock()
+    miner.mine.return_value = schema
+    monkeypatch.setattr("rdfsolve.SchemaMiner", Mock(return_value=miner))
+    if mode == "export":
+        pipeline.Stage(config)._save_schema_outputs(schema, tmp_path, "test", "")
+        path = tmp_path / "test_schema.json"
+    elif mode == "local":
+        pipeline.LocalMiningStage(config)._mine_local(source, 7019)
+        path = config.output_dir / "test" / "test_schema.json"
+    elif mode == "grouped":
+        pipeline.GroupedMiningStage(config)._mine_grouped("test", [source], 7019)
+        path = config.output_dir / "grouped_test" / "test_schema.json"
+    else:
+        stage = pipeline.LsLodCloudStage(config)
+        monkeypatch.setattr(stage, "_generate_sssom_mappings", Mock())
+        stage._mine_cloud([(source, tmp_path)], 7019)
+        path = config.output_dir / "lslod_cloud" / "lslod_cloud_schema.json"
+    assert MinedSchema.from_json(path) == schema

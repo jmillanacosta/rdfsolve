@@ -359,6 +359,10 @@ class Stage:
         """
         formats = self.config.output_formats
 
+        # Keep a complete internal record, regardless of export formats.
+        path = output_dir / f"{name}{suffix}_schema.json"
+        path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
+
         # JSON-LD format
         if "json-ld" in formats:
             path = output_dir / f"{name}{suffix}_schema.jsonld"
@@ -392,28 +396,6 @@ class Stage:
                 path.write_text(pydantic_code, encoding="utf-8")
             except Exception as e:
                 log.warning(f"[{name}] Could not generate Pydantic: {e}")
-
-        # JSON format (simplified, not JSON-LD)
-        if "json" in formats:
-            path = output_dir / f"{name}{suffix}_schema.json"
-            try:
-                simple_json = {
-                    "name": name,
-                    "pattern_count": len(schema.patterns),
-                    "patterns": [
-                        {
-                            "subject_class": p.subject_class,
-                            "property": p.property_uri,
-                            "object_class": p.object_class,
-                            "datatype": p.datatype,
-                            "count": p.count,
-                        }
-                        for p in schema.patterns
-                    ],
-                }
-                path.write_text(json.dumps(simple_json, indent=2), encoding="utf-8")
-            except Exception as e:
-                log.warning(f"[{name}] Could not generate JSON: {e}")
 
 
 class RemoteMiningStage(Stage):
@@ -989,17 +971,7 @@ class LocalMiningStage(Stage):
         else:
             schema = miner.mine(dataset_name=source.name)
 
-        schema_path = output_dir / f"{source.name}{suffix}_schema.jsonld"
-        schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
-
-        void_path = output_dir / f"{source.name}{suffix}_void.ttl"
-        try:
-            void_graph = schema.to_void_graph()
-            if void_graph:
-                void_ttl = void_graph.serialize(format="turtle")
-                void_path.write_text(void_ttl, encoding="utf-8")
-        except Exception as e:
-            log.warning(f"  Could not generate VoID: {e}")
+        self._save_schema_outputs(schema, output_dir, source.name, suffix)
 
 
 class GroupedMiningStage(LocalMiningStage):
@@ -1423,20 +1395,8 @@ class GroupedMiningStage(LocalMiningStage):
         else:
             schema = miner.mine(dataset_name=group_name)
 
-        # Save schema as JSON-LD
-        schema_path = output_dir / f"{group_name}_schema.jsonld"
-        schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
-
-        # Save VoID
-        void_path = output_dir / f"{group_name}_void.ttl"
-        try:
-            void_graph = schema.to_void_graph()
-            if void_graph:
-                void_ttl = void_graph.serialize(format="turtle")
-                void_path.write_text(void_ttl, encoding="utf-8")
-        except Exception as e:
-            log.warning(f"  Could not generate VoID: {e}")
-
+        self._save_schema_outputs(schema, output_dir, group_name, "")
+        schema_path = output_dir / f"{group_name}_schema.json"
         log.info(f"  -> Saved grouped schema to {schema_path}")
 
     def _ensure_qlever_image(self):
@@ -1734,18 +1694,8 @@ class LsLodCloudStage(Stage):
 
         schema = miner.mine(dataset_name="lslod_cloud")
 
-        schema_path = output_dir / "lslod_cloud_schema.jsonld"
-        schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
-
-        void_path = output_dir / "lslod_cloud_void.ttl"
-        try:
-            void_graph = schema.to_void_graph()
-            if void_graph:
-                void_ttl = void_graph.serialize(format="turtle")
-                void_path.write_text(void_ttl, encoding="utf-8")
-        except Exception as e:
-            log.warning(f"  Could not generate VoID: {e}")
-
+        self._save_schema_outputs(schema, output_dir, "lslod_cloud", "")
+        schema_path = output_dir / "lslod_cloud_schema.json"
         log.info(f"  -> Saved LSLOD Cloud schema to {schema_path}")
 
         log.info("  Generating SSSOM class mappings...")
@@ -1761,9 +1711,9 @@ class LsLodCloudStage(Stage):
         schemas = []
         dataset_void_uris = {}
         for source, workdir in source_data:
-            schema_path = self.config.output_dir / source.name / f"{source.name}_schema.jsonld"
+            schema_path = self.config.output_dir / source.name / f"{source.name}_schema.json"
             if schema_path.exists():
-                schema = MinedSchema.from_jsonld(schema_path)
+                schema = MinedSchema.from_json(schema_path)
                 schemas.append((source.name, schema))
                 dataset_void_uris[source.name] = f"https://rdfsolve.bigcat-bioinformatics.nl/dataset/{source.name}"
 

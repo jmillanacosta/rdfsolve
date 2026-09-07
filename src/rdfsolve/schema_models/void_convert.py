@@ -148,9 +148,14 @@ def void_to_minedschema(void_ttl: str) -> MinedSchema:
     """
     g = Graph()
     g.parse(data=void_ttl, format="turtle")
+    return void_graph_to_minedschema(g)
 
+
+def void_graph_to_minedschema(g: Graph) -> MinedSchema:
+    """Read VoID RDF without treating metadata predicates as patterns."""
     patterns = _extract_patterns_from_void(g)
     about = _extract_metadata_from_void(g)
+    about.pattern_count = len(patterns)
 
     return MinedSchema(patterns=patterns, about=about)
 
