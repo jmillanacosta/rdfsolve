@@ -106,13 +106,13 @@ class VoidParser:
         """Extract class information from VoID description."""
         self.classes = {}
         for s, _p, o in self.graph.triples((None, self.void_class, None)):
-            self.classes[s] = o
+            self.classes[str(s)] = o
 
     def _extract_properties(self) -> None:
         """Extract property information from VoID description."""
         self.properties = {}
         for s, _p, o in self.graph.triples((None, self.void_property, None)):
-            self.properties[s] = o
+            self.properties[str(s)] = o
 
     def _extract_schema_triples(self) -> None:
         """Extract schema triples by analyzing property partitions."""
@@ -1142,7 +1142,9 @@ class VoidParser:
             # Get count
             count = None
             for _, _, c in self.graph.triples((partition, URIRef(f"{void_ns}triples"), None)):
-                count = int(c)
+                from rdfsolve.schema_models._rdf import optional_count
+
+                count = optional_count(c)
                 break
 
             # Get labels from rdfs:label

@@ -12,9 +12,12 @@ from datetime import datetime, timezone
 from enum import Enum
 from hashlib import md5
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+if TYPE_CHECKING:
+    from rdflib import Graph
 
 # PatternType enum
 
@@ -784,7 +787,7 @@ class MinedSchema(BaseModel):
 
     # VoID graph export
 
-    def to_void_graph(self, base_url: str | None = None) -> Any:
+    def to_void_graph(self, base_url: str | None = None) -> Graph:
         """Build an rdflib VoID Graph from the mined patterns.
 
         Args:

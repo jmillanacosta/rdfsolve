@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from rdflib import Graph, Namespace, URIRef
+from rdflib.query import ResultRow
 
+from rdfsolve.schema_models._rdf import optional_count
 from rdfsolve.schema_models.core import AboutMetadata, MinedSchema, SchemaPattern
 from rdfsolve.schema_models.void_model import VoidDataset
 
@@ -194,12 +196,14 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
     """
 
     for row in g.query(query):
+        if not isinstance(row, ResultRow):
+            raise TypeError("Expected a SELECT result row")
         subject_class = str(row.subjectClass)
         property_uri = str(row.property)
 
         # Get count safely
         count_val = row.get("count")
-        count = int(count_val) if count_val is not None else None
+        count = optional_count(count_val)
 
         if row.get("objectClass"):
             # Typed object pattern
@@ -253,8 +257,10 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
     # Use linksets only if no nested partitions found (avoid duplicates)
     if not patterns:
         for row in g.query(linkset_query):
+            if not isinstance(row, ResultRow):
+                raise TypeError("Expected a SELECT result row")
             count_val = row.get("count")
-            count = int(count_val) if count_val is not None else None
+            count = optional_count(count_val)
             subject_class = str(row.subjectClass)
             property_uri = str(row.predicate)
             object_class = str(row.objectClass)
@@ -306,7 +312,7 @@ def _extract_metadata_from_void(g: Graph) -> AboutMetadata:
         dataset_name=str(title) if title else None,
         title=str(title) if title else None,
         description=str(description) if description else None,
-        class_count=int(classes) if classes else 0,
-        property_count=int(properties) if properties else 0,
-        triple_count_estimate=int(triples) if triples else None,
+        class_count=optional_count(classes) or 0,
+        property_count=optional_count(properties) or 0,
+        triple_count_estimate=optional_count(triples),
     )

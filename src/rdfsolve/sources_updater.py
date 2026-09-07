@@ -166,7 +166,7 @@ def update_multiple_sources(
 
     if not sources_path.exists():
         logger.error(f"Sources file not found: {sources_path}")
-        return {name: False for name in updates.keys()}
+        return dict.fromkeys(updates.keys(), False)
 
     # Load sources
     try:
@@ -174,11 +174,11 @@ def update_multiple_sources(
             sources = yaml.safe_load(f)
     except Exception as e:
         logger.error(f"Failed to load sources file: {e}")
-        return {name: False for name in updates.keys()}
+        return dict.fromkeys(updates.keys(), False)
 
     if not isinstance(sources, list):
         logger.error(f"Expected list of sources, got {type(sources)}")
-        return {name: False for name in updates.keys()}
+        return dict.fromkeys(updates.keys(), False)
 
     # Create backup if requested
     if backup:
@@ -246,7 +246,7 @@ def update_multiple_sources(
         return results
     except Exception as e:
         logger.error(f"Failed to write sources file: {e}")
-        return {name: False for name in updates.keys()}
+        return dict.fromkeys(updates.keys(), False)
 
 
-__all__ = ["update_sources_yaml_with_graphs", "update_multiple_sources"]
+__all__ = ["update_multiple_sources", "update_sources_yaml_with_graphs"]
