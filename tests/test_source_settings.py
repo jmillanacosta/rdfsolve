@@ -276,8 +276,8 @@ def test_existing_group_index_needs_no_source_downloads(pipeline, tmp_path, monk
     sources = [pipeline.Source(name="one"), pipeline.Source(name="two")]
     workdir = config.data_dir / "qlever_groups" / "offline"
     workdir.mkdir(parents=True)
-    (workdir / "offline.index.spo").touch()
     stage = pipeline.GroupedMiningStage(config)
+    monkeypatch.setattr(stage, "_has_qlever_index", lambda path, name: path == workdir)
     monkeypatch.setattr(stage, "_identify_groups", lambda _: {"offline": sources})
     monkeypatch.setattr(stage, "_ensure_qlever_image", lambda: None)
     start, stop, mine = Mock(return_value=123), Mock(), Mock()

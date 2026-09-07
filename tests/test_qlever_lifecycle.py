@@ -1,5 +1,7 @@
 """Check process ownership and startup failures without loading an index."""
 
+from pathlib import Path
+import shutil
 import socket
 import subprocess
 from unittest.mock import Mock
@@ -34,6 +36,15 @@ def test_failed_start_reaps_process_and_preserves_old_log(tmp_path, monkeypatch)
     process.wait.assert_called_once_with()
     process.terminate.assert_not_called()
     assert old_log.read_text() == "previous run"
+
+
+def test_known_incomplete_pubchem_metadata_is_rejected(tmp_path):
+    from rdfsolve.qlever.index_check import has_cached_index
+
+    fixture = Path(__file__).parent / "test_data" / "qlever_pubchem_inchikey_metadata.json"
+    shutil.copyfile(fixture, tmp_path / "pubchem.ftp.inchikey.meta-data.json")
+    with pytest.raises(ValueError, match="num-predicates"):
+        has_cached_index(tmp_path, "pubchem.ftp.inchikey")
 
 
 def test_stop_escalates_only_for_owned_process():
