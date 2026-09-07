@@ -211,6 +211,7 @@ class PipelineConfig:
     # Ontology/metadata extraction
     extract_ontology: bool = False
     ontology_scope: str = "schema"
+    ontology_as_data: bool = False
     extract_metadata: bool = False
 
     # Parallelism
@@ -586,6 +587,7 @@ class RemoteMiningStage(Stage):
                     miner,
                     extract_ontology=self.config.extract_ontology,
                     ontology_scope=self.config.ontology_scope,
+                    ontology_as_data=self.config.ontology_as_data,
                     extract_metadata=self.config.extract_metadata,
                     dataset_name=source.name,
                 )
@@ -883,6 +885,7 @@ class LocalMiningStage(Stage):
                 miner,
                 extract_ontology=self.config.extract_ontology,
                 ontology_scope=self.config.ontology_scope,
+                    ontology_as_data=self.config.ontology_as_data,
                 extract_metadata=self.config.extract_metadata,
                 dataset_name=source.name,
             )
@@ -1286,6 +1289,7 @@ class GroupedMiningStage(LocalMiningStage):
                 miner,
                 extract_ontology=self.config.extract_ontology,
                 ontology_scope=self.config.ontology_scope,
+                    ontology_as_data=self.config.ontology_as_data,
                 extract_metadata=self.config.extract_metadata,
                 dataset_name=group_name,
             )
@@ -1915,6 +1919,8 @@ Examples:
     parser.add_argument("--skip-inference", action="store_true", help="Skip inference")
     parser.add_argument("--skip-analysis", action="store_true", help="Skip analysis stage")
     parser.add_argument("--skip-completed", action="store_true", help="Skip sources with existing schema output files")
+    parser.add_argument("--ontology-as-data", action="store_true",
+                        help="Opt in to bounded superclass aggregation (not observed typing)")
     parser.add_argument("--extract-ontology", action="store_true", help="Extract ontology structure (TBox: rdfs:subClassOf, domain/range)")
     parser.add_argument("--extract-metadata", action="store_true", help="Extract infrastructure metadata (VoID/DCAT)")
     parser.add_argument("--no-enrichment", action="store_true", help="Skip definitions and observed examples")
@@ -1981,6 +1987,7 @@ Examples:
     config.skip_local = args.remote_only or args.grouped_only or args.lslod_cloud_only
     config.extract_ontology = args.extract_ontology
     config.ontology_scope = args.ontology_scope
+    config.ontology_as_data = args.ontology_as_data
     config.extract_metadata = args.extract_metadata
     config.enrich = not args.no_enrichment
     config.examples_per_pattern = args.examples_per_pattern

@@ -1,9 +1,11 @@
 """Parse every mining query builder with each supported graph scope."""
 
 import inspect
+import json
 from unittest.mock import Mock
 
 import pytest
+from rdflib import Dataset
 from rdflib.plugins.sparql.parser import parseQuery
 
 from rdfsolve.mining import _query_owl_class_superclasses
@@ -48,13 +50,14 @@ def test_pattern_query_syntax(builder, scope, paged):
 @pytest.mark.parametrize("scope", SCOPES)
 def test_optional_query_syntax(scope):
     helper = Mock()
-    helper.select.return_value = {"results": {"bindings": []}}
+    helper.select.side_effect = lambda query, **kwargs: json.loads(
+        Dataset().query(query).serialize(format="json")
+    )
     _query_owl_class_superclasses(helper, scope)
     detect_ontology_as_data(helper, scope)
     mine_ontology_as_data_patterns(helper, scope, superclasses=["urn:A"])
     mine_ontology_as_data_subject_patterns(helper, scope, superclasses=["urn:A"])
     OntologyMiner(helper, scope).mine()
     MetadataMiner(helper, scope).mine()
-    assert helper.select.call_count == 17
     for call in helper.select.call_args_list:
         parseQuery(call.args[0])

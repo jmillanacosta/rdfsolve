@@ -429,7 +429,7 @@ class SchemaMiner:
                     declared.add(str(class_val))
             logger.info("Found %d declared classes (owl:Class/rdfs:Class)", len(declared))
         except Exception as e:
-            logger.warning("Could not query declared classes: %s", e)
+            raise RuntimeError(f"Class declarations could not be queried: {e}") from e
         return declared
 
     def _build_about_metadata(
