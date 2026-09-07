@@ -386,8 +386,6 @@ def mine_schema(
     report_path: str | None = None,
     filter_service_namespaces: bool = True,
     authors: list[dict[str, str]] | None = None,
-    # Deprecated parameter
-    two_phase: bool | None = None,
 ) -> MinedSchema:
     """Mine RDF schema from a SPARQL endpoint using SELECT queries.
 
@@ -395,8 +393,6 @@ def mine_schema(
     ----------
     strategy
         Mining strategy to use. Can be "two-phase" (default), "single-pass", or "one-shot".
-    two_phase
-        (Deprecated) Use strategy="two-phase" instead.
 
     Returns
     -------
@@ -423,7 +419,6 @@ def mine_schema(
         report_path=report_path,
         filter_service_namespaces=filter_service_namespaces,
         authors=authors,
-        two_phase=two_phase,
     )
 
 

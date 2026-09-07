@@ -5,7 +5,7 @@ Specification: https://www.w3.org/TR/shacl/
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, cast, get_args
 
 from pydantic import BaseModel, Field
 
@@ -16,6 +16,11 @@ if TYPE_CHECKING:
     from rdflib.term import Node
 
 
+NodeKind = Literal[
+    "IRI", "Literal", "BlankNode", "BlankNodeOrIRI", "BlankNodeOrLiteral", "IRIOrLiteral"
+]
+
+
 class ShaclPropertyShape(BaseModel):
     """Represents sh:PropertyShape."""
 
@@ -23,7 +28,7 @@ class ShaclPropertyShape(BaseModel):
     path: str = Field(..., description="sh:path")
     datatype: str | None = Field(None, description="sh:datatype")
     class_constraint: str | None = Field(None, description="sh:class")
-    node_kind: str | None = Field(None, description="sh:nodeKind (IRI/Literal/BlankNode)")
+    node_kind: NodeKind | None = None
     min_count: int | None = Field(None, description="sh:minCount")
     max_count: int | None = Field(None, description="sh:maxCount")
     name: str | None = Field(None, description="sh:name")
@@ -61,6 +66,8 @@ class ShaclPropertyShape(BaseModel):
                 "Literal": sh.Literal,
                 "BlankNode": sh.BlankNode,
                 "BlankNodeOrIRI": sh.BlankNodeOrIRI,
+                "BlankNodeOrLiteral": sh.BlankNodeOrLiteral,
+                "IRIOrLiteral": sh.IRIOrLiteral,
             }
             if self.node_kind in nk_map:
                 graph.add((node, sh.nodeKind, nk_map[self.node_kind]))
@@ -94,11 +101,13 @@ class ShaclPropertyShape(BaseModel):
     @classmethod
     def from_rdf(cls, graph: Graph, uri: Node) -> ShaclPropertyShape:
         """Parse from RDF graph."""
-        from rdflib import BNode, Namespace
+        from rdflib import BNode, Namespace, URIRef
 
         sh = Namespace("http://www.w3.org/ns/shacl#")
 
         path = graph.value(uri, sh.path)
+        if path is not None and not isinstance(path, URIRef):
+            raise ValueError("Only simple IRI SHACL paths are supported")
         datatype = graph.value(uri, sh.datatype)
         class_constraint = graph.value(uri, sh["class"])
         node_kind_uri = graph.value(uri, sh.nodeKind)
@@ -107,18 +116,15 @@ class ShaclPropertyShape(BaseModel):
         name = graph.value(uri, sh.name)
         description = graph.value(uri, sh.description)
 
-        # Map nodeKind URI to string
         node_kind = None
-        if node_kind_uri:
-            node_kind_str = str(node_kind_uri)
-            if node_kind_str.endswith("BlankNodeOrIRI"):
-                node_kind = "BlankNodeOrIRI"
-            elif node_kind_str.endswith("IRI"):
-                node_kind = "IRI"
-            elif node_kind_str.endswith("Literal"):
-                node_kind = "Literal"
-            elif node_kind_str.endswith("BlankNode"):
-                node_kind = "BlankNode"
+        if node_kind_uri is not None:
+            namespace = str(sh)
+            if not str(node_kind_uri).startswith(namespace):
+                raise ValueError(f"Invalid sh:nodeKind: {node_kind_uri}")
+            name_kind = str(node_kind_uri)[len(namespace) :]
+            if name_kind not in get_args(NodeKind):
+                raise ValueError(f"Invalid sh:nodeKind: {node_kind_uri}")
+            node_kind = cast(NodeKind, name_kind)
 
         return cls(
             uri=None if isinstance(uri, BNode) else str(uri),
