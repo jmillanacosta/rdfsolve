@@ -192,13 +192,12 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
         ?cp void:propertyPartition ?pp .
         ?pp void:property ?property .
 
-        # Either nested class partition (typed object) or datatype partition, or neither (Resource/BlankNode)
-        OPTIONAL {
+        # Keep each object partition and its own count in a separate row.
+        {
             ?pp void:classPartition ?objCp .
             ?objCp void:class ?objectClass .
             OPTIONAL { ?objCp void:triples ?count }
-        }
-        OPTIONAL {
+        } UNION {
             ?pp void-ext:datatypePartition ?dp .
             ?dp void-ext:datatype ?datatype .
             OPTIONAL { ?dp void:triples ?count }
