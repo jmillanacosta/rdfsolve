@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from rdfsolve.schema_models.core import SchemaPattern
+from rdfsolve.schema_models.pattern import SchemaPattern
 
 if TYPE_CHECKING:
     from rdfsolve.sparql_helper import SparqlHelper

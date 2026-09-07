@@ -11,7 +11,7 @@ from rdfsolve._outcomes import QueryFailure
 from rdfsolve.mining.query_builders import _graph_clause
 from rdfsolve.mining.query_fallbacks import select_outcome
 from rdfsolve.mining.report_tracking import ReportCollector
-from rdfsolve.schema_models.core import MinedSchema, SchemaPattern
+from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import (
     DEFINITION_PREDICATES,
     LABEL_PREDICATES,
@@ -20,6 +20,7 @@ from rdfsolve.schema_models.enrichment import (
     SchemaEnrichment,
     TermAnnotation,
 )
+from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.sparql_helper import SparqlHelper
 
 

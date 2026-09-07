@@ -11,7 +11,7 @@ from rdfsolve.mapping_models.core import (
     MappingEdge,
 )
 from rdfsolve.mapping_models.instance import InstanceMapping
-from rdfsolve.schema_models.core import AboutMetadata
+from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.sparql_helper import SparqlHelper
 
 _log = logging.getLogger(__name__)

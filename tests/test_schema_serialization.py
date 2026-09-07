@@ -98,29 +98,27 @@ def test_jsonld_round_trip_does_not_turn_metadata_into_patterns():
     assert len(Graph().parse(data=json.dumps(raw), format="json-ld")) > 0
 
 
-def test_legacy_adjacency_reader_keeps_its_own_context():
+def test_legacy_adjacency_is_rejected():
     raw = {
         "@context": {"ex": "https://example.org/"},
         "@about": {"dataset_name": "legacy"},
         "@graph": [{"@id": "ex:A", "ex:p": {"@id": "ex:B"}}],
     }
-    result = MinedSchema.from_dict(raw)
-    assert len(result.patterns) == 1
-    assert result.patterns[0].subject_class == "https://example.org/A"
-    assert result.about.dataset_name == "legacy"
+    with pytest.raises(ValueError, match="Legacy adjacency schemas are not supported"):
+        MinedSchema.from_dict(raw)
 
 
 @pytest.mark.parametrize("profile", ["canonical", "void"])
 def test_linkml_uses_patterns_not_metadata(profile):
     from linkml_runtime.dumpers import json_dumper
 
-    from rdfsolve.schema_models.linkml import to_linkml
+    from rdfsolve.schema_models.exporters.linkml import to_linkml
 
     schema = MinedSchema(
         patterns=[SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="urn:B")],
         about=AboutMetadata(dataset_name="test", description="Not a class"),
     )
-    result = schema.to_linkml() if profile == "canonical" else to_linkml(schema.to_jsonld())
+    result = schema.to_linkml() if profile == "canonical" else to_linkml(MinedSchema.from_dict(schema.to_jsonld()))
     document = json_dumper.to_dict(result)
     assert {item["class_uri"] for item in document["classes"].values()} == {"urn:A", "urn:B"}
     assert {item["slot_uri"] for item in document["slots"].values()} == {"urn:p"}

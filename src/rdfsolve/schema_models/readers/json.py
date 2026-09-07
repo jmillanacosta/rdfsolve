@@ -30,15 +30,10 @@ def _check_inline_contexts(value: Any) -> None:
 
 
 def read_schema(raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
-    """Read canonical JSON, marked legacy adjacency, or VoID JSON-LD."""
-    from rdfsolve._uri import make_expander
-    from rdfsolve.schema_models.core import (
-        AboutMetadata,
-        MinedSchema,
-        SchemaPattern,
-        _parse_schema_graph,
-    )
-    from rdfsolve.schema_models.void_convert import VOID, void_graph_to_minedschema
+    """Read canonical JSON or VoID JSON-LD."""
+    from rdfsolve.schema_models.core import MinedSchema
+    from rdfsolve.schema_models.pattern import SchemaPattern
+    from rdfsolve.schema_models.readers.void import VOID, void_graph_to_minedschema
 
     if isinstance(raw, dict) and "format" in raw:
         if raw["format"] != "rdfsolve.mined-schema":
@@ -62,14 +57,7 @@ def read_schema(raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
 
     _check_inline_contexts(raw)
     if isinstance(raw, dict) and "@about" in raw:
-        context = raw.get("@context", {})
-        nodes = raw.get("@graph")
-        if not isinstance(context, dict) or not isinstance(nodes, list):
-            raise ValueError("Expected an inline context and graph in legacy schema")
-        if any(not isinstance(node, dict) for node in nodes):
-            raise ValueError("Expected graph node objects in legacy schema")
-        patterns = _parse_schema_graph(nodes, make_expander(context), raw.get("_labels", {}))
-        return MinedSchema(patterns=patterns, about=AboutMetadata.model_validate(raw["@about"]))
+        raise ValueError("Legacy adjacency schemas are not supported; use canonical schema JSON")
 
     if not isinstance(raw, (dict, list)) or not raw:
         raise ValueError("Unsupported schema document")
@@ -79,5 +67,5 @@ def read_schema(raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
         or (None, RDF.type, VOID.Linkset) in graph
         or (None, VOID.classPartition, None) in graph
     ):
-        raise ValueError("Expected canonical JSON, marked legacy schema, or VoID JSON-LD")
+        raise ValueError("Expected canonical JSON or VoID JSON-LD")
     return void_graph_to_minedschema(graph)

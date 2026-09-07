@@ -6,22 +6,12 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.query import ResultRow
 
 from rdfsolve.schema_models._rdf import optional_count
-from rdfsolve.schema_models.core import AboutMetadata, MinedSchema, SchemaPattern
-from rdfsolve.schema_models.void_model import VoidDataset
+from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.pattern import SchemaPattern
 
 VOID = Namespace("http://rdfs.org/ns/void#")
 VOID_EXT = Namespace("http://ldf.fi/void-ext#")
-
-
-def minedschema_to_void(schema: MinedSchema, base_url: str = "https://example.org") -> VoidDataset:
-    """Read structural VoID fields from the canonical RDF exporter."""
-    from rdflib.namespace import FOAF
-
-    graph = schema.to_void_graph(base_url=base_url)
-    dataset = next(graph.objects(None, FOAF.primaryTopic), None)
-    if dataset is None:
-        raise ValueError("Export has no primary dataset")
-    return VoidDataset.from_rdf(graph, dataset)
 
 
 def void_to_minedschema(void_ttl: str) -> MinedSchema:
@@ -140,11 +130,28 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
                     property_label=labels.get(property_uri),
                 )
             )
-        else:
-            # Property partition without nested partitions - likely Resource or BlankNode
-            # For now, default to Resource (untyped URI)
-            # We'll need to check if the pattern already exists before adding
-            pass
+
+    # Bare property partitions do not state an RDF object kind.
+    represented = {(p.subject_class, p.property_uri) for p in patterns}
+    ambiguous = []
+    for cp in g.objects(None, VOID.classPartition):
+        subject_node = g.value(cp, VOID["class"])
+        if subject_node is None:
+            continue
+        for pp in g.objects(cp, VOID.propertyPartition):
+            predicate = g.value(pp, VOID.property)
+            if predicate is not None and (str(subject_node), str(predicate)) not in represented:
+                ambiguous.append((str(subject_node), str(predicate)))
+    if ambiguous:
+        import warnings
+
+        warnings.warn(
+            f"VoID omits object kinds for {len(ambiguous)} property partitions; "
+            f"these are not converted to patterns. Examples: {ambiguous[:3]}. "
+            "Use the canonical schema JSON to preserve all object kinds.",
+            UserWarning,
+            stacklevel=2,
+        )
 
     # Also extract from LinkSets
     linkset_query = """

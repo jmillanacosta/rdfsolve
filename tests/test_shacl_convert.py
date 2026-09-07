@@ -1,7 +1,10 @@
 """Tests for SHACL conversion functions."""
 
-from rdfsolve.schema_models.core import AboutMetadata, MinedSchema, SchemaPattern
-from rdfsolve.schema_models.shacl_convert import minedschema_to_shacl, shacl_to_minedschema
+from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.pattern import SchemaPattern
+from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
+from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 
 
 def test_roundtrip():
@@ -79,7 +82,7 @@ def test_roundtrip_with_multiple_classes():
 
 def test_from_shacl_method():
     """Test MinedSchema.from_shacl() method."""
-    from rdfsolve.schema_models.shacl_convert import minedschema_to_shacl
+    from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 
     original = MinedSchema(
         patterns=[

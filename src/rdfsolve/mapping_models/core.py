@@ -23,10 +23,7 @@ from rdfsolve._uri import (
 from rdfsolve.schema_models._constants import (
     _GRAPH_SKIP_KEYS,
 )
-from rdfsolve.schema_models.core import (
-    AboutMetadata,
-    _merge_into_list,
-)
+from rdfsolve.schema_models.about import AboutMetadata
 
 _log = logging.getLogger(__name__)
 
@@ -36,6 +33,27 @@ SKOS_NARROW_MATCH = "http://www.w3.org/2004/02/skos/core#narrowMatch"
 # -------------------------------------------------------------------
 # Data models
 # -------------------------------------------------------------------
+
+
+def _merge_into_list(
+    grouped: dict[str, dict[str, Any]],
+    key: str,
+    prop: str,
+    value: Any,
+) -> None:
+    """Merge *value* into ``grouped[key][prop]``.
+
+    Creates a list when two distinct values share the same slot.
+    """
+    node = grouped.setdefault(key, {"@id": key})
+    existing = node.get(prop)
+    if existing is None:
+        node[prop] = value
+    elif isinstance(existing, list):
+        if value not in existing:
+            existing.append(value)
+    elif existing != value:
+        node[prop] = [existing, value]
 
 
 class MappingEdge(BaseModel):
