@@ -127,8 +127,7 @@ def test_failed_optional_phase_keeps_its_report(miner, monkeypatch):
     with pytest.raises(RuntimeError, match="ontology failed"):
         mine_with_ontology(miner, extract_ontology=True, dataset_name="test")
     assert miner.last_report.finished_at
-    phase = miner.last_report.phases[0]
-    assert phase.name == "ontology-extraction"
+    phase = next(p for p in miner.last_report.phases if p.name == "ontology-extraction")
     assert phase.finished_at
     assert "ontology failed" in phase.error
 

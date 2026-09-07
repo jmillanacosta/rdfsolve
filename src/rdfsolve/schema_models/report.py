@@ -178,7 +178,7 @@ class MiningReport(BaseModel):
     )
 
     # Benchmark / resource usage
-    ontology_extraction: dict[str, int | list[str]] | None = None
+    ontology_extraction: dict[str, str | int | list[str]] | None = None
 
     machine: dict[str, Any] | None = Field(None)
     benchmark: dict[str, Any] | None = Field(None)

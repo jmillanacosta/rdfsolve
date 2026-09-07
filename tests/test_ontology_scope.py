@@ -80,3 +80,38 @@ def test_used_types_do_not_create_an_embedded_ontology():
     ontology = OntologyStructure().for_schema(["urn:UsedType"], ["urn:p"])
     assert ontology.classes == []
     assert len(ontology.to_rdf_graph()) == 0
+
+
+def test_scoped_queries_keep_ancestors_not_descendants_or_other_graphs():
+    import json
+    from unittest.mock import Mock
+    from rdflib import Dataset, OWL
+    from rdfsolve.mining.ontology_extraction import OntologyMiner
+
+    dataset = Dataset()
+    graph = dataset.graph(URIRef("urn:chosen"))
+    for child, parent in [(ENTITY, GENE), ("urn:A", "urn:B"), ("urn:B", "urn:A")]:
+        graph.add((URIRef(child), RDFS.subClassOf, URIRef(parent)))
+    graph.add((URIRef("urn:p"), RDFS.domain, URIRef("urn:A")))
+    graph.add((URIRef("urn:inverse"), OWL.inverseOf, URIRef("urn:p")))
+    graph.add((URIRef("urn:p"), RDF.type, OWL.FunctionalProperty))
+    dataset.graph(URIRef("urn:other")).add((URIRef(GENE), RDFS.subClassOf, URIRef("urn:Wrong")))
+    helper = Mock()
+    rows_seen = []
+
+    def select(query, **kwargs):
+        result = json.loads(dataset.query(query).serialize(format="json"))
+        rows_seen.extend(result["results"]["bindings"])
+        return result
+
+    helper.select.side_effect = select
+    result = OntologyMiner(
+        helper, ["urn:chosen"], class_iris=[GENE, "urn:UsedOnly"],
+        property_iris=["urn:p"], batch_size=1,
+    ).mine()
+    assert set(result.classes) == {GENE, "urn:A", "urn:B"}
+    assert len(result.subclass_relations) == 2
+    assert result.inverse_properties[0].property1 == "urn:inverse"
+    assert len(result.property_characteristics) == 1
+    assert ENTITY not in json.dumps(rows_seen)
+    assert all("VALUES ?" in call.args[0] for call in helper.select.call_args_list)
