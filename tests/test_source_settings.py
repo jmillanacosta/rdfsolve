@@ -161,6 +161,7 @@ def test_pattern_fallback_uses_pattern_page_settings(monkeypatch):
 
 @pytest.mark.parametrize("mode", ["export", "local", "grouped", "cloud"])
 def test_pipeline_always_saves_canonical_schema(pipeline, tmp_path, monkeypatch, mode):
+    monkeypatch.setattr("rdfsolve.qlever.index_check.verify_named_graphs", Mock())
     from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 
     schema = MinedSchema(
@@ -308,6 +309,7 @@ def test_registry_rejects_ambiguous_output_names(pipeline, tmp_path):
 
 @pytest.mark.parametrize("mode", ["remote", "local", "grouped", "cloud"])
 def test_pipeline_enables_enrichment_in_every_mining_mode(pipeline, tmp_path, monkeypatch, mode):
+    monkeypatch.setattr("rdfsolve.qlever.index_check.verify_named_graphs", Mock())
     config = pipeline.PipelineConfig(base_dir=tmp_path, examples_per_pattern=3)
     source = pipeline.Source(
         name="test",
@@ -348,3 +350,12 @@ def test_export_failure_keeps_canonical_output_but_fails_stage(pipeline, tmp_pat
     with pytest.raises(RuntimeError, match="bad export"):
         stage._save_schema_outputs(schema, tmp_path, "test", "")
     assert (tmp_path / "test_schema.json").exists()
+
+
+def test_rdfportal_pubchem_is_not_assigned_to_ftp_group(pipeline, tmp_path):
+    stage = pipeline.GroupedMiningStage(pipeline.PipelineConfig(base_dir=tmp_path))
+    source = pipeline.Source(
+        name="rdfportal.pubchem",
+        download_urls=["https://rdfportal.org/ntriples/pubchem/latest/void.nt.gz"],
+    )
+    assert stage._identify_groups([source]) == {"rdfportal": [source]}
