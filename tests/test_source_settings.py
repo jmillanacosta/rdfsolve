@@ -189,3 +189,107 @@ def test_pipeline_always_saves_canonical_schema(pipeline, tmp_path, monkeypatch,
         stage._mine_cloud([(source, tmp_path)], 7019)
         path = config.output_dir / "lslod_cloud" / "lslod_cloud_schema.json"
     assert MinedSchema.from_json(path) == schema
+
+
+@pytest.mark.parametrize(
+    "field", ["download_ttl", "download_owl", "download_nq", "download_jsonld"]
+)
+def test_qlever_source_keeps_download_formats(pipeline, field):
+    source = pipeline.Source.from_dict({"name": "test", field: "https://example.org/data"})
+    assert source.qlever_entry()[field] == "https://example.org/data"
+    assert source.download_urls == ["https://example.org/data"]
+    assert "download_urls" not in source.qlever_entry()
+
+
+def test_qlever_source_keeps_tar_scope(pipeline):
+    source = pipeline.Source.from_dict(
+        {
+            "name": "test",
+            "local_tar_url": "https://example.org/archive.tar.gz",
+            "graph_uris": "urn:g",
+        }
+    )
+    assert source.mode == pipeline.SourceMode.LOCAL
+    assert source.qlever_entry()["local_tar_url"] == "https://example.org/archive.tar.gz"
+    assert source.qlever_entry()["graph_uris"] == ["urn:g"]
+
+
+@pytest.mark.parametrize("mode", ["local", "grouped", "cloud"])
+def test_existing_qleverfile_is_not_replaced(pipeline, tmp_path, mode):
+    config = pipeline.PipelineConfig(base_dir=tmp_path)
+    path = tmp_path / "Qleverfile"
+    original = b"# Keep this archived source configuration\n"
+    path.write_bytes(original)
+    source = pipeline.Source(name="offline")
+    if mode == "local":
+        pipeline.LocalMiningStage(config)._prepare_qleverfile(tmp_path, source, 7019)
+    elif mode == "grouped":
+        pipeline.GroupedMiningStage(config)._prepare_group_qleverfile(
+            tmp_path, "offline", [source], 7019
+        )
+    else:
+        pipeline.LsLodCloudStage(config)._prepare_cloud_qleverfile(tmp_path, [source], 7019)
+    assert path.read_bytes() == original
+
+
+def test_new_group_qleverfile_uses_group_directory(pipeline, tmp_path):
+    config = pipeline.PipelineConfig(base_dir=tmp_path)
+    source = pipeline.Source.from_dict(
+        {"name": "test", "download_ttl": "https://example.org/data.ttl"}
+    )
+    workdir = tmp_path / "qlever_groups" / "test"
+    workdir.mkdir(parents=True)
+    pipeline.GroupedMiningStage(config)._prepare_group_qleverfile(workdir, "test", [source], 7019)
+    text = (workdir / "Qleverfile").read_text()
+    assert str(workdir / "rdf") in text
+    assert "qlever_workdirs/test" not in text
+
+
+def test_input_globs_keep_legacy_and_nested_files(pipeline, tmp_path):
+    (tmp_path / "rdf").mkdir()
+    nested = tmp_path / "rdf" / "data.ttl"
+    legacy = tmp_path / "data.n3"
+    nested.touch()
+    legacy.touch()
+    assert pipeline.LocalMiningStage._qlever_input_files(tmp_path, "rdf/*.ttl rdf/*.n3") == sorted(
+        [nested, legacy]
+    )
+
+
+def test_no_download_does_not_run_source_command(pipeline, tmp_path, monkeypatch):
+    config = pipeline.PipelineConfig(base_dir=tmp_path, no_download=True)
+    (tmp_path / "Qleverfile").write_text(
+        "[data]\nFORMAT=ttl\nGET_DATA_CMD=false\n[index]\nINPUT_FILES=rdf/*.ttl\nSETTINGS_JSON={}\n"
+    )
+    run = Mock(side_effect=AssertionError("Must not launch a command"))
+    monkeypatch.setattr(pipeline.subprocess, "run", run)
+    with pytest.raises(ValueError, match="No files found"):
+        pipeline.LocalMiningStage(config)._execute_qleverfile(
+            tmp_path, pipeline.Source(name="test")
+        )
+    run.assert_not_called()
+
+
+def test_existing_group_index_needs_no_source_downloads(pipeline, tmp_path, monkeypatch):
+    config = pipeline.PipelineConfig(base_dir=tmp_path, no_download=True)
+    sources = [pipeline.Source(name="one"), pipeline.Source(name="two")]
+    workdir = config.data_dir / "qlever_groups" / "offline"
+    workdir.mkdir(parents=True)
+    (workdir / "offline.index.spo").touch()
+    stage = pipeline.GroupedMiningStage(config)
+    monkeypatch.setattr(stage, "_identify_groups", lambda _: {"offline": sources})
+    monkeypatch.setattr(stage, "_ensure_qlever_image", lambda: None)
+    start, stop, mine = Mock(return_value=123), Mock(), Mock()
+    monkeypatch.setattr(stage, "_qlever_start", start)
+    monkeypatch.setattr(stage, "_qlever_stop", stop)
+    monkeypatch.setattr(stage, "_mine_grouped", mine)
+    assert stage._execute()["groups_mined"] == ["offline"]
+    mine.assert_called_once()
+    stop.assert_called_once_with(123)
+
+
+def test_partial_index_is_not_overwritten(pipeline, tmp_path):
+    (tmp_path / "test.index.ops").touch()
+    stage = pipeline.LocalMiningStage(pipeline.PipelineConfig(base_dir=tmp_path))
+    with pytest.raises(ValueError, match="Incomplete index"):
+        stage._has_qlever_index(tmp_path, "test")

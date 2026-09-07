@@ -7,6 +7,18 @@ Workflow scripts for mining, mapping, and analyzing RDF schemas.
 ### `pipeline.py`
 Main pipeline for mining schemas from SPARQL endpoints.
 
+To reuse local data when upstream sources are unavailable:
+
+```bash
+python scripts/pipeline.py --grouped-only --no-download --data-dir ../data --output-dir ../new-run
+```
+
+Existing Qleverfiles are kept unchanged. Existing local and grouped indices are
+used before the pipeline tries to fetch source data. `--no-download` blocks source
+downloads; it does not block mining queries or a missing QLever image pull. Keep
+`qlever.sif` in the data directory for runs without image access. A partial index
+must be inspected before rebuilding. Cached RDF files are not rewritten.
+
 ```bash
 # Mine all remote endpoints
 python scripts/pipeline.py --remote-only

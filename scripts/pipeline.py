@@ -91,6 +91,8 @@ class Source:
     endpoint: str | None = None
     local_provider: str | None = None
     download_urls: list[str] = field(default_factory=list)
+    download_fields: dict[str, Any] = field(default_factory=dict)
+    local_tar_url: str | None = None
     graph_uris: list[str] = field(default_factory=list)
     keywords: list[str] = field(default_factory=list)
     bioregistry_prefix: str | None = None
@@ -110,11 +112,11 @@ class Source:
 
     @property
     def mode(self) -> SourceMode:
-        if self.endpoint and (self.local_provider or self.download_urls):
+        if self.endpoint and (self.local_provider or self.download_urls or self.local_tar_url):
             return SourceMode.BOTH
         elif self.endpoint:
             return SourceMode.REMOTE
-        elif self.local_provider or self.download_urls:
+        elif self.local_provider or self.download_urls or self.local_tar_url:
             return SourceMode.LOCAL
         return SourceMode.UNKNOWN
 
@@ -123,9 +125,9 @@ class Source:
         from rdfsolve.models.source_model import SourceModel
 
         settings = SourceModel.model_validate(d)
+        download_fields = {k: v for k, v in d.items() if k.startswith("download_") and v}
         download_urls = []
-        for key in ["download_ttl", "download_nt", "download_nq", "download_rdf"]:
-            urls = d.get(key, [])
+        for urls in download_fields.values():
             if isinstance(urls, str):
                 urls = [urls]
             download_urls.extend(urls)
@@ -135,6 +137,8 @@ class Source:
             endpoint=d.get("endpoint"),
             local_provider=d.get("local_provider"),
             download_urls=download_urls,
+            download_fields=download_fields,
+            local_tar_url=d.get("local_tar_url"),
             graph_uris=settings.graph_uris,
             keywords=d.get("keywords", []),
             bioregistry_prefix=d.get("bioregistry_prefix"),
@@ -150,6 +154,15 @@ class Source:
             sparql_engine=settings.sparql_engine,
             sparql_strategy=settings.sparql_strategy,
         )
+
+    def qlever_entry(self) -> dict[str, Any]:
+        """Keep download formats and tar scope at the builder boundary."""
+        return {
+            "name": self.name,
+            **self.download_fields,
+            "local_tar_url": self.local_tar_url,
+            "graph_uris": self.graph_uris,
+        }
 
 
 @dataclass
@@ -181,6 +194,7 @@ class PipelineConfig:
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
     base_port: int = 7019
     qlever_startup_timeout: int = 10000  # seconds to wait for QLever to start
+    no_download: bool = False
 
     # Stage control
     skip_remote: bool = False
@@ -637,11 +651,12 @@ class LocalMiningStage(Stage):
 
             try:
                 qleverfile = workdir / "Qleverfile"
-                if not qleverfile.exists():
+                has_index = self._has_qlever_index(workdir, source.name)
+                if not qleverfile.exists() and not has_index:
                     self._prepare_qleverfile(workdir, source, port)
 
                 index_done = workdir / ".index.done"
-                if not index_done.exists():
+                if not has_index:
                     log.info("  Executing Qleverfile (download + index)...")
                     try:
                         self._execute_qleverfile(workdir, source)
@@ -708,20 +723,20 @@ class LocalMiningStage(Stage):
         return False
 
     def _has_qlever_index(self, workdir: Path, source_name: str) -> bool:
-        """Check if a pre-existing QLever index exists in workdir."""
+        """Reuse existing indices; do not overwrite partial index files."""
         index_spo = workdir / f"{source_name}.index.spo"
-        return index_spo.exists()
+        if index_spo.is_file():
+            return True
+        if any(workdir.glob(f"{source_name}.index.*")):
+            raise ValueError(f"Incomplete index in {workdir}; inspect it before rebuilding")
+        return False
 
     def _prepare_qleverfile(self, workdir: Path, source: Source, port: int):
         """Generate Qleverfile for source."""
-        entry = {
-            "name": source.name,
-            **{k: getattr(source, k) for k in dir(source) if k.startswith("download_") and getattr(source, k)},
-        }
-        if hasattr(source, "local_tar_url") and source.local_tar_url:
-            entry["local_tar_url"] = source.local_tar_url
-        if hasattr(source, "graph_uris") and source.graph_uris:
-            entry["graph_uris"] = source.graph_uris
+        qleverfile_path = workdir / "Qleverfile"
+        if qleverfile_path.exists():
+            return
+        entry = source.qlever_entry()
 
         cfg = QleverConfig(
             memory_for_queries="30G",
@@ -732,39 +747,13 @@ class LocalMiningStage(Stage):
         )
 
         qleverfile_content = build_qleverfile(
-            entry, self.config.data_dir, port, runtime="singularity", cfg=cfg
+            entry, self.config.data_dir, port, runtime="singularity", cfg=cfg, workdir=workdir
         )
 
         qleverfile_path = workdir / "Qleverfile"
-        qleverfile_path.write_text(qleverfile_content)
+        with qleverfile_path.open("x", encoding="utf-8") as stream:
+            stream.write(qleverfile_content)
         log.info(f"    Generated Qleverfile")
-
-    def _preprocess_rdf_files(self, input_files: list[Path]):
-        """Fix malformed RDF literals that cause QLever parse errors."""
-        import re
-        for rdf_file in input_files:
-            try:
-                content = rdf_file.read_text(encoding='utf-8', errors='replace')
-                original = content
-                # Fix Yes/No boolean literals
-                content = re.sub(
-                    r'"(Yes|YES|yes)"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
-                    '"true"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
-                content = re.sub(
-                    r'"(No|NO|no)"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
-                    '"false"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
-                # Fix numeric boolean literals (non-zero = true, 0 = false)
-                content = re.sub(
-                    r'"([1-9]\d*)"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
-                    '"true"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
-                content = re.sub(
-                    r'"0"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
-                    '"false"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
-                if content != original:
-                    log.info(f"    Fixed malformed literals in {rdf_file.name}")
-                    rdf_file.write_text(content, encoding='utf-8')
-            except Exception as e:
-                log.warning(f"    Could not preprocess {rdf_file.name}: {e}")
 
     def _execute_qleverfile(self, workdir: Path, source: Source, skip_download: bool = False):
         """Execute Qleverfile data download and indexing."""
@@ -773,7 +762,7 @@ class LocalMiningStage(Stage):
             raise ValueError(f"Qleverfile not found in {workdir}")
 
         import configparser
-        config = configparser.ConfigParser()
+        config = configparser.ConfigParser(interpolation=None)
         config.read(qleverfile_path)
 
         rdf_dir = workdir / "rdf"
@@ -783,24 +772,17 @@ class LocalMiningStage(Stage):
         rdf_format = config.get("data", "FORMAT")
         settings_json = config.get("index", "SETTINGS_JSON")
 
-        input_files = list(workdir.glob(input_files_pattern.replace("rdf/", "")))
-        if not input_files:
-            input_files = list(rdf_dir.glob(input_files_pattern.split("/")[-1]))
+        input_files = self._qlever_input_files(workdir, input_files_pattern)
 
-        if not input_files and not skip_download:
+        if not input_files and not skip_download and not self.config.no_download:
             get_data_cmd = config.get("data", "GET_DATA_CMD")
             log.info(f"    Downloading data...")
             subprocess.run(["bash", "-c", get_data_cmd], check=True, cwd=workdir)
 
-            input_files = list(workdir.glob(input_files_pattern.replace("rdf/", "")))
-            if not input_files:
-                input_files = list(rdf_dir.glob(input_files_pattern.split("/")[-1]))
+            input_files = self._qlever_input_files(workdir, input_files_pattern)
 
         if not input_files:
             raise ValueError(f"No files found matching {input_files_pattern}")
-
-        # Fix malformed boolean literals before indexing
-        self._preprocess_rdf_files(input_files)
 
         settings_path = workdir / f"{source.name}.settings.json"
         settings_path.write_text(settings_json)
@@ -830,6 +812,20 @@ class LocalMiningStage(Stage):
 
         log.info(f"    Indexing {len(input_files)} files...")
         subprocess.run(cmd, cwd=workdir, check=True)
+
+    @staticmethod
+    def _qlever_input_files(workdir: Path, patterns: str) -> list[Path]:
+        """Resolve each input glob; support legacy files outside rdf/."""
+        import glob
+        import shlex
+
+        files: set[Path] = set()
+        for pattern in shlex.split(patterns):
+            matches = [Path(p) for p in glob.glob(str(workdir / pattern))]
+            if not matches and pattern.startswith("rdf/"):
+                matches = [Path(p) for p in glob.glob(str(workdir / pattern[4:]))]
+            files.update(p.resolve() for p in matches if p.is_file())
+        return sorted(files)
 
     def _kill_existing_qlever_on_port(self, port: int):
         """Kill any existing QLever server running on the specified port."""
@@ -1015,6 +1011,18 @@ class GroupedMiningStage(LocalMiningStage):
                 continue
 
             try:
+                # Existing grouped indices do not need the original downloads.
+                if self._has_qlever_index(workdir, group_name):
+                    server_pid = self._qlever_start(workdir, group_name, port)
+                    if not server_pid:
+                        raise RuntimeError(f"Server failed to start for {group_name}")
+                    try:
+                        self._mine_grouped(group_name, group_sources, port)
+                        results["groups_mined"].append(group_name)
+                    finally:
+                        self._qlever_stop(server_pid)
+                    port += 1
+                    continue
                 source_data = []
                 for source in group_sources:
                     source_workdir = self.config.data_dir / "qlever_workdirs" / source.name
@@ -1027,7 +1035,13 @@ class GroupedMiningStage(LocalMiningStage):
                     )
 
                     # Download if no files exist and source has download URLs
-                    if not has_files and source.download_urls:
+                    if not has_files and self._has_qlever_index(source_workdir, source.name):
+                        sources_with_existing_index.append((source, source_workdir))
+                        continue
+                    if not has_files and not self.config.no_download and (
+                        source.download_urls or source.local_tar_url
+                        or (source_workdir / "Qleverfile").exists()
+                    ):
                         log.info(f"  -> Downloading data for {source.name}...")
                         try:
                             qleverfile = source_workdir / "Qleverfile"
@@ -1183,17 +1197,10 @@ class GroupedMiningStage(LocalMiningStage):
         self, workdir: Path, group_name: str, group_sources: list[Source], port: int
     ):
         """Generate provider Qleverfile for grouped sources."""
-        members = []
-        for source in group_sources:
-            entry = {
-                "name": source.name,
-                **{k: getattr(source, k) for k in dir(source) if k.startswith("download_") and getattr(source, k)},
-            }
-            if hasattr(source, "local_tar_url") and source.local_tar_url:
-                entry["local_tar_url"] = source.local_tar_url
-            if hasattr(source, "graph_uris") and source.graph_uris:
-                entry["graph_uris"] = source.graph_uris
-            members.append(entry)
+        qleverfile_path = workdir / "Qleverfile"
+        if qleverfile_path.exists():
+            return
+        members = [source.qlever_entry() for source in group_sources]
 
         cfg = QleverConfig(
             memory_for_queries="80G",
@@ -1204,11 +1211,12 @@ class GroupedMiningStage(LocalMiningStage):
         )
 
         qleverfile_content = build_provider_qleverfile(
-            group_name, members, self.config.data_dir, port, runtime="singularity", cfg=cfg
+            group_name, members, self.config.data_dir, port, runtime="singularity", cfg=cfg, workdir=workdir
         )
 
         qleverfile_path = workdir / "Qleverfile"
-        qleverfile_path.write_text(qleverfile_content)
+        with qleverfile_path.open("x", encoding="utf-8") as stream:
+            stream.write(qleverfile_content)
         log.info(f"  Generated provider Qleverfile")
 
     def _execute_group_qleverfile(
@@ -1505,17 +1513,10 @@ class LsLodCloudStage(Stage):
         self, workdir: Path, all_sources: list[Source], port: int
     ):
         """Generate Qleverfile for LSLOD Cloud."""
-        members = []
-        for source in all_sources:
-            entry = {
-                "name": source.name,
-                **{k: getattr(source, k) for k in dir(source) if k.startswith("download_") and getattr(source, k)},
-            }
-            if hasattr(source, "local_tar_url") and source.local_tar_url:
-                entry["local_tar_url"] = source.local_tar_url
-            if hasattr(source, "graph_uris") and source.graph_uris:
-                entry["graph_uris"] = source.graph_uris
-            members.append(entry)
+        qleverfile_path = workdir / "Qleverfile"
+        if qleverfile_path.exists():
+            return
+        members = [source.qlever_entry() for source in all_sources]
 
         cfg = QleverConfig(
             memory_for_queries="250G",
@@ -1526,11 +1527,12 @@ class LsLodCloudStage(Stage):
         )
 
         qleverfile_content = build_provider_qleverfile(
-            "lslod_cloud", members, self.config.data_dir, port, runtime="singularity", cfg=cfg
+            "lslod_cloud", members, self.config.data_dir, port, runtime="singularity", cfg=cfg, workdir=workdir
         )
 
         qleverfile_path = workdir / "Qleverfile"
-        qleverfile_path.write_text(qleverfile_content)
+        with qleverfile_path.open("x", encoding="utf-8") as stream:
+            stream.write(qleverfile_content)
         log.info("  Generated LSLOD Cloud Qleverfile")
 
     def _execute_cloud_qleverfile(self, workdir: Path, source_data: list[tuple[Source, Path]]):
@@ -2208,6 +2210,8 @@ Examples:
         help="Output format(s) to generate (default: json-ld void)",
     )
     parser.add_argument("--data-dir", type=Path, help="Data-directory")
+    parser.add_argument("--no-download", action="store_true",
+                        help="Use existing RDF and indices; do not fetch source data")
     parser.add_argument("--timeout", type=float, default=None,
                         help="Override query timeout in seconds (default: source setting)")
     parser.add_argument("--endpoint-status-file", type=Path, help="Endpoint health check JSON")
@@ -2223,6 +2227,7 @@ Examples:
     if args.data_dir:
         config.data_dir = args.data_dir
     config.timeout = args.timeout
+    config.no_download = args.no_download
     config.output_suffix = args.output_suffix
     config.output_formats = args.output_formats
     config.endpoint_status_file = args.endpoint_status_file
