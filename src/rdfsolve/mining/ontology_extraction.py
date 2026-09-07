@@ -97,8 +97,7 @@ WHERE {{
                 if row.get("child", {}).get("value") and row.get("parent", {}).get("value")
             ]
         except Exception as e:
-            logger.warning(f"Failed to query subClassOf: {e}")
-            return []
+            raise RuntimeError(f"Failed to query subClassOf: {e}") from e
 
     def query_domain(self) -> list[DomainAssertion]:
         """Query rdfs:domain assertions."""
@@ -125,8 +124,7 @@ WHERE {{
                 if row.get("property", {}).get("value") and row.get("domain", {}).get("value")
             ]
         except Exception as e:
-            logger.warning(f"Failed to query domain: {e}")
-            return []
+            raise RuntimeError(f"Failed to query domain: {e}") from e
 
     def query_range(self) -> list[RangeAssertion]:
         """Query rdfs:range assertions."""
@@ -153,8 +151,7 @@ WHERE {{
                 if row.get("property", {}).get("value") and row.get("range", {}).get("value")
             ]
         except Exception as e:
-            logger.warning(f"Failed to query range: {e}")
-            return []
+            raise RuntimeError(f"Failed to query range: {e}") from e
 
     def query_inverse_of(self) -> list[InverseRelation]:
         """Query owl:inverseOf relations."""
@@ -181,8 +178,7 @@ WHERE {{
                 if row.get("property1", {}).get("value") and row.get("property2", {}).get("value")
             ]
         except Exception as e:
-            logger.warning(f"Failed to query inverseOf: {e}")
-            return []
+            raise RuntimeError(f"Failed to query inverseOf: {e}") from e
 
     def query_property_characteristics(self) -> list[PropertyCharacteristic]:
         """Query OWL property characteristics."""
@@ -218,8 +214,7 @@ WHERE {{
                             PropertyCharacteristic(property_uri=prop, characteristic=char)
                         )
             except Exception as e:
-                logger.debug(f"Failed to query {char}: {e}")
-                continue
+                raise RuntimeError(f"Failed to query {char}: {e}") from e
 
         return results
 

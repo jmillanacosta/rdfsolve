@@ -93,8 +93,7 @@ WHERE {{
                     )
             return datasets
         except Exception as e:
-            logger.warning(f"Failed to query datasets: {e}")
-            return []
+            raise RuntimeError(f"Failed to query datasets: {e}") from e
 
     def query_services(self) -> list[ServiceDescription]:
         """Query SPARQL service descriptions."""
@@ -122,8 +121,7 @@ WHERE {{
                 if row.get("endpoint", {}).get("value")
             ]
         except Exception as e:
-            logger.warning(f"Failed to query services: {e}")
-            return []
+            raise RuntimeError(f"Failed to query services: {e}") from e
 
 
 __all__ = ["MetadataMiner"]

@@ -39,7 +39,7 @@ def _query_owl_class_superclasses(
         limit: Maximum number of superclasses to return (default 500 to prevent OOM)
 
     Returns:
-        List of superclass URIs (parents of owl:Class instances), limited to top N
+        List of superclass URIs. Fail if the configured limit is reached.
     """
     g_clause = ""
     if graph_uris:
@@ -67,6 +67,10 @@ LIMIT {limit}"""
     try:
         result = helper.select(query, purpose="owl-class-superclasses")
         bindings = result.get("results", {}).get("bindings", [])
+        if len(bindings) >= limit:
+            raise ValueError(
+                f"Ontology superclass query reached limit {limit}; results may be truncated"
+            )
         classes = []
         for row in bindings:
             class_uri = row.get("parent", {}).get("value")
@@ -76,8 +80,7 @@ LIMIT {limit}"""
         logger.info(f"Found {len(classes)} superclasses of owl:Class instances (top {limit})")
         return classes
     except Exception as e:
-        logger.warning(f"Failed to query owl:Class superclasses: {e}")
-        return []
+        raise RuntimeError(f"Failed to query owl:Class superclasses: {e}") from e
 
 
 def mine_with_ontology(
@@ -87,6 +90,7 @@ def mine_with_ontology(
     dataset_name: str | None = None,
     ontology_graph_uris: list[str] | None = None,
     ontology_scope: Literal["schema", "full"] = "schema",
+    ontology_as_data: bool = False,
 ) -> MiningResult:
     """Mine schema with optional ontology and metadata extraction.
 
@@ -94,6 +98,8 @@ def mine_with_ontology(
         miner: Configured SchemaMiner instance
         extract_ontology: Extract TBox (class hierarchies, domain/range)
         extract_metadata: Extract infrastructure metadata (VoID/DCAT)
+        ontology_as_data: Opt in to bounded superclass aggregation. This is
+            inferred evidence, not observed instance typing. Limit hits fail.
         dataset_name: Optional dataset name to attach to schema metadata
         ontology_graph_uris: Explicit graph URIs to mine for ontology.
             If provided, these graphs are mined specifically for ontology triples.
@@ -107,8 +113,14 @@ def mine_with_ontology(
         raise ValueError("ontology_scope must be schema or full")
     with miner._session(dataset_name):
         miner._report.report.config["ontology_scope"] = ontology_scope
+        miner._report.report.config["ontology_as_data"] = ontology_as_data
         result = _mine_with_ontology(
-            miner, extract_ontology, extract_metadata, dataset_name, ontology_graph_uris
+            miner,
+            extract_ontology,
+            extract_metadata,
+            dataset_name,
+            ontology_graph_uris,
+            ontology_as_data,
         )
         if result.ontology is not None and ontology_scope == "schema":
             raw_count = len(result.ontology.subclass_relations)
@@ -166,11 +178,12 @@ def _mine_with_ontology(
     extract_metadata: bool,
     dataset_name: str | None,
     ontology_graph_uris: list[str] | None,
+    ontology_as_data: bool,
 ) -> MiningResult:
     """Run optional phases within the miner's active report session."""
     # Detect if endpoint uses ontology-as-data pattern
     # (owl:Class instances used as subjects/objects in properties)
-    uses_ontology_as_data = detect_ontology_as_data(
+    uses_ontology_as_data = ontology_as_data and detect_ontology_as_data(
         miner._helper,
         miner.graph_uris,
         threshold=1000,
@@ -181,17 +194,17 @@ def _mine_with_ontology(
     ontology_graphs_used = []
     if extract_ontology:
         phase = miner._report.start_phase("ontology-extraction")
-        # If .owl graphs were discovered, mine those specifically for ontology
+        # Use explicit graph scope when provided.
         if ontology_graph_uris:
             logger.info(
-                f"Extracting ontology structure (TBox) from {len(ontology_graph_uris)} .owl graphs:"
+                f"Extracting ontology structure (TBox) from {len(ontology_graph_uris)} configured graphs:"
             )
             for owl_graph in ontology_graph_uris[:5]:  # Log first 5
                 logger.info(f"  - {owl_graph}")
             if len(ontology_graph_uris) > 5:
                 logger.info(f"  ... and {len(ontology_graph_uris) - 5} more")
 
-            # Mine .owl graphs for ontology
+            # Mine the configured ontology graphs.
             ontology_miner = OntologyMiner(miner._helper, ontology_graph_uris)
             ontology = ontology_miner.mine()
             ontology_graphs_used = ontology_graph_uris

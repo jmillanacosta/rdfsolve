@@ -72,8 +72,7 @@ LIMIT 10000"""
         )
         return detected
     except Exception as e:
-        logger.warning(f"Failed to detect ontology-as-data pattern: {e}")
-        return False
+        raise RuntimeError(f"Failed to detect ontology-as-data pattern: {e}") from e
 
 
 def mine_ontology_as_data_patterns(
@@ -150,6 +149,8 @@ LIMIT 1000"""
         logger.info("Mining ontology-as-data patterns (aggregated at superclass level)...")
         result = helper.select(query, purpose="ontology-as-data-aggregated")
         bindings = result.get("results", {}).get("bindings", [])
+        if len(bindings) >= 1000:
+            raise ValueError("Ontology-as-data query reached limit 1000; results may be truncated")
 
         patterns = []
         for row in bindings:
@@ -179,8 +180,7 @@ LIMIT 1000"""
         return patterns
 
     except Exception as e:
-        logger.warning(f"Failed to mine ontology-as-data patterns: {e}")
-        return []
+        raise RuntimeError(f"Failed to mine ontology-as-data patterns: {e}") from e
 
 
 def mine_ontology_as_data_subject_patterns(
@@ -242,6 +242,8 @@ LIMIT 1000"""
         logger.info("Mining ontology-as-data subject patterns (aggregated)...")
         result = helper.select(query, purpose="ontology-as-data-subject-aggregated")
         bindings = result.get("results", {}).get("bindings", [])
+        if len(bindings) >= 1000:
+            raise ValueError("Ontology-as-data query reached limit 1000; results may be truncated")
 
         patterns = []
         for row in bindings:
@@ -275,5 +277,4 @@ LIMIT 1000"""
         return patterns
 
     except Exception as e:
-        logger.warning(f"Failed to mine ontology-as-data subject patterns: {e}")
-        return []
+        raise RuntimeError(f"Failed to mine ontology-as-data subject patterns: {e}") from e

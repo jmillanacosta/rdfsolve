@@ -52,7 +52,9 @@ def test_optional_phase_matrix(miner, monkeypatch, ontology, metadata, detected)
     monkeypatch.setattr(
         "rdfsolve.mining.mine_ontology_as_data_subject_patterns", lambda *a, **kw: []
     )
-    result = mine_with_ontology(miner, ontology, metadata, dataset_name="test")
+    result = mine_with_ontology(
+        miner, ontology, metadata, dataset_name="test", ontology_as_data=True
+    )
     report = miner.last_report
     assert report.finished_at
     assert all(item is report for item in reports)

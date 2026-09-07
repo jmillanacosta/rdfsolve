@@ -116,3 +116,21 @@ def test_pagination_does_not_hide_programming_errors():
     miner._helper.select = Mock(side_effect=RuntimeError("bug"))
     with pytest.raises(RuntimeError, match="bug"):
         next(miner._helper.select_chunked("query"))
+
+
+def test_failed_ontology_query_is_not_an_empty_ontology():
+    from rdfsolve.mining import OntologyMiner
+
+    helper = Mock()
+    helper.select.side_effect = EndpointError("offline")
+    with pytest.raises(RuntimeError, match="offline"):
+        OntologyMiner(helper).mine()
+
+
+def test_ontology_aggregation_limit_is_not_complete():
+    from rdfsolve.mining.ontology_as_data import mine_ontology_as_data_patterns
+
+    helper = Mock()
+    helper.select.return_value = {"results": {"bindings": [{}] * 1000}}
+    with pytest.raises(RuntimeError, match="truncated"):
+        mine_ontology_as_data_patterns(helper, superclasses=["urn:A"])
