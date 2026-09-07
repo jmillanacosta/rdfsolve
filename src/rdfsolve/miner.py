@@ -467,6 +467,7 @@ class SchemaMiner:
             description=discovered.get("description"),
             source_license=discovered.get("source_license"),
             source_version=discovered.get("source_version"),
+            source_version_iri=discovered.get("source_version_iri"),
             source_issued=discovered.get("source_issued"),
             source_modified=discovered.get("source_modified"),
             source_publisher=discovered.get("source_publisher"),

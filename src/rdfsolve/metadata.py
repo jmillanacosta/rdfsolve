@@ -97,10 +97,11 @@ def build_void_dataset_query() -> str:
     PREFIX pav: <http://purl.org/pav/>
     PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 
-    SELECT ?license ?publisher ?creator ?version ?versionIRI
+    SELECT ?subject ?endpoint ?license ?publisher ?creator ?version ?versionIRI
            ?issued ?modified ?created ?homepage ?title ?description
     WHERE {{
       {{ ?subject a void:Dataset }} UNION {{ ?subject a dcat:Dataset }}
+      OPTIONAL {{ ?subject void:sparqlEndpoint ?endpoint }}
 
       {LICENSE_PATTERN}
       {PUBLISHER_PATTERN}
@@ -333,61 +334,44 @@ def process_metadata_results(bindings: list[dict[str, Any]]) -> dict[str, Any]:
 def query_endpoint_metadata(
     sparql_helper: SparqlHelper,
 ) -> dict[str, Any]:
-    """Query SPARQL endpoint for dataset metadata using multiple strategies.
+    """Read one identifiable dataset, without importing unrelated ontology metadata.
 
-    Tries multiple query strategies to discover metadata from different
-    vocabularies (DCTERMS, DC, DCAT, PAV, VoID, OWL, FOAF, PROV) across
-    different patterns (void:Dataset, owl:Ontology, named graphs, etc.).
-
-    Args:
-        sparql_helper: SparqlHelper instance configured for the endpoint
-
-    Returns:
-        dict with metadata fields (see process_metadata_results for schema)
-        Returns empty dict if all queries fail.
-
-    Example:
-        >>> from rdfsolve.sparql_helper import SparqlHelper
-        >>> helper = SparqlHelper("https://sparql.uniprot.org/sparql")
-        >>> metadata = query_endpoint_metadata(helper)
-        >>> print(metadata.get("source_license"))
+    Prefer a dataset linked to the queried endpoint. If only one dataset is
+    described, use it. Leave ambiguous or absent metadata unknown. Query errors
+    propagate so a caller can report failure instead of absence.
     """
-    strategies = [
-        ("void:Dataset/dcat:Dataset", build_void_dataset_query()),
-        ("owl:Ontology", build_owl_ontology_query()),
-        ("named-graph", build_named_graph_query()),
-        ("service-description", build_service_description_query()),
-        ("broad-scan", build_broad_scan_query()),
-    ]
+    from collections import defaultdict
 
-    for strategy_name, query in strategies:
-        try:
-            logger.debug("Trying metadata strategy: %s", strategy_name)
-            raw = sparql_helper.select(query, purpose=f"metadata_{strategy_name}")
-            bindings = raw.get("results", {}).get("bindings", [])
-
-            if not bindings:
-                continue
-
-            metadata = process_metadata_results(bindings)
-
-            if metadata:
-                logger.info(
-                    "Found metadata via %s: %s",
-                    strategy_name,
-                    list(metadata.keys()),
-                )
-                creators = metadata.get("source_creator", [])
-                if creators:
-                    logger.info("  - Captured %d creator(s)", len(creators))
-                return metadata
-
-        except Exception as e:
-            logger.debug("Metadata strategy %s failed: %s", strategy_name, e)
+    query = build_void_dataset_query()
+    raw = sparql_helper.select(query, purpose="dataset_metadata")
+    bindings = raw["results"]["bindings"]
+    groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    linked: set[str] = set()
+    for row in bindings:
+        subject = row.get("subject", {}).get("value")
+        if not subject:
             continue
-
-    logger.debug("No dataset metadata found via any strategy")
-    return {}
+        groups[subject].append(row)
+        endpoint = row.get("endpoint", {}).get("value", "")
+        if endpoint.rstrip("/") == sparql_helper.endpoint_url.rstrip("/"):
+            linked.add(subject)
+    candidates = linked or set(groups)
+    if len(candidates) != 1:
+        logger.info(
+            "Dataset metadata identity is absent or ambiguous (%d candidates)", len(candidates)
+        )
+        return {}
+    subject = next(iter(candidates))
+    rows = groups[subject]
+    # Do not combine conflicting release identifiers from multiple rows.
+    for key in ("version", "versionIRI", "issued", "modified", "created"):
+        values = {row[key]["value"] for row in rows if key in row}
+        if len(values) > 1:
+            rows = [{k: v for k, v in row.items() if k != key} for row in rows]
+    metadata = process_metadata_results(rows)
+    metadata["metadata_subject_iri"] = subject
+    metadata["metadata_identity_basis"] = "endpoint_link" if linked else "single_dataset"
+    return metadata
 
 
 # Utility functions for building custom queries with patterns
