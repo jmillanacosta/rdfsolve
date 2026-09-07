@@ -193,6 +193,7 @@ class PipelineConfig:
 
     # Ontology/metadata extraction
     extract_ontology: bool = False
+    ontology_scope: str = "schema"
     extract_metadata: bool = False
 
     # Parallelism
@@ -537,6 +538,7 @@ class RemoteMiningStage(Stage):
                 result = mine_with_ontology(
                     miner,
                     extract_ontology=self.config.extract_ontology,
+                    ontology_scope=self.config.ontology_scope,
                     extract_metadata=self.config.extract_metadata,
                     dataset_name=source.name,
                 )
@@ -945,6 +947,7 @@ class LocalMiningStage(Stage):
             result = mine_with_ontology(
                 miner,
                 extract_ontology=self.config.extract_ontology,
+                ontology_scope=self.config.ontology_scope,
                 extract_metadata=self.config.extract_metadata,
                 dataset_name=source.name,
             )
@@ -1369,6 +1372,7 @@ class GroupedMiningStage(LocalMiningStage):
             result = mine_with_ontology(
                 miner,
                 extract_ontology=self.config.extract_ontology,
+                ontology_scope=self.config.ontology_scope,
                 extract_metadata=self.config.extract_metadata,
                 dataset_name=group_name,
             )
@@ -2192,6 +2196,8 @@ Examples:
     parser.add_argument("--skip-completed", action="store_true", help="Skip sources with existing schema output files")
     parser.add_argument("--extract-ontology", action="store_true", help="Extract ontology structure (TBox: rdfs:subClassOf, domain/range)")
     parser.add_argument("--extract-metadata", action="store_true", help="Extract infrastructure metadata (VoID/DCAT)")
+    parser.add_argument("--ontology-scope", choices=["schema", "full"], default="schema",
+                        help="Export schema-relevant ontology or all queried axioms")
     parser.add_argument("--output-dir", type=Path, help="Output directory")
     parser.add_argument("--output-suffix", type=str, default="", help="Suffix for output files (e.g., _local, _remote)")
     parser.add_argument(
@@ -2228,6 +2234,7 @@ Examples:
     config.skip_remote = args.local_only or args.grouped_only or args.lslod_cloud_only
     config.skip_local = args.remote_only or args.grouped_only or args.lslod_cloud_only
     config.extract_ontology = args.extract_ontology
+    config.ontology_scope = args.ontology_scope
     config.extract_metadata = args.extract_metadata
 
     # Load sources
