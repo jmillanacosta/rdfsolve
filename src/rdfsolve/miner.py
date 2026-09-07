@@ -152,6 +152,7 @@ class SchemaMiner:
         source_name: str = "",
         enrich: bool = False,
         examples_per_pattern: int = 2,
+        max_response_bytes: int = 64 * 1024 * 1024,
     ) -> None:
         """Initialize a SchemaMiner.
 
@@ -190,6 +191,8 @@ class SchemaMiner:
             sparql_engine=sparql_engine,
             sparql_strategy=sparql_strategy,
             source_name=source_name,
+            inter_request_delay=delay,
+            max_response_bytes=max_response_bytes,
         )
         self._report_path = Path(report_path) if report_path else None
         self._rc: ReportCollector | None = None
@@ -281,6 +284,9 @@ class SchemaMiner:
                 "class_batch_size": self.class_batch_size,
                 "delay": self.delay,
                 "timeout": self.timeout,
+                "max_response_bytes": self._helper.max_response_bytes,
+                "max_retries": self._helper.max_retries,
+                "host_request_interval": self._helper.inter_request_delay,
                 "counts": self.counts,
                 "strategy": self._strategy.name,
                 "untyped_as_classes": self.untyped_as_classes,
