@@ -1,258 +1,137 @@
-"""RDF-config YAML generation (model, prefix, endpoint) from rdfsolve JSON-LD schemas."""
+"""Export RDF-config models from canonical patterns and observed examples."""
 
 from __future__ import annotations
 
+import json
 import re
-from typing import Any
+from collections import defaultdict
+from hashlib import sha256
+from typing import TYPE_CHECKING
 
-__all__ = ["to_rdfconfig"]
+from rdflib import XSD, Graph, Literal
+
+if TYPE_CHECKING:
+    from rdfsolve.schema_models.core import MinedSchema
+    from rdfsolve.schema_models.pattern import SchemaPattern
 
 
-# Public API
+def _name(text: str) -> str:
+    """Use a label or IRI local part as an identifier."""
+    words = re.findall(r"[A-Za-z0-9]+", text)
+    name = "".join(word[0].upper() + word[1:] for word in words) or "Term"
+    return "Term" + name if name[0].isdigit() else name
 
 
 def to_rdfconfig(
-    jsonld: dict[str, Any],
+    schema: MinedSchema,
     *,
     endpoint_url: str | None = None,
     endpoint_name: str | None = None,
     graph_uri: str | None = None,
 ) -> dict[str, str]:
-    """Generate RDF-config YAML files from a JSON-LD schema dict.
+    """Export model, prefix, and endpoint YAML.
 
-    Parameters
-    ----------
-    jsonld:
-        JSON-LD document (``@context``, ``@graph``, …).
-    endpoint_url:
-        SPARQL endpoint URL for ``endpoint.yaml``.
-    endpoint_name:
-        Label for the endpoint (defaults to ``"endpoint"``).
-    graph_uri:
-        Optional named-graph URI for ``endpoint.yaml``.
-
-    Returns
-    -------
-    dict
-        Keys ``model``, ``prefix``, ``endpoint`` -> YAML strings.
+    Missing examples stay absent. Cardinality is zero-or-more because
+    mined patterns do not establish required fields or upper bounds.
+    Bare blank nodes need a nested model, which these patterns do not
+    supply; reject them instead of emitting an empty, unusable branch.
+    Definitions and release identity use YAML comments, not new RDF-config keys.
     """
-    prefixes: dict[str, str] = jsonld.get("@context", {})
-    graph_data: list[dict[str, Any]] = jsonld.get("@graph", [])
+    if any(p.object_class == "BlankNode" for p in schema.patterns):
+        raise ValueError(
+            "RDF-config needs nested models for blank nodes. "
+            "Use canonical JSON or SHACL for these patterns."
+        )
 
+    labels: dict[str, str] = {}
+    for p in schema.patterns:
+        for iri, label in (
+            (p.subject_class, p.subject_label),
+            (p.property_uri, p.property_label),
+            (p.object_class, p.object_label),
+        ):
+            if label:
+                labels.setdefault(iri, label)
+    for annotation in schema.enrichment.labels:
+        labels.setdefault(annotation.term_iri, annotation.text.value)
+
+    names: dict[str, str] = {}
+    used: set[str] = set()
+    for iri in sorted(set(schema.get_classes()) | set(schema.get_properties())):
+        local = iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1].rsplit(":", 1)[-1]
+        base = _name(labels.get(iri, local))
+        candidate = base
+        index = 0
+        while candidate in used:
+            index += 1
+            suffix = sha256(f"{iri}:{index}".encode()).hexdigest()[:8]
+            candidate = f"{base}{suffix}"
+        used.add(candidate)
+        names[iri] = candidate
+
+    prefixes = {"xsd": str(XSD)}
+    graph = Graph(bind_namespaces="none")
+    for prefix, namespace in prefixes.items():
+        graph.bind(prefix, namespace)
+
+    groups: dict[str, dict[str, list[SchemaPattern]]] = defaultdict(lambda: defaultdict(list))
+    for pattern in schema.patterns:
+        groups[pattern.subject_class][pattern.property_uri].append(pattern)
+
+    lines = ["# Observed patterns; examples are convenience samples."]
+    if schema.about.schema_version:
+        lines.append("# Source version: " + json.dumps(schema.about.schema_version))
+    for class_iri in schema.get_classes():
+        description = schema.enrichment.description(class_iri)
+        if description:
+            lines.append("# " + json.dumps(description, ensure_ascii=False))
+        examples = [
+            f"<{term.value}>"
+            for term in schema.enrichment.class_examples.get(class_iri, [])
+            if term.kind == "uri"
+        ]
+        subject = " ".join([names[class_iri], *dict.fromkeys(examples)])
+        lines.extend([f"- {json.dumps(subject)}:", f"  - a: {json.dumps(f'<{class_iri}>')}"])
+        for property_iri, patterns in sorted(groups[class_iri].items()):
+            description = schema.enrichment.description(property_iri)
+            if description:
+                lines.append("  # " + json.dumps(description, ensure_ascii=False))
+            lines.append(f"  - {json.dumps(f'<{property_iri}>*')}:")
+            values: list[str | None] = []
+            for pattern in patterns:
+                if pattern.object_class not in ("Resource", "Literal"):
+                    values.append(names[pattern.object_class])
+            for example in schema.enrichment.examples:
+                if example.subject_class != class_iri or example.property_uri != property_iri:
+                    continue
+                term = example.value
+                if term.kind == "uri":
+                    values.append(f"<{term.value}>")
+                elif term.kind == "literal":
+                    literal = term.to_rdf()
+                    if not term.datatype and not term.language:
+                        literal = Literal(term.value, datatype=XSD.string, normalize=False)
+                    values.append(literal.n3(namespace_manager=graph.namespace_manager))
+            # RDF-config permits an object name without an example.
+            if not values:
+                values.append(None)
+            for index, value in enumerate(dict.fromkeys(values), 1):
+                variable = f"{names[class_iri]}_{names[property_iri]}_{index}".lower()
+                lines.append(f"    - {variable}: {json.dumps(value, ensure_ascii=False)}")
+
+    endpoint_url = endpoint_url or schema.about.endpoint
+    endpoint: dict[str, list[object]] = {}
+    if endpoint_url:
+        settings: list[object] = [endpoint_url]
+        graph_uris = [graph_uri] if graph_uri else schema.about.graph_uris
+        if graph_uris:
+            settings.append({"graph": graph_uris})
+        endpoint[endpoint_name or "endpoint"] = settings
+
+    # JSON is valid YAML and keeps endpoint names and IRIs safely quoted.
     return {
-        "model": _generate_model(graph_data, prefixes),
-        "prefix": _generate_prefix(prefixes),
-        "endpoint": _generate_endpoint(
-            endpoint_url,
-            endpoint_name,
-            graph_uri,
-        ),
+        "model": "\n".join(lines) + "\n",
+        "prefix": json.dumps({p: f"<{iri}>" for p, iri in sorted(prefixes.items())}, indent=2)
+        + "\n",
+        "endpoint": json.dumps(endpoint, indent=2) + "\n" if endpoint else "",
     }
-
-
-# prefix.yaml
-
-
-def _generate_prefix(prefixes: dict[str, str]) -> str:
-    lines = [f"{pfx}: <{uri}>" for pfx, uri in sorted(prefixes.items())]
-    return "\n".join(lines) + "\n"
-
-
-# endpoint.yaml
-
-
-def _generate_endpoint(
-    endpoint_url: str | None,
-    endpoint_name: str | None,
-    graph_uri: str | None,
-) -> str:
-    if not endpoint_url:
-        return ""
-    name = endpoint_name or "endpoint"
-    lines = [f"{name}:", f"  - {endpoint_url}"]
-    if graph_uri:
-        lines.append("  - graph:")
-        lines.append(f"    - {graph_uri}")
-    return "\n".join(lines) + "\n"
-
-
-# model.yaml
-
-
-def _generate_model(
-    graph_data: list[dict[str, Any]],
-    prefixes: dict[str, str],
-) -> str:
-    class_uris = {item["@id"] for item in graph_data if "@id" in item}
-    class_name_map = _build_unique_class_names(
-        class_uris,
-        prefixes,
-    )
-
-    classes: dict[str, list[dict[str, Any]]] = {}
-    for item in graph_data:
-        if "@id" not in item:
-            continue
-        subject = item["@id"]
-        classes.setdefault(subject, [])
-
-        unique_name = class_name_map.get(
-            subject,
-            _class_name(subject),
-        )
-        class_var = _variable_name(unique_name)
-
-        for prop, value in item.items():
-            if prop.startswith("@") or prop == "_counts":
-                continue
-            info = _analyze_property(
-                prop,
-                value,
-                class_var,
-                class_name_map,
-            )
-            if info:
-                classes[subject].append(info)
-
-    return _format_yaml(classes, class_name_map)
-
-
-# helpers
-
-
-def _class_name(uri_or_curie: str) -> str:
-    """CamelCase class name from URI/CURIE local part."""
-    if ":" in uri_or_curie:
-        local = uri_or_curie.split(":", 1)[1]
-    elif "/" in uri_or_curie:
-        local = uri_or_curie.split("/")[-1]
-    elif "#" in uri_or_curie:
-        local = uri_or_curie.split("#")[-1]
-    else:
-        local = uri_or_curie
-
-    local = re.sub(r"[^a-zA-Z0-9]", "", local)
-    if local and local[0].isdigit():
-        local = "C" + local
-    if local:
-        local = local[0].upper() + local[1:]
-    else:
-        local = "Class"
-    return local
-
-
-def _variable_name(uri_or_curie: str) -> str:
-    """snake_case variable name from URI/CURIE local part."""
-    if ":" in uri_or_curie:
-        local = uri_or_curie.split(":", 1)[1]
-    elif "/" in uri_or_curie:
-        local = uri_or_curie.split("/")[-1]
-    elif "#" in uri_or_curie:
-        local = uri_or_curie.split("#")[-1]
-    else:
-        local = uri_or_curie
-
-    local = re.sub(r"[^a-zA-Z0-9_]", "_", local)
-    local = re.sub(r"([a-z])([A-Z])", r"\1_\2", local)
-    local = local.lower()
-    local = re.sub(r"_+", "_", local).strip("_")
-    return local
-
-
-def _analyze_property(
-    prop: str,
-    value: Any,
-    class_var: str,
-    class_name_map: dict[str, str],
-) -> dict[str, Any] | None:
-    """Return structured info for one property entry."""
-    is_ref = False
-    target = None
-
-    if isinstance(value, dict) and "@id" in value:
-        is_ref = True
-        target = value["@id"]
-    elif isinstance(value, list) and value:
-        first = value[0]
-        if isinstance(first, dict) and "@id" in first:
-            is_ref = True
-            target = first["@id"]
-
-    prop_base = _variable_name(prop)
-    prop_var = f"{class_var}_{prop_base}"
-
-    if is_ref and target:
-        target_name = class_name_map.get(
-            target,
-            _class_name(target),
-        )
-        return {
-            "property": prop,
-            "variable": prop_var,
-            "range": target_name,
-        }
-    return {
-        "property": prop,
-        "variable": prop_var,
-        "range": f'"{prop_var}_value"',
-    }
-
-
-def _build_unique_class_names(
-    class_uris: set[str],
-    prefixes: dict[str, str],
-) -> dict[str, str]:
-    """Map each class URI to a unique CamelCase name."""
-    ns_to_prefix = {ns: pfx for pfx, ns in prefixes.items()}
-
-    name_to_uris: dict[str, list[str]] = {}
-    for uri in class_uris:
-        base = _class_name(uri)
-        name_to_uris.setdefault(base, []).append(uri)
-
-    result: dict[str, str] = {}
-    for base, uris in name_to_uris.items():
-        if len(uris) == 1:
-            result[uris[0]] = base
-        else:
-            for uri in uris:
-                pfx = None
-                if ":" in uri:
-                    pfx = uri.split(":", 1)[0]
-                else:
-                    for ns_uri, p in ns_to_prefix.items():
-                        if uri.startswith(ns_uri):
-                            pfx = p
-                            break
-                if pfx:
-                    pfx_clean = re.sub(
-                        r"[^a-zA-Z0-9]",
-                        "",
-                        pfx,
-                    )
-                    pfx_cap = pfx_clean[0].upper() + pfx_clean[1:] if pfx_clean else ""
-                    result[uri] = f"{pfx_cap}{base}"
-                else:
-                    result[uri] = f"{base}{str(abs(hash(uri)))[:6]}"
-    return result
-
-
-def _format_yaml(
-    classes: dict[str, list[dict[str, Any]]],
-    class_name_map: dict[str, str],
-) -> str:
-    """Format classes dict as RDF-config model.yaml."""
-    lines: list[str] = []
-    for class_uri in sorted(classes):
-        props = classes[class_uri]
-        name = class_name_map.get(
-            class_uri,
-            _class_name(class_uri),
-        )
-        lines.append(f"- {name} {class_uri}:")
-        for p in props:
-            lines.append(f"  - {p['property']}:")
-            lines.append(
-                f"    - {p['variable']}: {p['range']}",
-            )
-    return "\n".join(lines) + "\n"

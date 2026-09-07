@@ -15,7 +15,8 @@ def test_graph_to_jsonld():
     g = Graph()
     g.parse(data="@prefix void: <http://rdfs.org/ns/void#> .\n<http://ex.org/ds> a void:Dataset .", format="turtle")
     result = rdfsolve.graph_to_jsonld(g)
-    assert isinstance(result, dict)
+    assert "@about" not in result
+    assert rdfsolve.MinedSchema.from_dict(result).patterns == []
 
 
 @patch("rdfsolve.miner.SchemaMiner")

@@ -230,6 +230,23 @@ class MinedSchema(BaseModel):
         linkml_schema = self.to_linkml(schema_name, schema_description)
         return cast(str, YAMLGenerator(linkml_schema).serialize())
 
+    def to_rdfconfig(
+        self,
+        *,
+        endpoint_url: str | None = None,
+        endpoint_name: str | None = None,
+        graph_uri: str | None = None,
+    ) -> dict[str, str]:
+        """Export RDF-config from canonical patterns and source examples."""
+        from rdfsolve.schema_models.exporters.rdfconfig import to_rdfconfig
+
+        return to_rdfconfig(
+            self,
+            endpoint_url=endpoint_url,
+            endpoint_name=endpoint_name,
+            graph_uri=graph_uri,
+        )
+
     def to_pydantic(self, schema_name: str | None = None) -> str:
         """Generate label-named Pydantic views of observed RDF patterns."""
         from rdfsolve.schema_models.exporters.pydantic import to_pydantic
