@@ -196,8 +196,8 @@ class AboutMetadata(BaseModel):
         description="Unique identifier (UUID or content hash)",
     )
     schema_version: str = Field(
-        default="0.0.0",
-        description="Semantic version of this schema (major.minor.patch)",
+        default="",
+        description="Source release identifier or dated mining snapshot; not the JSON format version",
     )
 
     # Source
@@ -426,7 +426,7 @@ class AboutMetadata(BaseModel):
         authors: list[dict[str, str]] | None = None,
         qlever_version: dict[str, str] | None = None,
         # Version fields
-        schema_version: str = "1.0.0",
+        schema_version: str | None = None,
         source_version: str | None = None,
         source_version_iri: str | None = None,
         source_issued: str | None = None,
@@ -456,17 +456,26 @@ class AboutMetadata(BaseModel):
             encoded_name = quote(dataset_name, safe="")
             return f"{_BASE_URI}/api/{suffix}/{encoded_name}"
 
+        generated_at = finished_at or datetime.now(timezone.utc).isoformat()
+        version = (
+            source_version_iri
+            or source_version
+            or source_modified
+            or source_issued
+            or schema_version
+            or f"snapshot:{generated_at}"
+        )
         return AboutMetadata(
             # Identity
             schema_id=str(uuid4()),
-            schema_version=schema_version,
+            schema_version=version,
             # Source
             dataset_name=dataset_name,
             endpoint=endpoint,
             graph_uris=graph_uris,
             # Provenance
             generated_by=f"rdfsolve {VERSION}",
-            generated_at=datetime.now(timezone.utc).isoformat(),
+            generated_at=generated_at,
             strategy=strategy,
             # Data versioning
             source_version=source_version,
@@ -867,6 +876,8 @@ class MinedSchema(BaseModel):
         if self.about.generated_at:
             g.add((void_doc_uri, DCTERMS.created, RdfLiteral(self.about.generated_at)))
         g.add((void_doc_uri, FOAF.primaryTopic, dataset_uri))
+        if self.about.schema_version:
+            g.add((void_doc_uri, OWL.versionInfo, RdfLiteral(self.about.schema_version)))
 
         # void:Dataset represents the source RDF dataset
         g.add((dataset_uri, RDF.type, void.Dataset))
@@ -948,6 +959,8 @@ class MinedSchema(BaseModel):
         # Version info
         if self.about.source_version_iri:
             g.add((dataset_uri, OWL.versionIRI, URIRef(self.about.source_version_iri)))
+        if self.about.source_version:
+            g.add((dataset_uri, OWL.versionInfo, RdfLiteral(self.about.source_version)))
 
         # Dates
         if self.about.source_issued:

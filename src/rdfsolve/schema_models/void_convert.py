@@ -286,7 +286,7 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
 
 def _extract_metadata_from_void(g: Graph) -> AboutMetadata:
     """Extract AboutMetadata from VoID graph."""
-    from rdflib.namespace import DCTERMS, FOAF, RDF
+    from rdflib.namespace import DCTERMS, FOAF, OWL, RDF
 
     # Find the main dataset
     dataset_uri = None
@@ -311,6 +311,11 @@ def _extract_metadata_from_void(g: Graph) -> AboutMetadata:
     classes = g.value(dataset_uri, VOID.classes)
     properties = g.value(dataset_uri, VOID.properties)
     triples = g.value(dataset_uri, VOID.triples)
+    version_iri = g.value(dataset_uri, OWL.versionIRI)
+    source_version = g.value(dataset_uri, OWL.versionInfo)
+    document = g.value(predicate=FOAF.primaryTopic, object=dataset_uri)
+    schema_version = g.value(document, OWL.versionInfo) if document is not None else None
+    generated_at = g.value(document, DCTERMS.created) if document is not None else None
 
     return AboutMetadata.build(
         endpoint=str(endpoint) if endpoint else None,
@@ -320,4 +325,8 @@ def _extract_metadata_from_void(g: Graph) -> AboutMetadata:
         class_count=optional_count(classes) or 0,
         property_count=optional_count(properties) or 0,
         triple_count_estimate=optional_count(triples),
+        source_version_iri=str(version_iri) if version_iri is not None else None,
+        source_version=str(source_version) if source_version is not None else None,
+        schema_version=str(schema_version) if schema_version is not None else None,
+        finished_at=str(generated_at) if generated_at is not None else None,
     )
