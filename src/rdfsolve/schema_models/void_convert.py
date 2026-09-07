@@ -14,121 +14,14 @@ VOID_EXT = Namespace("http://ldf.fi/void-ext#")
 
 
 def minedschema_to_void(schema: MinedSchema, base_url: str = "https://example.org") -> VoidDataset:
-    """Convert MinedSchema to VoID Dataset.
+    """Read structural VoID fields from the canonical RDF exporter."""
+    from rdflib.namespace import FOAF
 
-    Groups patterns by subject class, creates nested partitions.
-
-    Args:
-        schema: MinedSchema to convert
-        base_url: Base URL for partition URIs
-
-    Returns:
-        VoidDataset with nested class/property/datatype partitions
-    """
-    from collections import defaultdict
-    from hashlib import md5
-
-    from rdfsolve.schema_models.void_model import (
-        VoidClassPartition,
-        VoidDatatypePartition,
-        VoidLinkset,
-        VoidPropertyPartition,
-    )
-
-    # Group patterns: subject_class -> property -> [(object_class, datatype, count)]
-    grouped: dict[str, dict[str, list[tuple[str, str | None, int | None]]]] = defaultdict(
-        lambda: defaultdict(list)
-    )
-
-    for pat in schema.patterns:
-        if pat.subject_class and pat.property_uri:
-            grouped[pat.subject_class][pat.property_uri].append(
-                (pat.object_class, pat.datatype, pat.count)
-            )
-
-    # Build class partitions
-    class_partitions = []
-    linksets = []
-
-    for subject_class in sorted(grouped.keys()):
-        cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
-
-        property_partitions = []
-        for prop_uri in sorted(grouped[subject_class].keys()):
-            prop_hash = md5(prop_uri.encode(), usedforsecurity=False).hexdigest()[:8]
-
-            nested_class_partitions = []
-            datatype_partitions = []
-
-            for obj_class, datatype, count in grouped[subject_class][prop_uri]:
-                if obj_class == "Literal" and datatype:
-                    dt_hash = md5(datatype.encode(), usedforsecurity=False).hexdigest()[:8]
-                    datatype_partitions.append(
-                        VoidDatatypePartition(
-                            uri=f"{base_url}/dt-{cls_hash}-{prop_hash}-{dt_hash}",
-                            datatype_uri=datatype,
-                            triples=count,
-                        )
-                    )
-                elif obj_class and obj_class not in ("Literal", "Resource", "BlankNode"):
-                    obj_hash = md5(obj_class.encode(), usedforsecurity=False).hexdigest()[:8]
-                    nested_class_partitions.append(
-                        VoidClassPartition(
-                            uri=f"{base_url}/cp-{cls_hash}-{prop_hash}-{obj_hash}",
-                            class_uri=obj_class,
-                            triples=count,
-                        )
-                    )
-                    # Also create linkset
-                    linksets.append(
-                        VoidLinkset(
-                            uri=f"{base_url}/ls-{cls_hash}-{prop_hash}-{obj_hash}",
-                            subjects_target_class=subject_class,
-                            link_predicate=prop_uri,
-                            objects_target_class=obj_class,
-                            triples=count,
-                        )
-                    )
-
-            prop_triples = sum(c or 0 for _, _, c in grouped[subject_class][prop_uri])
-            property_partitions.append(
-                VoidPropertyPartition(
-                    uri=f"{base_url}/pp-{cls_hash}-{prop_hash}",
-                    property_uri=prop_uri,
-                    triples=prop_triples if prop_triples > 0 else None,
-                    class_partitions=nested_class_partitions,
-                    datatype_partitions=datatype_partitions,
-                )
-            )
-
-        class_triples = sum(
-            c or 0 for prop_objs in grouped[subject_class].values() for _, _, c in prop_objs
-        )
-        class_partitions.append(
-            VoidClassPartition(
-                uri=f"{base_url}/cp-{cls_hash}",
-                class_uri=subject_class,
-                triples=class_triples if class_triples > 0 else None,
-                property_partitions=property_partitions,
-            )
-        )
-
-    # Build dataset
-    endpoint = schema.about.endpoint
-    dataset_uri = endpoint if endpoint else f"{base_url}/dataset"
-
-    return VoidDataset(
-        uri=dataset_uri,
-        title=schema.about.title or schema.about.dataset_name,
-        description=schema.about.description,
-        sparql_endpoint=endpoint,
-        classes_count=schema.about.class_count,
-        properties_count=schema.about.property_count,
-        triples=schema.about.triple_count_estimate,
-        distinct_subjects=schema.about.distinct_subject_count,
-        class_partitions=class_partitions,
-        linksets=linksets,
-    )
+    graph = schema.to_void_graph(base_url=base_url)
+    dataset = next(graph.objects(None, FOAF.primaryTopic), None)
+    if dataset is None:
+        raise ValueError("Export has no primary dataset")
+    return VoidDataset.from_rdf(graph, dataset)
 
 
 def void_to_minedschema(void_ttl: str) -> MinedSchema:
@@ -156,6 +49,11 @@ def void_graph_to_minedschema(g: Graph) -> MinedSchema:
     patterns = _extract_patterns_from_void(g)
     about = _extract_metadata_from_void(g)
     about.pattern_count = len(patterns)
+    for partition in g.objects(None, VOID.classPartition):
+        class_iri = g.value(partition, VOID["class"])
+        count = optional_count(g.value(partition, VOID.entities))
+        if class_iri is not None and count is not None:
+            about.class_entity_counts[str(class_iri)] = count
 
     from rdfsolve.schema_models.enrichment import SchemaEnrichment
 

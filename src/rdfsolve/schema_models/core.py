@@ -14,7 +14,7 @@ from hashlib import md5
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, field_validator
 
 if TYPE_CHECKING:
     from rdflib import Graph
@@ -308,6 +308,7 @@ class AboutMetadata(BaseModel):
     )
 
     # Statistics
+    class_entity_counts: dict[str, NonNegativeInt] = Field(default_factory=dict)
     pattern_count: int = Field(
         0,
         ge=0,
@@ -1031,15 +1032,16 @@ class MinedSchema(BaseModel):
             # Create sd:Service wrapper for endpoints with discovered graphs
             service_uri = URIRef(f"{endpoint}#service")
             g.add((service_uri, RDF.type, sd.Service))
-            g.add((service_uri, sd.url, URIRef(endpoint)))
+            g.add((service_uri, sd.endpoint, URIRef(endpoint)))
 
             # Link service to dataset description
-            g.add((service_uri, sd.defaultDatasetDescription, dataset_uri))
+            g.add((service_uri, sd.defaultDataset, dataset_uri))
+            g.add((dataset_uri, RDF.type, sd.Dataset))
 
             # Add sd:namedGraph entries for each discovered graph
             for graph_info in self.about.discovered_graphs:
                 graph_uri_str = graph_info.get("uri")
-                graph_count = graph_info.get("count", 0)
+                graph_count = graph_info.get("count")
 
                 if not graph_uri_str:
                     continue
@@ -1047,6 +1049,7 @@ class MinedSchema(BaseModel):
                 # Create sd:namedGraph structure
                 named_graph_node = BNode()
                 g.add((dataset_uri, sd.namedGraph, named_graph_node))
+                g.add((named_graph_node, RDF.type, sd.NamedGraph))
                 g.add((named_graph_node, sd.name, URIRef(graph_uri_str)))
 
                 # Create the sd:graph description
@@ -1056,7 +1059,7 @@ class MinedSchema(BaseModel):
                 g.add((graph_node, RDF.type, void.Dataset))
 
                 # Add triple count
-                if graph_count > 0:
+                if graph_count is not None:
                     g.add(
                         (
                             graph_node,
@@ -1143,21 +1146,9 @@ class MinedSchema(BaseModel):
             g.add((class_partition_uri, RDF.type, void.Dataset))
             g.add((class_partition_uri, void["class"], URIRef(subject_class)))
 
-            # Calculate total triples for this class (sum across all properties)
-            class_triple_count = 0
-            for objects in class_prop_objects[subject_class].values():
-                for _, _, count in objects:
-                    if count is not None:
-                        class_triple_count += count
-
-            if class_triple_count > 0:
-                g.add(
-                    (
-                        class_partition_uri,
-                        void.triples,
-                        RdfLiteral(class_triple_count, datatype=XSD.integer),
-                    )
-                )
+            count = self.about.class_entity_counts.get(subject_class)
+            if count is not None:
+                g.add((class_partition_uri, void.entities, RdfLiteral(count, datatype=XSD.integer)))
 
             # Add property partitions within this class partition
             for prop_uri in sorted(class_prop_objects[subject_class].keys()):
@@ -1168,20 +1159,7 @@ class MinedSchema(BaseModel):
                 g.add((prop_partition_uri, RDF.type, void.Dataset))
                 g.add((prop_partition_uri, void.property, URIRef(prop_uri)))
 
-                # Calculate triples for this subject_class + property combination
-                prop_triple_count = 0
-                for _, _, count in class_prop_objects[subject_class][prop_uri]:
-                    if count is not None:
-                        prop_triple_count += count
-
-                if prop_triple_count > 0:
-                    g.add(
-                        (
-                            prop_partition_uri,
-                            void.triples,
-                            RdfLiteral(prop_triple_count, datatype=XSD.integer),
-                        )
-                    )
+                # Object classes can overlap; do not sum their triple counts.
 
                 # Add object class partitions or datatype partitions
                 for object_class, datatype, count in class_prop_objects[subject_class][prop_uri]:
@@ -1231,47 +1209,7 @@ class MinedSchema(BaseModel):
                                 )
                             )
 
-        # Generate void:Linksets for connections between classes
-        # LinkSets provide an alternative representation showing subject -> predicate -> object
-        # This complements the nested partition structure above
-        for subject_class in class_prop_objects:
-            for prop_uri, objects in class_prop_objects[subject_class].items():
-                for object_class, _datatype, count in objects:
-                    # Only create LinkSets for typed object connections (not literals or Resources)
-                    if (
-                        object_class
-                        and object_class not in ("Literal", "Resource")
-                        and object_class not in _SENTINEL_OBJECTS
-                    ):
-                        # Create unique LinkSet URI based on subject + property + object
-                        linkset_hash = md5(
-                            f"{subject_class}|{prop_uri}|{object_class}".encode(),
-                            usedforsecurity=False,
-                        ).hexdigest()[:12]
-                        linkset_uri = URIRef(f"{base}linkset-{linkset_hash}")
-
-                        g.add((linkset_uri, RDF.type, void.Linkset))
-
-                        # subjectsTarget: blank node with void:class
-                        from rdflib import BNode
-
-                        subject_target = BNode()
-                        g.add((linkset_uri, void.subjectsTarget, subject_target))
-                        g.add((subject_target, void["class"], URIRef(subject_class)))
-
-                        # linkPredicate
-                        g.add((linkset_uri, void.linkPredicate, URIRef(prop_uri)))
-
-                        # objectsTarget: blank node with void:class
-                        object_target = BNode()
-                        g.add((linkset_uri, void.objectsTarget, object_target))
-                        g.add((object_target, void["class"], URIRef(object_class)))
-
-                        # Add triple count if available
-                        if count is not None:
-                            g.add(
-                                (linkset_uri, void.triples, RdfLiteral(count, datatype=XSD.integer))
-                            )
+        # A typed relationship alone does not establish a cross-dataset linkset.
 
         _bind_discovered_prefixes(g, self.patterns)
         self.annotate_rdf(g)
@@ -1472,70 +1410,6 @@ def _bind_discovered_prefixes(
                         ns,
                         exc_info=True,
                     )
-
-
-# JSON-LD @graph parsers
-
-
-def _parse_schema_graph(
-    graph_nodes: list[Any],
-    expand: Callable[[str], str],
-    labels: dict[str, str],
-) -> list[SchemaPattern]:
-    """Parse @graph nodes into a list of SchemaPattern objects.
-
-    Supports two formats:
-    1. VoID format: nodes have void-ext:subjectClass, void-ext:objectClass, void:property
-    2. Legacy format: @id is subject class, properties map to object classes
-    """
-    patterns: list[SchemaPattern] = []
-
-    # VoID vocabulary URIs
-    void_ext_subject = "http://ldf.fi/void-ext#subjectClass"
-    void_ext_object = "http://ldf.fi/void-ext#objectClass"
-    void_property = "http://rdfs.org/ns/void#property"
-    void_triples = "http://rdfs.org/ns/void#triples"
-
-    for node in graph_nodes:
-        node_id = node.get("@id", "")
-        if not node_id:
-            continue
-
-        # Check if this is a VoID partition node
-        has_void_subject = any(expand(k) == void_ext_subject for k in node if not k.startswith("@"))
-
-        if has_void_subject:
-            # VoID format: extract from void-ext predicates
-            pat = _parse_void_partition(
-                node, expand, labels, void_ext_subject, void_ext_object, void_property, void_triples
-            )
-            if pat:
-                patterns.append(pat)
-        else:
-            # Legacy format: @id is subject class
-            sc_curie = node_id
-            sc_uri = expand(sc_curie)
-            if not sc_uri.startswith(_URI_SCHEMES):
-                continue
-
-            counts_map: dict[str, dict[str, int]] = node.get("_counts", {})
-
-            for key, val in node.items():
-                if key.startswith(("@", "_")) or key in (_GRAPH_SKIP_KEYS):
-                    continue
-                p_uri = expand(key)
-                if not p_uri.startswith(_URI_SCHEMES):
-                    continue
-                entries = val if isinstance(val, list) else [val]
-                for entry in entries:
-                    pat = _parse_schema_entry(
-                        entry, sc_uri, p_uri, key, sc_curie, expand, labels, counts_map
-                    )
-                    if pat:
-                        patterns.append(pat)
-
-    return patterns
-
 
 def _parse_void_partition(
     node: dict[str, Any],

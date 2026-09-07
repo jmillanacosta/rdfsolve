@@ -13,8 +13,9 @@ from rdfsolve.mining.query_builders import (
     _build_batched_typed_count_query,
     _build_batched_untyped_count_query,
     _build_label_query,
+    _graph_clause,
 )
-from rdfsolve.mining.query_fallbacks import query_with_bisect
+from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
 from rdfsolve.models import SchemaPattern
 
 if TYPE_CHECKING:
@@ -29,6 +30,68 @@ __all__ = [
     "enrich_patterns_with_counts",
     "enrich_patterns_with_labels",
 ]
+
+
+def query_class_entity_counts(
+    classes: list[str],
+    helper: SparqlHelper,
+    graph_uris: list[str] | None,
+    report: ReportCollector,
+    batch_size: int = 50,
+    delay: float = 0,
+) -> dict[str, int]:
+    """Count distinct typed entities, not overlapping pattern rows."""
+    counts: dict[str, int] = {}
+    if batch_size < 1:
+        raise ValueError("Class count batch size must be positive")
+    batch_size = min(batch_size, 10)
+    opening, closing = _graph_clause(graph_uris)
+    phase = report.start_phase("class-entity-counts")
+    for offset in range(0, len(classes), batch_size):
+        batch = classes[offset : offset + batch_size]
+        aggregate = "COUNT(DISTINCT ?entity)" if graph_uris and len(graph_uris) > 1 else "COUNT(*)"
+        branches = [
+            f"{{ SELECT (<{iri}> AS ?class) ({aggregate} AS ?count) WHERE {{ "
+            f"{opening} ?entity a <{iri}> . {closing} }} }}"
+            for iri in batch
+        ]
+        query = "SELECT ?class ?count WHERE { " + " UNION ".join(branches) + " }"
+        started = time.monotonic()
+        outcome = select_outcome(query, "class-entity-counts", helper, batch, graph_uris)
+        report.record_query(
+            "class-entity-counts", time.monotonic() - started, success=outcome.state == "complete"
+        )
+        for row in outcome.rows:
+            try:
+                iri = row["class"]["value"]
+                count = int(row["count"]["value"])
+                if iri not in batch or count < 0 or iri in counts:
+                    raise ValueError("Invalid or duplicate class count")
+                counts[iri] = count
+            except (KeyError, TypeError, ValueError) as error:
+                outcome.state = "partial"
+                outcome.failures.append(
+                    QueryFailure(
+                        "invalid_response", str(error), "class-entity-counts", batch, graph_uris
+                    )
+                )
+        missing = sorted(set(batch) - counts.keys())
+        if missing:
+            outcome.state = "partial" if outcome.rows else "failed"
+            outcome.failures.append(
+                QueryFailure(
+                    "invalid_response",
+                    "Missing class counts",
+                    "class-entity-counts",
+                    missing,
+                    graph_uris,
+                )
+            )
+        report.record_outcome(outcome)
+        if delay and offset + batch_size < len(classes):
+            time.sleep(delay)
+    report.finish_phase(phase, items=len(counts))
+    return counts
 
 
 def enrich_patterns_with_counts(
