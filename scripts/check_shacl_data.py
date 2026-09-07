@@ -13,6 +13,7 @@ from collections import Counter
 from hashlib import file_digest
 from itertools import islice, zip_longest
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from pyshacl import validate
 from rdflib import RDF, SH, XSD, BNode, Graph, Literal, URIRef
@@ -84,11 +85,14 @@ def main():
     parser.add_argument("--data", type=Path, nargs="+", required=True)
     parser.add_argument("--schema", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--base-iri", help="Initial Turtle base; use the source ingestion base")
     parser.add_argument("--max-routes", type=int, default=24)
     parser.add_argument("--max-values", type=int, default=10000)
     args = parser.parse_args()
     if args.max_routes < 0 or args.max_values < 1:
         parser.error("Use a nonnegative route limit and positive value limit")
+    if args.base_iri and not urlsplit(args.base_iri).scheme:
+        parser.error("--base-iri must be absolute")
     args.output_dir.mkdir(parents=True, exist_ok=False)
     started = time.perf_counter()
     graph = Graph()
@@ -96,11 +100,28 @@ def main():
     for path in args.data:
         with path.open("rb") as stream:
             checksum = file_digest(stream, "sha256").hexdigest()
-        graph.parse(path, format="turtle")
+        graph.parse(path, format="turtle", publicID=args.base_iri)
         inputs.append(
-            {"path": str(path.resolve()), "sha256": checksum, "bytes": path.stat().st_size}
+            {
+                "path": str(path.resolve()),
+                "sha256": checksum,
+                "bytes": path.stat().st_size,
+                "initial_base": args.base_iri or path.resolve().as_uri(),
+            }
         )
     logger.info("Loaded %d triples from %d local files", len(graph), len(inputs))
+    file_iris = {
+        term
+        for triple in graph
+        for term in triple
+        if isinstance(term, URIRef) and str(term).startswith("file:")
+    }
+    if file_iris:
+        logger.warning(
+            "%d file IRIs in parsed data. Relative terms may use the local file base; "
+            "do not treat these as endpoint identities.",
+            len(file_iris),
+        )
     shapes = Graph().parse(args.shapes, format="turtle")
     target_counts = {
         str(target): len(set(graph.subjects(RDF.type, target)))
@@ -137,7 +158,7 @@ def main():
     if envelope.get("format") != "rdfsolve.mined-schema" or envelope.get("version") != 1:
         raise ValueError("Use canonical mined-schema JSON")
     model = envelope["schema"]
-    routes = model.get("navigation", {}).get("paths", [])
+    routes = (model.get("navigation") or {}).get("paths", [])
     checked = []
     by_length = [[r for r in routes if len(r["steps"]) == hops] for hops in range(2, 7)]
     selection = (r for row in zip_longest(*by_length) for r in row if r is not None)
@@ -146,6 +167,8 @@ def main():
     summary = {
         "inputs": inputs,
         "data_triples": len(graph),
+        "file_iri_count": len(file_iris),
+        "file_iri_examples": [str(term) for term in sorted(file_iris)[:3]],
         "shapes": str(args.shapes.resolve()),
         "schema": str(args.schema.resolve()),
         "schema_source_version": model["about"].get("schema_version"),
