@@ -105,6 +105,8 @@ class Source:
     avg_response_time: float | None = None
     delay: float | None = None
     timeout: float | None = None
+    sparql_engine: str = ""
+    sparql_strategy: str = ""
 
     @property
     def mode(self) -> SourceMode:
@@ -118,6 +120,9 @@ class Source:
 
     @classmethod
     def from_dict(cls, d: dict) -> Source:
+        from rdfsolve.models.source_model import SourceModel
+
+        settings = SourceModel.model_validate(d)
         download_urls = []
         for key in ["download_ttl", "download_nt", "download_nq", "download_rdf"]:
             urls = d.get(key, [])
@@ -130,7 +135,7 @@ class Source:
             endpoint=d.get("endpoint"),
             local_provider=d.get("local_provider"),
             download_urls=download_urls,
-            graph_uris=d.get("graph_uris", []),
+            graph_uris=settings.graph_uris,
             keywords=d.get("keywords", []),
             bioregistry_prefix=d.get("bioregistry_prefix"),
             endpoint_status=d.get("endpoint_status", "unknown"),
@@ -141,7 +146,9 @@ class Source:
             failure_count=d.get("failure_count", 0),
             avg_response_time=d.get("avg_response_time"),
             delay=d.get("delay"),
-            timeout=d.get("timeout"),
+            timeout=settings.timeout,
+            sparql_engine=settings.sparql_engine,
+            sparql_strategy=settings.sparql_strategy,
         )
 
 
@@ -163,7 +170,7 @@ class PipelineConfig:
     sources: list[Source] = field(default_factory=list)
 
     # Mining settings
-    timeout: float = 300.0
+    timeout: float | None = None  # Override the source timeout only when set.
     delay: float = 1.0
     chunk_size: int = 50000
     class_batch_size: int = 50
@@ -531,8 +538,14 @@ class RemoteMiningStage(Stage):
             miner = SchemaMiner(
                 endpoint_url=source.endpoint,
                 source_name=source.name,
-                timeout=self.config.timeout or source.timeout or 300,
+                graph_uris=source.graph_uris or None,
+                timeout=(self.config.timeout if self.config.timeout is not None
+                         else source.timeout if source.timeout is not None else 300.0),
                 delay=polite_delay,
+                sparql_engine=source.sparql_engine,
+                sparql_strategy=source.sparql_strategy,
+                chunk_size=self.config.chunk_size,
+                class_batch_size=self.config.class_batch_size,
                 report_path=str(report_path),
             )
 
@@ -932,12 +945,15 @@ class LocalMiningStage(Stage):
         suffix = self.config.output_suffix
         report_path = output_dir / f"{source.name}{suffix}_report.json"
 
-        # Use unlimited timeout for local QLever (we control the server)
+        # Local queries use QLever, not the remote endpoint's transport hints.
         miner = SchemaMiner(
             endpoint_url=endpoint,
             source_name=source.name,
-            timeout=86400.0,  # 24 hours - effectively unlimited for local queries
+            timeout=self.config.timeout if self.config.timeout is not None else 86400.0,
             delay=self.config.delay,
+            sparql_engine="qlever",
+            chunk_size=self.config.chunk_size,
+            class_batch_size=self.config.class_batch_size,
             report_path=str(report_path),
         )
 
@@ -1367,8 +1383,11 @@ class GroupedMiningStage(LocalMiningStage):
             endpoint_url=endpoint,
             source_name=group_name,
             graph_uris=graph_uris,
-            timeout=86400.0,
+            timeout=self.config.timeout if self.config.timeout is not None else 86400.0,
             delay=self.config.delay,
+            sparql_engine="qlever",
+            chunk_size=self.config.chunk_size,
+            class_batch_size=self.config.class_batch_size,
             report_path=str(report_path),
         )
 
@@ -1705,8 +1724,11 @@ class LsLodCloudStage(Stage):
             endpoint_url=endpoint,
             source_name="lslod_cloud",
             graph_uris=graph_uris,
-            timeout=86400.0,
+            timeout=self.config.timeout if self.config.timeout is not None else 86400.0,
             delay=self.config.delay,
+            sparql_engine="qlever",
+            chunk_size=self.config.chunk_size,
+            class_batch_size=self.config.class_batch_size,
             report_path=str(report_path),
         )
 
@@ -2230,7 +2252,8 @@ Examples:
         help="Output format(s) to generate (default: json-ld void)",
     )
     parser.add_argument("--data-dir", type=Path, help="Data-directory")
-    parser.add_argument("--timeout", type=float, default=300.0, help="Query timeout")
+    parser.add_argument("--timeout", type=float, default=None,
+                        help="Override query timeout in seconds (default: source setting)")
     parser.add_argument("--endpoint-status-file", type=Path, help="Endpoint health check JSON")
     parser.add_argument("--download-status-file", type=Path, help="Download health check JSON")
 
