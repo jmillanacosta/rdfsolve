@@ -44,6 +44,7 @@ def main() -> None:
         args.output_dir.mkdir(parents=True, exist_ok=False)
         (args.output_dir / "schema.json").write_text(json.dumps(schema.to_dict(), indent=2) + "\n")
         (args.output_dir / "shapes.ttl").write_text(schema.to_shacl())
+        (args.output_dir / "models.py").write_text(schema.to_pydantic())
         (args.output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary, indent=2))
 
