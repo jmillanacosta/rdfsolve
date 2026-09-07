@@ -14,10 +14,11 @@ from rdfsolve.mining.report_tracking import ReportCollector
 from rdfsolve.schema_models.core import MinedSchema, SchemaPattern
 from rdfsolve.schema_models.enrichment import (
     DEFINITION_PREDICATES,
+    LABEL_PREDICATES,
     PatternExample,
     RdfTerm,
     SchemaEnrichment,
-    TermDefinition,
+    TermAnnotation,
 )
 from rdfsolve.sparql_helper import SparqlHelper
 
@@ -35,7 +36,7 @@ def definition_query(iris: list[str], graph_uris: list[str] | None) -> str:
     opening, closing = _graph_clause(graph_uris)
     return f"""SELECT DISTINCT ?term ?predicate ?text WHERE {{
       VALUES ?term {{ {" ".join(map(_iri, iris))} }}
-      VALUES ?predicate {{ {" ".join(map(_iri, DEFINITION_PREDICATES))} }}
+      VALUES ?predicate {{ {" ".join(map(_iri, DEFINITION_PREDICATES + LABEL_PREDICATES))} }}
       {opening} ?term ?predicate ?text . FILTER(isLiteral(?text)) {closing}
     }}"""
 
@@ -94,6 +95,7 @@ def query_enrichment(
     examples_per_pattern: int = 2,
     delay: float = 0.0,
     report: ReportCollector | None = None,
+    annotation_iris: list[str] | None = None,
 ) -> SchemaEnrichment:
     """Attempt definitions and examples for every class and pattern.
 
@@ -149,17 +151,22 @@ def query_enrichment(
                     invalid(error, purpose)
 
     classes = sorted(schema.get_classes())
-    iris = sorted(set(classes) | set(schema.get_properties()))
+    iris = sorted(set(classes) | set(schema.get_properties()) | set(annotation_iris or []))
     for offset in range(0, len(iris), 50):
         for row in select(definition_query(iris[offset : offset + 50], graph_uris), "definitions"):
             try:
-                definition = TermDefinition(
+                definition = TermAnnotation(
                     term_iri=row["term"]["value"],
                     predicate=row["predicate"]["value"],
                     text=_term(row["text"], result.query_count),
                 )
-                if definition not in result.definitions:
-                    result.definitions.append(definition)
+                destination = (
+                    result.labels
+                    if definition.predicate in LABEL_PREDICATES
+                    else result.definitions
+                )
+                if definition not in destination:
+                    destination.append(definition)
             except (KeyError, TypeError, ValueError) as error:
                 invalid(error, "definitions")
     if examples_per_pattern:

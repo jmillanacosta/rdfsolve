@@ -1332,7 +1332,7 @@ class MinedSchema(BaseModel):
             graph += self.enrichment.to_rdf_graph()
         else:
             terms = {str(term) for triple in graph for term in triple}
-            for definition in self.enrichment.definitions:
+            for definition in self.enrichment.definitions + self.enrichment.labels:
                 if definition.term_iri in terms:
                     graph.add(
                         (

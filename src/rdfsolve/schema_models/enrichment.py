@@ -23,6 +23,14 @@ DEFINITION_PREDICATES = (
 )
 
 
+LABEL_PREDICATES = (
+    "http://www.w3.org/2000/01/rdf-schema#label",
+    "http://www.w3.org/2004/02/skos/core#prefLabel",
+    "http://purl.org/dc/terms/title",
+    "http://purl.org/dc/elements/1.1/title",
+)
+
+
 class RdfTerm(BaseModel):
     """An RDF term with its lexical form, datatype, and language."""
 
@@ -80,15 +88,15 @@ class RdfTerm(BaseModel):
         return self.value
 
 
-class TermDefinition(BaseModel):
-    """A source definition statement. Keep its predicate and language."""
+class TermAnnotation(BaseModel):
+    """A source text statement. Keep its predicate and language."""
 
     term_iri: str
     predicate: str
     text: RdfTerm
 
     @model_validator(mode="after")
-    def check_text(self) -> TermDefinition:
+    def check_text(self) -> TermAnnotation:
         """Keep only literal definition text."""
         if self.text.kind != "literal":
             raise ValueError("Definition text must be an RDF literal")
@@ -119,7 +127,8 @@ class SchemaEnrichment(BaseModel):
     query_count: int = Field(default=0, ge=0)
     graph_uris: list[str] | None = None
     endpoint: str | None = None
-    definitions: list[TermDefinition] = Field(default_factory=list)
+    definitions: list[TermAnnotation] = Field(default_factory=list)
+    labels: list[TermAnnotation] = Field(default_factory=list)
     class_examples: dict[str, list[RdfTerm]] = Field(default_factory=dict)
     examples: list[PatternExample] = Field(default_factory=list)
     failures: list[QueryFailure] = Field(default_factory=list)
@@ -143,7 +152,7 @@ class SchemaEnrichment(BaseModel):
     def to_rdf_graph(self) -> Graph:
         """Copy source definitions and observed triples; do not add constraints."""
         graph = Graph()
-        for definition in self.definitions:
+        for definition in self.definitions + self.labels:
             graph.add(
                 (
                     URIRef(definition.term_iri),
@@ -170,11 +179,14 @@ class SchemaEnrichment(BaseModel):
         """Read annotations and linked examples, not query completion claims."""
         result = cls()
         for iri in set(classes) | set(properties):
-            for predicate in DEFINITION_PREDICATES:
+            for predicate in DEFINITION_PREDICATES + LABEL_PREDICATES:
                 for text in graph.objects(URIRef(iri), URIRef(predicate)):
                     if isinstance(text, Literal):
-                        result.definitions.append(
-                            TermDefinition(
+                        destination = (
+                            result.labels if predicate in LABEL_PREDICATES else result.definitions
+                        )
+                        destination.append(
+                            TermAnnotation(
                                 term_iri=iri, predicate=predicate, text=RdfTerm.from_rdf(text)
                             )
                         )

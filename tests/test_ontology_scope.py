@@ -1,8 +1,9 @@
 """Keep the ontology needed by shapes, not every imported descendant."""
 
-from rdflib import RDF, RDFS, URIRef
+from rdflib import RDF, RDFS, Literal, URIRef
 
 from rdfsolve.schema_models.ontology import DomainAssertion, OntologyStructure, SubClassRelation
+from rdfsolve.schema_models.enrichment import RdfTerm, TermAnnotation
 
 GENE = "http://purl.obolibrary.org/obo/SO_0000704"
 ENTITY = "http://identifiers.org/ensembl/ENSG00000144229"
@@ -10,11 +11,30 @@ ENTITY = "http://identifiers.org/ensembl/ENSG00000144229"
 
 def test_gene_parent_remains_without_entity_leaf():
     ontology = OntologyStructure(subclass_relations=[SubClassRelation(child=ENTITY, parent=GENE)])
+    ontology.annotations = [
+        TermAnnotation(
+            term_iri=GENE,
+            predicate=str(RDFS.label),
+            text=RdfTerm(kind="literal", value="gene", language="en"),
+        ),
+        TermAnnotation(
+            term_iri=GENE,
+            predicate=str(RDFS.comment),
+            text=RdfTerm(kind="literal", value="Source definition", language="en"),
+        ),
+        TermAnnotation(
+            term_iri=ENTITY,
+            predicate=str(RDFS.label),
+            text=RdfTerm(kind="literal", value="Entity leaf"),
+        ),
+    ]
     selected = ontology.for_schema({GENE}, set())
     assert selected.classes == [GENE]
     assert selected.subclass_relations == []
     graph = selected.to_rdf_graph()
     assert (URIRef(GENE), RDF.type, RDFS.Class) in graph
+    assert (URIRef(GENE), RDFS.label, Literal("gene", lang="en")) in graph
+    assert (URIRef(GENE), RDFS.comment, Literal("Source definition", lang="en")) in graph
     assert not list(graph.triples((URIRef(ENTITY), None, None)))
     assert len(ontology.subclass_relations) == 1
 
