@@ -53,6 +53,11 @@ license = { file = "LICENSE" }
 
 requires-python = ">=3.10"
 dependencies = [
+    "pydantic>=2.0",
+    "requests>=2.0",
+    "httpx>=0.24",
+    "sssom>=0.4",
+    "typing-extensions>=4.0",
     # Core RDF processing
     "rdflib>=6.0.0", # RDF graph processing and parsing
     "sparqlwrapper>=2.0.0", # SPARQL endpoint communication
@@ -102,6 +107,12 @@ docs = [
 ]
 dev = [
     "ruff",
+    "mypy",
+    "pandas-stubs",
+    "types-networkx",
+    "types-PyYAML",
+    "types-requests",
+    "types-ujson",
 ]
 web = [
     "flask>=3.0",
@@ -154,6 +165,11 @@ skip = [
 plugins = [
     "pydantic.mypy",
 ]
+
+[[tool.mypy.overrides]]
+# These upstream packages do not publish type information.
+module = ["linkml.*", "linkml_runtime.*"]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "rdfsolve.cli"

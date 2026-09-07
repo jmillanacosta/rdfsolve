@@ -143,7 +143,7 @@ def mine_with_ontology(
 
             # Add ontology extraction info to report
             if hasattr(miner, "_report") and miner._report:
-                miner._report.report["ontology_extraction"] = {
+                miner._report.report.ontology_extraction = {
                     "graphs_mined": ontology_graphs_used,
                     "graph_count": len(ontology_graphs_used),
                     "subclass_relations": len(ontology.subclass_relations),

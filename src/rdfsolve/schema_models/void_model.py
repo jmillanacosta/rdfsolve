@@ -10,8 +10,11 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
+from rdfsolve.schema_models._rdf import optional_count
+
 if TYPE_CHECKING:
     from rdflib import Graph, URIRef
+    from rdflib.term import Node
 
 
 class VoidDatatypePartition(BaseModel):
@@ -38,7 +41,7 @@ class VoidDatatypePartition(BaseModel):
         return uri
 
     @classmethod
-    def from_rdf(cls, graph: Graph, uri: URIRef) -> VoidDatatypePartition:
+    def from_rdf(cls, graph: Graph, uri: Node) -> VoidDatatypePartition:
         """Parse from RDF graph."""
         from rdflib import Namespace
 
@@ -51,7 +54,7 @@ class VoidDatatypePartition(BaseModel):
         return cls(
             uri=str(uri),
             datatype_uri=str(datatype) if datatype else "",
-            triples=int(triples) if triples else None,
+            triples=optional_count(triples),
         )
 
 
@@ -92,7 +95,7 @@ class VoidPropertyPartition(BaseModel):
         return uri
 
     @classmethod
-    def from_rdf(cls, graph: Graph, uri: URIRef) -> VoidPropertyPartition:
+    def from_rdf(cls, graph: Graph, uri: Node) -> VoidPropertyPartition:
         """Parse from RDF graph."""
         from rdflib import Namespace
 
@@ -113,7 +116,7 @@ class VoidPropertyPartition(BaseModel):
         return cls(
             uri=str(uri),
             property_uri=str(property_uri) if property_uri else "",
-            triples=int(triples) if triples else None,
+            triples=optional_count(triples),
             class_partitions=class_partitions,
             datatype_partitions=datatype_partitions,
         )
@@ -153,7 +156,7 @@ class VoidClassPartition(BaseModel):
         return uri
 
     @classmethod
-    def from_rdf(cls, graph: Graph, uri: URIRef) -> VoidClassPartition:
+    def from_rdf(cls, graph: Graph, uri: Node) -> VoidClassPartition:
         """Parse from RDF graph."""
         from rdflib import Namespace
 
@@ -170,8 +173,8 @@ class VoidClassPartition(BaseModel):
         return cls(
             uri=str(uri),
             class_uri=str(class_uri) if class_uri else "",
-            triples=int(triples) if triples else None,
-            entities=int(entities) if entities else None,
+            triples=optional_count(triples),
+            entities=optional_count(entities),
             property_partitions=property_partitions,
         )
 
@@ -216,7 +219,7 @@ class VoidLinkset(BaseModel):
         return uri
 
     @classmethod
-    def from_rdf(cls, graph: Graph, uri: URIRef) -> VoidLinkset:
+    def from_rdf(cls, graph: Graph, uri: Node) -> VoidLinkset:
         """Parse from RDF graph."""
         from rdflib import Namespace
 
@@ -238,7 +241,7 @@ class VoidLinkset(BaseModel):
             subjects_target_class=str(subj_class) if subj_class else "",
             link_predicate=str(link_pred) if link_pred else "",
             objects_target_class=str(obj_class) if obj_class else "",
-            triples=int(triples) if triples else None,
+            triples=optional_count(triples),
         )
 
 
@@ -306,7 +309,7 @@ class VoidDataset(BaseModel):
         return uri
 
     @classmethod
-    def from_rdf(cls, graph: Graph, uri: URIRef) -> VoidDataset:
+    def from_rdf(cls, graph: Graph, uri: Node) -> VoidDataset:
         """Parse from RDF graph."""
         from rdflib import Namespace
         from rdflib.namespace import DCTERMS, RDF
@@ -337,10 +340,10 @@ class VoidDataset(BaseModel):
             title=str(title) if title else None,
             description=str(description) if description else None,
             sparql_endpoint=str(sparql_endpoint) if sparql_endpoint else None,
-            classes_count=int(classes_count) if classes_count else None,
-            properties_count=int(properties_count) if properties_count else None,
-            triples=int(triples) if triples else None,
-            distinct_subjects=int(distinct_subjects) if distinct_subjects else None,
+            classes_count=optional_count(classes_count),
+            properties_count=optional_count(properties_count),
+            triples=optional_count(triples),
+            distinct_subjects=optional_count(distinct_subjects),
             vocabularies=vocabularies,
             class_partitions=class_partitions,
             linksets=linksets,
@@ -380,7 +383,7 @@ class VoidDatasetDescription(BaseModel):
         return uri
 
     @classmethod
-    def from_rdf(cls, graph: Graph, uri: URIRef) -> VoidDatasetDescription:
+    def from_rdf(cls, graph: Graph, uri: Node) -> VoidDatasetDescription:
         """Parse from RDF graph."""
         from rdflib import Namespace
         from rdflib.namespace import DCTERMS, FOAF

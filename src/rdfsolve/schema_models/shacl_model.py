@@ -9,8 +9,11 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
+from rdfsolve.schema_models._rdf import optional_count
+
 if TYPE_CHECKING:
-    from rdflib import Graph, URIRef
+    from rdflib import BNode, Graph, URIRef
+    from rdflib.term import Node
 
 
 class ShaclPropertyShape(BaseModel):
@@ -26,7 +29,7 @@ class ShaclPropertyShape(BaseModel):
     name: str | None = Field(None, description="sh:name")
     description: str | None = Field(None, description="sh:description")
 
-    def to_rdf(self, graph: Graph) -> URIRef:
+    def to_rdf(self, graph: Graph) -> URIRef | BNode:
         """Serialize to RDF graph."""
         from rdflib import BNode, Namespace
         from rdflib import Literal as RdfLiteral
@@ -35,6 +38,7 @@ class ShaclPropertyShape(BaseModel):
 
         sh = Namespace("http://www.w3.org/ns/shacl#")
 
+        node: URIRef | BNode
         if self.uri:
             node = Ref(self.uri)
         else:
@@ -67,9 +71,9 @@ class ShaclPropertyShape(BaseModel):
         return node
 
     @classmethod
-    def from_rdf(cls, graph: Graph, uri: URIRef) -> ShaclPropertyShape:
+    def from_rdf(cls, graph: Graph, uri: Node) -> ShaclPropertyShape:
         """Parse from RDF graph."""
-        from rdflib import Namespace
+        from rdflib import BNode, Namespace
 
         sh = Namespace("http://www.w3.org/ns/shacl#")
 
@@ -94,13 +98,13 @@ class ShaclPropertyShape(BaseModel):
                 node_kind = "BlankNode"
 
         return cls(
-            uri=str(uri) if not str(uri).startswith("_:") else None,
+            uri=None if isinstance(uri, BNode) else str(uri),
             path=str(path) if path else "",
             datatype=str(datatype) if datatype else None,
             class_constraint=str(class_constraint) if class_constraint else None,
             node_kind=node_kind,
-            min_count=int(min_count) if min_count else None,
-            max_count=int(max_count) if max_count else None,
+            min_count=optional_count(min_count),
+            max_count=optional_count(max_count),
             name=str(name) if name else None,
             description=str(description) if description else None,
         )
@@ -145,7 +149,7 @@ class ShaclNodeShape(BaseModel):
         return uri
 
     @classmethod
-    def from_rdf(cls, graph: Graph, uri: URIRef) -> ShaclNodeShape:
+    def from_rdf(cls, graph: Graph, uri: Node) -> ShaclNodeShape:
         """Parse from RDF graph."""
         from rdflib import Namespace
         from rdflib.namespace import RDF
