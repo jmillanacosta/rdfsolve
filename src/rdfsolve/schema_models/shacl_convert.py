@@ -35,31 +35,37 @@ def minedschema_to_shacl(
     for subject_class in sorted(by_subject.keys()):
         cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
 
+        by_property: dict[str, list[SchemaPattern]] = defaultdict(list)
+        for pattern in by_subject[subject_class]:
+            by_property[pattern.property_uri].append(pattern)
         property_shapes = []
-        for pat in by_subject[subject_class]:
-            prop_hash = md5(pat.property_uri.encode(), usedforsecurity=False).hexdigest()[:8]
-
-            ps = ShaclPropertyShape(
-                uri=f"{base_uri}ps-{cls_hash}-{prop_hash}",
-                path=pat.property_uri,
-                name=pat.property_label,
-                description=schema.enrichment.description(pat.property_uri),
+        for prop, patterns in sorted(by_property.items()):
+            prop_hash = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
+            options: dict[tuple[str, str | None], ShaclPropertyShape] = {}
+            for pattern in patterns:
+                option = ShaclPropertyShape(path="")
+                if pattern.object_class == "Literal":
+                    option.node_kind = "Literal"
+                    option.datatype = pattern.datatype
+                elif pattern.object_class == "Resource":
+                    option.node_kind = "IRI"
+                elif pattern.object_class == "BlankNode":
+                    option.node_kind = "BlankNode"
+                else:
+                    option.node_kind = "BlankNodeOrIRI"
+                    option.class_constraint = pattern.object_class
+                options[(pattern.object_class, pattern.datatype)] = option
+            alternatives = list(options.values())
+            shape = (
+                alternatives[0]
+                if len(alternatives) == 1
+                else ShaclPropertyShape(path="", alternatives=alternatives)
             )
-
-            if pat.object_class == "Literal":
-                ps.node_kind = "Literal"
-                if pat.datatype:
-                    ps.datatype = pat.datatype
-            elif pat.object_class == "Resource":
-                ps.node_kind = "IRI"
-            elif pat.object_class == "BlankNode":
-                ps.node_kind = "BlankNode"
-            else:
-                ps.node_kind = "IRI"
-                ps.class_constraint = pat.object_class
-
-            property_shapes.append(ps)
-
+            shape.path = prop
+            shape.uri = f"{base_uri}ps-{cls_hash}-{prop_hash}"
+            shape.name = patterns[0].property_label
+            shape.description = schema.enrichment.description(prop)
+            property_shapes.append(shape)
         node_shapes.append(
             ShaclNodeShape(
                 uri=f"{base_uri}ns-{cls_hash}",
@@ -99,7 +105,12 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
         if not subject_class:
             continue
 
-        for ps in ns.property_shapes:
+        property_shapes = [
+            option.model_copy(update={"path": shape.path})
+            for shape in ns.property_shapes
+            for option in (shape.alternatives or [shape])
+        ]
+        for ps in property_shapes:
             if not ps.path:
                 continue
 
