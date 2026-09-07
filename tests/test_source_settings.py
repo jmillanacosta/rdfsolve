@@ -173,6 +173,7 @@ def test_pipeline_always_saves_canonical_schema(pipeline, tmp_path, monkeypatch,
     config = pipeline.PipelineConfig(base_dir=tmp_path, output_formats=[])
     miner = Mock()
     miner.mine.return_value = schema
+    miner.last_report.completion_state = "complete"
     monkeypatch.setattr("rdfsolve.SchemaMiner", Mock(return_value=miner))
     if mode == "export":
         pipeline.Stage(config)._save_schema_outputs(schema, tmp_path, "test", "")
@@ -304,6 +305,7 @@ def test_pipeline_enables_enrichment_in_every_mining_mode(pipeline, tmp_path, mo
         last_checked=datetime.now(timezone.utc).isoformat(),
     )
     constructor = Mock()
+    constructor.return_value.last_report.completion_state = "complete"
     monkeypatch.setattr("rdfsolve.SchemaMiner", constructor)
     monkeypatch.setattr(pipeline.Stage, "_save_schema_outputs", lambda *args: None)
     if mode == "remote":
@@ -316,3 +318,23 @@ def test_pipeline_enables_enrichment_in_every_mining_mode(pipeline, tmp_path, mo
         pipeline.LsLodCloudStage(config)._mine_cloud([(source, tmp_path)], 7019)
     assert constructor.call_args.kwargs["enrich"] is True
     assert constructor.call_args.kwargs["examples_per_pattern"] == 3
+
+
+@pytest.mark.parametrize("mined,state", [([], "failed"), (["ok"], "partial")])
+def test_failed_source_prevents_stage_success(pipeline, tmp_path, monkeypatch, mined, state):
+    stage = pipeline.RemoteMiningStage(pipeline.PipelineConfig(base_dir=tmp_path))
+    monkeypatch.setattr(stage, "_execute", lambda: {"mined": mined, "failed": ["down"]})
+    result = stage.run()
+    assert result["state"] == state
+    assert result["success"] is False
+
+
+def test_export_failure_keeps_canonical_output_but_fails_stage(pipeline, tmp_path, monkeypatch):
+    from rdfsolve.schema_models import AboutMetadata, MinedSchema
+
+    stage = pipeline.Stage(pipeline.PipelineConfig(base_dir=tmp_path, output_formats=["void"]))
+    schema = MinedSchema(about=AboutMetadata(dataset_name="test"))
+    monkeypatch.setattr(MinedSchema, "to_void_graph", Mock(side_effect=ValueError("bad export")))
+    with pytest.raises(RuntimeError, match="bad export"):
+        stage._save_schema_outputs(schema, tmp_path, "test", "")
+    assert (tmp_path / "test_schema.json").exists()

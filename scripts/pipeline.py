@@ -345,20 +345,35 @@ class Stage:
         self.start_time = time.time()
         try:
             self.results = self._execute()
-            self.results["success"] = True
+            failed = bool(self.results.get("failed"))
+            produced = any(self.results.get(key) for key in
+                           ("mined", "groups_mined", "indexed_individually"))
+            skipped = bool(self.results.get("skipped"))
+            state = ("partial" if produced else "failed") if failed else (
+                "partial" if skipped and produced else "skipped" if skipped else "complete"
+            )
+            self.results["state"] = state
+            self.results["success"] = state == "complete"
         except Exception as e:
             log.exception(f"Stage {self.name} failed: {e}")
-            self.results = {"success": False, "error": str(e)}
+            self.results = {"success": False, "state": "failed", "error": str(e)}
         finally:
             self.end_time = time.time()
             elapsed = self.end_time - self.start_time
             self.results["elapsed_seconds"] = elapsed
-            log.info(f"Stage {self.name} completed in {elapsed:.1f}s")
+            log.info(f"Stage {self.name}: {self.results.get('state', 'interrupted')} in {elapsed:.1f}s")
 
         return self.results
 
     def _execute(self) -> dict[str, Any]:
         raise NotImplementedError
+
+    @staticmethod
+    def _require_complete(miner: Any) -> None:
+        report = miner.last_report
+        if report is None or report.completion_state != "complete":
+            reason = report.abort_reason if report is not None else "No mining report"
+            raise RuntimeError(f"Mining incomplete: {reason or 'see the source report'}")
 
     def _save_schema_outputs(
         self,
@@ -395,7 +410,7 @@ class Stage:
                     void_ttl = void_graph.serialize(format="turtle")
                     path.write_text(void_ttl, encoding="utf-8")
             except Exception as e:
-                log.warning(f"[{name}] Could not generate VoID: {e}")
+                raise RuntimeError(f"[{name}] Could not generate VoID: {e}") from e
 
         # SHACL format
         if "shacl" in formats:
@@ -404,7 +419,7 @@ class Stage:
                 shacl_ttl = schema.to_shacl()
                 path.write_text(shacl_ttl, encoding="utf-8")
             except Exception as e:
-                log.warning(f"[{name}] Could not generate SHACL: {e}")
+                raise RuntimeError(f"[{name}] Could not generate SHACL: {e}") from e
 
         # Pydantic format (Python code)
         if "pydantic" in formats:
@@ -413,7 +428,7 @@ class Stage:
                 pydantic_code = schema.to_pydantic(schema_name=name)
                 path.write_text(pydantic_code, encoding="utf-8")
             except Exception as e:
-                log.warning(f"[{name}] Could not generate Pydantic: {e}")
+                raise RuntimeError(f"[{name}] Could not generate Pydantic: {e}") from e
 
 
 class RemoteMiningStage(Stage):
@@ -460,6 +475,9 @@ class RemoteMiningStage(Stage):
                     else:
                         results["skipped"].append(result["data"])
 
+        if not host_groups:
+            return {"mined": [], "failed": [], "skipped": ["No remote sources selected"]}
+
         # Mine hosts concurrently
         max_workers = min(self.config.parallelism or 8, len(host_groups))
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -473,6 +491,7 @@ class RemoteMiningStage(Stage):
                     future.result()
                 except Exception as e:
                     log.error(f"Host {host} mining failed: {e}")
+                    results["failed"].append({"host": host, "error": str(e)})
 
         # Log summary
         log.info(
@@ -572,7 +591,7 @@ class RemoteMiningStage(Stage):
                             ont_ttl = ontology_graph.serialize(format="turtle")
                             ontology_path.write_text(ont_ttl, encoding="utf-8")
                     except Exception as e:
-                        log.warning(f"[{source.name}] Could not generate ontology.ttl: {e}")
+                        raise RuntimeError(f"[{source.name}] Could not generate ontology.ttl: {e}") from e
                 if result.metadata:
                     metadata_path = source_output_dir / f"{source.name}{suffix}_metadata.ttl"
                     try:
@@ -581,7 +600,7 @@ class RemoteMiningStage(Stage):
                             meta_ttl = metadata_graph.serialize(format="turtle")
                             metadata_path.write_text(meta_ttl, encoding="utf-8")
                     except Exception as e:
-                        log.warning(f"[{source.name}] Could not generate metadata.ttl: {e}")
+                        raise RuntimeError(f"[{source.name}] Could not generate metadata.ttl: {e}") from e
             else:
                 schema = miner.mine(dataset_name=source.name)
 
@@ -592,6 +611,7 @@ class RemoteMiningStage(Stage):
 
             # Save schema in requested formats
             self._save_schema_outputs(schema, source_output_dir, source.name, suffix)
+            self._require_complete(miner)
 
             if miner.last_report:
                 report = {
@@ -866,7 +886,7 @@ class LocalMiningStage(Stage):
                         ont_ttl = ontology_graph.serialize(format="turtle")
                         ontology_path.write_text(ont_ttl, encoding="utf-8")
                 except Exception as e:
-                    log.warning(f"  Could not generate ontology.ttl: {e}")
+                    raise RuntimeError(f"  Could not generate ontology.ttl: {e}") from e
             if result.metadata:
                 metadata_path = output_dir / f"{source.name}{suffix}_metadata.ttl"
                 try:
@@ -875,11 +895,12 @@ class LocalMiningStage(Stage):
                         meta_ttl = metadata_graph.serialize(format="turtle")
                         metadata_path.write_text(meta_ttl, encoding="utf-8")
                 except Exception as e:
-                    log.warning(f"  Could not generate metadata.ttl: {e}")
+                    raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
         else:
             schema = miner.mine(dataset_name=source.name)
 
         self._save_schema_outputs(schema, output_dir, source.name, suffix)
+        self._require_complete(miner)
 
 
     def _ensure_qlever_image(self):
@@ -1249,7 +1270,7 @@ class GroupedMiningStage(LocalMiningStage):
                         ont_ttl = ontology_graph.serialize(format="turtle")
                         ontology_path.write_text(ont_ttl, encoding="utf-8")
                 except Exception as e:
-                    log.warning(f"  Could not generate ontology.ttl: {e}")
+                    raise RuntimeError(f"  Could not generate ontology.ttl: {e}") from e
             if result.metadata:
                 metadata_path = output_dir / f"{group_name}_metadata.ttl"
                 try:
@@ -1258,11 +1279,12 @@ class GroupedMiningStage(LocalMiningStage):
                         meta_ttl = metadata_graph.serialize(format="turtle")
                         metadata_path.write_text(meta_ttl, encoding="utf-8")
                 except Exception as e:
-                    log.warning(f"  Could not generate metadata.ttl: {e}")
+                    raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
         else:
             schema = miner.mine(dataset_name=group_name)
 
-        self._save_schema_outputs(schema, output_dir, group_name, "")
+        self._save_schema_outputs(schema, output_dir, group_name, self.config.output_suffix)
+        self._require_complete(miner)
         schema_path = output_dir / f"{group_name}_schema.json"
         log.info(f"  -> Saved grouped schema to {schema_path}")
 
@@ -1455,7 +1477,8 @@ class LsLodCloudStage(LocalMiningStage):
 
         schema = miner.mine(dataset_name="lslod_cloud")
 
-        self._save_schema_outputs(schema, output_dir, "lslod_cloud", "")
+        self._save_schema_outputs(schema, output_dir, "lslod_cloud", self.config.output_suffix)
+        self._require_complete(miner)
         schema_path = output_dir / "lslod_cloud_schema.json"
         log.info(f"  -> Saved LSLOD Cloud schema to {schema_path}")
 
@@ -1644,116 +1667,6 @@ class SSSOMSeedingStage(Stage):
         }
 
 
-class SeMRASeedingStage(Stage):
-    """Seed SeMRA mappings."""
-
-    name = "semra_seeding"
-
-    def _execute(self) -> dict[str, Any]:
-        mappings_dir = self.config.output_dir / "mappings" / "semra"
-        mappings_dir.mkdir(parents=True, exist_ok=True)
-
-        log.info(f"Seeding SeMRA mappings to {mappings_dir}")
-
-        existing = list(mappings_dir.glob("*.jsonld"))
-
-        return {
-            "output_dir": str(mappings_dir),
-            "existing_files": len(existing),
-        }
-
-
-class InstanceMatchingStage(Stage):
-    """Run instance-level matching across endpoints."""
-
-    name = "instance_matching"
-
-    def _execute(self) -> dict[str, Any]:
-
-        mappings_dir = self.config.output_dir / "mappings" / "instance_matching"
-        mappings_dir.mkdir(parents=True, exist_ok=True)
-
-        log.info(f"Running instance matching to {mappings_dir}")
-
-        # Get bioregistry prefixes from sources
-        prefixes = set()
-        for source in self.config.sources:
-            if source.bioregistry_prefix:
-                prefixes.add(source.bioregistry_prefix)
-
-        log.info(f"Found {len(prefixes)} unique bioregistry prefixes")
-
-        # This would run instance matching for each prefix
-        existing = list(mappings_dir.glob("*.jsonld"))
-
-        return {
-            "output_dir": str(mappings_dir),
-            "prefixes": len(prefixes),
-            "existing_files": len(existing),
-        }
-
-
-class ClassDerivationStage(Stage):
-    """Derive class-level mappings from instance evidence."""
-
-    name = "class_derivation"
-
-    def _execute(self) -> dict[str, Any]:
-
-        mappings_dir = self.config.output_dir / "mappings"
-        class_dir = mappings_dir / "class_derived"
-        class_dir.mkdir(parents=True, exist_ok=True)
-
-        log.info(f"Deriving class mappings to {class_dir}")
-
-        # Find instance mapping files
-        instance_files = list((mappings_dir / "instance_matching").glob("*.jsonld"))
-        sssom_files = list((mappings_dir / "sssom").glob("*.jsonld"))
-        semra_files = list((mappings_dir / "semra").glob("*.jsonld"))
-
-        input_files = instance_files + sssom_files + semra_files
-        log.info(f"Found {len(input_files)} input mapping files")
-
-        existing = list(class_dir.glob("*.jsonld"))
-
-        return {
-            "output_dir": str(class_dir),
-            "input_files": len(input_files),
-            "existing_files": len(existing),
-        }
-
-
-class InferenceStage(Stage):
-    """Expand mappings using SeMRA inference."""
-
-    name = "inference"
-
-    def _execute(self) -> dict[str, Any]:
-
-        mappings_dir = self.config.output_dir / "mappings"
-        inference_dir = mappings_dir / "inferenced"
-        inference_dir.mkdir(parents=True, exist_ok=True)
-
-        log.info(f"Running inference expansion to {inference_dir}")
-
-        # Find all mapping files
-        input_files = []
-        for subdir in ["sssom", "semra", "class_derived"]:
-            dir_path = mappings_dir / subdir
-            if dir_path.exists():
-                input_files.extend(dir_path.glob("*.jsonld"))
-
-        log.info(f"Found {len(input_files)} input mapping files")
-
-        existing = list(inference_dir.glob("*.jsonld"))
-
-        return {
-            "output_dir": str(inference_dir),
-            "input_files": len(input_files),
-            "existing_files": len(existing),
-        }
-
-
 class AnalysisStage(Stage):
     """Analyze schemas and generate statistics."""
 
@@ -1884,7 +1797,7 @@ class Pipeline:
 
         log.info("")
         log.info("=" * 70)
-        log.info(f"PIPELINE COMPLETE in {elapsed:.1f}s ({elapsed / 60:.1f} min)")
+        log.info(f"PIPELINE FINISHED in {elapsed:.1f}s ({elapsed / 60:.1f} min)")
         log.info("=" * 70)
 
         # Save results (with suffix to avoid overwriting between jobs)
@@ -2023,12 +1936,9 @@ Examples:
 
         if not config.skip_mappings:
             pipeline.add_stage(SSSOMSeedingStage)
-            pipeline.add_stage(SeMRASeedingStage)
-            pipeline.add_stage(InstanceMatchingStage)
-            pipeline.add_stage(ClassDerivationStage)
 
         if not config.skip_inference:
-            pipeline.add_stage(InferenceStage)
+            log.info("Inference is a separate workflow: scripts/infer_mappings.py")
 
         if not args.skip_analysis:
             pipeline.add_stage(AnalysisStage)
