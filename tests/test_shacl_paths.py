@@ -14,7 +14,7 @@ def test_path_and_cardinality_survive_canonical_storage():
     source = """
         @prefix sh: <http://www.w3.org/ns/shacl#> .
         <urn:S> a sh:NodeShape; sh:targetClass <urn:A>;
-            sh:closed true; sh:ignoredProperties (<urn:type>);
+            sh:closed true; sh:ignoredProperties (<urn:type>); sh:name "Display name"@en;
             sh:property [
                 sh:path (<urn:p> [sh:inversePath <urn:q>]);
                 sh:minCount 0; sh:maxCount 2;
@@ -34,6 +34,7 @@ def test_path_and_cardinality_survive_canonical_storage():
     prop = output.value(URIRef("urn:S"), SH.property)
     path = read_path(output, output.value(prop, SH.path))
     assert path == shape.path
+    assert output.value(URIRef("urn:S"), SH.name).language == "en"
     assert list(output.items(output.value(URIRef("urn:S"), SH.ignoredProperties))) == [URIRef("urn:type")]
     expression = path_to_sparql(path)
     query = f"SELECT ?value WHERE {{ <urn:one> {expression} ?value }}"

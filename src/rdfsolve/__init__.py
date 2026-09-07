@@ -1,5 +1,7 @@
 """RDF schema mining and LOD analysis toolkit."""
 
+import logging
+
 from .api import (
     discover_all_graphs,
     discover_void_graphs,
@@ -42,6 +44,8 @@ from .sources import classify_source_mode
 from .sources_updater import update_multiple_sources, update_sources_yaml_with_graphs
 from .version import VERSION
 from .void_discover import VoidParser
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     "VERSION",

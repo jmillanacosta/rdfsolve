@@ -28,6 +28,9 @@ def main() -> None:
         "endpoint_queries": 0,
         "instance_support": "not_checked",
         "schema_edges": routes.edge_count,
+        "patterns_with_triple_counts": sum(p.count is not None for p in schema.patterns),
+        "patterns_with_distinct_subject_counts": sum(p.distinct_subjects is not None for p in schema.patterns),
+        "classes_with_entity_counts": len(schema.about.class_entity_counts),
         "schema_walk_counts_by_hops": routes.walk_counts,
         "saved_candidates_by_hops": {
             hops: sum(len(path.steps) == hops for path in routes.paths)

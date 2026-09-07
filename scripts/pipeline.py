@@ -2002,6 +2002,8 @@ Examples:
     config.examples_per_pattern = args.examples_per_pattern
     config.navigation_hops = args.navigation_hops
     config.navigation_limit = args.navigation_limit
+    if config.navigation_limit < 0:
+        parser.error("--navigation-limit must be nonnegative")
 
     # Load sources
     config.load_sources(args.sources, skip_providers=args.skip_providers)
