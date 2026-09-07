@@ -1,7 +1,23 @@
 """Tests for VoID conversion functions."""
 
-from rdfsolve.schema_models.core import AboutMetadata, MinedSchema, SchemaPattern
-from rdfsolve.schema_models.void_convert import minedschema_to_void, void_to_minedschema
+from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.pattern import SchemaPattern
+from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.readers.void import void_to_minedschema
+from rdfsolve.schema_models.exporters.void import minedschema_to_void
+
+
+def test_bare_partition_does_not_invent_an_iri_object():
+    import pytest
+
+    with pytest.warns(UserWarning, match="omits object kinds"):
+        schema = void_to_minedschema("""
+            @prefix void: <http://rdfs.org/ns/void#> .
+            <urn:dataset> a void:Dataset; void:classPartition [
+                void:class <urn:A>; void:propertyPartition [void:property <urn:p>]
+            ] .
+        """)
+    assert schema.patterns == []
 
 
 def test_roundtrip_simple():

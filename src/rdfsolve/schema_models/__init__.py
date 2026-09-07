@@ -13,17 +13,11 @@ from rdfsolve.schema_models._constants import (
     _URI_SCHEMES,
     SERVICE_NAMESPACE_PREFIXES,
 )
-from rdfsolve.schema_models.core import (
-    AboutMetadata,
-    MinedSchema,
-    MiningResult,
-    PatternType,
-    SchemaPattern,
-    _merge_into_list,
-    _object_value_and_key,
-    _parse_schema_entry,
-    _parse_schema_graph,
-)
+from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.core import MinedSchema, MiningResult
+from rdfsolve.schema_models.exporters.rdfconfig import to_rdfconfig
+from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
+from rdfsolve.schema_models.exporters.void import minedschema_to_void
 from rdfsolve.schema_models.metadata import (
     DatasetDescription,
     MetadataPatterns,
@@ -38,25 +32,19 @@ from rdfsolve.schema_models.ontology import (
     Restriction,
     SubClassRelation,
 )
-from rdfsolve.schema_models.rdfconfig import to_rdfconfig
+from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
+from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
+from rdfsolve.schema_models.readers.void import void_to_minedschema
 from rdfsolve.schema_models.report import (
     MiningReport,
     OneShotQueryResult,
     PhaseReport,
     QueryStats,
 )
-from rdfsolve.schema_models.shacl_convert import (
-    minedschema_to_shacl,
-    shacl_to_minedschema,
-)
 from rdfsolve.schema_models.shacl_model import (
     ShaclNodeShape,
     ShaclPropertyShape,
     ShaclShapesGraph,
-)
-from rdfsolve.schema_models.void_convert import (
-    minedschema_to_void,
-    void_to_minedschema,
 )
 from rdfsolve.schema_models.void_model import (
     VoidClassPartition,
@@ -69,9 +57,9 @@ from rdfsolve.schema_models.void_model import (
 
 # Names that should be resolved lazily via __getattr__
 _LAZY_LINKML = {
-    "make_valid_linkml_name": "rdfsolve.schema_models.linkml",
-    "to_linkml": "rdfsolve.schema_models.linkml",
-    "to_linkml_yaml": "rdfsolve.schema_models.linkml",
+    "make_valid_linkml_name": "rdfsolve.schema_models.exporters.linkml",
+    "to_linkml": "rdfsolve.schema_models.exporters.linkml",
+    "to_linkml_yaml": "rdfsolve.schema_models.exporters.linkml",
 }
 
 
@@ -126,10 +114,6 @@ __all__ = [
     "VoidDatatypePartition",
     "VoidLinkset",
     "VoidPropertyPartition",
-    "_merge_into_list",
-    "_object_value_and_key",
-    "_parse_schema_entry",
-    "_parse_schema_graph",
     # linkml
     "make_valid_linkml_name",
     "minedschema_to_shacl",

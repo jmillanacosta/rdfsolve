@@ -574,9 +574,9 @@ class VoidParser:
     ) -> dict[str, str]:
         """Generate RDF-config YAML files.
 
-        See :func:`rdfsolve.schema_models.rdfconfig.to_rdfconfig`.
+        See :func:`rdfsolve.schema_models.exporters.rdfconfig.to_rdfconfig`.
         """
-        from rdfsolve.schema_models.rdfconfig import (
+        from rdfsolve.schema_models.exporters.rdfconfig import (
             to_rdfconfig as _to_rdfconfig,
         )
 
@@ -953,11 +953,12 @@ class VoidParser:
         Returns:
             LinkML SchemaDefinition object
         """
-        from rdfsolve.schema_models.linkml import to_linkml
+        from rdfsolve.schema_models.exporters.linkml import to_linkml
+        from rdfsolve.schema_models.readers.void import void_graph_to_minedschema
 
-        jsonld = self.to_jsonld(filter_void_admin_nodes=filter_void_nodes)
+        schema = void_graph_to_minedschema(self.graph)
         return to_linkml(
-            jsonld,
+            schema,
             schema_name=schema_name,
             schema_description=schema_description,
             schema_base_uri=schema_base_uri,
@@ -981,11 +982,12 @@ class VoidParser:
         Returns:
             LinkML schema as YAML string
         """
-        from rdfsolve.schema_models.linkml import to_linkml_yaml
+        from rdfsolve.schema_models.exporters.linkml import to_linkml_yaml
+        from rdfsolve.schema_models.readers.void import void_graph_to_minedschema
 
-        jsonld = self.to_jsonld(filter_void_admin_nodes=filter_void_nodes)
+        schema = void_graph_to_minedschema(self.graph)
         return to_linkml_yaml(
-            jsonld,
+            schema,
             schema_name=schema_name,
             schema_description=schema_description,
             schema_base_uri=schema_base_uri,
@@ -1028,7 +1030,9 @@ class VoidParser:
         from rdflib.namespace import DCTERMS, FOAF, OWL, RDF, XSD
 
         from rdfsolve.config import get_base_uri
-        from rdfsolve.schema_models.core import AboutMetadata, MinedSchema, SchemaPattern
+        from rdfsolve.schema_models.about import AboutMetadata
+        from rdfsolve.schema_models.core import MinedSchema
+        from rdfsolve.schema_models.pattern import SchemaPattern
 
         void_ns = URIRef("http://rdfs.org/ns/void#")
         void_ext_ns = URIRef("http://ldf.fi/void-ext#")

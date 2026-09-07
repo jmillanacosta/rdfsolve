@@ -14,7 +14,8 @@ from rdfsolve._uri import uri_to_curie
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 
 if TYPE_CHECKING:
-    from rdfsolve.schema_models.core import MinedSchema, SchemaPattern
+    from rdfsolve.schema_models.core import MinedSchema
+    from rdfsolve.schema_models.pattern import SchemaPattern
 
 
 def _identifier(text: str, *, class_name: bool = False) -> str:
