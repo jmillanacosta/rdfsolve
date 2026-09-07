@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from rdfsolve.mining.metadata_mining import MetadataMiner
 from rdfsolve.mining.ontology_as_data import (
@@ -86,6 +86,7 @@ def mine_with_ontology(
     extract_metadata: bool = False,
     dataset_name: str | None = None,
     ontology_graph_uris: list[str] | None = None,
+    ontology_scope: Literal["schema", "full"] = "schema",
 ) -> MiningResult:
     """Mine schema with optional ontology and metadata extraction.
 
@@ -94,17 +95,41 @@ def mine_with_ontology(
         extract_ontology: Extract TBox (class hierarchies, domain/range)
         extract_metadata: Extract infrastructure metadata (VoID/DCAT)
         dataset_name: Optional dataset name to attach to schema metadata
-        ontology_graph_uris: Discovered .owl graph URIs to mine for ontology.
+        ontology_graph_uris: Explicit graph URIs to mine for ontology.
             If provided, these graphs are mined specifically for ontology triples.
             If None, uses miner.graph_uris or default graph.
+        ontology_scope: Keep the schema's classes and ancestors, or all queried axioms.
 
     Returns:
         MiningResult with data schema, ontology, and metadata
     """
+    if ontology_scope not in ("schema", "full"):
+        raise ValueError("ontology_scope must be schema or full")
     with miner._session(dataset_name):
+        miner._report.report.config["ontology_scope"] = ontology_scope
         result = _mine_with_ontology(
             miner, extract_ontology, extract_metadata, dataset_name, ontology_graph_uris
         )
+        if result.ontology is not None and ontology_scope == "schema":
+            raw_count = len(result.ontology.subclass_relations)
+            visible = result.data_schema
+            if miner.filter_service_namespaces:
+                visible = visible.filter_service_namespaces()
+            result.ontology = result.ontology.for_schema(
+                visible.get_classes(), visible.get_properties()
+            )
+            summary = miner._report.report.ontology_extraction
+            if summary is not None:
+                summary.update(
+                    raw_subclass_relations=raw_count,
+                    subclass_relations=len(result.ontology.subclass_relations),
+                    excluded_subclass_relations=raw_count - len(result.ontology.subclass_relations),
+                    classes=len(result.ontology.classes),
+                    domain_assertions=len(result.ontology.domain_assertions),
+                    range_assertions=len(result.ontology.range_assertions),
+                    inverse_properties=len(result.ontology.inverse_properties),
+                    property_characteristics=len(result.ontology.property_characteristics),
+                )
         result.data_schema = miner._finish_schema(result.data_schema)
         return result
 
