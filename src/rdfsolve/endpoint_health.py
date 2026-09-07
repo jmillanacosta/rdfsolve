@@ -176,11 +176,11 @@ def get_polite_delay(source: SourceModel) -> float:
         Delay in seconds.
     """
     # Use explicit delay if configured
-    if source.delay is not None and source.delay > 0:
+    if source.delay is not None:
         return source.delay
 
-    # Local sources (no endpoint or local provider) need no delay
-    if not source.endpoint or source.local_provider:
+    # A download provider does not make a remote endpoint local.
+    if not source.endpoint:
         return DEFAULT_DELAYS["local"]
 
     # Rate limited endpoints need longer delays

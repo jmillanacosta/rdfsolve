@@ -289,13 +289,21 @@ class SchemaMiner:
             authors=self.authors,
             qlever_version=self.qlever_version,
             config={
+                "source_name": self._helper.source_name,
+                "graph_uris": self.graph_uris,
+                "graph_scope": "within_named_graphs" if self.graph_uris else "endpoint_default",
+                "sparql_engine": self._helper.sparql_engine,
+                "sparql_strategy": self._helper.sparql_strategy,
                 "chunk_size": self.chunk_size,
                 "class_chunk_size": self.class_chunk_size,
+                "class_batch_size": self.class_batch_size,
                 "delay": self.delay,
                 "timeout": self.timeout,
                 "counts": self.counts,
                 "strategy": self._strategy.name,
                 "untyped_as_classes": self.untyped_as_classes,
+                "unsafe_paging": self.unsafe_paging,
+                "filter_service_namespaces": self.filter_service_namespaces,
             },
         )
         self._rc = ReportCollector(report, self._report_path)
@@ -321,6 +329,8 @@ class SchemaMiner:
             class_chunk_size=self.class_chunk_size,
             class_batch_size=self.class_batch_size,
             ontology_classes=ontology_classes,
+            chunk_size=self.chunk_size,
+            unsafe_paging=self.unsafe_paging,
         )
 
         # Run strategy

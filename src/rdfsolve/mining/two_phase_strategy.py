@@ -123,20 +123,6 @@ class TwoPhaseStrategy(MiningStrategy):
             context,
         )
 
-        # Ontology-graph fallback
-        if not patterns and classes and context.graph_uris and abort_reason is None:
-            logger.warning(
-                "Phase 2 returned 0 patterns with GRAPH <%s> "
-                "- retrying without GRAPH restriction "
-                "(ontology-graph fallback)",
-                ", ".join(context.graph_uris),
-            )
-            patterns, abort_reason = self._run_phase2_batches(
-                classes,
-                None,
-                context,
-            )
-
         logger.info(f"  -> {len(patterns)} total patterns from {len(classes)} classes")
         context.report.finish_phase(p2, items=len(patterns), error=abort_reason)
         if abort_reason:
@@ -180,10 +166,10 @@ class TwoPhaseStrategy(MiningStrategy):
                 purpose,
                 context.helper,
                 lambda q, p, cs=None: context.collect_bindings(  # type: ignore[misc]
-                    q, p, cs or context.class_chunk_size or 10000
+                    q, p, cs or context.chunk_size
                 ),
-                context.class_chunk_size or 10000,
-                unsafe_paging=False,
+                context.chunk_size,
+                unsafe_paging=context.unsafe_paging,
             )
             context.report.record_outcome(outcome)
             if outcome.state != "complete":
