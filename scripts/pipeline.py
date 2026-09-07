@@ -197,6 +197,7 @@ class PipelineConfig:
     base_port: int = 7019
     qlever_startup_timeout: int = 600  # Seconds to load the index.
     no_download: bool = False
+    no_index: bool = False
 
     # Stage control
     skip_remote: bool = False
@@ -265,6 +266,9 @@ class PipelineConfig:
         sources = [Source.from_dict(d) for d in raw]
 
         if names:
+            missing = sorted(set(names) - {s.name for s in sources})
+            if missing:
+                raise ValueError(f"Unknown source names: {missing}")
             sources = [s for s in sources if s.name in names]
 
         if skip_providers:
@@ -278,6 +282,11 @@ class PipelineConfig:
             skipped = before - len(sources)
             if skipped:
                 log.info(f"Skipped {skipped} sources from providers: {skip_providers}")
+
+        from collections import Counter
+        duplicates = sorted(name for name, count in Counter(s.name for s in sources).items() if count > 1)
+        if duplicates:
+            raise ValueError(f"Duplicate source names would overwrite outputs: {duplicates}. Select a registry with unique names.")
 
         sources = self._filter_by_health_checks(sources)
 
@@ -683,6 +692,8 @@ class LocalMiningStage(Stage):
 
                 index_done = workdir / ".index.done"
                 if not has_index:
+                    if self.config.no_index:
+                        raise FileNotFoundError(f"No cached index in {workdir}; prepare it before mining")
                     log.info("  Executing Qleverfile (download + index)...")
                     try:
                         self._execute_qleverfile(workdir, source)
@@ -940,8 +951,18 @@ class GroupedMiningStage(LocalMiningStage):
         log.info(f"Identified {len(groups)} source groups for combined mining")
 
         results = {"groups_mined": [], "failed": [], "skipped": [], "indexed_individually": []}
-        # Track sources with existing indices but no RDF (to mine individually)
+        grouped_names = {source.name for members in groups.values() for source in members}
         sources_with_existing_index: list[tuple[Source, Path]] = []
+        for source in sources:
+            if source.name not in grouped_names:
+                workdir = self.config.data_dir / "qlever_workdirs" / source.name
+                if self._has_qlever_index(workdir, source.name):
+                    sources_with_existing_index.append((source, workdir))
+                else:
+                    results["failed"].append({"name": source.name,
+                        "error": f"No cached individual index in {workdir}; use --local-only to prepare it"})
+        if not sources:
+            results["skipped"].append("No local sources selected")
         self._ensure_qlever_image()
 
         qlever_workdir = self.config.data_dir / "qlever_groups"
@@ -974,6 +995,15 @@ class GroupedMiningStage(LocalMiningStage):
                     finally:
                         self._qlever_stop(server_pid)
                     port += 1
+                    continue
+                if self.config.no_index:
+                    for source in group_sources:
+                        source_workdir = self.config.data_dir / "qlever_workdirs" / source.name
+                        if not self._has_qlever_index(source_workdir, source.name):
+                            results["failed"].append({"name": source.name,
+                                "error": f"No grouped or individual index for {source.name}"})
+                        else:
+                            sources_with_existing_index.append((source, source_workdir))
                     continue
                 source_data = []
                 for source in group_sources:
@@ -1143,7 +1173,7 @@ class GroupedMiningStage(LocalMiningStage):
                 groups[group_name] = []
             groups[group_name].append(source)
 
-        return {k: v for k, v in groups.items() if len(v) > 1}
+        return groups
 
     def _prepare_group_qleverfile(
         self, workdir: Path, group_name: str, group_sources: list[Source], port: int
@@ -1813,6 +1843,43 @@ class Pipeline:
 # CLI
 
 
+def preflight(config: PipelineConfig, *, grouped: bool, remote: bool) -> None:
+    """Check configuration and cached inputs. Do not query or start servers."""
+    if remote:
+        selected = config.get_remote_sources()
+        if not selected:
+            raise ValueError("No remote sources selected")
+        log.info("Preflight: %d remote sources; endpoint availability is checked during mining", len(selected))
+        return
+    stage = GroupedMiningStage(config) if grouped else LocalMiningStage(config)
+    stage._ensure_qlever_image()
+    import shutil
+    if shutil.which("singularity") is None:
+        raise FileNotFoundError("singularity is not on PATH")
+    sources = config.get_local_sources()
+    if not sources:
+        raise ValueError("No local sources selected")
+    covered = set()
+    if grouped:
+        for name, members in stage._identify_groups(sources).items():
+            workdir = config.data_dir / "qlever_groups" / name
+            if stage._has_qlever_index(workdir, name):
+                covered.update(source.name for source in members)
+                log.info("Cached group %s: %s", name, workdir)
+    missing = []
+    for source in sources:
+        if source.name in covered:
+            continue
+        workdir = config.data_dir / "qlever_workdirs" / source.name
+        if stage._has_qlever_index(workdir, source.name):
+            log.info("Cached source %s: %s", source.name, workdir)
+        else:
+            missing.append(source.name)
+    if missing:
+        raise FileNotFoundError(f"Prepare indices or narrow --sources. Missing indices: {missing}")
+    log.info("Preflight: %d local sources have cached indices; loadability is checked at startup", len(sources))
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="RDFSolve LOD Cloud Analysis Pipeline",
@@ -1837,6 +1904,9 @@ Examples:
         help="LSLOD Cloud mining only (all local sources)",
     )
     parser.add_argument("--sources", nargs="+", help="Specific source names")
+    parser.add_argument("--sources-file", type=Path, help="Source registry YAML")
+    parser.add_argument("--preflight", action="store_true", help="Check selected inputs without mining")
+    parser.add_argument("--no-index", action="store_true", help="Use prepared indices only")
     parser.add_argument(
         "--skip-providers", nargs="+", help="Skip sources from these providers (e.g., idsm)"
     )
@@ -1881,7 +1951,10 @@ Examples:
         raise SystemExit(128 + signum)
 
     signal.signal(signal.SIGTERM, stop_on_signal)
-    config = PipelineConfig()
+    repo_dir = Path(__file__).resolve().parents[1]
+    config = PipelineConfig(base_dir=repo_dir.parent, repo_dir=repo_dir)
+    if args.sources_file:
+        config.sources_file = args.sources_file.resolve()
 
     if args.output_dir:
         config.output_dir = args.output_dir
@@ -1895,6 +1968,7 @@ Examples:
     config.qlever_startup_timeout = args.qlever_startup_timeout
     config.timeout = args.timeout
     config.no_download = args.no_download
+    config.no_index = args.no_index
     config.output_suffix = args.output_suffix
     config.output_formats = args.output_formats
     config.endpoint_status_file = args.endpoint_status_file
@@ -1918,6 +1992,11 @@ Examples:
         log.error("No sources loaded. Check sources.yaml or --sources argument.")
         sys.exit(1)
 
+    if args.preflight:
+        preflight(config, grouped=args.grouped_only, remote=args.remote_only)
+        return
+
+    config.output_dir.mkdir(parents=True, exist_ok=True)
     # Build pipeline
     pipeline = Pipeline(config)
 
