@@ -28,6 +28,10 @@ class ShaclPropertyShape(BaseModel):
     max_count: int | None = Field(None, description="sh:maxCount")
     name: str | None = Field(None, description="sh:name")
     description: str | None = Field(None, description="sh:description")
+    alternatives: list[ShaclPropertyShape] = Field(
+        default_factory=list,
+        description="Value constraints combined with sh:or; paths are ignored in these alternatives",
+    )
 
     def to_rdf(self, graph: Graph) -> URIRef | BNode:
         """Serialize to RDF graph."""
@@ -56,6 +60,7 @@ class ShaclPropertyShape(BaseModel):
                 "IRI": sh.IRI,
                 "Literal": sh.Literal,
                 "BlankNode": sh.BlankNode,
+                "BlankNodeOrIRI": sh.BlankNodeOrIRI,
             }
             if self.node_kind in nk_map:
                 graph.add((node, sh.nodeKind, nk_map[self.node_kind]))
@@ -67,6 +72,22 @@ class ShaclPropertyShape(BaseModel):
             graph.add((node, sh.name, RdfLiteral(self.name)))
         if self.description:
             graph.add((node, sh.description, RdfLiteral(self.description)))
+        if self.alternatives:
+            from rdflib.collection import Collection
+
+            alternatives: list[Node] = []
+            for alternative in self.alternatives:
+                branch = BNode()
+                if alternative.datatype:
+                    graph.add((branch, sh.datatype, Ref(alternative.datatype)))
+                if alternative.class_constraint:
+                    graph.add((branch, sh["class"], Ref(alternative.class_constraint)))
+                if alternative.node_kind:
+                    graph.add((branch, sh.nodeKind, sh[alternative.node_kind]))
+                alternatives.append(branch)
+            head = BNode()
+            Collection(graph, head, alternatives)
+            graph.add((node, sh["or"], head))
 
         return node
 
@@ -90,7 +111,9 @@ class ShaclPropertyShape(BaseModel):
         node_kind = None
         if node_kind_uri:
             node_kind_str = str(node_kind_uri)
-            if node_kind_str.endswith("IRI"):
+            if node_kind_str.endswith("BlankNodeOrIRI"):
+                node_kind = "BlankNodeOrIRI"
+            elif node_kind_str.endswith("IRI"):
                 node_kind = "IRI"
             elif node_kind_str.endswith("Literal"):
                 node_kind = "Literal"
@@ -107,6 +130,11 @@ class ShaclPropertyShape(BaseModel):
             max_count=optional_count(max_count),
             name=str(name) if name else None,
             description=str(description) if description else None,
+            alternatives=[
+                cls.from_rdf(graph, branch)
+                for head in graph.objects(uri, sh["or"])
+                for branch in graph.items(head)
+            ],
         )
 
 
