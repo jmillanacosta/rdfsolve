@@ -685,6 +685,155 @@ class VoidParser:
                 "error": str(exc),
             }
 
+    def discover_all_graphs(self, endpoint_url: str) -> dict[str, Any]:
+        """Discover all named graphs at endpoint with triple counts.
+
+        Executes: SELECT ?g (COUNT(*) AS ?count) WHERE {GRAPH ?g {?s ?p ?o}}
+        GROUP BY ?g ORDER BY DESC(?count)
+
+        Args:
+            endpoint_url: SPARQL endpoint URL.
+
+        Returns:
+            Dict with keys:
+            - ``graphs``: list of dicts with 'uri' and 'count' keys
+            - ``total_graphs``: number of graphs found
+            - ``ontology_graphs``: list of graph URIs with .owl extension
+            - ``void_graphs``: list of graph URIs containing 'void' in name
+            - ``error``: error message (only present on failure)
+        """
+        from rdfsolve.sparql_helper import SparqlHelper
+
+        query = """
+        SELECT ?g (COUNT(*) AS ?count)
+        WHERE {
+          GRAPH ?g { ?s ?p ?o }
+        }
+        GROUP BY ?g
+        ORDER BY DESC(?count)
+        """
+
+        try:
+            helper = SparqlHelper(endpoint_url)
+            results = helper.select(query, purpose="graph-discovery")
+
+            graphs = []
+            ontology_graphs = []
+            void_graphs = []
+
+            for row in results["results"]["bindings"]:
+                g_uri = row.get("g", {}).get("value")
+                count = int(row.get("count", {}).get("value", 0))
+
+                if not g_uri:
+                    continue
+
+                graphs.append({"uri": g_uri, "count": count})
+
+                # Identify ontology graphs (.owl extension)
+                if g_uri.endswith(".owl") or ".owl/" in g_uri or ".owl#" in g_uri:
+                    ontology_graphs.append(g_uri)
+                    logger.info(f"Found ontology graph: {g_uri} ({count} triples)")
+
+                # Identify potential metadata graphs (containing 'void')
+                if "void" in g_uri.lower():
+                    void_graphs.append(g_uri)
+                    logger.info(f"Found VoID metadata graph: {g_uri} ({count} triples)")
+
+            return {
+                "graphs": graphs,
+                "total_graphs": len(graphs),
+                "ontology_graphs": ontology_graphs,
+                "void_graphs": void_graphs,
+            }
+        except Exception as exc:
+            logger.warning(f"Graph discovery failed: {exc}")
+            return {
+                "graphs": [],
+                "total_graphs": 0,
+                "ontology_graphs": [],
+                "void_graphs": [],
+                "error": str(exc),
+            }
+
+    def extract_metadata_from_void_graphs(
+        self, endpoint_url: str, void_graph_uris: list[str]
+    ) -> dict[str, Any]:
+        """Extract metadata from graphs identified as containing VoID descriptions.
+
+        Queries all triples from the specified VoID metadata graphs to extract
+        dataset metadata like title, description, license, publisher, etc.
+
+        Args:
+            endpoint_url: SPARQL endpoint URL.
+            void_graph_uris: List of graph URIs identified as containing metadata.
+
+        Returns:
+            Dict with keys:
+            - ``metadata_by_graph``: dict mapping graph URI to extracted metadata
+            - ``total_triples``: total triples extracted from all metadata graphs
+            - ``error``: error message (only present on failure)
+        """
+        from rdfsolve.sparql_helper import SparqlHelper
+
+        if not void_graph_uris:
+            return {
+                "metadata_by_graph": {},
+                "total_triples": 0,
+            }
+
+        metadata_by_graph = {}
+        total_triples = 0
+
+        try:
+            helper = SparqlHelper(endpoint_url)
+
+            for graph_uri in void_graph_uris:
+                # Query all triples from this metadata graph
+                # Try one-shot first (no LIMIT), fall back to pagination if needed
+                query = f"""
+                SELECT ?s ?p ?o
+                WHERE {{
+                  GRAPH <{graph_uri}> {{
+                    ?s ?p ?o
+                  }}
+                }}
+                """
+
+                try:
+                    # SparqlHelper will automatically handle pagination if one-shot fails
+                    results = helper.select(query, purpose=f"metadata-extraction/{graph_uri}")
+                    triples = results["results"]["bindings"]
+
+                    metadata_by_graph[graph_uri] = {
+                        "triple_count": len(triples),
+                        "triples": triples,
+                    }
+                    total_triples += len(triples)
+
+                    logger.info(
+                        f"Extracted {len(triples)} triples from metadata graph: {graph_uri}"
+                    )
+                except Exception as exc:
+                    logger.warning(f"Failed to extract metadata from {graph_uri}: {exc}")
+                    metadata_by_graph[graph_uri] = {
+                        "triple_count": 0,
+                        "triples": [],
+                        "error": str(exc),
+                    }
+
+            return {
+                "metadata_by_graph": metadata_by_graph,
+                "total_triples": total_triples,
+            }
+        except Exception as exc:
+            logger.error(f"Metadata extraction failed: {exc}")
+            return {
+                "metadata_by_graph": {},
+                "total_triples": 0,
+                "error": str(exc),
+            }
+
     def build_void_graph_from_partitions(
         self,
         partitions: list[dict[str, str]],

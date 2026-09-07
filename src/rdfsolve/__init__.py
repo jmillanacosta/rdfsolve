@@ -1,11 +1,13 @@
 """RDF schema mining and LOD analysis toolkit."""
 
 from .api import (
+    discover_all_graphs,
     discover_void_graphs,
     discover_void_source,
     enrich_source_with_bioregistry,
     execute_sparql,
     export_schema_artifacts,
+    extract_metadata_from_void_graphs,
     get_bioregistry_metadata,
     graph_to_jsonld,
     graph_to_schema,
@@ -37,6 +39,7 @@ from .models import (
 )
 from .query import QueryResult, ResultCell
 from .sources import classify_source_mode
+from .sources_updater import update_multiple_sources, update_sources_yaml_with_graphs
 from .version import VERSION
 from .void_discover import VoidParser
 
@@ -56,11 +59,13 @@ __all__ = [
     "VoidParser",
     "classify_source_mode",
     "derive_class_mappings",
+    "discover_all_graphs",
     "discover_void_graphs",
     "discover_void_source",
     "enrich_source_with_bioregistry",
     "execute_sparql",
     "export_schema_artifacts",
+    "extract_metadata_from_void_graphs",
     "get_bioregistry_metadata",
     "graph_to_jsonld",
     "graph_to_schema",
@@ -78,4 +83,6 @@ __all__ = [
     "to_jsonld_from_file",
     "to_rdfconfig_from_file",
     "to_void_from_file",
+    "update_multiple_sources",
+    "update_sources_yaml_with_graphs",
 ]

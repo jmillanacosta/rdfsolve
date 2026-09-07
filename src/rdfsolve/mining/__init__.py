@@ -85,6 +85,7 @@ def mine_with_ontology(
     extract_ontology: bool = False,
     extract_metadata: bool = False,
     dataset_name: str | None = None,
+    ontology_graph_uris: list[str] | None = None,
 ) -> MiningResult:
     """Mine schema with optional ontology and metadata extraction.
 
@@ -93,6 +94,9 @@ def mine_with_ontology(
         extract_ontology: Extract TBox (class hierarchies, domain/range)
         extract_metadata: Extract infrastructure metadata (VoID/DCAT)
         dataset_name: Optional dataset name to attach to schema metadata
+        ontology_graph_uris: Discovered .owl graph URIs to mine for ontology.
+            If provided, these graphs are mined specifically for ontology triples.
+            If None, uses miner.graph_uris or default graph.
 
     Returns:
         MiningResult with data schema, ontology, and metadata
@@ -106,10 +110,48 @@ def mine_with_ontology(
     )
 
     ontology = None
+    ontology_graphs_used = []
     if extract_ontology:
-        logger.info("Extracting ontology structure (TBox)")
-        ontology_miner = OntologyMiner(miner._helper, miner.graph_uris)
-        ontology = ontology_miner.mine()
+        # If .owl graphs were discovered, mine those specifically for ontology
+        if ontology_graph_uris:
+            logger.info(f"Extracting ontology structure (TBox) from {len(ontology_graph_uris)} .owl graphs:")
+            for owl_graph in ontology_graph_uris[:5]:  # Log first 5
+                logger.info(f"  - {owl_graph}")
+            if len(ontology_graph_uris) > 5:
+                logger.info(f"  ... and {len(ontology_graph_uris) - 5} more")
+
+            # Mine .owl graphs for ontology
+            ontology_miner = OntologyMiner(miner._helper, ontology_graph_uris)
+            ontology = ontology_miner.mine()
+            ontology_graphs_used = ontology_graph_uris
+
+        else:
+            # Fallback: mine from configured graphs or default
+            graph_desc = ", ".join(miner.graph_uris) if miner.graph_uris else "default graph"
+            logger.info(f"Extracting ontology structure (TBox) from {graph_desc}")
+            ontology_miner = OntologyMiner(miner._helper, miner.graph_uris)
+            ontology = ontology_miner.mine()
+            ontology_graphs_used = miner.graph_uris or []
+
+        # Log ontology extraction results
+        if ontology:
+            logger.info(
+                f"Ontology extracted: {len(ontology.subclass_relations)} subclass, "
+                f"{len(ontology.domain_assertions)} domain, "
+                f"{len(ontology.range_assertions)} range relations"
+            )
+
+            # Add ontology extraction info to report
+            if hasattr(miner, "_report") and miner._report:
+                miner._report.report["ontology_extraction"] = {
+                    "graphs_mined": ontology_graphs_used,
+                    "graph_count": len(ontology_graphs_used),
+                    "subclass_relations": len(ontology.subclass_relations),
+                    "domain_assertions": len(ontology.domain_assertions),
+                    "range_assertions": len(ontology.range_assertions),
+                    "inverse_properties": len(ontology.inverse_properties),
+                    "property_characteristics": len(ontology.property_characteristics),
+                }
 
         # For ontology-as-data endpoints, query superclasses for aggregation
         if uses_ontology_as_data:
