@@ -195,7 +195,7 @@ class PipelineConfig:
     # QLever settings (for local mining)
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
     base_port: int = 7019
-    qlever_startup_timeout: int = 10000  # seconds to wait for QLever to start
+    qlever_startup_timeout: int = 600  # Seconds to load the index.
     no_download: bool = False
 
     # Stage control
@@ -334,6 +334,7 @@ class Stage:
         self.start_time: float | None = None
         self.end_time: float | None = None
         self.results: dict[str, Any] = {}
+        self._servers: dict[int, subprocess.Popen] = {}
 
     def run(self) -> dict[str, Any]:
         """Execute the stage."""
@@ -702,24 +703,6 @@ class LocalMiningStage(Stage):
 
         return results
 
-    def _ensure_qlever_image(self):
-        """Ensure QLever Singularity image exists."""
-        image_path = self.config.data_dir / "qlever.sif"
-        if image_path.exists():
-            return
-
-        log.info("Pulling QLever Singularity image...")
-        subprocess.run(
-            [
-                "singularity",
-                "pull",
-                "--disable-cache",
-                str(image_path),
-                self.config.qlever_image,
-            ],
-            check=True,
-        )
-
     def _check_data_exists(self, workdir: Path, source: Source) -> bool:
         """Check if data files already exist."""
         for ext in ["*.ttl", "*.nt", "*.nq", "*.ttl.gz", "*.nt.gz"]:
@@ -729,6 +712,9 @@ class LocalMiningStage(Stage):
 
     def _has_qlever_index(self, workdir: Path, source_name: str) -> bool:
         """Reuse existing indices; do not overwrite partial index files."""
+        from rdfsolve.qlever.lifecycle import index_name
+
+        source_name = index_name(workdir, source_name)
         index_spo = workdir / f"{source_name}.index.spo"
         if index_spo.is_file():
             return True
@@ -805,7 +791,7 @@ class LocalMiningStage(Stage):
             str(image_path),
             "qlever-index",
             "-i",
-            source.name,
+            config.get("data", "NAME", fallback=source.name),
             "-s",
             str(settings_path),
             "-F",
@@ -832,91 +818,6 @@ class LocalMiningStage(Stage):
             files.update(p.resolve() for p in matches if p.is_file())
         return sorted(files)
 
-    def _kill_existing_qlever_on_port(self, port: int):
-        """Kill any existing QLever server running on the specified port."""
-        try:
-            import psutil
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                try:
-                    cmdline = proc.info.get('cmdline', [])
-                    if cmdline and 'qlever-server' in ' '.join(cmdline):
-                        # Check if this process is using our port
-                        if f'-p {port}' in ' '.join(cmdline) or f'-p \'{port}\'' in ' '.join(cmdline):
-                            log.warning(f"  Killing existing QLever server (PID {proc.pid}) on port {port}")
-                            proc.kill()
-                            proc.wait(timeout=5)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-        except ImportError:
-            # psutil not available, try pkill
-            try:
-                subprocess.run(['pkill', '-f', f'qlever-server.*-p {port}'], check=False)
-            except Exception:
-                pass
-
-    def _qlever_start(self, workdir: Path, name: str, port: int) -> int | None:
-        """Start QLever server, return PID."""
-        # Kill any existing server on this port first
-        self._kill_existing_qlever_on_port(port)
-
-        image_path = self.config.data_dir / "qlever.sif"
-
-        cmd = [
-            "singularity",
-            "exec",
-            "--bind",
-            f"{workdir}:{workdir}",
-            "-W",
-            str(workdir),
-            str(image_path),
-            "bash",
-            "-c",
-            f"cd '{workdir}' && exec qlever-server -i '{name}' -j 8 -p '{port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '{name}'",
-        ]
-
-        log_path = workdir / "server.log"
-        with open(log_path, "w") as log_file:
-            proc = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT)
-
-        # Wait for server to start by checking log file
-        timeout = self.config.qlever_startup_timeout
-        iterations = timeout // 2  # Check every 2 seconds
-
-        log.info(f"  Waiting for QLever server (timeout: {timeout}s)...")
-
-        for i in range(iterations):
-            time.sleep(2)
-
-            # Check if process died
-            if proc.poll() is not None:
-                log.error("QLever server died during startup")
-                if log_path.exists():
-                    log.error(f"  Last log:\n{log_path.read_text()[-500:]}")
-                return None
-
-            # Check log file for ready message
-            if log_path.exists():
-                log_content = log_path.read_text()
-                if "The server is ready, listening for requests" in log_content:
-                    log.info(f"  QLever server started after ~{(i + 1) * 2}s")
-                    return proc.pid
-
-        log.error(f"QLever server did not start in {timeout}s")
-        if log_path.exists():
-            log.error(f"  Server log tail:\n{log_path.read_text()[-1000:]}")
-        proc.terminate()
-        return None
-
-    def _qlever_stop(self, pid: int):
-        """Stop QLever server."""
-        import signal
-
-        try:
-            os.kill(pid, signal.SIGTERM)
-            time.sleep(2)
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
 
     def _mine_local(self, source: Source, port: int):
         """Mine schema from local QLever instance."""
@@ -979,6 +880,28 @@ class LocalMiningStage(Stage):
             schema = miner.mine(dataset_name=source.name)
 
         self._save_schema_outputs(schema, output_dir, source.name, suffix)
+
+
+    def _ensure_qlever_image(self):
+        """Require the prepared image; do not pull a new engine during mining."""
+        image = self.config.data_dir / "qlever.sif"
+        if not image.is_file():
+            raise FileNotFoundError(f"Prepare the QLever image before mining: {image}")
+
+    def _qlever_start(self, workdir: Path, name: str, port: int) -> int:
+        from rdfsolve.qlever.lifecycle import start_server
+
+        process = start_server(self.config.data_dir / "qlever.sif", workdir, name, port,
+                               startup_timeout=self.config.qlever_startup_timeout)
+        self._servers[process.pid] = process
+        return process.pid
+
+    def _qlever_stop(self, pid: int):
+        from rdfsolve.qlever.lifecycle import stop_server
+
+        process = self._servers.pop(pid, None)
+        if process is not None:
+            stop_server(process)
 
 
 class GroupedMiningStage(LocalMiningStage):
@@ -1278,85 +1201,6 @@ class GroupedMiningStage(LocalMiningStage):
         log.info(f"  Indexing {len(input_files)} files from {len(source_data)} sources...")
         subprocess.run(cmd, cwd=workdir, check=True)
 
-    def _kill_existing_qlever_on_port(self, port: int):
-        """Kill any existing QLever server running on the specified port."""
-        try:
-            import psutil
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                try:
-                    cmdline = proc.info.get('cmdline', [])
-                    if cmdline and 'qlever-server' in ' '.join(cmdline):
-                        # Check if this process is using our port
-                        if f'-p {port}' in ' '.join(cmdline) or f'-p \'{port}\'' in ' '.join(cmdline):
-                            log.warning(f"  Killing existing QLever server (PID {proc.pid}) on port {port}")
-                            proc.kill()
-                            proc.wait(timeout=5)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-        except ImportError:
-            # psutil not available, try pkill
-            try:
-                subprocess.run(['pkill', '-f', f'qlever-server.*-p {port}'], check=False)
-            except Exception:
-                pass
-
-    def _qlever_start(self, workdir: Path, name: str, port: int) -> int | None:
-        # Kill any existing server on this port first
-        self._kill_existing_qlever_on_port(port)
-
-        image_path = self.config.data_dir / "qlever.sif"
-
-        cmd = [
-            "singularity",
-            "exec",
-            "--bind",
-            f"{workdir}:{workdir}",
-            "-W",
-            str(workdir),
-            str(image_path),
-            "bash",
-            "-c",
-            f"cd '{workdir}' && exec qlever-server -i '{name}' -j 8 -p '{port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '{name}'",
-        ]
-
-        log_path = workdir / "server.log"
-        with open(log_path, "w") as log_file:
-            proc = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT)
-
-        timeout = self.config.qlever_startup_timeout
-        iterations = timeout // 2
-        log.info(f"  Waiting for QLever server (timeout: {timeout}s)...")
-
-        for i in range(iterations):
-            time.sleep(2)
-
-            if proc.poll() is not None:
-                log.error("QLever server died during startup")
-                if log_path.exists():
-                    log.error(f"  Last log:\n{log_path.read_text()[-500:]}")
-                return None
-
-            if log_path.exists():
-                log_content = log_path.read_text()
-                if "The server is ready, listening for requests" in log_content:
-                    log.info(f"  QLever server started after ~{(i + 1) * 2}s")
-                    return proc.pid
-
-        log.error(f"QLever server did not start in {timeout}s")
-        if log_path.exists():
-            log.error(f"  Server log tail:\n{log_path.read_text()[-1000:]}")
-        proc.terminate()
-        return None
-
-    def _qlever_stop(self, pid: int):
-        import signal
-
-        try:
-            os.kill(pid, signal.SIGTERM)
-            time.sleep(2)
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
 
     def _mine_grouped(self, group_name: str, sources: list[Source], port: int):
         from rdfsolve import SchemaMiner
@@ -1422,25 +1266,7 @@ class GroupedMiningStage(LocalMiningStage):
         schema_path = output_dir / f"{group_name}_schema.json"
         log.info(f"  -> Saved grouped schema to {schema_path}")
 
-    def _ensure_qlever_image(self):
-        image_path = self.config.data_dir / "qlever.sif"
-        if image_path.exists():
-            return
-
-        log.info("Pulling QLever Singularity image...")
-        subprocess.run(
-            [
-                "singularity",
-                "pull",
-                "--disable-cache",
-                str(image_path),
-                self.config.qlever_image,
-            ],
-            check=True,
-        )
-
-
-class LsLodCloudStage(Stage):
+class LsLodCloudStage(LocalMiningStage):
     """Mine the complete Local Semantic LOD Cloud.
 
     Combines ALL local sources into one mega-QLever instance.
@@ -1596,90 +1422,6 @@ class LsLodCloudStage(Stage):
 
         subprocess.run(cmd, cwd=workdir, check=True)
 
-    def _kill_existing_qlever_on_port(self, port: int):
-        """Kill any existing QLever server running on the specified port."""
-        try:
-            import psutil
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                try:
-                    cmdline = proc.info.get('cmdline', [])
-                    if cmdline and 'qlever-server' in ' '.join(cmdline):
-                        # Check if this process is using our port
-                        if f'-p {port}' in ' '.join(cmdline) or f'-p \'{port}\'' in ' '.join(cmdline):
-                            log.warning(f"  Killing existing QLever server (PID {proc.pid}) on port {port}")
-                            proc.kill()
-                            proc.wait(timeout=5)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-        except ImportError:
-            # psutil not available, try pkill
-            try:
-                subprocess.run(['pkill', '-f', f'qlever-server.*-p {port}'], check=False)
-            except Exception:
-                pass
-
-    def _qlever_start(self, workdir: Path, name: str, port: int) -> int | None:
-        """Start QLever server for LSLOD Cloud with increased resources."""
-        # Kill any existing server on this port first
-        self._kill_existing_qlever_on_port(port)
-
-        image_path = self.config.data_dir / "qlever.sif"
-
-        # Use more resources for the complete cloud
-        cmd = [
-            "singularity",
-            "exec",
-            "--bind",
-            f"{workdir}:{workdir}",
-            "-W",
-            str(workdir),
-            str(image_path),
-            "bash",
-            "-c",
-            f"cd '{workdir}' && exec qlever-server -i '{name}' -j 16 -p '{port}' -m 60G -c 12G -e 8G -k 500 -s 2000s -a '{name}'",
-        ]
-
-        log_path = workdir / "server.log"
-        with open(log_path, "w") as log_file:
-            proc = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT)
-
-        # Wait for server to start
-        timeout = self.config.qlever_startup_timeout
-        iterations = timeout // 2
-
-        log.info(f"  Waiting for QLever server (timeout: {timeout}s)...")
-
-        for i in range(iterations):
-            time.sleep(2)
-
-            if proc.poll() is not None:
-                log.error("QLever server died during startup")
-                if log_path.exists():
-                    log.error(f"  Last log:\n{log_path.read_text()[-500:]}")
-                return None
-
-            if log_path.exists():
-                log_content = log_path.read_text()
-                if "The server is ready, listening for requests" in log_content:
-                    log.info(f"  QLever server started after ~{(i + 1) * 2}s")
-                    return proc.pid
-
-        log.error(f"QLever server did not start in {timeout}s")
-        if log_path.exists():
-            log.error(f"  Server log tail:\n{log_path.read_text()[-1000:]}")
-        proc.terminate()
-        return None
-
-    def _qlever_stop(self, pid: int):
-        """Stop QLever server."""
-        import signal
-
-        try:
-            os.kill(pid, signal.SIGTERM)
-            time.sleep(2)
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
 
     def _mine_cloud(self, source_data: list[tuple[Source, Path]], port: int):
         """Mine schema from the complete LSLOD Cloud."""
@@ -1839,25 +1581,6 @@ class LsLodCloudStage(Stage):
         stats_path.write_text(json.dumps(stats, indent=2))
 
         log.info(f"  -> Saved connectivity stats to {stats_path}")
-
-    def _ensure_qlever_image(self):
-        """Ensure QLever Singularity image exists."""
-        image_path = self.config.data_dir / "qlever.sif"
-        if image_path.exists():
-            return
-
-        log.info("Pulling QLever Singularity image...")
-        subprocess.run(
-            [
-                "singularity",
-                "pull",
-                "--disable-cache",
-                str(image_path),
-                self.config.qlever_image,
-            ],
-            check=True,
-        )
-
 
 class SSSOMSeedingStage(Stage):
     """Seed and enrich SSSOM mappings from external sources.
@@ -2225,6 +1948,9 @@ Examples:
         default=["json-ld", "void"],
         help="Output format(s) to generate (default: json-ld void)",
     )
+    parser.add_argument("--base-port", type=int, default=7019, help="First local QLever port")
+    parser.add_argument("--qlever-startup-timeout", type=int, default=600,
+                        help="Seconds to wait for an index to load")
     parser.add_argument("--data-dir", type=Path, help="Data-directory")
     parser.add_argument("--no-download", action="store_true",
                         help="Use existing RDF and indices; do not fetch source data")
@@ -2236,12 +1962,24 @@ Examples:
     args = parser.parse_args()
 
     # Build config
+    import signal
+
+    def stop_on_signal(signum, frame):
+        raise SystemExit(128 + signum)
+
+    signal.signal(signal.SIGTERM, stop_on_signal)
     config = PipelineConfig()
 
     if args.output_dir:
         config.output_dir = args.output_dir
     if args.data_dir:
         config.data_dir = args.data_dir
+    if not 1024 <= args.base_port <= 60000:
+        parser.error("--base-port must be between 1024 and 60000")
+    if args.qlever_startup_timeout <= 0:
+        parser.error("--qlever-startup-timeout must be positive")
+    config.base_port = args.base_port
+    config.qlever_startup_timeout = args.qlever_startup_timeout
     config.timeout = args.timeout
     config.no_download = args.no_download
     config.output_suffix = args.output_suffix
