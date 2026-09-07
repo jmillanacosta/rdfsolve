@@ -561,6 +561,18 @@ class SchemaMiner:
         if self.enrich:
             schema.enrichment = self.query_enrichment(schema, annotation_iris=annotation_iris)
         classes, properties = self._collect_class_property_sets(schema.patterns)
+        entity_counts = {}
+        if self.counts:
+            from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
+
+            entity_counts = query_class_entity_counts(
+                sorted(classes),
+                self._helper,
+                self.graph_uris,
+                self._report,
+                self.class_batch_size,
+                self.delay,
+            )
         report = self._report.report
         report.strategy = schema.about.strategy or report.strategy
         self._report.finalise(
@@ -578,6 +590,7 @@ class SchemaMiner:
             used_type_count=len(classes - self._declared_classes),
             discovered_metadata=report.discovered_metadata,
         )
+        schema.about.class_entity_counts = entity_counts
         return schema
 
     def query_enrichment(
