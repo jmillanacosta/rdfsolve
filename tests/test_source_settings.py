@@ -296,6 +296,16 @@ def test_partial_index_is_not_overwritten(pipeline, tmp_path):
         stage._has_qlever_index(tmp_path, "test")
 
 
+def test_registry_rejects_ambiguous_output_names(pipeline, tmp_path):
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("- name: test\n  endpoint: https://one.test\n- name: test\n  endpoint: https://two.test\n")
+    config = pipeline.PipelineConfig(base_dir=tmp_path, sources_file=registry)
+    with pytest.raises(ValueError, match="Duplicate source names"):
+        config.load_sources(["test"])
+    with pytest.raises(ValueError, match="Unknown source names"):
+        config.load_sources(["typo"])
+
+
 @pytest.mark.parametrize("mode", ["remote", "local", "grouped", "cloud"])
 def test_pipeline_enables_enrichment_in_every_mining_mode(pipeline, tmp_path, monkeypatch, mode):
     config = pipeline.PipelineConfig(base_dir=tmp_path, examples_per_pattern=3)
