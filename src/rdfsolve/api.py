@@ -89,7 +89,6 @@ def load_parser_from_jsonld(
 
 def to_rdfconfig_from_file(
     void_file_path: str,
-    filter_void_nodes: bool = True,
     endpoint_url: str | None = None,
     endpoint_name: str | None = None,
     graph_uri: str | None = None,
@@ -97,7 +96,6 @@ def to_rdfconfig_from_file(
     """Convert a VoID file to RDF-config YAML files."""
     parser = load_parser_from_file(void_file_path)
     return parser.to_rdfconfig(
-        filter_void_nodes=filter_void_nodes,
         endpoint_url=endpoint_url,
         endpoint_name=endpoint_name,
         graph_uri=graph_uri,
@@ -114,7 +112,6 @@ def to_void_from_file(jsonld_path: str) -> Graph:
 
 def to_linkml_from_file(
     void_file_path: str,
-    filter_void_nodes: bool = True,
     schema_name: str | None = None,
     schema_description: str | None = None,
     schema_base_uri: str | None = None,
@@ -123,7 +120,6 @@ def to_linkml_from_file(
 
     Args:
         void_file_path: Path to VoID file
-        filter_void_nodes: Remove VoID-specific nodes
         schema_name: Name for the schema
         schema_description: Description for the schema
         schema_base_uri: Base URI for the schema
@@ -133,7 +129,6 @@ def to_linkml_from_file(
     """
     parser = load_parser_from_file(void_file_path)
     return parser.to_linkml_yaml(
-        filter_void_nodes=filter_void_nodes,
         schema_name=schema_name,
         schema_description=schema_description,
         schema_base_uri=schema_base_uri,
@@ -142,7 +137,6 @@ def to_linkml_from_file(
 
 def to_shacl_from_file(
     void_file_path: str,
-    filter_void_nodes: bool = True,
     schema_base_uri: str = "http://example.org/shapes/",
 ) -> str:
     """Convert a VoID file to SHACL shapes.
@@ -153,7 +147,6 @@ def to_shacl_from_file(
 
     Args:
         void_file_path: Path to VoID file
-        filter_void_nodes: Remove VoID-specific nodes
         schema_base_uri: Base URI for the SHACL shapes (default: http://example.org/shapes/)
 
     Returns:
@@ -161,14 +154,12 @@ def to_shacl_from_file(
     """
     parser = load_parser_from_file(void_file_path)
     return parser.to_shacl(
-        filter_void_nodes=filter_void_nodes,
         schema_base_uri=schema_base_uri,
     )
 
 
 def to_jsonld_from_file(
     void_file_path: str,
-    filter_void_admin_nodes: bool = True,
     endpoint_url: str | None = None,
     dataset_name: str | None = None,
     graph_uris: str | list[str] | None = None,
@@ -177,7 +168,6 @@ def to_jsonld_from_file(
     parser = load_parser_from_file(void_file_path)
     graph_uris_list = [graph_uris] if isinstance(graph_uris, str) else graph_uris
     return parser.to_jsonld(
-        filter_void_admin_nodes=filter_void_admin_nodes,
         endpoint_url=endpoint_url,
         dataset_name=dataset_name,
         graph_uris=graph_uris_list,
@@ -187,7 +177,6 @@ def to_jsonld_from_file(
 def graph_to_jsonld(
     graph: Graph,
     graph_uris: str | list[str] | None = None,
-    filter_void_admin_nodes: bool = True,
     endpoint_url: str | None = None,
     dataset_name: str | None = None,
 ) -> dict[str, Any]:
@@ -195,7 +184,6 @@ def graph_to_jsonld(
     parser = load_parser_from_graph(graph, graph_uris=graph_uris)
     graph_uris_list = [graph_uris] if isinstance(graph_uris, str) else graph_uris
     return parser.to_jsonld(
-        filter_void_admin_nodes=filter_void_admin_nodes,
         endpoint_url=endpoint_url,
         dataset_name=dataset_name,
         graph_uris=graph_uris_list,
@@ -205,17 +193,15 @@ def graph_to_jsonld(
 def graph_to_schema(
     void_graph: Graph,
     graph_uris: str | list[str] | None = None,
-    filter_void_admin_nodes: bool = True,
 ) -> pd.DataFrame:
     """Convert VoID graph to schema DataFrame."""
     parser = VoidParser(void_source=void_graph, graph_uris=graph_uris)
-    return parser.to_schema(filter_void_admin_nodes=filter_void_admin_nodes)
+    return parser.to_schema()
 
 
 def graph_to_linkml(
     graph: Graph,
     graph_uris: str | list[str] | None = None,
-    filter_void_nodes: bool = True,
     schema_name: str | None = None,
     schema_description: str | None = None,
     schema_base_uri: str | None = None,
@@ -225,7 +211,6 @@ def graph_to_linkml(
     Args:
         graph: RDFLib Graph with VoID data
         graph_uris: Graph URIs to filter extraction
-        filter_void_nodes: Remove VoID-specific nodes
         schema_name: Name for the schema
         schema_description: Description for the schema
         schema_base_uri: Base URI for the schema
@@ -235,7 +220,6 @@ def graph_to_linkml(
     """
     parser = load_parser_from_graph(graph, graph_uris=graph_uris)
     return parser.to_linkml_yaml(
-        filter_void_nodes=filter_void_nodes,
         schema_name=schema_name,
         schema_description=schema_description,
         schema_base_uri=schema_base_uri,
@@ -245,7 +229,6 @@ def graph_to_linkml(
 def graph_to_shacl(
     graph: Graph,
     graph_uris: str | list[str] | None = None,
-    filter_void_nodes: bool = True,
     schema_base_uri: str = "http://example.org/shapes/",
 ) -> str:
     """Convert a VoID graph to SHACL shapes.
@@ -257,7 +240,6 @@ def graph_to_shacl(
     Args:
         graph: RDFLib Graph with VoID data
         graph_uris: Graph URIs to filter extraction
-        filter_void_nodes: Remove VoID-specific nodes
         schema_base_uri: Base URI for the SHACL shapes (default: http://example.org/shapes/)
 
     Returns:
@@ -265,7 +247,6 @@ def graph_to_shacl(
     """
     parser = load_parser_from_graph(graph, graph_uris=graph_uris)
     return parser.to_shacl(
-        filter_void_nodes=filter_void_nodes,
         schema_base_uri=schema_base_uri,
     )
 
@@ -305,7 +286,6 @@ def export_schema_artifacts(
         try:
             export_parser = VoidParser(void_source=void_graph)
             rdfconfig = export_parser.to_rdfconfig(
-                filter_void_nodes=True,
                 endpoint_url=endpoint,
                 endpoint_name=name,
             )

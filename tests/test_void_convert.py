@@ -174,3 +174,9 @@ def test_mixed_class_and_datatype_partitions_keep_their_own_counts():
     restored = MinedSchema.from_dict(schema.to_jsonld())
     key = lambda p: (p.object_class, p.datatype, p.count)
     assert {key(p) for p in restored.patterns} == {key(p) for p in schema.patterns}
+
+    from rdfsolve.void_discover import VoidParser
+    parser = VoidParser(schema.to_void_graph())
+    assert {key(p) for p in parser.to_mined_schema().patterns} == {key(p) for p in schema.patterns}
+    assert len(MinedSchema.from_shacl(parser.to_shacl()).patterns) == 4
+    assert len(parser.to_schema()) == 4

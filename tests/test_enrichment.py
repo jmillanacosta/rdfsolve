@@ -134,6 +134,36 @@ def test_miner_enriches_before_finalizing_report(source, monkeypatch):
     )
 
 
+def test_rdfconfig_preserves_mixed_values_and_escapes_text(source):
+    import yaml
+
+    schema, helper = source
+    schema.enrichment = query_enrichment(schema, helper, ["urn:chosen"], examples_per_pattern=1)
+    result = schema.to_rdfconfig(endpoint_url=helper.endpoint_url, endpoint_name='name: "quoted"')
+    model = yaml.safe_load(result["model"])
+    entry = next(item for item in model if next(iter(item)).startswith("Thing "))
+    predicates = next(iter(entry.values()))
+    assert predicates[0] == {"a": "<urn:test:A>"}
+    values = [next(iter(item.values())) for item in predicates[1]["<urn:test:p>*"]]
+    assert "Target" in values
+    assert "<urn:test:two>" in values
+    assert '"hello"@en' in values
+    assert yaml.safe_load(result["endpoint"])['name: "quoted"'] == [helper.endpoint_url]
+    assert schema.to_rdfconfig() == schema.to_rdfconfig()
+
+
+def test_rdfconfig_does_not_fabricate_missing_samples(source):
+    import yaml
+
+    schema, _ = source
+    schema.patterns = schema.patterns[:1]
+    model = yaml.safe_load(schema.to_rdfconfig()["model"])
+    assert model == [{"Thing": [{"a": "<urn:test:A>"}, {"<urn:test:p>*": [{"thing_p_1": None}]}]}]
+    schema.patterns[0].object_class = "BlankNode"
+    with pytest.raises(ValueError, match="nested models"):
+        schema.to_rdfconfig()
+
+
 def test_rdf_term_does_not_normalize_lexical_form():
     term = RdfTerm(kind="literal", value="01", datatype="http://www.w3.org/2001/XMLSchema#integer")
     assert str(term.to_rdf()) == "01"
