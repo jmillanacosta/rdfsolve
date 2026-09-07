@@ -547,7 +547,7 @@ def to_linkml(
     conflicts = all_class_names & all_slot_names
     slot_name_mapping = {s: (f"has_{s}" if s in conflicts else s) for s in all_slot_names}
 
-    schema.classes = _build_classes(
+    classes = _build_classes(
         all_class_names,
         class_properties,
         original_class_uris,
@@ -556,16 +556,34 @@ def to_linkml(
         prefixes,
     )
     # Pass the actual classes dict to slots builder so it can validate ranges
-    schema.slots = _build_slots(
+    slots = _build_slots(
         all_slot_names,
         slot_name_mapping,
         property_ranges,
         property_descriptions,
         original_slot_uris,
         class_properties,
-        schema.classes,  # Pass actual classes, not all_class_names
+        classes,
         prefixes,
     )
+    from linkml_runtime.linkml_model.meta import Example
+
+    for cls in classes.values():
+        iri = _expand_uri(str(cls.class_uri), prefixes)
+        cls.description = mined.enrichment.description(iri) or cls.description
+        cls.examples = [
+            Example(value=term.value) for term in mined.enrichment.class_examples.get(iri, [])
+        ]
+    for slot in slots.values():
+        iri = _expand_uri(str(slot.slot_uri), prefixes)
+        slot.description = mined.enrichment.description(iri) or slot.description
+        slot.examples = [
+            Example(value=example.value.value)
+            for example in mined.enrichment.examples
+            if example.property_uri == iri
+        ]
+    schema.classes = classes
+    schema.slots = slots
     return schema
 
 

@@ -157,7 +157,13 @@ def void_graph_to_minedschema(g: Graph) -> MinedSchema:
     about = _extract_metadata_from_void(g)
     about.pattern_count = len(patterns)
 
-    return MinedSchema(patterns=patterns, about=about)
+    from rdfsolve.schema_models.enrichment import SchemaEnrichment
+
+    schema = MinedSchema(patterns=patterns, about=about)
+    schema.enrichment = SchemaEnrichment.from_rdf_graph(
+        g, schema.get_classes(), schema.get_properties()
+    )
+    return schema
 
 
 def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:

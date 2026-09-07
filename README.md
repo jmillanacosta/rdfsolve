@@ -28,7 +28,7 @@ pip install rdfsolve
 ```python
 from rdfsolve import SchemaMiner
 
-# Mine any SPARQL endpoint
+# Query a SPARQL endpoint
 miner = SchemaMiner(endpoint_url="https://sparql.uniprot.org/sparql", source_name="uniprot")
 schema = miner.mine(dataset_name="uniprot")
 
@@ -53,9 +53,37 @@ from rdfsolve import MinedSchema
 schema = MinedSchema.from_json("uniprot_schema.json")
 ```
 
-Canonical JSON uses `format: rdfsolve.mined-schema`, a format `version`, and a `schema` object. It preserves all model fields, including unknown counts, object kinds, labels, and provenance metadata. The pipeline writes this record for every new mined result, regardless of the requested export formats.
+### Add definitions, examples, and a typed API
 
-`to_jsonld()` is a VoID RDF export, not the canonical record. `from_json()` and `from_dict()` also read VoID JSON-LD and legacy adjacency documents marked with `@about`. Unknown versions, unmarked adjacency, and external JSON-LD contexts are rejected. VoID imports preserve only fields supported by the adapter; mixed-object partitions and some metadata still need repair. Use canonical JSON for internal analysis. Reading a file does not establish that its mining run was complete or comparable.
+```python
+from pathlib import Path
+from rdfsolve import SchemaMiner
+
+miner = SchemaMiner(
+    endpoint_url="https://sparql.uniprot.org/sparql",
+    enrich=True,
+    examples_per_pattern=2,
+)
+schema = miner.mine(dataset_name="uniprot")
+Path("uniprot_models.py").write_text(schema.to_pydantic(), encoding="utf-8")
+
+# You can also enrich a saved schema with the same source and graph scope.
+# schema.enrichment = miner.query_enrichment(schema)
+```
+
+Generated classes use cleaned source labels. Definitions become class docstrings;
+observed values become field examples. Fields allow the observed ranges without
+claiming that the sample proves required fields or maximum cardinality.
+
+The pipeline retrieves this enrichment in every mining mode. Use
+`--examples-per-pattern 0` for definitions only, or `--no-enrichment` to skip it.
+Samples follow endpoint order, not a random sampling design. Query failures and
+missing definitions remain visible in the canonical JSON and mining report.
+
+`schema.about.source_version_iri` retains the source release IRI when metadata
+identifies one. `schema_version` uses that IRI, a release label, a source date,
+or a dated mining snapshot. The canonical JSON envelope's `version` is a separate
+storage-format identifier. A snapshot date does not certify an upstream release.
 
 ### Load and convert existing schemas
 

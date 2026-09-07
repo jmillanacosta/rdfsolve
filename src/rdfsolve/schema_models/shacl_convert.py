@@ -42,6 +42,8 @@ def minedschema_to_shacl(
             ps = ShaclPropertyShape(
                 uri=f"{base_uri}ps-{cls_hash}-{prop_hash}",
                 path=pat.property_uri,
+                name=pat.property_label,
+                description=schema.enrichment.description(pat.property_uri),
             )
 
             if pat.object_class == "Literal":
@@ -62,6 +64,8 @@ def minedschema_to_shacl(
             ShaclNodeShape(
                 uri=f"{base_uri}ns-{cls_hash}",
                 target_class=subject_class,
+                name=by_subject[subject_class][0].subject_label,
+                description=schema.enrichment.description(subject_class),
                 property_shapes=property_shapes,
             )
         )
