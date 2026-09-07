@@ -210,6 +210,14 @@ class AboutMetadata(BaseModel):
         None,
         description="Named graph URIs queried",
     )
+    discovered_graphs: list[dict[str, Any]] | None = Field(
+        None,
+        description="All named graphs discovered via discover_all_graphs() with counts",
+    )
+    ontology_graph_uris: list[str] | None = Field(
+        None,
+        description="URIs of graphs identified as ontologies (.owl extension)",
+    )
 
     # Provenance
     generated_by: str = Field(
@@ -797,6 +805,7 @@ class MinedSchema(BaseModel):
         # Configure namespaces
         base_uri = get_base_uri()
         void = Namespace("http://rdfs.org/ns/void#")
+        sd = Namespace("http://www.w3.org/ns/sparql-service-description#")
         vocab_ns = Namespace(f"{base_uri}/vocab#")
         partition_ns = Namespace(f"{base_uri}/schema#")
 
@@ -809,6 +818,7 @@ class MinedSchema(BaseModel):
         for pfx, ns in (
             ("void", void),
             ("void-ext", void_ext),
+            ("sd", sd),
             ("rdf", RDF),
             ("rdfs", RDFS),
             ("xsd", XSD),
@@ -994,6 +1004,76 @@ class MinedSchema(BaseModel):
         # Add vocabulary declarations
         for vocab_uri in sorted(vocabs):
             g.add((dataset_uri, void.vocabulary, URIRef(vocab_uri)))
+
+        # Add discovered graphs as sd:namedGraph if available
+        if self.about.discovered_graphs and endpoint:
+            from rdflib import BNode
+
+            # Create sd:Service wrapper for endpoints with discovered graphs
+            service_uri = URIRef(f"{endpoint}#service")
+            g.add((service_uri, RDF.type, sd.Service))
+            g.add((service_uri, sd.url, URIRef(endpoint)))
+
+            # Link service to dataset description
+            g.add((service_uri, sd.defaultDatasetDescription, dataset_uri))
+
+            # Add sd:namedGraph entries for each discovered graph
+            for graph_info in self.about.discovered_graphs:
+                graph_uri_str = graph_info.get("uri")
+                graph_count = graph_info.get("count", 0)
+
+                if not graph_uri_str:
+                    continue
+
+                # Create sd:namedGraph structure
+                named_graph_node = BNode()
+                g.add((dataset_uri, sd.namedGraph, named_graph_node))
+                g.add((named_graph_node, sd.name, URIRef(graph_uri_str)))
+
+                # Create the sd:graph description
+                graph_node = BNode()
+                g.add((named_graph_node, sd.graph, graph_node))
+                g.add((graph_node, RDF.type, sd.Graph))
+                g.add((graph_node, RDF.type, void.Dataset))
+
+                # Add triple count
+                if graph_count > 0:
+                    g.add(
+                        (
+                            graph_node,
+                            void.triples,
+                            RdfLiteral(graph_count, datatype=XSD.integer),
+                        )
+                    )
+
+                # Add dcterms:title (derive from graph URI if not provided)
+                graph_title = graph_info.get("title")
+                if not graph_title:
+                    # Derive title from URI (e.g., "http://example.org/data/" -> "data")
+                    if "#" in graph_uri_str:
+                        graph_title = graph_uri_str.rsplit("#", 1)[-1] or graph_uri_str
+                    elif "/" in graph_uri_str.rstrip("/"):
+                        graph_title = graph_uri_str.rstrip("/").rsplit("/", 1)[-1] or graph_uri_str
+                    else:
+                        graph_title = graph_uri_str
+
+                if graph_title:
+                    g.add((graph_node, DCTERMS.title, RdfLiteral(graph_title)))
+
+                # Add foaf:homepage (use graph URI as homepage if it's HTTP)
+                homepage = graph_info.get("homepage")
+                if not homepage and graph_uri_str.startswith(("http://", "https://")):
+                    # Use the graph URI itself as homepage
+                    homepage = graph_uri_str.rstrip("/")
+
+                if homepage:
+                    g.add((graph_node, FOAF.homepage, URIRef(homepage)))
+
+                # Mark ontology graphs with void:vocabulary
+                if self.about.ontology_graph_uris and graph_uri_str in self.about.ontology_graph_uris:
+                    g.add((dataset_uri, void.vocabulary, URIRef(graph_uri_str)))
+                    # Also mark the graph itself
+                    g.add((graph_node, DCTERMS.type, URIRef("http://www.w3.org/2002/07/owl#Ontology")))
 
         # Group patterns by subject class for nested VoID structure
         # Structure: class partition -> property partition -> object/datatype partition

@@ -19,8 +19,10 @@ class SourceEntry(TypedDict, total=False):
 
     name: str
     endpoint: str
-    void_iri: str
+    void_iri: str  # DEPRECATED: use void_graphs instead
     void_uri_base: str
+    void_graphs: list[str]  # Discovered VoID metadata graph URIs
+    void_schema: list[str]  # VoID graphs with mineable partitions
     graph_uris: list[str]
     use_graph: bool
     two_phase: bool

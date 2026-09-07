@@ -335,6 +335,64 @@ def discover_void_graphs(
     return VoidParser().discover_void_graphs(endpoint_url)
 
 
+def discover_all_graphs(endpoint_url: str) -> dict[str, Any]:
+    """Discover all named graphs at endpoint with triple counts.
+
+    Identifies:
+    - All named graphs with their triple counts
+    - Ontology graphs (.owl extension) → marked as void:vocabulary
+    - VoID metadata graphs (containing 'void' in URI)
+
+    Args:
+        endpoint_url: SPARQL endpoint URL.
+
+    Returns:
+        Dict with keys:
+        - ``graphs``: list of dicts with 'uri' and 'count' keys
+        - ``total_graphs``: number of graphs found
+        - ``ontology_graphs``: list of .owl graph URIs
+        - ``void_graphs``: list of graph URIs containing 'void'
+
+    Example:
+        >>> from rdfsolve import discover_all_graphs
+        >>> result = discover_all_graphs("https://sparql.uniprot.org/sparql")
+        >>> print(f"Found {result['total_graphs']} graphs")
+        >>> print(f"Ontology graphs: {result['ontology_graphs']}")
+    """
+    return VoidParser().discover_all_graphs(endpoint_url)
+
+
+def extract_metadata_from_void_graphs(
+    endpoint_url: str, void_graph_uris: list[str]
+) -> dict[str, Any]:
+    """Extract metadata triples from VoID-named graphs.
+
+    VoID metadata graphs often contain dataset descriptions (title, license,
+    publisher, etc.). This function extracts all triples from graphs identified
+    as containing metadata.
+
+    Args:
+        endpoint_url: SPARQL endpoint URL.
+        void_graph_uris: List of graph URIs to extract metadata from.
+
+    Returns:
+        Dict with keys:
+        - ``metadata_by_graph``: dict mapping graph URI to metadata triples
+        - ``total_triples``: total triples extracted
+
+    Example:
+        >>> from rdfsolve import discover_all_graphs, extract_metadata_from_void_graphs
+        >>> graphs = discover_all_graphs("https://example.org/sparql")
+        >>> if graphs['void_graphs']:
+        ...     metadata = extract_metadata_from_void_graphs(
+        ...         "https://example.org/sparql",
+        ...         graphs['void_graphs']
+        ...     )
+        ...     print(f"Extracted {metadata['total_triples']} metadata triples")
+    """
+    return VoidParser().extract_metadata_from_void_graphs(endpoint_url, void_graph_uris)
+
+
 def mine_schema(
     endpoint_url: str,
     graph_uris: str | list[str] | None = None,
