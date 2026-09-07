@@ -56,7 +56,7 @@ WHERE {{
       <http://www.w3.org/2000/01/rdf-schema#label>,
       <http://www.w3.org/2000/01/rdf-schema#comment>
     ))
-  {"}}" if g_clause else ""}
+  {"}" if g_clause else ""}
 }}
 LIMIT 10000"""
 
@@ -137,7 +137,7 @@ WHERE {{
           <http://www.w3.org/2002/07/owl#Class>,
           <http://www.w3.org/2000/01/rdf-schema#Class>
         ))
-      {"}}" if g_clause else ""}
+      {"}" if g_clause else ""}
     }}
     GROUP BY ?subjectClass ?property ?objectSuperclass
   }}
@@ -232,7 +232,7 @@ WHERE {{
       <http://www.w3.org/2000/01/rdf-schema#label>,
       <http://www.w3.org/2000/01/rdf-schema#comment>
     ))
-  {"}}" if g_clause else ""}
+      {"}" if g_clause else ""}
 }}
 GROUP BY ?subjectSuperclass ?property
 ORDER BY DESC(?count)

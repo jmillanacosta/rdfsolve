@@ -7,7 +7,8 @@ import logging
 import os
 import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -195,6 +196,7 @@ class SchemaMiner:
         self._report_path = Path(report_path) if report_path else None
         self._rc: ReportCollector | None = None
         self._ontology_classes: list[str] | None = None
+        self._declared_classes: set[str] = set()
         self.last_report: MiningReport | None = None
 
     def _resolve_strategy(
@@ -511,9 +513,63 @@ class SchemaMiner:
         *report_path* was given at construction time, the JSON is
         flushed to disk after each phase completes.
         """
-        strategy = self._build_strategy_string()
-        started_at = datetime.now(timezone.utc).isoformat()
-        self._init_report(dataset_name, strategy, started_at)
+        with self._session(dataset_name):
+            return self._finish_schema(self._mine_schema(dataset_name))
+
+    @contextmanager
+    def _session(self, dataset_name: str | None) -> Iterator[None]:
+        """Start one report before any phase and retain failures."""
+        self._ontology_classes = None
+        self._declared_classes = set()
+        self._init_report(
+            dataset_name, self._build_strategy_string(), datetime.now(timezone.utc).isoformat()
+        )
+        self.last_report = self._report.report
+        try:
+            yield
+        except BaseException as exc:
+            reason = f"{type(exc).__name__}: {exc}"
+            self._report.set_abort_reason(reason)
+            report = self._report.report
+            for phase in report.phases:
+                if phase.finished_at is None:
+                    self._report.finish_phase(phase, error=reason)
+            self._report.finalise(
+                pattern_count=report.pattern_count,
+                class_count=report.class_count,
+                property_count=report.property_count,
+                uris_labelled=report.unique_uris_labelled,
+            )
+            raise
+
+    def _finish_schema(self, schema: MinedSchema) -> MinedSchema:
+        """Filter the result and set final counts and times once."""
+        if self.filter_service_namespaces:
+            schema = self._apply_namespace_filter(schema)
+        classes, properties = self._collect_class_property_sets(schema.patterns)
+        report = self._report.report
+        report.strategy = schema.about.strategy or report.strategy
+        self._report.finalise(
+            pattern_count=len(schema.patterns),
+            class_count=len(classes),
+            property_count=len(properties),
+            uris_labelled=report.unique_uris_labelled,
+        )
+        schema.about = self._build_about_metadata(
+            report.dataset_name,
+            report.strategy,
+            report.started_at,
+            schema.patterns,
+            declared_class_count=len(classes & self._declared_classes),
+            used_type_count=len(classes - self._declared_classes),
+            discovered_metadata=report.discovered_metadata,
+        )
+        return schema
+
+    def _mine_schema(self, dataset_name: str | None) -> MinedSchema:
+        """Mine data patterns within the active report session."""
+        strategy = self._report.report.strategy
+        started_at = self._report.report.started_at
 
         t0 = time.monotonic()
         patterns, one_shot_results = self._run_patterns_phase()
@@ -530,12 +586,13 @@ class SchemaMiner:
             dt,
         )
 
-        classes, properties = self._collect_class_property_sets(
+        classes, _ = self._collect_class_property_sets(
             patterns,
         )
 
         # Query for formally declared classes (owl:Class / rdfs:Class)
         declared_classes = self._query_declared_classes()
+        self._declared_classes = declared_classes
         declared_in_patterns = declared_classes & classes
         used_types = classes - declared_classes
 
@@ -546,18 +603,13 @@ class SchemaMiner:
             len(used_types),
         )
 
-        self._report.finalise(
-            pattern_count=len(patterns),
-            class_count=len(classes),
-            property_count=len(properties),
-            uris_labelled=len(uris_before),
-        )
+        self._report.report.unique_uris_labelled = len(uris_before)
         if one_shot_results is not None:
             self._report.report.one_shot_results = one_shot_results
             self._report.flush()
-        self.last_report = self._report.report
-
         # Query dataset metadata for MiningReport (not VoID)
+        phase = self._report.start_phase("dataset-metadata")
+        discovered_metadata: dict[str, Any] = {}
         try:
             logger.info("Querying dataset metadata...")
             discovered_metadata = self.query_dataset_metadata()
@@ -567,6 +619,9 @@ class SchemaMiner:
                 self._report.flush()
         except Exception as e:
             logger.warning("Could not query dataset metadata: %s", e)
+            self._report.finish_phase(phase, error=str(e))
+        else:
+            self._report.finish_phase(phase, items=len(discovered_metadata))
 
         about = self._build_about_metadata(
             dataset_name,
@@ -578,9 +633,6 @@ class SchemaMiner:
             discovered_metadata=discovered_metadata if discovered_metadata else {},
         )
         schema = MinedSchema(patterns=patterns, about=about)
-
-        if self.filter_service_namespaces:
-            schema = self._apply_namespace_filter(schema)
 
         return schema
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from rdflib import RDF, Graph, Namespace, URIRef
+from rdflib import RDF, Graph, Literal, Namespace, URIRef
 
 
 class DatasetDescription(BaseModel):
@@ -49,9 +49,9 @@ class MetadataPatterns(BaseModel):
             ds_uri = URIRef(ds.uri)
             g.add((ds_uri, RDF.type, VOID.Dataset))
             if ds.title:
-                g.add((ds_uri, DCTERMS.title, RDF.Literal(ds.title)))
+                g.add((ds_uri, DCTERMS.title, Literal(ds.title)))
             if ds.description:
-                g.add((ds_uri, DCTERMS.description, RDF.Literal(ds.description)))
+                g.add((ds_uri, DCTERMS.description, Literal(ds.description)))
             if ds.homepage:
                 g.add((ds_uri, FOAF.homepage, URIRef(ds.homepage)))
             if ds.sparql_endpoint:

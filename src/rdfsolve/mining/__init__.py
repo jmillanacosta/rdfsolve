@@ -58,7 +58,7 @@ WHERE {{
     ?child <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?parent .
     FILTER(isURI(?parent))
     FILTER(!isBlank(?parent))
-  {"}}" if g_clause else ""}
+  {"}" if g_clause else ""}
 }}
 GROUP BY ?parent
 ORDER BY DESC(?count)
@@ -101,6 +101,22 @@ def mine_with_ontology(
     Returns:
         MiningResult with data schema, ontology, and metadata
     """
+    with miner._session(dataset_name):
+        result = _mine_with_ontology(
+            miner, extract_ontology, extract_metadata, dataset_name, ontology_graph_uris
+        )
+        result.data_schema = miner._finish_schema(result.data_schema)
+        return result
+
+
+def _mine_with_ontology(
+    miner: SchemaMiner,
+    extract_ontology: bool,
+    extract_metadata: bool,
+    dataset_name: str | None,
+    ontology_graph_uris: list[str] | None,
+) -> MiningResult:
+    """Run optional phases within the miner's active report session."""
     # Detect if endpoint uses ontology-as-data pattern
     # (owl:Class instances used as subjects/objects in properties)
     uses_ontology_as_data = detect_ontology_as_data(
@@ -110,8 +126,10 @@ def mine_with_ontology(
     )
 
     ontology = None
+    superclasses: list[str] = []
     ontology_graphs_used = []
     if extract_ontology:
+        phase = miner._report.start_phase("ontology-extraction")
         # If .owl graphs were discovered, mine those specifically for ontology
         if ontology_graph_uris:
             logger.info(f"Extracting ontology structure (TBox) from {len(ontology_graph_uris)} .owl graphs:")
@@ -142,31 +160,31 @@ def mine_with_ontology(
             )
 
             # Add ontology extraction info to report
-            if hasattr(miner, "_report") and miner._report:
-                miner._report.report.ontology_extraction = {
-                    "graphs_mined": ontology_graphs_used,
-                    "graph_count": len(ontology_graphs_used),
-                    "subclass_relations": len(ontology.subclass_relations),
-                    "domain_assertions": len(ontology.domain_assertions),
-                    "range_assertions": len(ontology.range_assertions),
-                    "inverse_properties": len(ontology.inverse_properties),
-                    "property_characteristics": len(ontology.property_characteristics),
-                }
+            miner._report.report.ontology_extraction = {
+                "graphs_mined": ontology_graphs_used,
+                "graph_count": len(ontology_graphs_used),
+                "subclass_relations": len(ontology.subclass_relations),
+                "domain_assertions": len(ontology.domain_assertions),
+                "range_assertions": len(ontology.range_assertions),
+                "inverse_properties": len(ontology.inverse_properties),
+                "property_characteristics": len(ontology.property_characteristics),
+            }
+        miner._report.finish_phase(phase)
 
-        # For ontology-as-data endpoints, query superclasses for aggregation
-        if uses_ontology_as_data:
-            logger.info("Querying for superclasses of owl:Class instances")
-            superclasses = _query_owl_class_superclasses(miner._helper, miner.graph_uris)
-            # Inject these as additional classes for pattern mining
-            if superclasses:
-                miner._ontology_classes = superclasses
+    # Aggregation does not require separate ontology export.
+    if uses_ontology_as_data:
+        logger.info("Querying for superclasses of owl:Class instances")
+        superclasses = _query_owl_class_superclasses(miner._helper, miner.graph_uris)
+        if superclasses:
+            miner._ontology_classes = superclasses
 
     logger.info("Mining schema patterns (ABox)")
-    data_schema = miner.mine(dataset_name=dataset_name)
+    data_schema = miner._mine_schema(dataset_name=dataset_name)
 
     # If ontology-as-data detected, mine additional patterns
     # showing how owl:Class instances are used as data
     if uses_ontology_as_data:
+        phase = miner._report.start_phase("ontology-as-data")
         logger.info("Mining ontology-as-data patterns (owl:Class usage as data)")
 
         # Mine patterns where owl:Class instances are objects (attributed to superclass)
@@ -187,6 +205,7 @@ def mine_with_ontology(
         all_patterns = object_patterns + subject_patterns
         logger.info(f"Adding {len(all_patterns)} ontology-as-data patterns to schema")
         data_schema.patterns.extend(all_patterns)
+        miner._report.finish_phase(phase, items=len(all_patterns))
 
         # Update metadata to reflect ontology-as-data strategy
         data_schema.about.pattern_count = len(data_schema.patterns)
@@ -197,9 +216,11 @@ def mine_with_ontology(
 
     metadata = None
     if extract_metadata:
+        phase = miner._report.start_phase("infrastructure-metadata")
         logger.info("Extracting infrastructure metadata")
         metadata_miner = MetadataMiner(miner._helper, miner.graph_uris)
         metadata = metadata_miner.mine()
+        miner._report.finish_phase(phase)
 
     return MiningResult(
         data_schema=data_schema,
