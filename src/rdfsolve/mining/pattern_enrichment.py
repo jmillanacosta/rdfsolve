@@ -6,6 +6,7 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
+from rdfsolve._outcomes import QueryFailure, QueryOutcome
 from rdfsolve._uri import get_local_name, pick_label
 from rdfsolve.mining.query_builders import (
     _build_batched_literal_count_query,
@@ -167,7 +168,7 @@ def _fetch_typed_count_batch(
     """Query typed-object counts for one class batch and update *counts*."""
     try:
         t0 = time.monotonic()
-        bindings = query_with_bisect(
+        outcome = query_with_bisect(
             batch,
             graph_uris,
             _build_batched_typed_count_query,
@@ -177,11 +178,13 @@ def _fetch_typed_count_batch(
             chunk_size,
             unsafe_paging,
         )
+        report.record_outcome(outcome)
         report.record_query(
             "counts/typed-object",
             time.monotonic() - t0,
+            success=outcome.state == "complete",
         )
-        for b in bindings:
+        for b in outcome.rows:
             key = (
                 b.get("class", {}).get("value", ""),
                 b.get("p", {}).get("value", ""),
@@ -189,8 +192,18 @@ def _fetch_typed_count_batch(
             )
             cnt = b.get("cnt", {}).get("value")
             if cnt:
-                counts[key] = int(float(cnt))
-    except Exception as e:
+                counts[key] = int(cnt)
+    except (ValueError, TypeError) as e:
+        report.record_outcome(
+            QueryOutcome(
+                state="failed",
+                failures=[
+                    QueryFailure(
+                        "invalid_response", str(e), "counts/typed-object", batch, graph_uris
+                    )
+                ],
+            )
+        )
         logger.warning(
             "Typed-object count query failed (%s): %s",
             label,
@@ -212,7 +225,7 @@ def _fetch_literal_count_batch(
     """Query literal counts for one class batch and update *counts*."""
     try:
         t0 = time.monotonic()
-        bindings = query_with_bisect(
+        outcome = query_with_bisect(
             batch,
             graph_uris,
             _build_batched_literal_count_query,
@@ -222,11 +235,13 @@ def _fetch_literal_count_batch(
             chunk_size,
             unsafe_paging,
         )
+        report.record_outcome(outcome)
         report.record_query(
             "counts/literal",
             time.monotonic() - t0,
+            success=outcome.state == "complete",
         )
-        for b in bindings:
+        for b in outcome.rows:
             dt = b.get("dt", {}).get("value", "")
             key = (
                 b.get("class", {}).get("value", ""),
@@ -235,8 +250,16 @@ def _fetch_literal_count_batch(
             )
             cnt = b.get("cnt", {}).get("value")
             if cnt:
-                counts[key] = int(float(cnt))
-    except Exception as e:
+                counts[key] = int(cnt)
+    except (ValueError, TypeError) as e:
+        report.record_outcome(
+            QueryOutcome(
+                state="failed",
+                failures=[
+                    QueryFailure("invalid_response", str(e), "counts/literal", batch, graph_uris)
+                ],
+            )
+        )
         logger.warning(
             "Literal count query failed (%s): %s",
             label,
@@ -258,7 +281,7 @@ def _fetch_untyped_count_batch(
     """Query untyped-URI counts for one class batch and update *counts*."""
     try:
         t0 = time.monotonic()
-        bindings = query_with_bisect(
+        outcome = query_with_bisect(
             batch,
             graph_uris,
             _build_batched_untyped_count_query,
@@ -268,11 +291,13 @@ def _fetch_untyped_count_batch(
             chunk_size,
             unsafe_paging,
         )
+        report.record_outcome(outcome)
         report.record_query(
             "counts/untyped-uri",
             time.monotonic() - t0,
+            success=outcome.state == "complete",
         )
-        for b in bindings:
+        for b in outcome.rows:
             key = (
                 b.get("class", {}).get("value", ""),
                 b.get("p", {}).get("value", ""),
@@ -280,8 +305,18 @@ def _fetch_untyped_count_batch(
             )
             cnt = b.get("cnt", {}).get("value")
             if cnt:
-                counts[key] = int(float(cnt))
-    except Exception as e:
+                counts[key] = int(cnt)
+    except (ValueError, TypeError) as e:
+        report.record_outcome(
+            QueryOutcome(
+                state="failed",
+                failures=[
+                    QueryFailure(
+                        "invalid_response", str(e), "counts/untyped-uri", batch, graph_uris
+                    )
+                ],
+            )
+        )
         logger.warning(
             "Untyped-URI count query failed (%s): %s",
             label,

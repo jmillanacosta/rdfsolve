@@ -6,6 +6,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from rdfsolve._outcomes import QueryFailure
+
 
 class QueryStats(BaseModel):
     """Cumulative statistics for one query category."""
@@ -160,6 +162,7 @@ class MiningReport(BaseModel):
 
     # Results summary
     abort_reason: str | None = Field(None)
+    query_failures: list[QueryFailure] = Field(default_factory=list)
     pattern_count: int = Field(0, ge=0)
     class_count: int = Field(0, ge=0)
     property_count: int = Field(0, ge=0)
