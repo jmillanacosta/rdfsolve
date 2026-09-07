@@ -48,3 +48,20 @@ def test_aop_shacl_has_no_generated_counts_or_duplicate_paths():
     assert all(s.deactivated for s in restored.shapes.node_shapes if "navigation-" not in s.uri)
     active = Graph().parse(data=schema.to_shacl(activate_observed=True), format="turtle")
     assert not list(active.objects(None, SH.deactivated))
+    namespace = {}
+    exec(schema.to_pydantic(), namespace)
+    first = schema.navigation.paths[0]
+    exported = namespace["RDF_NAVIGATION"][first.steps[0].subject_class][0]
+    assert exported["bindings"]["focus"]["class_iri"] == first.steps[0].subject_class
+    assert exported["triples"][-1]["object"] == "value"
+    assert exported["bindings"]["step_1"]["class_iri"] == first.steps[0].object_class
+    assert exported["execution"] == "not_implemented"
+    assert namespace["RDF_NAVIGATION_SUMMARY"]["omitted_by_class"]
+    models = [value for value in namespace.values() if isinstance(value, type)
+              and getattr(value, "rdf_class_iri", None) == first.steps[0].subject_class]
+    exported_schema = models[0].model_json_schema()
+    view = (exported_schema["$defs"][exported_schema["$ref"].rsplit("/", 1)[-1]]
+            if "$ref" in exported_schema else exported_schema)
+    assert view["rdf_navigation"][0] == exported
+    assert any("rdf_patterns" in field for field in view["properties"].values())
+    json.dumps(exported_schema)

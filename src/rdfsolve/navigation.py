@@ -21,7 +21,8 @@ def discover_paths(
     No endpoint requests are made. Cycles are allowed up to max_hops.
     A shared class is a possible join, not evidence of shared entities.
     Counts are exact for the supplied schema graph, not the source dataset.
-    Samples rotate across starting classes, with lexical order within each class.
+    Samples rotate across starting classes. Each step prefers predicates and
+    classes not yet used in that route; ties use lexical order.
     They are bounded coverage samples, not frequency estimates.
     """
     if not 2 <= max_hops <= 6 or max_paths_per_length < 0:
@@ -63,7 +64,19 @@ def discover_paths(
     def walks(
         start: str, remaining: int, prefix: tuple[SchemaPattern, ...]
     ) -> Iterator[NavigationPath]:
-        for edge in outgoing.get(start, []):
+        predicates = {edge.property_uri for edge in prefix}
+        classes = {edge.subject_class for edge in prefix} | {start}
+        edges = sorted(
+            outgoing.get(start, []),
+            key=lambda edge: (
+                edge.property_uri in predicates,
+                edge.object_class in classes,
+                edge.property_uri,
+                edge.object_class,
+                edge.datatype or "",
+            ),
+        )
+        for edge in edges:
             if remaining == 1:
                 yield NavigationPath(steps=[*prefix, edge])
             elif suffix[remaining - 1].get(edge.object_class, 0):

@@ -98,6 +98,7 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
         "ClassVar",
         "Any",
         "RDF_NAVIGATION",
+        "RDF_NAVIGATION_SUMMARY",
         "SHACL_PROFILES",
         "Decimal",
         "date",
@@ -131,12 +132,10 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
         )
     routes: dict[str, list[dict[str, Any]]] = {}
     if schema.navigation is not None:
-        from rdfsolve.schema_models.exporters.paths import path_to_sparql
+        from rdfsolve.schema_models.exporters.navigation import navigation_metadata
 
         for route in schema.navigation.paths:
-            item = route.model_dump(mode="json")
-            item["path"] = route.property_path().model_dump(mode="json")
-            item["sparql_path"] = path_to_sparql(route.property_path())
+            item = navigation_metadata(route)
             routes.setdefault(route.steps[0].subject_class, []).append(item)
 
     metadata = {
@@ -145,7 +144,15 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
         "source_version": schema.about.source_version,
         "source_version_iri": schema.about.source_version_iri,
         "generated_at": schema.about.generated_at,
+        "endpoint": schema.about.endpoint,
+        "graph_uris": schema.about.graph_uris,
+        "rdf_dataset": schema.about.model_dump(mode="json"),
     }
+    summary = (
+        schema.navigation.model_dump(mode="json", exclude={"paths"})
+        if schema.navigation is not None
+        else None
+    )
     lines = [
         '"""Typed views of observed RDF patterns. Fields do not prove cardinality or completeness."""',
         "from __future__ import annotations",
@@ -157,6 +164,7 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
         "",
         f"DATASET_METADATA = {metadata!r}",
         f"RDF_NAVIGATION = {routes!r}",
+        f"RDF_NAVIGATION_SUMMARY = {summary!r}",
         f"SHACL_PROFILES = {profiles!r}",
         "",
         "class RDFResource(BaseModel):",
@@ -176,10 +184,14 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
                 f"    rdf_class_iri: ClassVar[str] = {iri!r}",
                 f"    rdf_navigation: ClassVar[list[dict[str, Any]]] = RDF_NAVIGATION.get({iri!r}, [])",
                 f"    rdf_shapes: ClassVar[list[dict[str, Any]]] = SHACL_PROFILES.get({iri!r}, [])",
-                f"    model_config = ConfigDict(json_schema_extra={{'rdf_class_iri': {iri!r}, 'examples': {class_examples!r}, **DATASET_METADATA}})",
+                f"    model_config = ConfigDict(json_schema_extra={{'rdf_class_iri': {iri!r}, 'examples': {class_examples!r}, 'rdf_navigation': RDF_NAVIGATION.get({iri!r}, []), 'rdf_shapes': SHACL_PROFILES.get({iri!r}, []), **DATASET_METADATA}})",
             ]
         )
-        fields = set(dir(BaseModel)) | used | {"uri", "rdf_type", "rdf_class_iri", "rdf_navigation", "rdf_shapes"}
+        fields = (
+            set(dir(BaseModel))
+            | used
+            | {"uri", "rdf_type", "rdf_class_iri", "rdf_navigation", "rdf_shapes"}
+        )
         for prop, patterns in sorted(grouped[iri].items()):
             local = re.split(r"[/#:]", prop)[-1]
             field = _identifier(local)
@@ -197,9 +209,18 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
                 for example in schema.enrichment.examples
                 if example.subject_class == iri and example.property_uri == prop
             ]
+            rdf_metadata = {
+                "rdf_property_iri": prop,
+                "rdf_patterns": [p.model_dump(mode="json") for p in patterns],
+                "rdf_examples": [
+                    e.model_dump(mode="json")
+                    for e in schema.enrichment.examples
+                    if e.subject_class == iri and e.property_uri == prop
+                ],
+            }
             lines.append(
                 f"    {field}: {value_type} | list[{value_type}] | None = Field(None, "
-                f"alias={prop!r}, description={description!r}, examples={examples!r}, json_schema_extra={{'rdf_property_iri': {prop!r}}})"
+                f"alias={prop!r}, description={description!r}, examples={examples!r}, json_schema_extra={rdf_metadata!r})"
             )
         lines.append("")
     for name in names.values():
