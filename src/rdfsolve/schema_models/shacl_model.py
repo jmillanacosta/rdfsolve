@@ -69,8 +69,8 @@ class ShaclPropertyShape(BaseModel):
         else:
             node = BNode()
 
-        graph.add((node, RDF.type, sh.PropertyShape if self.path else sh.NodeShape))
         if self.path:
+            graph.add((node, RDF.type, sh.PropertyShape))
             from rdfsolve.schema_models.exporters.paths import path_to_rdf
 
             path = (

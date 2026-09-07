@@ -186,6 +186,23 @@ def to_linkml(
         )
 
     about = schema.about
+    annotations = (
+        {"source_version_iri": about.source_version_iri} if about.source_version_iri else {}
+    )
+    if schema.shapes is not None or schema.navigation is not None:
+        import json
+        import logging
+
+        for key, model in (
+            ("rdfsolve_shacl_profile", schema.shapes),
+            ("rdfsolve_navigation", schema.navigation),
+        ):
+            if model is not None:
+                annotations[key] = json.dumps(model.model_dump(mode="json"), sort_keys=True)
+        if schema.shapes is not None:
+            logging.getLogger(__name__).warning(
+                "LinkML retains SHACL profiles as annotations, not equivalent validation constraints."
+            )
     return SchemaDefinition(
         id=base,
         name=name,
@@ -199,9 +216,7 @@ def to_linkml(
         default_range="string",
         imports=["linkml:types"],
         prefixes={name: base, "linkml": "https://w3id.org/linkml/"},
-        annotations={"source_version_iri": about.source_version_iri}
-        if about.source_version_iri
-        else {},
+        annotations=annotations,
         types=types,
         classes={item.name: item for item in classes.values()},
         slots=slots,

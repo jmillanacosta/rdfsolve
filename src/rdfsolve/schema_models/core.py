@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, SERVICE_NAMESPACE_PREFIXES
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
+from rdfsolve.schema_models.navigation import NavigationSummary
 from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 
@@ -40,6 +41,19 @@ class MinedSchema(BaseModel):
         ...,
         description="Provenance metadata",
     )
+
+    navigation: NavigationSummary | None = None
+
+    def discover_paths(
+        self, *, max_hops: int = 3, max_paths_per_length: int = 100
+    ) -> NavigationSummary:
+        """Compose candidate routes locally; do not verify instance joins."""
+        from rdfsolve.navigation import discover_paths
+
+        self.navigation = discover_paths(
+            self, max_hops=max_hops, max_paths_per_length=max_paths_per_length
+        )
+        return self.navigation
 
     # Service-namespace filtering
 
@@ -78,7 +92,9 @@ class MinedSchema(BaseModel):
         """Return sorted unique subject/object class URIs."""
         classes: set[str] = set()
         if self.shapes is not None:
-            classes.update(shape.target_class for shape in self.shapes.node_shapes if shape.target_class)
+            classes.update(
+                shape.target_class for shape in self.shapes.node_shapes if shape.target_class
+            )
         for p in self.patterns:
             classes.add(p.subject_class)
             if p.object_class not in _SENTINEL_OBJECTS:
@@ -201,6 +217,12 @@ class MinedSchema(BaseModel):
         """Export the supported VoID fields."""
         from rdfsolve.schema_models.exporters.void import to_void_graph
 
+        if self.shapes is not None or self.navigation is not None:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "VoID does not encode SHACL profiles or composed navigation. Keep canonical JSON."
+            )
         return to_void_graph(self, base_url)
 
     def to_linkml(
@@ -287,7 +309,9 @@ class MinedSchema(BaseModel):
         shapes = minedschema_to_shacl(self, base_uri=base_uri)
         graph = shapes.to_rdf()
         # VoID statistics remain dataset metadata, not validation constraints.
-        graph += self.to_void_graph()
+        from rdfsolve.schema_models.exporters.void import to_void_graph
+
+        graph += to_void_graph(self)
         self.annotate_rdf(graph)
         result: str = graph.serialize(format="turtle")
         return result

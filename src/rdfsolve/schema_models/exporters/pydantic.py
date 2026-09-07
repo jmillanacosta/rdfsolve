@@ -6,7 +6,7 @@ import keyword
 import re
 from collections import defaultdict
 from hashlib import sha256
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
@@ -96,6 +96,9 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
         "ConfigDict",
         "Field",
         "ClassVar",
+        "Any",
+        "RDF_NAVIGATION",
+        "SHACL_PROFILES",
         "Decimal",
         "date",
         "datetime",
@@ -115,6 +118,27 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
         base = _identifier(meaningful[0] if meaningful else curie, class_name=True)
         names[iri] = _unique_name(base, iri, used)
 
+    profiles: dict[str, list[dict[str, Any]]] = {}
+    if schema.shapes is not None:
+        import logging
+
+        for shape in schema.shapes.node_shapes:
+            if shape.target_class:
+                profiles.setdefault(shape.target_class, []).append(shape.model_dump(mode="json"))
+        logging.getLogger(__name__).warning(
+            "Pydantic retains SHACL profiles as metadata; it does not enforce SHACL "
+            "paths, qualified counts, closed shapes, or RDF value-node cardinalities."
+        )
+    routes: dict[str, list[dict[str, Any]]] = {}
+    if schema.navigation is not None:
+        from rdfsolve.schema_models.exporters.paths import path_to_sparql
+
+        for route in schema.navigation.paths:
+            item = route.model_dump(mode="json")
+            item["path"] = route.property_path().model_dump(mode="json")
+            item["sparql_path"] = path_to_sparql(route.property_path())
+            routes.setdefault(route.steps[0].subject_class, []).append(item)
+
     metadata = {
         "dataset_name": schema_name or schema.about.dataset_name,
         "schema_version": schema.about.schema_version,
@@ -128,10 +152,12 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
         "",
         "from datetime import date, datetime, time",
         "from decimal import Decimal",
-        "from typing import ClassVar",
+        "from typing import Any, ClassVar",
         "from pydantic import BaseModel, ConfigDict, Field",
         "",
         f"DATASET_METADATA = {metadata!r}",
+        f"RDF_NAVIGATION = {routes!r}",
+        f"SHACL_PROFILES = {profiles!r}",
         "",
         "class RDFResource(BaseModel):",
         "    model_config = ConfigDict(populate_by_name=True, extra='allow')",
@@ -148,10 +174,12 @@ def to_pydantic(schema: MinedSchema, schema_name: str | None = None) -> str:
                 f"class {name}(RDFResource):",
                 f"    {(schema.enrichment.description(iri) or ('Observed type ' + iri))!r}",
                 f"    rdf_class_iri: ClassVar[str] = {iri!r}",
+                f"    rdf_navigation: ClassVar[list[dict[str, Any]]] = RDF_NAVIGATION.get({iri!r}, [])",
+                f"    rdf_shapes: ClassVar[list[dict[str, Any]]] = SHACL_PROFILES.get({iri!r}, [])",
                 f"    model_config = ConfigDict(json_schema_extra={{'rdf_class_iri': {iri!r}, 'examples': {class_examples!r}, **DATASET_METADATA}})",
             ]
         )
-        fields = set(dir(BaseModel)) | used | {"uri", "rdf_type", "rdf_class_iri"}
+        fields = set(dir(BaseModel)) | used | {"uri", "rdf_type", "rdf_class_iri", "rdf_navigation", "rdf_shapes"}
         for prop, patterns in sorted(grouped[iri].items()):
             local = re.split(r"[/#:]", prop)[-1]
             field = _identifier(local)

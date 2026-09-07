@@ -29,6 +29,8 @@ def test_path_and_cardinality_survive_canonical_storage():
     assert shape.min_count == shape.qualified_min_count == 0
     assert shape.max_count == 2 and shape.qualified_max_count == 1
     output = Graph().parse(data=restored.to_shacl(), format="turtle")
+    repeated = MinedSchema.from_shacl(restored.to_shacl())
+    assert len(repeated.shapes.node_shapes) == 1
     prop = output.value(URIRef("urn:S"), SH.property)
     path = read_path(output, output.value(prop, SH.path))
     assert path == shape.path

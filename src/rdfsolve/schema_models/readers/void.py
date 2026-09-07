@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from rdflib import Graph, Namespace, URIRef
 from rdflib.query import ResultRow
 
@@ -143,14 +145,10 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
             if predicate is not None and (str(subject_node), str(predicate)) not in represented:
                 ambiguous.append((str(subject_node), str(predicate)))
     if ambiguous:
-        import warnings
-
-        warnings.warn(
+        logging.getLogger(__name__).warning(
             f"VoID omits object kinds for {len(ambiguous)} property partitions; "
             f"these are not converted to patterns. Examples: {ambiguous[:3]}. "
             "Use the canonical schema JSON to preserve all object kinds.",
-            UserWarning,
-            stacklevel=2,
         )
 
     # Also extract from LinkSets

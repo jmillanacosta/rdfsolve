@@ -26,7 +26,7 @@ def minedschema_to_shacl(
         ShaclShapesGraph with NodeShape per class
     """
     if schema.shapes is not None:
-        return schema.shapes.model_copy(deep=True)
+        return _add_navigation(schema, schema.shapes.model_copy(deep=True), base_uri)
 
     from collections import defaultdict
     from hashlib import md5
@@ -81,4 +81,56 @@ def minedschema_to_shacl(
             )
         )
 
-    return ShaclShapesGraph(node_shapes=node_shapes, base_uri=base_uri)
+    return _add_navigation(
+        schema, ShaclShapesGraph(node_shapes=node_shapes, base_uri=base_uri), base_uri
+    )
+
+
+def _add_navigation(
+    schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str
+) -> ShaclShapesGraph:
+    """Add nonrestrictive path hints. Zero is a lower bound, not an observed count."""
+    import logging
+    from collections import defaultdict
+    from hashlib import sha256
+
+    if schema.navigation is None or not schema.navigation.paths:
+        return shapes
+    by_class: dict[str, list[ShaclPropertyShape]] = defaultdict(list)
+    for route in schema.navigation.paths:
+        end = route.steps[-1]
+        hint = ShaclPropertyShape(path="")
+        if end.object_class == "Literal":
+            hint.node_kind = "Literal"
+            hint.datatype = end.datatype
+        elif end.object_class in ("Resource", "BlankNode"):
+            hint.node_kind = "IRI" if end.object_class == "Resource" else "BlankNode"
+        else:
+            hint.class_constraint = end.object_class
+        by_class[route.steps[0].subject_class].append(
+            ShaclPropertyShape(
+                path=route.property_path(),
+                name=" / ".join(step.property_label or step.property_uri for step in route.steps),
+                description=(
+                    "Schema-composed navigation candidate. Instance joins were not checked. "
+                    "The zero qualified lower bound does not assert a path occurrence. "
+                    "Intermediate class filters and step counts remain in canonical JSON."
+                ),
+                qualified_shape=hint,
+                qualified_min_count=0,
+            )
+        )
+    for class_iri, properties in sorted(by_class.items()):
+        identifier = sha256(class_iri.encode()).hexdigest()[:16]
+        shapes.node_shapes.append(
+            ShaclNodeShape(
+                uri=f"{base_uri}navigation-{identifier}",
+                target_class=class_iri,
+                property_shapes=properties,
+            )
+        )
+    logging.getLogger(__name__).warning(
+        "SHACL navigation keeps predicate sequences and endpoint-type hints, not intermediate "
+        "class filters, step statistics, or schema-walk totals. Keep canonical JSON for those."
+    )
+    return shapes
