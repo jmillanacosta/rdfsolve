@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, ClassVar, Literal
+from urllib.parse import urlsplit
 
 import yaml
 
@@ -57,6 +58,14 @@ class EndpointTimeoutError(EndpointError):
         """Initialize with error message and optional HTTP status code."""
         super().__init__(msg)
         self.status_code = status_code
+
+
+class ResponseLimitError(EndpointTimeoutError):
+    """Response exceeded the byte budget; use a smaller query."""
+
+
+class EndpointRateLimitError(EndpointError):
+    """Remote host rate limit; do not split the query into more requests."""
 
 
 class EndpointUnhealthyError(EndpointError):
@@ -350,7 +359,7 @@ class SparqlHelper:
         endpoint_url: str,
         *,
         use_post: bool = False,
-        max_retries: int = 10,
+        max_retries: int = 3,
         initial_backoff: float = 1.0,
         max_backoff: float = 30.0,
         timeout: float = 10000.0,
@@ -358,8 +367,13 @@ class SparqlHelper:
         sparql_strategy: str = "",
         source_name: str = "",
         inter_request_delay: float = 0.0,
+        max_response_bytes: int = 64 * 1024 * 1024,
     ) -> None:
         """Initialize SPARQL helper with retry logic and optional strategy hints."""
+        if max_response_bytes < 1 or max_retries < 1 or inter_request_delay < 0:
+            raise ValueError("Use positive response/retry limits and nonnegative request delay")
+        self.max_response_bytes = max_response_bytes
+        self._last_error_body = ""
         self.endpoint_url = endpoint_url.rstrip("/")
         self.use_post = use_post
         self.max_retries = max_retries
@@ -381,6 +395,8 @@ class SparqlHelper:
 
         # Session for connection pooling
         self._session = requests.Session()
+        if urlsplit(self.endpoint_url).hostname in ("localhost", "127.0.0.1", "::1"):
+            self._session.trust_env = False
 
         logger.debug(f"SparqlHelper initialized for {self.endpoint_url}")
 
@@ -390,7 +406,7 @@ class SparqlHelper:
         entry: dict[str, Any],
         *,
         timeout: float | None = None,
-        max_retries: int = 10,
+        max_retries: int = 3,
     ) -> SparqlHelper:
         """Create SparqlHelper from sources.yaml entry with endpoint and strategy configuration."""
         endpoint = entry.get("endpoint", "")
@@ -404,6 +420,7 @@ class SparqlHelper:
             sparql_engine=engine,
             sparql_strategy=strategy,
             source_name=entry.get("name", ""),
+            max_response_bytes=int(entry.get("max_response_bytes", 64 * 1024 * 1024)),
         )
 
     def select(
@@ -608,11 +625,6 @@ class SparqlHelper:
         purpose: str = "",
     ) -> Any:
         """Execute SPARQL query with GET/POST fallback and retry logic."""
-        # Throttling: sleep before each new logical request so remote
-        # public endpoints are not overloaded.  Zero (default) = no delay.
-        if self.inter_request_delay > 0:
-            time.sleep(self.inter_request_delay)
-
         # Try GET first (unless we know POST is required)
         use_post = self._requires_post
         # Track whether we've tried raw POST (application/sparql-query)
@@ -648,6 +660,8 @@ class SparqlHelper:
                             f"{purpose} | Endpoint returned HTML error even with POST"
                         )
 
+                parsed = json.loads(result) if parse_json else result
+
                 # Record successful query
                 SparqlHelper._record_query(
                     query=query,
@@ -679,11 +693,7 @@ class SparqlHelper:
                     if self.source_name not in SparqlHelper._strategy_updates:
                         SparqlHelper._strategy_updates[self.source_name] = winning
 
-                # Parse JSON if requested
-                if parse_json:
-                    return json.loads(result)
-
-                return result
+                return parsed
 
             except requests.exceptions.HTTPError as e:
                 status_code = e.response.status_code if e.response is not None else 0
@@ -732,7 +742,11 @@ class SparqlHelper:
                     # uses chunked/paginated queries instead of
                     # retrying the same heavy one-shot query 10 more times —
                     # each of which will also run for many minutes before 429.
-                    if status_code == 429:
+                    if status_code == 429 and urlsplit(self.endpoint_url).hostname in (
+                        "localhost",
+                        "127.0.0.1",
+                        "::1",
+                    ):
                         tag = f"{query_type}[{purpose}]" if purpose else query_type
                         logger.warning(
                             "%s 429 Too Many Requests from local QLever %s"
@@ -744,6 +758,15 @@ class SparqlHelper:
                             f"QLever 429 (at capacity): {e}",
                             status_code=429,
                         ) from e
+                    if status_code == 429:
+                        if attempt >= self.max_retries:
+                            raise EndpointRateLimitError(
+                                "Remote host rate limit; retry budget exhausted"
+                            ) from e
+                        logger.warning(
+                            "Remote host rate-limited %s; honor shared cooldown", self.endpoint_url
+                        )
+                        continue
                     # A 500/504 whose body signals "query too expensive"
                     # (Virtuoso cost limit, statement timeout, gateway
                     # timeout, etc.) is not a transient server error -
@@ -751,7 +774,7 @@ class SparqlHelper:
                     # Raise as EndpointTimeoutError so callers (e.g.
                     # the two-phase miner) can use pagination.
                     if status_code in (500, 504):
-                        body = e.response.text.lower() if e.response is not None else ""
+                        body = self._last_error_body.lower()
                         is_cost_limit = status_code == 504 or any(
                             pat in body for pat in self.COST_LIMIT_PATTERNS
                         )
@@ -773,6 +796,9 @@ class SparqlHelper:
 
                 # Non-retryable HTTP error
                 raise EndpointError(f"HTTP {status_code}: {e}") from e
+
+            except (EndpointTimeoutError, EndpointRateLimitError):
+                raise
 
             except requests.exceptions.Timeout as e:
                 # Timeouts are surfaced immediately so that callers
@@ -872,6 +898,7 @@ class SparqlHelper:
     def _check_response_health(
         self,
         response: requests.Response,
+        text: str,
     ) -> None:
         """Raise :class:`EndpointUnhealthyError` for deceptive responses.
 
@@ -882,7 +909,7 @@ class SparqlHelper:
         gracefully.
         """
         ct = response.headers.get("Content-Type", "").lower()
-        body = response.text.strip()
+        body = text.strip()
 
         # If the response is proper SPARQL JSON, nothing to do.
         if "sparql-results+json" in ct or "application/json" in ct:
@@ -901,95 +928,71 @@ class SparqlHelper:
                 )
 
     def _get_query(self, query: str, accept: str) -> str:
-        """
-        Execute SPARQL query using HTTP GET.
-
-        Args:
-            query: SPARQL query string
-            accept: Accept header for content negotiation
-
-        Returns:
-            Response body as string
-
-        Raises:
-            requests.exceptions.HTTPError: On HTTP errors
-        """
-        headers = {
-            "Accept": accept,
-            "User-Agent": "rdfsolve/1.0 (SPARQL client)",
-        }
-
-        params = {"query": query}
-
-        response = self._session.get(
-            self.endpoint_url,
-            params=params,
-            headers=headers,
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        self._check_response_health(response)
-
-        return response.text
+        """Send a bounded GET request."""
+        return self._request("GET", query, accept)
 
     def _post_query(self, query: str, accept: str) -> str:
-        """
-        Execute SPARQL query using HTTP POST.
-
-        Uses application/x-www-form-urlencoded encoding as per SPARQL protocol.
-
-        Args:
-            query: SPARQL query string
-            accept: Accept header for content negotiation
-
-        Returns:
-            Response body as string
-
-        Raises:
-            requests.exceptions.HTTPError: On HTTP errors
-        """
-        headers = {
-            "Accept": accept,
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "rdfsolve/1.0 (SPARQL client)",
-        }
-
-        data = {"query": query}
-
-        response = self._session.post(
-            self.endpoint_url,
-            data=data,
-            headers=headers,
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        self._check_response_health(response)
-
-        return response.text
+        """Send a bounded form POST request."""
+        return self._request("POST", query, accept)
 
     def _post_raw_query(self, query: str, accept: str) -> str:
-        """Execute SPARQL query using HTTP POST with raw query body.
+        """Send a bounded SPARQL protocol POST request."""
+        return self._request("POST", query, accept, raw=True)
 
-        Uses ``application/sparql-query`` content-type (SPARQL 1.1
-        Protocol §2.1.3).  Required by some engines (QLever/DSMZ)
-        that reject form-encoded POST.
-        """
-        headers = {
-            "Accept": accept,
-            "Content-Type": "application/sparql-query",
-            "User-Agent": "rdfsolve/1.0 (SPARQL client)",
-        }
+    def _request(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
+        from rdfsolve._http_policy import defer_host, retry_after_seconds, wait_for_host
 
-        response = self._session.post(
+        host = urlsplit(self.endpoint_url).hostname or self.endpoint_url
+        if not wait_for_host(host, self.inter_request_delay, self.timeout):
+            raise EndpointRateLimitError("Host cooldown exceeds the request wait budget")
+        headers = {"Accept": accept, "User-Agent": "rdfsolve (SPARQL client)"}
+        if method == "POST":
+            headers["Content-Type"] = (
+                "application/sparql-query" if raw else "application/x-www-form-urlencoded"
+            )
+        self._last_error_body = ""
+        started = time.monotonic()
+        with self._session.request(
+            method,
             self.endpoint_url,
-            data=query.encode("utf-8"),
+            params={"query": query} if method == "GET" else None,
+            data=(query.encode("utf-8") if raw else {"query": query}) if method == "POST" else None,
             headers=headers,
             timeout=self.timeout,
-        )
-        response.raise_for_status()
-        self._check_response_health(response)
-
-        return response.text
+            stream=True,
+        ) as response:
+            if response.status_code in (429, 503):
+                cooldown = retry_after_seconds(response.headers.get("Retry-After"))
+                defer_host(
+                    host, cooldown if cooldown is not None else max(1.0, self.initial_backoff)
+                )
+            body = bytearray()
+            error_response = response.status_code >= 400
+            limit = (
+                min(self.max_response_bytes, 65536) if error_response else self.max_response_bytes
+            )
+            for chunk in response.iter_content(chunk_size=65536):
+                if time.monotonic() - started > self.timeout:
+                    raise EndpointTimeoutError("Response stream exceeded the request time budget")
+                available = limit - len(body)
+                body.extend(chunk[:available])
+                if len(chunk) > available:
+                    if error_response:
+                        break
+                    raise ResponseLimitError(f"Decompressed response exceeds {limit} bytes")
+            encoding = (
+                response.encoding
+                if "charset=" in response.headers.get("Content-Type", "").lower()
+                else "utf-8"
+            )
+            text = body.decode(
+                encoding or "utf-8", errors="replace" if error_response else "strict"
+            )
+            if error_response:
+                self._last_error_body = text
+            response.raise_for_status()
+            self._check_response_health(response, text)
+            return text
 
     def _handle_retry(
         self,
