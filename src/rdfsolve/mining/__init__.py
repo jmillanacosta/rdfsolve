@@ -132,7 +132,9 @@ def _mine_with_ontology(
         phase = miner._report.start_phase("ontology-extraction")
         # If .owl graphs were discovered, mine those specifically for ontology
         if ontology_graph_uris:
-            logger.info(f"Extracting ontology structure (TBox) from {len(ontology_graph_uris)} .owl graphs:")
+            logger.info(
+                f"Extracting ontology structure (TBox) from {len(ontology_graph_uris)} .owl graphs:"
+            )
             for owl_graph in ontology_graph_uris[:5]:  # Log first 5
                 logger.info(f"  - {owl_graph}")
             if len(ontology_graph_uris) > 5:

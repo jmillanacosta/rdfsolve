@@ -919,3 +919,4 @@ notes/*
 data/*
 /src/logs/
 rdfsolve_pipeline.svg
+docs/known-limitations.md
