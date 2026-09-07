@@ -1188,7 +1188,9 @@ class SparqlHelper:
                     elapsed = time.monotonic() - t0
 
                     result_body = results.get("results")
-                    bindings = result_body.get("bindings") if isinstance(result_body, dict) else None
+                    bindings = (
+                        result_body.get("bindings") if isinstance(result_body, dict) else None
+                    )
                     if not isinstance(bindings, list) or any(
                         not isinstance(row, dict) for row in bindings
                     ):
@@ -1251,8 +1253,7 @@ class SparqlHelper:
             if not success:
                 # Raise so callers know the result set is incomplete.
                 raise PaginationTruncatedError(
-                    f"Pagination abandoned at offset {current_offset}"
-                    f": {last_error}",
+                    f"Pagination abandoned at offset {current_offset}: {last_error}",
                     offset=current_offset,
                 ) from last_error
 

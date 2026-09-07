@@ -1074,10 +1074,15 @@ class MinedSchema(BaseModel):
                     g.add((graph_node, FOAF.homepage, URIRef(homepage)))
 
                 # Mark ontology graphs with void:vocabulary
-                if self.about.ontology_graph_uris and graph_uri_str in self.about.ontology_graph_uris:
+                if (
+                    self.about.ontology_graph_uris
+                    and graph_uri_str in self.about.ontology_graph_uris
+                ):
                     g.add((dataset_uri, void.vocabulary, URIRef(graph_uri_str)))
                     # Also mark the graph itself
-                    g.add((graph_node, DCTERMS.type, URIRef("http://www.w3.org/2002/07/owl#Ontology")))
+                    g.add(
+                        (graph_node, DCTERMS.type, URIRef("http://www.w3.org/2002/07/owl#Ontology"))
+                    )
 
         # Group patterns by subject class for nested VoID structure
         # Structure: class partition -> property partition -> object/datatype partition

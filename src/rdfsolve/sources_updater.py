@@ -48,7 +48,7 @@ def update_sources_yaml_with_graphs(
         ...     "data/sources.yaml",
         ...     "mydata",
         ...     graphs,
-        ...     void_partition_graphs=["http://example.org/void/"]
+        ...     void_partition_graphs=["http://example.org/void/"],
         ... )
     """
     sources_path = Path(sources_file)
@@ -107,7 +107,9 @@ def update_sources_yaml_with_graphs(
     # Add void_schema if VoID partitions are mineable
     if void_partition_graphs:
         source["void_schema"] = void_partition_graphs
-        logger.info(f"Added {len(void_partition_graphs)} VoID schema graph(s): {void_partition_graphs}")
+        logger.info(
+            f"Added {len(void_partition_graphs)} VoID schema graph(s): {void_partition_graphs}"
+        )
         updates_made = True
     elif "void_schema" in source:
         # Remove if no longer present

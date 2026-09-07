@@ -383,10 +383,9 @@ def extract_metadata_from_void_graphs(
     Example:
         >>> from rdfsolve import discover_all_graphs, extract_metadata_from_void_graphs
         >>> graphs = discover_all_graphs("https://example.org/sparql")
-        >>> if graphs['void_graphs']:
+        >>> if graphs["void_graphs"]:
         ...     metadata = extract_metadata_from_void_graphs(
-        ...         "https://example.org/sparql",
-        ...         graphs['void_graphs']
+        ...         "https://example.org/sparql", graphs["void_graphs"]
         ...     )
         ...     print(f"Extracted {metadata['total_triples']} metadata triples")
     """
