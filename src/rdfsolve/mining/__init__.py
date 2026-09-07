@@ -121,27 +121,8 @@ def mine_with_ontology(
             dataset_name,
             ontology_graph_uris,
             ontology_as_data,
+            ontology_scope,
         )
-        if result.ontology is not None and ontology_scope == "schema":
-            raw_count = len(result.ontology.subclass_relations)
-            visible = result.data_schema
-            if miner.filter_service_namespaces:
-                visible = visible.filter_service_namespaces()
-            result.ontology = result.ontology.for_schema(
-                visible.get_classes(), visible.get_properties()
-            )
-            summary = miner._report.report.ontology_extraction
-            if summary is not None:
-                summary.update(
-                    raw_subclass_relations=raw_count,
-                    subclass_relations=len(result.ontology.subclass_relations),
-                    excluded_subclass_relations=raw_count - len(result.ontology.subclass_relations),
-                    classes=len(result.ontology.classes),
-                    domain_assertions=len(result.ontology.domain_assertions),
-                    range_assertions=len(result.ontology.range_assertions),
-                    inverse_properties=len(result.ontology.inverse_properties),
-                    property_characteristics=len(result.ontology.property_characteristics),
-                )
         ontology_iris = result.ontology.term_iris() if result.ontology else []
         annotations = None
         shared_scope = ontology_graph_uris is None or ontology_graph_uris == miner.graph_uris
@@ -179,6 +160,7 @@ def _mine_with_ontology(
     dataset_name: str | None,
     ontology_graph_uris: list[str] | None,
     ontology_as_data: bool,
+    ontology_scope: Literal["schema", "full"],
 ) -> MiningResult:
     """Run optional phases within the miner's active report session."""
     # Detect if endpoint uses ontology-as-data pattern
@@ -191,52 +173,6 @@ def _mine_with_ontology(
 
     ontology = None
     superclasses: list[str] = []
-    ontology_graphs_used = []
-    if extract_ontology:
-        phase = miner._report.start_phase("ontology-extraction")
-        # Use explicit graph scope when provided.
-        if ontology_graph_uris:
-            logger.info(
-                f"Extracting ontology structure (TBox) from {len(ontology_graph_uris)} configured graphs:"
-            )
-            for owl_graph in ontology_graph_uris[:5]:  # Log first 5
-                logger.info(f"  - {owl_graph}")
-            if len(ontology_graph_uris) > 5:
-                logger.info(f"  ... and {len(ontology_graph_uris) - 5} more")
-
-            # Mine the configured ontology graphs.
-            ontology_miner = OntologyMiner(miner._helper, ontology_graph_uris)
-            ontology = ontology_miner.mine()
-            ontology_graphs_used = ontology_graph_uris
-
-        else:
-            # Fallback: mine from configured graphs or default
-            graph_desc = ", ".join(miner.graph_uris) if miner.graph_uris else "default graph"
-            logger.info(f"Extracting ontology structure (TBox) from {graph_desc}")
-            ontology_miner = OntologyMiner(miner._helper, miner.graph_uris)
-            ontology = ontology_miner.mine()
-            ontology_graphs_used = miner.graph_uris or []
-
-        # Log ontology extraction results
-        if ontology:
-            logger.info(
-                f"Ontology extracted: {len(ontology.subclass_relations)} subclass, "
-                f"{len(ontology.domain_assertions)} domain, "
-                f"{len(ontology.range_assertions)} range relations"
-            )
-
-            # Add ontology extraction info to report
-            miner._report.report.ontology_extraction = {
-                "graphs_mined": ontology_graphs_used,
-                "graph_count": len(ontology_graphs_used),
-                "subclass_relations": len(ontology.subclass_relations),
-                "domain_assertions": len(ontology.domain_assertions),
-                "range_assertions": len(ontology.range_assertions),
-                "inverse_properties": len(ontology.inverse_properties),
-                "property_characteristics": len(ontology.property_characteristics),
-            }
-        miner._report.finish_phase(phase)
-
     # Aggregation does not require separate ontology export.
     if uses_ontology_as_data:
         logger.info("Querying for superclasses of owl:Class instances")
@@ -279,6 +215,34 @@ def _mine_with_ontology(
             data_schema.about.strategy += "+ontology-as-data"
         else:
             data_schema.about.strategy = "ontology-as-data"
+
+    if extract_ontology:
+        phase = miner._report.start_phase("ontology-extraction")
+        visible = data_schema
+        if miner.filter_service_namespaces:
+            visible = visible.filter_service_namespaces()
+        scope = ontology_graph_uris if ontology_graph_uris is not None else miner.graph_uris
+        logger.info("Querying %s-scoped ontology axioms", ontology_scope)
+        ontology = OntologyMiner(
+            miner._helper,
+            scope,
+            class_iris=visible.get_classes() if ontology_scope == "schema" else None,
+            property_iris=visible.get_properties() if ontology_scope == "schema" else None,
+            batch_size=min(miner.class_batch_size, 50),
+            delay=miner.delay,
+        ).mine()
+        miner._report.report.ontology_extraction = {
+            "scope": ontology_scope,
+            "graphs_mined": scope or [],
+            "graph_count": len(scope or []),
+            "classes": len(ontology.classes),
+            "subclass_relations": len(ontology.subclass_relations),
+            "domain_assertions": len(ontology.domain_assertions),
+            "range_assertions": len(ontology.range_assertions),
+            "inverse_properties": len(ontology.inverse_properties),
+            "property_characteristics": len(ontology.property_characteristics),
+        }
+        miner._report.finish_phase(phase)
 
     metadata = None
     if extract_metadata:
