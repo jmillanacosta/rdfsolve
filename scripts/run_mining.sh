@@ -19,6 +19,7 @@ test -r "$registry" || { echo "Source registry not readable: $registry" >&2; exi
 # Keep remote proxy settings, but connect to local QLever directly.
 export no_proxy="localhost,127.0.0.1,::1${no_proxy:+,$no_proxy}"
 export NO_PROXY="$no_proxy${NO_PROXY:+,$NO_PROXY}"
+export RDFSOLVE_HTTP_LOCK_DIR="${RDFSOLVE_HTTP_LOCK_DIR:-$repo/../.rdfsolve-http-locks}"
 export PYTHONUNBUFFERED=1
 export PYTHONFAULTHANDLER=1
 "$python" -c 'import pathlib, rdfsolve; p=pathlib.Path(rdfsolve.__file__).resolve(); print("Package:", p); assert p.is_relative_to(pathlib.Path.cwd() / "src"), "Install this checkout in the selected environment"'

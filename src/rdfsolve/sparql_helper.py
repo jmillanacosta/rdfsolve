@@ -853,11 +853,19 @@ class SparqlHelper:
         return self._request("POST", query, accept, raw=True)
 
     def _request(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
-        from rdfsolve._http_policy import defer_host, retry_after_seconds, wait_for_host
+        from rdfsolve._host_gate import HostBusyError, host_request
 
         host = urlsplit(self.endpoint_url).hostname or self.endpoint_url
-        if not wait_for_host(host, self.inter_request_delay, self.timeout):
-            raise EndpointRateLimitError("Host cooldown exceeds the request wait budget")
+        try:
+            with host_request(host, timeout=self.timeout, interval=self.inter_request_delay):
+                return self._request_serial(method, query, accept, raw=raw)
+        except HostBusyError as error:
+            raise EndpointRateLimitError(str(error)) from error
+
+    def _request_serial(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
+        from rdfsolve._http_policy import defer_host, retry_after_seconds
+
+        host = urlsplit(self.endpoint_url).hostname or self.endpoint_url
         headers = {"Accept": accept, "User-Agent": "rdfsolve (SPARQL client)"}
         if method == "POST":
             headers["Content-Type"] = (

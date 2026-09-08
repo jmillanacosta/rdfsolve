@@ -36,6 +36,12 @@ def defer_host(host: str, seconds: float) -> None:
         _condition.notify_all()
 
 
+def remaining_host_delay(host: str) -> float:
+    """Return the host cooldown to persist when its request slot closes."""
+    with _condition:
+        return max(0.0, _next_request.get(host, 0.0) - time.monotonic())
+
+
 def wait_for_host(host: str, interval: float, max_wait: float) -> bool:
     """Reserve one request start, or refuse a wait beyond the caller's budget."""
     deadline = time.monotonic() + max_wait

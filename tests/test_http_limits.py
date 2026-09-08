@@ -50,7 +50,8 @@ def test_decompressed_response_limit_does_not_retry(monkeypatch):
         thread.join()
 
 
-def test_remote_retry_after_applies_to_other_helpers(monkeypatch):
+def test_remote_retry_after_applies_to_other_helpers(monkeypatch, tmp_path):
+    monkeypatch.setenv("RDFSOLVE_HTTP_LOCK_DIR", str(tmp_path))
     monkeypatch.setattr(_http_policy, "_next_request", {})
     calls = []
 
