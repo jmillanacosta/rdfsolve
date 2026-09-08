@@ -49,14 +49,27 @@ class Client(DatasetClient):
     def model(self, name_or_iri: str) -> type[BaseModel]:
         """Accept generated names, spaced names, or full class IRIs."""
         matches = [
-            model for name, model in self.models.items()
-            if _key(name_or_iri) in {
-                _key(name), _key(re.split(r"[/#:]", getattr(model, "rdf_class_iri", ""))[-1])
-            } or getattr(model, "rdf_class_iri", "") == name_or_iri
+            model
+            for name, model in self.models.items()
+            if _key(name_or_iri)
+            in {_key(name), _key(re.split(r"[/#:]", getattr(model, "rdf_class_iri", ""))[-1])}
+            or getattr(model, "rdf_class_iri", "") == name_or_iri
         ]
         if len(matches) != 1:
             raise ValueError(f"Choose a type from data.types(): {name_or_iri}")
         return matches[0]
+
+    def type_name(self, model: type[BaseModel]) -> str:
+        """Display a source label without changing the generated type."""
+        iri = getattr(model, "rdf_class_iri", "")
+        labels = [
+            item.text.value for item in self._schema.enrichment.labels
+            if item.term_iri == iri and item.text.language in (None, "en")
+        ]
+        if labels:
+            return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", min(labels))
+        local = re.split(r"[/#:]", iri)[-1]
+        return local if re.search(r"\\d", local) else _name(model.__name__)
 
     def link_name(self, model: type[BaseModel], field: str) -> str:
         """Use a source label or readable predicate name for a link."""
@@ -64,7 +77,8 @@ class Client(DatasetClient):
         if isinstance(extra, dict):
             iri = str(extra.get("rdf_property_iri", ""))
             labels = [
-                item.text.value for item in self._schema.enrichment.labels
+                item.text.value
+                for item in self._schema.enrichment.labels
                 if item.term_iri == iri and item.text.language in (None, "en")
             ]
             if labels:
@@ -76,7 +90,8 @@ class Client(DatasetClient):
     def field_name(self, model: type[BaseModel], text: str) -> str:
         """Resolve a field by its Python name or displayed source label."""
         matches = [
-            name for name in model.model_fields
+            name
+            for name in model.model_fields
             if _key(text) in {_key(name), _key(self.link_name(model, name))}
         ]
         if len(matches) != 1:
@@ -98,14 +113,16 @@ class Client(DatasetClient):
             if not isinstance(iri, str):
                 raise ValueError("The identifier column must contain IRIs")
             _iri(iri)
-            records.append(model.model_validate({
-                "uri": iri, **{field: row[column] for field, column in fields.items()}
-            }))
+            records.append(
+                model.model_validate(
+                    {"uri": iri, **{field: row[column] for field, column in fields.items()}}
+                )
+            )
         return Results(self, records)
 
     def types(self) -> pd.DataFrame:
         """List available record types without sending a query."""
-        return pd.DataFrame({"Type": sorted(_name(name) for name in self.models)})
+        return pd.DataFrame({"Type": sorted(self.type_name(model) for model in self.models.values())})
 
     @classmethod
     def from_session(
@@ -139,8 +156,10 @@ class Client(DatasetClient):
         if field is not None:
             predicates = {
                 str(info.json_schema_extra["rdf_property_iri"])
-                for model in models for name, info in model.model_fields.items()
-                if _key(name) == _key(field) and isinstance(info.json_schema_extra, dict)
+                for model in models
+                for name, info in model.model_fields.items()
+                if _key(name) == _key(field)
+                and isinstance(info.json_schema_extra, dict)
                 and info.json_schema_extra.get("rdf_property_iri")
             }
             if not predicates:
@@ -220,17 +239,29 @@ class Results:
 
     def _repr_html_(self) -> str:
         note = " · showing the first 20" if len(self) > 20 else ""
-        return f"<p>{len(self)} matches{note}</p>" + self._table().head(20).to_html(index=False, escape=True)
+        return f"<p>{len(self)} matches{note}</p>" + self._table().head(20).to_html(
+            index=False, escape=True
+        )
 
     def _table(self) -> pd.DataFrame:
-        return pd.DataFrame([
-            {"Name": _title(record), "Type": _name(type(record).__name__)}
-            for record in self.records
-        ], columns=["Name", "Type"])
+        return pd.DataFrame(
+            [
+                {"Name": _title(record), "Type": self.client.type_name(type(record))}
+                for record in self.records
+            ],
+            columns=["Name", "Type"],
+        )
 
     def types(self) -> pd.DataFrame:
         """List the types found and their record counts."""
-        return self._table().groupby("Type", as_index=False).size().rename(columns={"size": "Matches"})
+        groups: dict[type[BaseModel], list[BaseModel]] = defaultdict(list)
+        for record in self.records:
+            groups[type(record)].append(record)
+        return pd.DataFrame([
+            {"Type": self.client.type_name(model), "Matches": len(records),
+             "Example": _title(records[0])}
+            for model, records in groups.items()
+        ], columns=["Type", "Matches", "Example"])
 
     def of_type(self, kind: str) -> Results:
         """Keep matches of one type without sending a query."""
@@ -246,13 +277,17 @@ class Results:
     def fields(self) -> SimpleNamespace:
         """Offer field names for tab completion, without fetching their values."""
         names = {
-            name for record in self.records for name, info in type(record).model_fields.items()
+            name
+            for record in self.records
+            for name, info in type(record).model_fields.items()
             if isinstance(info.json_schema_extra, dict) and info.json_schema_extra.get("rdf_path")
         }
         aliases = {name: name for name in sorted(names)}
         for record in self.records:
             for name in names & type(record).model_fields.keys():
-                label = re.sub(r"\\W+", "_", self.client.link_name(type(record), name).lower()).strip("_")
+                label = re.sub(
+                    r"\\W+", "_", self.client.link_name(type(record), name).lower()
+                ).strip("_")
                 if label.isidentifier() and label not in aliases:
                     aliases[label] = name
         return SimpleNamespace(**aliases)
@@ -264,30 +299,50 @@ class Results:
             for row in self.client.links(source).itertuples(index=False):
                 target = self.client.model(str(row.target))
                 if not incoming or target in models:
-                    routes.append((target, str(row.field), source) if incoming else (source, str(row.field), target))
+                    routes.append(
+                        (target, str(row.field), source)
+                        if incoming
+                        else (source, str(row.field), target)
+                    )
         return routes
 
     def paths(self, *, incoming: bool = False) -> pd.DataFrame:
         """Show the types and named links available from these records."""
-        return pd.DataFrame([
-            {"From": _name(source.__name__), "Link": self.client.link_name(target if incoming else source, field), "To": _name(target.__name__)}
-            for source, field, target in self._routes(incoming)
-        ], columns=["From", "Link", "To"]).drop_duplicates()
+        return pd.DataFrame(
+            [
+                {
+                    "From": self.client.type_name(source),
+                    "Link": self.client.link_name(target if incoming else source, field),
+                    "To": self.client.type_name(target),
+                }
+                for source, field, target in self._routes(incoming)
+            ],
+            columns=["From", "Link", "To"],
+        ).drop_duplicates()
 
     def related(self, kind: str, *, via: str | None = None, incoming: bool = False) -> Results:
         """Read a related type. Ask for a link name when several routes exist."""
         target = self.client.model(kind)
         routes = [
-            (source, field) for source, field, dest in self._routes(incoming)
-            if dest is target and (via is None or _key(via) in {
-                _key(field), _key(self.client.link_name(dest if incoming else source, field))
-            })
+            (source, field)
+            for source, field, dest in self._routes(incoming)
+            if dest is target
+            and (
+                via is None
+                or _key(via)
+                in {_key(field), _key(self.client.link_name(dest if incoming else source, field))}
+            )
         ]
         by_source: dict[type[BaseModel], set[str]] = defaultdict(set)
         for source, field in routes:
             by_source[source].add(field)
         if any(len(fields) > 1 for fields in by_source.values()):
-            choices = sorted({self.client.link_name(target if incoming else source, field) for source, field in routes})
+            choices = sorted(
+                {
+                    self.client.link_name(target if incoming else source, field)
+                    for source, field in routes
+                }
+            )
             raise ValueError(f"Choose one link with via= from: {choices}")
         if self.records and not routes:
             raise ValueError("No matching link. Use paths() to see where these records can lead.")
@@ -306,21 +361,22 @@ class Results:
         if field == "uri":
             return
         models = {type(record) for record in self.records}
-        names = {
-            model: self.client.field_name(model, field)
-            for model in models
-        }
+        names = {model: self.client.field_name(model, field) for model in models}
         with self.client.step(f"Read {field}"):
             for model, name in names.items():
                 group = [
-                    r for r in self.records if type(r) is model
+                    r
+                    for r in self.records
+                    if type(r) is model
                     and name not in vars(r).get("rdf_loaded_fields", [])
                     and name not in r.model_fields_set
                 ]
                 if not group:
                     continue
                 selected = set(_name_fields(model)) | {name}
-                selected.update(field for r in group for field in vars(r).get("rdf_loaded_fields", []))
+                selected.update(
+                    field for r in group for field in vars(r).get("rdf_loaded_fields", [])
+                )
                 loaded = self.client.get_many(
                     model, [str(vars(r)["uri"]) for r in group], fields=sorted(selected)
                 )
@@ -339,7 +395,9 @@ class Results:
             for field in fields:
                 name = self.client.field_name(type(record), field)
                 value = getattr(record, name)
-                row[_name(field)] = " | ".join(map(str, value)) if isinstance(value, list) else value
+                row[_name(field)] = (
+                    " | ".join(map(str, value)) if isinstance(value, list) else value
+                )
             rows.append(row)
         return pd.DataFrame(rows, columns=["Name", *(_name(f) for f in fields)])
 
@@ -359,15 +417,23 @@ class Results:
                 graph = model_to_graph(record, fields=[name])
                 terms = [
                     RdfTerm.from_rdf(value).model_dump(mode="json")
-                    for value in graph.objects(URIRef(vars(record)["uri"]), URIRef(str(extra["rdf_property_iri"])))
+                    for value in graph.objects(
+                        URIRef(vars(record)["uri"]), URIRef(str(extra["rdf_property_iri"]))
+                    )
                 ]
             for term in terms:
                 values[json.dumps(term, sort_keys=True)].add(str(vars(record)["uri"]))
         rows = []
         for raw, subjects in values.items():
             term = json.loads(raw)
-            rows.append({"Value": term["value"], "Records": len(subjects),
-                         "Language": term.get("language"), "Datatype": term.get("datatype")})
+            rows.append(
+                {
+                    "Value": term["value"],
+                    "Records": len(subjects),
+                    "Language": term.get("language"),
+                    "Datatype": term.get("datatype"),
+                }
+            )
         result = pd.DataFrame(rows, columns=["Value", "Records", "Language"])
         result.attrs["rdf_terms"] = [json.loads(raw) for raw in values]
         return result.dropna(axis=1, how="all")
@@ -378,8 +444,12 @@ def explore(endpoint: str, *, graph: str | None = None, timeout: float = 30) -> 
     from rdfsolve.miner import SchemaMiner
 
     miner = SchemaMiner(
-        endpoint, graph_uris=[graph] if graph else None,
-        counts=False, enrich=True, examples_per_pattern=0, timeout=timeout,
+        endpoint,
+        graph_uris=[graph] if graph else None,
+        counts=False,
+        enrich=True,
+        examples_per_pattern=0,
+        timeout=timeout,
     )
     miner.helper.enable_query_collection()
     try:
