@@ -18,11 +18,7 @@ from rdfsolve.schema_models.core import MinedSchema, MiningResult
 from rdfsolve.schema_models.exporters.rdfconfig import to_rdfconfig
 from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 from rdfsolve.schema_models.exporters.void import minedschema_to_void
-from rdfsolve.schema_models.metadata import (
-    DatasetDescription,
-    MetadataPatterns,
-    ServiceDescription,
-)
+from rdfsolve.schema_models.metadata import MetadataDocument
 from rdfsolve.schema_models.ontology import (
     DomainAssertion,
     InverseRelation,
@@ -83,11 +79,10 @@ __all__ = [
     # core
     "AboutMetadata",
     # metadata
-    "DatasetDescription",
     # ontology
     "DomainAssertion",
     "InverseRelation",
-    "MetadataPatterns",
+    "MetadataDocument",
     "MinedSchema",
     # report
     "MiningReport",
@@ -101,7 +96,6 @@ __all__ = [
     "RangeAssertion",
     "Restriction",
     "SchemaPattern",
-    "ServiceDescription",
     # shacl models
     "ShaclNodeShape",
     "ShaclPropertyShape",

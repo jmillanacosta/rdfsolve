@@ -489,7 +489,7 @@ class SchemaMiner:
         """Query endpoint for dataset metadata using multiple patterns."""
         from rdfsolve.metadata import query_endpoint_metadata
 
-        return query_endpoint_metadata(self._helper)
+        return query_endpoint_metadata(self._helper, graph_uris=self.graph_uris)
 
     def mine(
         self,

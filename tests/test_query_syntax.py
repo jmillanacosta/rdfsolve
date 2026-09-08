@@ -53,6 +53,8 @@ def test_optional_query_syntax(scope):
     helper.select.side_effect = lambda query, **kwargs: json.loads(
         Dataset().query(query).serialize(format="json")
     )
+    helper.endpoint_url = "https://example.org/sparql"
+    helper.construct.side_effect = lambda query: Dataset().query(query).serialize(format="turtle").decode()
     _query_owl_class_superclasses(helper, scope)
     detect_ontology_as_data(helper, scope)
     mine_ontology_as_data_patterns(helper, scope, superclasses=["urn:A"])

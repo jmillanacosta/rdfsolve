@@ -4,13 +4,13 @@ import json
 from unittest.mock import Mock
 
 import pytest
-from rdflib import Literal, URIRef
+from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import DCTERMS
 
 from rdfsolve.miner import SchemaMiner
 from rdfsolve.mining import mine_with_ontology
 from rdfsolve.schema_models import SchemaPattern
-from rdfsolve.schema_models.metadata import DatasetDescription, MetadataPatterns
+from rdfsolve.schema_models.metadata import MetadataDocument
 from rdfsolve.schema_models.ontology import OntologyStructure
 
 
@@ -44,7 +44,7 @@ def test_optional_phase_matrix(miner, monkeypatch, ontology, metadata, detected)
     monkeypatch.setattr("rdfsolve.mining.detect_ontology_as_data", lambda *a, **kw: detected)
     monkeypatch.setattr("rdfsolve.mining._query_owl_class_superclasses", lambda *a: ["urn:A"])
     monkeypatch.setattr("rdfsolve.mining.OntologyMiner.mine", optional(OntologyStructure()))
-    monkeypatch.setattr("rdfsolve.mining.MetadataMiner.mine", optional(MetadataPatterns()))
+    monkeypatch.setattr("rdfsolve.mining.MetadataMiner.mine", optional(MetadataDocument(graph=Graph())))
     pattern = SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="urn:B")
     monkeypatch.setattr(
         "rdfsolve.mining.mine_ontology_as_data_patterns", lambda *a, **kw: [pattern]
@@ -133,9 +133,10 @@ def test_failed_optional_phase_keeps_its_report(miner, monkeypatch):
 
 
 def test_metadata_export_uses_literal_nodes():
-    metadata = MetadataPatterns(
-        datasets=[DatasetDescription(uri="urn:dataset", title="Title", description="Text")]
-    )
+    source = Graph()
+    source.add((URIRef("urn:dataset"), DCTERMS.title, Literal("Title")))
+    source.add((URIRef("urn:dataset"), DCTERMS.description, Literal("Text")))
+    metadata = MetadataDocument(graph=source)
     graph = metadata.to_rdf_graph()
     assert (URIRef("urn:dataset"), DCTERMS.title, Literal("Title")) in graph
     assert (URIRef("urn:dataset"), DCTERMS.description, Literal("Text")) in graph

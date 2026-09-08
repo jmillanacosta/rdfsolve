@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from rdfsolve.schema_models.metadata import MetadataDocument
     from rdfsolve.schema_models.void_schema import VoidSchema
     from rdfsolve.sources import SourceEntry
 
@@ -439,27 +440,21 @@ def mine_schema(
 
 
 def query_metadata(
-    endpoint_url: str,
-    timeout: float = 30.0,
-) -> dict[str, Any]:
-    """Query SPARQL endpoint for dataset metadata without full schema mining.
+    endpoint_url: str, timeout: float = 30.0, *,
+    graph_uris: list[str] | None = None,
+    subject_iris: list[str] | None = None,
+) -> MetadataDocument:
+    """Retrieve scoped RDF metadata. Use .project(subject_iri) for known fields.
 
-    Useful for metadata harvesting, catalog building, and pre-mining checks.
-    Queries for license, publisher, creators, version, dates, etc. using
-    multiple strategies across common metadata vocabularies (DCTERMS, DC,
-    DCAT, PAV, VoID, OWL, FOAF, PROV).
-
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        timeout: Query timeout in seconds (default: 30)
-
-    Returns:
-        dict with metadata fields.
+    Explicit subjects can use any vocabulary. Automatic discovery looks for
+    declared VoID/DCAT datasets and SPARQL services, not arbitrary entities.
+    None graph scope means the default graph, not every named graph.
     """
-    from .miner import SchemaMiner
+    from rdfsolve.metadata import query_metadata_document
+    from rdfsolve.sparql_helper import SparqlHelper
 
-    miner = SchemaMiner(endpoint_url=endpoint_url, timeout=timeout)
-    return miner.query_dataset_metadata()
+    with SparqlHelper(endpoint_url, timeout=timeout, max_retries=1) as helper:
+        return query_metadata_document(helper, graph_uris=graph_uris, subject_iris=subject_iris)
 
 
 # Sources / Registry

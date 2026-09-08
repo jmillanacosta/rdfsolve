@@ -13,6 +13,7 @@ from rdfsolve.schema_models.void_model import VoidClassPartition, VoidDataset
 
 if TYPE_CHECKING:
     from rdfsolve.schema_models.core import MinedSchema
+    from rdfsolve.schema_models.metadata import MetadataDocument
 
 logger = logging.getLogger(__name__)
 VOID = Namespace("http://rdfs.org/ns/void#")
@@ -70,6 +71,13 @@ class VoidSchema:
             VoidClassPartition.from_rdf(self.graph, node)
             for node in sorted(set(self.graph.subjects(VOID["class"], None)), key=str)
         ]
+
+    def get_metadata(self) -> MetadataDocument:
+        """Return retained RDF, without a new endpoint request."""
+        from rdfsolve.schema_models.metadata import MetadataDocument
+
+        return MetadataDocument(graph=self.graph + Graph(), endpoint=self.endpoint,
+                                graph_uris=self.graph_uris, scope="retained VoID RDF")
 
     def to_mined_schema(self) -> MinedSchema:
         """Read supported patterns and metadata; do not mine instance data."""

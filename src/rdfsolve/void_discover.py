@@ -1,7 +1,12 @@
 """VoID parser for converting RDF graphs to schemas and discovering VoID catalogs from SPARQL endpoints."""
 
+from __future__ import annotations
+
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from rdfsolve.schema_models.metadata import MetadataDocument
 
 import pandas as pd
 from linkml_runtime.linkml_model import SchemaDefinition
@@ -85,6 +90,13 @@ class VoidParser:
 
         fmt = format_map.get(suffix, "turtle")  # default to turtle
         self.graph.parse(self.void_file_path, format=fmt)
+
+    def get_metadata(self) -> MetadataDocument:
+        """Return retained RDF metadata without querying an endpoint."""
+        from rdfsolve.schema_models.metadata import MetadataDocument
+
+        return MetadataDocument(graph=self.graph + Graph(), graph_uris=self.graph_uris,
+                                scope="retained VoID RDF")
 
     def to_mined_schema(self) -> MinedSchema:
         """Read the supported VoID profile through the canonical reader."""

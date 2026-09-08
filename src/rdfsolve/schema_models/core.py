@@ -19,6 +19,8 @@ from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 if TYPE_CHECKING:
     from rdflib import Graph
 
+    from rdfsolve.schema_models.metadata import MetadataDocument
+
 
 class MinedSchema(BaseModel):
     """Complete mined schema: patterns + provenance.
@@ -140,6 +142,15 @@ class MinedSchema(BaseModel):
         parses the file first.
         """
         return cls.from_json(path)
+
+    def get_metadata(self) -> MetadataDocument:
+        """Return RDF generated from this schema, not original source evidence."""
+        from rdfsolve.schema_models.metadata import MetadataDocument
+
+        return MetadataDocument(
+            graph=self.to_void_graph(), endpoint=self.about.endpoint,
+            scope="rdfsolve export of stored schema fields",
+        )
 
     @classmethod
     def from_void_source(

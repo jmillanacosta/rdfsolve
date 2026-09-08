@@ -24,7 +24,18 @@ def trim_descriptions(model: T, limit: int | None) -> T:
     result = model.model_copy(deep=True)
 
     def visit(value: object) -> None:
-        if isinstance(value, TermAnnotation):
+        from rdfsolve.schema_models.metadata import MetadataDocument
+
+        if isinstance(value, MetadataDocument):
+            from rdflib import Literal
+            from rdflib.namespace import DC, DCTERMS
+
+            for subject, predicate, text in list(value.graph):
+                if predicate in {DC.description, DCTERMS.description} and isinstance(text, Literal):
+                    value.graph.remove((subject, predicate, text))
+                    value.graph.add((subject, predicate, Literal(str(text)[:limit],
+                                     lang=text.language, datatype=text.datatype)))
+        elif isinstance(value, TermAnnotation):
             if value.predicate in DEFINITION_PREDICATES:
                 value.text.value = value.text.value[:limit]
         elif isinstance(value, BaseModel):

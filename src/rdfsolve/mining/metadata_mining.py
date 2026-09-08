@@ -1,127 +1,20 @@
-"""Infrastructure metadata mining (DCAT/VoID)."""
+"""Read metadata evidence for the optional pipeline phase."""
 
 from __future__ import annotations
 
-import logging
-from typing import TYPE_CHECKING
-
-from rdfsolve.schema_models.metadata import (
-    DatasetDescription,
-    MetadataPatterns,
-    ServiceDescription,
-)
-
-if TYPE_CHECKING:
-    from rdfsolve.sparql_helper import SparqlHelper
-
-logger = logging.getLogger(__name__)
+from rdfsolve.metadata import query_metadata_document
+from rdfsolve.schema_models.metadata import MetadataDocument
+from rdfsolve.sparql_helper import SparqlHelper
 
 
 class MetadataMiner:
-    """Extract infrastructure metadata patterns."""
+    """Retrieve descriptions without rebuilding them as VoID."""
 
-    def __init__(
-        self,
-        helper: SparqlHelper,
-        graph_uris: list[str] | None = None,
-    ) -> None:
-        """Initialize metadata miner.
-
-        Args:
-            helper: SPARQL helper for query execution
-            graph_uris: Named graphs to restrict queries to
-        """
+    def __init__(self, helper: SparqlHelper, graph_uris: list[str] | None = None) -> None:
+        """Use the caller's helper and graph scope."""
         self.helper = helper
         self.graph_uris = graph_uris
 
-    def _graph_clause(self) -> tuple[str, str]:
-        """Return (open, close) for GRAPH clause."""
-        if not self.graph_uris:
-            return "", ""
-        if len(self.graph_uris) == 1:
-            return f"GRAPH <{self.graph_uris[0]}> {{", "}"
-        values = " ".join(f"(<{u}>)" for u in self.graph_uris)
-        return f"VALUES (?_g) {{ {values} }} GRAPH ?_g {{", "}"
-
-    def mine(self) -> MetadataPatterns | None:
-        """Extract metadata patterns."""
-        logger.info("Mining infrastructure metadata")
-
-        datasets = self.query_datasets()
-        services = self.query_services()
-
-        if not datasets and not services:
-            logger.info("No infrastructure metadata found")
-            return None
-
-        logger.info(f"Found {len(datasets)} datasets, {len(services)} services")
-
-        return MetadataPatterns(datasets=datasets, services=services)
-
-    def query_datasets(self) -> list[DatasetDescription]:
-        """Query void:Dataset descriptions."""
-        g_open, g_close = self._graph_clause()
-        query = f"""\
-SELECT DISTINCT ?ds ?title ?desc ?homepage ?endpoint ?license
-WHERE {{
-  {g_open}
-    ?ds a <http://rdfs.org/ns/void#Dataset> .
-    OPTIONAL {{ ?ds <http://purl.org/dc/terms/title> ?title . }}
-    OPTIONAL {{ ?ds <http://purl.org/dc/terms/description> ?desc . }}
-    OPTIONAL {{ ?ds <http://xmlns.com/foaf/0.1/homepage> ?homepage . }}
-    OPTIONAL {{ ?ds <http://rdfs.org/ns/void#sparqlEndpoint> ?endpoint . }}
-    OPTIONAL {{ ?ds <http://purl.org/dc/terms/license> ?license . }}
-  {g_close}
-}}"""
-
-        try:
-            result = self.helper.select(query, purpose="metadata/datasets")
-            bindings = result.get("results", {}).get("bindings", [])
-            datasets = []
-            for row in bindings:
-                ds_uri = row.get("ds", {}).get("value")
-                if ds_uri:
-                    datasets.append(
-                        DatasetDescription(
-                            uri=ds_uri,
-                            title=row.get("title", {}).get("value"),
-                            description=row.get("desc", {}).get("value"),
-                            homepage=row.get("homepage", {}).get("value"),
-                            sparql_endpoint=row.get("endpoint", {}).get("value"),
-                            license=row.get("license", {}).get("value"),
-                        )
-                    )
-            return datasets
-        except Exception as e:
-            raise RuntimeError(f"Failed to query datasets: {e}") from e
-
-    def query_services(self) -> list[ServiceDescription]:
-        """Query SPARQL service descriptions."""
-        g_open, g_close = self._graph_clause()
-        query = f"""\
-SELECT DISTINCT ?endpoint
-WHERE {{
-  {g_open}
-    ?service a <http://www.w3.org/ns/sparql-service-description#Service> .
-    ?service <http://www.w3.org/ns/sparql-service-description#endpoint> ?endpoint .
-  {g_close}
-}}"""
-
-        try:
-            result = self.helper.select(query, purpose="metadata/services")
-            bindings = result.get("results", {}).get("bindings", [])
-            return [
-                ServiceDescription(
-                    endpoint=row.get("endpoint", {}).get("value", ""),
-                    supported_language=[],
-                    result_format=[],
-                    feature=[],
-                )
-                for row in bindings
-                if row.get("endpoint", {}).get("value")
-            ]
-        except Exception as e:
-            raise RuntimeError(f"Failed to query services: {e}") from e
-
-
-__all__ = ["MetadataMiner"]
+    def mine(self) -> MetadataDocument:
+        """Return evidence, including an empty graph when no roots match."""
+        return query_metadata_document(self.helper, graph_uris=self.graph_uris)

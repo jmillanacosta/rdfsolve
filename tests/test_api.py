@@ -28,11 +28,14 @@ def test_mine_schema(mock_cls):
     assert schema is not None
 
 
-@patch("rdfsolve.miner.SchemaMiner")
+@patch("rdfsolve.sparql_helper.SparqlHelper")
 def test_query_metadata(mock_cls):
-    mock_cls.return_value.query_dataset_metadata.return_value = {"source_license": "http://ex.org/l"}
-    result = rdfsolve.query_metadata("http://example.org/sparql")
-    assert "source_license" in result
+    helper = mock_cls.return_value.__enter__.return_value
+    helper.construct.return_value = ""
+    helper.endpoint_url = "http://example.org/sparql"
+    result = rdfsolve.query_metadata(helper.endpoint_url)
+    assert len(result.graph) == 0
+    assert result.project() == {}
 
 
 def test_load_sources(tmp_path):

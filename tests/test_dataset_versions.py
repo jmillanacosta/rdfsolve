@@ -6,7 +6,7 @@ import pytest
 from rdflib import Graph, Literal, Namespace, RDF, URIRef
 from rdflib.namespace import OWL
 
-from rdfsolve.metadata import build_void_dataset_query, query_endpoint_metadata
+from rdfsolve.metadata import build_metadata_query, query_endpoint_metadata
 from rdfsolve.schema_models import AboutMetadata, MinedSchema
 
 
@@ -49,28 +49,24 @@ def test_dataset_query_does_not_select_imported_ontology():
     graph = Graph()
     graph.add((URIRef("urn:imported"), RDF.type, OWL.Ontology))
     graph.add((URIRef("urn:imported"), OWL.versionIRI, URIRef("urn:wrong-release")))
-    assert list(graph.query(build_void_dataset_query())) == []
+    assert list(graph.query(build_metadata_query())) == []
 
 
 def test_metadata_does_not_mix_datasets():
     helper = Mock(endpoint_url="https://example.org/sparql")
-    helper.select.return_value = {
-        "results": {
-            "bindings": [
-                {"subject": {"value": "urn:a"}, "versionIRI": {"value": "urn:release-a"}},
-                {"subject": {"value": "urn:b"}, "versionIRI": {"value": "urn:release-b"}},
-            ]
-        }
-    }
+    graph = Graph()
+    void = Namespace("http://rdfs.org/ns/void#")
+    for name in ("a", "b"):
+        graph.add((URIRef(f"urn:{name}"), RDF.type, void.Dataset))
+        graph.add((URIRef(f"urn:{name}"), OWL.versionIRI, URIRef(f"urn:release-{name}")))
+    helper.construct.side_effect = lambda query: graph.query(query).serialize(format="turtle").decode()
     assert query_endpoint_metadata(helper) == {}
-    helper.select.return_value["results"]["bindings"][1]["endpoint"] = {
-        "value": helper.endpoint_url
-    }
+    graph.add((URIRef("urn:b"), void.sparqlEndpoint, URIRef(helper.endpoint_url)))
     assert query_endpoint_metadata(helper)["source_version_iri"] == "urn:release-b"
 
 
 def test_metadata_failure_is_not_empty_metadata():
     helper = Mock()
-    helper.select.side_effect = RuntimeError("query failed")
+    helper.construct.side_effect = RuntimeError("query failed")
     with pytest.raises(RuntimeError, match="query failed"):
         query_endpoint_metadata(helper)
