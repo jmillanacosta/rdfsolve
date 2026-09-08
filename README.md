@@ -203,16 +203,6 @@ chemical_paths = data.paths_between(pathways[0], "Chemical entity", max_hops=3)
 The first finds matching names; the second finds records of the chosen class.
 Both verify the links from this pathway, not all pathways of its class.
 
-To see the records around one pathway:
-
-```python
-nearby = data.connections(pathways[0], max_hops=2)
-display(Markdown(data.diagram(paths=nearby, instances=False)))
-```
-
-Large results return a bounded view with a warning and a "Partial view" notice
-on the diagram. Set `max_paths` only when exceeding a chosen limit must raise an error.
-
 Press Tab after `pathways.fields.` to discover fields while typing.
 `show()` retrieves only the fields you ask for; displaying results does not
 send requests.
