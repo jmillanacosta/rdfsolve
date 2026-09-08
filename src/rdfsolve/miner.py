@@ -209,6 +209,14 @@ class SchemaMiner:
         self._declared_classes: set[str] = set()
         self.last_report: MiningReport | None = None
 
+    @property
+    def helper(self) -> SparqlHelper:
+        """Expose the miner's helper for query recording and later exploration.
+
+        The miner owns this helper and closes it on exit.
+        """
+        return self._helper
+
     def close(self) -> None:
         """Release the HTTP session."""
         self._helper.close()

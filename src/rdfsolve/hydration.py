@@ -9,7 +9,9 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import datetime, timezone
+from importlib.metadata import version
 from pathlib import Path
+from platform import python_version
 from typing import Any, TypeVar
 from uuid import uuid4
 
@@ -153,6 +155,10 @@ class Hydrator:
         """
         return {
             "schema": self._schema.to_dict(),
+            "environment": {
+                "python": python_version(),
+                **{name: version(name) for name in ("rdfsolve", "pydantic", "rdflib")},
+            },
             "graph_uris": list(self.graph_uris),
             "budgets": {
                 "batch_size": self.batch_size,

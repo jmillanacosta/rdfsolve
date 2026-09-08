@@ -173,7 +173,7 @@ def test_rdf_output_preserves_source_triples_and_rejects_invented_paths():
         assert set(created.to_graph().objects(URIRef(ROOT), URIRef(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"))) == {URIRef(DATASET)}
         nested = client.get(model, ROOT, fields=["description", "subset"])
-        nested.subset = client.follow([nested], "subset", model, fields=["description"]) if hasattr(client, "follow") else [
+        nested.subset = [
             client.get(model, iri, fields=["description"]) for iri in nested.subset]
         assert all(triple in graph for triple in nested.to_graph())
         restored = model.model_validate_json(nested.model_dump_json())
