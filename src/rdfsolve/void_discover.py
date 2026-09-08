@@ -129,11 +129,11 @@ class VoidParser:
             graph_uri=graph_uri,
         )
 
-    # ------------------------------------------------------------------
     # VoID catalog discovery
-    # ------------------------------------------------------------------
 
-    def discover_void_graphs(self, endpoint_url: str) -> dict[str, Any]:
+    def discover_void_graphs(
+        self, endpoint_url: str, *, timeout: float = 30.0, max_retries: int = 1
+    ) -> dict[str, Any]:
         """Discover VoID graphs at *endpoint_url* via a SELECT query.
 
         Queries for VoID partitions across all named graphs.  Returns a
@@ -147,7 +147,7 @@ class VoidParser:
         Returns:
             Dict with keys ``has_void_descriptions``, ``found_graphs``,
             ``total_graphs``, ``void_content``, ``partitions``.
-            On failure an ``error`` key is added and counts are zero.
+            Query failures raise; they are not empty results.
         """
         from rdfsolve.sparql_helper import SparqlHelper
 
@@ -177,8 +177,28 @@ class VoidParser:
           }
         }
         """
+        if self.graph_uris == []:
+            raise ValueError("Use graph_uris=None for all named graphs, or select at least one graph")
+        if self.graph_uris is not None:
+            values = " ".join(URIRef(iri).n3() for iri in self.graph_uris)
+            query = query.replace("GRAPH ?g {", "VALUES ?g { " + values + " } GRAPH ?g {", 1)
+        if self.exclude_graphs:
+            from rdflib import Literal
+
+            from rdfsolve.schema_models._constants import SERVICE_NAMESPACE_PREFIXES
+
+            filters = " ".join(
+                f"FILTER(!STRSTARTS(STR(?g), {Literal(prefix).n3()}))"
+                for prefix in SERVICE_NAMESPACE_PREFIXES
+            )
+            query = query.replace("GRAPH ?g {", filters + " GRAPH ?g {", 1)
+        logger.info(
+            "Querying VoID partitions at %s; graph scope: %s",
+            endpoint_url,
+            self.graph_uris if self.graph_uris is not None else "all named graphs",
+        )
         try:
-            helper = SparqlHelper(endpoint_url)
+            helper = SparqlHelper(endpoint_url, timeout=timeout, max_retries=max_retries)
             results = helper.select(query, purpose="void/partition-discovery")
 
             found_graphs: list[str] = []
@@ -208,6 +228,9 @@ class VoidParser:
                     p["objectDatatype"] = row["objectDatatype"]["value"]
                 partitions.append(p)
 
+            logger.info(
+                "Found %d VoID partition records in %d graphs", len(partitions), len(found_graphs)
+            )
             return {
                 "has_void_descriptions": bool(found_graphs),
                 "found_graphs": found_graphs,
@@ -216,15 +239,8 @@ class VoidParser:
                 "partitions": partitions,
             }
         except Exception as exc:
-            logger.info("VoID discovery failed: %s", exc)
-            return {
-                "has_void_descriptions": False,
-                "found_graphs": [],
-                "total_graphs": 0,
-                "void_content": {},
-                "partitions": [],
-                "error": str(exc),
-            }
+            logger.warning("VoID discovery failed at %s: %s", endpoint_url, exc)
+            raise
 
     def discover_all_graphs(self, endpoint_url: str) -> dict[str, Any]:
         """Discover all named graphs at endpoint with triple counts.

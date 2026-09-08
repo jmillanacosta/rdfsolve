@@ -310,9 +310,14 @@ def discover_void_graphs(
     endpoint_url: str,
     graph_uris: str | list[str] | None = None,
     exclude_graphs: bool = False,
+    *,
+    timeout: float = 30.0,
+    max_retries: int = 1,
 ) -> dict[str, Any]:
-    """Find VoID graphs at *endpoint_url*."""
-    return VoidParser().discover_void_graphs(endpoint_url)
+    """Find published VoID partitions. Raise on query failure."""
+    return VoidParser(graph_uris=graph_uris, exclude_graphs=exclude_graphs).discover_void_graphs(
+        endpoint_url, timeout=timeout, max_retries=max_retries
+    )
 
 
 def discover_all_graphs(endpoint_url: str) -> dict[str, Any]:
@@ -516,9 +521,23 @@ def discover_void_source(
     void_uri_base: str | None = None,
     entry: SourceEntry | dict[str, Any] | None = None,
     fmt: str = "all",
+    timeout: float = 30.0,
+    max_retries: int = 1,
+    graph_uris: str | list[str] | None = None,
 ) -> dict[str, Any]:
-    """Discover VoID descriptions for one source and export artefacts."""
-    result = discover_void_graphs(endpoint, exclude_graphs=False)
+    """Find published VoID and export it; return counts and file paths.
+
+    This does not mine instance data. timeout bounds each HTTP request,
+    not the whole operation. Query failures raise instead of reporting zero.
+    """
+    logger.info("Discovering published VoID at %s (request timeout %.1fs)", endpoint, timeout)
+    result = discover_void_graphs(
+        endpoint,
+        graph_uris=graph_uris,
+        exclude_graphs=False,
+        timeout=timeout,
+        max_retries=max_retries,
+    )
     partitions = result.get("partitions", [])
 
     if not partitions:
@@ -528,6 +547,7 @@ def discover_void_source(
             "files": {},
         }
 
+    logger.info("Exporting %d VoID partition records for %s", len(partitions), name)
     base_uri = void_uri_base or resolve_void_uri_base(name, entry=entry)
     parser = VoidParser()
     void_graph = parser.build_void_graph_from_partitions(partitions, base_uri=base_uri)
