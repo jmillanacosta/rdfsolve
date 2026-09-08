@@ -182,10 +182,11 @@ Press Tab after `pathways.fields.` to discover fields while typing.
 send requests.
 
 Start directly from an endpoint with `explore(endpoint, graph=graph_iri)`.
-Save the queries and steps with `data.save_session("session.json")`, then
-close the connection with `data.close()`.
+Show each query and its returned data with `data.query_log()`.
+Save the queries, results, and steps with `data.save_session("session.json")`,
+then close the connection with `data.close()`.
 
-[Walk through the thyroid investigation](notebooks/SparqlHelper/AOPWiki_hydration.ipynb).
+[Walk through the thyroid investigation](notebooks/pydantic_clients/AOPWiki_hydration.ipynb).
 
 ### Write Python records as RDF
 
@@ -200,8 +201,8 @@ direct fields with `to_graph(fields=["title"])` instead. Output is one graph,
 not named-graph preservation or SHACL validation. Class mappings do not merge
 instance identities.
 
-[Save a small RDF subset](notebooks/SparqlHelper/AOPWiki_subsets.ipynb) or
-[write RDF from a chemical table](notebooks/SparqlHelper/AOPWiki_table_to_RDF.ipynb).
+[Save a small RDF subset](notebooks/pydantic_clients/AOPWiki_subsets.ipynb) or
+[write RDF from a chemical table](notebooks/pydantic_clients/AOPWiki_table_to_RDF.ipynb).
 `schema.to_pydantic_classes()` returns runtime classes; `schema.to_pydantic()`
 exports Python source. These differ from serializing a schema or record as JSON.
 
