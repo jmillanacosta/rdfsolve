@@ -45,10 +45,10 @@ class RetainedMetadata(BaseModel):
         """Capture source RDF and its retrieval scope."""
         dataset = document.rdf_dataset
         return cls(
-            rdf=(dataset.serialize(format="trig") if dataset is not None
-                 else document.to_turtle()),
+            rdf=(dataset.serialize(format="trig") if dataset is not None else document.to_turtle()),
             format="trig" if dataset is not None else "turtle",
-            endpoint=document.endpoint, graph_uris=document.graph_uris,
+            endpoint=document.endpoint,
+            graph_uris=document.graph_uris,
             scope=document.scope,
         )
 
@@ -64,8 +64,11 @@ class RetainedMetadata(BaseModel):
         else:
             graph = Graph().parse(data=self.rdf, format="turtle")
         return MetadataDocument(
-            graph=graph, rdf_dataset=dataset, endpoint=self.endpoint,
-            graph_uris=self.graph_uris, scope=self.scope,
+            graph=graph,
+            rdf_dataset=dataset,
+            endpoint=self.endpoint,
+            graph_uris=self.graph_uris,
+            scope=self.scope,
         )
 
 
@@ -81,8 +84,10 @@ class MetadataDocument(BaseModel):
     scope: str = "root descriptions and two blank-node levels"
 
     def __repr__(self) -> str:
-        return (f"MetadataDocument(triples={len(self.graph)}, "
-                f"resources={len(set(self.graph.subjects()))}; print to view)")
+        return (
+            f"MetadataDocument(triples={len(self.graph)}, "
+            f"resources={len(set(self.graph.subjects()))}; print to view)"
+        )
 
     def __str__(self) -> str:
         return self.to_markdown()
@@ -112,7 +117,9 @@ class MetadataDocument(BaseModel):
         partitions = set(self.graph.objects(None, VOID.classPartition)) | set(
             self.graph.objects(None, VOID.propertyPartition)
         )
-        ordered = sorted(subjects, key=lambda node: (node not in roots or node in partitions, str(node)))
+        ordered = sorted(
+            subjects, key=lambda node: (node not in roots or node in partitions, str(node))
+        )
         lines = ["## Metadata view", ""]
         if self.scope.startswith("rdfsolve export"):
             lines.append("Generated from stored schema fields; not original source metadata.")
@@ -123,7 +130,9 @@ class MetadataDocument(BaseModel):
             lines += ["", "No information was retrieved in this scope."]
         for subject in ordered[:max_resources]:
             lines += ["", "### " + cell(str(subject)), "", "| Property | Value |", "| --- | --- |"]
-            values = sorted(self.graph.predicate_objects(subject), key=lambda pair: (str(pair[0]), pair[1].n3()))
+            values = sorted(
+                self.graph.predicate_objects(subject), key=lambda pair: (str(pair[0]), pair[1].n3())
+            )
             for predicate, value in values[:max_values]:
                 label = self.graph.namespace_manager.normalizeUri(str(predicate))
                 if isinstance(value, Literal):
@@ -131,7 +140,9 @@ class MetadataDocument(BaseModel):
                     if value.language:
                         text += f" ({value.language})"
                     elif value.datatype:
-                        text += " [" + self.graph.namespace_manager.normalizeUri(value.datatype) + "]"
+                        text += (
+                            " [" + self.graph.namespace_manager.normalizeUri(value.datatype) + "]"
+                        )
                 else:
                     text = str(value)
                 if len(text) > 240:
@@ -148,11 +159,17 @@ class MetadataDocument(BaseModel):
         """Select one retained context; None selects the default graph."""
         if self.rdf_dataset is None:
             raise ValueError("No dataset contexts were retained")
-        graph = (self.rdf_dataset.default_context if graph_uri is None
-                 else self.rdf_dataset.graph(graph_uri))
-        return MetadataDocument(graph=graph + Graph(), endpoint=self.endpoint,
-                                graph_uris=[graph_uri] if graph_uri else None,
-                                scope=self.scope)
+        graph = (
+            self.rdf_dataset.default_context
+            if graph_uri is None
+            else self.rdf_dataset.graph(graph_uri)
+        )
+        return MetadataDocument(
+            graph=graph + Graph(),
+            endpoint=self.endpoint,
+            graph_uris=[graph_uri] if graph_uri else None,
+            scope=self.scope,
+        )
 
     def to_rdf_graph(self) -> Graph:
         """Return a copy of the evidence, not reconstructed metadata."""
@@ -184,35 +201,46 @@ class MetadataDocument(BaseModel):
             candidates = set(self.graph.subjects(RDF.type, VOID.Dataset)) | set(
                 self.graph.subjects(RDF.type, DCAT.Dataset)
             )
-            partitions = set(self.graph.objects(None, VOID.classPartition)) | set(
-                self.graph.objects(None, VOID.propertyPartition)
-            ) | set(self.graph.objects(None, URIRef("http://ldf.fi/void-ext#datatypePartition")))
+            partitions = (
+                set(self.graph.objects(None, VOID.classPartition))
+                | set(self.graph.objects(None, VOID.propertyPartition))
+                | set(self.graph.objects(None, URIRef("http://ldf.fi/void-ext#datatypePartition")))
+            )
             candidates -= partitions
             linked = {
-                node for node in candidates
-                if self.endpoint and any(
+                node
+                for node in candidates
+                if self.endpoint
+                and any(
                     str(endpoint).rstrip("/") == self.endpoint.rstrip("/")
                     for endpoint in self.graph.objects(node, VOID.sparqlEndpoint)
                 )
             }
             candidates = linked or candidates
             if len(candidates) != 1:
-                logger.info("Metadata projection has %d dataset candidates; select a subject",
-                            len(candidates))
+                logger.info(
+                    "Metadata projection has %d dataset candidates; select a subject",
+                    len(candidates),
+                )
                 return {}
             subject = next(iter(candidates))
             basis = "endpoint_link" if linked else "single_dataset"
         result: dict[str, Any] = {}
         for name, predicates in FIELDS.items():
-            values = {value for predicate in predicates
-                      for value in self.graph.objects(subject, predicate)}
+            values = {
+                value
+                for predicate in predicates
+                for value in self.graph.objects(subject, predicate)
+            }
             if name == "source_creator" and values:
                 result[name] = sorted({str(value) for value in values})
             elif len(values) == 1:
                 result[name] = str(next(iter(values)))
             elif len(values) > 1:
                 logger.warning("Leave conflicting metadata field %s unset for %s", name, subject)
-        identity_key = "metadata_subject_iri" if isinstance(subject, URIRef) else "metadata_subject_blank_node"
+        identity_key = (
+            "metadata_subject_iri" if isinstance(subject, URIRef) else "metadata_subject_blank_node"
+        )
         result[identity_key] = str(subject)
         result["metadata_identity_basis"] = basis
         return result

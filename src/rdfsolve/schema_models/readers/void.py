@@ -41,7 +41,9 @@ def void_graph_to_minedschema(g: Graph, *, endpoint: str | None = None) -> Mined
     patterns = _extract_patterns_from_void(g)
     about = _extract_metadata_from_void(g, endpoint=endpoint)
     about.pattern_count = len(patterns)
-    for partition in set(g.objects(None, VOID.classPartition)) | set(g.subjects(VOID["class"], None)):
+    for partition in set(g.objects(None, VOID.classPartition)) | set(
+        g.subjects(VOID["class"], None)
+    ):
         class_iri = g.value(partition, VOID["class"])
         count = optional_count(g.value(partition, VOID.entities))
         if class_iri is not None and count is not None:
@@ -51,7 +53,8 @@ def void_graph_to_minedschema(g: Graph, *, endpoint: str | None = None) -> Mined
     from rdfsolve.schema_models.metadata import MetadataDocument, RetainedMetadata
 
     schema = MinedSchema(
-        patterns=patterns, about=about,
+        patterns=patterns,
+        about=about,
         source_metadata=RetainedMetadata.from_document(
             MetadataDocument(graph=g, endpoint=endpoint, scope="retained VoID RDF")
         ),
@@ -225,7 +228,9 @@ def _extract_metadata_from_void(g: Graph, *, endpoint: str | None = None) -> Abo
     generated_at = g.value(document, DCTERMS.created) if document is not None else None
     return AboutMetadata.build(
         **metadata,
-        endpoint=str(unique(VOID.sparqlEndpoint)) if unique(VOID.sparqlEndpoint) is not None else None,
+        endpoint=str(unique(VOID.sparqlEndpoint))
+        if unique(VOID.sparqlEndpoint) is not None
+        else None,
         dataset_name=metadata.get("title"),
         class_count=optional_count(unique(VOID.classes)) or 0,
         property_count=optional_count(unique(VOID.properties)) or 0,

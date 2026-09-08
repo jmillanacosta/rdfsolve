@@ -62,9 +62,9 @@ schema.to_dict()  # Versioned canonical document (dict)
 schema.get_classes()  # List with classes
 schema.get_properties()  # List with properties
 
-print(schema.get_metadata())    # Print a summary view of found metadata across graphs
-print(schema.get_metadata().to_trig())    # Print metadata as trig
-print(schema.get_metadata().to_turtle())    # Print metadata as turtle
+print(schema.get_metadata())  # Print a summary view of found metadata across graphs
+print(schema.get_metadata().to_trig())  # Print metadata as trig
+print(schema.get_metadata().to_turtle())  # Print metadata as turtle
 
 import json
 

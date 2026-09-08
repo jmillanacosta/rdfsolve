@@ -17,7 +17,8 @@ DEFAULT_TYPES = (
 
 
 def build_metadata_query(
-    *, subject_iris: list[str] | None = None,
+    *,
+    subject_iris: list[str] | None = None,
     resource_types: tuple[str, ...] = DEFAULT_TYPES,
 ) -> str:
     """Read all predicates on selected roots and two blank-node levels.
@@ -32,12 +33,18 @@ def build_metadata_query(
     else:
         if not resource_types:
             raise ValueError("resource_types must not be empty")
-        selector = ("VALUES ?kind { " + " ".join(URIRef(i).n3() for i in resource_types)
-                    + " } ?root a ?kind .")
-    return """
+        selector = (
+            "VALUES ?kind { "
+            + " ".join(URIRef(i).n3() for i in resource_types)
+            + " } ?root a ?kind ."
+        )
+    return (
+        """
     CONSTRUCT { ?root ?p ?o . ?o ?bp ?bo . ?bo ?cp ?co }
     WHERE {
-    """ + selector + """
+    """
+        + selector
+        + """
       ?root ?p ?o .
       OPTIONAL {
         FILTER(isBlank(?o))
@@ -51,10 +58,12 @@ def build_metadata_query(
       }
     }
     """
+    )
 
 
 def query_metadata_document(
-    helper: SparqlHelper, *,
+    helper: SparqlHelper,
+    *,
     graph_uris: list[str] | None = None,
     subject_iris: list[str] | None = None,
     resource_types: tuple[str, ...] = DEFAULT_TYPES,
@@ -79,17 +88,21 @@ def query_metadata_document(
         target = dataset.default_context if uri is None else dataset.graph(uri)
         target += retrieved
         graph += retrieved
-    return MetadataDocument(graph=graph, rdf_dataset=dataset,
-                            endpoint=helper.endpoint_url, graph_uris=graph_uris)
+    return MetadataDocument(
+        graph=graph, rdf_dataset=dataset, endpoint=helper.endpoint_url, graph_uris=graph_uris
+    )
 
 
 def query_endpoint_metadata(
-    sparql_helper: SparqlHelper, *, graph_uris: list[str] | None = None,
+    sparql_helper: SparqlHelper,
+    *,
+    graph_uris: list[str] | None = None,
     subject_iri: str | None = None,
 ) -> dict[str, Any]:
     """Return the supported projection; use query_metadata_document for RDF."""
     document = query_metadata_document(
-        sparql_helper, graph_uris=graph_uris,
+        sparql_helper,
+        graph_uris=graph_uris,
         subject_iris=[subject_iri] if subject_iri is not None else None,
     )
     return document.project(subject_iri)

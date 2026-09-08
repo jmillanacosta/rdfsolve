@@ -59,7 +59,8 @@ class VoidSchema:
             VoidDataset.from_rdf(self.graph, node)
             for node in sorted(
                 set(self.graph.subjects(RDF.type, VOID.Dataset))
-                | set(self.graph.subjects(VOID.classPartition, None)), key=str
+                | set(self.graph.subjects(VOID.classPartition, None)),
+                key=str,
             )
             if not any(self.graph.subjects(VOID.classPartition, node))
             and not any(self.graph.subjects(VOID.propertyPartition, node))
@@ -79,22 +80,34 @@ class VoidSchema:
             raise ValueError("No dataset contexts were retained")
         if graph_uri is not None and graph_uri not in self.graph_uris:
             raise ValueError(f"No VoID was retrieved from {graph_uri}")
-        graph = (self.rdf_dataset.default_context if graph_uri is None
-                 else self.rdf_dataset.graph(graph_uri))
+        graph = (
+            self.rdf_dataset.default_context
+            if graph_uri is None
+            else self.rdf_dataset.graph(graph_uri)
+        )
         dataset = Dataset()
         target = dataset.default_context if graph_uri is None else dataset.graph(graph_uri)
         target += graph
-        return VoidSchema(graph + Graph(), self.endpoint, self.name,
-                          [graph_uri] if graph_uri else [], graph_uri is None,
-                          rdf_dataset=dataset)
+        return VoidSchema(
+            graph + Graph(),
+            self.endpoint,
+            self.name,
+            [graph_uri] if graph_uri else [],
+            graph_uri is None,
+            rdf_dataset=dataset,
+        )
 
     def get_metadata(self) -> MetadataDocument:
         """Return retained RDF, without a new endpoint request."""
         from rdfsolve.schema_models.metadata import MetadataDocument
 
-        return MetadataDocument(graph=self.graph + Graph(), endpoint=self.endpoint,
-                                rdf_dataset=self.rdf_dataset,
-                                graph_uris=self.graph_uris, scope="retained VoID RDF")
+        return MetadataDocument(
+            graph=self.graph + Graph(),
+            endpoint=self.endpoint,
+            rdf_dataset=self.rdf_dataset,
+            graph_uris=self.graph_uris,
+            scope="retained VoID RDF",
+        )
 
     def to_mined_schema(self) -> MinedSchema:
         """Read supported patterns and metadata; do not mine instance data."""

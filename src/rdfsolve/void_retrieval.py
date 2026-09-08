@@ -23,9 +23,7 @@ def graph_scope(body: str, graphs: list[str] | None) -> str:
     return "VALUES ?g { " + values + " } GRAPH ?g { " + body + " }"
 
 
-def discover_graph_names(
-    helper: SparqlHelper, *, batch_size: int, max_pages: int
-) -> list[str]:
+def discover_graph_names(helper: SparqlHelper, *, batch_size: int, max_pages: int) -> list[str]:
     """List graph names without counting their triples."""
     query = "SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } } ORDER BY ?g"
     return [
@@ -99,14 +97,18 @@ def discover_description(
         raise ValueError("Batch sizes and max_pages must be positive")
     if graphs == []:
         raise ValueError("Use graph_uris=None for all named graphs, or select at least one graph")
-    names = graphs if graphs is not None else discover_graph_names(
-        helper, batch_size=batch_size, max_pages=max_pages
+    names = (
+        graphs
+        if graphs is not None
+        else discover_graph_names(helper, batch_size=batch_size, max_pages=max_pages)
     )
     names = sorted({name for name in names if not name.startswith(excluded_prefixes)})
     candidates = [name for name in names if "void" in name.lower()]
-    scopes = [names] if graphs is not None else [
-        candidates, [name for name in names if name not in candidates]
-    ]
+    scopes = (
+        [names]
+        if graphs is not None
+        else [candidates, [name for name in names if name not in candidates]]
+    )
     result = Dataset()
     found: list[str] = []
     for scope in scopes:
@@ -120,8 +122,14 @@ def discover_description(
                        (?p = <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> &&
                         ?o IN (void:Dataset, void:Linkset)))"""
             values = " ".join(URIRef(uri).n3() for uri in batch)
-            query = (PREFIXES + "SELECT ?g WHERE { VALUES ?g { " + values
-                     + " } FILTER EXISTS { GRAPH ?g { " + body + " } } } ORDER BY ?g")
+            query = (
+                PREFIXES
+                + "SELECT ?g WHERE { VALUES ?g { "
+                + values
+                + " } FILTER EXISTS { GRAPH ?g { "
+                + body
+                + " } } } ORDER BY ?g"
+            )
             matched: list[str] = [
                 row["g"]["value"]
                 for page in helper.select_chunked(

@@ -530,13 +530,15 @@ class SchemaMiner:
                 from rdfsolve.mining.local_graph import LocalGraphHelper
 
                 downloads = download_graphs(
-                    self.graph_store_url or "", self.graph_uris or [],
-                    self.graph_store_dir, max_bytes=self.graph_store_max_bytes,
+                    self.graph_store_url or "",
+                    self.graph_uris or [],
+                    self.graph_store_dir,
+                    max_bytes=self.graph_store_max_bytes,
                     timeout=self.timeout,
                 )
                 self._helper = LocalGraphHelper(
-                    self.endpoint_url, load_downloads(downloads, endpoint_url=self.endpoint_url,
-                                                      timeout=self.timeout)
+                    self.endpoint_url,
+                    load_downloads(downloads, endpoint_url=self.endpoint_url, timeout=self.timeout),
                 )
                 self._report.report.config["graph_store"] = {
                     "url": self.graph_store_url,
@@ -873,7 +875,9 @@ def mine_schema(
         qlever_version=qlever_version,
         sparql_engine=sparql_engine,
         sparql_strategy=sparql_strategy,
-        get_graphs_from_store=get_graphs_from_store, graph_store_url=graph_store_url,
-        graph_store_dir=graph_store_dir, graph_store_max_bytes=graph_store_max_bytes,
+        get_graphs_from_store=get_graphs_from_store,
+        graph_store_url=graph_store_url,
+        graph_store_dir=graph_store_dir,
+        graph_store_max_bytes=graph_store_max_bytes,
     )
     return miner.mine(dataset_name=dataset_name)

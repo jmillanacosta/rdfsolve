@@ -17,8 +17,7 @@ from rdflib import Dataset, URIRef
 from rdfsolve._host_gate import host_request
 
 logger = logging.getLogger(__name__)
-FORMATS = {"text/turtle": "turtle", "application/n-triples": "nt",
-           "application/rdf+xml": "xml"}
+FORMATS = {"text/turtle": "turtle", "application/n-triples": "nt", "application/rdf+xml": "xml"}
 
 
 @dataclass(frozen=True)
@@ -68,17 +67,24 @@ def download_graphs(
             if remaining <= 0:
                 raise TimeoutError("Graph Store download deadline reached")
             logger.info("Download Graph Store graph %s", uri)
-            with host_request(parsed.hostname or store_url, timeout=remaining), session.get(
-                store_url, params={"graph": uri},
-                headers={"Accept": "application/n-triples, text/turtle;q=0.9"},
-                timeout=(min(timeout, remaining), min(timeout, remaining)),
-                stream=True, allow_redirects=False,
-            ) as response:
+            with (
+                host_request(parsed.hostname or store_url, timeout=remaining),
+                session.get(
+                    store_url,
+                    params={"graph": uri},
+                    headers={"Accept": "application/n-triples, text/turtle;q=0.9"},
+                    timeout=(min(timeout, remaining), min(timeout, remaining)),
+                    stream=True,
+                    allow_redirects=False,
+                ) as response,
+            ):
                 if response.status_code in {429, 503}:
                     from rdfsolve._http_policy import defer_host, retry_after_seconds
 
-                    defer_host(parsed.hostname or store_url,
-                               retry_after_seconds(response.headers.get("Retry-After")) or 30)
+                    defer_host(
+                        parsed.hostname or store_url,
+                        retry_after_seconds(response.headers.get("Retry-After")) or 30,
+                    )
                 response.raise_for_status()
                 if response.status_code != 200:
                     raise ValueError(f"Expected HTTP 200, received {response.status_code}")
@@ -97,18 +103,34 @@ def download_graphs(
                             raise TimeoutError("Graph Store download deadline reached")
                         used += len(chunk)
                         if used > max_bytes:
-                            raise ValueError(f"Graph Store download exceeds {max_bytes} decoded bytes")
+                            raise ValueError(
+                                f"Graph Store download exceeds {max_bytes} decoded bytes"
+                            )
                         stream.write(chunk)
                         digest.update(chunk)
                         size += len(chunk)
                 partial.rename(path)
-                results.append(GraphDownload(
-                    uri, str(path), fmt, size, digest.hexdigest(),
-                    response.headers.get("ETag"), response.headers.get("Last-Modified"),
-                ))
+                results.append(
+                    GraphDownload(
+                        uri,
+                        str(path),
+                        fmt,
+                        size,
+                        digest.hexdigest(),
+                        response.headers.get("ETag"),
+                        response.headers.get("Last-Modified"),
+                    )
+                )
     (run / "download.json").write_text(
-        json.dumps({"state": "downloaded", "store_url": store_url,
-                    "graphs": [asdict(item) for item in results]}, indent=2) + "\n",
+        json.dumps(
+            {
+                "state": "downloaded",
+                "store_url": store_url,
+                "graphs": [asdict(item) for item in results],
+            },
+            indent=2,
+        )
+        + "\n",
         encoding="utf-8",
     )
     return results
@@ -124,17 +146,20 @@ def load_downloads(
     """
     dataset = Dataset()
     for item in downloads:
-        dataset.graph(item.graph_uri).parse(
-            item.path, format=item.format, publicID=item.graph_uri
-        )
+        dataset.graph(item.graph_uri).parse(item.path, format=item.format, publicID=item.graph_uri)
     if endpoint_url is not None:
         from rdfsolve.sparql_helper import SparqlHelper
 
         with SparqlHelper(endpoint_url, timeout=timeout, max_retries=1) as helper:
             for item in downloads:
-                query = ("SELECT (COUNT(*) AS ?count) WHERE { GRAPH "
-                         + URIRef(item.graph_uri).n3() + " { ?s ?p ?o } }")
-                rows = helper.select(query, purpose="graph-store/verify-count")["results"]["bindings"]
+                query = (
+                    "SELECT (COUNT(*) AS ?count) WHERE { GRAPH "
+                    + URIRef(item.graph_uri).n3()
+                    + " { ?s ?p ?o } }"
+                )
+                rows = helper.select(query, purpose="graph-store/verify-count")["results"][
+                    "bindings"
+                ]
                 expected = int(rows[0]["count"]["value"])
                 actual = len(dataset.graph(item.graph_uri))
                 if actual != expected:
@@ -145,8 +170,15 @@ def load_downloads(
                     )
         if downloads:
             (Path(downloads[0].path).parent / "validation.json").write_text(
-                json.dumps({"state": "count_verified", "endpoint": endpoint_url,
-                            "triples": sum(len(dataset.graph(i.graph_uri)) for i in downloads)},
-                           indent=2) + "\n", encoding="utf-8",
+                json.dumps(
+                    {
+                        "state": "count_verified",
+                        "endpoint": endpoint_url,
+                        "triples": sum(len(dataset.graph(i.graph_uri)) for i in downloads),
+                    },
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
             )
     return dataset

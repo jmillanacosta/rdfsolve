@@ -329,15 +329,23 @@ def discover_void_graphs(
 ) -> dict[str, Any]:
     """Retrieve published VoID RDF and its canonical schema. Failures raise."""
     return VoidParser(graph_uris=graph_uris, exclude_graphs=exclude_graphs).discover_void_graphs(
-        endpoint_url, timeout=timeout, max_retries=max_retries,
-        batch_size=batch_size, graph_batch_size=graph_batch_size, max_pages=max_pages,
+        endpoint_url,
+        timeout=timeout,
+        max_retries=max_retries,
+        batch_size=batch_size,
+        graph_batch_size=graph_batch_size,
+        max_pages=max_pages,
     )
 
 
 def discover_all_graphs(
-    endpoint_url: str, *, include_counts: bool = False,
-    timeout: float = 30.0, max_retries: int = 1,
-    batch_size: int = 100, max_pages: int = 1000,
+    endpoint_url: str,
+    *,
+    include_counts: bool = False,
+    timeout: float = 30.0,
+    max_retries: int = 1,
+    batch_size: int = 100,
+    max_pages: int = 1000,
 ) -> dict[str, Any]:
     """List graph names in pages. Set include_counts=True for triple counts.
 
@@ -345,8 +353,12 @@ def discover_all_graphs(
     Query failures raise. Omitted counts are None, not zero.
     """
     return VoidParser().discover_all_graphs(
-        endpoint_url, include_counts=include_counts, timeout=timeout,
-        max_retries=max_retries, batch_size=batch_size, max_pages=max_pages,
+        endpoint_url,
+        include_counts=include_counts,
+        timeout=timeout,
+        max_retries=max_retries,
+        batch_size=batch_size,
+        max_pages=max_pages,
     )
 
 
@@ -431,8 +443,10 @@ def mine_schema(
         report_path=report_path,
         filter_service_namespaces=filter_service_namespaces,
         authors=authors,
-        get_graphs_from_store=get_graphs_from_store, graph_store_url=graph_store_url,
-        graph_store_dir=graph_store_dir, graph_store_max_bytes=graph_store_max_bytes,
+        get_graphs_from_store=get_graphs_from_store,
+        graph_store_url=graph_store_url,
+        graph_store_dir=graph_store_dir,
+        graph_store_max_bytes=graph_store_max_bytes,
     )
 
 
@@ -440,7 +454,9 @@ def mine_schema(
 
 
 def query_metadata(
-    endpoint_url: str, timeout: float = 30.0, *,
+    endpoint_url: str,
+    timeout: float = 30.0,
+    *,
     graph_uris: list[str] | None = None,
     subject_iris: list[str] | None = None,
 ) -> MetadataDocument:
@@ -550,8 +566,11 @@ def discover_void_source(
         if not graph_store_url or not scopes:
             raise ValueError("Graph Store retrieval requires graph_store_url and graph_uris")
         downloads = download_graphs(
-            graph_store_url, scopes, graph_store_dir,
-            max_bytes=graph_store_max_bytes, timeout=timeout,
+            graph_store_url,
+            scopes,
+            graph_store_dir,
+            max_bytes=graph_store_max_bytes,
+            timeout=timeout,
         )
         dataset = load_downloads(downloads, endpoint_url=endpoint, timeout=timeout)
         graph = Graph()
@@ -560,16 +579,30 @@ def discover_void_source(
         document = VoidSchema(graph, endpoint, name, scopes, rdf_dataset=dataset)
     else:
         result = discover_void_graphs(
-            endpoint, graph_uris=scopes, timeout=timeout, max_retries=max_retries,
-            batch_size=batch_size, graph_batch_size=graph_batch_size, max_pages=max_pages,
+            endpoint,
+            graph_uris=scopes,
+            timeout=timeout,
+            max_retries=max_retries,
+            batch_size=batch_size,
+            graph_batch_size=graph_batch_size,
+            max_pages=max_pages,
         )
         document = VoidSchema(
-            result["graph"], endpoint, name, result["found_graphs"], result["default_graph"],
-            rdf_dataset=result["rdf_dataset"]
+            result["graph"],
+            endpoint,
+            name,
+            result["found_graphs"],
+            result["default_graph"],
+            rdf_dataset=result["rdf_dataset"],
         )
     if output_dir is not None:
         document.files = export_schema_artifacts(
-            document.graph, name, endpoint, output_dir, tag=tag, fmt=fmt,
+            document.graph,
+            name,
+            endpoint,
+            output_dir,
+            tag=tag,
+            fmt=fmt,
         )
         dataset_path = Path(output_dir) / f"{name}_{tag}_dataset.trig"
         dataset_path.write_text(document.to_trig(), encoding="utf-8")

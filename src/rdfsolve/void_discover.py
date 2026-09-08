@@ -95,8 +95,9 @@ class VoidParser:
         """Return retained RDF metadata without querying an endpoint."""
         from rdfsolve.schema_models.metadata import MetadataDocument
 
-        return MetadataDocument(graph=self.graph + Graph(), graph_uris=self.graph_uris,
-                                scope="retained VoID RDF")
+        return MetadataDocument(
+            graph=self.graph + Graph(), graph_uris=self.graph_uris, scope="retained VoID RDF"
+        )
 
     def to_mined_schema(self) -> MinedSchema:
         """Read the supported VoID profile through the canonical reader."""
@@ -143,8 +144,14 @@ class VoidParser:
     # VoID catalog discovery
 
     def discover_void_graphs(
-        self, endpoint_url: str, *, timeout: float = 30.0, max_retries: int = 1,
-        batch_size: int = 100, graph_batch_size: int = 8, max_pages: int = 1000,
+        self,
+        endpoint_url: str,
+        *,
+        timeout: float = 30.0,
+        max_retries: int = 1,
+        batch_size: int = 100,
+        graph_batch_size: int = 8,
+        max_pages: int = 1000,
     ) -> dict[str, Any]:
         """Retrieve published VoID and parse it through the canonical reader.
 
@@ -158,8 +165,11 @@ class VoidParser:
 
         with SparqlHelper(endpoint_url, timeout=timeout, max_retries=max_retries) as helper:
             dataset, found, default_graph = discover_description(
-                helper, self.graph_uris, batch_size=batch_size,
-                graph_batch_size=graph_batch_size, max_pages=max_pages,
+                helper,
+                self.graph_uris,
+                batch_size=batch_size,
+                graph_batch_size=graph_batch_size,
+                max_pages=max_pages,
                 excluded_prefixes=tuple(SERVICE_NAMESPACE_PREFIXES) if self.exclude_graphs else (),
             )
         graph = Graph()
@@ -169,8 +179,10 @@ class VoidParser:
         schema = self.to_mined_schema()
         partitions = [
             {
-                "subjectClass": p.subject_class, "prop": p.property_uri,
-                "objectClass": p.object_class, "objectDatatype": p.datatype,
+                "subjectClass": p.subject_class,
+                "prop": p.property_uri,
+                "objectClass": p.object_class,
+                "objectDatatype": p.datatype,
                 "count": p.count,
             }
             for p in schema.patterns
@@ -189,9 +201,14 @@ class VoidParser:
         }
 
     def discover_all_graphs(
-        self, endpoint_url: str, *, include_counts: bool = False,
-        timeout: float = 30.0, max_retries: int = 1,
-        batch_size: int = 100, max_pages: int = 1000,
+        self,
+        endpoint_url: str,
+        *,
+        include_counts: bool = False,
+        timeout: float = 30.0,
+        max_retries: int = 1,
+        batch_size: int = 100,
+        max_pages: int = 1000,
     ) -> dict[str, Any]:
         """List named graphs. Counts are optional and can be expensive."""
         from rdfsolve.sparql_helper import SparqlHelper
@@ -202,12 +219,16 @@ class VoidParser:
             graphs: list[dict[str, Any]] = [{"uri": uri, "count": None} for uri in names]
             if include_counts:
                 for graph in graphs:
-                    query = ("SELECT (COUNT(*) AS ?count) WHERE { GRAPH "
-                             + URIRef(graph["uri"]).n3() + " { ?s ?p ?o } }")
+                    query = (
+                        "SELECT (COUNT(*) AS ?count) WHERE { GRAPH "
+                        + URIRef(graph["uri"]).n3()
+                        + " { ?s ?p ?o } }"
+                    )
                     rows = helper.select(query, purpose="graph/count")["results"]["bindings"]
                     graph["count"] = int(rows[0]["count"]["value"])
         return {
-            "graphs": graphs, "total_graphs": len(graphs),
+            "graphs": graphs,
+            "total_graphs": len(graphs),
             "ontology_graphs": [],
             "void_graphs": [uri for uri in names if "void" in uri.lower()],
         }

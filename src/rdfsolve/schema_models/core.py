@@ -154,14 +154,13 @@ class MinedSchema(BaseModel):
         if self.source_metadata is not None:
             return self.source_metadata.to_document()
         return MetadataDocument(
-            graph=self.to_void_graph(), endpoint=self.about.endpoint,
+            graph=self.to_void_graph(),
+            endpoint=self.about.endpoint,
             scope="rdfsolve export of stored schema fields",
         )
 
     @classmethod
-    def from_void_source(
-        cls, endpoint: str, name: str, **kwargs: Any
-    ) -> MinedSchema:
+    def from_void_source(cls, endpoint: str, name: str, **kwargs: Any) -> MinedSchema:
         """Retrieve published VoID and return its canonical schema.
 
         This does not fill missing statistics by querying instance data.
