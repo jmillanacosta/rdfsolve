@@ -193,6 +193,16 @@ instead lists possible class routes without querying the data.
 Use `diagram(paths=paths, path=1)` for the first complete path. Add
 `instances=False` to show its classes instead of its records.
 
+Start from one record to keep the search within its connections:
+
+```python
+name_paths = data.paths_between(pathways[0], target_value="Phenobarbital", max_hops=3)
+chemical_paths = data.paths_between(pathways[0], "Chemical entity", max_hops=3)
+```
+
+The first finds matching names; the second finds records of the chosen class.
+Both verify the links from this pathway, not all pathways of its class.
+
 Press Tab after `pathways.fields.` to discover fields while typing.
 `show()` retrieves only the fields you ask for; displaying results does not
 send requests.

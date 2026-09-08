@@ -49,7 +49,7 @@ class Client(DatasetClient):
 
     def paths_between(
         self,
-        source: str,
+        source: str | BaseModel,
         target: str | None = None,
         *,
         target_value: str | None = None,
@@ -59,7 +59,8 @@ class Client(DatasetClient):
     ) -> pd.DataFrame:
         """List class routes, or query connections to a matching record name.
 
-        A target class lists schema routes without queries. Use target_value
+        Two class names list schema routes without queries. A source record
+        restricts observed paths to that record's IRI. Use target_value
         instead to verify mined class routes against records whose names or
         identifiers contain that text, ignoring case. Paths stay in one graph
         and do not repeat classes or resources. Class routes are queried in
@@ -70,12 +71,26 @@ class Client(DatasetClient):
 
         if (target is None) == (target_value is None):
             raise ValueError("Supply either a target class or target_value")
-        if target_value is not None:
-            source_iri = str(getattr(self.model(source), "rdf_class_iri", ""))
+        source_resource = None
+        if isinstance(source, BaseModel):
+            source_resource = getattr(source, "uri", None)
+            if not isinstance(source_resource, str):
+                raise ValueError("Use a client record with a resource IRI")
+            _iri(source_resource)
+            source = str(getattr(type(source), "rdf_class_iri", ""))
+        if target_value is not None or source_resource is not None:
+            source_class = str(getattr(self.model(source), "rdf_class_iri", ""))
+            target_class = (
+                str(getattr(self.model(target), "rdf_class_iri", ""))
+                if target is not None
+                else None
+            )
             return value_paths(
                 self,
-                source_iri,
+                source_class,
                 target_value,
+                source_iri=source_resource,
+                target_class=target_class,
                 max_hops=max_hops,
                 both_directions=both_directions,
                 max_paths=max_paths,

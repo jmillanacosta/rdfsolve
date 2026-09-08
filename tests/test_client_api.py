@@ -182,6 +182,25 @@ def test_paths_to_value_keep_real_links_and_draw_only_selected_paths():
         assert len(data.queries) == before
 
 
+def test_record_paths_bind_the_source_and_verify_its_type():
+    with client() as data:
+        selected_iri = "https://identifiers.org/aop/162"
+        record = data.get(data.model(AOP), selected_iri, fields=[])
+        named = data.paths_between(source=record, target_value="Phenobarbital", max_hops=3)
+        typed = data.paths_between(source=record, target=CHEMICAL, max_hops=3)
+        for table in (named, typed):
+            assert table.attrs["routes"]
+            assert {route["bindings"]["n0"]["value"] for route in table.attrs["routes"]} == {selected_iri}
+            assert all(q["result_retained"] for q in data.session_metadata()["queries"])
+        assert {route["bindings"][f"n{route['hops']}"]["value"] for route in typed.attrs["routes"]} == {
+            "https://identifiers.org/cas/50-06-6"
+        }
+        assert typed.attrs["target_class"] == CHEMICAL
+        data.source.remove((URIRef(selected_iri), RDF.type, URIRef(AOP)))
+        assert data.paths_between(record, target=CHEMICAL, max_hops=2).empty
+        assert data.paths_between(record, target_value="Phenobarbital", max_hops=2).empty
+
+
 def test_value_paths_do_not_join_graphs():
     with client() as data:
         graphs = Dataset()
