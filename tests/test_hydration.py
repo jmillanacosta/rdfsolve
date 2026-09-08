@@ -1,5 +1,6 @@
 """Test hydration against retained AOPWiki RDF, not a mock domain dataset."""
 
+import json
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -87,6 +88,45 @@ def test_endpoint_failures_and_truncation_do_not_return_empty_objects(monkeypatc
         # A supplied helper remains usable.
         select.return_value = {"results": {"bindings": []}}
         assert helper.select("SELECT * WHERE {}")["results"]["bindings"] == []
+
+
+def test_session_keeps_repeated_queries_and_failed_steps(tmp_path):
+    graph = Graph().parse(DATA, format="turtle")
+    with schema().hydrator(graph, max_rows=1) as client:
+        model = client.model(DATASET)
+        for _ in range(2):
+            with pytest.raises(HydrationLimitError), client.step("Read dataset"):
+                client.get(model, ROOT)
+        output = tmp_path / "session.json"
+        client.save_session(output)
+    session = json.loads(output.read_text())
+    assert [q["id"] for q in session["queries"]] == [1, 2]
+    assert session["queries"][0]["query"] == session["queries"][1]["query"]
+    assert all(q["success"] for q in session["queries"])
+    assert [step["query_ids"] for step in session["steps"]] == [[1], [2]]
+    assert all(step["status"] == "failed" for step in session["steps"])
+    assert all(step["error"] == "HydrationLimitError" for step in session["steps"])
+
+
+def test_session_keeps_helper_history_and_failed_queries(monkeypatch):
+    with SparqlHelper("https://example.org/sparql") as helper:
+        helper.enable_query_collection()
+        monkeypatch.setattr(helper, "_execute_request", Mock(return_value={
+            "results": {"bindings": []},
+        }))
+        helper.select("SELECT * WHERE {}")
+        with schema().hydrator(helper) as client:
+            monkeypatch.setattr(helper, "_execute_request", Mock(
+                side_effect=EndpointError("unavailable")
+            ))
+            with pytest.raises(EndpointError), client.step("Read dataset"):
+                client.get(client.model(DATASET), ROOT)
+            session = client.session_metadata()
+        assert len(session["queries"]) == 2
+        assert session["queries"][0]["success"] is True
+        assert session["queries"][1]["success"] is False
+        assert session["queries"][1]["error"] == "EndpointError"
+        assert session["steps"][0]["query_ids"] == [2]
 
 
 def test_void_pattern_fields_work_without_shacl_profiles():

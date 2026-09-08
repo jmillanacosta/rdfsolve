@@ -37,6 +37,8 @@ class QueryRecord:
     description: str = ""
     keywords: list[str] = field(default_factory=list)
     success: bool = True
+    purpose: str = ""
+    error: str | None = None
 
     def query_id(self) -> str:
         """Generate a unique ID for this query based on content hash."""
@@ -168,17 +170,18 @@ class SparqlHelper:
         "memory limit exceeded",
     )
 
-    def enable_query_collection(self) -> None:
-        """Collect successful request texts in this helper only."""
+    def enable_query_collection(self, *, clear: bool = True) -> None:
+        """Collect query executions, including failures. Optionally keep prior records."""
         self._collect_queries = True
-        self._query_registry.clear()
+        if clear:
+            self._query_registry.clear()
 
     def disable_query_collection(self) -> None:
         """Stop automatic query collection."""
         self._collect_queries = False
 
     def get_collected_queries(self) -> list[QueryRecord]:
-        """Return successful request records, not proof of complete results."""
+        """Return execution records, not proof of complete results."""
         return self._query_registry.copy()
 
     def clear_collected_queries(self) -> None:
@@ -191,19 +194,23 @@ class SparqlHelper:
         query_type: Literal["SELECT", "CONSTRUCT", "ASK"],
         endpoint_url: str,
         success: bool = True,
+        purpose: str = "",
+        error: str | None = None,
     ) -> None:
-        """Collect a successful request without storing its results."""
+        """Collect a query execution without storing its results."""
         if self._collect_queries:
-            record = QueryRecord(query, query_type, endpoint_url, success=success)
+            record = QueryRecord(
+                query, query_type, endpoint_url, success=success, purpose=purpose, error=error
+            )
             self._query_registry.append(record)
             if not any(saved.query == query for saved in self.queries.queries.values()):
                 name = record.query_id()
                 if name not in self.queries.queries:
                     try:
                         self.queries.add(name, query, endpoint=endpoint_url)
-                    except Exception as error:
+                    except Exception as export_error:
                         logger.warning(
-                            "Cannot save query %s as a portable example: %s", name, error
+                            "Cannot save query %s as a portable example: %s", name, export_error
                         )
 
     def add_query(self, name: str, query: str, *, description: str = "") -> SavedQuery:
@@ -525,6 +532,30 @@ class SparqlHelper:
         parse_json: bool = True,
         purpose: str = "",
     ) -> Any:
+        """Record each logical query, including one that fails after retries."""
+        success = False
+        failure = None
+        try:
+            result = self._execute_request(query, accept, query_type, parse_json, purpose)
+            success = True
+            return result
+        except Exception as error:
+            failure = type(error).__name__
+            raise
+        finally:
+            self._record_query(
+                query, query_type, self.endpoint_url,
+                success=success, purpose=purpose, error=failure,
+            )
+
+    def _execute_request(
+        self,
+        query: str,
+        accept: str,
+        query_type: Literal["SELECT", "CONSTRUCT", "ASK"] = "SELECT",
+        parse_json: bool = True,
+        purpose: str = "",
+    ) -> Any:
         """Execute SPARQL query with GET/POST fallback and retry logic."""
         # Try GET first (unless we know POST is required)
         use_post = self._requires_post
@@ -565,14 +596,6 @@ class SparqlHelper:
                         )
 
                 parsed = json.loads(result) if parse_json else result
-
-                # Record successful query
-                self._record_query(
-                    query=query,
-                    query_type=query_type,
-                    endpoint_url=self.endpoint_url,
-                    success=True,
-                )
 
                 logger.info(
                     "%s completed (%s)",

@@ -5,7 +5,11 @@ from __future__ import annotations
 import json
 import keyword
 import logging
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import asdict
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field, create_model
@@ -17,7 +21,7 @@ from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.exporters.pydantic import build_pydantic_classes
 from rdfsolve.schema_models.paths import PropertyPath
-from rdfsolve.sparql_helper import EndpointError, SparqlHelper
+from rdfsolve.sparql_helper import EndpointError, QueryRecord, SparqlHelper
 
 logger = logging.getLogger(__name__)
 Model = TypeVar("Model", bound=BaseModel)
@@ -106,6 +110,68 @@ class Hydrator:
         self.max_rows = max_rows
         self.max_subjects = max_subjects
         self.queries: list[str] = []
+        self._schema = schema
+        self._local_records: list[QueryRecord] = []
+        self._steps: list[dict[str, Any]] = []
+        if isinstance(self.source, SparqlHelper):
+            self.source.enable_query_collection(clear=False)
+
+    def _records(self) -> list[QueryRecord]:
+        if isinstance(self.source, SparqlHelper):
+            return self.source.get_collected_queries()
+        return self._local_records
+
+    @contextmanager
+    def step(self, name: str) -> Iterator[None]:
+        """Name a research step and retain its queries, even when it fails."""
+        if not name.strip():
+            raise ValueError("Supply a step name")
+        start = len(self._records())
+        item: dict[str, Any] = {
+            "name": name,
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "status": "failed",
+        }
+        self._steps.append(item)
+        try:
+            yield
+            item["status"] = "complete"
+        except Exception as error:
+            item["error"] = type(error).__name__
+            raise
+        finally:
+            item["query_ids"] = list(range(start + 1, len(self._records()) + 1))
+            item["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    def session_metadata(self) -> dict[str, Any]:
+        """Return all retained helper queries and named steps, not a data snapshot.
+
+        Query IDs identify executions, including repeated texts. Queries outside
+        a named step remain in the session. HTTP retries are one execution.
+        Use this client and its helper sequentially while recording steps.
+        """
+        return {
+            "schema": self._schema.to_dict(),
+            "graph_uris": list(self.graph_uris),
+            "budgets": {
+                "batch_size": self.batch_size,
+                "max_rows": self.max_rows,
+                "max_subjects": self.max_subjects,
+            },
+            "queries": [
+                {"id": index, **asdict(record)}
+                for index, record in enumerate(self._records(), 1)
+            ],
+            "steps": [dict(step) for step in self._steps],
+        }
+
+    def save_session(self, path: str | Path) -> None:
+        """Save query text, step outcomes, schema, and budgets as JSON."""
+        Path(path).write_text(
+            json.dumps(self.session_metadata(), indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+
 
     def model(self, name_or_iri: str) -> type[BaseModel]:
         """Find a generated class by its Python name or full RDF class IRI."""
@@ -163,10 +229,17 @@ class Hydrator:
         """Execute one bounded query and retain its text for inspection."""
         self.queries.append(query)
         if isinstance(self.source, Graph):
-            raw = self.source.query(query).serialize(format="json")
-            if raw is None:
-                raise EndpointError("Local query returned no results document")
-            result = json.loads(raw)
+            record = QueryRecord(query, "SELECT", "", success=False, purpose="hydrate")
+            self._local_records.append(record)
+            try:
+                raw = self.source.query(query).serialize(format="json")
+                if raw is None:
+                    raise EndpointError("Local query returned no results document")
+                result = json.loads(raw)
+                record.success = True
+            except Exception as error:
+                record.error = type(error).__name__
+                raise
         else:
             result = self.source.select(query, purpose="hydrate")
         try:
