@@ -30,7 +30,9 @@ def check_cached_input(path: Path) -> InputCheck:
             digest.update(chunk)
     after = path.stat()
     if (before.st_ino, before.st_size, before.st_mtime_ns) != (
-        after.st_ino, after.st_size, after.st_mtime_ns
+        after.st_ino,
+        after.st_size,
+        after.st_mtime_ns,
     ):
         raise ValueError(f"Cached input changed during inspection: {path}")
     if not decoded_bytes:

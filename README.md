@@ -33,15 +33,15 @@ miner = SchemaMiner(endpoint_url="https://sparql.example.org/sparql")
 schema = miner.mine(dataset_name="example")
 
 # Export formats
-schema.to_void_graph()      # VoID RDF graph
-schema.to_linkml_yaml()     # LinkML schema YAML string
+schema.to_void_graph()  # VoID RDF graph
+schema.to_linkml_yaml()  # LinkML schema YAML string
 schema.to_shacl()  # SHACL shapes
-schema.to_pydantic()        # Python source for dataset-specific Pydantic classes
-schema.to_dict()            # Versioned canonical document (dict)
+schema.to_pydantic()  # Python source for dataset-specific Pydantic classes
+schema.to_dict()  # Versioned canonical document (dict)
 
 # Inspect
-schema.get_classes()        # List with classes
-schema.get_properties()     # List with properties
+schema.get_classes()  # List with classes
+schema.get_properties()  # List with properties
 
 import json
 
