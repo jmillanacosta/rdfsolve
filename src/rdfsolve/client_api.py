@@ -73,14 +73,49 @@ class Client(DatasetClient):
                 return _name(re.split(r"[/#:]", iri)[-1])
         return _name(field)
 
+    def field_name(self, model: type[BaseModel], text: str) -> str:
+        """Resolve a field by its Python name or displayed source label."""
+        matches = [
+            name for name in model.model_fields
+            if _key(text) in {_key(name), _key(self.link_name(model, name))}
+        ]
+        if len(matches) != 1:
+            raise ValueError(f"Choose a field from results.fields: {text}")
+        return matches[0]
+
+    def from_table(
+        self, kind: str, table: pd.DataFrame, *, id_column: str, **columns: str
+    ) -> Results:
+        """Create typed records from named table columns without querying."""
+        model = self.model(kind)
+        missing = {id_column, *columns.values()} - set(table.columns)
+        if missing:
+            raise ValueError(f"Missing columns: {sorted(missing)}")
+        fields = {self.field_name(model, field): column for field, column in columns.items()}
+        records = []
+        for row in table.to_dict(orient="records"):
+            iri = row[id_column]
+            if not isinstance(iri, str):
+                raise ValueError("The identifier column must contain IRIs")
+            _iri(iri)
+            records.append(model.model_validate({
+                "uri": iri, **{field: row[column] for field, column in fields.items()}
+            }))
+        return Results(self, records)
+
     def types(self) -> pd.DataFrame:
         """List available record types without sending a query."""
         return pd.DataFrame({"Type": sorted(_name(name) for name in self.models)})
 
     @classmethod
-    def from_session(cls, path: str | Path, **kwargs: Any) -> Client:
+    def from_session(
+        cls, path: str | Path, *, data_file: str | Path | None = None, **kwargs: Any
+    ) -> Client:
         """Reuse a saved session's schema. Do not replay its queries."""
         session = json.loads(Path(path).read_text(encoding="utf-8"))
+        if data_file is not None:
+            kwargs["source"] = Graph().parse(data_file)
+            kwargs["graph_uris"] = []
         return cls(MinedSchema.from_dict(session["schema"]), **kwargs)
 
     def find(self, text: str, *, kind: str | None = None, field: str | None = None) -> Results:
@@ -214,7 +249,13 @@ class Results:
             name for record in self.records for name, info in type(record).model_fields.items()
             if isinstance(info.json_schema_extra, dict) and info.json_schema_extra.get("rdf_path")
         }
-        return SimpleNamespace(**{name: name for name in sorted(names)})
+        aliases = {name: name for name in sorted(names)}
+        for record in self.records:
+            for name in names & type(record).model_fields.keys():
+                label = re.sub(r"\\W+", "_", self.client.link_name(type(record), name).lower()).strip("_")
+                if label.isidentifier() and label not in aliases:
+                    aliases[label] = name
+        return SimpleNamespace(**aliases)
 
     def _routes(self, incoming: bool) -> list[tuple[type[BaseModel], str, type[BaseModel]]]:
         routes = []
@@ -266,16 +307,18 @@ class Results:
             return
         models = {type(record) for record in self.records}
         names = {
-            model: next((name for name in model.model_fields if _key(name) == _key(field)), None)
+            model: self.client.field_name(model, field)
             for model in models
         }
-        if any(name is None for name in names.values()):
-            raise ValueError(f"Choose a field from results.fields: {field}")
         with self.client.step(f"Read {field}"):
             for model, name in names.items():
-                if name is None:
+                group = [
+                    r for r in self.records if type(r) is model
+                    and name not in vars(r).get("rdf_loaded_fields", [])
+                    and name not in r.model_fields_set
+                ]
+                if not group:
                     continue
-                group = [r for r in self.records if type(r) is model]
                 selected = set(_name_fields(model)) | {name}
                 selected.update(field for r in group for field in vars(r).get("rdf_loaded_fields", []))
                 loaded = self.client.get_many(
@@ -294,7 +337,7 @@ class Results:
         for record in self.records:
             row: dict[str, Any] = {"Name": _title(record)}
             for field in fields:
-                name = next(n for n in type(record).model_fields if _key(n) == _key(field))
+                name = self.client.field_name(type(record), field)
                 value = getattr(record, name)
                 row[_name(field)] = " | ".join(map(str, value)) if isinstance(value, list) else value
             rows.append(row)
@@ -305,8 +348,20 @@ class Results:
         self._load(field)
         values: dict[str, set[str]] = defaultdict(set)
         for record in self.records:
-            name = next(n for n in type(record).model_fields if _key(n) == _key(field))
-            for term in vars(record).get("rdf_terms", {}).get(name, []):
+            name = self.client.field_name(type(record), field)
+            terms = vars(record).get("rdf_terms", {}).get(name)
+            if terms is None:
+                from rdfsolve.schema_models.enrichment import RdfTerm
+
+                extra = type(record).model_fields[name].json_schema_extra
+                if not isinstance(extra, dict) or not extra.get("rdf_property_iri"):
+                    raise ValueError("No direct RDF field definition")
+                graph = model_to_graph(record, fields=[name])
+                terms = [
+                    RdfTerm.from_rdf(value).model_dump(mode="json")
+                    for value in graph.objects(URIRef(vars(record)["uri"]), URIRef(str(extra["rdf_property_iri"])))
+                ]
+            for term in terms:
                 values[json.dumps(term, sort_keys=True)].add(str(vars(record)["uri"]))
         rows = []
         for raw, subjects in values.items():

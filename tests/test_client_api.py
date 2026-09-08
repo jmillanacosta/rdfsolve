@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from rdflib import Graph, Literal, RDF, URIRef
 
@@ -70,3 +71,21 @@ def test_errors_and_completion_do_not_trigger_hidden_queries():
         with pytest.raises(ValueError, match="field"):
             pathways.show("misspelt")
         assert data.model("Adverse outcome pathway") is data.model(AOP)
+        data.source.query = lambda *args, **kwargs: pytest.fail("Display must not query")
+        assert not pathways.show("title").empty
+        assert not pathways.values(pathways.fields.title).empty
+
+
+def test_table_input_uses_field_definitions_without_querying(tmp_path):
+    with client() as data:
+        data.source.query = lambda *args, **kwargs: pytest.fail("Table input must not query")
+        table = pd.DataFrame({"ID": ["https://identifiers.org/cas/50-06-6"], "Name": ["Phenobarbital"]})
+        records = data.from_table(CHEMICAL, table, id_column="ID", title="Name")
+        assert list(records.values("title")["Value"]) == ["Phenobarbital"]
+        output = tmp_path / "chemical.ttl"
+        data.save(output, records)
+        assert all(triple in data.source for triple in Graph().parse(output))
+        with pytest.raises(ValueError, match="Missing columns"):
+            data.from_table(CHEMICAL, table, id_column="missing", title="Name")
+        with pytest.raises(ValueError):
+            data.from_table(CHEMICAL, table.assign(ID="not an IRI"), id_column="ID", title="Name")
