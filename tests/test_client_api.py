@@ -30,6 +30,36 @@ def client():
     return Client(MinedSchema(about={"dataset_name": "aopwikirdf"}, patterns=list(patterns.values())), graph, graph_uris=[])
 
 
+def test_agent_tools_keep_typed_records_and_query_evidence():
+    from pydantic_ai import ModelRetry
+    from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
+    from pydantic_ai.models.function import FunctionModel
+    from pydantic_ai.usage import UsageLimits
+
+    from rdfsolve.pydantic_ai import ClientTools
+
+    def model(messages, info):
+        if len(messages) == 1:
+            return ModelResponse(parts=[ToolCallPart("find", {"text": "Phenobarbital", "kind": CHEMICAL})])
+        return ModelResponse(parts=[TextPart("Found")])
+
+    with client() as data:
+        tools = ClientTools(data, preview_rows=1, max_results=1)
+        agent = tools.agent(FunctionModel(model))
+        agent.run_sync("Find Phenobarbital", usage_limits=UsageLimits(request_limit=2))
+        records = tools.results["r1"].records
+        assert records and all(record.rdf_class_iri == CHEMICAL for record in records)
+        assert all(record.to_graph() for record in records)
+        session = data.session_metadata()
+        assert session["queries"] and all(query["result_retained"] for query in session["queries"])
+        before = len(session["queries"])
+        with pytest.raises(ModelRetry, match="budget"):
+            tools.find("anything")
+        with pytest.raises(ModelRetry, match="Unknown result"):
+            tools.show("another-session", [])
+        assert len(data.session_metadata()["queries"]) == before
+
+
 def test_find_follow_values_and_saved_links(tmp_path):
     with client() as data:
         matches = data.find("Phenobarbital")

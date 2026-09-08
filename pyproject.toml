@@ -90,7 +90,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+agents = [
+    "pydantic-ai-slim[openai,anthropic]==1.97.0",
+    "python-dotenv==1.2.3",
+]
 tests = [
+    "pydantic-ai-slim==1.97.0",
     "pytest",
     "coverage",
     "networkx>=2.8",
