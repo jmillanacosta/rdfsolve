@@ -152,34 +152,55 @@ schema.to_linkml_yaml()  # To LinkML
 schema.to_shacl()  # To SHACL
 ```
 
-### Retrieve Python objects
+### Explore data with Python objects
 
-Turn a mined schema or SHACL shapes into runtime classes, then retrieve only the
-fields you want. For an AOPWiki schema:
+Generate a typed API from a mined schema or SHACL shapes. Find records by name,
+see which links are available, and follow the ones you need. For AOPWiki:
 
 ```python
-with schema.hydrator() as client:
+with schema.client() as client:
     AOP = client.model("AdverseOutcomePathway")
-    pathways = client.sample(AOP, limit=3, fields=["title", "has_key_event"])
-    for pathway in pathways:
-        print(pathway.title, pathway.has_key_event)
+    with client.step("Find thyroid pathways"):
+        pathways = client.search(AOP, "thyroid", fields=["title", "has_key_event"])
+    print(client.table(pathways, ["title"]))
+    print(client.links(AOP))
+    client.save_session("session.json")
 ```
 
-The same client reads endpoints or local RDFLib graphs. Pass
-`schema.hydrator(graph, graph_uris=[])` to read a local graph's default scope.
-Plain predicates, SHACL paths, and paths added with `client.with_paths()` all
-work. Linked resources stay IRIs until you request them with `get()` or
-`get_many()`; nothing downloads recursively.
+Use `client.follow(pathways, "has_key_event", client.model("KeyEvent"))` to read
+their key events. Nothing downloads recursively. The same API reads a local
+RDFLib graph with `schema.client(graph, graph_uris=[])`.
 
-Requested fields contain lists, including `[]` for no returned values.
-Unrequested fields stay `None`. Original terms remain in `object.rdf_terms`;
-source details remain in `object.rdf_source`. Failures and exceeded row budgets
-raise errors. Retrieval does not validate SHACL or prove completeness.
+Requested fields contain lists; `[]` means no returned values, and `None`
+means not requested. Original RDF terms and source details remain on each
+object. Request failures and exceeded limits raise errors.
 
-[Try the live AOPWiki notebook](notebooks/SparqlHelper/AOPWiki_hydration.ipynb):
-mine, generate classes, and retrieve pathway and key-event titles.
+`client.steps()` shows what ran. The saved session keeps queries, failures,
+fallbacks, matched links, and the schema. It records how results were obtained,
+not a snapshot of the endpoint. To include mining queries, enable collection
+with `miner.helper.enable_query_collection()` before mining, then pass that
+helper to `schema.client(miner.helper)` while the miner is open.
+
+[Explore thyroid-related pathways and chemicals](notebooks/SparqlHelper/AOPWiki_hydration.ipynb).
+
+### Write Python records as RDF
+
+```python
+graph = pathways[0].to_graph()
+graph.serialize("pathway.ttl", format="turtle")
+```
+
+Each populated field uses its model's RDF predicate. Retrieved literals keep
+their text, language, and datatype. Nested records write their own RDF fields.
+Multi-step path values cannot recreate missing intermediate triples; select
+direct fields with `to_graph(fields=["title"])` instead. Output is one graph,
+not named-graph preservation or SHACL validation. Class mappings do not merge
+instance identities.
+
+[Save a small RDF subset](notebooks/SparqlHelper/AOPWiki_subsets.ipynb) or
+[write RDF from a chemical table](notebooks/SparqlHelper/AOPWiki_table_to_RDF.ipynb).
 `schema.to_pydantic_classes()` returns runtime classes; `schema.to_pydantic()`
-exports Python source.
+exports Python source. These differ from serializing a schema or record as JSON.
 
 ### SparqlHelper
 
@@ -253,8 +274,8 @@ fetch external imports. Validation queries remain available for inspection and
 export, but need SHACL context and cannot run with `run_query()`. A successful
 request does not prove that the endpoint returned every result.
 
-This is a base for reusable query libraries and, later, clients that retrieve an
-entity's fields along known paths. Object hydration is not implemented.
+Use these query libraries directly, or use `schema.client()` to retrieve
+generated Python records through fields and paths.
 
 ### Add metadata to a source registry
 
