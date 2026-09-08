@@ -30,3 +30,26 @@ def test_explicit_subject_keeps_unprojected_predicates_and_graph_scope():
         helper, graph_uris=["urn:absent"], subject_iris=[subject]
     ).graph
     assert not query_metadata_document(helper, graph_uris=["urn:metadata"]).graph
+
+
+def test_readable_view_is_bounded_and_does_not_change_saved_rdf():
+    from rdfsolve.schema_models.metadata import MetadataDocument
+
+    graph = Graph().parse(DATA, format="turtle")
+    before = graph + Graph()
+    document = MetadataDocument(graph=graph)
+    view = document.to_markdown(max_resources=1, max_values=1)
+    assert "\n| Property | Value |\n" in view
+    assert "more resources are not shown" in view
+    assert "more values are not shown" in view
+    assert "not a complete description" in view
+    assert str(document) == document._repr_markdown_() == document.to_markdown()
+    assert f"triples={len(graph)}" in repr(document)
+    assert isomorphic(graph, before)
+
+
+def test_empty_view_does_not_claim_the_endpoint_has_no_metadata():
+    from rdfsolve.schema_models.metadata import MetadataDocument
+
+    document = MetadataDocument(graph=Graph())
+    assert "No information was retrieved in this scope." in str(document)

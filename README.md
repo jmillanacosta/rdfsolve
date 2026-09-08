@@ -156,8 +156,7 @@ python scripts/pipeline.py --sources sources.yaml --local-only
 
 ### Query metadata without mining
 
-Retrieve RDF descriptions without mining patterns. The returned document keeps
-source predicates, literal languages, and datatypes:
+Read the available metadata without mining the data itself:
 
 ```python
 from rdfsolve.api import query_metadata
@@ -166,18 +165,17 @@ metadata = query_metadata(
     "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
     graph_uris=["http://aopwiki.org/"],
 )
-fields = metadata.project()  # Empty if dataset identity is ambiguous.
-rdf = metadata.to_turtle()
+print(metadata)  # Readable view; notebooks also display it automatically.
 ```
 
-Use `subject_iris=[...]` to retrieve a resource described with another
-vocabulary. Known-field projections leave conflicting scalar values unset.
-Retrieval includes root descriptions and two blank-node levels; it does not
-crawl linked resources. Creation dates are not reported as publication dates.
+The view shows what was retrieved, not everything the endpoint may contain. Long
+views are shortened and say what is hidden. Use `metadata.to_turtle()` for all
+retained details, or `metadata.to_markdown()` to save the readable view.
 
 ### Discover existing VoID descriptions
 
-Find and export pre-existing VoID descriptions at an endpoint:
+VoID is a published dataset description. It may contain metadata without any
+relationship patterns:
 
 ```python
 from rdfsolve.api import discover_void_source
@@ -187,21 +185,20 @@ void = discover_void_source(
     name="aopwikirdf",
 )
 print(void.has_void, void.has_partitions, void.has_patterns)
-metadata = void.get_metadata()  # No network request.
-for graph_uri in void.graph_uris:
-    description = void.for_graph(graph_uri)
-    print(graph_uri, description.has_partitions, description.has_patterns)
-trig = void.to_trig()  # Preserve graph boundaries.
+print(void.get_metadata())  # Show retrieved metadata; no new request.
+
 schema = void.to_mined_schema()
-stored_metadata = schema.get_metadata()  # RDF generated from stored schema fields.
+print(schema.get_metadata())  # Show metadata from the stored schema.
 ```
 
-Discovery checks every named graph and the default graph, sequentially. Explicit
-`graph_uris` restrict the search. VoID without partitions remains useful
-metadata; class-count partitions alone do not describe relationship patterns.
-Turtle is a union view; use TriG to retain contexts. Metadata graph locations
-are not inferred instance-query scopes. Set `output_dir` only when files are
-wanted.
+`has_void` means a description was found; `has_patterns` means it provides
+relationship patterns we can read. Missing patterns do not mean missing
+metadata. Schema metadata is generated from stored fields; it is not the
+original description.
+
+Discovery checks all graphs, one request at a time. Use `void.graph_uris` to
+list matches and `void.for_graph(uri).get_metadata()` to inspect one. Set
+`output_dir` only when you want files.
 
 ### Probe endpoints for entity matching
 

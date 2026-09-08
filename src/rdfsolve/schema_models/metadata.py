@@ -41,6 +41,70 @@ class MetadataDocument(BaseModel):
     graph_uris: list[str] | None = None
     scope: str = "root descriptions and two blank-node levels"
 
+    def __repr__(self) -> str:
+        return (f"MetadataDocument(triples={len(self.graph)}, "
+                f"resources={len(set(self.graph.subjects()))}; print to view)")
+
+    def __str__(self) -> str:
+        return self.to_markdown()
+
+    def _repr_markdown_(self) -> str:
+        return self.to_markdown()
+
+    def to_markdown(self, *, max_resources: int = 5, max_values: int = 30) -> str:
+        """Render a bounded view. Keep all values in the underlying RDF."""
+        from html import escape
+
+        from rdflib import Literal
+
+        if max_resources < 1 or max_values < 1:
+            raise ValueError("Display limits must be positive")
+
+        def cell(text: str) -> str:
+            # Escape source text before displaying it as Markdown.
+            for token in ("\\", "`", "*", "_", "[", "]", "|", "#"):
+                text = text.replace(token, "\\" + token)
+            return escape(text).replace("\r", "").replace("\n", "<br>")
+
+        subjects = set(self.graph.subjects())
+        roots = set(self.graph.subjects(RDF.type, VOID.Dataset)) | set(
+            self.graph.subjects(RDF.type, DCAT.Dataset)
+        )
+        partitions = set(self.graph.objects(None, VOID.classPartition)) | set(
+            self.graph.objects(None, VOID.propertyPartition)
+        )
+        ordered = sorted(subjects, key=lambda node: (node not in roots or node in partitions, str(node)))
+        lines = ["## Metadata view", ""]
+        if self.scope.startswith("rdfsolve export"):
+            lines.append("Generated from stored schema fields; not original source metadata.")
+        else:
+            lines.append("Retrieved information; not a complete description of the endpoint.")
+        lines += ["", f"{len(self.graph)} RDF statements across {len(subjects)} resources."]
+        if not subjects:
+            lines += ["", "No information was retrieved in this scope."]
+        for subject in ordered[:max_resources]:
+            lines += ["", "### " + cell(str(subject)), "", "| Property | Value |", "| --- | --- |"]
+            values = sorted(self.graph.predicate_objects(subject), key=lambda pair: (str(pair[0]), pair[1].n3()))
+            for predicate, value in values[:max_values]:
+                label = self.graph.namespace_manager.normalizeUri(str(predicate))
+                if isinstance(value, Literal):
+                    text = str(value)
+                    if value.language:
+                        text += f" ({value.language})"
+                    elif value.datatype:
+                        text += " [" + self.graph.namespace_manager.normalizeUri(value.datatype) + "]"
+                else:
+                    text = str(value)
+                if len(text) > 240:
+                    text = text[:240] + "… [shortened]"
+                lines.append(f"| {cell(label)} | {cell(text)} |")
+            if len(values) > max_values:
+                lines += ["", f"{len(values) - max_values} more values are not shown."]
+        if len(subjects) > max_resources:
+            lines += ["", f"{len(subjects) - max_resources} more resources are not shown."]
+        lines += ["", "Use to_turtle() for all retained RDF."]
+        return "\n".join(lines)
+
     def for_graph(self, graph_uri: str | None) -> MetadataDocument:
         """Select one retained context; None selects the default graph."""
         if self.rdf_dataset is None:
