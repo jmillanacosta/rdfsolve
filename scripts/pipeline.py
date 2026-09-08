@@ -578,7 +578,6 @@ class RemoteMiningStage(Stage):
             report_path = source_output_dir / f"{source.name}{suffix}_report.json"
             miner = SchemaMiner(
                 endpoint_url=source.endpoint,
-                source_name=source.name,
                 graph_uris=source.graph_uris or None,
                 timeout=(self.config.timeout if self.config.timeout is not None
                          else source.timeout if source.timeout is not None else 300.0),
@@ -874,7 +873,6 @@ class LocalMiningStage(Stage):
         # Local queries use QLever, not the remote endpoint's transport hints.
         miner = SchemaMiner(
             endpoint_url=endpoint,
-            source_name=source.name,
             timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,
             sparql_engine="qlever",
@@ -1267,7 +1265,6 @@ class GroupedMiningStage(LocalMiningStage):
 
         miner = SchemaMiner(
             endpoint_url=endpoint,
-            source_name=group_name,
             graph_uris=graph_uris,
             timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,
@@ -1499,7 +1496,6 @@ class LsLodCloudStage(LocalMiningStage):
 
         miner = SchemaMiner(
             endpoint_url=endpoint,
-            source_name="lslod_cloud",
             graph_uris=graph_uris,
             timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,

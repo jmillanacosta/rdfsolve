@@ -29,7 +29,7 @@ pip install rdfsolve
 from rdfsolve import SchemaMiner
 
 # Query a SPARQL endpoint
-miner = SchemaMiner(endpoint_url="https://sparql.uniprot.org/sparql", source_name="uniprot")
+miner = SchemaMiner(endpoint_url="https://sparql.uniprot.org/sparql")
 schema = miner.mine(dataset_name="uniprot")
 
 # Export formats

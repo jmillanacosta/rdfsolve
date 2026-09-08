@@ -149,7 +149,6 @@ class SchemaMiner:
         qlever_version: dict[str, str] | None = None,
         sparql_engine: str = "",
         sparql_strategy: str = "",
-        source_name: str = "",
         enrich: bool = False,
         examples_per_pattern: int = 2,
         max_response_bytes: int = 64 * 1024 * 1024,
@@ -190,7 +189,6 @@ class SchemaMiner:
             timeout=timeout,
             sparql_engine=sparql_engine,
             sparql_strategy=sparql_strategy,
-            source_name=source_name,
             inter_request_delay=delay,
             max_response_bytes=max_response_bytes,
         )
@@ -274,7 +272,6 @@ class SchemaMiner:
             authors=self.authors,
             qlever_version=self.qlever_version,
             config={
-                "source_name": self._helper.source_name,
                 "graph_uris": self.graph_uris,
                 "graph_scope": "within_named_graphs" if self.graph_uris else "endpoint_default",
                 "sparql_engine": self._helper.sparql_engine,
@@ -771,7 +768,6 @@ def mine_schema(
     qlever_version: dict[str, str] | None = None,
     sparql_engine: str = "",
     sparql_strategy: str = "",
-    source_name: str = "",
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`.
 
@@ -838,6 +834,5 @@ def mine_schema(
         qlever_version=qlever_version,
         sparql_engine=sparql_engine,
         sparql_strategy=sparql_strategy,
-        source_name=source_name,
     )
     return miner.mine(dataset_name=dataset_name)

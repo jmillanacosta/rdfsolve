@@ -74,7 +74,6 @@ def test_report_records_effective_settings():
         delay=0.0,
         sparql_engine="virtuoso",
         sparql_strategy="post+raw",
-        source_name="test",
         strategy="one-shot",
         chunk_size=123,
         class_batch_size=7,
@@ -93,7 +92,6 @@ def test_report_records_effective_settings():
     assert config["class_batch_size"] == 7
     assert config["unsafe_paging"] is True
     assert config["filter_service_namespaces"] is False
-    assert config["source_name"] == "test"
 
 
 def test_empty_scoped_results_do_not_trigger_unscoped_queries():

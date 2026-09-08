@@ -10,11 +10,8 @@ import time
 import warnings
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, ClassVar, Literal
 from urllib.parse import urlsplit
-
-import yaml
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
@@ -171,63 +168,6 @@ class SparqlHelper:
     _query_registry: ClassVar[list[QueryRecord]] = []
     _collect_queries: ClassVar[bool] = False
 
-    # Strategy discovery: maps source name -> winning strategy string.
-    _strategy_updates: ClassVar[dict[str, str]] = {}
-
-    @classmethod
-    def get_strategy_updates(cls) -> dict[str, str]:
-        """Return accumulated strategy updates (source_name -> winning strategy)."""
-        return cls._strategy_updates.copy()
-
-    @classmethod
-    def flush_strategy_updates(
-        cls,
-        sources_yaml: str | Path | None = None,
-    ) -> int:
-        """Write accumulated strategy discoveries to sources.yaml.
-
-        Returns:
-            Number of entries updated.
-        """
-        if not cls._strategy_updates:
-            return 0
-
-        if sources_yaml is None:
-            sources_yaml = Path(__file__).resolve().parent.parent.parent / "data" / "sources.yaml"
-        sources_yaml = Path(sources_yaml)
-
-        with open(sources_yaml, encoding="utf-8") as fh:
-            sources = yaml.safe_load(fh)
-
-        by_name = {s["name"]: s for s in sources}
-        updated = 0
-        for name, strategy in cls._strategy_updates.items():
-            if name in by_name:
-                old = by_name[name].get("sparql_strategy") or ""
-                if old != strategy:
-                    by_name[name]["sparql_strategy"] = strategy
-                    updated += 1
-                    logger.info(
-                        "sources.yaml: %s sparql_strategy %r -> %r",
-                        name,
-                        old,
-                        strategy,
-                    )
-
-        if updated:
-            with open(sources_yaml, "w", encoding="utf-8") as fh:
-                yaml.dump(
-                    sources,
-                    fh,
-                    default_flow_style=False,
-                    sort_keys=False,
-                    width=200,
-                )
-            logger.info("Flushed %d strategy updates to %s", updated, sources_yaml)
-
-        cls._strategy_updates.clear()
-        return updated
-
     @classmethod
     def enable_query_collection(cls) -> None:
         """Enable collection of all executed queries."""
@@ -365,7 +305,6 @@ class SparqlHelper:
         timeout: float = 10000.0,
         sparql_engine: str = "",
         sparql_strategy: str = "",
-        source_name: str = "",
         inter_request_delay: float = 0.0,
         max_response_bytes: int = 64 * 1024 * 1024,
     ) -> None:
@@ -382,9 +321,7 @@ class SparqlHelper:
         self.timeout = timeout
         self.sparql_engine = sparql_engine
         self.sparql_strategy = sparql_strategy
-        self.source_name = source_name
         self.inter_request_delay = inter_request_delay
-        self._last_winning_strategy: str = ""
 
         # Derive initial method from strategy hint when available.
         if sparql_strategy and not use_post and "post" in sparql_strategy:
@@ -419,7 +356,6 @@ class SparqlHelper:
             max_retries=max_retries,
             sparql_engine=engine,
             sparql_strategy=strategy,
-            source_name=entry.get("name", ""),
             max_response_bytes=int(entry.get("max_response_bytes", 64 * 1024 * 1024)),
         )
 
@@ -669,29 +605,6 @@ class SparqlHelper:
                     endpoint_url=self.endpoint_url,
                     success=True,
                 )
-
-                # Determine winning strategy label
-                if _use_raw_post:
-                    winning = "post+raw+json"
-                elif use_post:
-                    winning = "post+form+json"
-                else:
-                    winning = "get+json"
-                self._last_winning_strategy = winning
-
-                # If strategy differs from configured hint, record update
-                if self.sparql_strategy and winning != self.sparql_strategy and self.source_name:
-                    SparqlHelper._strategy_updates[self.source_name] = winning
-                    logger.info(
-                        "Strategy update for %s: %s -> %s",
-                        self.source_name,
-                        self.sparql_strategy,
-                        winning,
-                    )
-                # If no strategy was configured, record discovery
-                elif not self.sparql_strategy and self.source_name:
-                    if self.source_name not in SparqlHelper._strategy_updates:
-                        SparqlHelper._strategy_updates[self.source_name] = winning
 
                 return parsed
 
