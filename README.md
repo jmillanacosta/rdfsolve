@@ -151,9 +151,13 @@ schema.to_jsonld()  # To JSON-LD
 schema.to_linkml_yaml()  # To LinkML
 schema.to_shacl()  # To SHACL
 ```
-### Run your own queries
 
-Use `SparqlHelper` without mining schemas or loading a registry:
+### SparqlHelper
+
+Large SPARQL queries can time out, and endpoints can fail intermittently.
+`SparqlHelper` retries temporary failures and fetches large results in smaller
+batches. It reduces page sizes with LIMIT/OFFSET steps after timeouts and spaces
+requests to ease the load on endpoints.
 
 ```python
 from rdfsolve.sparql_helper import SparqlHelper
@@ -161,36 +165,67 @@ from rdfsolve.sparql_helper import SparqlHelper
 endpoint = "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
 query = "SELECT DISTINCT ?class WHERE { ?s a ?class } ORDER BY ?class"
 
-with SparqlHelper(endpoint, timeout=30, max_retries=1) as helper:
-    results = helper.select(query + " LIMIT 20")  # SPARQL JSON results
-    for row in results["results"]["bindings"]:
-        print(row["class"]["value"])
-
-    has_data = helper.ask("ASK { ?s ?p ?o }")  # bool
-    graph = helper.construct_graph(
-        "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 10"
-    )  # RDFLib graph
+with SparqlHelper(endpoint, timeout=30) as helper:
+    pages = helper.prepare_paginated_query(query)
+    for rows in helper.select_chunked(pages, chunk_size=100):
+        print(rows)
 ```
 
-SELECT results retain each value's RDF type, language, and datatype when
-provided. `construct()` returns Turtle text; `construct_graph()` parses it.
-These are read operations, not SPARQL UPDATE commands. Write `GRAPH` or `FROM`
-in your query when you need a specific graph.
+For a single request, use `helper.select(query)`. Use `helper.ask(query)` for
+yes/no questions or `helper.construct_graph(query)` to retrieve RDF. No mining
+pipeline or registry is required.
 
-For larger SELECT results, process one page at a time:
+Paging helps with result size; it cannot guarantee that an expensive query will
+finish.
+
+### Keep and share useful queries
+
+Give queries names, run them again, and share them as Turtle:
 
 ```python
-with SparqlHelper(endpoint, timeout=30, max_retries=1) as helper:
-    paged = helper.prepare_paginated_query(query)  # No existing LIMIT/OFFSET
-    for page in helper.select_chunked(paged, chunk_size=100, max_pages=100):
-        for row in page:
-            print(row["class"]["value"])
+with SparqlHelper(endpoint, timeout=30) as helper:
+    helper.add_query("classes", query)
+    results = helper.run_query("classes")
+    helper.export_queries_as_ttl("queries.ttl")
+    print(helper.history)  # Named runs: time, duration, and success or error
 ```
 
-Use a stable `ORDER BY`. Paging does not freeze changing data or detect every
-server-side result cap. Requests are rate-limited per host, and failed requests
-raise errors. The timeout applies to each request, not the whole paged
-operation.
+Already have query examples in a SHACL document? Load them, then run a chosen
+query:
+
+```python
+with SparqlHelper(endpoint, timeout=30) as helper:
+    names = helper.load_shacl("queries.ttl")
+    print(names)
+    helper.queries.rename(names[0], "my query")
+    results = helper.run_query("my query")
+```
+
+Each helper keeps its own collection. Turtle preserves the query text, labels,
+prefixes, and other loaded RDF—not the results or run history. For existing
+code, call `helper.enable_query_collection()` to also save successful request
+texts. Collection controls apply to the helper instance, not the class.
+
+SHACL paths can also become queries for a particular entity:
+
+```python
+helper.load_shacl("shapes.ttl")
+print(helper.queries.paths)  # Choose a property shape
+query = helper.queries.path_query(property_shape_id, entity_iri, limit=20)
+```
+
+This builds a query; it does not run it or fill Python objects. Paths can follow
+links forwards, backwards, or through several steps. A result limit does not
+bound the work needed to follow them.
+
+Review imported queries before running them, especially calls to other
+endpoints. Runs use the endpoint you chose for the helper. Loading does not
+fetch external imports. Validation queries remain available for inspection and
+export, but need SHACL context and cannot run with `run_query()`. A successful
+request does not prove that the endpoint returned every result.
+
+This is a base for reusable query libraries and, later, clients that retrieve an
+entity's fields along known paths. Object hydration is not implemented.
 
 ### Add metadata to a source registry
 
