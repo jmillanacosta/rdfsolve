@@ -186,7 +186,7 @@ Show each query and its returned data with `data.query_log()`.
 Save the queries, results, and steps with `data.save_session("session.json")`,
 then close the connection with `data.close()`.
 
-[Walk through the thyroid investigation](notebooks/pydantic_clients/AOPWiki_hydration.ipynb).
+[Walk through the thyroid investigation](notebooks/pydantic_clients/01_mine_explore.ipynb).
 
 ### Write Python records as RDF
 

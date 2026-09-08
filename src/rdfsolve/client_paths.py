@@ -70,6 +70,7 @@ def class_paths(
     routes: list[list[tuple[str, str, str, bool]]] = []
 
     def visit(node: str, seen: set[str], route: list[tuple[str, str, str, bool]]) -> None:
+        """Extend a route only where the target is still reachable."""
         if len(route) + distances.get(node, max_hops + 1) > max_hops:
             return
         if node == last:

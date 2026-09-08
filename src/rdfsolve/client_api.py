@@ -98,6 +98,12 @@ class Client(DatasetClient):
             max_paths=max_paths,
         )
 
+    def diagram(self, *kinds: str) -> str:
+        """Return a Mermaid diagram of selected model labels, IRIs, and RDF links."""
+        from rdfsolve.client_diagram import model_diagram
+
+        return model_diagram(self, kinds)
+
     def query_log(self) -> QueryLog:
         """Show every session query and its retained response without running it again."""
         return QueryLog(self.session_metadata())

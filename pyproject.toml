@@ -120,6 +120,7 @@ web = [
     "gunicorn>=22.0",
 ]
 notebooks = [
+    "pydantic-2-mermaid==0.7.3",
     # Additional packages for notebook development and analysis
     "matplotlib>=3.10.7", # Plotting and visualization
     "seaborn>=0.11.0", # Statistical visualization
