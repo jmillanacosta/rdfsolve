@@ -63,7 +63,8 @@ class Client(DatasetClient):
         """Display a source label without changing the generated type."""
         iri = getattr(model, "rdf_class_iri", "")
         labels = [
-            item.text.value for item in self._schema.enrichment.labels
+            item.text.value
+            for item in self._schema.enrichment.labels
             if item.term_iri == iri and item.text.language in (None, "en")
         ]
         if labels:
@@ -122,7 +123,9 @@ class Client(DatasetClient):
 
     def types(self) -> pd.DataFrame:
         """List available record types without sending a query."""
-        return pd.DataFrame({"Type": sorted(self.type_name(model) for model in self.models.values())})
+        return pd.DataFrame(
+            {"Type": sorted(self.type_name(model) for model in self.models.values())}
+        )
 
     @classmethod
     def from_session(
@@ -257,11 +260,17 @@ class Results:
         groups: dict[type[BaseModel], list[BaseModel]] = defaultdict(list)
         for record in self.records:
             groups[type(record)].append(record)
-        return pd.DataFrame([
-            {"Type": self.client.type_name(model), "Matches": len(records),
-             "Example": _title(records[0])}
-            for model, records in groups.items()
-        ], columns=["Type", "Matches", "Example"])
+        return pd.DataFrame(
+            [
+                {
+                    "Type": self.client.type_name(model),
+                    "Matches": len(records),
+                    "Example": _title(records[0]),
+                }
+                for model, records in groups.items()
+            ],
+            columns=["Type", "Matches", "Example"],
+        )
 
     def of_type(self, kind: str) -> Results:
         """Keep matches of one type without sending a query."""

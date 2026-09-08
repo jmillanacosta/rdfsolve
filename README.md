@@ -154,40 +154,43 @@ schema.to_shacl()  # To SHACL
 
 ### Explore data with Python objects
 
-Generate a typed API from a mined schema or SHACL shapes. Find records by name,
-see which links are available, and follow the ones you need. For AOPWiki:
+Use `rdfsolve.client_api` to find names or identifiers, then follow the results.
+For an AOPWiki schema:
 
 ```python
-with schema.client() as client:
-    AOP = client.model("AdverseOutcomePathway")
-    with client.step("Find thyroid pathways"):
-        pathways = client.search(AOP, "thyroid", fields=["title", "has_key_event"])
-    print(client.table(pathways, ["title"]))
-    print(client.links(AOP))
-    client.save_session("session.json")
+from rdfsolve.client_api import Client
+
+data = Client(schema)
+matches = data.find("thyroid")
+matches.types()
 ```
 
-Use `client.follow(pathways, "has_key_event", client.model("KeyEvent"))` to read
-their key events. Nothing downloads recursively. The same API reads a local
-RDFLib graph with `schema.client(graph, graph_uris=[])`.
+Pick the records you want and see where they lead:
 
-Requested fields contain lists; `[]` means no returned values, and `None`
-means not requested. Original RDF terms and source details remain on each
-object. Request failures and exceeded limits raise errors.
+```python
+pathways = matches.of_type("Adverse outcome pathway")
+pathways.paths()
 
-`client.steps()` shows what ran. The saved session keeps queries, failures,
-fallbacks, matched links, and the schema. It records how results were obtained,
-not a snapshot of the endpoint. To include mining queries, enable collection
-with `miner.helper.enable_query_collection()` before mining, then pass that
-helper to `schema.client(miner.helper)` while the miner is open.
+stressors = pathways.related("Stressor")
+chemicals = stressors.related("Chemical entity")
+chemicals.show("identifier")
+```
 
-[Explore thyroid-related pathways and chemicals](notebooks/SparqlHelper/AOPWiki_hydration.ipynb).
+Use `values("title")` to list values across your selected records.
+Press Tab after `pathways.fields.` to discover fields while typing.
+`show()` retrieves only the fields you ask for; displaying results does not
+send requests.
+
+Start directly from an endpoint with `explore(endpoint, graph=graph_iri)`.
+Save the queries and steps with `data.save_session("session.json")`, then
+close the connection with `data.close()`.
+
+[Walk through the thyroid investigation](notebooks/SparqlHelper/AOPWiki_hydration.ipynb).
 
 ### Write Python records as RDF
 
 ```python
-graph = pathways[0].to_graph()
-graph.serialize("pathway.ttl", format="turtle")
+data.save("selection.ttl", pathways, stressors, chemicals)
 ```
 
 Each populated field uses its model's RDF predicate. Retrieved literals keep
