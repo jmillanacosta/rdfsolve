@@ -42,3 +42,33 @@ def test_registry_helper_uses_request_budgets():
         assert helper._requires_post
     with pytest.raises(ValueError, match="endpoint"):
         SparqlHelper.from_source_entry({"name": "no-endpoint"})
+
+
+@pytest.mark.parametrize("method", ["find_classes_for_iris", "find_classes_for_iris_by_graph"])
+def test_class_lookup_does_not_hide_failed_batches(method, monkeypatch):
+    with SparqlHelper("https://example.org/sparql") as helper:
+        select = Mock(side_effect=EndpointError("unavailable"))
+        monkeypatch.setattr(helper, "select", select)
+        lookup = getattr(helper, method)
+        with pytest.raises(ValueError):
+            lookup(["urn:s"], values_batch_size=0)
+        with pytest.raises(ValueError):
+            lookup(["urn:s> } UNION { ?s ?p ?o"])
+        select.assert_not_called()
+        with pytest.raises(EndpointError, match="unavailable"):
+            lookup(["urn:s"])
+
+
+def test_fallback_log_reports_transport_change(monkeypatch, caplog):
+    import logging
+
+    caplog.set_level(logging.INFO, logger="rdfsolve.sparql_helper")
+    with SparqlHelper("https://example.org/sparql", max_retries=2) as helper:
+        monkeypatch.setattr(helper, "_get_query", Mock(return_value="<html>error</html>"))
+        monkeypatch.setattr(helper, "_post_query", Mock(return_value='{"boolean": true}'))
+        assert helper.ask("ASK {}")
+        assert "HTTP fallback used" in caplog.text
+        caplog.clear()
+        assert helper.ask("ASK {}")
+        assert "no HTTP fallback" in caplog.text
+        assert "ASK {}" not in caplog.text

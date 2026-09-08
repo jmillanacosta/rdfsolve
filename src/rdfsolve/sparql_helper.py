@@ -21,6 +21,7 @@ from rdflib import Graph
 from typing_extensions import Self
 
 from rdfsolve.query_collection import QueryCollection, QueryRun, SavedQuery
+from rdfsolve.schema_models.paths import PropertyPath
 
 logger = logging.getLogger(__name__)
 
@@ -427,6 +428,10 @@ class SparqlHelper:
         values_batch_size: int = 50,
     ) -> dict[str, dict[str, list[str]]]:
         """Find rdf:type classes for IRIs grouped by named graph using VALUES batching."""
+        if values_batch_size < 1:
+            raise ValueError("Use a positive VALUES batch size")
+        for iri in iris:
+            PropertyPath(operator="predicate", iri=iri)
         if not iris:
             return {}
 
@@ -443,10 +448,7 @@ class SparqlHelper:
                 "  GRAPH ?g { ?s a ?c }\n"
                 "}"
             )
-            try:
-                out = self.select(query)
-            except Exception:
-                continue
+            out = self.select(query)
             for b in out.get("results", {}).get("bindings", []):
                 s = b.get("s", {}).get("value")
                 g = b.get("g", {}).get("value")
@@ -464,6 +466,10 @@ class SparqlHelper:
         values_batch_size: int = 50,
     ) -> dict[str, list[str]]:
         """Find rdf:type classes for IRIs using VALUES batching (no graph grouping)."""
+        if values_batch_size < 1:
+            raise ValueError("Use a positive VALUES batch size")
+        for iri in iris:
+            PropertyPath(operator="predicate", iri=iri)
         if not iris:
             return {}
 
@@ -480,10 +486,7 @@ class SparqlHelper:
                 "  ?s a ?c .\n"
                 "}"
             )
-            try:
-                out = self.select(query)
-            except Exception:
-                continue
+            out = self.select(query)
             for b in out.get("results", {}).get("bindings", []):
                 s = b.get("s", {}).get("value")
                 c = b.get("c", {}).get("value")
@@ -528,6 +531,7 @@ class SparqlHelper:
         # Track whether we've tried raw POST (application/sparql-query)
         _tried_raw_post = False
         _use_raw_post = "post+raw" in (self.sparql_strategy or "")
+        fallback_used = False
 
         for attempt in range(1, self.max_retries + 1):
             try:
@@ -544,12 +548,14 @@ class SparqlHelper:
                 # Check if we got HTML instead of expected format
                 if self._is_html_response(result):
                     if not use_post and not _use_raw_post:
-                        logger.debug(f"{purpose} | GET returned HTML, switching to POST")
+                        logger.info("Fallback: GET returned HTML; use POST")
+                        fallback_used = True
                         self._requires_post = True
                         use_post = True
                         continue
                     elif use_post and not _tried_raw_post:
-                        logger.debug(f"{purpose} | form POST returned HTML, trying raw POST")
+                        logger.info("Fallback: form POST returned HTML; use raw POST")
+                        fallback_used = True
                         _use_raw_post = True
                         _tried_raw_post = True
                         continue
@@ -568,6 +574,11 @@ class SparqlHelper:
                     success=True,
                 )
 
+                logger.info(
+                    "%s completed (%s)",
+                    query_type,
+                    "HTTP fallback used" if fallback_used else "no HTTP fallback",
+                )
                 return parsed
 
             except requests.exceptions.HTTPError as e:
@@ -577,20 +588,22 @@ class SparqlHelper:
                 # 400 = Bad Request (QLever rejects GET), 405 = Method Not Allowed,
                 # 414 = URI Too Long
                 if not use_post and not _use_raw_post and status_code in (400, 405, 414):
-                    logger.debug(
-                        "GET returned %d, switching to POST",
+                    logger.info(
+                        "Fallback: GET returned %d; use POST",
                         status_code,
                     )
+                    fallback_used = True
                     self._requires_post = True
                     use_post = True
                     continue
 
                 # Form-encoded POST rejected -> try raw POST body
                 if use_post and not _tried_raw_post and status_code in (400, 405, 415):
-                    logger.debug(
-                        "Form POST returned %d, trying raw POST",
+                    logger.info(
+                        "Fallback: form POST returned %d; use raw POST",
                         status_code,
                     )
+                    fallback_used = True
                     _use_raw_post = True
                     _tried_raw_post = True
                     continue
@@ -704,7 +717,8 @@ class SparqlHelper:
 
                 # Check if this looks like a POST-required error
                 if not use_post and self._should_retry_with_post(error_msg):
-                    logger.debug(f"GET failed, switching to POST: {e}")
+                    logger.info("Fallback: GET failed; use POST")
+                    fallback_used = True
                     self._requires_post = True
                     use_post = True
                     continue
@@ -742,7 +756,8 @@ class SparqlHelper:
 
                 # Check if this looks like a POST-required error
                 if not use_post and self._should_retry_with_post(error_msg):
-                    logger.debug(f"GET failed for {purpose}, switching to POST: {e}")
+                    logger.info("Fallback: GET failed; use POST")
+                    fallback_used = True
                     self._requires_post = True
                     use_post = True
                     continue
@@ -1154,7 +1169,7 @@ class SparqlHelper:
             total_fetched += chunk_count
             current_offset += chunk_count
 
-            logger.info(
+            logger.debug(
                 "Chunked %s: fetched %d rows (total so far: %d, limit: %d)",
                 purpose or "query",
                 chunk_count,
