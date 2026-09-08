@@ -243,7 +243,7 @@ async def compare(run, models=None):
                             ),
                             timeout=180,
                         )
-                        item["usage"] = asdict(result.usage())
+                        item["usage"] = asdict(result.usage)
                         item["proposal"] = result.output.model_dump()
                         if result.output.query is None:
                             item.update(status="unsupported", exact=False)
