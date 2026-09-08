@@ -214,24 +214,6 @@ then close the connection with `data.close()`.
 
 [Walk through the thyroid investigation](notebooks/pydantic_clients/01_mine_explore.ipynb).
 
-### Write Python records as RDF
-
-```python
-data.save("selection.ttl", pathways, stressors, chemicals)
-```
-
-Each populated field uses its model's RDF predicate. Retrieved literals keep
-their text, language, and datatype. Nested records write their own RDF fields.
-Multi-step path values cannot recreate missing intermediate triples; select
-direct fields with `to_graph(fields=["title"])` instead. Output is one graph,
-not named-graph preservation or SHACL validation. Class mappings do not merge
-instance identities.
-
-[Save a small RDF subset](notebooks/pydantic_clients/AOPWiki_subsets.ipynb) or
-[write RDF from a chemical table](notebooks/pydantic_clients/AOPWiki_table_to_RDF.ipynb).
-`schema.to_pydantic_classes()` returns runtime classes; `schema.to_pydantic()`
-exports Python source. These differ from serializing a schema or record as JSON.
-
 ### SparqlHelper
 
 Large SPARQL queries can time out, and endpoints can fail intermittently.
@@ -287,19 +269,6 @@ helper.load_shacl("shapes.ttl")
 print(helper.queries.paths)  # Choose a property shape
 query = helper.queries.path_query(property_shape_id, entity_iri, limit=20)
 ```
-
-This builds a query; it does not run it or fill Python objects. Paths can follow
-links forwards, backwards, or through several steps. A result limit does not
-bound the work needed to follow them.
-
-Review imported queries before running them, especially calls to other
-endpoints. Runs use the endpoint you chose for the helper. Loading does not
-fetch external imports. Validation queries remain available for inspection and
-export, but need SHACL context and cannot run with `run_query()`. A successful
-request does not prove that the endpoint returned every result.
-
-Use these query libraries directly, or use `schema.client()` to retrieve
-generated Python records through fields and paths.
 
 ### Add metadata to a source registry
 
