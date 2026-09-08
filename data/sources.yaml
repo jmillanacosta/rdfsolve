@@ -5428,7 +5428,7 @@
   failure_count: 0
   endpoint_down: false
   avg_response_time: null
-- name: chebi
+- name: chebi.idsm
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ebi.ac.uk/dataset/chebi
   graph_uris:
@@ -10493,7 +10493,7 @@
   failure_count: 0
   endpoint_down: false
   avg_response_time: null
-- name: rdfportal.pdb
+- name: rdfportal.pdb.graph
   endpoint: http://rdfportal.org/pdb/sparql
   void_iri: http://rdfportal.org/dataset/pdbj
   graph_uris:
