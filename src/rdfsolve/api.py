@@ -18,6 +18,7 @@ import pandas as pd
 from rdflib import Graph
 
 from .models import MinedSchema
+from .source_enrichment import enrich_source
 from .void_discover import VoidParser
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "discover_void_graphs",
     "discover_void_source",
+    "enrich_source",
     "enrich_source_with_bioregistry",
     "execute_sparql",
     "export_schema_artifacts",

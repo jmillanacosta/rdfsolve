@@ -126,6 +126,9 @@ def check_endpoint_health(
             timestamp=timestamp,
         )
 
+    finally:
+        helper.close()
+
 
 def update_endpoint_status(
     source: SourceModel,

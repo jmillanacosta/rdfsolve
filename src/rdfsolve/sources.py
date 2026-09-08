@@ -19,6 +19,19 @@ class SourceEntry(TypedDict, total=False):
 
     name: str
     endpoint: str
+    dataset_metadata: dict[str, Any] | None
+    metadata_graph_uris: list[str] | None
+    enrichment: dict[str, Any]
+    endpoint_status: str
+    last_checked: str
+    last_success: str
+    last_error: str
+    failure_count: int
+    avg_response_time: float | None
+    has_void: bool
+    has_void_partitions: bool
+    has_void_patterns: bool
+    void_default_graph: bool
     void_iri: str  # DEPRECATED: use void_graphs instead
     void_uri_base: str
     void_graphs: list[str]  # Discovered VoID metadata graph URIs
