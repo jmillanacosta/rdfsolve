@@ -28,8 +28,10 @@
     /></a>
 </p>
 
-Mine typed RDF schemas, convert between formats, and derive cross-dataset
-mappings.
+An RDF toolkit for retrieving SPARQL endpoint and RDF dump metadata, testing
+endpoint availability, running queries with batching and retries, extract and
+convert schemas between descriptive (VoID) and validation (SHACL) formats,
+generate typed Python models (Pydantic), and derive mappings across datasets.
 
 ## Installation
 
@@ -106,7 +108,7 @@ list matches and `void.for_graph(uri).get_metadata()` to inspect one. Set
 
 ### Query metadata without mining
 
-Read the available metadata without mining the data itself:
+Read the available metadata (queried with the package):
 
 ```python
 from rdfsolve.api import query_metadata
@@ -118,9 +120,9 @@ metadata = query_metadata(
 print(metadata)  # Readable view; notebooks also display it automatically.
 ```
 
-The view shows what was retrieved, not everything the endpoint may contain. Long
-views are shortened and say what is hidden. Use `metadata.to_turtle()` for all
-retained details, or `metadata.to_markdown()` to save the readable view.
+The view shows what was retrieved, not everything the endpoint may contain. Use
+`metadata.to_turtle()`/`metadata.to_trig()` for all retained details, or
+`metadata.to_markdown()` to save the readable view.
 
 ### Read schema files
 
