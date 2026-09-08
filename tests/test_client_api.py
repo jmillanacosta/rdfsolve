@@ -192,6 +192,12 @@ def test_connections_keep_aopwiki_relative_iris_and_read_their_classes():
                          URIRef("http://aopkb.org/aop_ontology#has_key_event"), event))
         data.source.add((event, URIRef("http://aopkb.org/aop_ontology#hasBiologicalEvent"), node))
         data.source.add((node, RDF.type, cls))
+        other = URIRef("281_bioevent_0")
+        other_event = URIRef("https://identifiers.org/aop.events/281")
+        data.source.add((URIRef("https://identifiers.org/aop/162"),
+                         URIRef("http://aopkb.org/aop_ontology#has_key_event"), other_event))
+        data.source.add((other_event, URIRef("http://aopkb.org/aop_ontology#hasBiologicalEvent"), other))
+        data.source.add((other, RDF.type, cls))
         paths = data.connections("https://identifiers.org/aop/162", max_hops=2)
         matches = paths[paths["To"] == str(node)]
         assert not matches.empty
@@ -199,7 +205,9 @@ def test_connections_keep_aopwiki_relative_iris_and_read_their_classes():
         assert str(node) in data.diagram(paths=paths)
         assert str(cls).replace("#", "#35;") in data.diagram(paths=paths, instances=False)
         assert all("<1023_bioevent_0>" not in query for query in data.queries)
-        assert paths.attrs["unresolved_resources"] == [str(node)]
+        assert set(paths.attrs["unresolved_resources"]) == {str(node), str(other)}
+        steps = data.session_metadata()["steps"]
+        assert sum(len(s["query_ids"]) for s in steps if s["name"] == "Read classes through retained links") == 1
 
 
 def test_connections_without_target_match_the_aop_neighborhood():
@@ -207,7 +215,10 @@ def test_connections_without_target_match_the_aop_neighborhood():
 
     with client() as data:
         iri = "https://identifiers.org/aop/162"
+        data.batch_size = 1
         paths = data.connections(iri, max_hops=2)
+        steps = data.session_metadata()["steps"]
+        assert sum(len(s["query_ids"]) for s in steps if s["name"] == "Read classes along connections") == 1
         expected = set()
         frontier = {URIRef(iri)}
         for _ in range(2):

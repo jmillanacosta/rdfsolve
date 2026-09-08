@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from rdfsolve.client_api import Client
 
 COLUMNS = ["Path", "Step", "From", "Link", "Direction", "To"]
+CLASS_BATCH_SIZE = 200
 
 
 def _budget(max_hops: int, max_paths: int) -> None:
@@ -227,8 +228,8 @@ def _add_classes(client: Client, table: pd.DataFrame, routes: list[dict[str, Any
     classes: dict[tuple[str, str], set[str]] = defaultdict(set)
     models = {getattr(model, "rdf_class_iri", ""): model for model in client.models.values()}
     with client.step("Read classes along connections"):
-        for start in range(0, len(nodes), client.batch_size):
-            values = " ".join(safe_nodes[node] for node in nodes[start : start + client.batch_size])
+        for start in range(0, len(nodes), CLASS_BATCH_SIZE):
+            values = " ".join(safe_nodes[node] for node in nodes[start : start + CLASS_BATCH_SIZE])
             body = client._scope(f"VALUES ?resource {{ {values} }} ?resource a ?class")
             found = client._select(
                 f"SELECT DISTINCT ?resource ?class ?_graph WHERE {{ {body} }} LIMIT {client.max_rows + 1}"
@@ -287,6 +288,7 @@ def _read_unaddressable_classes(
     """Read malformed returned IRIs through their observed links, without a guessed base."""
     recovered: dict[tuple[str, str], set[str]] = {}
     attempted = set()
+    lookups = []
     for route in routes:
         bindings = route["bindings"]
         graph = bindings.get("_graph", {}).get("value", "")
@@ -311,12 +313,22 @@ def _read_unaddressable_classes(
             body.append(f"OPTIONAL {{ ?n{index} a ?class }}")
             pattern = " ".join(body)
             scoped = f"GRAPH {_iri(graph)} {{ {pattern} }}" if graph else client._scope(pattern)
-            with client.step("Read classes through retained links"):
-                rows = client._select(
-                    f"SELECT DISTINCT ?n{index} ?class WHERE {{ {scoped} }} LIMIT {client.max_rows + 1}"
-                )
+            lookups.append((key, scoped))
+    with client.step("Read classes through retained links"):
+        for start in range(0, len(lookups), CLASS_BATCH_SIZE):
+            batch = lookups[start : start + CLASS_BATCH_SIZE]
+            union = " UNION ".join(
+                f"{{ {pattern} BIND({index} AS ?lookup) }}"
+                for index, (_, pattern) in enumerate(batch)
+            )
+            rows = client._select(
+                f"SELECT DISTINCT ?lookup ?class WHERE {{ {union} }} LIMIT {client.max_rows + 1}"
+            )
             if len(rows) > client.max_rows:
                 raise HydrationLimitError("Class lookup exceeded max_rows")
-            if rows:
-                recovered[key] = {row["class"]["value"] for row in rows if "class" in row}
+            for row in rows:
+                key = batch[int(row["lookup"]["value"])][0]
+                recovered.setdefault(key, set())
+                if "class" in row:
+                    recovered[key].add(row["class"]["value"])
     return recovered

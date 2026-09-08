@@ -55,9 +55,16 @@ class QueryLog:
                     + "</pre>"
                 )
             fallback = " · HTTP fallback" if query.get("fallback_used") else ""
+            timing = ""
+            if "elapsed_seconds" in query:
+                timing = (
+                    f" · {query['elapsed_seconds']:.2f} s total"
+                    f" ({query.get('request_seconds', 0):.2f} s HTTP,"
+                    f" {query.get('wait_seconds', 0):.2f} s waiting)"
+                )
             sections.append(
                 f"<details><summary>{query['id']}. {escape(name)} — "
-                f"{escape(status)}{fallback}</summary>"
+                f"{escape(status)}{fallback}{timing}</summary>"
                 "<details><summary>Query text</summary><pre>"
                 + escape(query["query"])
                 + "</pre></details>"

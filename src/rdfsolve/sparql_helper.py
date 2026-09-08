@@ -8,6 +8,7 @@ import logging
 import secrets
 import time
 import warnings
+from contextvars import ContextVar
 from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -44,11 +45,17 @@ class QueryRecord:
     fallback_used: bool = False
     result: Any = None
     result_retained: bool = False
+    elapsed_seconds: float = 0.0
+    wait_seconds: float = 0.0
+    request_seconds: float = 0.0
 
     def query_id(self) -> str:
         """Generate a unique ID for this query based on content hash."""
         content = f"{self.query_type}:{self.query}"
         return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
+
+
+_active_record: ContextVar[QueryRecord | None] = ContextVar("sparql_query_record", default=None)
 
 
 class SparqlHelperError(Exception):
@@ -533,6 +540,8 @@ class SparqlHelper:
     ) -> Any:
         """Record each logical query, including one that fails after retries."""
         record = QueryRecord(query, query_type, self.endpoint_url, success=False, purpose=purpose)
+        started = time.monotonic()
+        token = _active_record.set(record)
         try:
             result = self._execute_request(
                 query, accept, query_type, parse_json, purpose, record=record
@@ -546,6 +555,8 @@ class SparqlHelper:
             record.error = type(error).__name__
             raise
         finally:
+            record.elapsed_seconds = time.monotonic() - started
+            _active_record.reset(token)
             self._record_query(record)
 
     def _execute_request(
@@ -873,11 +884,23 @@ class SparqlHelper:
         from rdfsolve._host_gate import HostBusyError, host_request
 
         host = urlsplit(self.endpoint_url).hostname or self.endpoint_url
+        record = _active_record.get()
+        started = time.monotonic()
+        request_started = None
         try:
             with host_request(host, timeout=self.timeout, interval=self.inter_request_delay):
+                request_started = time.monotonic()
                 return self._request_serial(method, query, accept, raw=raw)
         except HostBusyError as error:
             raise EndpointRateLimitError(str(error)) from error
+        finally:
+            finished = time.monotonic()
+            if record is not None:
+                record.wait_seconds += (
+                    request_started if request_started is not None else finished
+                ) - started
+                if request_started is not None:
+                    record.request_seconds += finished - request_started
 
     def _request_serial(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
         from rdfsolve._http_policy import defer_host, retry_after_seconds

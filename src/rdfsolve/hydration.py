@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import keyword
 import logging
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict
@@ -238,6 +239,7 @@ class Hydrator:
         if isinstance(self.source, Graph):
             record = QueryRecord(query, "SELECT", "", success=False, purpose="hydrate")
             self._local_records.append(record)
+            started = time.monotonic()
             try:
                 raw = self.source.query(query).serialize(format="json")
                 if raw is None:
@@ -249,6 +251,8 @@ class Hydrator:
             except Exception as error:
                 record.error = type(error).__name__
                 raise
+            finally:
+                record.elapsed_seconds = time.monotonic() - started
         else:
             result = self.source.select(query, purpose="hydrate")
         try:

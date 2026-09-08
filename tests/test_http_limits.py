@@ -39,11 +39,17 @@ def test_decompressed_response_limit_does_not_retry(monkeypatch):
     thread.start()
     try:
         with SparqlHelper(f"http://127.0.0.1:{server.server_port}", max_response_bytes=limit) as helper:
+            helper.enable_query_collection()
             with pytest.raises(ResponseLimitError):
                 helper._execute("CONSTRUCT WHERE { ?s ?p ?o }", "text/turtle", parse_json=False)
             assert len(calls) == 1
+            record = helper.get_collected_queries()[0]
+            assert record.elapsed_seconds >= record.request_seconds > 0
+            assert record.wait_seconds >= 0
+            elapsed = record.request_seconds
             helper.max_response_bytes = len(original)
             assert helper._get_query("CONSTRUCT WHERE { ?s ?p ?o }", "text/turtle") == original.decode()
+            assert record.request_seconds == elapsed
     finally:
         server.shutdown()
         server.server_close()
