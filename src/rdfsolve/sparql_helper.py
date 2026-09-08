@@ -302,7 +302,7 @@ class SparqlHelper:
         max_retries: int = 3,
         initial_backoff: float = 1.0,
         max_backoff: float = 30.0,
-        timeout: float = 10000.0,
+        timeout: float = 30.0,
         sparql_engine: str = "",
         sparql_strategy: str = "",
         inter_request_delay: float = 0.0,
@@ -347,15 +347,18 @@ class SparqlHelper:
     ) -> SparqlHelper:
         """Create SparqlHelper from sources.yaml entry with endpoint and strategy configuration."""
         endpoint = entry.get("endpoint", "")
+        if not endpoint:
+            raise ValueError("Source entry needs an endpoint URL")
         engine = entry.get("sparql_engine", "") or ""
         strategy = entry.get("sparql_strategy", "") or ""
-        t = timeout if timeout is not None else entry.get("timeout") or 10000.0
+        t = timeout if timeout is not None else entry.get("timeout") or 30.0
         return cls(
             endpoint,
             timeout=float(t),
             max_retries=max_retries,
             sparql_engine=engine,
             sparql_strategy=strategy,
+            inter_request_delay=float(entry.get("delay") or 0),
             max_response_bytes=int(entry.get("max_response_bytes", 64 * 1024 * 1024)),
         )
 
@@ -393,13 +396,8 @@ class SparqlHelper:
         if turtle_data.strip():
             try:
                 graph.parse(data=turtle_data, format="turtle")
-            except Exception as e:
-                logger.warning(f"Failed to parse CONSTRUCT as Turtle: {e}")
-                # Try N3 format as fallback
-                try:
-                    graph.parse(data=turtle_data, format="n3")
-                except Exception:
-                    logger.error("Failed to parse CONSTRUCT result")
+            except Exception as error:
+                raise EndpointError("CONSTRUCT returned invalid Turtle RDF") from error
 
         return graph
 
@@ -408,12 +406,12 @@ class SparqlHelper:
         result: dict[str, Any] = self._execute(
             query, accept=MimeTypes.SELECT_ACCEPT, query_type="ASK", parse_json=True
         )
-        raw = result.get("boolean", False)
-        # JSON parser already gives us a bool; guard against endpoints
-        # that return the string "true"/"false" instead.
-        if isinstance(raw, str):
+        raw = result.get("boolean")
+        if isinstance(raw, bool):
+            return raw
+        if isinstance(raw, str) and raw.strip().lower() in {"true", "false"}:
             return raw.strip().lower() == "true"
-        return bool(raw)
+        raise EndpointError("ASK response has no valid boolean result")
 
     # Characters that are illegal inside a SPARQL IRI literal <...>.
     # Characters that are illegal inside a SPARQL ``<…>`` IRI literal.
