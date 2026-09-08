@@ -162,6 +162,11 @@ fabric.properties
 .idea/codestream.xml
 
 ### JupyterNotebooks ###
+# Keep only the query and typed-client notebooks in Git.
+*.ipynb
+!/notebooks/sparql_helper/**/*.ipynb
+!/notebooks/pydantic_clients/**/*.ipynb
+
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
 
