@@ -920,3 +920,5 @@ data/*
 /src/logs/
 rdfsolve_pipeline.svg
 docs/known-limitations.md
+KNOWN_LIMITATIONS.md
+scripts/MINING.md

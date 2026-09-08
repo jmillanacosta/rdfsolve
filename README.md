@@ -29,35 +29,44 @@ pip install rdfsolve
 from rdfsolve import SchemaMiner
 
 # Query a SPARQL endpoint
-miner = SchemaMiner(endpoint_url="https://sparql.uniprot.org/sparql")
-schema = miner.mine(dataset_name="uniprot")
+miner = SchemaMiner(endpoint_url="https://sparql.example.org/sparql")
+schema = miner.mine(dataset_name="example")
 
 # Export formats
-schema.to_void_graph()  # VoID RDF graph
-schema.to_jsonld()  # JSON-LD dict
-schema.to_linkml_yaml()  # LinkML YAML string
+schema.to_void_graph()      # VoID RDF graph
+schema.to_linkml_yaml()     # LinkML schema YAML string
 schema.to_shacl()  # SHACL shapes
+schema.to_pydantic()        # Python source for dataset-specific Pydantic classes
+schema.to_dict()            # Versioned canonical document (dict)
 
-# Save the complete model for later analysis
+# Inspect
+schema.get_classes()        # List with classes
+schema.get_properties()     # List with properties
+
 import json
 
-with open("uniprot_schema.json", "w", encoding="utf-8") as f:
+with open("example_schema.json", "w", encoding="utf-8") as f:
     json.dump(schema.to_dict(), f, indent=2)
 ```
 
-`schema.json()` is Pydantic's deprecated instance serializer; use
-`schema.model_dump_json()`. It returns the `MinedSchema` data as a JSON string,
-without the canonical envelope. Use `schema.to_dict()` with `json.dump()` for
+`schema.model_dump_json()` returns the `MinedSchema` data as a JSON string.
+
+Use `schema.to_dict()` with `json.dump()` for
 saved rdfsolve files. `MinedSchema.model_json_schema()` describes the internal
 model; `schema.to_pydantic()` instead generates Python classes for the mined RDF types.
 
-### Read saved analysis data
+### Read schema files
 
 ```python
+from pathlib import Path
 from rdfsolve import MinedSchema
 
-schema = MinedSchema.from_json("uniprot_schema.json")
+schema = MinedSchema.from_json("example_schema.json")
+schema = MinedSchema.from_void(Path("example_void.ttl").read_text(encoding="utf-8"))
+schema = MinedSchema.from_shacl(Path("example_shacl.ttl").read_text(encoding="utf-8"))
 ```
+
+Allows (partial) interconversion through `MinedSchema`.
 
 ### Add definitions, examples, and a typed API
 
@@ -66,28 +75,22 @@ from pathlib import Path
 from rdfsolve import SchemaMiner
 
 miner = SchemaMiner(
-    endpoint_url="https://sparql.uniprot.org/sparql",
+    endpoint_url="https://sparql.example.org/sparql",
     enrich=True,
     examples_per_pattern=2,
 )
-schema = miner.mine(dataset_name="uniprot")
-Path("uniprot_models.py").write_text(schema.to_pydantic(), encoding="utf-8")
+schema = miner.mine(dataset_name="example")
+Path("example_models.py").write_text(schema.to_pydantic(), encoding="utf-8")
 
 # You can also enrich a saved schema with the same source and graph scope.
 # schema.enrichment = miner.query_enrichment(schema)
 ```
 
-Generated classes use cleaned source labels. Definitions become class docstrings;
-observed values become field examples. Fields allow the observed ranges without
-claiming that the sample proves required fields or maximum cardinality.
+Generated classes use cleaned source labels and definitions are used as class docstrings;
+observed values from instances become field examples.
 
-The pipeline retrieves this enrichment in every mining mode. Use
-`--examples-per-pattern 0` for definitions only, or `--no-enrichment` to skip it.
-Samples follow endpoint order, not a random sampling design. Query failures and
-missing definitions remain visible in the canonical JSON and mining report.
 
-`schema.about.source_version_iri` retains the source release IRI when metadata
-identifies one. `schema_version` uses that IRI, a release label, a source date,
+`schema.about.source_version_iri` gets assigned the source release IRI when metadata queries identify it. `schema_version` uses that IRI, a release label, a source date,
 or a dated mining snapshot. The canonical JSON envelope's `version` is a separate
 storage-format identifier. A snapshot date does not certify an upstream release.
 
@@ -199,7 +202,8 @@ Test endpoint availability and response times:
 ```python
 from rdfsolve.endpoint_health import check_endpoint_health
 
-status = check_endpoint_health("https://sparql.uniprot.org/sparql")
+check_endpoint_health("https://aopwiki.rdf.bigcat-bioinformatics.org/sparql")
+# EndpointHealthCheck(endpoint_url='https://aopwiki.rdf.bigcat-bioinformatics.org/sparql', status='up', response_time=0.1596362590789795, error_message='', timestamp='2026-09-08T08:16:36.126659+00:00')
 ```
 
 ### Infer cross-dataset mappings
