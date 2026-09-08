@@ -167,8 +167,7 @@ class Hydrator:
                 "max_subjects": self.max_subjects,
             },
             "queries": [
-                {"id": index, **asdict(record)}
-                for index, record in enumerate(self._records(), 1)
+                {"id": index, **asdict(record)} for index, record in enumerate(self._records(), 1)
             ],
             "steps": [dict(step) for step in self._steps],
             "retrievals": list(self._retrievals),
@@ -180,7 +179,6 @@ class Hydrator:
             json.dumps(self.session_metadata(), indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
-
 
     def model(self, name_or_iri: str) -> type[BaseModel]:
         """Find a generated class by its Python name or full RDF class IRI."""
@@ -370,13 +368,15 @@ class Hydrator:
                 converted = [_value(term) for term in terms]
                 payload[name] = converted
             objects[iri] = model.model_validate(payload)
-        self._retrievals.append({
-            "model": model.__name__,
-            "class_iri": getattr(model, "rdf_class_iri", None),
-            "subjects": list(objects),
-            "fields": selected,
-            "query_ids": sorted(set(query_ids.values())),
-        })
+        self._retrievals.append(
+            {
+                "model": model.__name__,
+                "class_iri": getattr(model, "rdf_class_iri", None),
+                "subjects": list(objects),
+                "fields": selected,
+                "query_ids": sorted(set(query_ids.values())),
+            }
+        )
         logger.info(
             "Retrieved %d %s objects; %d fields per object",
             len(objects),

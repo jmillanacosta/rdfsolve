@@ -61,7 +61,10 @@ def model_to_graph(record: BaseModel, *, fields: list[str] | None = None) -> Gra
 
 
 def _add_record(
-    record: BaseModel, graph: Graph, seen: set[int], fields: list[str] | None = None,
+    record: BaseModel,
+    graph: Graph,
+    seen: set[int],
+    fields: list[str] | None = None,
 ) -> None:
     if id(record) in seen:
         return
@@ -98,7 +101,9 @@ def _add_record(
         reverse = path.operator == "inverse" and path.items[0].operator == "predicate"
         predicate = path.items[0].iri if reverse else path.iri
         if path.operator != "predicate" and not reverse:
-            raise ValueError(f"Cannot reconstruct intermediate triples for {name}; select direct fields")
+            raise ValueError(
+                f"Cannot reconstruct intermediate triples for {name}; select direct fields"
+            )
         if predicate is None:
             raise ValueError(f"No predicate for {name}")
         values = value if isinstance(value, list) else [value]

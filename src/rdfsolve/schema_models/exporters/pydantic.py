@@ -186,7 +186,6 @@ def to_pydantic(
         "",
         "        return model_to_graph(self, fields=fields)",
         "",
-
     ]
     for iri, name in names.items():
         class_examples = [
