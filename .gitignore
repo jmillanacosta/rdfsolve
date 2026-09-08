@@ -931,3 +931,6 @@ scripts/MINING.md
 # Local editor formatting settings
 /.markdownlint.json
 /.prettierrc.json
+notebooks/*_summary.json
+notebooks/*models.py
+notebooks/*.ttl

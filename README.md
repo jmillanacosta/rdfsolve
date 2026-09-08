@@ -270,8 +270,7 @@ with SparqlHelper(endpoint, timeout=30) as helper:
     print(helper.history)  # Named runs: time, duration, and success or error
 ```
 
-Already have query examples in a SHACL document? Load them, then run a chosen
-query:
+Loading a SHACL with Sparql Examples:
 
 ```python
 with SparqlHelper(endpoint, timeout=30) as helper:
@@ -280,11 +279,6 @@ with SparqlHelper(endpoint, timeout=30) as helper:
     helper.queries.rename(names[0], "my query")
     results = helper.run_query("my query")
 ```
-
-Each helper keeps its own collection. Turtle preserves the query text, labels,
-prefixes, and other loaded RDF—not the results or run history. For existing
-code, call `helper.enable_query_collection()` to also save successful request
-texts. Collection controls apply to the helper instance, not the class.
 
 SHACL paths can also become queries for a particular entity:
 
