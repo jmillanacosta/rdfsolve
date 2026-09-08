@@ -177,6 +177,22 @@ chemicals.show("identifier")
 ```
 
 Use `values("title")` to list values across your selected records.
+Use `target_value` when you know a name but not its class:
+
+```python
+from IPython.display import Markdown, display
+
+paths = data.paths_between("Adverse outcome pathway", target_value="Phenobarbital", max_hops=3)
+display(paths)
+display(Markdown(data.diagram(paths=paths)))
+```
+
+This verifies mined class routes against matching names or identifiers, ignoring case.
+It does not link records just because they share a type. Passing a second class
+instead lists possible class routes without querying the data.
+Use `diagram(paths=paths, path=1)` for the first complete path. Add
+`instances=False` to show its classes instead of its records.
+
 Press Tab after `pathways.fields.` to discover fields while typing.
 `show()` retrieves only the fields you ask for; displaying results does not
 send requests.

@@ -146,7 +146,6 @@ def resource_paths(
     if first == last:
         raise ValueError("Choose two different resources")
     routes: list[dict[str, Any]] = []
-    rows = []
     with client.step(f"Find connections between {first} and {last}"):
         for hops in range(1, max_hops + 1):
             body = connection_query(first, last, hops, both_directions)
@@ -164,14 +163,23 @@ def resource_paths(
                     "Too many connections; reduce max_hops or raise max_paths and max_rows"
                 )
             for binding in bindings:
-                number = len(routes) + 1
                 routes.append(
                     {"hops": hops, "bindings": binding, "query_id": len(client._records())}
                 )
-                for i in range(hops):
-                    s, p, o = (binding[key]["value"] for key in (f"n{i}", f"p{i}", f"n{i + 1}"))
-                    backward = binding[f"back{i}"]["value"] in ("true", "1")
-                    rows.append([number, i + 1, s, _label(client, p), "←" if backward else "→", o])
+    return resource_path_table(client, routes, max_hops)
+
+
+def resource_path_table(
+    client: Client, routes: list[dict[str, Any]], max_hops: int
+) -> pd.DataFrame:
+    """Render retained resource paths and retrieve their class annotations."""
+    rows = []
+    for number, route in enumerate(routes, 1):
+        binding = route["bindings"]
+        for i in range(route["hops"]):
+            s, p, o = (binding[key]["value"] for key in (f"n{i}", f"p{i}", f"n{i + 1}"))
+            backward = binding[f"back{i}"]["value"] in ("true", "1")
+            rows.append([number, i + 1, s, _label(client, p), "←" if backward else "→", o])
     table = pd.DataFrame(rows, columns=COLUMNS)
     table.attrs.update(routes=routes, basis="queried resource paths", max_hops=max_hops)
     _add_classes(client, table, routes)

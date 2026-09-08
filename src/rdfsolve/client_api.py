@@ -50,18 +50,38 @@ class Client(DatasetClient):
     def paths_between(
         self,
         source: str,
-        target: str,
+        target: str | None = None,
         *,
+        target_value: str | None = None,
         max_hops: int = 3,
         both_directions: bool = True,
         max_paths: int = 1000,
     ) -> pd.DataFrame:
-        """List class routes up to max_hops, with no repeated classes or queries.
+        """List class routes, or query connections to a matching record name.
 
-        Names or class IRIs are accepted. These are schema routes, not evidence
-        that particular records connect. Raise if max_paths is exceeded.
+        A target class lists schema routes without queries. Use target_value
+        instead to verify mined class routes against records whose names or
+        identifiers contain that text, ignoring case. Paths stay in one graph
+        and do not repeat classes or resources. Class routes are queried in
+        batches and bounded by max_paths. Raise rather than return partial paths.
         """
         from rdfsolve.client_paths import class_paths
+        from rdfsolve.client_value_paths import value_paths
+
+        if (target is None) == (target_value is None):
+            raise ValueError("Supply either a target class or target_value")
+        if target_value is not None:
+            source_iri = str(getattr(self.model(source), "rdf_class_iri", ""))
+            return value_paths(
+                self,
+                source_iri,
+                target_value,
+                max_hops=max_hops,
+                both_directions=both_directions,
+                max_paths=max_paths,
+            )
+        if target is None:
+            raise ValueError("Supply a target class")
 
         return class_paths(
             self,
@@ -98,10 +118,22 @@ class Client(DatasetClient):
             max_paths=max_paths,
         )
 
-    def diagram(self, *kinds: str) -> str:
-        """Return a Mermaid diagram of selected model labels, IRIs, and RDF links."""
-        from rdfsolve.client_diagram import model_diagram
+    def diagram(
+        self,
+        *kinds: str,
+        paths: pd.DataFrame | None = None,
+        path: int | None = None,
+        instances: bool = True,
+    ) -> str:
+        """Draw selected models or the selected rows of a paths table, without queries."""
+        from rdfsolve.client_diagram import model_diagram, path_diagram
 
+        if paths is not None:
+            if kinds:
+                raise ValueError("Choose model names or a paths table, not both")
+            return path_diagram(self, paths, path=path, instances=instances)
+        if path is not None:
+            raise ValueError("Supply a paths table to choose a path")
         return model_diagram(self, kinds)
 
     def query_log(self) -> QueryLog:

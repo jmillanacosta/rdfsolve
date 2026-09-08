@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from rdflib import Graph, Literal, RDF, URIRef
+from rdflib import Dataset, Graph, Literal, RDF, URIRef
 
 from rdfsolve import MinedSchema, SchemaPattern
 from rdfsolve.client_api import Client
@@ -142,6 +142,57 @@ def test_class_routes_and_actual_connections():
         with pytest.raises(ValueError):
             data.connections("urn:bad> } UNION { ?s ?p ?o", pathway)
         assert len(data.queries) == queries
+
+
+def test_paths_to_value_keep_real_links_and_draw_only_selected_paths():
+    from rdfsolve.hydration import HydrationLimitError
+
+    with client() as data:
+        paths = data.paths_between(AOP, target_value="pHENOBARBITAL", max_hops=3)
+        assert paths.attrs["routes"]
+        for route in paths.attrs["routes"]:
+            bindings = route["bindings"]
+            assert (URIRef(bindings["n0"]["value"]), RDF.type, URIRef(AOP)) in data.source
+            for i in range(route["hops"]):
+                s, p, o = (URIRef(bindings[k]["value"]) for k in (f"n{i}", f"p{i}", f"n{i+1}"))
+                assert p != RDF.type
+                assert ((o, p, s) if bindings[f"back{i}"]["value"] == "true" else (s, p, o)) in data.source
+        selected = paths[paths["Path"] == paths["Path"].iloc[0]]
+        queries = len(data.queries)
+        diagram = data.diagram(paths=selected)
+        assert "https://identifiers.org/aop.stressor/133" in diagram
+        assert "https://identifiers.org/cas/50-06-6" not in diagram
+        assert len(data.queries) == queries
+        whole = data.diagram(paths=paths, path=1)
+        assert whole == diagram
+        types = data.diagram(paths=paths, path=1, instances=False)
+        assert STRESSOR.replace("#", "#35;") in types
+        assert "https://identifiers.org/aop.stressor/133" not in types
+        with pytest.raises(ValueError, match="Path number"):
+            data.diagram(paths=paths, path=999)
+        reverse = data.paths_between(CHEMICAL, AOP, max_hops=2)
+        assert "N1 -->" in data.diagram(paths=reverse)
+        assert data.paths_between(AOP, target_value='absent" } UNION { ?s ?p ?o } #', max_hops=1).empty
+        with pytest.raises(HydrationLimitError):
+            data.paths_between(AOP, target_value="Phenobarbital", max_hops=2, max_paths=1)
+        before = len(data.queries)
+        for kwargs in ({}, {"target_value": ""}, {"target": CHEMICAL, "target_value": "Phenobarbital"}):
+            with pytest.raises(ValueError):
+                data.paths_between(AOP, **kwargs)
+        assert len(data.queries) == before
+
+
+def test_value_paths_do_not_join_graphs():
+    with client() as data:
+        graphs = Dataset()
+        first, second = graphs.graph(URIRef("urn:first")), graphs.graph(URIRef("urn:second"))
+        chemical_link = URIRef("http://aopkb.org/aop_ontology#has_chemical_entity")
+        for triple in data.source:
+            (second if triple[1] == chemical_link else first).add(triple)
+        with Client(data._schema, graphs, graph_uris=["urn:first", "urn:second"]) as scoped:
+            paths = scoped.paths_between(AOP, target_value="Phenobarbital", max_hops=2)
+            assert not paths.empty
+            assert "https://identifiers.org/cas/50-06-6" not in paths["To"].values
 
 
 def test_errors_and_completion_do_not_trigger_hidden_queries():

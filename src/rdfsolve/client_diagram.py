@@ -8,6 +8,8 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from rdfsolve.client_api import Client
 
 
@@ -58,6 +60,64 @@ def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:
                 label = _text(client.link_name(model, str(row.field)))
                 edges.add(f"{source} --> {ids[target]} : {label}")
     lines.extend(sorted(edges))
+    return "```mermaid\n" + "\n".join(lines) + "\n```"
+
+
+def path_diagram(
+    client: Client,
+    paths: pd.DataFrame,
+    *,
+    path: int | None = None,
+    instances: bool = True,
+) -> str:
+    """Draw only the retained path steps selected in the table."""
+    routes = paths.attrs.get("routes")
+    if not isinstance(routes, list):
+        raise ValueError("Use a table returned by paths_between or connections")
+    if path is not None:
+        if type(path) is not int or path not in paths["Path"].values:
+            raise ValueError("Choose a Path number from the table")
+        paths = paths[paths["Path"] == path]
+    classes = {
+        (item["graph"], item["resource"]): item["classes"]
+        for item in paths.attrs.get("resource_classes", [])
+    }
+    nodes: dict[str, tuple[str, str]] = {}
+    edges: set[tuple[str, str, str]] = set()
+    for row in paths.to_dict(orient="records"):
+        route = routes[int(row["Path"]) - 1]
+        step = int(row["Step"]) - 1
+        if isinstance(route, dict):
+            binding = route["bindings"]
+            s, o = (binding[key]["value"] for key in (f"n{step}", f"n{step + 1}"))
+            backward = binding[f"back{step}"]["value"] in ("true", "1")
+            labels = (str(row["From class"]), str(row["To class"]))
+            keys = [
+                f"{route['query_id']}:{binding[f'n{i}']['value']}"
+                if binding[f"n{i}"]["type"] == "bnode"
+                else binding[f"n{i}"]["value"]
+                for i in (step, step + 1)
+            ]
+            if not instances:
+                graph = binding.get("_graph", {}).get("value", "")
+                types = [" | ".join(classes.get((graph, iri), [])) for iri in (s, o)]
+                keys = [
+                    "classes:" + value if value else key
+                    for value, key in zip(types, keys, strict=True)
+                ]
+                s, o = types
+        else:
+            s, _predicate, o, backward = route[step]
+            labels = (client.type_name(client.model(s)), client.type_name(client.model(o)))
+            keys = [s, o]
+        for key, iri, label in zip(keys, (s, o), labels, strict=True):
+            if key not in nodes:
+                nodes[key] = (f"N{len(nodes)}", f"{_text(label)}<br/>{_text(iri)}")
+        source, target = keys[::-1] if backward else keys
+        edges.add((nodes[source][0], str(row["Link"]), nodes[target][0]))
+    lines = ["flowchart LR"]
+    lines.extend(f'{name}["{label}"]' for name, label in nodes.values())
+    lines.extend(f'{s} -->|"{_text(label)}"| {o}' for s, label, o in sorted(edges))
     return "```mermaid\n" + "\n".join(lines) + "\n```"
 
 
