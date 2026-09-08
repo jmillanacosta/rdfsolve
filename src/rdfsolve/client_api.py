@@ -15,7 +15,7 @@ import pandas as pd
 from pydantic import BaseModel
 from rdflib import Graph, Literal, URIRef
 
-from rdfsolve.exploration import DatasetClient
+from rdfsolve.exploration import SEARCH_PREDICATES, DatasetClient
 from rdfsolve.hydration import HydrationLimitError, _iri, _term
 from rdfsolve.model_rdf import model_to_graph
 from rdfsolve.query_log import QueryLog
@@ -180,7 +180,7 @@ class Client(DatasetClient):
     def types(self) -> pd.DataFrame:
         """List available record types without sending a query."""
         return pd.DataFrame(
-            {"Type": sorted(self.type_name(model) for model in self.models.values())}
+            {"Class": sorted(self.type_name(model) for model in self.models.values())}
         )
 
     @classmethod
@@ -196,8 +196,6 @@ class Client(DatasetClient):
 
     def find(self, text: str, *, kind: str | None = None, field: str | None = None) -> Results:
         """Find names and identifiers across types. Optionally search a chosen field."""
-        from rdfsolve.schema_models.enrichment import LABEL_PREDICATES
-
         if not text.strip():
             raise ValueError("Enter a word or name to find")
         models = [self.model(kind)] if kind else list(self.models.values())
@@ -205,13 +203,7 @@ class Client(DatasetClient):
         if not by_iri:
             return Results(self, [])
         classes = " ".join(_iri(iri) for iri in by_iri)
-        predicates = set(LABEL_PREDICATES) | {
-            "http://purl.org/dc/elements/1.1/identifier",
-            "http://purl.org/dc/terms/identifier",
-            "http://purl.org/dc/terms/alternative",
-            "http://www.w3.org/2004/02/skos/core#altLabel",
-            "http://www.w3.org/2004/02/skos/core#notation",
-        }
+        predicates = SEARCH_PREDICATES
         if field is not None:
             predicates = {
                 str(info.json_schema_extra["rdf_property_iri"])
@@ -305,10 +297,10 @@ class Results:
     def _table(self) -> pd.DataFrame:
         return pd.DataFrame(
             [
-                {"Name": _title(record), "Type": self.client.type_name(type(record))}
+                {"Name": _title(record), "Class": self.client.type_name(type(record))}
                 for record in self.records
             ],
-            columns=["Name", "Type"],
+            columns=["Name", "Class"],
         )
 
     def types(self) -> pd.DataFrame:
@@ -319,13 +311,13 @@ class Results:
         return pd.DataFrame(
             [
                 {
-                    "Type": self.client.type_name(model),
+                    "Class": self.client.type_name(model),
                     "Matches": len(records),
                     "Example": _title(records[0]),
                 }
                 for model, records in groups.items()
             ],
-            columns=["Type", "Matches", "Example"],
+            columns=["Class", "Matches", "Example"],
         )
 
     def of_type(self, kind: str) -> Results:
@@ -385,8 +377,37 @@ class Results:
             columns=["From", "Link", "To"],
         ).drop_duplicates()
 
-    def related(self, kind: str, *, via: str | None = None, incoming: bool = False) -> Results:
-        """Read a related type. Ask for a link name when several routes exist."""
+    def related(
+        self,
+        kind: str | None = None,
+        *,
+        via: str | None = None,
+        value: str | None = None,
+        incoming: bool = False,
+    ) -> Results:
+        """Follow a link or an intermediate class, optionally matching a name or identifier.
+
+        A class in via means two hops. A link name selects one direct link.
+        Text is a case-insensitive substring, tested only on connected targets.
+        """
+        if kind is None and value is None:
+            raise ValueError("Choose kind or value")
+        if value is not None and not value.strip():
+            raise ValueError("Enter a word or name to find")
+        if via is not None:
+            try:
+                intermediate = self.client.model(via)
+            except ValueError:
+                intermediate = None
+            if intermediate is not None:
+                middle = self.related(intermediate.__name__, incoming=incoming)
+                return middle.related(kind, value=value, incoming=incoming)
+        if kind is None:
+            targets = sorted({target.__name__ for _, _, target in self._routes(incoming)})
+            records: list[BaseModel] = []
+            for name in targets:
+                records.extend(self.related(name, via=via, value=value, incoming=incoming))
+            return Results(self.client, records)
         target = self.client.model(kind)
         routes = [
             (source, field)
@@ -401,7 +422,7 @@ class Results:
         by_source: dict[type[BaseModel], set[str]] = defaultdict(set)
         for source, field in routes:
             by_source[source].add(field)
-        if any(len(fields) > 1 for fields in by_source.values()):
+        if value is None and any(len(fields) > 1 for fields in by_source.values()):
             choices = sorted(
                 {
                     self.client.link_name(target if incoming else source, field)
@@ -412,14 +433,22 @@ class Results:
         if self.records and not routes:
             raise ValueError("No matching link. Use paths() to see where these records can lead.")
         found: dict[str, BaseModel] = {}
-        with self.client.step(f"Read related {_name(target.__name__)}"):
+        with self.client.step(
+            f"Read related {self.client.type_name(target)}"
+            + (f" matching {value}" if value is not None else "")
+        ):
             for source, fields in by_source.items():
-                field = next(iter(fields))
                 records = [record for record in self.records if type(record) is source]
-                for record in self.client.follow(
-                    records, field, target, inverse=incoming, fields=_name_fields(target)
-                ):
-                    found[str(vars(record)["uri"])] = record
+                for field in sorted(fields):
+                    for record in self.client.follow(
+                        records,
+                        field,
+                        target,
+                        inverse=incoming,
+                        fields=_name_fields(target),
+                        value=value,
+                    ):
+                        found[str(vars(record)["uri"])] = record
         return Results(self.client, list(found.values()))
 
     def _load(self, field: str) -> None:
@@ -456,7 +485,10 @@ class Results:
             self._load(field)
         rows = []
         for record in self.records:
-            row: dict[str, Any] = {"Name": _title(record)}
+            row: dict[str, Any] = {
+                "Name": _title(record),
+                "Class": self.client.type_name(type(record)),
+            }
             for field in fields:
                 name = self.client.field_name(type(record), field)
                 value = getattr(record, name)
@@ -464,7 +496,7 @@ class Results:
                     " | ".join(map(str, value)) if isinstance(value, list) else value
                 )
             rows.append(row)
-        return pd.DataFrame(rows, columns=["Name", *(_name(f) for f in fields)])
+        return pd.DataFrame(rows, columns=["Name", "Class", *(_name(f) for f in fields)])
 
     def values(self, field: str) -> pd.DataFrame:
         """List values of one field across these records, not the whole endpoint."""

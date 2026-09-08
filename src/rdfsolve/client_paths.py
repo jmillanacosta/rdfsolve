@@ -173,4 +173,54 @@ def resource_paths(
                     rows.append([number, i + 1, s, _label(client, p), "←" if backward else "→", o])
     table = pd.DataFrame(rows, columns=COLUMNS)
     table.attrs.update(routes=routes, basis="queried resource paths", max_hops=max_hops)
+    _add_classes(client, table, routes)
     return table
+
+
+def _add_classes(client: Client, table: pd.DataFrame, routes: list[dict[str, Any]]) -> None:
+    nodes = sorted(
+        {
+            term["value"]
+            for route in routes
+            for key, term in route["bindings"].items()
+            if key.startswith("n") and term["type"] == "uri"
+        }
+    )
+    classes: dict[tuple[str, str], set[str]] = defaultdict(set)
+    models = {getattr(model, "rdf_class_iri", ""): model for model in client.models.values()}
+    with client.step("Read classes along connections"):
+        for start in range(0, len(nodes), client.batch_size):
+            values = " ".join(_iri(node) for node in nodes[start : start + client.batch_size])
+            body = client._scope(f"VALUES ?resource {{ {values} }} ?resource a ?class")
+            found = client._select(
+                f"SELECT DISTINCT ?resource ?class ?_graph WHERE {{ {body} }} LIMIT {client.max_rows + 1}"
+            )
+            if len(found) > client.max_rows:
+                raise HydrationLimitError("Class lookup exceeded max_rows")
+            for row in found:
+                resource, cls = row["resource"]["value"], row["class"]["value"]
+                graph = row.get("_graph", {}).get("value", "")
+                classes[(graph, resource)].add(cls)
+    from_classes, to_classes = [], []
+    for route in routes:
+        binding = route["bindings"]
+        graph = binding.get("_graph", {}).get("value", "")
+        names = []
+        for i in range(route["hops"] + 1):
+            node = binding[f"n{i}"]
+            types = sorted(classes[(graph, node["value"])])
+            names.append(
+                " | ".join(
+                    client.type_name(models[cls]) if cls in models else _label(client, cls)
+                    for cls in types
+                )
+                or ("Class not read" if node["type"] == "bnode" else "No type returned")
+            )
+        from_classes.extend(names[:-1])
+        to_classes.extend(names[1:])
+    table.insert(3, "From class", from_classes)
+    table["To class"] = to_classes
+    table.attrs["resource_classes"] = [
+        {"graph": graph, "resource": resource, "classes": sorted(types)}
+        for (graph, resource), types in sorted(classes.items())
+    ]

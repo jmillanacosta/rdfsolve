@@ -15,6 +15,13 @@ from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.sparql_helper import EndpointError
 
 Model = TypeVar("Model", bound=BaseModel)
+SEARCH_PREDICATES = set(LABEL_PREDICATES) | {
+    "http://purl.org/dc/elements/1.1/identifier",
+    "http://purl.org/dc/terms/identifier",
+    "http://purl.org/dc/terms/alternative",
+    "http://www.w3.org/2004/02/skos/core#altLabel",
+    "http://www.w3.org/2004/02/skos/core#notation",
+}
 
 
 def _path(model: type[BaseModel], field: str) -> PropertyPath:
@@ -95,6 +102,7 @@ class DatasetClient(Hydrator):
         *,
         fields: list[str] | None = None,
         inverse: bool = False,
+        value: str | None = None,
     ) -> list[Model]:
         """Follow a named field and retrieve distinct typed targets.
 
@@ -104,6 +112,16 @@ class DatasetClient(Hydrator):
         """
         if not records:
             return []
+        if value is not None and not value.strip():
+            raise ValueError("Enter a word or name to find")
+        text_filter = ""
+        if value is not None:
+            predicates = " ".join(_iri(p) for p in sorted(SEARCH_PREDICATES))
+            text_filter = (
+                f"FILTER EXISTS {{ VALUES ?_nameProperty {{ {predicates} }} "
+                f"?target ?_nameProperty ?_nameValue . FILTER(!isBlank(?_nameValue) && "
+                f"CONTAINS(LCASE(STR(?_nameValue)), LCASE({Literal(value).n3()}))) }}"
+            )
         source_model = type(records[0])
         if any(type(record) is not source_model for record in records):
             raise ValueError("Use records of one generated model")
@@ -122,7 +140,7 @@ class DatasetClient(Hydrator):
                 f"VALUES ?source {{ {values} }} "
                 f"?source a {_iri(getattr(source_model, 'rdf_class_iri', ''))} ; "
                 f"{path_text} ?target . "
-                f"?target a {_iri(getattr(target, 'rdf_class_iri', ''))} . FILTER(isIRI(?target))"
+                f"?target a {_iri(getattr(target, 'rdf_class_iri', ''))} . FILTER(isIRI(?target)) {text_filter}"
             )
             rows = self._select(
                 f"SELECT DISTINCT ?source ?target ?_graph WHERE {{ {body} }} "

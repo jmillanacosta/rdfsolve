@@ -39,6 +39,14 @@ def test_find_follow_values_and_saved_links(tmp_path):
         stressors = chemicals.related(STRESSOR, incoming=True)
         pathways = stressors.related(AOP, incoming=True)
         assert len(stressors) == 1 and len(pathways) == 2
+        through = pathways.related(kind=CHEMICAL, via=STRESSOR)
+        assert {r.uri for r in through} == {r.uri for r in chemicals}
+        named = pathways.related(value="phenobarbital", via=STRESSOR)
+        assert {r.uri for r in named} == {r.uri for r in chemicals}
+        assert named._table()["Class"].notna().all()
+        assert "Class" in named.show("title")
+        assert not pathways.related(value="Phenobarbitol", via=STRESSOR)
+        assert not pathways.related(value='"} UNION { ?s ?p ?o } #', via=STRESSOR)
         titles = pathways.values("title")
         assert set(titles["Value"]) == {str(value) for record in pathways
             for value in data.source.objects(URIRef(record.uri),
@@ -80,6 +88,8 @@ def test_class_routes_and_actual_connections():
         assert result["From"].tolist() == [chemical, stressor]
         assert result["To"].tolist() == [stressor, pathway]
         assert result["Direction"].tolist() == ["←", "←"]
+        assert all(result["From class"] != "No type returned")
+        assert all(result["To class"] != "No type returned")
         assert data.connections(chemical, pathway, max_hops=2, both_directions=False).empty
         assert data.connections(chemical, "urn:absent", max_hops=2).empty
         # Every returned step must be an actual triple, including reverse steps.
