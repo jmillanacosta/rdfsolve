@@ -12,6 +12,7 @@ from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, SERVICE_NAMESPA
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
+from rdfsolve.schema_models.metadata import RetainedMetadata
 from rdfsolve.schema_models.navigation import NavigationSummary
 from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
@@ -45,6 +46,9 @@ class MinedSchema(BaseModel):
         description="Provenance metadata",
     )
 
+    source_metadata: RetainedMetadata | None = Field(
+        None, description="Original RDF evidence, separate from projected schema fields"
+    )
     navigation: NavigationSummary | None = None
 
     def discover_paths(
@@ -144,9 +148,11 @@ class MinedSchema(BaseModel):
         return cls.from_json(path)
 
     def get_metadata(self) -> MetadataDocument:
-        """Return RDF generated from this schema, not original source evidence."""
+        """Return retained source RDF, or generated metadata when none was retained."""
         from rdfsolve.schema_models.metadata import MetadataDocument
 
+        if self.source_metadata is not None:
+            return self.source_metadata.to_document()
         return MetadataDocument(
             graph=self.to_void_graph(), endpoint=self.about.endpoint,
             scope="rdfsolve export of stored schema fields",

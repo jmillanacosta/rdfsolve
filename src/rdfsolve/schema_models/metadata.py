@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from typing import Literal as FormatLiteral
 
 from pydantic import BaseModel, ConfigDict, Field
 from rdflib import Dataset, Graph, Namespace, URIRef
@@ -28,6 +29,44 @@ FIELDS = {
     "source_modified": (DCTERMS.modified, PAV.lastUpdateOn),
     "homepage": (FOAF.homepage,),
 }
+
+
+class RetainedMetadata(BaseModel):
+    """Store source RDF in canonical JSON without changing its vocabulary."""
+
+    rdf: str
+    format: FormatLiteral["turtle", "trig"]
+    endpoint: str | None = None
+    graph_uris: list[str] | None = None
+    scope: str
+
+    @classmethod
+    def from_document(cls, document: MetadataDocument) -> RetainedMetadata:
+        """Capture source RDF and its retrieval scope."""
+        dataset = document.rdf_dataset
+        return cls(
+            rdf=(dataset.serialize(format="trig") if dataset is not None
+                 else document.to_turtle()),
+            format="trig" if dataset is not None else "turtle",
+            endpoint=document.endpoint, graph_uris=document.graph_uris,
+            scope=document.scope,
+        )
+
+    def to_document(self) -> MetadataDocument:
+        """Restore source values and any retained graph boundaries."""
+        dataset = None
+        if self.format == "trig":
+            dataset = Dataset()
+            dataset.parse(data=self.rdf, format="trig")
+            graph = Graph()
+            for subject, predicate, value, _ in dataset.quads():
+                graph.add((subject, predicate, value))
+        else:
+            graph = Graph().parse(data=self.rdf, format="turtle")
+        return MetadataDocument(
+            graph=graph, rdf_dataset=dataset, endpoint=self.endpoint,
+            graph_uris=self.graph_uris, scope=self.scope,
+        )
 
 
 class MetadataDocument(BaseModel):
@@ -122,6 +161,12 @@ class MetadataDocument(BaseModel):
     def to_turtle(self) -> str:
         """Serialize the retrieved RDF."""
         return self.graph.serialize(format="turtle")
+
+    def to_trig(self) -> str:
+        """Export retained graph boundaries; require captured dataset contexts."""
+        if self.rdf_dataset is None:
+            raise ValueError("No dataset contexts were retained; use to_turtle()")
+        return self.rdf_dataset.serialize(format="trig")
 
     def project(self, subject_iri: str | None = None) -> dict[str, Any]:
         """Project one dataset. Leave absent or ambiguous scalar fields unset.

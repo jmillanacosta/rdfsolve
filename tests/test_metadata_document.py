@@ -53,3 +53,43 @@ def test_empty_view_does_not_claim_the_endpoint_has_no_metadata():
 
     document = MetadataDocument(graph=Graph())
     assert "No information was retrieved in this scope." in str(document)
+
+
+def test_void_conversion_preserves_source_metadata_and_contexts_through_json():
+    from rdfsolve.schema_models.core import MinedSchema
+    from rdfsolve.schema_models.void_schema import VoidSchema
+
+    graph = Graph().parse(DATA.with_name("aopwikirdf_metadata_excerpt.ttl"))
+    dataset = Dataset()
+    dataset.graph("http://aopwiki.org/").__iadd__(graph)
+    dataset.default_context.__iadd__(graph)
+    void = VoidSchema(
+        graph, "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql", "aopwikirdf",
+        graph_uris=["http://aopwiki.org/"], default_graph=True, rdf_dataset=dataset,
+    )
+    schema = void.to_mined_schema()
+    assert schema.about.description == "AOP-Wiki RDF -- complete dataset"
+    assert schema.about.source_version == "2026.09.05"
+    assert schema.about.source_issued is None  # createdOn is not an issue date.
+    assert schema.about.triple_count_estimate is None  # Do not copy the subset count.
+    assert not schema.patterns
+
+    restored = MinedSchema.from_dict(schema.to_dict())
+    for result in (schema, restored):
+        metadata = result.get_metadata()
+        assert isomorphic(metadata.graph, graph)
+        assert isomorphic(metadata.for_graph("http://aopwiki.org/").graph, graph)
+        assert isomorphic(metadata.for_graph(None).graph, graph)
+        assert metadata.scope == "retained VoID RDF"
+        exported = Dataset().parse(data=metadata.to_trig(), format="trig")
+        assert isomorphic(exported.graph("http://aopwiki.org/"), graph)
+
+
+def test_ambiguous_void_keeps_evidence_without_guessing_dataset_fields():
+    from rdfsolve.schema_models.readers.void import void_graph_to_minedschema
+
+    graph = Graph().parse(DATA.with_name("aopwikirdf_metadata_excerpt.ttl"))
+    schema = void_graph_to_minedschema(graph)
+    assert schema.about.description is None
+    assert schema.about.source_version is None
+    assert isomorphic(schema.get_metadata().graph, graph)

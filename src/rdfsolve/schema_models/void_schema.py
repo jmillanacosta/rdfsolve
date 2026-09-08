@@ -98,9 +98,11 @@ class VoidSchema:
 
     def to_mined_schema(self) -> MinedSchema:
         """Read supported patterns and metadata; do not mine instance data."""
+        from rdfsolve.schema_models.metadata import RetainedMetadata
         from rdfsolve.schema_models.readers.void import void_graph_to_minedschema
 
-        schema = void_graph_to_minedschema(self.graph)
+        schema = void_graph_to_minedschema(self.graph, endpoint=self.endpoint)
+        schema.source_metadata = RetainedMetadata.from_document(self.get_metadata())
         schema.about.endpoint = schema.about.endpoint or self.endpoint
         schema.about.dataset_name = schema.about.dataset_name or self.name
         # Description locations are not the instance graphs they describe.

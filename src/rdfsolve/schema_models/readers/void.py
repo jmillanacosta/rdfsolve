@@ -36,10 +36,10 @@ def void_to_minedschema(void_ttl: str) -> MinedSchema:
     return void_graph_to_minedschema(g)
 
 
-def void_graph_to_minedschema(g: Graph) -> MinedSchema:
+def void_graph_to_minedschema(g: Graph, *, endpoint: str | None = None) -> MinedSchema:
     """Read VoID RDF without treating metadata predicates as patterns."""
     patterns = _extract_patterns_from_void(g)
-    about = _extract_metadata_from_void(g)
+    about = _extract_metadata_from_void(g, endpoint=endpoint)
     about.pattern_count = len(patterns)
     for partition in set(g.objects(None, VOID.classPartition)) | set(g.subjects(VOID["class"], None)):
         class_iri = g.value(partition, VOID["class"])
@@ -48,8 +48,14 @@ def void_graph_to_minedschema(g: Graph) -> MinedSchema:
             about.class_entity_counts[str(class_iri)] = count
 
     from rdfsolve.schema_models.enrichment import SchemaEnrichment
+    from rdfsolve.schema_models.metadata import MetadataDocument, RetainedMetadata
 
-    schema = MinedSchema(patterns=patterns, about=about)
+    schema = MinedSchema(
+        patterns=patterns, about=about,
+        source_metadata=RetainedMetadata.from_document(
+            MetadataDocument(graph=g, endpoint=endpoint, scope="retained VoID RDF")
+        ),
+    )
     schema.enrichment = SchemaEnrichment.from_rdf_graph(
         g, schema.get_classes(), schema.get_properties()
     )
@@ -192,14 +198,14 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
     return patterns
 
 
-def _extract_metadata_from_void(g: Graph) -> AboutMetadata:
+def _extract_metadata_from_void(g: Graph, *, endpoint: str | None = None) -> AboutMetadata:
     """Project one dataset without guessing across independent descriptions."""
     from rdflib.namespace import DCTERMS, FOAF, OWL
     from rdflib.term import Node
 
     from rdfsolve.schema_models.metadata import MetadataDocument
 
-    metadata = MetadataDocument(graph=g).project()
+    metadata = MetadataDocument(graph=g, endpoint=endpoint).project()
     subject = metadata.pop("metadata_subject_iri", None)
     blank_subject = metadata.pop("metadata_subject_blank_node", None)
     metadata.pop("metadata_identity_basis", None)
