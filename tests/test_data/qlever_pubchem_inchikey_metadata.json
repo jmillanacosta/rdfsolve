@@ -1,1 +1,8 @@
-{"encoded-iri-prefixes":{"prefixes-with-leading-angle-brackets":[]},"git-hash":"9ec88a","index-format-version":{"date":"2024-10-22","pull-request-number":1572},"locale":{"country":"US","ignore-punctuation":false,"language":"en"},"num-subjects":{"internal":0,"normal":123592829},"vocabulary-type":"on-disk-compressed"}
+{
+  "encoded-iri-prefixes": { "prefixes-with-leading-angle-brackets": [] },
+  "git-hash": "9ec88a",
+  "index-format-version": { "date": "2024-10-22", "pull-request-number": 1572 },
+  "locale": { "country": "US", "ignore-punctuation": false, "language": "en" },
+  "num-subjects": { "internal": 0, "normal": 123592829 },
+  "vocabulary-type": "on-disk-compressed"
+}

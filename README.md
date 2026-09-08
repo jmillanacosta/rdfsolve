@@ -48,6 +48,9 @@ from rdfsolve import SchemaMiner
 miner = SchemaMiner(endpoint_url="https://sparql.example.org/sparql")
 schema = miner.mine(dataset_name="example")
 
+# Enrich with labels and definitions, and examples
+schema.enrichment = miner.query_enrichment(schema)
+
 # Export formats
 schema.to_void_graph()  # VoID RDF graph
 schema.to_linkml_yaml()  # LinkML schema YAML string
@@ -84,32 +87,6 @@ schema = MinedSchema.from_shacl(Path("example_shacl.ttl").read_text(encoding="ut
 
 Allows (partial) interconversion through `MinedSchema`.
 
-### Add definitions, examples, and a typed API
-
-```python
-from pathlib import Path
-from rdfsolve import SchemaMiner
-
-miner = SchemaMiner(
-    endpoint_url="https://sparql.example.org/sparql",
-    enrich=True,
-    examples_per_pattern=2,
-)
-schema = miner.mine(dataset_name="example")
-Path("example_models.py").write_text(schema.to_pydantic(), encoding="utf-8")
-
-# You can also enrich a saved schema with the same source and graph scope.
-# schema.enrichment = miner.query_enrichment(schema)
-```
-
-Generated classes use cleaned source labels and definitions are used as class
-docstrings; observed values from instances become field examples.
-
-`schema.about.source_version_iri` gets assigned the source release IRI when
-metadata queries identify it. `schema_version` uses that IRI, a release label, a
-source date, or a dated mining snapshot. The canonical JSON envelope's `version`
-is a separate storage-format identifier. A snapshot date does not certify an
-upstream release.
 
 ### Load and convert existing schemas
 
@@ -210,7 +187,7 @@ types:
 from rdfsolve.instance_matcher import probe_endpoint
 
 match = probe_endpoint(
-    endpoint_url="https://sparql.uniprot.org/sparql",
+    endpoint_url="https://sparql.example.org/sparql",
     uri_prefix="http://identifiers.org/ncbigene/",
     limit=100,
 )
