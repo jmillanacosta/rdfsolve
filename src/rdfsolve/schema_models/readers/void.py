@@ -219,6 +219,7 @@ def _extract_metadata_from_void(g: Graph, *, endpoint: str | None = None) -> Abo
     dataset_uri = URIRef(subject) if subject is not None else BNode(blank_subject)
 
     def unique(predicate: URIRef) -> Node | None:
+        """Return a value only when the dataset states exactly one."""
         values = set(g.objects(dataset_uri, predicate))
         return next(iter(values)) if len(values) == 1 else None
 

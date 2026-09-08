@@ -24,6 +24,7 @@ def trim_descriptions(model: T, limit: int | None) -> T:
     result = model.model_copy(deep=True)
 
     def visit(value: object) -> None:
+        """Trim supported description fields in the copied model."""
         from rdfsolve.schema_models.metadata import MetadataDocument
 
         if isinstance(value, MetadataDocument):

@@ -64,6 +64,7 @@ def discover_paths(
     def walks(
         start: str, remaining: int, prefix: tuple[SchemaPattern, ...]
     ) -> Iterator[NavigationPath]:
+        """Extend a class route to the requested length."""
         predicates = {edge.property_uri for edge in prefix}
         classes = {edge.subject_class for edge in prefix} | {start}
         edges = sorted(

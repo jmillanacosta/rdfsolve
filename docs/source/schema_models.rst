@@ -31,7 +31,7 @@ Ontology Models
 LinkML Converter
 ----------------
 
-.. automodule:: rdfsolve.schema_models.linkml
+.. automodule:: rdfsolve.schema_models.exporters.linkml
    :members:
    :undoc-members:
    :show-inheritance:
@@ -47,7 +47,7 @@ SHACL Models
 SHACL Converter
 ---------------
 
-.. automodule:: rdfsolve.schema_models.shacl_convert
+.. automodule:: rdfsolve.schema_models.exporters.shacl
    :members:
    :undoc-members:
    :show-inheritance:
@@ -63,7 +63,7 @@ VoID Models
 VoID Converter
 --------------
 
-.. automodule:: rdfsolve.schema_models.void_convert
+.. automodule:: rdfsolve.schema_models.readers.void
    :members:
    :undoc-members:
    :show-inheritance:
@@ -71,7 +71,7 @@ VoID Converter
 RDF-Config Converter
 --------------------
 
-.. automodule:: rdfsolve.schema_models.rdfconfig
+.. automodule:: rdfsolve.schema_models.exporters.rdfconfig
    :members:
    :undoc-members:
    :show-inheritance:

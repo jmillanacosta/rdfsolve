@@ -138,6 +138,7 @@ def to_linkml(
     class_ranges: dict[tuple[str, str], set[str]] = {}
 
     def value_range(pattern: SchemaPattern) -> str:
+        """Choose a LinkML range for one observed pattern."""
         if pattern.object_class in class_names:
             return class_names[pattern.object_class]
         if pattern.object_class == "Resource":
@@ -155,6 +156,7 @@ def to_linkml(
         class_ranges.setdefault((pattern.subject_class, pattern.property_uri), set()).add(value)
 
     def constraints(values: set[str]) -> dict[str, Any]:
+        """Represent one range or a set of alternative ranges."""
         ordered = sorted(values)
         return (
             {"range": ordered[0]}

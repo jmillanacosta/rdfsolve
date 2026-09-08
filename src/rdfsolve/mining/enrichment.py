@@ -114,6 +114,7 @@ def query_enrichment(
     successful = 0
 
     def select(query: str, purpose: str) -> list[dict[str, Any]]:
+        """Run a query and record its outcome."""
         nonlocal successful
         if result.query_count and delay:
             time.sleep(delay)
@@ -129,6 +130,7 @@ def query_enrichment(
         return outcome.rows
 
     def invalid(error: Exception, purpose: str) -> None:
+        """Record malformed response data as a failure."""
         failure = QueryFailure("invalid_response", str(error), purpose, [], graph_uris)
         result.failures.append(failure)
         if report:
@@ -137,6 +139,7 @@ def query_enrichment(
             report.record_outcome(QueryOutcome([], "failed", [failure]))
 
     def batched(queries: list[str], purpose: str) -> Iterator[tuple[int, dict[str, Any]]]:
+        """Group example queries and retain each result slot."""
         for offset in range(0, len(queries), 10):
             branches = [
                 f"{{ {{ {query} }} BIND({index} AS ?slot) }}"

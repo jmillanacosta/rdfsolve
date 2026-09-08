@@ -105,6 +105,7 @@ class MetadataDocument(BaseModel):
             raise ValueError("Display limits must be positive")
 
         def cell(text: str) -> str:
+            """Escape source text for display in a Markdown cell."""
             # Escape source text before displaying it as Markdown.
             for token in ("\\", "`", "*", "_", "[", "]", "|", "#"):
                 text = text.replace(token, "\\" + token)
