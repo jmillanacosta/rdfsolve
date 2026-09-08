@@ -182,6 +182,26 @@ def test_paths_to_value_keep_real_links_and_draw_only_selected_paths():
         assert len(data.queries) == before
 
 
+def test_connections_keep_aopwiki_relative_iris_and_read_their_classes():
+    # AOPWiki returned these links and this non-absolute IRI on 2026-09-08.
+    event = URIRef("https://identifiers.org/aop.events/1023")
+    node = URIRef("1023_bioevent_0")
+    cls = URIRef("http://aopkb.org/aop_ontology#BiologicalEvent")
+    with client() as data:
+        data.source.add((URIRef("https://identifiers.org/aop/162"),
+                         URIRef("http://aopkb.org/aop_ontology#has_key_event"), event))
+        data.source.add((event, URIRef("http://aopkb.org/aop_ontology#hasBiologicalEvent"), node))
+        data.source.add((node, RDF.type, cls))
+        paths = data.connections("https://identifiers.org/aop/162", max_hops=2)
+        matches = paths[paths["To"] == str(node)]
+        assert not matches.empty
+        assert set(matches["To class"]) == {"BiologicalEvent"}
+        assert str(node) in data.diagram(paths=paths)
+        assert str(cls).replace("#", "#35;") in data.diagram(paths=paths, instances=False)
+        assert all("<1023_bioevent_0>" not in query for query in data.queries)
+        assert paths.attrs["unresolved_resources"] == [str(node)]
+
+
 def test_connections_without_target_match_the_aop_neighborhood():
     from rdfsolve.hydration import HydrationLimitError
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from collections import defaultdict, deque
 from itertools import product
@@ -9,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from pydantic import BaseModel
-from rdflib import RDF
+from rdflib import RDF, Literal
 
 from rdfsolve.hydration import HydrationLimitError, _iri
 
@@ -214,11 +215,20 @@ def _add_classes(client: Client, table: pd.DataFrame, routes: list[dict[str, Any
             if key.startswith("n") and term["type"] == "uri"
         }
     )
+    safe_nodes = {}
+    for node in nodes:
+        try:
+            safe_nodes[node] = _iri(node)
+        except ValueError:
+            continue
+    unread = set(nodes) - safe_nodes.keys()
+    table.attrs["unresolved_resources"] = sorted(unread)
+    nodes = sorted(safe_nodes)
     classes: dict[tuple[str, str], set[str]] = defaultdict(set)
     models = {getattr(model, "rdf_class_iri", ""): model for model in client.models.values()}
     with client.step("Read classes along connections"):
         for start in range(0, len(nodes), client.batch_size):
-            values = " ".join(_iri(node) for node in nodes[start : start + client.batch_size])
+            values = " ".join(safe_nodes[node] for node in nodes[start : start + client.batch_size])
             body = client._scope(f"VALUES ?resource {{ {values} }} ?resource a ?class")
             found = client._select(
                 f"SELECT DISTINCT ?resource ?class ?_graph WHERE {{ {body} }} LIMIT {client.max_rows + 1}"
@@ -229,6 +239,15 @@ def _add_classes(client: Client, table: pd.DataFrame, routes: list[dict[str, Any
                 resource, cls = row["resource"]["value"], row["class"]["value"]
                 graph = row.get("_graph", {}).get("value", "")
                 classes[(graph, resource)].add(cls)
+    recovered = _read_unaddressable_classes(client, routes, unread, safe_nodes)
+    classes.update(recovered)
+    missing = unread - {resource for _, resource in recovered}
+    if missing:
+        logging.getLogger(__name__).warning(
+            "Class lookup skipped for %d returned identifiers without a safe absolute IRI; "
+            "their links remain in the table",
+            len(missing),
+        )
     from_classes, to_classes = [], []
     for route in routes:
         binding = route["bindings"]
@@ -242,7 +261,12 @@ def _add_classes(client: Client, table: pd.DataFrame, routes: list[dict[str, Any
                     client.type_name(models[cls]) if cls in models else _label(client, cls)
                     for cls in types
                 )
-                or ("Class not read" if node["type"] == "bnode" else "No type returned")
+                or (
+                    "Class not read"
+                    if node["type"] == "bnode"
+                    or (node["value"] in unread and (graph, node["value"]) not in recovered)
+                    else "No type returned"
+                )
             )
         from_classes.extend(names[:-1])
         to_classes.extend(names[1:])
@@ -252,3 +276,47 @@ def _add_classes(client: Client, table: pd.DataFrame, routes: list[dict[str, Any
         {"graph": graph, "resource": resource, "classes": sorted(types)}
         for (graph, resource), types in sorted(classes.items())
     ]
+
+
+def _read_unaddressable_classes(
+    client: Client,
+    routes: list[dict[str, Any]],
+    unread: set[str],
+    safe_nodes: dict[str, str],
+) -> dict[tuple[str, str], set[str]]:
+    """Read malformed returned IRIs through their observed links, without a guessed base."""
+    recovered: dict[tuple[str, str], set[str]] = {}
+    attempted = set()
+    for route in routes:
+        bindings = route["bindings"]
+        graph = bindings.get("_graph", {}).get("value", "")
+        nodes = [bindings[f"n{i}"] for i in range(route["hops"] + 1)]
+        if any(node["type"] != "uri" for node in nodes):
+            continue
+        for index, node in enumerate(nodes):
+            key = (graph, node["value"])
+            if node["value"] not in unread or key in attempted:
+                continue
+            attempted.add(key)
+            terms = [safe_nodes.get(n["value"], f"?n{i}") for i, n in enumerate(nodes)]
+            body = []
+            for i in range(route["hops"]):
+                left, right = (
+                    (i + 1, i) if bindings[f"back{i}"]["value"] in ("true", "1") else (i, i + 1)
+                )
+                body.append(f"{terms[left]} {_iri(bindings[f'p{i}']['value'])} {terms[right]} .")
+            for i, term in enumerate(nodes):
+                if term["value"] in unread:
+                    body.append(f"FILTER(STR(?n{i}) = {Literal(term['value']).n3()})")
+            body.append(f"OPTIONAL {{ ?n{index} a ?class }}")
+            pattern = " ".join(body)
+            scoped = f"GRAPH {_iri(graph)} {{ {pattern} }}" if graph else client._scope(pattern)
+            with client.step("Read classes through retained links"):
+                rows = client._select(
+                    f"SELECT DISTINCT ?n{index} ?class WHERE {{ {scoped} }} LIMIT {client.max_rows + 1}"
+                )
+            if len(rows) > client.max_rows:
+                raise HydrationLimitError("Class lookup exceeded max_rows")
+            if rows:
+                recovered[key] = {row["class"]["value"] for row in rows if "class" in row}
+    return recovered

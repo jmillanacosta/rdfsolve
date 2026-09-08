@@ -82,6 +82,7 @@ def path_diagram(
         (item["graph"], item["resource"]): item["classes"]
         for item in paths.attrs.get("resource_classes", [])
     }
+    unresolved = set(paths.attrs.get("unresolved_resources", []))
     nodes: dict[str, tuple[str, str]] = {}
     edges: set[tuple[str, str, str]] = set()
     for row in paths.to_dict(orient="records"):
@@ -94,7 +95,7 @@ def path_diagram(
             labels = (str(row["From class"]), str(row["To class"]))
             keys = [
                 f"{route['query_id']}:{binding[f'n{i}']['value']}"
-                if binding[f"n{i}"]["type"] == "bnode"
+                if binding[f"n{i}"]["type"] == "bnode" or binding[f"n{i}"]["value"] in unresolved
                 else binding[f"n{i}"]["value"]
                 for i in (step, step + 1)
             ]
