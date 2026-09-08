@@ -103,6 +103,15 @@ class SourceModel(BaseModel):
 
     name: str
     endpoint: str = ""
+    dataset_metadata: dict[str, Any] | None = None
+    metadata_graph_uris: list[str] | None = None
+    enrichment: dict[str, Any] | None = None
+    void_graphs: list[str] | None = None
+    void_schema: list[str] | None = None
+    void_default_graph: bool | None = None
+    has_void: bool | None = None
+    has_void_partitions: bool | None = None
+    has_void_patterns: bool | None = None
     void_iri: str = ""
     graph_uris: list[str] = Field(default_factory=list)
     use_graph: bool = False

@@ -43,6 +43,11 @@ def test_enrichment_preserves_settings_and_makes_distinct_backups(tmp_path, resp
     assert "source_issued" not in entry["dataset_metadata"]
     assert saved["enrichment"]["phases"]["void"] == "skipped"
     assert len(list(tmp_path.glob("sources.yaml.*.bak"))) == 2
+    from rdfsolve.models.source_model import SourcesRegistry
+
+    typed = SourcesRegistry.from_yaml(path).by_name("aopwikirdf")
+    assert typed.dataset_metadata == entry["dataset_metadata"]
+    assert typed.enrichment == entry["enrichment"]
 
 
 def test_metadata_failure_keeps_previous_values(tmp_path, responses):
