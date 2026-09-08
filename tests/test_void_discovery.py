@@ -56,7 +56,7 @@ def test_discovery_preserves_published_rdf(catalog, tmp_path):
         (tmp_path / "aopwiki_discovered_remote_schema.json").read_text()
     ))
     assert len(stored.patterns) == len(expected.patterns)
-    assert "schema_json" in exported["files"]
+    assert "schema_json" in exported.files
 
 
 def test_discovery_uses_graph_names_and_stops_at_page_limit(catalog):

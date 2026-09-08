@@ -184,6 +184,9 @@ class PipelineConfig:
     sssom_sources_file: Path | None = None
     sources: list[Source] = field(default_factory=list)
 
+    get_graphs_from_store: bool = False
+    graph_store_urls: dict[str, str] = field(default_factory=dict)
+
     # Mining settings
     timeout: float | None = None  # Override the source timeout only when set.
     delay: float = 1.0
@@ -538,8 +541,10 @@ class RemoteMiningStage(Stage):
         if not source.endpoint:
             return {"status": "skipped", "data": source.name}
 
+        use_graph_store = self.config.get_graphs_from_store and source.name in self.config.graph_store_urls
+
         # Skip endpoints known to be down
-        if source.endpoint_down and source.failure_count >= 3:
+        if source.endpoint_down and source.failure_count >= 3 and not use_graph_store:
             log.warning(f"[{source.name}] Skipping: endpoint marked as down")
             return {"status": "skipped", "data": source.name}
 
@@ -554,7 +559,7 @@ class RemoteMiningStage(Stage):
             except ValueError:
                 pass
 
-        if needs_health_check:
+        if needs_health_check and not use_graph_store:
             health = check_endpoint_health(source.endpoint, timeout=30)
             update_endpoint_status(source, health)
             if health.status != "up":
@@ -578,6 +583,10 @@ class RemoteMiningStage(Stage):
             report_path = source_output_dir / f"{source.name}{suffix}_report.json"
             miner = SchemaMiner(
                 endpoint_url=source.endpoint,
+                get_graphs_from_store=use_graph_store,
+                graph_store_url=self.config.graph_store_urls.get(source.name),
+                graph_store_dir=source_output_dir / "downloads",
+                graph_store_max_bytes=self.config.max_response_bytes,
                 graph_uris=source.graph_uris or None,
                 timeout=(self.config.timeout if self.config.timeout is not None
                          else source.timeout if source.timeout is not None else 300.0),
@@ -627,10 +636,11 @@ class RemoteMiningStage(Stage):
             else:
                 schema = miner.mine(dataset_name=source.name)
 
-            source.endpoint_status = "up"
-            source.last_success = datetime.now(timezone.utc).isoformat()
-            source.failure_count = 0
-            source.endpoint_down = False
+            if not use_graph_store:
+                source.endpoint_status = "up"
+                source.last_success = datetime.now(timezone.utc).isoformat()
+                source.failure_count = 0
+                source.endpoint_down = False
 
             # Save schema in requested formats
             self._save_schema_outputs(schema, source_output_dir, source.name, suffix)
@@ -655,10 +665,11 @@ class RemoteMiningStage(Stage):
                 return {"status": "mined", "data": {"name": source.name, "endpoint": source.endpoint}}
 
         except Exception as e:
-            source.failure_count += 1
-            source.last_error = str(e)[:500]
-            if source.failure_count >= 3:
-                source.endpoint_down = True
+            if not use_graph_store:
+                source.failure_count += 1
+                source.last_error = str(e)[:500]
+                if source.failure_count >= 3:
+                    source.endpoint_down = True
 
             log.error(f"[{source.name}] -> FAILED: {e}")
             return {"status": "failed", "data": {"name": source.name, "error": str(e)}}
@@ -1937,6 +1948,8 @@ Examples:
     parser.add_argument("--skip-completed", action="store_true", help="Skip sources with existing schema output files")
     parser.add_argument("--ontology-as-data", action="store_true",
                         help="Opt in to bounded superclass aggregation (not observed typing)")
+    parser.add_argument("--get-graphs-from-store", action="store_true", help="Mine explicitly configured small Graph Store downloads locally; fail on retrieval errors")
+    parser.add_argument("--graph-store-url", action="append", default=[], metavar="SOURCE=URL", help="Explicit Graph Store service for one source; repeat as needed")
     parser.add_argument("--extract-ontology", action="store_true", help="Extract ontology structure (TBox: rdfs:subClassOf, domain/range)")
     parser.add_argument("--extract-metadata", action="store_true", help="Extract infrastructure metadata (VoID/DCAT)")
     parser.add_argument("--no-enrichment", action="store_true", help="Skip definitions and observed examples")
@@ -2007,6 +2020,14 @@ Examples:
     config.class_batch_size = args.class_batch_size
     config.max_response_bytes = args.max_response_mb * 1024 * 1024
     config.timeout = args.timeout
+    config.get_graphs_from_store = args.get_graphs_from_store
+    for value in args.graph_store_url:
+        source_name, separator, url = value.partition("=")
+        if not source_name or not separator or not url:
+            parser.error("--graph-store-url requires SOURCE=URL")
+        config.graph_store_urls[source_name] = url
+    if config.get_graphs_from_store and not config.graph_store_urls:
+        parser.error("--get-graphs-from-store requires --graph-store-url SOURCE=URL")
     config.no_download = args.no_download
     config.no_index = args.no_index
     config.output_suffix = args.output_suffix

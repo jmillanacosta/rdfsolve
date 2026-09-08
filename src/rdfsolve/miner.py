@@ -152,6 +152,10 @@ class SchemaMiner:
         enrich: bool = False,
         examples_per_pattern: int = 2,
         max_response_bytes: int = 64 * 1024 * 1024,
+        get_graphs_from_store: bool = False,
+        graph_store_url: str | None = None,
+        graph_store_dir: str | Path = "graph-store",
+        graph_store_max_bytes: int = 64 * 1024 * 1024,
     ) -> None:
         """Initialize a SchemaMiner.
 
@@ -162,6 +166,12 @@ class SchemaMiner:
                 - None (uses "two-phase" as default)
         """
         self.endpoint_url = endpoint_url
+        self.get_graphs_from_store = get_graphs_from_store
+        self.graph_store_url = graph_store_url
+        self.graph_store_dir = Path(graph_store_dir)
+        self.graph_store_max_bytes = graph_store_max_bytes
+        if get_graphs_from_store and (not graph_store_url or not graph_uris):
+            raise ValueError("Graph Store mining requires graph_store_url and graph_uris")
         if not 0 <= examples_per_pattern <= 20:
             raise ValueError("examples_per_pattern must be between 0 and 20")
         self.enrich = enrich
@@ -511,7 +521,28 @@ class SchemaMiner:
             dataset_name, self._build_strategy_string(), datetime.now(timezone.utc).isoformat()
         )
         self.last_report = self._report.report
+        remote_helper = self._helper
         try:
+            if self.get_graphs_from_store:
+                from dataclasses import asdict
+
+                from rdfsolve.graph_store import download_graphs, load_downloads
+                from rdfsolve.mining.local_graph import LocalGraphHelper
+
+                downloads = download_graphs(
+                    self.graph_store_url or "", self.graph_uris or [],
+                    self.graph_store_dir, max_bytes=self.graph_store_max_bytes,
+                    timeout=self.timeout,
+                )
+                self._helper = LocalGraphHelper(
+                    self.endpoint_url, load_downloads(downloads, endpoint_url=self.endpoint_url,
+                                                      timeout=self.timeout)
+                )
+                self._report.report.config["graph_store"] = {
+                    "url": self.graph_store_url,
+                    "engine": "rdflib",
+                    "graphs": [asdict(item) for item in downloads],
+                }
             yield
         except BaseException as exc:
             reason = f"{type(exc).__name__}: {exc}"
@@ -527,6 +558,10 @@ class SchemaMiner:
                 uris_labelled=report.unique_uris_labelled,
             )
             raise
+        finally:
+            if self._helper is not remote_helper:
+                self._helper.close()
+                self._helper = remote_helper
 
     def _finish_schema(
         self, schema: MinedSchema, annotation_iris: list[str] | None = None
@@ -768,6 +803,10 @@ def mine_schema(
     qlever_version: dict[str, str] | None = None,
     sparql_engine: str = "",
     sparql_strategy: str = "",
+    get_graphs_from_store: bool = False,
+    graph_store_url: str | None = None,
+    graph_store_dir: str | Path = "graph-store",
+    graph_store_max_bytes: int = 64 * 1024 * 1024,
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`.
 
@@ -834,5 +873,7 @@ def mine_schema(
         qlever_version=qlever_version,
         sparql_engine=sparql_engine,
         sparql_strategy=sparql_strategy,
+        get_graphs_from_store=get_graphs_from_store, graph_store_url=graph_store_url,
+        graph_store_dir=graph_store_dir, graph_store_max_bytes=graph_store_max_bytes,
     )
     return miner.mine(dataset_name=dataset_name)

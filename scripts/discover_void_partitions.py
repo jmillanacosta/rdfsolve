@@ -90,12 +90,11 @@ def main():
                 endpoint=endpoint,
                 name=name,
                 output_dir=args.output_dir,
-                entry=source,
             )
 
-            if result.get("files"):
-                partitions_count = result["partitions_found"]
-                files = result.get("files", {})
+            if len(result.graph):
+                partitions_count = len(result.to_mined_schema().patterns)
+                files = result.files
                 log.info(
                     "  ✓ Found %d partitions for %s",
                     partitions_count,

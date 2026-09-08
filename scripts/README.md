@@ -136,3 +136,67 @@ export OUTPUT_DIR=/path/to/output
 export TIMEOUT=600
 sbatch scripts/slurm_remote.sh
 ```
+
+## Read VoID and test Graph Store access
+
+Discovery returns a `VoidSchema`, not an export receipt. It does not write files
+unless `output_dir` is set.
+
+```python
+from rdfsolve import MinedSchema, discover_void_source
+
+void = discover_void_source(
+    endpoint="https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
+    name="aopwikirdf",
+)
+print(void.has_void, void.has_partitions, void.has_patterns)
+datasets = void.datasets
+schema = void.to_mined_schema()
+# Equivalent retrieval and conversion:
+schema = MinedSchema.from_void_source(
+    endpoint="https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
+    name="aopwikirdf",
+)
+```
+
+`void.graph` retains retrieved RDF; typed views cover supported fields.
+Metadata-only VoID is useful even when `schema.patterns` is empty.
+`void.class_partitions` also exposes standalone class-count partitions.
+
+Graph Store retrieval is opt-in through `get_graphs_from_store=True`,
+`graph_store_url`, and explicit `graph_uris`. Both discovery and `SchemaMiner`
+accept these options. Downloads have byte and time limits. Their parsed triple
+counts must match the SPARQL graph counts before use. Count agreement is a
+check, not proof that both services expose identical RDF.
+
+The local Graph Store mining path uses RDFLib memory and the existing mining
+queries. The default download cap is 64 MiB, not a RAM limit. Keep large
+datasets in the disk-backed QLever workflow. Retrieval failures stop the run;
+they do not switch silently to another data source.
+
+```bash
+uv run scripts/test_aopwiki_graph_store.py --output-dir ../graph-store-aopwiki
+# Add --mine to run local instance mining after the count check.
+```
+
+At the September 8 check, AOPWiki returned 10,001 Graph Store triples for
+`http://aopwiki.org/`, while SPARQL counted 338,061. The script rejects this
+response. Do not treat it as a complete local dataset.
+
+For configured pipeline sources:
+
+```bash
+uv run scripts/pipeline.py --remote-only --sources aopwikirdf \
+  --get-graphs-from-store \
+  --graph-store-url aopwikirdf=https://aopwiki.rdf.bigcat-bioinformatics.org/sparql-graph-crud/
+```
+
+The source must declare its graph scope. A Graph Store failure does not mark the
+SPARQL endpoint as down.
+
+Remote SPARQL and Graph Store requests share one in-flight slot per host in each
+process. POSIX applications can set `RDFSOLVE_HTTP_LOCK_DIR` to coordinate
+processes through shared storage. The mining launcher sets this explicitly. Use
+that same directory in interactive sessions to coordinate with jobs. Restart
+existing Python sessions to load changes; old processes do not gain these limits
+automatically.

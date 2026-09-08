@@ -111,11 +111,10 @@ def main():
                 name=name,
                 endpoint=endpoint,
                 output_dir=args.output_dir,
-                entry=source.model_dump(),
             )
 
-            partition_count = result.get("partition_count", 0)
-            graphs_found = result.get("graphs_found", 0)
+            partition_count = len(result.to_mined_schema().patterns)
+            graphs_found = len(result.graph_uris)
 
             if partition_count > 0:
                 logger.info(f"  ✓ Found {partition_count} VoID partitions in {graphs_found} graphs")

@@ -40,6 +40,7 @@ from .models import (
     SchemaPattern,
 )
 from .query import QueryResult, ResultCell
+from .schema_models.void_schema import VoidSchema
 from .sources import classify_source_mode
 from .sources_updater import update_multiple_sources, update_sources_yaml_with_graphs
 from .version import VERSION
@@ -61,6 +62,7 @@ __all__ = [
     "SchemaMiner",
     "SchemaPattern",
     "VoidParser",
+    "VoidSchema",
     "classify_source_mode",
     "derive_class_mappings",
     "discover_all_graphs",

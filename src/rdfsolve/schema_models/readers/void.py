@@ -41,7 +41,7 @@ def void_graph_to_minedschema(g: Graph) -> MinedSchema:
     patterns = _extract_patterns_from_void(g)
     about = _extract_metadata_from_void(g)
     about.pattern_count = len(patterns)
-    for partition in g.objects(None, VOID.classPartition):
+    for partition in set(g.objects(None, VOID.classPartition)) | set(g.subjects(VOID["class"], None)):
         class_iri = g.value(partition, VOID["class"])
         count = optional_count(g.value(partition, VOID.entities))
         if class_iri is not None and count is not None:
@@ -194,7 +194,7 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
 
 def _extract_metadata_from_void(g: Graph) -> AboutMetadata:
     """Extract AboutMetadata from VoID graph."""
-    from rdflib.namespace import DCTERMS, FOAF, OWL, RDF
+    from rdflib.namespace import DC, DCTERMS, FOAF, OWL, RDF
 
     # Find the main dataset
     dataset_uri = None
@@ -214,13 +214,14 @@ def _extract_metadata_from_void(g: Graph) -> AboutMetadata:
         return AboutMetadata.build()
 
     title = g.value(dataset_uri, DCTERMS.title)
-    description = g.value(dataset_uri, DCTERMS.description)
+    description = g.value(dataset_uri, DCTERMS.description) or g.value(dataset_uri, DC.description)
     endpoint = g.value(dataset_uri, VOID.sparqlEndpoint)
     classes = g.value(dataset_uri, VOID.classes)
     properties = g.value(dataset_uri, VOID.properties)
     triples = g.value(dataset_uri, VOID.triples)
     version_iri = g.value(dataset_uri, OWL.versionIRI)
-    source_version = g.value(dataset_uri, OWL.versionInfo)
+    pav = Namespace("http://purl.org/pav/")
+    source_version = g.value(dataset_uri, OWL.versionInfo) or g.value(dataset_uri, pav.version)
     document = g.value(predicate=FOAF.primaryTopic, object=dataset_uri)
     schema_version = g.value(document, OWL.versionInfo) if document is not None else None
     generated_at = g.value(document, DCTERMS.created) if document is not None else None
@@ -235,6 +236,12 @@ def _extract_metadata_from_void(g: Graph) -> AboutMetadata:
         triple_count_estimate=optional_count(triples),
         source_version_iri=str(version_iri) if version_iri is not None else None,
         source_version=str(source_version) if source_version is not None else None,
+        source_license=str(g.value(dataset_uri, DCTERMS.license) or "") or None,
+        source_issued=str(g.value(dataset_uri, DCTERMS.issued) or g.value(dataset_uri, pav.createdOn) or "") or None,
+        source_modified=str(g.value(dataset_uri, DCTERMS.modified) or "") or None,
+        source_publisher=str(g.value(dataset_uri, DCTERMS.publisher) or "") or None,
+        source_creator=[str(v) for v in g.objects(dataset_uri, DCTERMS.creator)] or None,
+        homepage=str(g.value(dataset_uri, FOAF.homepage) or "") or None,
         schema_version=str(schema_version) if schema_version is not None else None,
         finished_at=str(generated_at) if generated_at is not None else None,
     )

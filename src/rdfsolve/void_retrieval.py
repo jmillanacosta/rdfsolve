@@ -13,9 +13,6 @@ PREFIXES = """
 PREFIX void: <http://rdfs.org/ns/void#>
 PREFIX void-ext: <http://ldf.fi/void-ext#>
 """
-# These links describe partitions, not instance-data paths.
-DESCRIPTION_PATH = """(void:classPartition|void:propertyPartition|
-void-ext:datatypePartition|void:subset|void:subjectsTarget|void:objectsTarget)*"""
 
 
 def graph_scope(body: str, graphs: list[str] | None) -> str:
@@ -49,31 +46,30 @@ def retrieve_description(helper: SparqlHelper, graphs: list[str] | None) -> Grap
     Split graph batches on request limits. A single oversized graph raises.
     Never page triples: blank-node names do not persist between responses.
     """
-    body = f"""
-    {{
-      ?root ?vp ?value .
+    body = """
+    {
+      ?s ?vp ?value .
       FILTER(STRSTARTS(STR(?vp), STR(void:)) ||
              STRSTARTS(STR(?vp), STR(void-ext:)))
-      ?root {DESCRIPTION_PATH} ?s .
       ?s ?p ?o .
-    }} UNION {{
+    } UNION {
       ?s a ?kind ; ?p ?o .
-      VALUES ?kind {{ void:Dataset void:Linkset }}
-    }} UNION {{
+      VALUES ?kind { void:Dataset void:Linkset }
+    } UNION {
       ?partition ?termPredicate ?s .
-      VALUES ?termPredicate {{ void:class void:property void-ext:datatype }}
+      VALUES ?termPredicate { void:class void:property void-ext:datatype }
       ?s ?p ?o .
-      VALUES ?p {{
+      VALUES ?p {
         <http://www.w3.org/2000/01/rdf-schema#label>
         <http://www.w3.org/2000/01/rdf-schema#comment>
         <http://www.w3.org/2004/02/skos/core#prefLabel>
         <http://www.w3.org/2004/02/skos/core#definition>
         <http://purl.obolibrary.org/obo/IAO_0000115>
-      }}
-    }} UNION {{
+      }
+    } UNION {
       ?s <http://xmlns.com/foaf/0.1/primaryTopic> ?dataset ; ?p ?o .
       ?dataset a void:Dataset .
-    }}
+    }
     """
     query = PREFIXES + "CONSTRUCT { ?s ?p ?o } WHERE { " + graph_scope(body, graphs) + " }"
     try:

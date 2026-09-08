@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from rdfsolve.schema_models.void_schema import VoidSchema
     from rdfsolve.sources import SourceEntry
 
 import pandas as pd
@@ -392,6 +393,10 @@ def mine_schema(
     report_path: str | None = None,
     filter_service_namespaces: bool = True,
     authors: list[dict[str, str]] | None = None,
+    get_graphs_from_store: bool = False,
+    graph_store_url: str | None = None,
+    graph_store_dir: str | Path = "graph-store",
+    graph_store_max_bytes: int = 64 * 1024 * 1024,
 ) -> MinedSchema:
     """Mine RDF schema from a SPARQL endpoint using SELECT queries.
 
@@ -425,6 +430,8 @@ def mine_schema(
         report_path=report_path,
         filter_service_namespaces=filter_service_namespaces,
         authors=authors,
+        get_graphs_from_store=get_graphs_from_store, graph_store_url=graph_store_url,
+        graph_store_dir=graph_store_dir, graph_store_max_bytes=graph_store_max_bytes,
     )
 
 
@@ -516,11 +523,9 @@ def sources_to_jsonld(
 def discover_void_source(
     endpoint: str,
     name: str,
-    output_dir: str | Path = ".",
+    output_dir: str | Path | None = None,
     *,
     tag: str = "discovered_remote",
-    void_uri_base: str | None = None,
-    entry: SourceEntry | dict[str, Any] | None = None,
     fmt: str = "all",
     timeout: float = 30.0,
     max_retries: int = 1,
@@ -528,69 +533,49 @@ def discover_void_source(
     batch_size: int = 100,
     graph_batch_size: int = 8,
     max_pages: int = 1000,
-) -> dict[str, Any]:
-    """Find published VoID and export it; return counts and file paths.
+    get_graphs_from_store: bool = False,
+    graph_store_url: str | None = None,
+    graph_store_dir: str | Path = "graph-store",
+    graph_store_max_bytes: int = 64 * 1024 * 1024,
+) -> VoidSchema:
+    """Return published VoID as an object. Export only when output_dir is set.
 
-    This does not mine instance data. timeout bounds each HTTP request,
-    not the whole operation. Query failures raise instead of reporting zero.
+    Use .to_mined_schema() for canonical patterns, .datasets for typed VoID
+    descriptions, and .graph for all retrieved RDF. Empty patterns do not
+    imply an empty description. Graph Store mode requires explicit scope.
     """
-    logger.info("Discovering published VoID at %s (request timeout %.1fs)", endpoint, timeout)
-    result = discover_void_graphs(
-        endpoint,
-        graph_uris=graph_uris,
-        exclude_graphs=False,
-        timeout=timeout,
-        max_retries=max_retries,
-        batch_size=batch_size, graph_batch_size=graph_batch_size, max_pages=max_pages,
-    )
-    partitions = result.get("partitions", [])
+    from rdfsolve.schema_models.void_schema import VoidSchema
 
-    if not result["has_void_descriptions"]:
-        return {
-            "partitions_found": 0,
-            "graphs_found": 0,
-            "files": {},
-        }
+    if fmt not in {"void", "jsonld", "all"}:
+        raise ValueError("fmt must be void, jsonld, or all")
+    scopes = [graph_uris] if isinstance(graph_uris, str) else graph_uris
+    if get_graphs_from_store:
+        from rdfsolve.graph_store import download_graphs, load_downloads
 
-    logger.info("Exporting %d VoID partition records for %s", len(partitions), name)
-    # Keep source identifiers. Do not mint replacements for published partitions.
-    if void_uri_base is not None:
-        logger.warning("void_uri_base does not rename published VoID identifiers")
-    void_graph = result["graph"]
-
-    files = export_schema_artifacts(
-        void_graph,
-        name,
-        endpoint,
-        output_dir,
-        tag=tag,
-        fmt=fmt,
-    )
-
-    out = Path(output_dir)
-    report = {
-        "dataset": name,
-        "endpoint": endpoint,
-        "source": "discovered",
-        "state": result["state"],
-        "default_graph": result["default_graph"],
-        "graph_uris": result["found_graphs"],
-        "retrieved_triples": len(void_graph),
-        "graphs_found": len(result.get("found_graphs", [])),
-        "partitions_found": len(partitions),
-    }
-    report_path = out / f"{name}_{tag}_report.json"
-    report_path.write_text(
-        json.dumps(report, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    files["report"] = str(report_path)
-
-    return {
-        "partitions_found": len(partitions),
-        "graphs_found": len(result.get("found_graphs", [])),
-        "files": files,
-    }
+        if not graph_store_url or not scopes:
+            raise ValueError("Graph Store retrieval requires graph_store_url and graph_uris")
+        downloads = download_graphs(
+            graph_store_url, scopes, graph_store_dir,
+            max_bytes=graph_store_max_bytes, timeout=timeout,
+        )
+        dataset = load_downloads(downloads, endpoint_url=endpoint, timeout=timeout)
+        graph = Graph()
+        for uri in scopes:
+            graph += dataset.graph(uri)
+        document = VoidSchema(graph, endpoint, name, scopes)
+    else:
+        result = discover_void_graphs(
+            endpoint, graph_uris=scopes, timeout=timeout, max_retries=max_retries,
+            batch_size=batch_size, graph_batch_size=graph_batch_size, max_pages=max_pages,
+        )
+        document = VoidSchema(
+            result["graph"], endpoint, name, result["found_graphs"], result["default_graph"]
+        )
+    if output_dir is not None:
+        document.files = export_schema_artifacts(
+            document.graph, name, endpoint, output_dir, tag=tag, fmt=fmt,
+        )
+    return document
 
 
 # SPARQL execution

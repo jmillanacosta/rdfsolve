@@ -142,6 +142,19 @@ class MinedSchema(BaseModel):
         return cls.from_json(path)
 
     @classmethod
+    def from_void_source(
+        cls, endpoint: str, name: str, **kwargs: Any
+    ) -> MinedSchema:
+        """Retrieve published VoID and return its canonical schema.
+
+        This does not fill missing statistics by querying instance data.
+        Pass discovery options such as graph_uris and get_graphs_from_store.
+        """
+        from rdfsolve.api import discover_void_source
+
+        return discover_void_source(endpoint, name, **kwargs).to_mined_schema()
+
+    @classmethod
     def from_void(cls, void_ttl: str) -> MinedSchema:
         """Parse VoID Turtle into MinedSchema.
 
