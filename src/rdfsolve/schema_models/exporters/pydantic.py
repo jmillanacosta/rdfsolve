@@ -129,9 +129,9 @@ def to_pydantic(
         for shape in schema.shapes.node_shapes:
             if shape.target_class:
                 profiles.setdefault(shape.target_class, []).append(shape.model_dump(mode="json"))
-        logging.getLogger(__name__).warning(
-            "rdfsolve Pydantic generation retains SHACL profiles as metadata; it does not enforce SHACL "
-            "paths, qualified counts, closed shapes, or RDF value-node cardinalities."
+        logging.getLogger(__name__).info(
+            "rdfsolve Pydantic generation retains SHACL profiles. Hydration can read "
+            "their paths; it does not run SHACL validation."
         )
     routes: dict[str, list[dict[str, Any]]] = {}
     if schema.navigation is not None:

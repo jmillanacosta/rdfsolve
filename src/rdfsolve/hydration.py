@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import keyword
 import logging
 from datetime import datetime, timezone
 from typing import Any, TypeVar
@@ -47,6 +48,17 @@ def _term(binding: dict[str, Any]) -> RdfTerm:
             "language": binding.get("xml:lang"),
         }
     )
+
+
+def _value(term: RdfTerm) -> Any:
+    """Use native literal values while retaining their RDF form separately."""
+    if term.kind != "literal":
+        return term.json_value()
+    literal = term.to_rdf()
+    if not isinstance(literal, Literal):
+        raise TypeError("Expected a literal")
+    native = literal.toPython()
+    return str(literal) if isinstance(native, Literal) else native
 
 
 class Hydrator:
@@ -116,6 +128,7 @@ class Hydrator:
         for name, value in paths.items():
             if (
                 not name.isidentifier()
+                or keyword.iskeyword(name)
                 or name.startswith(("_", "model_"))
                 or hasattr(model, name)
                 or name in model.model_fields
@@ -265,7 +278,7 @@ class Hydrator:
             }
             for name in selected:
                 terms = found.get(name, [])
-                converted = [term.json_value() for term in terms]
+                converted = [_value(term) for term in terms]
                 payload[name] = converted
             objects[iri] = model.model_validate(payload)
         logger.info(
