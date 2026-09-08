@@ -11,6 +11,7 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TypeVar
+from uuid import uuid4
 
 from pydantic import BaseModel, Field, create_model
 from rdflib import Graph, Literal
@@ -305,8 +306,11 @@ class Hydrator:
         ]
         values: dict[str, dict[str, list[RdfTerm]]] = {iri: {} for iri in iris}
         unique = list(values)
+        response_scopes: dict[str, str] = {}
         for start in range(0, len(unique), self.batch_size):
             batch = unique[start : start + self.batch_size]
+            scope = uuid4().hex
+            response_scopes.update(dict.fromkeys(batch, scope))
             body = self._scope(" UNION ".join(branches))
             query = (
                 f"SELECT DISTINCT ?s ?field ?value WHERE {{ VALUES ?s {{ {' '.join(_iri(iri) for iri in batch)} }} "
@@ -346,6 +350,7 @@ class Hydrator:
                     if isinstance(self.source, SparqlHelper)
                     else None,
                     "graph_uris": self.graph_uris,
+                    "blank_node_scope": response_scopes[iri],
                     "retrieved_at": datetime.now(timezone.utc).isoformat(),
                 },
             }

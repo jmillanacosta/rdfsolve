@@ -150,6 +150,36 @@ def test_exploration_follows_real_links_in_both_directions():
             client.follow([root], "misspelt", model)
 
 
+def test_rdf_output_preserves_source_triples_and_rejects_invented_paths():
+    graph = Graph().parse(DATA, format="turtle")
+    with schema().hydrator(graph) as client:
+        model = client.model(DATASET)
+        record = client.get(model, ROOT)
+        with pytest.raises(ValueError, match="intermediate triples"):
+            record.to_graph()
+        output = record.to_graph(fields=["description", "subset"])
+        predicates = {URIRef(DESCRIPTION), URIRef("http://rdfs.org/ns/void#subset"),
+                      URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")}
+        expected = {triple for triple in graph.triples((URIRef(ROOT), None, None))
+                    if triple[1] in predicates}
+        assert set(output) == expected
+        record.description = ["A revised description"]
+        with pytest.raises(ValueError, match="Values changed"):
+            record.to_graph(fields=["description"])
+        del record.rdf_terms["description"]
+        assert str(record.to_graph(fields=["description"]).value(
+            URIRef(ROOT), URIRef(DESCRIPTION))) == "A revised description"
+        created = model(uri=ROOT, description=record.description)
+        assert set(created.to_graph().objects(URIRef(ROOT), URIRef(
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"))) == {URIRef(DATASET)}
+        nested = client.get(model, ROOT, fields=["description", "subset"])
+        nested.subset = client.follow([nested], "subset", model, fields=["description"]) if hasattr(client, "follow") else [
+            client.get(model, iri, fields=["description"]) for iri in nested.subset]
+        assert all(triple in graph for triple in nested.to_graph())
+        restored = model.model_validate_json(nested.model_dump_json())
+        assert set(restored.to_graph()) == set(nested.to_graph())
+
+
 def test_void_pattern_fields_work_without_shacl_profiles():
     graph = Graph().parse(DATA, format="turtle")
     mined = schema()

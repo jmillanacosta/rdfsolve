@@ -96,6 +96,7 @@ def to_pydantic(
     used = {
         "RDFResource",
         "BaseModel",
+        "Graph",
         "ConfigDict",
         "Field",
         "ClassVar",
@@ -164,6 +165,7 @@ def to_pydantic(
         "from decimal import Decimal",
         "from typing import Any, ClassVar",
         "from pydantic import BaseModel, ConfigDict, Field",
+        "from rdflib import Graph",
         "",
         f"DATASET_METADATA = {metadata!r}",
         f"RDF_NAVIGATION = {routes!r}",
@@ -178,6 +180,13 @@ def to_pydantic(
         "    rdf_loaded_fields: list[str] = Field(default_factory=list, repr=False)",
         "    rdf_source: dict[str, Any] = Field(default_factory=dict, repr=False)",
         "",
+        "    def to_graph(self, *, fields: list[str] | None = None) -> Graph:",
+        '        """Write populated RDF fields. Compound paths need their intermediate triples."""',
+        "        from rdfsolve.model_rdf import model_to_graph",
+        "",
+        "        return model_to_graph(self, fields=fields)",
+        "",
+
     ]
     for iri, name in names.items():
         class_examples = [
@@ -205,6 +214,7 @@ def to_pydantic(
                 "rdf_terms",
                 "rdf_loaded_fields",
                 "rdf_source",
+                "to_graph",
             }
         )
         for prop, patterns in sorted(grouped[iri].items()):
