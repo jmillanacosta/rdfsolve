@@ -105,7 +105,7 @@ def path_diagram(
                     "classes:" + value if value else key
                     for value, key in zip(types, keys, strict=True)
                 ]
-                s, o = types
+                s, o = [value or iri for value, iri in zip(types, (s, o), strict=True)]
         else:
             s, _predicate, o, backward = route[step]
             labels = (client.type_name(client.model(s)), client.type_name(client.model(o)))

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict, deque
+from itertools import product
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from pydantic import BaseModel
+from rdflib import RDF
 
 from rdfsolve.hydration import HydrationLimitError, _iri
 
@@ -105,28 +107,38 @@ def class_paths(
     return table
 
 
-def connection_query(source: str, target: str, hops: int, both_directions: bool) -> str:
+def connection_query(source: str, target: str | None, hops: int, both_directions: bool) -> str:
     """Build a fixed-length path with bound endpoints and no repeated resources."""
-    body = [f"VALUES ?n0 {{ {_iri(source)} }} VALUES ?n{hops} {{ {_iri(target)} }}"]
-    for i in range(hops):
-        forward = f"?n{i} ?p{i} ?n{i + 1} . BIND(false AS ?back{i})"
-        if both_directions:
-            backward = f"?n{i + 1} ?p{i} ?n{i} . BIND(true AS ?back{i})"
-            body.append(f"{{ {{ {forward} }} UNION {{ {backward} }} }}")
-        else:
-            body.append(forward)
-    for i in range(1, hops):
-        body.append(f"FILTER(!isLiteral(?n{i}))")
-    for i in range(hops + 1):
-        for j in range(i):
-            body.append(f"FILTER(!sameTerm(?n{i}, ?n{j}))")
-    return "\n".join(body)
+    nodes = [_iri(source), *[f"?n{i}" for i in range(1, hops + 1)]]
+    if target is not None:
+        nodes[-1] = _iri(target)
+    branches = []
+    for directions in product((False, True) if both_directions else (False,), repeat=hops):
+        body = []
+        # Keep each connected triple pattern together, before output bindings.
+        for i, backward in enumerate(directions):
+            left, right = (i + 1, i) if backward else (i, i + 1)
+            body.append(f"{nodes[left]} ?p{i} {nodes[right]} .")
+            if target is None:
+                body.append(f"FILTER(?p{i} != {_iri(str(RDF.type))})")
+        for i in range(1, hops + (target is None)):
+            body.append(f"FILTER(!isLiteral({nodes[i]}))")
+        for i in range(hops + 1):
+            for j in range(i):
+                body.append(f"FILTER(!sameTerm({nodes[i]}, {nodes[j]}))")
+        body.append(f"BIND({_iri(source)} AS ?n0)")
+        if target is not None:
+            body.append(f"BIND({_iri(target)} AS ?n{hops})")
+        for i, backward in enumerate(directions):
+            body.append(f"BIND({'true' if backward else 'false'} AS ?back{i})")
+        branches.append("{ " + " ".join(body) + " }")
+    return " UNION ".join(branches)
 
 
 def resource_paths(
     client: Client,
     source: str | BaseModel,
-    target: str | BaseModel,
+    target: str | BaseModel | None,
     *,
     max_hops: int,
     both_directions: bool,
@@ -135,18 +147,25 @@ def resource_paths(
     """Retrieve all simple resource paths within the bounds, or raise on overflow.
 
     Each path stays in one selected graph. Reverse steps are included when
-    both_directions is true. No predicates are excluded, including rdf:type.
+    both_directions is true. With a target, no predicates are excluded.
+    Without a target, exclude rdf:type and literal leaves.
     Endpoint limits still apply; a successful response is not a completeness proof.
     """
     _budget(max_hops, max_paths)
     first = str(vars(source)["uri"]) if isinstance(source, BaseModel) else source
     last = str(vars(target)["uri"]) if isinstance(target, BaseModel) else target
     _iri(first)
-    _iri(last)
+    if last is not None:
+        _iri(last)
     if first == last:
         raise ValueError("Choose two different resources")
     routes: list[dict[str, Any]] = []
-    with client.step(f"Find connections between {first} and {last}"):
+    description = (
+        f"Find connections from {first}"
+        if last is None
+        else f"Find connections between {first} and {last}"
+    )
+    with client.step(description):
         for hops in range(1, max_hops + 1):
             body = connection_query(first, last, hops, both_directions)
             variables = [f"?n{i}" for i in range(hops + 1)]

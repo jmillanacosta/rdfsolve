@@ -182,6 +182,39 @@ def test_paths_to_value_keep_real_links_and_draw_only_selected_paths():
         assert len(data.queries) == before
 
 
+def test_connections_without_target_match_the_aop_neighborhood():
+    from rdfsolve.hydration import HydrationLimitError
+
+    with client() as data:
+        iri = "https://identifiers.org/aop/162"
+        paths = data.connections(iri, max_hops=2)
+        expected = set()
+        frontier = {URIRef(iri)}
+        for _ in range(2):
+            neighbors = set()
+            for node in frontier:
+                for s, p, o in data.source:
+                    if p != RDF.type and not isinstance(o, Literal) and node in (s, o):
+                        expected.add((str(s), str(p), str(o)))
+                        neighbors.update((s, o))
+            frontier = neighbors - {URIRef(iri)}
+        actual = set()
+        for route in paths.attrs["routes"]:
+            b = route["bindings"]
+            for i in range(route["hops"]):
+                s, p, o = (b[key]["value"] for key in (f"n{i}", f"p{i}", f"n{i + 1}"))
+                actual.add((o, p, s) if b[f"back{i}"]["value"] in ("true", "1") else (s, p, o))
+        assert actual == expected
+        assert iri in data.diagram(paths=paths)
+        untyped = {node for s, _, o in expected for node in (s, o)
+                   if not list(data.source.objects(URIRef(node), RDF.type))}
+        assert untyped
+        class_view = data.diagram(paths=paths, instances=False)
+        assert all(node in class_view for node in untyped)
+        with pytest.raises(HydrationLimitError):
+            data.connections(iri, max_hops=2, max_paths=1)
+
+
 def test_record_paths_bind_the_source_and_verify_its_type():
     with client() as data:
         selected_iri = "https://identifiers.org/aop/162"

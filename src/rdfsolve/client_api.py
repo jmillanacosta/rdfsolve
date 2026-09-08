@@ -110,17 +110,19 @@ class Client(DatasetClient):
     def connections(
         self,
         source: str | BaseModel,
-        target: str | BaseModel,
+        target: str | BaseModel | None = None,
         *,
         max_hops: int = 3,
         both_directions: bool = True,
         max_paths: int = 1000,
     ) -> pd.DataFrame:
-        """Find actual paths between two records or IRIs, up to max_hops.
+        """Find actual paths between records, or around one record.
 
         Show every intermediate resource and link. Paths do not repeat resources
         and stay in one graph. Requests run in sequence and raise on overflow.
         Set both_directions=False to follow outgoing links only.
+        Without a target, return linked resources within max_hops. Do not follow
+        rdf:type links or literal values; show classes as node annotations.
         """
         from rdfsolve.client_paths import resource_paths
 
