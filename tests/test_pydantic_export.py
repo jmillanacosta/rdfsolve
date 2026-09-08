@@ -76,8 +76,8 @@ def test_keywords_quotes_and_collisions_compile():
     assert len(models) == 2
     assert len({m.__name__ for m in models}) == 2
     for model in models:
-        assert len(model.model_fields) == 7
-        assert len(model.model_json_schema()["properties"]) == 7
+        assert len([f for f in model.model_fields.values() if f.alias and f.alias.startswith("urn:")]) == 5
+        assert {p.property_uri for p in patterns} <= set(model.model_json_schema()["properties"])
     assert (
         schema.to_pydantic()
         == schema.model_copy(update={"patterns": list(reversed(patterns))}).to_pydantic()

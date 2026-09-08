@@ -20,7 +20,9 @@ from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 if TYPE_CHECKING:
     from rdflib import Graph
 
+    from rdfsolve.hydration import Hydrator
     from rdfsolve.schema_models.metadata import MetadataDocument
+    from rdfsolve.sparql_helper import SparqlHelper
 
 
 class MinedSchema(BaseModel):
@@ -316,6 +318,18 @@ class MinedSchema(BaseModel):
             endpoint_name=endpoint_name,
             graph_uri=graph_uri,
         )
+
+    def to_pydantic_classes(self) -> dict[str, type[BaseModel]]:
+        """Generate runtime classes using the same definitions as the Python export."""
+        from rdfsolve.schema_models.exporters.pydantic import build_pydantic_classes
+
+        return build_pydantic_classes(self)
+
+    def hydrator(self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any) -> Hydrator:
+        """Read generated model fields from a source. See Hydrator for request budgets."""
+        from rdfsolve.hydration import Hydrator
+
+        return Hydrator(self, source, **kwargs)
 
     def to_pydantic(
         self, schema_name: str | None = None, *, trim_descriptions: int | None = None

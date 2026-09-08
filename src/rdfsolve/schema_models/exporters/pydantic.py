@@ -1,4 +1,4 @@
-"""Generate typed views of observed RDF patterns, not closed-world constraints."""
+"""Generate typed views of observed RDF patterns."""
 
 from __future__ import annotations
 
@@ -130,7 +130,7 @@ def to_pydantic(
             if shape.target_class:
                 profiles.setdefault(shape.target_class, []).append(shape.model_dump(mode="json"))
         logging.getLogger(__name__).warning(
-            "Pydantic retains SHACL profiles as metadata; it does not enforce SHACL "
+            "rdfsolve Pydantic generation retains SHACL profiles as metadata; it does not enforce SHACL "
             "paths, qualified counts, closed shapes, or RDF value-node cardinalities."
         )
     routes: dict[str, list[dict[str, Any]]] = {}
@@ -174,6 +174,9 @@ def to_pydantic(
         "    model_config = ConfigDict(populate_by_name=True, extra='allow')",
         "    uri: str = Field(alias='@id', min_length=1)",
         "    rdf_type: list[str] = Field(default_factory=list, alias='@type')",
+        "    rdf_terms: dict[str, list[dict[str, Any]]] = Field(default_factory=dict, repr=False)",
+        "    rdf_loaded_fields: list[str] = Field(default_factory=list, repr=False)",
+        "    rdf_source: dict[str, Any] = Field(default_factory=dict, repr=False)",
         "",
     ]
     for iri, name in names.items():
@@ -193,7 +196,16 @@ def to_pydantic(
         fields = (
             set(dir(BaseModel))
             | used
-            | {"uri", "rdf_type", "rdf_class_iri", "rdf_navigation", "rdf_shapes"}
+            | {
+                "uri",
+                "rdf_type",
+                "rdf_class_iri",
+                "rdf_navigation",
+                "rdf_shapes",
+                "rdf_terms",
+                "rdf_loaded_fields",
+                "rdf_source",
+            }
         )
         for prop, patterns in sorted(grouped[iri].items()):
             local = re.split(r"[/#:]", prop)[-1]
@@ -215,6 +227,7 @@ def to_pydantic(
             ]
             rdf_metadata = {
                 "rdf_property_iri": prop,
+                "rdf_path": {"operator": "predicate", "iri": prop, "items": []},
                 "rdf_patterns": [p.model_dump(mode="json") for p in patterns],
                 "rdf_examples": [
                     e.model_dump(mode="json")
@@ -226,7 +239,47 @@ def to_pydantic(
                 f"    {field}: {value_type} | list[{value_type}] | None = Field(None, "
                 f"alias={prop!r}, description={description!r}, examples={examples!r}, json_schema_extra={rdf_metadata!r})"
             )
+        seen_paths = set(grouped[iri])
+        for profile in profiles.get(iri, []):
+            for prop in profile["property_shapes"]:
+                from rdfsolve.schema_models.exporters.paths import path_to_sparql
+                from rdfsolve.schema_models.paths import PropertyPath
+
+                path = (
+                    PropertyPath(operator="predicate", iri=prop["path"])
+                    if isinstance(prop["path"], str)
+                    else PropertyPath.model_validate(prop["path"])
+                )
+                key = path.iri or path_to_sparql(path)
+                if key in seen_paths:
+                    continue
+                seen_paths.add(key)
+                base = prop.get("name") or (path.iri or "").rsplit("/", 1)[-1].rsplit("#", 1)[-1]
+                field = _unique_name(_identifier(base or "path"), str(key), fields)
+                if field.startswith("model_"):
+                    field = _unique_name("prop_" + field, str(key), fields)
+                description = clip_description(prop.get("description"), trim_descriptions) or ""
+                path_metadata = {
+                    "rdf_path": path.model_dump(mode="json"),
+                    "shacl_shape": prop.get("uri"),
+                }
+                lines.append(
+                    f"    {field}: Any = Field(None, description={description!r}, json_schema_extra={path_metadata!r})"
+                )
         lines.append("")
     for name in names.values():
         lines.append(f"{name}.model_rebuild(_types_namespace=globals())")
     return "\n".join(lines) + "\n"
+
+
+def build_pydantic_classes(schema: MinedSchema) -> dict[str, type[BaseModel]]:
+    """Load only code produced by this exporter, never supplied Python source."""
+    namespace: dict[str, Any] = {"__name__": "rdfsolve.generated"}
+    exec(compile(to_pydantic(schema), "<rdfsolve generated models>", "exec"), namespace)  # noqa: S102
+    return {
+        name: value
+        for name, value in namespace.items()
+        if isinstance(value, type)
+        and issubclass(value, BaseModel)
+        and hasattr(value, "rdf_class_iri")
+    }

@@ -31,6 +31,7 @@ from .class_derivation import ClassPair, derive_class_mappings
 
 # Inference modules
 from .class_index import ClassIndex, EntityClassInfo
+from .hydration import HydrationLimitError, Hydrator
 from .instance_matcher import probe_endpoint, probe_resource
 from .miner import SchemaMiner
 from .models import (
@@ -55,6 +56,8 @@ __all__ = [
     "ClassIndex",
     "ClassPair",
     "EntityClassInfo",
+    "HydrationLimitError",
+    "Hydrator",
     "Mapping",
     "MappingEdge",
     "MinedSchema",

@@ -413,7 +413,12 @@ class ShaclShapesGraph(BaseModel):
         if unknown:
             logger.warning("SHACL reader does not retain these predicates: %s", unknown)
         node_shapes = []
-        for ns_uri in graph.subjects(RDF.type, sh.NodeShape):
+        nodes = set(graph.subjects(RDF.type, sh.NodeShape))
+        nodes.update(graph.subjects(sh.targetClass, None))
+        nodes.update(graph.subjects(sh.property, None))
+        for ns_uri in sorted(nodes, key=str):
+            if (ns_uri, sh.path, None) in graph:
+                continue
             node_shapes.append(ShaclNodeShape.from_rdf(graph, ns_uri))
 
         return cls(node_shapes=node_shapes)
