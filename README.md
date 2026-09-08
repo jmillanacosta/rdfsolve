@@ -152,7 +152,7 @@ schema.to_linkml_yaml()  # To LinkML
 schema.to_shacl()  # To SHACL
 ```
 
-### Explore data with Python objects
+### Typed client generation
 
 Use `rdfsolve.client_api` to find names or identifiers, then follow the results.
 For an AOPWiki schema:
@@ -444,7 +444,7 @@ python scripts/build_graphs.py output/schemas/ --mappings output/mappings/
 ### Let an agent use your typed client
 
 Install `rdfsolve[agents]` to give a PydanticAI agent the same classes, searches,
-and links you use through `data`. Records stay in Python; queries and returned
+and links of the typed client. Records stay in Python; queries and returned
 data remain in the session log.
 
 ```python
@@ -460,10 +460,6 @@ answer = await agent.run(
 print(answer.output)
 data.query_log()
 ```
-
-Set your provider's API key in your environment, not in a notebook cell.
-The [AOPWiki agent notebook](notebooks/pydantic_ai/01_ask_aopwiki.ipynb) compares
-OpenAI and Claude query proposals with withheld reference queries on a local dump.
 
 ## Documentation
 
