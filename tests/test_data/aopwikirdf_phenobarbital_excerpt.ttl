@@ -1,0 +1,85 @@
+# AOPWiki excerpt retrieved 2026-09-08. All triples verified against http://aopwiki.org/.
+# Source: https://aopwiki.rdf.bigcat-bioinformatics.org/sparql
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix ns1: <http://aopkb.org/aop_ontology#> .
+@prefix ns2: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://identifiers.org/aop/107> a ns1:AdverseOutcomePathway ;
+    ns1:has_key_event <https://identifiers.org/aop.events/1214>,
+        <https://identifiers.org/aop.events/715>,
+        <https://identifiers.org/aop.events/716>,
+        <https://identifiers.org/aop.events/719>,
+        <https://identifiers.org/aop.events/774> ;
+    ns2:C54571 <https://identifiers.org/aop.stressor/133>,
+        <https://identifiers.org/aop.stressor/218>,
+        <https://identifiers.org/aop.stressor/251> ;
+    dc:title "Constitutive androstane receptor activation leading to hepatocellular adenomas and carcinomas in the mouse and the rat" .
+
+<https://identifiers.org/aop/162> a ns1:AdverseOutcomePathway ;
+    ns1:has_key_event <https://identifiers.org/aop.events/1023>,
+        <https://identifiers.org/aop.events/281>,
+        <https://identifiers.org/aop.events/295>,
+        <https://identifiers.org/aop.events/739>,
+        <https://identifiers.org/aop.events/740>,
+        <https://identifiers.org/aop.events/741>,
+        <https://identifiers.org/aop.events/961> ;
+    ns2:C54571 <https://identifiers.org/aop.stressor/133>,
+        <https://identifiers.org/aop.stressor/170>,
+        <https://identifiers.org/aop.stressor/171> ;
+    dc:title "Enhanced hepatic clearance of thyroid hormones leading to thyroid follicular cell adenomas and carcinomas in the rat and mouse" .
+
+<https://identifiers.org/aop.events/1023> a ns1:KeyEvent ;
+    dc:title "Increased, Thyroid-stimulating hormone (TSH)" .
+
+<https://identifiers.org/aop.events/1214> a ns1:KeyEvent ;
+    dc:title "Altered gene expression specific to CAR activation, Hepatocytes" .
+
+<https://identifiers.org/aop.events/281> a ns1:KeyEvent ;
+    dc:title " Thyroxine (T4) in serum, Decreased" .
+
+<https://identifiers.org/aop.events/295> a ns1:KeyEvent ;
+    dc:title "Induction, Upregulation of glucuronyltransferase activity" .
+
+<https://identifiers.org/aop.events/715> a ns1:KeyEvent ;
+    dc:title "Activation, Constitutive androstane receptor" .
+
+<https://identifiers.org/aop.events/716> a ns1:KeyEvent ;
+    dc:title "Increase, cell proliferation (hepatocytes)" .
+
+<https://identifiers.org/aop.events/719> a ns1:KeyEvent ;
+    dc:title "Increase, hepatocellular adenomas and carcinomas" .
+
+<https://identifiers.org/aop.events/739> a ns1:KeyEvent ;
+    dc:title "Increase, Hypertrophy and proliferation (follicular cell)" .
+
+<https://identifiers.org/aop.events/740> a ns1:KeyEvent ;
+    dc:title "Increase, Hyperplasia (follicular cells)" .
+
+<https://identifiers.org/aop.events/741> a ns1:KeyEvent ;
+    dc:title "Increase, Adenomas/carcinomas (follicular cell)" .
+
+<https://identifiers.org/aop.events/774> a ns1:KeyEvent ;
+    dc:title "Increase, Preneoplastic foci (hepatocytes)" .
+
+<https://identifiers.org/aop.events/961> a ns1:KeyEvent ;
+    dc:title "Increased, Clearance of thyroxine from serum" .
+
+<https://identifiers.org/aop.stressor/133> a ns2:C54571 ;
+    ns1:has_chemical_entity <https://identifiers.org/cas/50-06-6> ;
+    dc:title "Phenobarbital" .
+
+<https://identifiers.org/cas/50-06-6> a <http://semanticscience.org/resource/CHEMINF_000000>,
+        <http://semanticscience.org/resource/CHEMINF_000446> ;
+    dc:identifier <https://identifiers.org/cas/50-06-6> ;
+    dc:title "Phenobarbital" ;
+    skos:exactMatch <https://identifiers.org/chebi/8069>,
+        <https://identifiers.org/chembl.compound/CHEMBL40>,
+        <https://identifiers.org/chemspider/4599>,
+        <https://identifiers.org/drugbank/DB01174>,
+        <https://identifiers.org/hmdb/HMDB0015305>,
+        <https://identifiers.org/hmdb/HMDB15305>,
+        <https://identifiers.org/kegg.compound/C07434>,
+        <https://identifiers.org/kegg.compound/D00506>,
+        <https://identifiers.org/pubchem.compound/4763>,
+        <https://identifiers.org/wikidata/Q407241> .
