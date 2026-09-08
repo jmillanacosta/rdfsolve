@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from rdflib import Graph, URIRef
+from rdflib import Dataset, Graph, URIRef
 
 from rdfsolve.sparql_helper import EndpointTimeoutError, SparqlHelper
 
@@ -93,8 +93,8 @@ def discover_description(
     graph_batch_size: int,
     max_pages: int,
     excluded_prefixes: tuple[str, ...] = (),
-) -> tuple[Graph, list[str], bool]:
-    """Try named VoID candidates, other named graphs, then the default graph."""
+) -> tuple[Dataset, list[str], bool]:
+    """Inspect all named graphs and the default graph; retain graph boundaries."""
     if min(batch_size, graph_batch_size, max_pages) < 1:
         raise ValueError("Batch sizes and max_pages must be positive")
     if graphs == []:
@@ -107,7 +107,7 @@ def discover_description(
     scopes = [names] if graphs is not None else [
         candidates, [name for name in names if name not in candidates]
     ]
-    result = Graph()
+    result = Dataset()
     found: list[str] = []
     for scope in scopes:
         for start in range(0, len(scope), graph_batch_size):
@@ -119,7 +119,9 @@ def discover_description(
                        STRSTARTS(STR(?p), STR(void-ext:)) ||
                        (?p = <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> &&
                         ?o IN (void:Dataset, void:Linkset)))"""
-            query = PREFIXES + "SELECT DISTINCT ?g WHERE { " + graph_scope(body, batch) + " } ORDER BY ?g"
+            values = " ".join(URIRef(uri).n3() for uri in batch)
+            query = (PREFIXES + "SELECT ?g WHERE { VALUES ?g { " + values
+                     + " } FILTER EXISTS { GRAPH ?g { " + body + " } } } ORDER BY ?g")
             matched: list[str] = [
                 row["g"]["value"]
                 for page in helper.select_chunked(
@@ -130,11 +132,9 @@ def discover_description(
                 )
                 for row in page
             ]
-            if matched:
-                result += retrieve_description(helper, matched)
-                found.extend(matched)
-        if len(result):
-            return result, found, False
+            for uri in matched:
+                result.graph(uri).__iadd__(retrieve_description(helper, [uri]))
+                found.append(uri)
     if graphs is None:
-        result = retrieve_description(helper, None)
-    return result, found, bool(len(result))
+        result.default_context.__iadd__(retrieve_description(helper, None))
+    return result, found, bool(len(result.default_context))

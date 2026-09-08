@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from rdflib import Graph, URIRef
+from rdflib import Dataset, Graph, URIRef
 
 from rdfsolve.schema_models.metadata import MetadataDocument
 from rdfsolve.sparql_helper import SparqlHelper
@@ -68,14 +68,19 @@ def query_metadata_document(
         raise ValueError("graph_uris must be None or a nonempty list")
     query = build_metadata_query(subject_iris=subject_iris, resource_types=resource_types)
     graph = Graph()
+    dataset = Dataset()
     for uri in graph_uris if graph_uris is not None else [None]:
         scoped = query
         if uri is not None:
             scoped = query.replace("WHERE {", "WHERE { GRAPH " + URIRef(uri).n3() + " {", 1)
             scoped += " }"
         text = helper.construct(scoped)
-        graph += Graph().parse(data=text, format="turtle", publicID=helper.endpoint_url)
-    return MetadataDocument(graph=graph, endpoint=helper.endpoint_url, graph_uris=graph_uris)
+        retrieved = Graph().parse(data=text, format="turtle", publicID=helper.endpoint_url)
+        target = dataset.default_context if uri is None else dataset.graph(uri)
+        target += retrieved
+        graph += retrieved
+    return MetadataDocument(graph=graph, rdf_dataset=dataset,
+                            endpoint=helper.endpoint_url, graph_uris=graph_uris)
 
 
 def query_endpoint_metadata(

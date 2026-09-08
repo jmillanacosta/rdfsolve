@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from rdflib import Graph, Namespace
+from rdflib import Dataset, Graph, Namespace
 from rdflib.namespace import RDF
 
 from rdfsolve.schema_models.void_model import VoidClassPartition, VoidDataset
@@ -29,6 +29,7 @@ class VoidSchema:
     graph_uris: list[str] = field(default_factory=list)
     default_graph: bool = False
     files: dict[str, str] = field(default_factory=dict)
+    rdf_dataset: Dataset | None = field(default=None, repr=False)
 
     @property
     def has_void(self) -> bool:
@@ -72,11 +73,27 @@ class VoidSchema:
             for node in sorted(set(self.graph.subjects(VOID["class"], None)), key=str)
         ]
 
+    def for_graph(self, graph_uri: str | None) -> VoidSchema:
+        """Select one description context. None selects the default graph."""
+        if self.rdf_dataset is None:
+            raise ValueError("No dataset contexts were retained")
+        if graph_uri is not None and graph_uri not in self.graph_uris:
+            raise ValueError(f"No VoID was retrieved from {graph_uri}")
+        graph = (self.rdf_dataset.default_context if graph_uri is None
+                 else self.rdf_dataset.graph(graph_uri))
+        dataset = Dataset()
+        target = dataset.default_context if graph_uri is None else dataset.graph(graph_uri)
+        target += graph
+        return VoidSchema(graph + Graph(), self.endpoint, self.name,
+                          [graph_uri] if graph_uri else [], graph_uri is None,
+                          rdf_dataset=dataset)
+
     def get_metadata(self) -> MetadataDocument:
         """Return retained RDF, without a new endpoint request."""
         from rdfsolve.schema_models.metadata import MetadataDocument
 
         return MetadataDocument(graph=self.graph + Graph(), endpoint=self.endpoint,
+                                rdf_dataset=self.rdf_dataset,
                                 graph_uris=self.graph_uris, scope="retained VoID RDF")
 
     def to_mined_schema(self) -> MinedSchema:
@@ -86,10 +103,17 @@ class VoidSchema:
         schema = void_graph_to_minedschema(self.graph)
         schema.about.endpoint = schema.about.endpoint or self.endpoint
         schema.about.dataset_name = schema.about.dataset_name or self.name
-        schema.about.graph_uris = self.graph_uris or None
+        # Description locations are not the instance graphs they describe.
+        schema.about.metadata_graph_uris = self.graph_uris or None
         if len(self.graph) and not schema.patterns:
             logger.warning("Published VoID contains no supported class/property patterns")
         return schema
+
+    def to_trig(self) -> str:
+        """Export retained graph boundaries. Turtle is only a union view."""
+        if self.rdf_dataset is None:
+            raise ValueError("This object has no retained dataset contexts")
+        return self.rdf_dataset.serialize(format="trig")
 
     def to_turtle(self) -> str:
         """Return the retrieved RDF, including fields absent from typed views."""

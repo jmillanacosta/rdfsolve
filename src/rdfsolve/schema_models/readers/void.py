@@ -193,55 +193,37 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
 
 
 def _extract_metadata_from_void(g: Graph) -> AboutMetadata:
-    """Extract AboutMetadata from VoID graph."""
-    from rdflib.namespace import DC, DCTERMS, FOAF, OWL, RDF
+    """Project one dataset without guessing across independent descriptions."""
+    from rdflib.namespace import DCTERMS, FOAF, OWL
+    from rdflib.term import Node
 
-    # Find the main dataset
-    dataset_uri = None
-    for s in g.subjects(RDF.type, VOID.Dataset):
-        # Prefer non-partition datasets (those with sparqlEndpoint or title)
-        if g.value(s, VOID.sparqlEndpoint) or g.value(s, DCTERMS.title):
-            dataset_uri = s
-            break
+    from rdfsolve.schema_models.metadata import MetadataDocument
 
-    if not dataset_uri:
-        # Fallback to any dataset
-        for s in g.subjects(RDF.type, VOID.Dataset):
-            dataset_uri = s
-            break
-
-    if not dataset_uri:
+    metadata = MetadataDocument(graph=g).project()
+    subject = metadata.pop("metadata_subject_iri", None)
+    blank_subject = metadata.pop("metadata_subject_blank_node", None)
+    metadata.pop("metadata_identity_basis", None)
+    if subject is None and blank_subject is None:
         return AboutMetadata.build()
+    from rdflib import BNode
 
-    title = g.value(dataset_uri, DCTERMS.title)
-    description = g.value(dataset_uri, DCTERMS.description) or g.value(dataset_uri, DC.description)
-    endpoint = g.value(dataset_uri, VOID.sparqlEndpoint)
-    classes = g.value(dataset_uri, VOID.classes)
-    properties = g.value(dataset_uri, VOID.properties)
-    triples = g.value(dataset_uri, VOID.triples)
-    version_iri = g.value(dataset_uri, OWL.versionIRI)
-    pav = Namespace("http://purl.org/pav/")
-    source_version = g.value(dataset_uri, OWL.versionInfo) or g.value(dataset_uri, pav.version)
-    document = g.value(predicate=FOAF.primaryTopic, object=dataset_uri)
+    dataset_uri = URIRef(subject) if subject is not None else BNode(blank_subject)
+
+    def unique(predicate: URIRef) -> Node | None:
+        values = set(g.objects(dataset_uri, predicate))
+        return next(iter(values)) if len(values) == 1 else None
+
+    documents = set(g.subjects(FOAF.primaryTopic, dataset_uri))
+    document = next(iter(documents)) if len(documents) == 1 else None
     schema_version = g.value(document, OWL.versionInfo) if document is not None else None
     generated_at = g.value(document, DCTERMS.created) if document is not None else None
-
     return AboutMetadata.build(
-        endpoint=str(endpoint) if endpoint else None,
-        dataset_name=str(title) if title else None,
-        title=str(title) if title else None,
-        description=str(description) if description else None,
-        class_count=optional_count(classes) or 0,
-        property_count=optional_count(properties) or 0,
-        triple_count_estimate=optional_count(triples),
-        source_version_iri=str(version_iri) if version_iri is not None else None,
-        source_version=str(source_version) if source_version is not None else None,
-        source_license=str(g.value(dataset_uri, DCTERMS.license) or "") or None,
-        source_issued=str(g.value(dataset_uri, DCTERMS.issued) or g.value(dataset_uri, pav.createdOn) or "") or None,
-        source_modified=str(g.value(dataset_uri, DCTERMS.modified) or "") or None,
-        source_publisher=str(g.value(dataset_uri, DCTERMS.publisher) or "") or None,
-        source_creator=[str(v) for v in g.objects(dataset_uri, DCTERMS.creator)] or None,
-        homepage=str(g.value(dataset_uri, FOAF.homepage) or "") or None,
+        **metadata,
+        endpoint=str(unique(VOID.sparqlEndpoint)) if unique(VOID.sparqlEndpoint) is not None else None,
+        dataset_name=metadata.get("title"),
+        class_count=optional_count(unique(VOID.classes)) or 0,
+        property_count=optional_count(unique(VOID.properties)) or 0,
+        triple_count_estimate=optional_count(unique(VOID.triples)),
         schema_version=str(schema_version) if schema_version is not None else None,
         finished_at=str(generated_at) if generated_at is not None else None,
     )

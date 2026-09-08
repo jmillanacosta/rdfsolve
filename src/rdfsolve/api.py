@@ -557,19 +557,23 @@ def discover_void_source(
         graph = Graph()
         for uri in scopes:
             graph += dataset.graph(uri)
-        document = VoidSchema(graph, endpoint, name, scopes)
+        document = VoidSchema(graph, endpoint, name, scopes, rdf_dataset=dataset)
     else:
         result = discover_void_graphs(
             endpoint, graph_uris=scopes, timeout=timeout, max_retries=max_retries,
             batch_size=batch_size, graph_batch_size=graph_batch_size, max_pages=max_pages,
         )
         document = VoidSchema(
-            result["graph"], endpoint, name, result["found_graphs"], result["default_graph"]
+            result["graph"], endpoint, name, result["found_graphs"], result["default_graph"],
+            rdf_dataset=result["rdf_dataset"]
         )
     if output_dir is not None:
         document.files = export_schema_artifacts(
             document.graph, name, endpoint, output_dir, tag=tag, fmt=fmt,
         )
+        dataset_path = Path(output_dir) / f"{name}_{tag}_dataset.trig"
+        dataset_path.write_text(document.to_trig(), encoding="utf-8")
+        document.files["dataset_trig"] = str(dataset_path)
     return document
 
 

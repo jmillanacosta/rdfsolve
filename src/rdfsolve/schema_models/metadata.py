@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Dataset, Graph, Namespace, URIRef
 from rdflib.namespace import DC, DCTERMS, FOAF, OWL, RDF
 from rdflib.term import Node
 
@@ -36,9 +36,20 @@ class MetadataDocument(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     graph: Graph = Field(repr=False, exclude=True)
+    rdf_dataset: Dataset | None = Field(default=None, repr=False, exclude=True)
     endpoint: str | None = None
     graph_uris: list[str] | None = None
     scope: str = "root descriptions and two blank-node levels"
+
+    def for_graph(self, graph_uri: str | None) -> MetadataDocument:
+        """Select one retained context; None selects the default graph."""
+        if self.rdf_dataset is None:
+            raise ValueError("No dataset contexts were retained")
+        graph = (self.rdf_dataset.default_context if graph_uri is None
+                 else self.rdf_dataset.graph(graph_uri))
+        return MetadataDocument(graph=graph + Graph(), endpoint=self.endpoint,
+                                graph_uris=[graph_uri] if graph_uri else None,
+                                scope=self.scope)
 
     def to_rdf_graph(self) -> Graph:
         """Return a copy of the evidence, not reconstructed metadata."""
@@ -64,6 +75,10 @@ class MetadataDocument(BaseModel):
             candidates = set(self.graph.subjects(RDF.type, VOID.Dataset)) | set(
                 self.graph.subjects(RDF.type, DCAT.Dataset)
             )
+            partitions = set(self.graph.objects(None, VOID.classPartition)) | set(
+                self.graph.objects(None, VOID.propertyPartition)
+            ) | set(self.graph.objects(None, URIRef("http://ldf.fi/void-ext#datatypePartition")))
+            candidates -= partitions
             linked = {
                 node for node in candidates
                 if self.endpoint and any(
@@ -88,6 +103,7 @@ class MetadataDocument(BaseModel):
                 result[name] = str(next(iter(values)))
             elif len(values) > 1:
                 logger.warning("Leave conflicting metadata field %s unset for %s", name, subject)
-        result["metadata_subject_iri"] = str(subject)
+        identity_key = "metadata_subject_iri" if isinstance(subject, URIRef) else "metadata_subject_blank_node"
+        result[identity_key] = str(subject)
         result["metadata_identity_basis"] = basis
         return result

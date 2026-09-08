@@ -71,3 +71,23 @@ def test_discovery_failure_is_not_an_empty_export(tmp_path):
         with pytest.raises(PaginationTruncatedError, match="unavailable"):
             discover_void_source("https://example.org/sparql", "source", tmp_path / "output")
     assert not (tmp_path / "output").exists()
+
+
+def test_discovery_keeps_all_graphs_after_a_void_named_match(catalog):
+    dataset, graph_uri, source = catalog
+    # Put the same real export in differently named contexts to check coverage.
+    dataset.graph("urn:well-known:void").__iadd__(source)
+    dataset.default_context.__iadd__(source)
+    document = discover_void_source("https://example.org/sparql", "aopwiki")
+    assert set(document.graph_uris) == {graph_uri, "urn:well-known:void"}
+    assert document.default_graph
+    for uri in document.graph_uris:
+        view = document.for_graph(uri)
+        assert isomorphic(view.graph, source)
+        assert view.has_void and view.has_patterns
+        assert view.to_mined_schema().about.graph_uris is None
+        assert view.to_mined_schema().about.metadata_graph_uris == [uri]
+    assert isomorphic(document.for_graph(None).graph, source)
+    restored = Dataset().parse(data=document.to_trig(), format="trig")
+    assert isomorphic(restored.graph(graph_uri), source)
+    assert isomorphic(document.get_metadata().for_graph(graph_uri).graph, source)

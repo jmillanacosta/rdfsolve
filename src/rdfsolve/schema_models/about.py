@@ -37,6 +37,9 @@ class AboutMetadata(BaseModel):
         None,
         description="SPARQL endpoint URL",
     )
+    metadata_graph_uris: list[str] | None = Field(
+        None, description="Named graphs from which metadata was retrieved; not instance query scope"
+    )
     graph_uris: list[str] | None = Field(
         None,
         description="Named graph URIs queried",

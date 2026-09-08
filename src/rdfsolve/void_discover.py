@@ -149,7 +149,7 @@ class VoidParser:
         """Retrieve published VoID and parse it through the canonical reader.
 
         Named graphs containing 'void' are candidates, not proof of VoID.
-        Try other graphs and the default graph only when candidates are empty.
+        Inspect every named graph and the default graph; retain their boundaries.
         Explicit graph scope never expands. Failures raise.
         """
         from rdfsolve.schema_models._constants import SERVICE_NAMESPACE_PREFIXES
@@ -157,11 +157,14 @@ class VoidParser:
         from rdfsolve.void_retrieval import discover_description
 
         with SparqlHelper(endpoint_url, timeout=timeout, max_retries=max_retries) as helper:
-            graph, found, default_graph = discover_description(
+            dataset, found, default_graph = discover_description(
                 helper, self.graph_uris, batch_size=batch_size,
                 graph_batch_size=graph_batch_size, max_pages=max_pages,
                 excluded_prefixes=tuple(SERVICE_NAMESPACE_PREFIXES) if self.exclude_graphs else (),
             )
+        graph = Graph()
+        for context in dataset.contexts():
+            graph += context
         self.graph = graph
         schema = self.to_mined_schema()
         partitions = [
@@ -180,6 +183,7 @@ class VoidParser:
             "default_graph": default_graph,
             "partitions": partitions,
             "graph": graph,
+            "rdf_dataset": dataset,
             "schema": schema,
             "state": "complete" if len(graph) else "empty",
         }
