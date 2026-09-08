@@ -36,9 +36,13 @@ def void_to_minedschema(void_ttl: str) -> MinedSchema:
     return void_graph_to_minedschema(g)
 
 
-def void_graph_to_minedschema(g: Graph, *, endpoint: str | None = None) -> MinedSchema:
+def void_graph_to_minedschema(
+    g: Graph, *, endpoint: str | None = None, report_untyped: bool = True
+) -> MinedSchema:
     """Read VoID RDF without treating metadata predicates as patterns."""
     patterns = _extract_patterns_from_void(g)
+    if report_untyped:
+        warn_untyped_partitions(g, patterns)
     about = _extract_metadata_from_void(g, endpoint=endpoint)
     about.pattern_count = len(patterns)
     for partition in set(g.objects(None, VOID.classPartition)) | set(
@@ -142,24 +146,6 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
                 )
             )
 
-    # Bare property partitions do not state an RDF object kind.
-    represented = {(p.subject_class, p.property_uri) for p in patterns}
-    ambiguous = []
-    for cp in g.objects(None, VOID.classPartition):
-        subject_node = g.value(cp, VOID["class"])
-        if subject_node is None:
-            continue
-        for pp in g.objects(cp, VOID.propertyPartition):
-            predicate = g.value(pp, VOID.property)
-            if predicate is not None and (str(subject_node), str(predicate)) not in represented:
-                ambiguous.append((str(subject_node), str(predicate)))
-    if ambiguous:
-        logging.getLogger(__name__).warning(
-            f"VoID omits object kinds for {len(ambiguous)} property partitions; "
-            f"these are not converted to patterns. Examples: {ambiguous[:3]}. "
-            "Use the canonical schema JSON to preserve all object kinds.",
-        )
-
     # Also extract from LinkSets
     linkset_query = """
     PREFIX void: <http://rdfs.org/ns/void#>
@@ -239,3 +225,23 @@ def _extract_metadata_from_void(g: Graph, *, endpoint: str | None = None) -> Abo
         schema_version=str(schema_version) if schema_version is not None else None,
         finished_at=str(generated_at) if generated_at is not None else None,
     )
+
+
+def warn_untyped_partitions(g: Graph, patterns: list[SchemaPattern]) -> None:
+    """Report partitions still missing object kinds after all readers finish."""
+    represented = {(p.subject_class, p.property_uri) for p in patterns}
+    ambiguous = []
+    for cp in g.objects(None, VOID.classPartition):
+        subject_node = g.value(cp, VOID["class"])
+        if subject_node is None:
+            continue
+        for pp in g.objects(cp, VOID.propertyPartition):
+            predicate = g.value(pp, VOID.property)
+            if predicate is not None and (str(subject_node), str(predicate)) not in represented:
+                ambiguous.append((str(subject_node), str(predicate)))
+    if ambiguous:
+        logging.getLogger(__name__).warning(
+            f"VoID omits object kinds for {len(ambiguous)} property partitions; "
+            f"these are not converted to patterns. Examples: {ambiguous[:3]}. "
+            "Use the canonical schema JSON to preserve all object kinds.",
+        )

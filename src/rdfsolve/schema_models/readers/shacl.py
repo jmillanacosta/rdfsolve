@@ -21,12 +21,16 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
     Only simple value constraints also become patterns. Cardinalities
     count values per focus node, not triples in the dataset.
     """
-    from rdfsolve.schema_models.readers.void import VOID, void_graph_to_minedschema
+    from rdfsolve.schema_models.readers.void import (
+        VOID,
+        void_graph_to_minedschema,
+        warn_untyped_partitions,
+    )
 
     graph = Graph().parse(data=shacl_ttl, format="turtle")
     shapes = ShaclShapesGraph.from_rdf(graph)
     schema = (
-        void_graph_to_minedschema(graph)
+        void_graph_to_minedschema(graph, report_untyped=False)
         if (None, RDF.type, VOID.Dataset) in graph
         else MinedSchema(about=AboutMetadata.build())
     )
@@ -89,6 +93,7 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
             "(compound paths, missing value constraints, or intersections).",
             unrepresented,
         )
+    warn_untyped_partitions(graph, schema.patterns)
     schema.about.pattern_count = len(schema.patterns)
     schema.about.class_count = len(schema.get_classes())
     schema.about.property_count = len(schema.get_properties())
