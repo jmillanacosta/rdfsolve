@@ -31,6 +31,7 @@ from .class_derivation import ClassPair, derive_class_mappings
 
 # Inference modules
 from .class_index import ClassIndex, EntityClassInfo
+from .exploration import DatasetClient
 from .hydration import HydrationLimitError, Hydrator
 from .instance_matcher import probe_endpoint, probe_resource
 from .miner import SchemaMiner
@@ -55,6 +56,7 @@ __all__ = [
     "AboutMetadata",
     "ClassIndex",
     "ClassPair",
+    "DatasetClient",
     "EntityClassInfo",
     "HydrationLimitError",
     "Hydrator",

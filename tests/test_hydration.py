@@ -129,6 +129,27 @@ def test_session_keeps_helper_history_and_failed_queries(monkeypatch):
         assert session["steps"][0]["query_ids"] == [2]
 
 
+def test_exploration_follows_real_links_in_both_directions():
+    graph = Graph().parse(DATA, format="turtle")
+    with schema().client(graph) as client:
+        model = client.model(DATASET)
+        root = client.get(model, ROOT, fields=["description"])
+        assert "subset" in set(client.links(model)["field"])
+        assert client.search(model, 'missing" } #', fields=["description"]) == []
+        with client.step("Read subsets"):
+            subsets = client.follow([root], "subset", model, fields=["description"])
+        expected = {str(iri) for iri in graph.objects(URIRef(ROOT), URIRef("http://rdfs.org/ns/void#subset"))}
+        assert {obj.uri for obj in subsets} == expected
+        assert [obj.uri for obj in client.follow(subsets, "subset", model, inverse=True)] == [ROOT]
+        matches = client.evidence()
+        assert set(matches["target"]) == expected | {ROOT}
+        assert set(client.table(subsets, ["description"])["uri"]) == expected
+        with pytest.raises(ValueError, match="Unknown fields"):
+            client.table(subsets, ["misspelt"])
+        with pytest.raises(ValueError, match="No RDF path"):
+            client.follow([root], "misspelt", model)
+
+
 def test_void_pattern_fields_work_without_shacl_profiles():
     graph = Graph().parse(DATA, format="turtle")
     mined = schema()
