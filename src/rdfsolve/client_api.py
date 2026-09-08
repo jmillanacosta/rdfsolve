@@ -47,6 +47,57 @@ def _title(record: BaseModel) -> str:
 class Client(DatasetClient):
     """Find records without first choosing their type, then explore their links."""
 
+    def paths_between(
+        self,
+        source: str,
+        target: str,
+        *,
+        max_hops: int = 3,
+        both_directions: bool = True,
+        max_paths: int = 1000,
+    ) -> pd.DataFrame:
+        """List class routes up to max_hops, with no repeated classes or queries.
+
+        Names or class IRIs are accepted. These are schema routes, not evidence
+        that particular records connect. Raise if max_paths is exceeded.
+        """
+        from rdfsolve.client_paths import class_paths
+
+        return class_paths(
+            self,
+            source,
+            target,
+            max_hops=max_hops,
+            both_directions=both_directions,
+            max_paths=max_paths,
+        )
+
+    def connections(
+        self,
+        source: str | BaseModel,
+        target: str | BaseModel,
+        *,
+        max_hops: int = 3,
+        both_directions: bool = True,
+        max_paths: int = 1000,
+    ) -> pd.DataFrame:
+        """Find actual paths between two records or IRIs, up to max_hops.
+
+        Show every intermediate resource and link. Paths do not repeat resources
+        and stay in one graph. Requests run in sequence and raise on overflow.
+        Set both_directions=False to follow outgoing links only.
+        """
+        from rdfsolve.client_paths import resource_paths
+
+        return resource_paths(
+            self,
+            source,
+            target,
+            max_hops=max_hops,
+            both_directions=both_directions,
+            max_paths=max_paths,
+        )
+
     def query_log(self) -> QueryLog:
         """Show every session query and its retained response without running it again."""
         return QueryLog(self.session_metadata())

@@ -64,6 +64,46 @@ def test_find_follow_values_and_saved_links(tmp_path):
         assert len(log.queries) == len(data.queries)
 
 
+def test_class_routes_and_actual_connections():
+    from rdfsolve.hydration import HydrationLimitError
+
+    chemical = "https://identifiers.org/cas/50-06-6"
+    pathway = "https://identifiers.org/aop/162"
+    stressor = "https://identifiers.org/aop.stressor/133"
+    with client() as data:
+        classes = data.paths_between(CHEMICAL, AOP, max_hops=2)
+        assert len(classes) == 2 and classes["Direction"].tolist() == ["←", "←"]
+        assert not data.queries
+        assert data.paths_between(CHEMICAL, AOP, max_hops=1).empty
+        assert data.paths_between(CHEMICAL, AOP, max_hops=3, both_directions=False).empty
+        result = data.connections(chemical, pathway, max_hops=2)
+        assert result["From"].tolist() == [chemical, stressor]
+        assert result["To"].tolist() == [stressor, pathway]
+        assert result["Direction"].tolist() == ["←", "←"]
+        assert data.connections(chemical, pathway, max_hops=2, both_directions=False).empty
+        assert data.connections(chemical, "urn:absent", max_hops=2).empty
+        # Every returned step must be an actual triple, including reverse steps.
+        longer = data.connections(chemical, pathway, max_hops=3)
+        for route in longer.attrs["routes"]:
+            b = route["bindings"]
+            nodes = [b[f"n{i}"]["value"] for i in range(route["hops"] + 1)]
+            assert len(set(nodes)) == len(nodes)
+            for i in range(route["hops"]):
+                s, p, o = (URIRef(b[k]["value"]) for k in (f"n{i}", f"p{i}", f"n{i+1}"))
+                assert ((o, p, s) if b[f"back{i}"]["value"] == "true" else (s, p, o)) in data.source
+        assert all(q["result_retained"] for q in data.session_metadata()["queries"])
+        with pytest.raises(HydrationLimitError):
+            data.connections(pathway, "https://identifiers.org/aop/107", max_hops=2, max_paths=1)
+        assert data.session_metadata()["steps"][-1]["status"] == "failed"
+        queries = len(data.queries)
+        for args in ({"max_hops": 0}, {"max_hops": 7}, {"max_paths": 0}):
+            with pytest.raises(ValueError):
+                data.connections(chemical, pathway, **args)
+        with pytest.raises(ValueError):
+            data.connections("urn:bad> } UNION { ?s ?p ?o", pathway)
+        assert len(data.queries) == queries
+
+
 def test_errors_and_completion_do_not_trigger_hidden_queries():
     with client() as data:
         matches = data.find('absent" } #')
