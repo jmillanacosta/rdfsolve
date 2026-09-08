@@ -151,6 +151,86 @@ schema.to_jsonld()  # To JSON-LD
 schema.to_linkml_yaml()  # To LinkML
 schema.to_shacl()  # To SHACL
 ```
+### Run your own queries
+
+Use `SparqlHelper` without mining schemas or loading a registry:
+
+```python
+from rdfsolve.sparql_helper import SparqlHelper
+
+endpoint = "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
+query = "SELECT DISTINCT ?class WHERE { ?s a ?class } ORDER BY ?class"
+
+with SparqlHelper(endpoint, timeout=30, max_retries=1) as helper:
+    results = helper.select(query + " LIMIT 20")  # SPARQL JSON results
+    for row in results["results"]["bindings"]:
+        print(row["class"]["value"])
+
+    has_data = helper.ask("ASK { ?s ?p ?o }")  # bool
+    graph = helper.construct_graph(
+        "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 10"
+    )  # RDFLib graph
+```
+
+SELECT results retain each value's RDF type, language, and datatype when
+provided. `construct()` returns Turtle text; `construct_graph()` parses it.
+These are read operations, not SPARQL UPDATE commands. Write `GRAPH` or `FROM`
+in your query when you need a specific graph.
+
+For larger SELECT results, process one page at a time:
+
+```python
+with SparqlHelper(endpoint, timeout=30, max_retries=1) as helper:
+    paged = helper.prepare_paginated_query(query)  # No existing LIMIT/OFFSET
+    for page in helper.select_chunked(paged, chunk_size=100, max_pages=100):
+        for row in page:
+            print(row["class"]["value"])
+```
+
+Use a stable `ORDER BY`. Paging does not freeze changing data or detect every
+server-side result cap. Requests are rate-limited per host, and failed requests
+raise errors. The timeout applies to each request, not the whole paged
+operation.
+
+### Add metadata to a source registry
+
+Start with a name and endpoint. Add `sources_file` to create or update a YAML
+entry; omit it to preview without writing:
+
+```python
+from rdfsolve import enrich_source
+
+source = enrich_source(
+    "aopwikirdf",
+    "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
+    sources_file="sources.yaml",
+)
+print(source["dataset_metadata"])
+print(source["enrichment"])  # Completed, failed, or skipped retrieval steps
+```
+
+This tests availability and retrieves dataset descriptions, not instance
+patterns. It fills supported metadata such as the description, license, and
+version when one dataset can be identified. Missing or ambiguous metadata stays
+blank; failed retrieval leaves previous values intact. Existing query settings
+and unrelated fields are kept. Saves make unique backups; YAML comments and
+layout are not preserved.
+
+Metadata comes from the default graph unless `metadata_graph_uris=[...]` is
+supplied or stored. Add `discover_void=True` to find published VoID descriptions
+and record their graph locations and pattern availability. That scan can take
+many requests; it does not run by default. Metadata locations do not become
+instance-query scopes.
+
+Reuse the registry for your own queries:
+
+```python
+from rdfsolve import load_sources
+
+source = next(s for s in load_sources("sources.yaml") if s["name"] == "aopwikirdf")
+with SparqlHelper.from_source_entry(source) as helper:
+    results = helper.select(query + " LIMIT 20")
+```
 
 ### Batch mining
 
@@ -159,18 +239,22 @@ Mine multiple endpoints from a YAML file:
 **Create `sources.yaml`:**
 
 ```yaml
-sources:
-  uniprot:
-    endpoint: https://sparql.uniprot.org/sparql
+- name: uniprot
+  endpoint: https://sparql.uniprot.org/sparql
 
-  rhea:
-    endpoint: https://sparql.rhea-db.org/sparql
+- name: rhea
+  endpoint: https://sparql.rhea-db.org/sparql
 ```
+
+To populate an entry from its name and endpoint, use
+`enrich_source(name, endpoint, sources_file="sources.yaml")` as above. Retrieved
+metadata is separate from settings such as `chunk_size`, `class_batch_size`, and
+`timeout`; choose those for the workload.
 
 **Run batch mining:**
 
 ```bash
-python scripts/pipeline.py --sources sources.yaml --remote-only
+python scripts/pipeline.py --sources-file sources.yaml --remote-only
 ```
 
 **Output:**
@@ -192,16 +276,14 @@ output/
 Mine local RDF dumps using QLever:
 
 ```yaml
-sources:
-  drugbank:
-    download_urls:
-      - https://example.org/drugbank.nt.gz
-    local_provider: qlever
+- name: drugbank
+  download_nt:
+    - https://example.org/drugbank.nt.gz
 ```
 
 ```bash
 # Download, index, and mine
-python scripts/pipeline.py --sources sources.yaml --local-only
+python scripts/pipeline.py --sources-file sources.yaml --local-only
 ```
 
 ### Probe endpoints for entity matching
