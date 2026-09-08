@@ -28,6 +28,8 @@ class MiningContext:
         class_chunk_size: int | None = None,
         class_batch_size: int = 15,
         ontology_classes: list[str] | None = None,
+        chunk_size: int = 10_000,
+        unsafe_paging: bool = False,
     ) -> None:
         """Initialize mining context.
 
@@ -40,6 +42,8 @@ class MiningContext:
             class_chunk_size: Chunk size for batched class processing
             class_batch_size: Batch size for class discovery
             ontology_classes: Pre-discovered ontology classes
+            chunk_size: Page size for pattern queries
+            unsafe_paging: Permit paging without a stable order
         """
         self.helper = helper
         self.graph_uris = graph_uris
@@ -49,6 +53,8 @@ class MiningContext:
         self.class_chunk_size = class_chunk_size
         self.class_batch_size = class_batch_size
         self.ontology_classes = ontology_classes or []
+        self.chunk_size = chunk_size
+        self.unsafe_paging = unsafe_paging
 
 
 class MiningStrategy(ABC):

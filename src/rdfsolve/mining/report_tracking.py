@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from rdfsolve._outcomes import QueryOutcome
 from rdfsolve.models import MiningReport, PhaseReport, QueryStats
 
 logger = logging.getLogger(__name__)
@@ -144,6 +145,12 @@ class ReportCollector:
             self._report.total_queries_failed += 1
 
     _MAX_DROPPED_SAMPLES: int = 20
+
+    def record_outcome(self, outcome: QueryOutcome) -> None:
+        """Record unresolved failures after all permitted fallbacks finish."""
+        if outcome.state != "complete":
+            self._report.query_failures.extend(outcome.failures)
+            self.set_abort_reason(f"{len(self._report.query_failures)} required queries incomplete")
 
     def record_dropped_uri(self, sample: str) -> None:
         """Record a pattern dropped due to an invalid URI value.

@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from rdfsolve.schema_models.core import SchemaPattern
+from rdfsolve.schema_models.pattern import SchemaPattern
 
 if TYPE_CHECKING:
     from rdfsolve.sparql_helper import SparqlHelper
@@ -56,7 +56,7 @@ WHERE {{
       <http://www.w3.org/2000/01/rdf-schema#label>,
       <http://www.w3.org/2000/01/rdf-schema#comment>
     ))
-  {"}}" if g_clause else ""}
+  {"}" if g_clause else ""}
 }}
 LIMIT 10000"""
 
@@ -72,8 +72,7 @@ LIMIT 10000"""
         )
         return detected
     except Exception as e:
-        logger.warning(f"Failed to detect ontology-as-data pattern: {e}")
-        return False
+        raise RuntimeError(f"Failed to detect ontology-as-data pattern: {e}") from e
 
 
 def mine_ontology_as_data_patterns(
@@ -137,7 +136,7 @@ WHERE {{
           <http://www.w3.org/2002/07/owl#Class>,
           <http://www.w3.org/2000/01/rdf-schema#Class>
         ))
-      {"}}" if g_clause else ""}
+      {"}" if g_clause else ""}
     }}
     GROUP BY ?subjectClass ?property ?objectSuperclass
   }}
@@ -150,6 +149,8 @@ LIMIT 1000"""
         logger.info("Mining ontology-as-data patterns (aggregated at superclass level)...")
         result = helper.select(query, purpose="ontology-as-data-aggregated")
         bindings = result.get("results", {}).get("bindings", [])
+        if len(bindings) >= 1000:
+            raise ValueError("Ontology-as-data query reached limit 1000; results may be truncated")
 
         patterns = []
         for row in bindings:
@@ -179,8 +180,7 @@ LIMIT 1000"""
         return patterns
 
     except Exception as e:
-        logger.warning(f"Failed to mine ontology-as-data patterns: {e}")
-        return []
+        raise RuntimeError(f"Failed to mine ontology-as-data patterns: {e}") from e
 
 
 def mine_ontology_as_data_subject_patterns(
@@ -232,7 +232,7 @@ WHERE {{
       <http://www.w3.org/2000/01/rdf-schema#label>,
       <http://www.w3.org/2000/01/rdf-schema#comment>
     ))
-  {"}}" if g_clause else ""}
+      {"}" if g_clause else ""}
 }}
 GROUP BY ?subjectSuperclass ?property
 ORDER BY DESC(?count)
@@ -242,6 +242,8 @@ LIMIT 1000"""
         logger.info("Mining ontology-as-data subject patterns (aggregated)...")
         result = helper.select(query, purpose="ontology-as-data-subject-aggregated")
         bindings = result.get("results", {}).get("bindings", [])
+        if len(bindings) >= 1000:
+            raise ValueError("Ontology-as-data query reached limit 1000; results may be truncated")
 
         patterns = []
         for row in bindings:
@@ -275,5 +277,4 @@ LIMIT 1000"""
         return patterns
 
     except Exception as e:
-        logger.warning(f"Failed to mine ontology-as-data subject patterns: {e}")
-        return []
+        raise RuntimeError(f"Failed to mine ontology-as-data subject patterns: {e}") from e

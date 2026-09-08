@@ -6,14 +6,16 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
+from rdfsolve._outcomes import QueryFailure, QueryOutcome
 from rdfsolve._uri import get_local_name, pick_label
 from rdfsolve.mining.query_builders import (
     _build_batched_literal_count_query,
     _build_batched_typed_count_query,
     _build_batched_untyped_count_query,
     _build_label_query,
+    _graph_clause,
 )
-from rdfsolve.mining.query_fallbacks import query_with_bisect
+from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
 from rdfsolve.models import SchemaPattern
 
 if TYPE_CHECKING:
@@ -28,6 +30,68 @@ __all__ = [
     "enrich_patterns_with_counts",
     "enrich_patterns_with_labels",
 ]
+
+
+def query_class_entity_counts(
+    classes: list[str],
+    helper: SparqlHelper,
+    graph_uris: list[str] | None,
+    report: ReportCollector,
+    batch_size: int = 50,
+    delay: float = 0,
+) -> dict[str, int]:
+    """Count distinct typed entities, not overlapping pattern rows."""
+    counts: dict[str, int] = {}
+    if batch_size < 1:
+        raise ValueError("Class count batch size must be positive")
+    batch_size = min(batch_size, 10)
+    opening, closing = _graph_clause(graph_uris)
+    phase = report.start_phase("class-entity-counts")
+    for offset in range(0, len(classes), batch_size):
+        batch = classes[offset : offset + batch_size]
+        aggregate = "COUNT(DISTINCT ?entity)" if graph_uris and len(graph_uris) > 1 else "COUNT(*)"
+        branches = [
+            f"{{ SELECT (<{iri}> AS ?class) ({aggregate} AS ?count) WHERE {{ "
+            f"{opening} ?entity a <{iri}> . {closing} }} }}"
+            for iri in batch
+        ]
+        query = "SELECT ?class ?count WHERE { " + " UNION ".join(branches) + " }"
+        started = time.monotonic()
+        outcome = select_outcome(query, "class-entity-counts", helper, batch, graph_uris)
+        report.record_query(
+            "class-entity-counts", time.monotonic() - started, success=outcome.state == "complete"
+        )
+        for row in outcome.rows:
+            try:
+                iri = row["class"]["value"]
+                count = int(row["count"]["value"])
+                if iri not in batch or count < 0 or iri in counts:
+                    raise ValueError("Invalid or duplicate class count")
+                counts[iri] = count
+            except (KeyError, TypeError, ValueError) as error:
+                outcome.state = "partial"
+                outcome.failures.append(
+                    QueryFailure(
+                        "invalid_response", str(error), "class-entity-counts", batch, graph_uris
+                    )
+                )
+        missing = sorted(set(batch) - counts.keys())
+        if missing:
+            outcome.state = "partial" if outcome.rows else "failed"
+            outcome.failures.append(
+                QueryFailure(
+                    "invalid_response",
+                    "Missing class counts",
+                    "class-entity-counts",
+                    missing,
+                    graph_uris,
+                )
+            )
+        report.record_outcome(outcome)
+        if delay and offset + batch_size < len(classes):
+            time.sleep(delay)
+    report.finish_phase(phase, items=len(counts))
+    return counts
 
 
 def enrich_patterns_with_counts(
@@ -167,7 +231,7 @@ def _fetch_typed_count_batch(
     """Query typed-object counts for one class batch and update *counts*."""
     try:
         t0 = time.monotonic()
-        bindings = query_with_bisect(
+        outcome = query_with_bisect(
             batch,
             graph_uris,
             _build_batched_typed_count_query,
@@ -177,11 +241,13 @@ def _fetch_typed_count_batch(
             chunk_size,
             unsafe_paging,
         )
+        report.record_outcome(outcome)
         report.record_query(
             "counts/typed-object",
             time.monotonic() - t0,
+            success=outcome.state == "complete",
         )
-        for b in bindings:
+        for b in outcome.rows:
             key = (
                 b.get("class", {}).get("value", ""),
                 b.get("p", {}).get("value", ""),
@@ -189,8 +255,18 @@ def _fetch_typed_count_batch(
             )
             cnt = b.get("cnt", {}).get("value")
             if cnt:
-                counts[key] = int(float(cnt))
-    except Exception as e:
+                counts[key] = int(cnt)
+    except (ValueError, TypeError) as e:
+        report.record_outcome(
+            QueryOutcome(
+                state="failed",
+                failures=[
+                    QueryFailure(
+                        "invalid_response", str(e), "counts/typed-object", batch, graph_uris
+                    )
+                ],
+            )
+        )
         logger.warning(
             "Typed-object count query failed (%s): %s",
             label,
@@ -212,7 +288,7 @@ def _fetch_literal_count_batch(
     """Query literal counts for one class batch and update *counts*."""
     try:
         t0 = time.monotonic()
-        bindings = query_with_bisect(
+        outcome = query_with_bisect(
             batch,
             graph_uris,
             _build_batched_literal_count_query,
@@ -222,11 +298,13 @@ def _fetch_literal_count_batch(
             chunk_size,
             unsafe_paging,
         )
+        report.record_outcome(outcome)
         report.record_query(
             "counts/literal",
             time.monotonic() - t0,
+            success=outcome.state == "complete",
         )
-        for b in bindings:
+        for b in outcome.rows:
             dt = b.get("dt", {}).get("value", "")
             key = (
                 b.get("class", {}).get("value", ""),
@@ -235,8 +313,16 @@ def _fetch_literal_count_batch(
             )
             cnt = b.get("cnt", {}).get("value")
             if cnt:
-                counts[key] = int(float(cnt))
-    except Exception as e:
+                counts[key] = int(cnt)
+    except (ValueError, TypeError) as e:
+        report.record_outcome(
+            QueryOutcome(
+                state="failed",
+                failures=[
+                    QueryFailure("invalid_response", str(e), "counts/literal", batch, graph_uris)
+                ],
+            )
+        )
         logger.warning(
             "Literal count query failed (%s): %s",
             label,
@@ -258,7 +344,7 @@ def _fetch_untyped_count_batch(
     """Query untyped-URI counts for one class batch and update *counts*."""
     try:
         t0 = time.monotonic()
-        bindings = query_with_bisect(
+        outcome = query_with_bisect(
             batch,
             graph_uris,
             _build_batched_untyped_count_query,
@@ -268,11 +354,13 @@ def _fetch_untyped_count_batch(
             chunk_size,
             unsafe_paging,
         )
+        report.record_outcome(outcome)
         report.record_query(
             "counts/untyped-uri",
             time.monotonic() - t0,
+            success=outcome.state == "complete",
         )
-        for b in bindings:
+        for b in outcome.rows:
             key = (
                 b.get("class", {}).get("value", ""),
                 b.get("p", {}).get("value", ""),
@@ -280,8 +368,18 @@ def _fetch_untyped_count_batch(
             )
             cnt = b.get("cnt", {}).get("value")
             if cnt:
-                counts[key] = int(float(cnt))
-    except Exception as e:
+                counts[key] = int(cnt)
+    except (ValueError, TypeError) as e:
+        report.record_outcome(
+            QueryOutcome(
+                state="failed",
+                failures=[
+                    QueryFailure(
+                        "invalid_response", str(e), "counts/untyped-uri", batch, graph_uris
+                    )
+                ],
+            )
+        )
         logger.warning(
             "Untyped-URI count query failed (%s): %s",
             label,
@@ -315,7 +413,7 @@ def enrich_patterns_with_labels(
     for pat in patterns:
         all_uris.add(pat.subject_class)
         all_uris.add(pat.property_uri)
-        if pat.object_class not in ("Literal", "Resource"):
+        if pat.object_class not in ("Literal", "Resource", "BlankNode"):
             all_uris.add(pat.object_class)
 
     if not all_uris:
@@ -361,22 +459,27 @@ def _fetch_label_batch(
             time.monotonic() - t0,
         )
         bindings = result.get("results", {}).get("bindings", [])
-        for b in bindings:
-            uri = b.get("uri", {}).get("value", "")
-            if not uri or uri in label_map:
+        candidates: dict[str, dict[str, dict[str, str]]] = {}
+        for row in bindings:
+            uri = row.get("uri", {}).get("value")
+            if uri not in batch:
                 continue
-            rdfs_lbl = b.get("rdfsLabel", {}).get("value")
-            dc_lbl = b.get("dcTitle", {}).get("value")
-            iao_lbl = b.get("iaoLabel", {}).get("value")
-            skos_pref = b.get("skosPrefLabel", {}).get("value")
-            skos_alt = b.get("skosAltLabel", {}).get("value")
+            fields = candidates.setdefault(uri, {})
+            for key, term in row.items():
+                if key == "uri" or not term.get("value"):
+                    continue
+                old = fields.get(key)
+                rank = (term.get("xml:lang") not in (None, "en"), term["value"])
+                if old is None or rank < (old.get("xml:lang") not in (None, "en"), old["value"]):
+                    fields[key] = term
+        for uri, row in candidates.items():
             label_map[uri] = pick_label(
-                rdfs_lbl,
-                dc_lbl,
+                row.get("rdfsLabel", {}).get("value"),
+                row.get("dcTitle", {}).get("value"),
                 uri,
-                iao_label=iao_lbl,
-                skos_pref_label=skos_pref,
-                skos_alt_label=skos_alt,
+                iao_label=row.get("iaoLabel", {}).get("value"),
+                skos_pref_label=row.get("skosPrefLabel", {}).get("value"),
+                skos_alt_label=row.get("skosAltLabel", {}).get("value"),
             )
     except Exception as e:
         report.record_query(
@@ -384,7 +487,7 @@ def _fetch_label_batch(
             time.monotonic() - t0,
             success=False,
         )
-        logger.warning("Label batch failed (%d URIs) : %s", len(batch), e)
+        logger.warning("Label batch failed (%d IRIs): %s", len(batch), type(e).__name__)
 
 
 def _enrich_with_local(

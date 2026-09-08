@@ -14,6 +14,7 @@ from rdfsolve.mining.query_builders import (
     _build_typed_object_query_plain,
     _build_untyped_uri_query_plain,
 )
+from rdfsolve.mining.query_fallbacks import select_outcome
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.models import OneShotQueryResult, PatternType, SchemaPattern
 
@@ -85,49 +86,25 @@ class OneShotStrategy(MiningStrategy):
         """Execute a single one-shot SELECT and record analytics."""
         phase = context.report.start_phase(f"one-shot/{qtype}")
         t0 = time.monotonic()
-        try:
-            raw = context.helper.select(
-                query,
-                purpose=f"one-shot/{qtype}",
-            )
-            duration = time.monotonic() - t0
-            bindings = raw.get("results", {}).get("bindings", [])
-            row_count = len(bindings)
-            logger.info(
-                "One-shot %s: %d rows in %.1fs",
-                qtype,
-                row_count,
-                duration,
-            )
-            context.report.record_query(f"one-shot/{qtype}", duration)
-            context.report.finish_phase(phase, items=row_count)
-            return bindings, OneShotQueryResult(
-                query_type=qtype,
-                success=True,
-                duration_s=round(duration, 3),
-                row_count=row_count,
-            )
-        except Exception as exc:
-            duration = time.monotonic() - t0
-            logger.warning(
-                "One-shot %s failed after %.1fs: %s",
-                qtype,
-                duration,
-                exc,
-            )
-            context.report.record_query(
-                f"one-shot/{qtype}",
-                duration,
-                success=False,
-            )
-            context.report.finish_phase(phase, items=0, error=str(exc))
-            return [], OneShotQueryResult(
-                query_type=qtype,
-                success=False,
-                duration_s=round(duration, 3),
-                row_count=None,
-                error=str(exc),
-            )
+        outcome = select_outcome(
+            query,
+            f"one-shot/{qtype}",
+            context.helper,
+            graph_uris=context.graph_uris,
+        )
+        duration = time.monotonic() - t0
+        context.report.record_outcome(outcome)
+        success = outcome.state == "complete"
+        error = "; ".join(failure.message for failure in outcome.failures) or None
+        context.report.record_query(f"one-shot/{qtype}", duration, success=success)
+        context.report.finish_phase(phase, items=len(outcome.rows), error=error)
+        return outcome.rows, OneShotQueryResult(
+            query_type=qtype,
+            success=success,
+            duration_s=round(duration, 3),
+            row_count=len(outcome.rows) if success else None,
+            error=error,
+        )
 
     def _parse_one_shot_bindings(
         self,

@@ -19,11 +19,25 @@ class SourceEntry(TypedDict, total=False):
 
     name: str
     endpoint: str
-    void_iri: str
+    dataset_metadata: dict[str, Any] | None
+    metadata_graph_uris: list[str] | None
+    enrichment: dict[str, Any]
+    endpoint_status: str
+    last_checked: str
+    last_success: str
+    last_error: str
+    failure_count: int
+    avg_response_time: float | None
+    has_void: bool
+    has_void_partitions: bool
+    has_void_patterns: bool
+    void_default_graph: bool
+    void_iri: str  # DEPRECATED: use void_graphs instead
     void_uri_base: str
+    void_graphs: list[str]  # Discovered VoID metadata graph URIs
+    void_schema: list[str]  # VoID graphs with mineable partitions
     graph_uris: list[str]
     use_graph: bool
-    two_phase: bool
     chunk_size: int
     class_batch_size: int
     class_chunk_size: int | None
@@ -575,7 +589,6 @@ def _yaml_node_to_entry(node: dict[str, Any]) -> SourceEntry:
     e["graph_uris"] = list(raw_g)
 
     e["use_graph"] = bool(node.get("use_graph", False))
-    e["two_phase"] = bool(node.get("two_phase", True))
     e["counts"] = bool(node.get("counts", True))
     e["unsafe_paging"] = bool(node.get("unsafe_paging", False))
 
@@ -648,7 +661,6 @@ def _node_to_entry(node: dict[str, Any]) -> SourceEntry:
 
     # booleans
     e["use_graph"] = bool(node.get("use_graph", False))
-    e["two_phase"] = bool(node.get("two_phase", True))
     e["counts"] = bool(node.get("counts", True))
     e["unsafe_paging"] = bool(node.get("unsafe_paging", False))
 

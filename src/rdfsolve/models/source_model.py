@@ -51,8 +51,6 @@ class SourceModel(BaseModel):
         Named graph URIs to restrict queries.
     use_graph:
         Whether to use a GRAPH clause in SPARQL queries.
-    two_phase:
-        Use two-phase mining (default True).
     chunk_size:
         Mining chunk size (None = default).
     class_batch_size:
@@ -105,10 +103,18 @@ class SourceModel(BaseModel):
 
     name: str
     endpoint: str = ""
+    dataset_metadata: dict[str, Any] | None = None
+    metadata_graph_uris: list[str] | None = None
+    enrichment: dict[str, Any] | None = None
+    void_graphs: list[str] | None = None
+    void_schema: list[str] | None = None
+    void_default_graph: bool | None = None
+    has_void: bool | None = None
+    has_void_partitions: bool | None = None
+    has_void_patterns: bool | None = None
     void_iri: str = ""
     graph_uris: list[str] = Field(default_factory=list)
     use_graph: bool = False
-    two_phase: bool = True
     chunk_size: int | None = None
     class_batch_size: int | None = None
     class_chunk_size: int | None = None

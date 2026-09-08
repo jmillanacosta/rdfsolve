@@ -10,12 +10,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from rdfsolve.schema_models.metadata import MetadataDocument
+    from rdfsolve.schema_models.void_schema import VoidSchema
     from rdfsolve.sources import SourceEntry
 
 import pandas as pd
 from rdflib import Graph
 
 from .models import MinedSchema
+from .source_enrichment import enrich_source
 from .void_discover import VoidParser
 
 logger = logging.getLogger(__name__)
@@ -23,6 +26,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "discover_void_graphs",
     "discover_void_source",
+    "enrich_source",
     "enrich_source_with_bioregistry",
     "execute_sparql",
     "export_schema_artifacts",
@@ -89,7 +93,6 @@ def load_parser_from_jsonld(
 
 def to_rdfconfig_from_file(
     void_file_path: str,
-    filter_void_nodes: bool = True,
     endpoint_url: str | None = None,
     endpoint_name: str | None = None,
     graph_uri: str | None = None,
@@ -97,7 +100,6 @@ def to_rdfconfig_from_file(
     """Convert a VoID file to RDF-config YAML files."""
     parser = load_parser_from_file(void_file_path)
     return parser.to_rdfconfig(
-        filter_void_nodes=filter_void_nodes,
         endpoint_url=endpoint_url,
         endpoint_name=endpoint_name,
         graph_uri=graph_uri,
@@ -114,7 +116,6 @@ def to_void_from_file(jsonld_path: str) -> Graph:
 
 def to_linkml_from_file(
     void_file_path: str,
-    filter_void_nodes: bool = True,
     schema_name: str | None = None,
     schema_description: str | None = None,
     schema_base_uri: str | None = None,
@@ -123,7 +124,6 @@ def to_linkml_from_file(
 
     Args:
         void_file_path: Path to VoID file
-        filter_void_nodes: Remove VoID-specific nodes
         schema_name: Name for the schema
         schema_description: Description for the schema
         schema_base_uri: Base URI for the schema
@@ -133,7 +133,6 @@ def to_linkml_from_file(
     """
     parser = load_parser_from_file(void_file_path)
     return parser.to_linkml_yaml(
-        filter_void_nodes=filter_void_nodes,
         schema_name=schema_name,
         schema_description=schema_description,
         schema_base_uri=schema_base_uri,
@@ -142,7 +141,6 @@ def to_linkml_from_file(
 
 def to_shacl_from_file(
     void_file_path: str,
-    filter_void_nodes: bool = True,
     schema_base_uri: str = "http://example.org/shapes/",
 ) -> str:
     """Convert a VoID file to SHACL shapes.
@@ -153,7 +151,6 @@ def to_shacl_from_file(
 
     Args:
         void_file_path: Path to VoID file
-        filter_void_nodes: Remove VoID-specific nodes
         schema_base_uri: Base URI for the SHACL shapes (default: http://example.org/shapes/)
 
     Returns:
@@ -161,14 +158,12 @@ def to_shacl_from_file(
     """
     parser = load_parser_from_file(void_file_path)
     return parser.to_shacl(
-        filter_void_nodes=filter_void_nodes,
         schema_base_uri=schema_base_uri,
     )
 
 
 def to_jsonld_from_file(
     void_file_path: str,
-    filter_void_admin_nodes: bool = True,
     endpoint_url: str | None = None,
     dataset_name: str | None = None,
     graph_uris: str | list[str] | None = None,
@@ -177,7 +172,6 @@ def to_jsonld_from_file(
     parser = load_parser_from_file(void_file_path)
     graph_uris_list = [graph_uris] if isinstance(graph_uris, str) else graph_uris
     return parser.to_jsonld(
-        filter_void_admin_nodes=filter_void_admin_nodes,
         endpoint_url=endpoint_url,
         dataset_name=dataset_name,
         graph_uris=graph_uris_list,
@@ -187,7 +181,6 @@ def to_jsonld_from_file(
 def graph_to_jsonld(
     graph: Graph,
     graph_uris: str | list[str] | None = None,
-    filter_void_admin_nodes: bool = True,
     endpoint_url: str | None = None,
     dataset_name: str | None = None,
 ) -> dict[str, Any]:
@@ -195,7 +188,6 @@ def graph_to_jsonld(
     parser = load_parser_from_graph(graph, graph_uris=graph_uris)
     graph_uris_list = [graph_uris] if isinstance(graph_uris, str) else graph_uris
     return parser.to_jsonld(
-        filter_void_admin_nodes=filter_void_admin_nodes,
         endpoint_url=endpoint_url,
         dataset_name=dataset_name,
         graph_uris=graph_uris_list,
@@ -205,17 +197,15 @@ def graph_to_jsonld(
 def graph_to_schema(
     void_graph: Graph,
     graph_uris: str | list[str] | None = None,
-    filter_void_admin_nodes: bool = True,
 ) -> pd.DataFrame:
     """Convert VoID graph to schema DataFrame."""
     parser = VoidParser(void_source=void_graph, graph_uris=graph_uris)
-    return parser.to_schema(filter_void_admin_nodes=filter_void_admin_nodes)
+    return parser.to_schema()
 
 
 def graph_to_linkml(
     graph: Graph,
     graph_uris: str | list[str] | None = None,
-    filter_void_nodes: bool = True,
     schema_name: str | None = None,
     schema_description: str | None = None,
     schema_base_uri: str | None = None,
@@ -225,7 +215,6 @@ def graph_to_linkml(
     Args:
         graph: RDFLib Graph with VoID data
         graph_uris: Graph URIs to filter extraction
-        filter_void_nodes: Remove VoID-specific nodes
         schema_name: Name for the schema
         schema_description: Description for the schema
         schema_base_uri: Base URI for the schema
@@ -235,7 +224,6 @@ def graph_to_linkml(
     """
     parser = load_parser_from_graph(graph, graph_uris=graph_uris)
     return parser.to_linkml_yaml(
-        filter_void_nodes=filter_void_nodes,
         schema_name=schema_name,
         schema_description=schema_description,
         schema_base_uri=schema_base_uri,
@@ -245,7 +233,6 @@ def graph_to_linkml(
 def graph_to_shacl(
     graph: Graph,
     graph_uris: str | list[str] | None = None,
-    filter_void_nodes: bool = True,
     schema_base_uri: str = "http://example.org/shapes/",
 ) -> str:
     """Convert a VoID graph to SHACL shapes.
@@ -257,7 +244,6 @@ def graph_to_shacl(
     Args:
         graph: RDFLib Graph with VoID data
         graph_uris: Graph URIs to filter extraction
-        filter_void_nodes: Remove VoID-specific nodes
         schema_base_uri: Base URI for the SHACL shapes (default: http://example.org/shapes/)
 
     Returns:
@@ -265,7 +251,6 @@ def graph_to_shacl(
     """
     parser = load_parser_from_graph(graph, graph_uris=graph_uris)
     return parser.to_shacl(
-        filter_void_nodes=filter_void_nodes,
         schema_base_uri=schema_base_uri,
     )
 
@@ -278,10 +263,18 @@ def export_schema_artifacts(
     tag: str = "discovered_remote",
     fmt: str = "all",
 ) -> dict[str, str]:
-    """Write VoID / JSON-LD / RDF-config artefacts."""
+    """Write source VoID RDF and canonical schema exports."""
+    if fmt not in {"void", "jsonld", "all"}:
+        raise ValueError("fmt must be void, jsonld, or all")
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     written: dict[str, str] = {}
+    schema = VoidParser(void_source=void_graph).to_mined_schema()
+    schema.about.endpoint = schema.about.endpoint or endpoint
+    schema.about.dataset_name = schema.about.dataset_name or name
+    canonical_path = out / f"{name}_{tag}_schema.json"
+    canonical_path.write_text(json.dumps(schema.to_dict(), indent=2) + "\n", encoding="utf-8")
+    written["schema_json"] = str(canonical_path)
 
     if fmt in ("void", "all"):
         void_path = out / f"{name}_{tag}_void.ttl"
@@ -305,7 +298,6 @@ def export_schema_artifacts(
         try:
             export_parser = VoidParser(void_source=void_graph)
             rdfconfig = export_parser.to_rdfconfig(
-                filter_void_nodes=True,
                 endpoint_url=endpoint,
                 endpoint_name=name,
             )
@@ -318,7 +310,7 @@ def export_schema_artifacts(
                 )
             written["rdfconfig_dir"] = str(config_dir)
         except Exception as exc:
-            logger.debug("RDF-config export failed for %s: %s", name, exc)
+            logger.warning("RDF-config export failed for %s: %s", name, exc)
 
     return written
 
@@ -330,9 +322,76 @@ def discover_void_graphs(
     endpoint_url: str,
     graph_uris: str | list[str] | None = None,
     exclude_graphs: bool = False,
+    *,
+    timeout: float = 30.0,
+    max_retries: int = 1,
+    batch_size: int = 100,
+    graph_batch_size: int = 8,
+    max_pages: int = 1000,
 ) -> dict[str, Any]:
-    """Find VoID graphs at *endpoint_url*."""
-    return VoidParser().discover_void_graphs(endpoint_url)
+    """Retrieve published VoID RDF and its canonical schema. Failures raise."""
+    return VoidParser(graph_uris=graph_uris, exclude_graphs=exclude_graphs).discover_void_graphs(
+        endpoint_url,
+        timeout=timeout,
+        max_retries=max_retries,
+        batch_size=batch_size,
+        graph_batch_size=graph_batch_size,
+        max_pages=max_pages,
+    )
+
+
+def discover_all_graphs(
+    endpoint_url: str,
+    *,
+    include_counts: bool = False,
+    timeout: float = 30.0,
+    max_retries: int = 1,
+    batch_size: int = 100,
+    max_pages: int = 1000,
+) -> dict[str, Any]:
+    """List graph names in pages. Set include_counts=True for triple counts.
+
+    A graph name is not evidence that it contains an ontology.
+    Query failures raise. Omitted counts are None, not zero.
+    """
+    return VoidParser().discover_all_graphs(
+        endpoint_url,
+        include_counts=include_counts,
+        timeout=timeout,
+        max_retries=max_retries,
+        batch_size=batch_size,
+        max_pages=max_pages,
+    )
+
+
+def extract_metadata_from_void_graphs(
+    endpoint_url: str, void_graph_uris: list[str]
+) -> dict[str, Any]:
+    """Extract metadata triples from VoID-named graphs.
+
+    VoID metadata graphs often contain dataset descriptions (title, license,
+    publisher, etc.). This function extracts all triples from graphs identified
+    as containing metadata.
+
+    Args:
+        endpoint_url: SPARQL endpoint URL.
+        void_graph_uris: List of graph URIs to extract metadata from.
+
+    Returns:
+        Dict with keys:
+        - ``metadata_by_graph``: dict mapping graph URI to metadata triples
+        - ``total_triples``: total triples extracted
+
+    Example:
+        >>> from rdfsolve import discover_all_graphs, extract_metadata_from_void_graphs
+        >>> graphs = discover_all_graphs("https://example.org/sparql")
+        >>> if graphs["void_graphs"]:
+        ...     metadata = extract_metadata_from_void_graphs(
+        ...         "https://example.org/sparql", graphs["void_graphs"]
+        ...     )
+        ...     print(f"Extracted {metadata['total_triples']} metadata triples")
+    """
+    return VoidParser().extract_metadata_from_void_graphs(endpoint_url, void_graph_uris)
 
 
 def mine_schema(
@@ -349,8 +408,10 @@ def mine_schema(
     report_path: str | None = None,
     filter_service_namespaces: bool = True,
     authors: list[dict[str, str]] | None = None,
-    # Deprecated parameter
-    two_phase: bool | None = None,
+    get_graphs_from_store: bool = False,
+    graph_store_url: str | None = None,
+    graph_store_dir: str | Path = "graph-store",
+    graph_store_max_bytes: int = 64 * 1024 * 1024,
 ) -> MinedSchema:
     """Mine RDF schema from a SPARQL endpoint using SELECT queries.
 
@@ -358,8 +419,6 @@ def mine_schema(
     ----------
     strategy
         Mining strategy to use. Can be "two-phase" (default), "single-pass", or "one-shot".
-    two_phase
-        (Deprecated) Use strategy="two-phase" instead.
 
     Returns
     -------
@@ -386,7 +445,10 @@ def mine_schema(
         report_path=report_path,
         filter_service_namespaces=filter_service_namespaces,
         authors=authors,
-        two_phase=two_phase,
+        get_graphs_from_store=get_graphs_from_store,
+        graph_store_url=graph_store_url,
+        graph_store_dir=graph_store_dir,
+        graph_store_max_bytes=graph_store_max_bytes,
     )
 
 
@@ -396,25 +458,21 @@ def mine_schema(
 def query_metadata(
     endpoint_url: str,
     timeout: float = 30.0,
-) -> dict[str, Any]:
-    """Query SPARQL endpoint for dataset metadata without full schema mining.
+    *,
+    graph_uris: list[str] | None = None,
+    subject_iris: list[str] | None = None,
+) -> MetadataDocument:
+    """Retrieve scoped RDF metadata. Use .project(subject_iri) for known fields.
 
-    Useful for metadata harvesting, catalog building, and pre-mining checks.
-    Queries for license, publisher, creators, version, dates, etc. using
-    multiple strategies across common metadata vocabularies (DCTERMS, DC,
-    DCAT, PAV, VoID, OWL, FOAF, PROV).
-
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        timeout: Query timeout in seconds (default: 30)
-
-    Returns:
-        dict with metadata fields.
+    Explicit subjects can use any vocabulary. Automatic discovery looks for
+    declared VoID/DCAT datasets and SPARQL services, not arbitrary entities.
+    None graph scope means the default graph, not every named graph.
     """
-    from .miner import SchemaMiner
+    from rdfsolve.metadata import query_metadata_document
+    from rdfsolve.sparql_helper import SparqlHelper
 
-    miner = SchemaMiner(endpoint_url=endpoint_url, timeout=timeout)
-    return miner.query_dataset_metadata()
+    with SparqlHelper(endpoint_url, timeout=timeout, max_retries=1) as helper:
+        return query_metadata_document(helper, graph_uris=graph_uris, subject_iris=subject_iris)
 
 
 # Sources / Registry
@@ -478,57 +536,80 @@ def sources_to_jsonld(
 def discover_void_source(
     endpoint: str,
     name: str,
-    output_dir: str | Path = ".",
+    output_dir: str | Path | None = None,
     *,
     tag: str = "discovered_remote",
-    void_uri_base: str | None = None,
-    entry: SourceEntry | dict[str, Any] | None = None,
     fmt: str = "all",
-) -> dict[str, Any]:
-    """Discover VoID descriptions for one source and export artefacts."""
-    result = discover_void_graphs(endpoint, exclude_graphs=False)
-    partitions = result.get("partitions", [])
+    timeout: float = 30.0,
+    max_retries: int = 1,
+    graph_uris: str | list[str] | None = None,
+    batch_size: int = 100,
+    graph_batch_size: int = 8,
+    max_pages: int = 1000,
+    get_graphs_from_store: bool = False,
+    graph_store_url: str | None = None,
+    graph_store_dir: str | Path = "graph-store",
+    graph_store_max_bytes: int = 64 * 1024 * 1024,
+) -> VoidSchema:
+    """Return published VoID as an object. Export only when output_dir is set.
 
-    if not partitions:
-        return {
-            "partitions_found": 0,
-            "graphs_found": 0,
-            "files": {},
-        }
+    Use .to_mined_schema() for canonical patterns, .datasets for typed VoID
+    descriptions, and .graph for all retrieved RDF. Empty patterns do not
+    imply an empty description. Graph Store mode requires explicit scope.
+    """
+    from rdfsolve.schema_models.void_schema import VoidSchema
 
-    base_uri = void_uri_base or resolve_void_uri_base(name, entry=entry)
-    parser = VoidParser()
-    void_graph = parser.build_void_graph_from_partitions(partitions, base_uri=base_uri)
+    if fmt not in {"void", "jsonld", "all"}:
+        raise ValueError("fmt must be void, jsonld, or all")
+    scopes = [graph_uris] if isinstance(graph_uris, str) else graph_uris
+    if get_graphs_from_store:
+        from rdfsolve.graph_store import download_graphs, load_downloads
 
-    files = export_schema_artifacts(
-        void_graph,
-        name,
-        endpoint,
-        output_dir,
-        tag=tag,
-        fmt=fmt,
-    )
-
-    out = Path(output_dir)
-    report = {
-        "dataset": name,
-        "endpoint": endpoint,
-        "source": "discovered",
-        "graphs_found": len(result.get("found_graphs", [])),
-        "partitions_found": len(partitions),
-    }
-    report_path = out / f"{name}_{tag}_report.json"
-    report_path.write_text(
-        json.dumps(report, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    files["report"] = str(report_path)
-
-    return {
-        "partitions_found": len(partitions),
-        "graphs_found": len(result.get("found_graphs", [])),
-        "files": files,
-    }
+        if not graph_store_url or not scopes:
+            raise ValueError("Graph Store retrieval requires graph_store_url and graph_uris")
+        downloads = download_graphs(
+            graph_store_url,
+            scopes,
+            graph_store_dir,
+            max_bytes=graph_store_max_bytes,
+            timeout=timeout,
+        )
+        dataset = load_downloads(downloads, endpoint_url=endpoint, timeout=timeout)
+        graph = Graph()
+        for uri in scopes:
+            graph += dataset.graph(uri)
+        document = VoidSchema(graph, endpoint, name, scopes, rdf_dataset=dataset)
+    else:
+        result = discover_void_graphs(
+            endpoint,
+            graph_uris=scopes,
+            timeout=timeout,
+            max_retries=max_retries,
+            batch_size=batch_size,
+            graph_batch_size=graph_batch_size,
+            max_pages=max_pages,
+        )
+        document = VoidSchema(
+            result["graph"],
+            endpoint,
+            name,
+            result["found_graphs"],
+            result["default_graph"],
+            rdf_dataset=result["rdf_dataset"],
+        )
+    if output_dir is not None:
+        document.files = export_schema_artifacts(
+            document.graph,
+            name,
+            endpoint,
+            output_dir,
+            tag=tag,
+            fmt=fmt,
+        )
+        dataset_path = Path(output_dir) / f"{name}_{tag}_dataset.trig"
+        dataset_path.write_text(document.to_trig(), encoding="utf-8")
+        document.files["dataset_trig"] = str(dataset_path)
+    return document
 
 
 # SPARQL execution

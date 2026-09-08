@@ -1,573 +1,29 @@
-"""Core schema models: SchemaPattern, AboutMetadata, MinedSchema.
-
-These are the primary data structures for mined RDF schemas.
-"""
+"""Mined schema model and format entry points."""
 
 from __future__ import annotations
 
 import json as _json
-import logging
-from collections.abc import Callable
-from datetime import datetime, timezone
-from enum import Enum
-from hashlib import md5
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field
 
-# PatternType enum
+from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, SERVICE_NAMESPACE_PREFIXES
+from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.enrichment import SchemaEnrichment
+from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
+from rdfsolve.schema_models.metadata import RetainedMetadata
+from rdfsolve.schema_models.navigation import NavigationSummary
+from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
+from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 
+if TYPE_CHECKING:
+    from rdflib import Graph
 
-class PatternType(str, Enum):
-    """Semantic type of an RDF pattern.
-
-    Distinguishes what kind of RDF construct a pattern represents,
-    which is essential for proper schema interpretation and
-    downstream code generation.
-    """
-
-    OBJECT_PROPERTY = "object_property"
-    """Links subject to another resource (typed or untyped URI)."""
-
-    DATATYPE_PROPERTY = "datatype_property"
-    """Links subject to a literal value (string, integer, date, etc)."""
-
-    ANNOTATION_PROPERTY = "annotation"
-    """Metadata property (rdfs:label, rdfs:comment, dcterms prefix, etc)."""
-
-    BLANK_NODE_PROPERTY = "blank_node_property"
-    """Links subject to a blank node (structural/anonymous)."""
-
-    UNKNOWN = "unknown"
-    """Could not determine the pattern type."""
-
-
-from rdfsolve._uri import (
-    make_expander,
-    uri_to_curie,
-)
-from rdfsolve.schema_models._constants import (
-    _BASE_URI,
-    _GRAPH_SKIP_KEYS,
-    _RESOURCE_URIS,
-    _SENTINEL_OBJECTS,
-    _URI_SCHEMES,
-    SERVICE_NAMESPACE_PREFIXES,
-)
-
-_log = logging.getLogger(__name__)
-
-
-# SchemaPattern
-
-
-class SchemaPattern(BaseModel):
-    """A single schema pattern: subject_class -> property -> object.
-
-    Captures four kinds of relationships:
-
-    - **typed-object**:
-      ``?s a ?sc . ?s ?p ?o . ?o a ?oc``
-    - **literal**:
-      ``?s a ?sc . ?s ?p ?o . FILTER(isLiteral(?o))``
-    - **untyped-uri** (unconstrained URI):
-      ``?s a ?sc . ?s ?p ?o . FILTER(isURI(?o) && NOT EXISTS { ?o a ?any })``
-    - **blank-node**:
-      ``?s a ?sc . ?s ?p ?o . FILTER(isBlank(?o))``
-
-    This model is shared between SchemaMiner (direct SPARQL)
-    and VoidParser (RDF triples VoID catalog-based extraction).
-    """
-
-    subject_class: str = Field(
-        ...,
-        description="URI of the subject class",
-    )
-    property_uri: str = Field(
-        ...,
-        description="URI of the property",
-    )
-    object_class: str = Field(
-        ...,
-        description=(
-            "URI of the object class. Special values: "
-            "'Literal' for literal objects (use datatype for XSD type), "
-            "'Resource' for untyped URI objects (rdfs:Resource), "
-            "'BlankNode' for blank node objects."
-        ),
-    )
-    count: int | None = Field(
-        None,
-        ge=0,
-        description="Number of triples matching this pattern",
-    )
-    datatype: str | None = Field(
-        None,
-        description="XSD datatype URI for literal objects (only when object_class == 'Literal')",
-    )
-    blank_node_predicates: list[str] | None = Field(
-        None,
-        description=(
-            "Predicates that blank node objects have (structural signature). "
-            "Only set when object_class == 'BlankNode'. Common patterns: "
-            "rdf:first/rdf:rest (lists), owl:onProperty (restrictions)."
-        ),
-    )
-
-    # Semantic type
-    pattern_type: PatternType = Field(
-        default=PatternType.UNKNOWN,
-        description="Semantic type of this pattern (object/datatype/annotation/blank_node)",
-    )
-
-    # Evidence metrics
-    distinct_subjects: int | None = Field(
-        None,
-        ge=0,
-        description="Number of distinct subjects using this pattern",
-    )
-    distinct_objects: int | None = Field(
-        None,
-        ge=0,
-        description="Number of distinct objects in this pattern",
-    )
-    confidence: float = Field(
-        default=1.0,
-        ge=0.0,
-        le=1.0,
-        description="Confidence score (0.0-1.0) for this pattern",
-    )
-    evidence_source: str = Field(
-        default="mined",
-        description="How this pattern was discovered: 'mined', 'inferred', 'imported'",
-    )
-
-    # Labels
-    subject_label: str | None = Field(
-        None,
-        description="Human-readable label for the subject class",
-    )
-    property_label: str | None = Field(
-        None,
-        description="Human-readable label for the property",
-    )
-    object_label: str | None = Field(
-        None,
-        description="Human-readable label for the object class",
-    )
-
-    @field_validator("subject_class", "property_uri")
-    @classmethod
-    def _validate_uri(cls, v: str) -> str:
-        if not v.startswith(_URI_SCHEMES):
-            msg = f"Invalid URI: {v}"
-            raise ValueError(msg)
-        return v
-
-    @field_validator("object_class")
-    @classmethod
-    def _validate_object(cls, v: str) -> str:
-        if v not in _SENTINEL_OBJECTS and not v.startswith(
-            _URI_SCHEMES,
-        ):
-            msg = f"Invalid object class: {v}"
-            raise ValueError(msg)
-        return v
-
-
-# AboutMetadata
-
-
-class AboutMetadata(BaseModel):
-    """Provenance metadata attached to every schema export.
-
-    Contains identity, source, provenance, quality, and validation
-    information critical for versioned schema management and
-    downstream typed-client generation.
-    """
-
-    # Identity
-    schema_id: str | None = Field(
-        None,
-        description="Unique identifier (UUID or content hash)",
-    )
-    schema_version: str = Field(
-        default="0.0.0",
-        description="Semantic version of this schema (major.minor.patch)",
-    )
-
-    # Source
-    dataset_name: str | None = Field(
-        None,
-        description="Human-readable dataset name",
-    )
-    endpoint: str | None = Field(
-        None,
-        description="SPARQL endpoint URL",
-    )
-    graph_uris: list[str] | None = Field(
-        None,
-        description="Named graph URIs queried",
-    )
-
-    # Provenance
-    generated_by: str = Field(
-        default="unknown",
-        description="Tool and version string",
-    )
-    generated_at: str = Field(
-        default="",
-        description="ISO-8601 timestamp (UTC)",
-    )
-    strategy: str = Field(
-        "unknown",
-        description="Mining strategy used (e.g. 'qlever_oneshot', 'sparql_paginated', 'void')",
-    )
-
-    # Data Versioning (critical for typed-client)
-    source_version: str | None = Field(
-        None,
-        description="Version of the source data if known (e.g. '2024_01', 'v3.2')",
-    )
-    source_version_iri: str | None = Field(
-        None,
-        description="Dataset version IRI (owl:versionIRI)",
-    )
-    source_issued: str | None = Field(
-        None,
-        description="Publication date of source dataset (ISO-8601, dcat:issued)",
-    )
-    source_modified: str | None = Field(
-        None,
-        description="Last-Modified timestamp of source data (ISO-8601)",
-    )
-    source_license: str | None = Field(
-        None,
-        description="License URI for the source data",
-    )
-    source_publisher: str | None = Field(
-        None,
-        description="Publisher URI or name (dcterms:publisher)",
-    )
-    source_creator: list[str] | None = Field(
-        None,
-        description="Creator URIs (dcterms:creator)",
-    )
-    homepage: str | None = Field(
-        None,
-        description="Dataset homepage URI (foaf:homepage)",
-    )
-    title: str | None = Field(
-        None,
-        description="Dataset title (dcterms:title, overrides dataset_name if present)",
-    )
-    description: str | None = Field(
-        None,
-        description="Dataset description (dcterms:description)",
-    )
-
-    # Tool Versions
-    rdfsolve_version: str | None = Field(
-        None,
-        description="rdfsolve version string",
-    )
-    qlever_version: dict[str, str] | None = Field(
-        None,
-        description=(
-            "QLever build info fetched from the endpoint's "
-            '?cmd=stats: {"git_hash_server": str, "git_hash_index": str}'
-        ),
-    )
-
-    # Timing
-    started_at: str | None = Field(
-        None,
-        description="ISO-8601 timestamp when mining started",
-    )
-    finished_at: str | None = Field(
-        None,
-        description="ISO-8601 timestamp when mining finished",
-    )
-    total_duration_s: float | None = Field(
-        None,
-        ge=0,
-        description="Total wall-clock seconds",
-    )
-
-    # Statistics
-    pattern_count: int = Field(
-        0,
-        ge=0,
-        description="Number of schema patterns",
-    )
-    class_count: int = Field(
-        0,
-        ge=0,
-        description="Number of distinct classes (declared + used types)",
-    )
-    declared_class_count: int = Field(
-        0,
-        ge=0,
-        description=(
-            "Number of formally declared classes (owl:Class or rdfs:Class). "
-            "These have explicit class definitions in the dataset."
-        ),
-    )
-    used_type_count: int = Field(
-        0,
-        ge=0,
-        description=(
-            "Number of URIs used as rdf:type values but NOT declared as classes. "
-            "Common in LOD: external ontology terms used as types without importing definitions."
-        ),
-    )
-    property_count: int = Field(
-        0,
-        ge=0,
-        description="Number of distinct properties",
-    )
-    triple_count_estimate: int | None = Field(
-        None,
-        ge=0,
-        description="Estimated total triples in source data",
-    )
-    distinct_subject_count: int | None = Field(
-        None,
-        ge=0,
-        description="COUNT(DISTINCT ?s) across all patterns",
-    )
-    distinct_predicate_count: int | None = Field(
-        None,
-        ge=0,
-        description="COUNT(DISTINCT ?p) across all patterns",
-    )
-    document_count: int | None = Field(
-        None,
-        ge=0,
-        description="Number of RDF documents in the dataset (for local/downloaded datasets, void:documents)",
-    )
-
-    # Quality Metrics
-    coverage_score: float | None = Field(
-        None,
-        ge=0.0,
-        le=1.0,
-        description="Fraction of data covered by schema patterns (0.0-1.0)",
-    )
-    confidence_score: float | None = Field(
-        None,
-        ge=0.0,
-        le=1.0,
-        description="Overall schema confidence score (0.0-1.0)",
-    )
-
-    # Validation
-    validation_status: Literal["unvalidated", "auto_validated", "manual_validated"] = Field(
-        default="unvalidated",
-        description="Validation state of this schema",
-    )
-    validation_errors: list[str] = Field(
-        default_factory=list,
-        description="List of validation error messages",
-    )
-
-    # Authors
-    authors: list[dict[str, str]] | None = Field(
-        None,
-        description='List of {"name": str, "orcid": str} dicts',
-    )
-
-    # Canonical URIs (auto-populated from dataset_name)
-    schema_uri: str | None = Field(
-        None,
-        description="Canonical URI where this schema is served",
-    )
-    void_uri: str | None = Field(
-        None,
-        description="Canonical URI where the VoID catalog is served",
-    )
-    report_uri: str | None = Field(
-        None,
-        description="Canonical URI where the run report is served",
-    )
-    linkml_uri: str | None = Field(
-        None,
-        description="Canonical URI where the LinkML schema is served",
-    )
-
-    model_config = ConfigDict(extra="allow")
-
-    @staticmethod
-    def build(
-        endpoint: str | None = None,
-        dataset_name: str | None = None,
-        graph_uris: list[str] | None = None,
-        pattern_count: int = 0,
-        class_count: int = 0,
-        declared_class_count: int = 0,
-        used_type_count: int = 0,
-        property_count: int = 0,
-        strategy: str = "unknown",
-        started_at: str | None = None,
-        finished_at: str | None = None,
-        total_duration_s: float | None = None,
-        authors: list[dict[str, str]] | None = None,
-        qlever_version: dict[str, str] | None = None,
-        # Version fields
-        schema_version: str = "1.0.0",
-        source_version: str | None = None,
-        source_version_iri: str | None = None,
-        source_issued: str | None = None,
-        source_modified: str | None = None,
-        source_license: str | None = None,
-        source_publisher: str | None = None,
-        source_creator: list[str] | None = None,
-        homepage: str | None = None,
-        title: str | None = None,
-        description: str | None = None,
-        triple_count_estimate: int | None = None,
-        distinct_subject_count: int | None = None,
-        distinct_predicate_count: int | None = None,
-        document_count: int | None = None,
-        coverage_score: float | None = None,
-        confidence_score: float | None = None,
-    ) -> AboutMetadata:
-        """Create metadata with auto-populated version + timestamp."""
-        from urllib.parse import quote
-        from uuid import uuid4
-
-        from rdfsolve.version import VERSION
-
-        def _uri(suffix: str) -> str | None:
-            if not dataset_name:
-                return None
-            encoded_name = quote(dataset_name, safe="")
-            return f"{_BASE_URI}/api/{suffix}/{encoded_name}"
-
-        return AboutMetadata(
-            # Identity
-            schema_id=str(uuid4()),
-            schema_version=schema_version,
-            # Source
-            dataset_name=dataset_name,
-            endpoint=endpoint,
-            graph_uris=graph_uris,
-            # Provenance
-            generated_by=f"rdfsolve {VERSION}",
-            generated_at=datetime.now(timezone.utc).isoformat(),
-            strategy=strategy,
-            # Data versioning
-            source_version=source_version,
-            source_version_iri=source_version_iri,
-            source_issued=source_issued,
-            source_modified=source_modified,
-            source_license=source_license,
-            source_publisher=source_publisher,
-            source_creator=source_creator,
-            homepage=homepage,
-            title=title,
-            description=description,
-            # Tool versions
-            rdfsolve_version=VERSION,
-            qlever_version=qlever_version,
-            # Timing
-            started_at=started_at,
-            finished_at=finished_at,
-            total_duration_s=total_duration_s,
-            # Statistics
-            pattern_count=pattern_count,
-            class_count=class_count,
-            declared_class_count=declared_class_count,
-            used_type_count=used_type_count,
-            property_count=property_count,
-            triple_count_estimate=triple_count_estimate,
-            distinct_subject_count=distinct_subject_count,
-            distinct_predicate_count=distinct_predicate_count,
-            document_count=document_count,
-            # Quality
-            coverage_score=coverage_score,
-            confidence_score=confidence_score,
-            # Authors
-            authors=authors,
-            # Canonical URIs
-            schema_uri=_uri("schemas"),
-            void_uri=_uri("void"),
-            report_uri=_uri("reports"),
-            linkml_uri=_uri("linkml"),
-        )
-
-
-# JSON-LD helpers
-
-
-def _merge_into_list(
-    grouped: dict[str, dict[str, Any]],
-    key: str,
-    prop: str,
-    value: Any,
-) -> None:
-    """Merge *value* into ``grouped[key][prop]``.
-
-    Creates a list when two distinct values share the same slot.
-    """
-    node = grouped.setdefault(key, {"@id": key})
-    existing = node.get(prop)
-    if existing is None:
-        node[prop] = value
-    elif isinstance(existing, list):
-        if value not in existing:
-            existing.append(value)
-    elif existing != value:
-        node[prop] = [existing, value]
-
-
-def _object_value_and_key(
-    pat: SchemaPattern,
-    context: dict[str, str],
-    labels: dict[str, str],
-) -> tuple[dict[str, Any], str]:
-    """Return the JSON-LD object value dict and count-map key.
-
-    Handles four cases:
-    - Literal: returns {"@type": datatype_curie}
-    - Resource (untyped URI): returns {"@id": "rdfs:Resource"}
-    - BlankNode: returns {"@id": "_:BlankNode"} (structural marker)
-    - Typed object: returns {"@id": class_curie}
-    """
-    if pat.object_class == "Literal":
-        if pat.datatype:
-            dt_c, dt_pfx, dt_ns = uri_to_curie(pat.datatype)
-            if dt_pfx and dt_ns:
-                context[dt_pfx] = dt_ns
-            return {"@type": dt_c}, f"Literal:{dt_c}"
-        context.setdefault(
-            "xsd",
-            "http://www.w3.org/2001/XMLSchema#",
-        )
-        return {"@type": "xsd:string"}, "Literal:xsd:string"
-
-    if pat.object_class == "Resource":
-        context.setdefault(
-            "rdfs",
-            "http://www.w3.org/2000/01/rdf-schema#",
-        )
-        return {"@id": "rdfs:Resource"}, "Resource"
-
-    if pat.object_class == "BlankNode":
-        # Blank nodes in JSON-LD are represented with _: prefix
-        # We use a structural marker to indicate "some blank node"
-        return {"@id": "_:BlankNode"}, "BlankNode"
-
-    oc, oc_pfx, oc_ns = uri_to_curie(pat.object_class)
-    if oc_pfx and oc_ns:
-        context[oc_pfx] = oc_ns
-    if pat.object_label:
-        labels[oc] = pat.object_label
-    return {"@id": oc}, oc
-
-
-# MinedSchema
+    from rdfsolve.exploration import DatasetClient
+    from rdfsolve.hydration import Hydrator
+    from rdfsolve.schema_models.metadata import MetadataDocument
+    from rdfsolve.sparql_helper import SparqlHelper
 
 
 class MinedSchema(BaseModel):
@@ -584,10 +40,30 @@ class MinedSchema(BaseModel):
         default_factory=list,
         description="Schema patterns",
     )
+    enrichment: SchemaEnrichment = Field(default_factory=SchemaEnrichment)
+    shapes: ShaclShapesGraph | None = Field(
+        None, description="Supported source SHACL profile, separate from observed triple patterns"
+    )
     about: AboutMetadata = Field(
         ...,
         description="Provenance metadata",
     )
+
+    source_metadata: RetainedMetadata | None = Field(
+        None, description="Original RDF evidence, separate from projected schema fields"
+    )
+    navigation: NavigationSummary | None = None
+
+    def discover_paths(
+        self, *, max_hops: int = 3, max_paths_per_length: int = 100
+    ) -> NavigationSummary:
+        """Compose candidate routes locally; do not verify instance joins."""
+        from rdfsolve.navigation import discover_paths
+
+        self.navigation = discover_paths(
+            self, max_hops=max_hops, max_paths_per_length=max_paths_per_length
+        )
+        return self.navigation
 
     # Service-namespace filtering
 
@@ -625,6 +101,10 @@ class MinedSchema(BaseModel):
     def get_classes(self) -> list[str]:
         """Return sorted unique subject/object class URIs."""
         classes: set[str] = set()
+        if self.shapes is not None:
+            classes.update(
+                shape.target_class for shape in self.shapes.node_shapes if shape.target_class
+            )
         for p in self.patterns:
             classes.add(p.subject_class)
             if p.object_class not in _SENTINEL_OBJECTS:
@@ -638,24 +118,28 @@ class MinedSchema(BaseModel):
     # JSON-LD import
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any]) -> MinedSchema:
-        """Reconstruct from a JSON-LD dict (e.g. returned by :meth:`to_jsonld`).
+    def from_dict(cls, raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
+        """Read canonical JSON or VoID JSON-LD.
 
-        Inverse of :meth:`to_jsonld`.  Expands CURIEs using the
-        dict's own ``@context`` block.
+        Only canonical JSON preserves all model fields. RDF imports use
+        their adapter's supported fields. External contexts are rejected.
         """
-        context: dict[str, str] = raw.get("@context", {})
-        about_data = raw.get("@about", {})
-        labels: dict[str, str] = raw.get("_labels", {})
-        expand = make_expander(context)
+        from rdfsolve.schema_models.readers.json import read_schema
 
-        patterns = _parse_schema_graph(
-            raw.get("@graph", []),
-            expand,
-            labels,
-        )
-        about = AboutMetadata.model_validate(about_data)
-        return cls(patterns=patterns, about=about)
+        return read_schema(raw)
+
+    def to_dict(self, *, trim_descriptions: int | None = None) -> dict[str, Any]:
+        """Return canonical JSON. Optional text trimming is lossy."""
+        return {
+            "format": "rdfsolve.mined-schema",
+            "version": 1,
+            "schema": trim_export_text(self, trim_descriptions).model_dump(mode="json"),
+        }
+
+    @classmethod
+    def from_json(cls, path: str | Path) -> MinedSchema:
+        """Read a saved schema through format detection and validation."""
+        return cls.from_dict(_json.loads(Path(path).read_text(encoding="utf-8")))
 
     @classmethod
     def from_jsonld(cls, path: str | Path) -> MinedSchema:
@@ -664,10 +148,30 @@ class MinedSchema(BaseModel):
         Convenience wrapper around :meth:`from_dict` that reads and
         parses the file first.
         """
-        raw = _json.loads(
-            Path(path).read_text(encoding="utf-8"),
+        return cls.from_json(path)
+
+    def get_metadata(self) -> MetadataDocument:
+        """Return retained source RDF, or generated metadata when none was retained."""
+        from rdfsolve.schema_models.metadata import MetadataDocument
+
+        if self.source_metadata is not None:
+            return self.source_metadata.to_document()
+        return MetadataDocument(
+            graph=self.to_void_graph(),
+            endpoint=self.about.endpoint,
+            scope="rdfsolve export of stored schema fields",
         )
-        return cls.from_dict(raw)
+
+    @classmethod
+    def from_void_source(cls, endpoint: str, name: str, **kwargs: Any) -> MinedSchema:
+        """Retrieve published VoID and return its canonical schema.
+
+        This does not fill missing statistics by querying instance data.
+        Pass discovery options such as graph_uris and get_graphs_from_store.
+        """
+        from rdfsolve.api import discover_void_source
+
+        return discover_void_source(endpoint, name, **kwargs).to_mined_schema()
 
     @classmethod
     def from_void(cls, void_ttl: str) -> MinedSchema:
@@ -685,7 +189,7 @@ class MinedSchema(BaseModel):
             >>> print(len(schema.patterns))
             435
         """
-        from rdfsolve.schema_models.void_convert import void_to_minedschema
+        from rdfsolve.schema_models.readers.void import void_to_minedschema
 
         return void_to_minedschema(void_ttl)
 
@@ -705,58 +209,24 @@ class MinedSchema(BaseModel):
             >>> print(len(schema.patterns))
             10
         """
-        from rdfsolve.schema_models.shacl_convert import shacl_to_minedschema
+        from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
 
         return shacl_to_minedschema(shacl_ttl)
 
     # NetworkX export
 
-    def to_networkx(self) -> Any:
-        """Export as a typed-object ``nx.MultiDiGraph``.
+    def to_networkx(self, *, trim_descriptions: int | None = None) -> Any:
+        """Export typed class relationships."""
+        from rdfsolve.schema_models.exporters.networkx import to_networkx
 
-        Nodes are class URIs.  Each typed-object pattern becomes a
-        directed edge.  Literal/Resource sentinels are excluded.
-        """
-        try:
-            import networkx as _nx
-        except ImportError as exc:
-            raise ImportError(
-                "networkx is required for to_networkx(); install it with: pip install networkx",
-            ) from exc
+        return to_networkx(trim_export_text(self, trim_descriptions))
 
-        graph: Any = _nx.MultiDiGraph()
-        dataset = self.about.dataset_name or ""
-
-        for pat in self.patterns:
-            if pat.object_class in _SENTINEL_OBJECTS:
-                continue
-            for uri, label in (
-                (pat.subject_class, pat.subject_label),
-                (pat.object_class, pat.object_label),
-            ):
-                if uri not in graph:
-                    graph.add_node(
-                        uri,
-                        dataset=dataset,
-                        label=label or "",
-                    )
-            graph.add_edge(
-                pat.subject_class,
-                pat.object_class,
-                predicate=pat.property_uri,
-                dataset=dataset,
-                count=pat.count,
-            )
-        return graph
-
-    # JSON-LD export
-
-    def to_jsonld(self) -> dict[str, Any]:
+    def to_jsonld(self, *, trim_descriptions: int | None = None) -> dict[str, Any]:
         """Export schema as JSON-LD by serializing the VoID graph.
 
-        This produces proper semantic RDF using VoID vocabulary,
-        serialized as JSON-LD. The result is fully interconvertible
-        with other RDF formats.
+        This is an RDF export, not the internal storage format. VoID
+        does not preserve every model field. Use :meth:`to_dict` for
+        lossless storage and :meth:`from_dict` to read either profile.
 
         Returns a JSON-LD document with:
         - void:Dataset for the schema metadata
@@ -767,7 +237,7 @@ class MinedSchema(BaseModel):
         import json
 
         # Get the VoID graph (proper semantic RDF)
-        void_graph = self.to_void_graph()
+        void_graph = self.to_void_graph(trim_descriptions=trim_descriptions)
 
         # Serialize as JSON-LD
         jsonld_str = void_graph.serialize(format="json-ld", auto_compact=True)
@@ -776,426 +246,48 @@ class MinedSchema(BaseModel):
 
     # VoID graph export
 
-    def to_void_graph(self, base_url: str | None = None) -> Any:
-        """Build an rdflib VoID Graph from the mined patterns.
+    def to_void_graph(
+        self, base_url: str | None = None, *, trim_descriptions: int | None = None
+    ) -> Graph:
+        """Export the supported VoID fields."""
+        from rdfsolve.schema_models.exporters.void import to_void_graph
 
-        Args:
-            base_url: Base URL for void:dataDump (e.g., "https://rdfsolve.bigcat-bioinformatics.nl").
-                     If provided, generates dataDump URL as {base_url}/{dataset_name}/void.ttl
+        if self.shapes is not None or self.navigation is not None:
+            import logging
 
-        Allows feeding the result into VoidParser for downstream
-        conversion to LinkML, SHACL, RDF-config, etc.
-        """
-        import json
-
-        from rdflib import Graph, Namespace, URIRef
-        from rdflib import Literal as RdfLiteral
-        from rdflib.namespace import DCTERMS, FOAF, OWL, RDF, RDFS, XSD
-
-        from rdfsolve.config import get_base_uri
-
-        # Configure namespaces
-        base_uri = get_base_uri()
-        void = Namespace("http://rdfs.org/ns/void#")
-        vocab_ns = Namespace(f"{base_uri}/vocab#")
-        partition_ns = Namespace(f"{base_uri}/schema#")
-
-        g = Graph()
-
-        # void-ext namespace for datatype partitions
-        void_ext = Namespace("http://ldf.fi/void-ext#")
-
-        # Bind standard namespaces
-        for pfx, ns in (
-            ("void", void),
-            ("void-ext", void_ext),
-            ("rdf", RDF),
-            ("rdfs", RDFS),
-            ("xsd", XSD),
-            ("dcterms", DCTERMS),
-            ("foaf", FOAF),
-            ("owl", OWL),
-        ):
-            g.bind(pfx, ns)
-
-        # Bind rdfsolve-specific namespaces
-        g.bind("vocab", vocab_ns)
-        g.bind("partition", partition_ns)
-
-        # Dataset URI: represents THE SOURCE RDF dataset
-        endpoint = self.about.endpoint
-
-        if endpoint and not endpoint.startswith(("http://localhost", "http://127.0.0.1")):
-            # Remote endpoint: use endpoint URL as dataset identifier
-            dataset_uri = URIRef(endpoint)
-            # Use schema namespace for partitions
-            base = str(partition_ns)
-        else:
-            # Local or no endpoint: use configured base URI
-            dataset_name = self.about.dataset_name or "unknown"
-            dataset_uri = URIRef(f"{base_uri}/dataset/{dataset_name}")
-            # Use schema namespace for partitions
-            base = str(partition_ns)
-
-        # void:DatasetDescription wrapper (W3C VoID spec section 3.1)
-        # The VoID document itself is described as a resource
-        from rdfsolve.version import VERSION
-
-        void_doc_uri = URIRef("")  # <> represents this document
-        g.add((void_doc_uri, RDF.type, void.DatasetDescription))
-
-        # DatasetDescription title includes the source name
-        dataset_display_name = self.about.title or self.about.dataset_name or "Unknown Dataset"
-        g.add(
-            (void_doc_uri, DCTERMS.title, RdfLiteral(f"VoID Description of {dataset_display_name}"))
+            logging.getLogger(__name__).warning(
+                "VoID does not encode SHACL profiles or composed navigation. Keep canonical JSON."
+            )
+        return to_void_graph(
+            trim_export_text(self, trim_descriptions), base_url, trim_descriptions=trim_descriptions
         )
-        g.add((void_doc_uri, DCTERMS.creator, RdfLiteral(f"rdfsolve {VERSION}")))
-        if self.about.generated_at:
-            g.add((void_doc_uri, DCTERMS.created, RdfLiteral(self.about.generated_at)))
-        g.add((void_doc_uri, FOAF.primaryTopic, dataset_uri))
-
-        # void:Dataset represents the source RDF dataset
-        g.add((dataset_uri, RDF.type, void.Dataset))
-
-        # SPARQL endpoint (only for remote endpoints)
-        if endpoint and not endpoint.startswith(("http://localhost", "http://127.0.0.1")):
-            g.add((dataset_uri, void.sparqlEndpoint, URIRef(endpoint)))
-
-        # void:dataDump URL (only for local/downloaded datasets with base_url)
-        if (
-            base_url
-            and self.about.dataset_name
-            and (not endpoint or endpoint.startswith(("http://localhost", "http://127.0.0.1")))
-        ):
-            # Generate dataDump URL pointing to the dump file location
-            datadump_url = f"{base_url.rstrip('/')}/{self.about.dataset_name}/void.ttl"
-            g.add((dataset_uri, void.dataDump, URIRef(datadump_url)))
-
-        # void:documents (only for local/downloaded datasets)
-        if (
-            not endpoint or endpoint.startswith(("http://localhost", "http://127.0.0.1"))
-        ) and self.about.document_count:
-            g.add(
-                (
-                    dataset_uri,
-                    void.documents,
-                    RdfLiteral(self.about.document_count, datatype=XSD.integer),
-                )
-            )
-
-        # Title: prefer explicit title from metadata, fallback to dataset_name
-        title_value = self.about.title or self.about.dataset_name
-        if title_value:
-            g.add((dataset_uri, DCTERMS.title, RdfLiteral(title_value)))
-
-        # Description: combine discovered description with provenance info
-        provenance_desc = (
-            f"Mined with rdfsolve {VERSION} on {self.about.generated_at or 'unknown date'}"
-        )
-        if self.about.description:
-            # Strip trailing period from discovered description if present
-            desc_clean = self.about.description.rstrip(".")
-            full_desc = f"{desc_clean}. {provenance_desc}"
-        else:
-            full_desc = provenance_desc
-        g.add((dataset_uri, DCTERMS.description, RdfLiteral(full_desc)))
-
-        # License
-        if self.about.source_license:
-            g.add((dataset_uri, DCTERMS.license, URIRef(self.about.source_license)))
-
-        # Publisher
-        if self.about.source_publisher:
-            # Try as URI first, fallback to literal if not a valid URI
-            try:
-                if self.about.source_publisher.startswith(("http://", "https://", "urn:")):
-                    g.add((dataset_uri, DCTERMS.publisher, URIRef(self.about.source_publisher)))
-                else:
-                    g.add((dataset_uri, DCTERMS.publisher, RdfLiteral(self.about.source_publisher)))
-            except Exception:
-                g.add((dataset_uri, DCTERMS.publisher, RdfLiteral(self.about.source_publisher)))
-
-        # Creators (multiple allowed)
-        if self.about.source_creator:
-            for creator in self.about.source_creator:
-                # Try as URI first, fallback to literal
-                try:
-                    if creator.startswith(("http://", "https://", "urn:")):
-                        g.add((dataset_uri, DCTERMS.creator, URIRef(creator)))
-                    else:
-                        g.add((dataset_uri, DCTERMS.creator, RdfLiteral(creator)))
-                except Exception:
-                    g.add((dataset_uri, DCTERMS.creator, RdfLiteral(creator)))
-
-        # Homepage
-        if self.about.homepage:
-            g.add((dataset_uri, FOAF.homepage, URIRef(self.about.homepage)))
-
-        # Version info
-        if self.about.source_version_iri:
-            g.add((dataset_uri, OWL.versionIRI, URIRef(self.about.source_version_iri)))
-
-        # Dates
-        if self.about.source_issued:
-            g.add((dataset_uri, DCTERMS.issued, RdfLiteral(self.about.source_issued)))
-        if self.about.source_modified:
-            g.add((dataset_uri, DCTERMS.modified, RdfLiteral(self.about.source_modified)))
-
-        # Dataset statistics
-        if self.about.class_count:
-            g.add(
-                (
-                    dataset_uri,
-                    void.classes,
-                    RdfLiteral(self.about.class_count, datatype=XSD.integer),
-                )
-            )
-        if self.about.property_count:
-            g.add(
-                (
-                    dataset_uri,
-                    void.properties,
-                    RdfLiteral(self.about.property_count, datatype=XSD.integer),
-                )
-            )
-        if self.about.triple_count_estimate:
-            g.add(
-                (
-                    dataset_uri,
-                    void.triples,
-                    RdfLiteral(self.about.triple_count_estimate, datatype=XSD.integer),
-                )
-            )
-        if self.about.distinct_subject_count:
-            g.add(
-                (
-                    dataset_uri,
-                    void.distinctSubjects,
-                    RdfLiteral(self.about.distinct_subject_count, datatype=XSD.integer),
-                )
-            )
-
-        # Extract vocabularies from patterns
-        vocabs = set()
-        for pat in self.patterns:
-            for uri in [pat.subject_class, pat.property_uri, pat.object_class]:
-                if uri and uri not in _SENTINEL_OBJECTS:
-                    # Extract namespace
-                    if "#" in uri:
-                        vocab = uri.rsplit("#", 1)[0] + "#"
-                    elif "/" in uri:
-                        vocab = uri.rsplit("/", 1)[0] + "/"
-                    else:
-                        continue
-                    # Skip W3C vocabularies
-                    if not vocab.startswith("http://www.w3.org/"):
-                        vocabs.add(vocab)
-
-        # Add vocabulary declarations
-        for vocab_uri in sorted(vocabs):
-            g.add((dataset_uri, void.vocabulary, URIRef(vocab_uri)))
-
-        # Group patterns by subject class for nested VoID structure
-        # Structure: class partition -> property partition -> object/datatype partition
-        from collections import defaultdict
-
-        # subject_class -> property_uri -> [(object_class, datatype, count), ...]
-        class_prop_objects: dict[str, dict[str, list[tuple[str, str | None, int | None]]]] = (
-            defaultdict(lambda: defaultdict(list))
-        )
-
-        # Collect labels for all URIs
-        uri_labels: dict[str, str] = {}
-        for pat in self.patterns:
-            if not pat.subject_class or pat.subject_class in _SENTINEL_OBJECTS:
-                continue
-            if not pat.property_uri:
-                continue
-
-            class_prop_objects[pat.subject_class][pat.property_uri].append(
-                (pat.object_class, pat.datatype, pat.count)
-            )
-
-            # Collect labels
-            if pat.subject_label and pat.subject_class not in _SENTINEL_OBJECTS:
-                uri_labels[pat.subject_class] = pat.subject_label
-            if pat.property_label:
-                uri_labels[pat.property_uri] = pat.property_label
-            if pat.object_label and pat.object_class not in _SENTINEL_OBJECTS:
-                uri_labels[pat.object_class] = pat.object_label
-
-        # Write rdfs:label triples for all URIs
-        for uri, label in uri_labels.items():
-            g.add((URIRef(uri), RDFS.label, RdfLiteral(label)))
-
-        # Generate nested VoID class partitions per void-generator spec
-        for subject_class in sorted(class_prop_objects.keys()):
-            # Create class partition URI
-            cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
-            class_partition_uri = URIRef(f"{base}class-{cls_hash}")
-
-            # Add class partition to dataset
-            g.add((dataset_uri, void.classPartition, class_partition_uri))
-            g.add((class_partition_uri, RDF.type, void.Dataset))
-            g.add((class_partition_uri, void["class"], URIRef(subject_class)))
-
-            # Calculate total triples for this class (sum across all properties)
-            class_triple_count = 0
-            for objects in class_prop_objects[subject_class].values():
-                for _, _, count in objects:
-                    if count is not None:
-                        class_triple_count += count
-
-            if class_triple_count > 0:
-                g.add(
-                    (
-                        class_partition_uri,
-                        void.triples,
-                        RdfLiteral(class_triple_count, datatype=XSD.integer),
-                    )
-                )
-
-            # Add property partitions within this class partition
-            for prop_uri in sorted(class_prop_objects[subject_class].keys()):
-                prop_hash = md5(prop_uri.encode(), usedforsecurity=False).hexdigest()[:8]
-                prop_partition_uri = URIRef(f"{base}class-{cls_hash}-prop-{prop_hash}")
-
-                g.add((class_partition_uri, void.propertyPartition, prop_partition_uri))
-                g.add((prop_partition_uri, RDF.type, void.Dataset))
-                g.add((prop_partition_uri, void.property, URIRef(prop_uri)))
-
-                # Calculate triples for this subject_class + property combination
-                prop_triple_count = 0
-                for _, _, count in class_prop_objects[subject_class][prop_uri]:
-                    if count is not None:
-                        prop_triple_count += count
-
-                if prop_triple_count > 0:
-                    g.add(
-                        (
-                            prop_partition_uri,
-                            void.triples,
-                            RdfLiteral(prop_triple_count, datatype=XSD.integer),
-                        )
-                    )
-
-                # Add object class partitions or datatype partitions
-                for object_class, datatype, count in class_prop_objects[subject_class][prop_uri]:
-                    if object_class == "Literal":
-                        # Add datatype partition for literals
-                        if datatype:
-                            dt_hash = md5(datatype.encode(), usedforsecurity=False).hexdigest()[:8]
-                            dt_partition_uri = URIRef(
-                                f"{base}class-{cls_hash}-prop-{prop_hash}-dt-{dt_hash}"
-                            )
-
-                            g.add(
-                                (prop_partition_uri, void_ext.datatypePartition, dt_partition_uri)
-                            )
-                            g.add((dt_partition_uri, void_ext.datatype, URIRef(datatype)))
-
-                            if count is not None and count > 0:
-                                g.add(
-                                    (
-                                        dt_partition_uri,
-                                        void.triples,
-                                        RdfLiteral(count, datatype=XSD.integer),
-                                    )
-                                )
-
-                    elif (
-                        object_class
-                        and object_class != "Resource"
-                        and object_class not in _SENTINEL_OBJECTS
-                    ):
-                        # Add nested class partition for typed objects
-                        obj_hash = md5(object_class.encode(), usedforsecurity=False).hexdigest()[:8]
-                        obj_partition_uri = URIRef(
-                            f"{base}class-{cls_hash}-prop-{prop_hash}-obj-{obj_hash}"
-                        )
-
-                        g.add((prop_partition_uri, void.classPartition, obj_partition_uri))
-                        g.add((obj_partition_uri, RDF.type, void.Dataset))
-                        g.add((obj_partition_uri, void["class"], URIRef(object_class)))
-
-                        if count is not None and count > 0:
-                            g.add(
-                                (
-                                    obj_partition_uri,
-                                    void.triples,
-                                    RdfLiteral(count, datatype=XSD.integer),
-                                )
-                            )
-
-        # Generate void:Linksets for connections between classes
-        # LinkSets provide an alternative representation showing subject -> predicate -> object
-        # This complements the nested partition structure above
-        for subject_class in class_prop_objects:
-            for prop_uri, objects in class_prop_objects[subject_class].items():
-                for object_class, _datatype, count in objects:
-                    # Only create LinkSets for typed object connections (not literals or Resources)
-                    if (
-                        object_class
-                        and object_class not in ("Literal", "Resource")
-                        and object_class not in _SENTINEL_OBJECTS
-                    ):
-                        # Create unique LinkSet URI based on subject + property + object
-                        linkset_hash = md5(
-                            f"{subject_class}|{prop_uri}|{object_class}".encode(),
-                            usedforsecurity=False,
-                        ).hexdigest()[:12]
-                        linkset_uri = URIRef(f"{base}linkset-{linkset_hash}")
-
-                        g.add((linkset_uri, RDF.type, void.Linkset))
-
-                        # subjectsTarget: blank node with void:class
-                        from rdflib import BNode
-
-                        subject_target = BNode()
-                        g.add((linkset_uri, void.subjectsTarget, subject_target))
-                        g.add((subject_target, void["class"], URIRef(subject_class)))
-
-                        # linkPredicate
-                        g.add((linkset_uri, void.linkPredicate, URIRef(prop_uri)))
-
-                        # objectsTarget: blank node with void:class
-                        object_target = BNode()
-                        g.add((linkset_uri, void.objectsTarget, object_target))
-                        g.add((object_target, void["class"], URIRef(object_class)))
-
-                        # Add triple count if available
-                        if count is not None and count > 0:
-                            g.add(
-                                (linkset_uri, void.triples, RdfLiteral(count, datatype=XSD.integer))
-                            )
-
-        _bind_discovered_prefixes(g, self.patterns)
-        return g
-
-    # LinkML export
 
     def to_linkml(
         self,
         schema_name: str | None = None,
         schema_description: str | None = None,
+        *,
+        trim_descriptions: int | None = None,
     ) -> Any:
         """Convert to LinkML SchemaDefinition with full metadata.
 
         Returns LinkML SchemaDefinition object.
         """
-        from rdfsolve.schema_models.linkml import to_linkml
+        from rdfsolve.schema_models.exporters.linkml import to_linkml
+        from rdfsolve.schema_models.exporters.text import clip_description
 
-        jsonld = self.to_jsonld()
         return to_linkml(
-            jsonld,
+            trim_export_text(self, trim_descriptions),
             schema_name=schema_name or self.about.dataset_name,
-            schema_description=schema_description,
+            schema_description=clip_description(schema_description, trim_descriptions),
         )
 
     def to_linkml_yaml(
         self,
         schema_name: str | None = None,
         schema_description: str | None = None,
+        *,
+        trim_descriptions: int | None = None,
     ) -> str:
         """Convert to LinkML YAML with full metadata.
 
@@ -1205,316 +297,77 @@ class MinedSchema(BaseModel):
 
         from linkml.generators.yamlgen import YAMLGenerator
 
-        linkml_schema = self.to_linkml(schema_name, schema_description)
+        linkml_schema = self.to_linkml(
+            schema_name, schema_description, trim_descriptions=trim_descriptions
+        )
         return cast(str, YAMLGenerator(linkml_schema).serialize())
 
-    def to_pydantic(self, schema_name: str | None = None) -> str:
-        """Generate Pydantic models from schema patterns.
+    def to_rdfconfig(
+        self,
+        *,
+        endpoint_url: str | None = None,
+        endpoint_name: str | None = None,
+        graph_uri: str | None = None,
+        trim_descriptions: int | None = None,
+    ) -> dict[str, str]:
+        """Export RDF-config from canonical patterns and source examples."""
+        from rdfsolve.schema_models.exporters.rdfconfig import to_rdfconfig
 
-        Creates a Python module with Pydantic BaseModel classes for each subject class,
-        with fields representing properties and their types.
+        return to_rdfconfig(
+            trim_export_text(self, trim_descriptions),
+            endpoint_url=endpoint_url,
+            endpoint_name=endpoint_name,
+            graph_uri=graph_uri,
+        )
 
-        Args:
-            schema_name: Name for the schema module (defaults to dataset_name)
+    def to_pydantic_classes(self) -> dict[str, type[BaseModel]]:
+        """Generate runtime classes using the same definitions as the Python export."""
+        from rdfsolve.schema_models.exporters.pydantic import build_pydantic_classes
 
-        Returns:
-            Python code string with Pydantic models
+        return build_pydantic_classes(self)
 
-        Example:
-            >>> schema = MinedSchema.from_jsonld("schema.jsonld")
-            >>> py_code = schema.to_pydantic()
-            >>> with open("models.py", "w") as f:
-            ...     f.write(py_code)
-        """
-        from collections import defaultdict
+    def client(
+        self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any
+    ) -> DatasetClient:
+        """Explore generated models by name and follow their recorded links."""
+        from rdfsolve.exploration import DatasetClient
 
-        schema_name = schema_name or self.about.dataset_name or "schema"
-        schema_name.replace("-", "_").replace(".", "_")
+        return DatasetClient(self, source, **kwargs)
 
-        # Group patterns by subject class
-        class_patterns: dict[str, list[SchemaPattern]] = defaultdict(list)
-        for pattern in self.patterns:
-            class_patterns[pattern.subject_class].append(pattern)
+    def hydrator(self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any) -> Hydrator:
+        """Read generated model fields from a source. See Hydrator for request budgets."""
+        from rdfsolve.hydration import Hydrator
 
-        # Build imports
-        imports = [
-            '"""Pydantic models generated from RDF schema patterns.',
-            "",
-            "This module provides Pydantic models for RDF data validation and API usage.",
-            "All models inherit from RDFResource and can be instantiated with:",
-            "  - uri: The RDF resource URI (required)",
-            "  - identifier: A human-readable identifier (required if present in schema)",
-            "  - Other fields as specified in the schema",
-            "",
-            "Example:",
-            "    >>> from pydantic import HttpUrl",
-            "    >>> aop = AdverseOutcomePathway(",
-            '    ...     uri=HttpUrl("http://example.org/aop/1"),',
-            '    ...     identifier="AOP:1",',
-            '    ...     label="My AOP"',
-            "    ... )",
-            "    >>> ke = KeyEvent(",
-            '    ...     uri=HttpUrl("http://example.org/ke/1"),',
-            '    ...     label="Key Event 1"',
-            "    ... )",
-            "    >>> aop.has_key_event = [ke]  # Multi-valued properties are lists",
-            '"""',
-            "",
-            "from __future__ import annotations",
-            "",
-            "from typing import Any, Optional",
-            "",
-            "from pydantic import BaseModel, ConfigDict, Field, HttpUrl",
-            "",
-            "",
-            "class RDFResource(BaseModel):",
-            '    """Base class for all RDF resources.',
-            "",
-            "    All RDF resources have a URI identifier and optional RDF types.",
-            "    This base class provides JSON-LD compatibility with @id/@type aliases.",
-            '    """',
-            "",
-            "    model_config = ConfigDict(",
-            "        populate_by_name=True,  # Allow both uri and @id",
-            "        arbitrary_types_allowed=True,",
-            "        extra='allow',  # RDF open-world: allow extra fields",
-            "    )",
-            "",
-            '    uri: HttpUrl = Field(..., description="RDF resource URI", alias="@id")',
-            '    rdf_type: list[HttpUrl] = Field(default_factory=list, alias="@type", description="RDF types (rdf:type)")',
-            "",
-            "",
-        ]
+        return Hydrator(self, source, **kwargs)
 
-        # First pass: Build URI-to-classname mapping with collision detection
-        import hashlib
-        import re
+    def to_pydantic(
+        self, schema_name: str | None = None, *, trim_descriptions: int | None = None
+    ) -> str:
+        """Generate label-named Pydantic views of observed RDF patterns."""
+        from rdfsolve.schema_models.exporters.pydantic import to_pydantic
 
-        uri_to_classname: dict[str, str] = {}
-        class_name_counts: dict[str, int] = {}  # Track usage for deduplication
+        return to_pydantic(
+            trim_export_text(self, trim_descriptions),
+            schema_name,
+            trim_descriptions=trim_descriptions,
+        )
 
-        def _generate_base_class_name(subject_class: str, first_pattern: SchemaPattern) -> str:
-            """Generate base class name from URI or label."""
-            if subject_class.startswith("_:"):
-                bnode_hash = hashlib.md5(subject_class.encode(), usedforsecurity=False).hexdigest()[
-                    :8
-                ]
-                return f"Subject{bnode_hash.capitalize()}"
+    def annotate_rdf(
+        self, graph: Graph, *, include_examples: bool = True, trim_descriptions: int | None = None
+    ) -> None:
+        """Attach source annotations and provenance."""
+        from rdfsolve.schema_models.exporters.rdf import annotate_rdf
 
-            # Prefer label if available, otherwise use URI slug
-            name_source = first_pattern.subject_label or subject_class.split("/")[-1].split("#")[-1]
-
-            # Remove parentheses and their contents (e.g., "Gene ID (NCBI)" → "Gene ID")
-            name_source = re.sub(r"\([^)]*\)", "", name_source)
-            # Convert hyphens, underscores, dots, colons to spaces, then CamelCase
-            name_source = (
-                name_source.replace("-", " ").replace("_", " ").replace(".", " ").replace(":", " ")
-            )
-            # Remove any leftover special characters
-            name_source = re.sub(r"[^\w\s]", "", name_source)
-            base_name = "".join(word.capitalize() for word in name_source.split() if word)
-
-            if not base_name or not base_name[0].isalpha():
-                base_name = f"Class{base_name}"
-            return base_name
-
-        # Build mapping with deduplication
-        for subject_class in sorted(class_patterns.keys()):
-            patterns = class_patterns[subject_class]
-            base_name = _generate_base_class_name(subject_class, patterns[0])
-
-            # Handle duplicates by adding numeric suffix
-            if base_name in class_name_counts:
-                class_name_counts[base_name] += 1
-                final_name = f"{base_name}{class_name_counts[base_name]}"
-            else:
-                class_name_counts[base_name] = 0
-                final_name = base_name
-
-            uri_to_classname[subject_class] = final_name
-
-        # Second pass: Build class models using the mapping
-        models = []
-        for subject_class in sorted(class_patterns.keys()):
-            patterns = class_patterns[subject_class]
-            first_pattern = patterns[0]
-            class_name = uri_to_classname[subject_class]
-
-            # Build class docstring with label if available
-            class_doc = f"Model for {subject_class}"
-            if first_pattern.subject_label:
-                class_doc = f"{first_pattern.subject_label} ({subject_class})"
-
-            model_lines = [
-                f"class {class_name}(RDFResource):",
-                f'    """{class_doc}.',
-                "",
-            ]
-
-            # Add pattern count info
-            pattern_count = len(patterns)
-            property_count = len({p.property_uri for p in patterns})
-            model_lines.append(f"    Patterns: {pattern_count}, Properties: {property_count}")
-            model_lines.append("")
-            model_lines.append(f"    RDF Class: {subject_class}")
-            model_lines.append('    """')
-            model_lines.append("")
-
-            # Add fields for each property
-            seen_props = set()
-            for pattern in patterns:
-                prop_uri = pattern.property_uri
-                if prop_uri in seen_props:
-                    continue
-                seen_props.add(prop_uri)
-
-                # Create safe field name
-                prop_local = prop_uri.split("/")[-1].split("#")[-1]
-                field_name = prop_local.replace("-", "_").replace(".", "_").lower()
-
-                # Strip leading underscores (Pydantic doesn't allow them)
-                field_name = field_name.lstrip("_")
-
-                # Prefix if starts with digit, is Python keyword, or is empty
-                if (
-                    not field_name
-                    or field_name[0].isdigit()
-                    or field_name
-                    in ("type", "class", "id", "uri", "rdf_type")  # Also avoid base class fields
-                ):
-                    field_name = f"prop_{field_name}"
-
-                # Check if this is an identifier field (required for instantiation)
-                is_identifier = "identifier" in field_name.lower()
-
-                # Identifiers are always strings, regardless of schema
-                if is_identifier:
-                    field_type = "str"
-                # Determine field type
-                elif pattern.object_class == "Literal":
-                    # Literals are typically single-valued (name, description, count, etc.)
-                    if pattern.datatype:
-                        dt_local = pattern.datatype.split("#")[-1]
-                        if dt_local in ("string", "str", "langString", "normalizedString", "token"):
-                            field_type = "Optional[str]"
-                        elif dt_local in (
-                            "integer",
-                            "int",
-                            "long",
-                            "nonNegativeInteger",
-                            "positiveInteger",
-                            "unsignedInt",
-                        ):
-                            field_type = "Optional[int]"
-                        elif dt_local in ("float", "double", "decimal"):
-                            field_type = "Optional[float]"
-                        elif dt_local in ("boolean", "bool"):
-                            field_type = "Optional[bool]"
-                        elif dt_local in ("date", "dateTime", "time", "gYear", "gYearMonth"):
-                            field_type = (
-                                "Optional[str]"  # Use str for dates (could import datetime)
-                            )
-                        elif dt_local in ("anyURI", "uri"):
-                            field_type = "Optional[HttpUrl]"
-                        elif dt_local == "base64Binary":
-                            field_type = "Optional[bytes]"
-                        else:
-                            field_type = "Optional[str]"  # Default for unknown datatypes
-                    else:
-                        field_type = "Optional[str]"
-                elif pattern.object_class in (
-                    "Resource",
-                    "http://www.w3.org/2000/01/rdf-schema#Resource",
-                ):
-                    # Untyped IRIs - could be multi-valued but we don't know
-                    field_type = "Optional[HttpUrl]"
-                else:
-                    # Reference to another class - use the pre-computed mapping
-                    # Object properties are typically multi-valued in RDF
-                    if pattern.object_class in uri_to_classname:
-                        obj_class_name = uri_to_classname[pattern.object_class]
-                    else:
-                        # Fallback for references to classes not in our schema
-                        obj_name_source = (
-                            pattern.object_label
-                            or pattern.object_class.split("/")[-1].split("#")[-1]
-                        )
-                        obj_name_source = re.sub(r"\([^)]*\)", "", obj_name_source)
-                        obj_name_source = (
-                            obj_name_source.replace("-", " ")
-                            .replace("_", " ")
-                            .replace(".", " ")
-                            .replace(":", " ")
-                        )
-                        obj_name_source = re.sub(r"[^\w\s]", "", obj_name_source)
-                        obj_class_name = "".join(
-                            word.capitalize() for word in obj_name_source.split() if word
-                        )
-                        if not obj_class_name or not obj_class_name[0].isalpha():
-                            obj_class_name = f"Class{obj_class_name}"
-
-                    # Use list for object properties (RDF default: properties are multi-valued)
-                    field_type = f"list[{obj_class_name}]"
-
-                # Build field description with all available info
-                desc_parts = []
-                if pattern.property_label:
-                    desc_parts.append(pattern.property_label)
-                desc_parts.append(f"Property: {prop_uri}")
-                if pattern.object_label:
-                    desc_parts.append(f"Range: {pattern.object_label}")
-                if pattern.count:
-                    desc_parts.append(f"Count: {pattern.count}")
-
-                field_desc = ". ".join(desc_parts)
-
-                # Generate field definition with appropriate default
-                if field_type.startswith("list["):
-                    # Multi-valued: use default_factory=list
-                    model_lines.append(
-                        f'    {field_name}: {field_type} = Field(default_factory=list, description="{field_desc}")'
-                    )
-                elif is_identifier:
-                    # Identifiers are recommended but optional (RDF open-world assumption)
-                    # For production APIs, you may want to make these required by changing to Field(...)
-                    model_lines.append(
-                        f'    {field_name}: Optional[str] = Field(None, description="{field_desc} (Recommended for production)")'
-                    )
-                else:
-                    # Single-valued optional (literals, IRIs)
-                    model_lines.append(
-                        f'    {field_name}: {field_type} = Field(None, description="{field_desc}")'
-                    )
-
-            if len(seen_props) == 0:
-                model_lines.append("    pass")
-
-            model_lines.append("")
-            models.append("\n".join(model_lines))
-
-        # Add forward reference resolution (for circular dependencies)
-        forward_refs = [
-            "",
-            "# Resolve forward references for circular dependencies",
-        ]
-        for class_name in sorted(uri_to_classname.values()):
-            forward_refs.append(f"{class_name}.model_rebuild()")
-
-        # Combine everything
-        code = "\n".join(imports) + "\n" + "\n".join(models) + "\n" + "\n".join(forward_refs)
-
-        # Add module-level comment
-        header = f"""# Generated from {schema_name}
-# Patterns: {len(self.patterns)}
-# Classes: {len(class_patterns)}
-# Properties: {len({p.property_uri for p in self.patterns})}
-
-"""
-        return header + code
+        annotate_rdf(
+            trim_export_text(self, trim_descriptions), graph, include_examples=include_examples
+        )
 
     def to_shacl(
         self,
         base_uri: str = "http://example.org/shapes/",
+        *,
+        activate_observed: bool = False,
+        trim_descriptions: int | None = None,
     ) -> str:
         """Convert to SHACL shapes.
 
@@ -1522,6 +375,7 @@ class MinedSchema(BaseModel):
 
         Args:
             base_uri: Base URI for shape URIs
+            activate_observed: Enforce generated one-hop templates; source profiles stay unchanged.
 
         Example:
             >>> schema = MinedSchema.from_jsonld("schema.jsonld")
@@ -1529,321 +383,23 @@ class MinedSchema(BaseModel):
             >>> print(shacl_ttl[:100])
             @prefix sh: <http://www.w3.org/ns/shacl#> .
         """
-        from rdfsolve.schema_models.shacl_convert import minedschema_to_shacl
+        from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 
-        shapes = minedschema_to_shacl(self, base_uri=base_uri)
-        result: str = shapes.to_rdf().serialize(format="turtle")
+        schema = trim_export_text(self, trim_descriptions)
+        shapes = minedschema_to_shacl(
+            schema, base_uri=base_uri, activate_observed=activate_observed
+        )
+        graph = trim_export_text(shapes, trim_descriptions).to_rdf()
+        # VoID statistics remain dataset metadata, not validation constraints.
+        from rdfsolve.schema_models.exporters.void import to_void_graph
+
+        graph += to_void_graph(schema, trim_descriptions=trim_descriptions)
+        schema.annotate_rdf(graph)
+        result: str = graph.serialize(format="turtle")
         return result
 
 
-# VoID graph helpers
-
-
-def _add_void_object(
-    g: Any,
-    pp: Any,
-    pat: SchemaPattern,
-    void_ext: Any,
-    rdfs: Any,
-    xsd: Any,
-    base: str,
-) -> None:
-    """Add object-class triple(s) for one pattern."""
-    from rdflib import URIRef
-
-    if pat.object_class == "Literal":
-        g.add((pp, void_ext.objectClass, rdfs.Literal))
-        if pat.datatype:
-            h = md5(
-                pat.datatype.encode(),
-                usedforsecurity=False,
-            ).hexdigest()[:12]
-            dt_node = URIRef(f"{base}dt_{h}")
-            g.add((pp, void_ext.datatypePartition, dt_node))
-            g.add(
-                (
-                    dt_node,
-                    void_ext.datatype,
-                    URIRef(pat.datatype),
-                )
-            )
-    elif pat.object_class == "Resource":
-        g.add((pp, void_ext.objectClass, rdfs.Resource))
-    else:
-        g.add(
-            (
-                pp,
-                void_ext.objectClass,
-                URIRef(pat.object_class),
-            )
-        )
-
-
-def _add_void_labels(
-    g: Any,
-    pat: SchemaPattern,
-    uri_ref: Any,
-    rdf_literal: Any,
-    rdfs: Any,
-) -> None:
-    """Add rdfs:label triples for subject, property, object."""
-    for uri, label in (
-        (pat.subject_class, pat.subject_label),
-        (pat.property_uri, pat.property_label),
-    ):
-        if label:
-            g.add(
-                (
-                    uri_ref(uri),
-                    rdfs.label,
-                    rdf_literal(label),
-                )
-            )
-    if pat.object_label and pat.object_class not in _SENTINEL_OBJECTS:
-        g.add(
-            (
-                uri_ref(pat.object_class),
-                rdfs.label,
-                rdf_literal(pat.object_label),
-            )
-        )
-
-
-def _bind_discovered_prefixes(
-    g: Any,
-    patterns: list[SchemaPattern],
-) -> None:
-    """Bind bioregistry-derived prefixes to the graph."""
-    for pat in patterns:
-        for uri in (
-            pat.subject_class,
-            pat.property_uri,
-            pat.object_class,
-        ):
-            if uri in _SENTINEL_OBJECTS:
-                continue
-            _, pfx, ns = uri_to_curie(uri)
-            if pfx and ns:
-                try:
-                    g.bind(pfx, ns, override=False)
-                except Exception:
-                    _log.debug(
-                        "Could not bind %s=%s",
-                        pfx,
-                        ns,
-                        exc_info=True,
-                    )
-
-
-# JSON-LD @graph parsers
-
-
-def _parse_schema_graph(
-    graph_nodes: list[Any],
-    expand: Callable[[str], str],
-    labels: dict[str, str],
-) -> list[SchemaPattern]:
-    """Parse @graph nodes into a list of SchemaPattern objects.
-
-    Supports two formats:
-    1. VoID format: nodes have void-ext:subjectClass, void-ext:objectClass, void:property
-    2. Legacy format: @id is subject class, properties map to object classes
-    """
-    patterns: list[SchemaPattern] = []
-
-    # VoID vocabulary URIs
-    void_ext_subject = "http://ldf.fi/void-ext#subjectClass"
-    void_ext_object = "http://ldf.fi/void-ext#objectClass"
-    void_property = "http://rdfs.org/ns/void#property"
-    void_triples = "http://rdfs.org/ns/void#triples"
-
-    for node in graph_nodes:
-        node_id = node.get("@id", "")
-        if not node_id:
-            continue
-
-        # Check if this is a VoID partition node
-        has_void_subject = any(expand(k) == void_ext_subject for k in node if not k.startswith("@"))
-
-        if has_void_subject:
-            # VoID format: extract from void-ext predicates
-            pat = _parse_void_partition(
-                node, expand, labels, void_ext_subject, void_ext_object, void_property, void_triples
-            )
-            if pat:
-                patterns.append(pat)
-        else:
-            # Legacy format: @id is subject class
-            sc_curie = node_id
-            sc_uri = expand(sc_curie)
-            if not sc_uri.startswith(_URI_SCHEMES):
-                continue
-
-            counts_map: dict[str, dict[str, int]] = node.get("_counts", {})
-
-            for key, val in node.items():
-                if key.startswith(("@", "_")) or key in (_GRAPH_SKIP_KEYS):
-                    continue
-                p_uri = expand(key)
-                if not p_uri.startswith(_URI_SCHEMES):
-                    continue
-                entries = val if isinstance(val, list) else [val]
-                for entry in entries:
-                    pat = _parse_schema_entry(
-                        entry, sc_uri, p_uri, key, sc_curie, expand, labels, counts_map
-                    )
-                    if pat:
-                        patterns.append(pat)
-
-    return patterns
-
-
-def _parse_void_partition(
-    node: dict[str, Any],
-    expand: Callable[[str], str],
-    labels: dict[str, str],
-    void_ext_subject: str,
-    void_ext_object: str,
-    void_property: str,
-    void_triples: str,
-) -> SchemaPattern | None:
-    """Parse a VoID partition node into a SchemaPattern."""
-    subject_class: str | None = None
-    object_class: str | None = None
-    property_uri: str | None = None
-    count: int | None = None
-    datatype: str | None = None
-
-    for key, val in node.items():
-        if key.startswith("@"):
-            continue
-
-        expanded_key = expand(key)
-
-        # Extract the @id from nested objects
-        if isinstance(val, dict):
-            val_id = val.get("@id")
-        elif isinstance(val, list) and val and isinstance(val[0], dict):
-            val_id = val[0].get("@id")
-        else:
-            val_id = val
-
-        if expanded_key == void_ext_subject and val_id:
-            subject_class = expand(val_id)
-
-        elif expanded_key == void_ext_object and val_id:
-            obj_uri = expand(val_id)
-            # Check for sentinel objects
-            if obj_uri == "http://www.w3.org/2000/01/rdf-schema#Literal":
-                object_class = "Literal"
-            elif obj_uri == "http://www.w3.org/2000/01/rdf-schema#Resource":
-                object_class = "Resource"
-            else:
-                object_class = obj_uri
-
-        elif expanded_key == void_property and val_id:
-            property_uri = expand(val_id)
-
-        elif expanded_key == void_triples:
-            # Count can be a literal value
-            if isinstance(val, dict) and "@value" in val:
-                try:
-                    count = int(val["@value"])
-                except (ValueError, TypeError):
-                    pass
-            elif isinstance(val, (int, float)):
-                count = int(val)
-
-        elif expanded_key == "http://ldf.fi/void-ext#datatype":
-            # Datatype for literals
-            if isinstance(val, dict) and "@id" in val:
-                datatype = expand(val["@id"])
-            elif isinstance(val, str):
-                datatype = expand(val)
-
-    # Validate required fields
-    if not subject_class or not property_uri or not object_class:
-        return None
-
-    if not subject_class.startswith(_URI_SCHEMES):
-        return None
-
-    return SchemaPattern(
-        subject_class=subject_class,
-        property_uri=property_uri,
-        object_class=object_class,
-        count=count,
-        datatype=datatype,
-        subject_label=labels.get(subject_class),
-        property_label=labels.get(property_uri),
-        object_label=labels.get(object_class) if object_class not in _SENTINEL_OBJECTS else None,
-    )
-
-
-def _parse_schema_entry(
-    entry: Any,
-    sc_uri: str,
-    p_uri: str,
-    key: str,
-    sc_curie: str,
-    expand: Callable[[str], str],
-    labels: dict[str, str],
-    counts_map: dict[str, dict[str, int]],
-) -> SchemaPattern | None:
-    """Parse a single @graph entry into a SchemaPattern or None."""
-    if not isinstance(entry, dict):
-        return None
-
-    obj_id = entry.get("@id")
-    obj_type = entry.get("@type")
-    base = {
-        "subject_class": sc_uri,
-        "property_uri": p_uri,
-        "subject_label": labels.get(sc_curie),
-        "property_label": labels.get(key),
-    }
-
-    try:
-        if obj_id is not None:
-            oc_uri = expand(obj_id)
-            count = counts_map.get(key, {}).get(
-                obj_id,
-                None,
-            )
-            if oc_uri in _RESOURCE_URIS:
-                return SchemaPattern(
-                    **base,
-                    object_class="Resource",
-                    count=count,
-                )
-            if oc_uri.startswith(_URI_SCHEMES):
-                return SchemaPattern(
-                    **base,
-                    object_class=oc_uri,
-                    count=count,
-                    object_label=labels.get(obj_id),
-                )
-        elif obj_type is not None:
-            dt_uri = expand(obj_type)
-            return SchemaPattern(
-                **base,
-                object_class="Literal",
-                datatype=dt_uri,
-                count=counts_map.get(key, {}).get(
-                    obj_type,
-                    None,
-                ),
-            )
-    except Exception:
-        _log.debug(
-            "Skipping invalid pattern entry",
-            exc_info=True,
-        )
-
-    return None
-
-
-# MiningResult - complete mining output
+# MiningResult
 
 
 class MiningResult(BaseModel):

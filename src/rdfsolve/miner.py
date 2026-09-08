@@ -7,12 +7,14 @@ import logging
 import os
 import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
+from typing_extensions import Self
 
 from rdfsolve._uri import get_local_name, pick_label
 from rdfsolve.mining.one_shot_strategy import OneShotStrategy
@@ -66,6 +68,7 @@ from rdfsolve.models import (
     QueryStats,
     SchemaPattern,
 )
+from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.sparql_helper import (
     EndpointError,
     EndpointTimeoutError,
@@ -114,12 +117,8 @@ class SchemaMiner:
         HTTP timeout per request (seconds).
     counts:
         Whether to also run COUNT queries for triple counts.
-    two_phase:
-        Use two-phase mining (default).  Phase 1 discovers all
-        ``rdf:type`` classes; phase 2 queries properties per
-        class.  Much gentler on heavyweight endpoints like
-        QLever/PubChem/UniProt.  Pass ``False`` for
-        single-pass strategy.
+    strategy:
+        Choose two-phase, single-pass, or one-shot mining.
     filter_service_namespaces:
         When ``True`` (the default), remove patterns whose
         subject, property, or object URI belongs to a
@@ -151,10 +150,13 @@ class SchemaMiner:
         qlever_version: dict[str, str] | None = None,
         sparql_engine: str = "",
         sparql_strategy: str = "",
-        source_name: str = "",
-        # Deprecated parameters (kept for backward compatibility)
-        two_phase: bool | None = None,
-        one_shot: bool | None = None,
+        enrich: bool = False,
+        examples_per_pattern: int = 2,
+        max_response_bytes: int = 64 * 1024 * 1024,
+        get_graphs_from_store: bool = False,
+        graph_store_url: str | None = None,
+        graph_store_dir: str | Path = "graph-store",
+        graph_store_max_bytes: int = 64 * 1024 * 1024,
     ) -> None:
         """Initialize a SchemaMiner.
 
@@ -163,10 +165,18 @@ class SchemaMiner:
                 - A string: "two-phase" (default), "single-pass", or "one-shot"
                 - A MiningStrategy instance for custom strategies
                 - None (uses "two-phase" as default)
-            two_phase: (Deprecated) Use strategy="two-phase" instead
-            one_shot: (Deprecated) Use strategy="one-shot" instead
         """
         self.endpoint_url = endpoint_url
+        self.get_graphs_from_store = get_graphs_from_store
+        self.graph_store_url = graph_store_url
+        self.graph_store_dir = Path(graph_store_dir)
+        self.graph_store_max_bytes = graph_store_max_bytes
+        if get_graphs_from_store and (not graph_store_url or not graph_uris):
+            raise ValueError("Graph Store mining requires graph_store_url and graph_uris")
+        if not 0 <= examples_per_pattern <= 20:
+            raise ValueError("examples_per_pattern must be between 0 and 20")
+        self.enrich = enrich
+        self.examples_per_pattern = examples_per_pattern
         self.graph_uris: list[str] | None = (
             [graph_uris] if isinstance(graph_uris, str) else graph_uris
         )
@@ -183,43 +193,47 @@ class SchemaMiner:
         self.qlever_version = qlever_version
 
         # Handle strategy parameter - resolve string names to strategy instances
-        self._strategy = self._resolve_strategy(strategy, two_phase, one_shot)
+        self._strategy = self._resolve_strategy(strategy)
 
         self._helper = SparqlHelper(
             endpoint_url,
             timeout=timeout,
             sparql_engine=sparql_engine,
             sparql_strategy=sparql_strategy,
-            source_name=source_name,
+            inter_request_delay=delay,
+            max_response_bytes=max_response_bytes,
         )
         self._report_path = Path(report_path) if report_path else None
         self._rc: ReportCollector | None = None
         self._ontology_classes: list[str] | None = None
+        self._declared_classes: set[str] = set()
         self.last_report: MiningReport | None = None
+
+    @property
+    def helper(self) -> SparqlHelper:
+        """Expose the miner's helper for query recording and later exploration.
+
+        The miner owns this helper and closes it on exit.
+        """
+        return self._helper
+
+    def close(self) -> None:
+        """Release the HTTP session."""
+        self._helper.close()
+
+    def __enter__(self) -> Self:
+        """Use the miner as a context manager."""
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        """Release the HTTP session after mining."""
+        self.close()
 
     def _resolve_strategy(
         self,
         strategy: str | MiningStrategy | None,
-        two_phase: bool | None,
-        one_shot: bool | None,
     ) -> MiningStrategy:
-        """Resolve strategy parameter to a MiningStrategy instance.
-
-        Handles backward compatibility with deprecated two_phase/one_shot flags.
-        """
-        # Handle deprecated parameters
-        if two_phase is not None or one_shot is not None:
-            logger.warning(
-                "Parameters 'two_phase' and 'one_shot' are deprecated. "
-                "Use strategy='two-phase', strategy='single-pass', or strategy='one-shot' instead."
-            )
-            if one_shot:
-                return OneShotStrategy()
-            elif two_phase:
-                return TwoPhaseStrategy()
-            else:
-                return SinglePassStrategy()
-
+        """Resolve a strategy name or use the supplied strategy."""
         # Handle strategy parameter
         if strategy is None:
             # Default to two-phase
@@ -289,13 +303,25 @@ class SchemaMiner:
             authors=self.authors,
             qlever_version=self.qlever_version,
             config={
+                "graph_uris": self.graph_uris,
+                "graph_scope": "within_named_graphs" if self.graph_uris else "endpoint_default",
+                "sparql_engine": self._helper.sparql_engine,
+                "sparql_strategy": self._helper.sparql_strategy,
                 "chunk_size": self.chunk_size,
                 "class_chunk_size": self.class_chunk_size,
+                "class_batch_size": self.class_batch_size,
                 "delay": self.delay,
                 "timeout": self.timeout,
+                "max_response_bytes": self._helper.max_response_bytes,
+                "max_retries": self._helper.max_retries,
+                "host_request_interval": self._helper.inter_request_delay,
                 "counts": self.counts,
                 "strategy": self._strategy.name,
                 "untyped_as_classes": self.untyped_as_classes,
+                "unsafe_paging": self.unsafe_paging,
+                "filter_service_namespaces": self.filter_service_namespaces,
+                "enrich": self.enrich,
+                "examples_per_pattern": self.examples_per_pattern,
             },
         )
         self._rc = ReportCollector(report, self._report_path)
@@ -321,6 +347,8 @@ class SchemaMiner:
             class_chunk_size=self.class_chunk_size,
             class_batch_size=self.class_batch_size,
             ontology_classes=ontology_classes,
+            chunk_size=self.chunk_size,
+            unsafe_paging=self.unsafe_paging,
         )
 
         # Run strategy
@@ -408,7 +436,7 @@ class SchemaMiner:
                     declared.add(str(class_val))
             logger.info("Found %d declared classes (owl:Class/rdfs:Class)", len(declared))
         except Exception as e:
-            logger.warning("Could not query declared classes: %s", e)
+            raise RuntimeError(f"Class declarations could not be queried: {e}") from e
         return declared
 
     def _build_about_metadata(
@@ -455,6 +483,7 @@ class SchemaMiner:
             description=discovered.get("description"),
             source_license=discovered.get("source_license"),
             source_version=discovered.get("source_version"),
+            source_version_iri=discovered.get("source_version_iri"),
             source_issued=discovered.get("source_issued"),
             source_modified=discovered.get("source_modified"),
             source_publisher=discovered.get("source_publisher"),
@@ -481,7 +510,7 @@ class SchemaMiner:
         """Query endpoint for dataset metadata using multiple patterns."""
         from rdfsolve.metadata import query_endpoint_metadata
 
-        return query_endpoint_metadata(self._helper)
+        return query_endpoint_metadata(self._helper, graph_uris=self.graph_uris)
 
     def mine(
         self,
@@ -501,9 +530,127 @@ class SchemaMiner:
         *report_path* was given at construction time, the JSON is
         flushed to disk after each phase completes.
         """
-        strategy = self._build_strategy_string()
-        started_at = datetime.now(timezone.utc).isoformat()
-        self._init_report(dataset_name, strategy, started_at)
+        with self._session(dataset_name):
+            return self._finish_schema(self._mine_schema(dataset_name))
+
+    @contextmanager
+    def _session(self, dataset_name: str | None) -> Iterator[None]:
+        """Start one report before any phase and retain failures."""
+        self._ontology_classes = None
+        self._declared_classes = set()
+        self._init_report(
+            dataset_name, self._build_strategy_string(), datetime.now(timezone.utc).isoformat()
+        )
+        self.last_report = self._report.report
+        remote_helper = self._helper
+        try:
+            if self.get_graphs_from_store:
+                from dataclasses import asdict
+
+                from rdfsolve.graph_store import download_graphs, load_downloads
+                from rdfsolve.mining.local_graph import LocalGraphHelper
+
+                downloads = download_graphs(
+                    self.graph_store_url or "",
+                    self.graph_uris or [],
+                    self.graph_store_dir,
+                    max_bytes=self.graph_store_max_bytes,
+                    timeout=self.timeout,
+                )
+                self._helper = LocalGraphHelper(
+                    self.endpoint_url,
+                    load_downloads(downloads, endpoint_url=self.endpoint_url, timeout=self.timeout),
+                )
+                self._report.report.config["graph_store"] = {
+                    "url": self.graph_store_url,
+                    "engine": "rdflib",
+                    "graphs": [asdict(item) for item in downloads],
+                }
+            yield
+        except BaseException as exc:
+            reason = f"{type(exc).__name__}: {exc}"
+            self._report.set_abort_reason(reason)
+            report = self._report.report
+            for phase in report.phases:
+                if phase.finished_at is None:
+                    self._report.finish_phase(phase, error=reason)
+            self._report.finalise(
+                pattern_count=report.pattern_count,
+                class_count=report.class_count,
+                property_count=report.property_count,
+                uris_labelled=report.unique_uris_labelled,
+            )
+            raise
+        finally:
+            if self._helper is not remote_helper:
+                self._helper.close()
+                self._helper = remote_helper
+
+    def _finish_schema(
+        self, schema: MinedSchema, annotation_iris: list[str] | None = None
+    ) -> MinedSchema:
+        """Filter the result and set final counts and times once."""
+        if self.filter_service_namespaces:
+            schema = self._apply_namespace_filter(schema)
+        if self.enrich:
+            schema.enrichment = self.query_enrichment(schema, annotation_iris=annotation_iris)
+        classes, properties = self._collect_class_property_sets(schema.patterns)
+        entity_counts = {}
+        if self.counts:
+            from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
+
+            entity_counts = query_class_entity_counts(
+                sorted(classes),
+                self._helper,
+                self.graph_uris,
+                self._report,
+                self.class_batch_size,
+                self.delay,
+            )
+        report = self._report.report
+        report.strategy = schema.about.strategy or report.strategy
+        self._report.finalise(
+            pattern_count=len(schema.patterns),
+            class_count=len(classes),
+            property_count=len(properties),
+            uris_labelled=report.unique_uris_labelled,
+        )
+        schema.about = self._build_about_metadata(
+            report.dataset_name,
+            report.strategy,
+            report.started_at,
+            schema.patterns,
+            declared_class_count=len(classes & self._declared_classes),
+            used_type_count=len(classes - self._declared_classes),
+            discovered_metadata=report.discovered_metadata,
+        )
+        schema.about.class_entity_counts = entity_counts
+        return schema
+
+    def query_enrichment(
+        self, schema: MinedSchema, *, annotation_iris: list[str] | None = None
+    ) -> SchemaEnrichment:
+        """Query definitions and observed examples with this miner's settings.
+
+        Assign the return value to ``schema.enrichment`` when called after mining.
+        No ontology or external vocabulary download is attempted.
+        """
+        from rdfsolve.mining.enrichment import query_enrichment
+
+        return query_enrichment(
+            schema,
+            self._helper,
+            self.graph_uris,
+            examples_per_pattern=self.examples_per_pattern,
+            delay=self.delay,
+            report=self._rc,
+            annotation_iris=annotation_iris,
+        )
+
+    def _mine_schema(self, dataset_name: str | None) -> MinedSchema:
+        """Mine data patterns within the active report session."""
+        strategy = self._report.report.strategy
+        started_at = self._report.report.started_at
 
         t0 = time.monotonic()
         patterns, one_shot_results = self._run_patterns_phase()
@@ -520,12 +667,13 @@ class SchemaMiner:
             dt,
         )
 
-        classes, properties = self._collect_class_property_sets(
+        classes, _ = self._collect_class_property_sets(
             patterns,
         )
 
         # Query for formally declared classes (owl:Class / rdfs:Class)
         declared_classes = self._query_declared_classes()
+        self._declared_classes = declared_classes
         declared_in_patterns = declared_classes & classes
         used_types = classes - declared_classes
 
@@ -536,18 +684,13 @@ class SchemaMiner:
             len(used_types),
         )
 
-        self._report.finalise(
-            pattern_count=len(patterns),
-            class_count=len(classes),
-            property_count=len(properties),
-            uris_labelled=len(uris_before),
-        )
+        self._report.report.unique_uris_labelled = len(uris_before)
         if one_shot_results is not None:
             self._report.report.one_shot_results = one_shot_results
             self._report.flush()
-        self.last_report = self._report.report
-
         # Query dataset metadata for MiningReport (not VoID)
+        phase = self._report.start_phase("dataset-metadata")
+        discovered_metadata: dict[str, Any] = {}
         try:
             logger.info("Querying dataset metadata...")
             discovered_metadata = self.query_dataset_metadata()
@@ -557,6 +700,9 @@ class SchemaMiner:
                 self._report.flush()
         except Exception as e:
             logger.warning("Could not query dataset metadata: %s", e)
+            self._report.finish_phase(phase, error=str(e))
+        else:
+            self._report.finish_phase(phase, items=len(discovered_metadata))
 
         about = self._build_about_metadata(
             dataset_name,
@@ -568,9 +714,6 @@ class SchemaMiner:
             discovered_metadata=discovered_metadata if discovered_metadata else {},
         )
         schema = MinedSchema(patterns=patterns, about=about)
-
-        if self.filter_service_namespaces:
-            schema = self._apply_namespace_filter(schema)
 
         return schema
 
@@ -613,23 +756,27 @@ class SchemaMiner:
         all_bindings: list[dict[str, Any]] = []
         has_rc = hasattr(self, "_rc")
         page = 0
-        for chunk in self._helper.select_chunked(
-            query_template,
-            chunk_size=effective,
-            delay_between_chunks=self.delay,
-            purpose=purpose,
-        ):
-            page += 1
-            all_bindings.extend(chunk)
-            if has_rc:
-                self._report.record_query(purpose, 0.0)
-            logger.info(
-                "  %s page %d: +%d rows (%d total)",
-                purpose,
-                page,
-                len(chunk),
-                len(all_bindings),
-            )
+        try:
+            for chunk in self._helper.select_chunked(
+                query_template,
+                chunk_size=effective,
+                delay_between_chunks=self.delay,
+                purpose=purpose,
+            ):
+                page += 1
+                all_bindings.extend(chunk)
+                if has_rc:
+                    self._report.record_query(purpose, 0.0)
+                logger.info(
+                    "  %s page %d: +%d rows (%d total)",
+                    purpose,
+                    page,
+                    len(chunk),
+                    len(all_bindings),
+                )
+        except PaginationTruncatedError as error:
+            error.partial_rows = all_bindings + error.partial_rows
+            raise
         return all_bindings
 
     def _run_typed_object(self) -> list[SchemaPattern]:
@@ -679,10 +826,10 @@ def mine_schema(
     qlever_version: dict[str, str] | None = None,
     sparql_engine: str = "",
     sparql_strategy: str = "",
-    source_name: str = "",
-    # Deprecated parameters
-    two_phase: bool | None = None,
-    one_shot: bool | None = None,
+    get_graphs_from_store: bool = False,
+    graph_store_url: str | None = None,
+    graph_store_dir: str | Path = "graph-store",
+    graph_store_max_bytes: int = 64 * 1024 * 1024,
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`.
 
@@ -715,10 +862,6 @@ def mine_schema(
     strategy:
         Mining strategy to use. Can be "two-phase" (default),
         "single-pass", "one-shot", or a MiningStrategy instance.
-    two_phase:
-        (Deprecated) Use strategy="two-phase" instead.
-    one_shot:
-        (Deprecated) Use strategy="one-shot" instead.
     report_path:
         If given, write an analytics JSON report to this path.
         The file is updated incrementally after each mining phase.
@@ -753,8 +896,12 @@ def mine_schema(
         qlever_version=qlever_version,
         sparql_engine=sparql_engine,
         sparql_strategy=sparql_strategy,
-        source_name=source_name,
-        two_phase=two_phase,
-        one_shot=one_shot,
+        get_graphs_from_store=get_graphs_from_store,
+        graph_store_url=graph_store_url,
+        graph_store_dir=graph_store_dir,
+        graph_store_max_bytes=graph_store_max_bytes,
     )
-    return miner.mine(dataset_name=dataset_name)
+    try:
+        return miner.mine(dataset_name=dataset_name)
+    finally:
+        miner.close()

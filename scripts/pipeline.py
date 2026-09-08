@@ -61,6 +61,8 @@ from typing import Any
 import yaml
 
 from rdfsolve.qlever import QleverConfig, build_provider_qleverfile, build_qleverfile
+from rdfsolve.qlever.inputs import rdf_input_files
+from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
 # Configure logging
 logging.basicConfig(
@@ -91,6 +93,8 @@ class Source:
     endpoint: str | None = None
     local_provider: str | None = None
     download_urls: list[str] = field(default_factory=list)
+    download_fields: dict[str, Any] = field(default_factory=dict)
+    local_tar_url: str | None = None
     graph_uris: list[str] = field(default_factory=list)
     keywords: list[str] = field(default_factory=list)
     bioregistry_prefix: str | None = None
@@ -105,22 +109,27 @@ class Source:
     avg_response_time: float | None = None
     delay: float | None = None
     timeout: float | None = None
+    sparql_engine: str = ""
+    sparql_strategy: str = ""
 
     @property
     def mode(self) -> SourceMode:
-        if self.endpoint and (self.local_provider or self.download_urls):
+        if self.endpoint and (self.local_provider or self.download_urls or self.local_tar_url):
             return SourceMode.BOTH
         elif self.endpoint:
             return SourceMode.REMOTE
-        elif self.local_provider or self.download_urls:
+        elif self.local_provider or self.download_urls or self.local_tar_url:
             return SourceMode.LOCAL
         return SourceMode.UNKNOWN
 
     @classmethod
     def from_dict(cls, d: dict) -> Source:
+        from rdfsolve.models.source_model import SourceModel
+
+        settings = SourceModel.model_validate(d)
+        download_fields = {k: v for k, v in d.items() if k.startswith("download_") and v}
         download_urls = []
-        for key in ["download_ttl", "download_nt", "download_nq", "download_rdf"]:
-            urls = d.get(key, [])
+        for urls in download_fields.values():
             if isinstance(urls, str):
                 urls = [urls]
             download_urls.extend(urls)
@@ -130,7 +139,9 @@ class Source:
             endpoint=d.get("endpoint"),
             local_provider=d.get("local_provider"),
             download_urls=download_urls,
-            graph_uris=d.get("graph_uris", []),
+            download_fields=download_fields,
+            local_tar_url=d.get("local_tar_url"),
+            graph_uris=settings.graph_uris,
             keywords=d.get("keywords", []),
             bioregistry_prefix=d.get("bioregistry_prefix"),
             endpoint_status=d.get("endpoint_status", "unknown"),
@@ -141,8 +152,19 @@ class Source:
             failure_count=d.get("failure_count", 0),
             avg_response_time=d.get("avg_response_time"),
             delay=d.get("delay"),
-            timeout=d.get("timeout"),
+            timeout=settings.timeout,
+            sparql_engine=settings.sparql_engine,
+            sparql_strategy=settings.sparql_strategy,
         )
+
+    def qlever_entry(self) -> dict[str, Any]:
+        """Keep download formats and tar scope at the builder boundary."""
+        return {
+            "name": self.name,
+            **self.download_fields,
+            "local_tar_url": self.local_tar_url,
+            "graph_uris": self.graph_uris,
+        }
 
 
 @dataclass
@@ -162,18 +184,29 @@ class PipelineConfig:
     sssom_sources_file: Path | None = None
     sources: list[Source] = field(default_factory=list)
 
+    get_graphs_from_store: bool = False
+    graph_store_urls: dict[str, str] = field(default_factory=dict)
+
     # Mining settings
-    timeout: float = 300.0
+    timeout: float | None = None  # Override the source timeout only when set.
     delay: float = 1.0
-    chunk_size: int = 50000
-    class_batch_size: int = 50
+    chunk_size: int = 10000
+    class_batch_size: int = 15
+    max_response_bytes: int = 64 * 1024 * 1024
     benchmark: bool = True
+    enrich: bool = True
+    examples_per_pattern: int = 1
+    trim_descriptions: int | None = None
+    navigation_hops: int = 2
+    navigation_limit: int = 100
     void_base_url: str = "https://rdfsolve.bigcat-bioinformatics.nl"
 
     # QLever settings (for local mining)
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
     base_port: int = 7019
-    qlever_startup_timeout: int = 10000  # seconds to wait for QLever to start
+    qlever_startup_timeout: int = 600  # Seconds to load the index.
+    no_download: bool = False
+    no_index: bool = False
 
     # Stage control
     skip_remote: bool = False
@@ -186,6 +219,8 @@ class PipelineConfig:
 
     # Ontology/metadata extraction
     extract_ontology: bool = False
+    ontology_scope: str = "schema"
+    ontology_as_data: bool = False
     extract_metadata: bool = False
 
     # Parallelism
@@ -241,6 +276,9 @@ class PipelineConfig:
         sources = [Source.from_dict(d) for d in raw]
 
         if names:
+            missing = sorted(set(names) - {s.name for s in sources})
+            if missing:
+                raise ValueError(f"Unknown source names: {missing}")
             sources = [s for s in sources if s.name in names]
 
         if skip_providers:
@@ -254,6 +292,11 @@ class PipelineConfig:
             skipped = before - len(sources)
             if skipped:
                 log.info(f"Skipped {skipped} sources from providers: {skip_providers}")
+
+        from collections import Counter
+        duplicates = sorted(name for name, count in Counter(s.name for s in sources).items() if count > 1)
+        if duplicates:
+            raise ValueError(f"Duplicate source names would overwrite outputs: {duplicates}. Select a registry with unique names.")
 
         sources = self._filter_by_health_checks(sources)
 
@@ -310,6 +353,7 @@ class Stage:
         self.start_time: float | None = None
         self.end_time: float | None = None
         self.results: dict[str, Any] = {}
+        self._servers: dict[int, subprocess.Popen] = {}
 
     def run(self) -> dict[str, Any]:
         """Execute the stage."""
@@ -320,20 +364,35 @@ class Stage:
         self.start_time = time.time()
         try:
             self.results = self._execute()
-            self.results["success"] = True
+            failed = bool(self.results.get("failed"))
+            produced = any(self.results.get(key) for key in
+                           ("mined", "groups_mined", "indexed_individually"))
+            skipped = bool(self.results.get("skipped"))
+            state = ("partial" if produced else "failed") if failed else (
+                "partial" if skipped and produced else "skipped" if skipped else "complete"
+            )
+            self.results["state"] = state
+            self.results["success"] = state == "complete"
         except Exception as e:
             log.exception(f"Stage {self.name} failed: {e}")
-            self.results = {"success": False, "error": str(e)}
+            self.results = {"success": False, "state": "failed", "error": str(e)}
         finally:
             self.end_time = time.time()
             elapsed = self.end_time - self.start_time
             self.results["elapsed_seconds"] = elapsed
-            log.info(f"Stage {self.name} completed in {elapsed:.1f}s")
+            log.info(f"Stage {self.name}: {self.results.get('state', 'interrupted')} in {elapsed:.1f}s")
 
         return self.results
 
     def _execute(self) -> dict[str, Any]:
         raise NotImplementedError
+
+    @staticmethod
+    def _require_complete(miner: Any) -> None:
+        report = miner.last_report
+        if report is None or report.completion_state != "complete":
+            reason = report.abort_reason if report is not None else "No mining report"
+            raise RuntimeError(f"Mining incomplete: {reason or 'see the source report'}")
 
     def _save_schema_outputs(
         self,
@@ -351,62 +410,50 @@ class Stage:
             suffix: Output file suffix
         """
         formats = self.config.output_formats
+        if self.config.trim_descriptions is not None:
+            log.warning("[%s] Export descriptions are truncated to %s characters; text is lossy",
+                        name, self.config.trim_descriptions)
+        if self.config.navigation_hops:
+            schema.discover_paths(max_hops=self.config.navigation_hops,
+                                  max_paths_per_length=self.config.navigation_limit)
+
+        # Keep canonical data for every run. Text trimming, if requested, is lossy.
+        path = output_dir / f"{name}{suffix}_schema.json"
+        path.write_text(json.dumps(schema.to_dict(trim_descriptions=self.config.trim_descriptions), indent=2), encoding="utf-8")
 
         # JSON-LD format
         if "json-ld" in formats:
             path = output_dir / f"{name}{suffix}_schema.jsonld"
-            path.write_text(json.dumps(schema.to_jsonld(), indent=2), encoding="utf-8")
+            path.write_text(json.dumps(schema.to_jsonld(trim_descriptions=self.config.trim_descriptions), indent=2), encoding="utf-8")
 
         # VoID format
         if "void" in formats:
             path = output_dir / f"{name}{suffix}_void.ttl"
             try:
-                void_graph = schema.to_void_graph(base_url=self.config.void_base_url)
+                void_graph = schema.to_void_graph(base_url=self.config.void_base_url, trim_descriptions=self.config.trim_descriptions)
                 if void_graph:
                     void_ttl = void_graph.serialize(format="turtle")
                     path.write_text(void_ttl, encoding="utf-8")
             except Exception as e:
-                log.warning(f"[{name}] Could not generate VoID: {e}")
+                raise RuntimeError(f"[{name}] Could not generate VoID: {e}") from e
 
         # SHACL format
         if "shacl" in formats:
             path = output_dir / f"{name}{suffix}_shacl.ttl"
             try:
-                shacl_ttl = schema.to_shacl()
+                shacl_ttl = schema.to_shacl(trim_descriptions=self.config.trim_descriptions)
                 path.write_text(shacl_ttl, encoding="utf-8")
             except Exception as e:
-                log.warning(f"[{name}] Could not generate SHACL: {e}")
+                raise RuntimeError(f"[{name}] Could not generate SHACL: {e}") from e
 
         # Pydantic format (Python code)
         if "pydantic" in formats:
             path = output_dir / f"{name}{suffix}_schema.py"
             try:
-                pydantic_code = schema.to_pydantic(schema_name=name)
+                pydantic_code = schema.to_pydantic(schema_name=name, trim_descriptions=self.config.trim_descriptions)
                 path.write_text(pydantic_code, encoding="utf-8")
             except Exception as e:
-                log.warning(f"[{name}] Could not generate Pydantic: {e}")
-
-        # JSON format (simplified, not JSON-LD)
-        if "json" in formats:
-            path = output_dir / f"{name}{suffix}_schema.json"
-            try:
-                simple_json = {
-                    "name": name,
-                    "pattern_count": len(schema.patterns),
-                    "patterns": [
-                        {
-                            "subject_class": p.subject_class,
-                            "property": p.property_uri,
-                            "object_class": p.object_class,
-                            "datatype": p.datatype,
-                            "count": p.count,
-                        }
-                        for p in schema.patterns
-                    ],
-                }
-                path.write_text(json.dumps(simple_json, indent=2), encoding="utf-8")
-            except Exception as e:
-                log.warning(f"[{name}] Could not generate JSON: {e}")
+                raise RuntimeError(f"[{name}] Could not generate Pydantic: {e}") from e
 
 
 class RemoteMiningStage(Stage):
@@ -429,7 +476,7 @@ class RemoteMiningStage(Stage):
         for source in sources:
             if not source.endpoint:
                 continue
-            host = urlparse(source.endpoint).netloc
+            host = urlparse(source.endpoint).hostname or source.endpoint
             if host not in host_groups:
                 host_groups[host] = []
             host_groups[host].append(source)
@@ -453,8 +500,11 @@ class RemoteMiningStage(Stage):
                     else:
                         results["skipped"].append(result["data"])
 
+        if not host_groups:
+            return {"mined": [], "failed": [], "skipped": ["No remote sources selected"]}
+
         # Mine hosts concurrently
-        max_workers = min(self.config.parallelism or 8, len(host_groups))
+        max_workers = min(max(1, self.config.parallelism), len(host_groups))
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
                 executor.submit(mine_host_sources, host, host_sources): host
@@ -466,6 +516,7 @@ class RemoteMiningStage(Stage):
                     future.result()
                 except Exception as e:
                     log.error(f"Host {host} mining failed: {e}")
+                    results["failed"].append({"host": host, "error": str(e)})
 
         # Log summary
         log.info(
@@ -490,8 +541,10 @@ class RemoteMiningStage(Stage):
         if not source.endpoint:
             return {"status": "skipped", "data": source.name}
 
+        use_graph_store = self.config.get_graphs_from_store and source.name in self.config.graph_store_urls
+
         # Skip endpoints known to be down
-        if source.endpoint_down and source.failure_count >= 3:
+        if source.endpoint_down and source.failure_count >= 3 and not use_graph_store:
             log.warning(f"[{source.name}] Skipping: endpoint marked as down")
             return {"status": "skipped", "data": source.name}
 
@@ -506,7 +559,7 @@ class RemoteMiningStage(Stage):
             except ValueError:
                 pass
 
-        if needs_health_check:
+        if needs_health_check and not use_graph_store:
             health = check_endpoint_health(source.endpoint, timeout=30)
             update_endpoint_status(source, health)
             if health.status != "up":
@@ -530,9 +583,21 @@ class RemoteMiningStage(Stage):
             report_path = source_output_dir / f"{source.name}{suffix}_report.json"
             miner = SchemaMiner(
                 endpoint_url=source.endpoint,
-                source_name=source.name,
-                timeout=self.config.timeout or source.timeout or 300,
+                get_graphs_from_store=use_graph_store,
+                graph_store_url=self.config.graph_store_urls.get(source.name),
+                graph_store_dir=source_output_dir / "downloads",
+                graph_store_max_bytes=self.config.max_response_bytes,
+                graph_uris=source.graph_uris or None,
+                timeout=(self.config.timeout if self.config.timeout is not None
+                         else source.timeout if source.timeout is not None else 300.0),
                 delay=polite_delay,
+                sparql_engine=source.sparql_engine,
+                sparql_strategy=source.sparql_strategy,
+                chunk_size=self.config.chunk_size,
+                class_batch_size=self.config.class_batch_size,
+            enrich=self.config.enrich,
+            examples_per_pattern=self.config.examples_per_pattern,
+            max_response_bytes=self.config.max_response_bytes,
                 report_path=str(report_path),
             )
 
@@ -542,6 +607,8 @@ class RemoteMiningStage(Stage):
                 result = mine_with_ontology(
                     miner,
                     extract_ontology=self.config.extract_ontology,
+                    ontology_scope=self.config.ontology_scope,
+                    ontology_as_data=self.config.ontology_as_data,
                     extract_metadata=self.config.extract_metadata,
                     dataset_name=source.name,
                 )
@@ -550,31 +617,34 @@ class RemoteMiningStage(Stage):
                 if result.ontology:
                     ontology_path = source_output_dir / f"{source.name}{suffix}_ontology.ttl"
                     try:
-                        ontology_graph = result.ontology.to_rdf_graph()
+                        ontology_graph = trim_export_text(result.ontology, self.config.trim_descriptions).to_rdf_graph()
                         if ontology_graph:
+                            schema.annotate_rdf(ontology_graph, include_examples=False, trim_descriptions=self.config.trim_descriptions)
                             ont_ttl = ontology_graph.serialize(format="turtle")
                             ontology_path.write_text(ont_ttl, encoding="utf-8")
                     except Exception as e:
-                        log.warning(f"[{source.name}] Could not generate ontology.ttl: {e}")
+                        raise RuntimeError(f"[{source.name}] Could not generate ontology.ttl: {e}") from e
                 if result.metadata:
                     metadata_path = source_output_dir / f"{source.name}{suffix}_metadata.ttl"
                     try:
-                        metadata_graph = result.metadata.to_rdf_graph()
+                        metadata_graph = trim_export_text(result.metadata, self.config.trim_descriptions).to_rdf_graph()
                         if metadata_graph:
                             meta_ttl = metadata_graph.serialize(format="turtle")
                             metadata_path.write_text(meta_ttl, encoding="utf-8")
                     except Exception as e:
-                        log.warning(f"[{source.name}] Could not generate metadata.ttl: {e}")
+                        raise RuntimeError(f"[{source.name}] Could not generate metadata.ttl: {e}") from e
             else:
                 schema = miner.mine(dataset_name=source.name)
 
-            source.endpoint_status = "up"
-            source.last_success = datetime.now(timezone.utc).isoformat()
-            source.failure_count = 0
-            source.endpoint_down = False
+            if not use_graph_store:
+                source.endpoint_status = "up"
+                source.last_success = datetime.now(timezone.utc).isoformat()
+                source.failure_count = 0
+                source.endpoint_down = False
 
             # Save schema in requested formats
             self._save_schema_outputs(schema, source_output_dir, source.name, suffix)
+            self._require_complete(miner)
 
             if miner.last_report:
                 report = {
@@ -595,10 +665,11 @@ class RemoteMiningStage(Stage):
                 return {"status": "mined", "data": {"name": source.name, "endpoint": source.endpoint}}
 
         except Exception as e:
-            source.failure_count += 1
-            source.last_error = str(e)[:500]
-            if source.failure_count >= 3:
-                source.endpoint_down = True
+            if not use_graph_store:
+                source.failure_count += 1
+                source.last_error = str(e)[:500]
+                if source.failure_count >= 3:
+                    source.endpoint_down = True
 
             log.error(f"[{source.name}] -> FAILED: {e}")
             return {"status": "failed", "data": {"name": source.name, "error": str(e)}}
@@ -640,11 +711,14 @@ class LocalMiningStage(Stage):
 
             try:
                 qleverfile = workdir / "Qleverfile"
-                if not qleverfile.exists():
+                has_index = self._has_qlever_index(workdir, source.name)
+                if not qleverfile.exists() and not has_index:
                     self._prepare_qleverfile(workdir, source, port)
 
                 index_done = workdir / ".index.done"
-                if not index_done.exists():
+                if not has_index:
+                    if self.config.no_index:
+                        raise FileNotFoundError(f"No cached index in {workdir}; prepare it before mining")
                     log.info("  Executing Qleverfile (download + index)...")
                     try:
                         self._execute_qleverfile(workdir, source)
@@ -685,24 +759,6 @@ class LocalMiningStage(Stage):
 
         return results
 
-    def _ensure_qlever_image(self):
-        """Ensure QLever Singularity image exists."""
-        image_path = self.config.data_dir / "qlever.sif"
-        if image_path.exists():
-            return
-
-        log.info("Pulling QLever Singularity image...")
-        subprocess.run(
-            [
-                "singularity",
-                "pull",
-                "--disable-cache",
-                str(image_path),
-                self.config.qlever_image,
-            ],
-            check=True,
-        )
-
     def _check_data_exists(self, workdir: Path, source: Source) -> bool:
         """Check if data files already exist."""
         for ext in ["*.ttl", "*.nt", "*.nq", "*.ttl.gz", "*.nt.gz"]:
@@ -711,20 +767,17 @@ class LocalMiningStage(Stage):
         return False
 
     def _has_qlever_index(self, workdir: Path, source_name: str) -> bool:
-        """Check if a pre-existing QLever index exists in workdir."""
-        index_spo = workdir / f"{source_name}.index.spo"
-        return index_spo.exists()
+        """Reuse existing indices; do not overwrite partial index files."""
+        from rdfsolve.qlever.index_check import has_cached_index
+
+        return has_cached_index(workdir, source_name)
 
     def _prepare_qleverfile(self, workdir: Path, source: Source, port: int):
         """Generate Qleverfile for source."""
-        entry = {
-            "name": source.name,
-            **{k: getattr(source, k) for k in dir(source) if k.startswith("download_") and getattr(source, k)},
-        }
-        if hasattr(source, "local_tar_url") and source.local_tar_url:
-            entry["local_tar_url"] = source.local_tar_url
-        if hasattr(source, "graph_uris") and source.graph_uris:
-            entry["graph_uris"] = source.graph_uris
+        qleverfile_path = workdir / "Qleverfile"
+        if qleverfile_path.exists():
+            return
+        entry = source.qlever_entry()
 
         cfg = QleverConfig(
             memory_for_queries="30G",
@@ -735,39 +788,13 @@ class LocalMiningStage(Stage):
         )
 
         qleverfile_content = build_qleverfile(
-            entry, self.config.data_dir, port, runtime="singularity", cfg=cfg
+            entry, self.config.data_dir, port, runtime="singularity", cfg=cfg, workdir=workdir
         )
 
         qleverfile_path = workdir / "Qleverfile"
-        qleverfile_path.write_text(qleverfile_content)
+        with qleverfile_path.open("x", encoding="utf-8") as stream:
+            stream.write(qleverfile_content)
         log.info(f"    Generated Qleverfile")
-
-    def _preprocess_rdf_files(self, input_files: list[Path]):
-        """Fix malformed RDF literals that cause QLever parse errors."""
-        import re
-        for rdf_file in input_files:
-            try:
-                content = rdf_file.read_text(encoding='utf-8', errors='replace')
-                original = content
-                # Fix Yes/No boolean literals
-                content = re.sub(
-                    r'"(Yes|YES|yes)"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
-                    '"true"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
-                content = re.sub(
-                    r'"(No|NO|no)"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
-                    '"false"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
-                # Fix numeric boolean literals (non-zero = true, 0 = false)
-                content = re.sub(
-                    r'"([1-9]\d*)"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
-                    '"true"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
-                content = re.sub(
-                    r'"0"\^\^<http://www\.w3\.org/2001/XMLSchema#boolean>',
-                    '"false"^^<http://www.w3.org/2001/XMLSchema#boolean>', content)
-                if content != original:
-                    log.info(f"    Fixed malformed literals in {rdf_file.name}")
-                    rdf_file.write_text(content, encoding='utf-8')
-            except Exception as e:
-                log.warning(f"    Could not preprocess {rdf_file.name}: {e}")
 
     def _execute_qleverfile(self, workdir: Path, source: Source, skip_download: bool = False):
         """Execute Qleverfile data download and indexing."""
@@ -776,7 +803,7 @@ class LocalMiningStage(Stage):
             raise ValueError(f"Qleverfile not found in {workdir}")
 
         import configparser
-        config = configparser.ConfigParser()
+        config = configparser.ConfigParser(interpolation=None)
         config.read(qleverfile_path)
 
         rdf_dir = workdir / "rdf"
@@ -786,24 +813,17 @@ class LocalMiningStage(Stage):
         rdf_format = config.get("data", "FORMAT")
         settings_json = config.get("index", "SETTINGS_JSON")
 
-        input_files = list(workdir.glob(input_files_pattern.replace("rdf/", "")))
-        if not input_files:
-            input_files = list(rdf_dir.glob(input_files_pattern.split("/")[-1]))
+        input_files = self._qlever_input_files(workdir, input_files_pattern)
 
-        if not input_files and not skip_download:
+        if not input_files and not skip_download and not self.config.no_download:
             get_data_cmd = config.get("data", "GET_DATA_CMD")
             log.info(f"    Downloading data...")
             subprocess.run(["bash", "-c", get_data_cmd], check=True, cwd=workdir)
 
-            input_files = list(workdir.glob(input_files_pattern.replace("rdf/", "")))
-            if not input_files:
-                input_files = list(rdf_dir.glob(input_files_pattern.split("/")[-1]))
+            input_files = self._qlever_input_files(workdir, input_files_pattern)
 
         if not input_files:
             raise ValueError(f"No files found matching {input_files_pattern}")
-
-        # Fix malformed boolean literals before indexing
-        self._preprocess_rdf_files(input_files)
 
         settings_path = workdir / f"{source.name}.settings.json"
         settings_path.write_text(settings_json)
@@ -821,7 +841,7 @@ class LocalMiningStage(Stage):
             str(image_path),
             "qlever-index",
             "-i",
-            source.name,
+            config.get("data", "NAME", fallback=source.name),
             "-s",
             str(settings_path),
             "-F",
@@ -829,96 +849,29 @@ class LocalMiningStage(Stage):
             *file_flags,
             "-p",
             config.get("index", "PARALLEL_PARSING"),
+            "-b",
+            config.get("index", "PARSER_BUFFER_SIZE", fallback="2GB"),
+            "-m",
+            config.get("index", "STXXL_MEMORY", fallback="16GB"),
         ]
 
         log.info(f"    Indexing {len(input_files)} files...")
         subprocess.run(cmd, cwd=workdir, check=True)
 
-    def _kill_existing_qlever_on_port(self, port: int):
-        """Kill any existing QLever server running on the specified port."""
-        try:
-            import psutil
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                try:
-                    cmdline = proc.info.get('cmdline', [])
-                    if cmdline and 'qlever-server' in ' '.join(cmdline):
-                        # Check if this process is using our port
-                        if f'-p {port}' in ' '.join(cmdline) or f'-p \'{port}\'' in ' '.join(cmdline):
-                            log.warning(f"  Killing existing QLever server (PID {proc.pid}) on port {port}")
-                            proc.kill()
-                            proc.wait(timeout=5)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-        except ImportError:
-            # psutil not available, try pkill
-            try:
-                subprocess.run(['pkill', '-f', f'qlever-server.*-p {port}'], check=False)
-            except Exception:
-                pass
+    @staticmethod
+    def _qlever_input_files(workdir: Path, patterns: str) -> list[Path]:
+        """Resolve each input glob; support legacy files outside rdf/."""
+        import glob
+        import shlex
 
-    def _qlever_start(self, workdir: Path, name: str, port: int) -> int | None:
-        """Start QLever server, return PID."""
-        # Kill any existing server on this port first
-        self._kill_existing_qlever_on_port(port)
+        files: set[Path] = set()
+        for pattern in shlex.split(patterns):
+            matches = [Path(p) for p in glob.glob(str(workdir / pattern))]
+            if not matches and pattern.startswith("rdf/"):
+                matches = [Path(p) for p in glob.glob(str(workdir / pattern[4:]))]
+            files.update(p.resolve() for p in matches if p.is_file())
+        return sorted(files)
 
-        image_path = self.config.data_dir / "qlever.sif"
-
-        cmd = [
-            "singularity",
-            "exec",
-            "--bind",
-            f"{workdir}:{workdir}",
-            "-W",
-            str(workdir),
-            str(image_path),
-            "bash",
-            "-c",
-            f"cd '{workdir}' && exec qlever-server -i '{name}' -j 8 -p '{port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '{name}'",
-        ]
-
-        log_path = workdir / "server.log"
-        with open(log_path, "w") as log_file:
-            proc = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT)
-
-        # Wait for server to start by checking log file
-        timeout = self.config.qlever_startup_timeout
-        iterations = timeout // 2  # Check every 2 seconds
-
-        log.info(f"  Waiting for QLever server (timeout: {timeout}s)...")
-
-        for i in range(iterations):
-            time.sleep(2)
-
-            # Check if process died
-            if proc.poll() is not None:
-                log.error("QLever server died during startup")
-                if log_path.exists():
-                    log.error(f"  Last log:\n{log_path.read_text()[-500:]}")
-                return None
-
-            # Check log file for ready message
-            if log_path.exists():
-                log_content = log_path.read_text()
-                if "The server is ready, listening for requests" in log_content:
-                    log.info(f"  QLever server started after ~{(i + 1) * 2}s")
-                    return proc.pid
-
-        log.error(f"QLever server did not start in {timeout}s")
-        if log_path.exists():
-            log.error(f"  Server log tail:\n{log_path.read_text()[-1000:]}")
-        proc.terminate()
-        return None
-
-    def _qlever_stop(self, pid: int):
-        """Stop QLever server."""
-        import signal
-
-        try:
-            os.kill(pid, signal.SIGTERM)
-            time.sleep(2)
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
 
     def _mine_local(self, source: Source, port: int):
         """Mine schema from local QLever instance."""
@@ -932,12 +885,17 @@ class LocalMiningStage(Stage):
         suffix = self.config.output_suffix
         report_path = output_dir / f"{source.name}{suffix}_report.json"
 
-        # Use unlimited timeout for local QLever (we control the server)
+        # Local queries use QLever, not the remote endpoint's transport hints.
         miner = SchemaMiner(
             endpoint_url=endpoint,
-            source_name=source.name,
-            timeout=86400.0,  # 24 hours - effectively unlimited for local queries
+            timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,
+            sparql_engine="qlever",
+            chunk_size=self.config.chunk_size,
+            class_batch_size=self.config.class_batch_size,
+            enrich=self.config.enrich,
+            examples_per_pattern=self.config.examples_per_pattern,
+            max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
         )
 
@@ -947,6 +905,8 @@ class LocalMiningStage(Stage):
             result = mine_with_ontology(
                 miner,
                 extract_ontology=self.config.extract_ontology,
+                ontology_scope=self.config.ontology_scope,
+                    ontology_as_data=self.config.ontology_as_data,
                 extract_metadata=self.config.extract_metadata,
                 dataset_name=source.name,
             )
@@ -955,35 +915,49 @@ class LocalMiningStage(Stage):
             if result.ontology:
                 ontology_path = output_dir / f"{source.name}{suffix}_ontology.ttl"
                 try:
-                    ontology_graph = result.ontology.to_rdf_graph()
+                    ontology_graph = trim_export_text(result.ontology, self.config.trim_descriptions).to_rdf_graph()
                     if ontology_graph:
+                        schema.annotate_rdf(ontology_graph, include_examples=False, trim_descriptions=self.config.trim_descriptions)
                         ont_ttl = ontology_graph.serialize(format="turtle")
                         ontology_path.write_text(ont_ttl, encoding="utf-8")
                 except Exception as e:
-                    log.warning(f"  Could not generate ontology.ttl: {e}")
+                    raise RuntimeError(f"  Could not generate ontology.ttl: {e}") from e
             if result.metadata:
                 metadata_path = output_dir / f"{source.name}{suffix}_metadata.ttl"
                 try:
-                    metadata_graph = result.metadata.to_rdf_graph()
+                    metadata_graph = trim_export_text(result.metadata, self.config.trim_descriptions).to_rdf_graph()
                     if metadata_graph:
                         meta_ttl = metadata_graph.serialize(format="turtle")
                         metadata_path.write_text(meta_ttl, encoding="utf-8")
                 except Exception as e:
-                    log.warning(f"  Could not generate metadata.ttl: {e}")
+                    raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
         else:
             schema = miner.mine(dataset_name=source.name)
 
-        schema_path = output_dir / f"{source.name}{suffix}_schema.jsonld"
-        schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
+        self._save_schema_outputs(schema, output_dir, source.name, suffix)
+        self._require_complete(miner)
 
-        void_path = output_dir / f"{source.name}{suffix}_void.ttl"
-        try:
-            void_graph = schema.to_void_graph()
-            if void_graph:
-                void_ttl = void_graph.serialize(format="turtle")
-                void_path.write_text(void_ttl, encoding="utf-8")
-        except Exception as e:
-            log.warning(f"  Could not generate VoID: {e}")
+
+    def _ensure_qlever_image(self):
+        """Require the prepared image; do not pull a new engine during mining."""
+        image = self.config.data_dir / "qlever.sif"
+        if not image.is_file():
+            raise FileNotFoundError(f"Prepare the QLever image before mining: {image}")
+
+    def _qlever_start(self, workdir: Path, name: str, port: int) -> int:
+        from rdfsolve.qlever.lifecycle import start_server
+
+        process = start_server(self.config.data_dir / "qlever.sif", workdir, name, port,
+                               startup_timeout=self.config.qlever_startup_timeout)
+        self._servers[process.pid] = process
+        return process.pid
+
+    def _qlever_stop(self, pid: int):
+        from rdfsolve.qlever.lifecycle import stop_server
+
+        process = self._servers.pop(pid, None)
+        if process is not None:
+            stop_server(process)
 
 
 class GroupedMiningStage(LocalMiningStage):
@@ -1001,8 +975,18 @@ class GroupedMiningStage(LocalMiningStage):
         log.info(f"Identified {len(groups)} source groups for combined mining")
 
         results = {"groups_mined": [], "failed": [], "skipped": [], "indexed_individually": []}
-        # Track sources with existing indices but no RDF (to mine individually)
+        grouped_names = {source.name for members in groups.values() for source in members}
         sources_with_existing_index: list[tuple[Source, Path]] = []
+        for source in sources:
+            if source.name not in grouped_names:
+                workdir = self.config.data_dir / "qlever_workdirs" / source.name
+                if self._has_qlever_index(workdir, source.name):
+                    sources_with_existing_index.append((source, workdir))
+                else:
+                    results["failed"].append({"name": source.name,
+                        "error": f"No cached individual index in {workdir}; use --local-only to prepare it"})
+        if not sources:
+            results["skipped"].append("No local sources selected")
         self._ensure_qlever_image()
 
         qlever_workdir = self.config.data_dir / "qlever_groups"
@@ -1024,19 +1008,43 @@ class GroupedMiningStage(LocalMiningStage):
                 continue
 
             try:
+                # Existing grouped indices do not need the original downloads.
+                if self._has_qlever_index(workdir, group_name):
+                    server_pid = self._qlever_start(workdir, group_name, port)
+                    if not server_pid:
+                        raise RuntimeError(f"Server failed to start for {group_name}")
+                    try:
+                        self._mine_grouped(group_name, group_sources, port)
+                        results["groups_mined"].append(group_name)
+                    finally:
+                        self._qlever_stop(server_pid)
+                    port += 1
+                    continue
+                if self.config.no_index:
+                    for source in group_sources:
+                        source_workdir = self.config.data_dir / "qlever_workdirs" / source.name
+                        if not self._has_qlever_index(source_workdir, source.name):
+                            results["failed"].append({"name": source.name,
+                                "error": f"No grouped or individual index for {source.name}"})
+                        else:
+                            sources_with_existing_index.append((source, source_workdir))
+                    continue
                 source_data = []
                 for source in group_sources:
                     source_workdir = self.config.data_dir / "qlever_workdirs" / source.name
                     source_workdir.mkdir(parents=True, exist_ok=True)
 
                     # Check if workdir has RDF files
-                    has_files = any(
-                        list(source_workdir.glob(ext))
-                        for ext in ["*.ttl", "*.nt", "*.nq", "rdf/*.ttl", "rdf/*.nt", "rdf/*.nq"]
-                    )
+                    has_files = bool(rdf_input_files(source_workdir))
 
                     # Download if no files exist and source has download URLs
-                    if not has_files and source.download_urls:
+                    if not has_files and self._has_qlever_index(source_workdir, source.name):
+                        sources_with_existing_index.append((source, source_workdir))
+                        continue
+                    if not has_files and not self.config.no_download and (
+                        source.download_urls or source.local_tar_url
+                        or (source_workdir / "Qleverfile").exists()
+                    ):
                         log.info(f"  -> Downloading data for {source.name}...")
                         try:
                             qleverfile = source_workdir / "Qleverfile"
@@ -1044,10 +1052,7 @@ class GroupedMiningStage(LocalMiningStage):
                                 self._prepare_qleverfile(source_workdir, source, self.config.base_port)
                             self._execute_qleverfile(source_workdir, source)
                             # Re-check for files
-                            has_files = any(
-                                list(source_workdir.glob(ext))
-                                for ext in ["*.ttl", "*.nt", "*.nq", "rdf/*.ttl", "rdf/*.nt", "rdf/*.nq"]
-                            )
+                            has_files = bool(rdf_input_files(source_workdir))
                         except Exception as dl_err:
                             log.warning(f"  -> Download failed for {source.name}: {dl_err}")
 
@@ -1057,7 +1062,9 @@ class GroupedMiningStage(LocalMiningStage):
                             log.info(f"  -> No RDF files but found existing QLever index for {source.name}")
                             sources_with_existing_index.append((source, source_workdir))
                         else:
-                            log.warning(f"  -> No RDF files in {source.name} workdir, skipping")
+                            raise FileNotFoundError(
+                                f"No prepared RDF inputs for {source.name}; decompress cached downloads first"
+                            )
                         continue
                     source_data.append((source, source_workdir))
 
@@ -1070,18 +1077,10 @@ class GroupedMiningStage(LocalMiningStage):
                 if not qleverfile.exists():
                     self._prepare_group_qleverfile(workdir, group_name, group_sources, port)
 
-                index_done = workdir / ".index.done"
-                if not index_done.exists():
-                    log.info(f"  Indexing {len(source_data)} sources...")
-                    try:
-                        self._execute_group_qleverfile(workdir, group_name, source_data)
-                        index_done.touch()
-                    except Exception as idx_err:
-                        log.error(f"  -> Indexing failed: {idx_err}")
-                        results["failed"].append(
-                            {"group": group_name, "error": f"Index failed: {idx_err}"}
-                        )
-                        continue
+                log.info(f"  Indexing {len(source_data)} sources...")
+                self._execute_group_qleverfile(workdir, group_name, source_data)
+                if not self._has_qlever_index(workdir, group_name):
+                    raise RuntimeError(f"Index command returned without a complete index: {workdir}")
 
                 log.info(f"  Starting QLever on port {port}...")
                 server_pid = self._qlever_start(workdir, group_name, port)
@@ -1164,7 +1163,10 @@ class GroupedMiningStage(LocalMiningStage):
                 hostname = urlparse(first_url).hostname
                 if hostname:
                     # Only group known multi-file providers
-                    if "pubchem" in hostname or "pubchem" in source.name:
+                    if source.name.startswith("pubchem.ftp.") or (
+                        hostname == "ftp.ncbi.nlm.nih.gov"
+                        and urlparse(first_url).path.lower().startswith("/pubchem/")
+                    ):
                         group_name = "pubchem.ftp"
                     elif "bio2rdf" in hostname or "bio2rdf" in source.name:
                         group_name = "bio2rdf"
@@ -1186,23 +1188,16 @@ class GroupedMiningStage(LocalMiningStage):
                 groups[group_name] = []
             groups[group_name].append(source)
 
-        return {k: v for k, v in groups.items() if len(v) > 1}
+        return groups
 
     def _prepare_group_qleverfile(
         self, workdir: Path, group_name: str, group_sources: list[Source], port: int
     ):
         """Generate provider Qleverfile for grouped sources."""
-        members = []
-        for source in group_sources:
-            entry = {
-                "name": source.name,
-                **{k: getattr(source, k) for k in dir(source) if k.startswith("download_") and getattr(source, k)},
-            }
-            if hasattr(source, "local_tar_url") and source.local_tar_url:
-                entry["local_tar_url"] = source.local_tar_url
-            if hasattr(source, "graph_uris") and source.graph_uris:
-                entry["graph_uris"] = source.graph_uris
-            members.append(entry)
+        qleverfile_path = workdir / "Qleverfile"
+        if qleverfile_path.exists():
+            return
+        members = [source.qlever_entry() for source in group_sources]
 
         cfg = QleverConfig(
             memory_for_queries="80G",
@@ -1213,11 +1208,12 @@ class GroupedMiningStage(LocalMiningStage):
         )
 
         qleverfile_content = build_provider_qleverfile(
-            group_name, members, self.config.data_dir, port, runtime="singularity", cfg=cfg
+            group_name, members, self.config.data_dir, port, runtime="singularity", cfg=cfg, workdir=workdir
         )
 
         qleverfile_path = workdir / "Qleverfile"
-        qleverfile_path.write_text(qleverfile_content)
+        with qleverfile_path.open("x", encoding="utf-8") as stream:
+            stream.write(qleverfile_content)
         log.info(f"  Generated provider Qleverfile")
 
     def _execute_group_qleverfile(
@@ -1229,7 +1225,6 @@ class GroupedMiningStage(LocalMiningStage):
         config = configparser.ConfigParser()
         config.read(qleverfile_path)
 
-        rdf_format = config.get("data", "FORMAT")
         settings_json = config.get("index", "SETTINGS_JSON")
 
         settings_path = workdir / f"{group_name}.settings.json"
@@ -1237,17 +1232,18 @@ class GroupedMiningStage(LocalMiningStage):
 
         input_files = []
         for source, source_workdir in source_data:
-            for ext in ["*.ttl", "*.nt", "*.nq"]:
-                for f in source_workdir.glob(ext):
-                    graph_uri = f"http://rdfsolve.org/graph/{source.name}"
-                    input_files.append((f, graph_uri))
+            files = rdf_input_files(source_workdir)
+            if not files:
+                raise ValueError(f"No prepared RDF inputs for {source.name} in {source_workdir}")
+            graph_uri = f"http://rdfsolve.org/graph/{source.name}"
+            input_files.extend((path, graph_uri) for path in files)
 
         if not input_files:
             raise ValueError(f"No input files found for group {group_name}")
 
         file_flags = []
         for file_path, graph_uri in input_files:
-            file_flags.extend(["-f", str(file_path), "-g", graph_uri])
+            file_flags.extend(["-f", str(file_path), "-F", file_path.suffix[1:], "-g", graph_uri])
 
         image_path = self.config.data_dir / "qlever.sif"
         cmd = [
@@ -1261,95 +1257,18 @@ class GroupedMiningStage(LocalMiningStage):
             group_name,
             "-s",
             str(settings_path),
-            "-F",
-            rdf_format,
             *file_flags,
             "-p",
             config.get("index", "PARALLEL_PARSING"),
+            "-b",
+            config.get("index", "PARSER_BUFFER_SIZE", fallback="2GB"),
+            "-m",
+            config.get("index", "STXXL_MEMORY", fallback="16GB"),
         ]
 
         log.info(f"  Indexing {len(input_files)} files from {len(source_data)} sources...")
         subprocess.run(cmd, cwd=workdir, check=True)
 
-    def _kill_existing_qlever_on_port(self, port: int):
-        """Kill any existing QLever server running on the specified port."""
-        try:
-            import psutil
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                try:
-                    cmdline = proc.info.get('cmdline', [])
-                    if cmdline and 'qlever-server' in ' '.join(cmdline):
-                        # Check if this process is using our port
-                        if f'-p {port}' in ' '.join(cmdline) or f'-p \'{port}\'' in ' '.join(cmdline):
-                            log.warning(f"  Killing existing QLever server (PID {proc.pid}) on port {port}")
-                            proc.kill()
-                            proc.wait(timeout=5)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-        except ImportError:
-            # psutil not available, try pkill
-            try:
-                subprocess.run(['pkill', '-f', f'qlever-server.*-p {port}'], check=False)
-            except Exception:
-                pass
-
-    def _qlever_start(self, workdir: Path, name: str, port: int) -> int | None:
-        # Kill any existing server on this port first
-        self._kill_existing_qlever_on_port(port)
-
-        image_path = self.config.data_dir / "qlever.sif"
-
-        cmd = [
-            "singularity",
-            "exec",
-            "--bind",
-            f"{workdir}:{workdir}",
-            "-W",
-            str(workdir),
-            str(image_path),
-            "bash",
-            "-c",
-            f"cd '{workdir}' && exec qlever-server -i '{name}' -j 8 -p '{port}' -m 40G -c 8G -e 4G -k 200 -s 1000s -a '{name}'",
-        ]
-
-        log_path = workdir / "server.log"
-        with open(log_path, "w") as log_file:
-            proc = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT)
-
-        timeout = self.config.qlever_startup_timeout
-        iterations = timeout // 2
-        log.info(f"  Waiting for QLever server (timeout: {timeout}s)...")
-
-        for i in range(iterations):
-            time.sleep(2)
-
-            if proc.poll() is not None:
-                log.error("QLever server died during startup")
-                if log_path.exists():
-                    log.error(f"  Last log:\n{log_path.read_text()[-500:]}")
-                return None
-
-            if log_path.exists():
-                log_content = log_path.read_text()
-                if "The server is ready, listening for requests" in log_content:
-                    log.info(f"  QLever server started after ~{(i + 1) * 2}s")
-                    return proc.pid
-
-        log.error(f"QLever server did not start in {timeout}s")
-        if log_path.exists():
-            log.error(f"  Server log tail:\n{log_path.read_text()[-1000:]}")
-        proc.terminate()
-        return None
-
-    def _qlever_stop(self, pid: int):
-        import signal
-
-        try:
-            os.kill(pid, signal.SIGTERM)
-            time.sleep(2)
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
 
     def _mine_grouped(self, group_name: str, sources: list[Source], port: int):
         from rdfsolve import SchemaMiner
@@ -1365,12 +1284,20 @@ class GroupedMiningStage(LocalMiningStage):
 
         miner = SchemaMiner(
             endpoint_url=endpoint,
-            source_name=group_name,
             graph_uris=graph_uris,
-            timeout=86400.0,
+            timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,
+            sparql_engine="qlever",
+            chunk_size=self.config.chunk_size,
+            class_batch_size=self.config.class_batch_size,
+            enrich=self.config.enrich,
+            examples_per_pattern=self.config.examples_per_pattern,
+            max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
         )
+
+        from rdfsolve.qlever.index_check import verify_named_graphs
+        verify_named_graphs(miner._helper, graph_uris)
 
         # Use mine_with_ontology if ontology extraction enabled
         if self.config.extract_ontology or self.config.extract_metadata:
@@ -1378,6 +1305,8 @@ class GroupedMiningStage(LocalMiningStage):
             result = mine_with_ontology(
                 miner,
                 extract_ontology=self.config.extract_ontology,
+                ontology_scope=self.config.ontology_scope,
+                    ontology_as_data=self.config.ontology_as_data,
                 extract_metadata=self.config.extract_metadata,
                 dataset_name=group_name,
             )
@@ -1386,59 +1315,31 @@ class GroupedMiningStage(LocalMiningStage):
             if result.ontology:
                 ontology_path = output_dir / f"{group_name}_ontology.ttl"
                 try:
-                    ontology_graph = result.ontology.to_rdf_graph()
+                    ontology_graph = trim_export_text(result.ontology, self.config.trim_descriptions).to_rdf_graph()
                     if ontology_graph:
+                        schema.annotate_rdf(ontology_graph, include_examples=False, trim_descriptions=self.config.trim_descriptions)
                         ont_ttl = ontology_graph.serialize(format="turtle")
                         ontology_path.write_text(ont_ttl, encoding="utf-8")
                 except Exception as e:
-                    log.warning(f"  Could not generate ontology.ttl: {e}")
+                    raise RuntimeError(f"  Could not generate ontology.ttl: {e}") from e
             if result.metadata:
                 metadata_path = output_dir / f"{group_name}_metadata.ttl"
                 try:
-                    metadata_graph = result.metadata.to_rdf_graph()
+                    metadata_graph = trim_export_text(result.metadata, self.config.trim_descriptions).to_rdf_graph()
                     if metadata_graph:
                         meta_ttl = metadata_graph.serialize(format="turtle")
                         metadata_path.write_text(meta_ttl, encoding="utf-8")
                 except Exception as e:
-                    log.warning(f"  Could not generate metadata.ttl: {e}")
+                    raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
         else:
             schema = miner.mine(dataset_name=group_name)
 
-        # Save schema as JSON-LD
-        schema_path = output_dir / f"{group_name}_schema.jsonld"
-        schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
-
-        # Save VoID
-        void_path = output_dir / f"{group_name}_void.ttl"
-        try:
-            void_graph = schema.to_void_graph()
-            if void_graph:
-                void_ttl = void_graph.serialize(format="turtle")
-                void_path.write_text(void_ttl, encoding="utf-8")
-        except Exception as e:
-            log.warning(f"  Could not generate VoID: {e}")
-
+        self._save_schema_outputs(schema, output_dir, group_name, self.config.output_suffix)
+        self._require_complete(miner)
+        schema_path = output_dir / f"{group_name}_schema.json"
         log.info(f"  -> Saved grouped schema to {schema_path}")
 
-    def _ensure_qlever_image(self):
-        image_path = self.config.data_dir / "qlever.sif"
-        if image_path.exists():
-            return
-
-        log.info("Pulling QLever Singularity image...")
-        subprocess.run(
-            [
-                "singularity",
-                "pull",
-                "--disable-cache",
-                str(image_path),
-                self.config.qlever_image,
-            ],
-            check=True,
-        )
-
-
-class LsLodCloudStage(Stage):
+class LsLodCloudStage(LocalMiningStage):
     """Mine the complete Local Semantic LOD Cloud.
 
     Combines ALL local sources into one mega-QLever instance.
@@ -1522,17 +1423,10 @@ class LsLodCloudStage(Stage):
         self, workdir: Path, all_sources: list[Source], port: int
     ):
         """Generate Qleverfile for LSLOD Cloud."""
-        members = []
-        for source in all_sources:
-            entry = {
-                "name": source.name,
-                **{k: getattr(source, k) for k in dir(source) if k.startswith("download_") and getattr(source, k)},
-            }
-            if hasattr(source, "local_tar_url") and source.local_tar_url:
-                entry["local_tar_url"] = source.local_tar_url
-            if hasattr(source, "graph_uris") and source.graph_uris:
-                entry["graph_uris"] = source.graph_uris
-            members.append(entry)
+        qleverfile_path = workdir / "Qleverfile"
+        if qleverfile_path.exists():
+            return
+        members = [source.qlever_entry() for source in all_sources]
 
         cfg = QleverConfig(
             memory_for_queries="250G",
@@ -1543,11 +1437,12 @@ class LsLodCloudStage(Stage):
         )
 
         qleverfile_content = build_provider_qleverfile(
-            "lslod_cloud", members, self.config.data_dir, port, runtime="singularity", cfg=cfg
+            "lslod_cloud", members, self.config.data_dir, port, runtime="singularity", cfg=cfg, workdir=workdir
         )
 
         qleverfile_path = workdir / "Qleverfile"
-        qleverfile_path.write_text(qleverfile_content)
+        with qleverfile_path.open("x", encoding="utf-8") as stream:
+            stream.write(qleverfile_content)
         log.info("  Generated LSLOD Cloud Qleverfile")
 
     def _execute_cloud_qleverfile(self, workdir: Path, source_data: list[tuple[Source, Path]]):
@@ -1565,10 +1460,11 @@ class LsLodCloudStage(Stage):
 
         input_files = []
         for source, source_workdir in source_data:
-            for ext in ["*.ttl", "*.nt", "*.nq"]:
-                for f in source_workdir.glob(ext):
-                    graph_uri = f"http://rdfsolve.org/graph/{source.name}"
-                    input_files.append((f, graph_uri))
+            files = rdf_input_files(source_workdir)
+            if not files:
+                raise ValueError(f"No prepared RDF inputs for {source.name} in {source_workdir}")
+            graph_uri = f"http://rdfsolve.org/graph/{source.name}"
+            input_files.extend((path, graph_uri) for path in files)
 
         if not input_files:
             raise ValueError("No input files found for LSLOD Cloud")
@@ -1577,7 +1473,7 @@ class LsLodCloudStage(Stage):
 
         file_flags = []
         for file_path, graph_uri in input_files:
-            file_flags.extend(["-f", str(file_path), "-g", graph_uri])
+            file_flags.extend(["-f", str(file_path), "-F", file_path.suffix[1:], "-g", graph_uri])
 
         image_path = self.config.data_dir / "qlever.sif"
         cmd = [
@@ -1596,94 +1492,14 @@ class LsLodCloudStage(Stage):
             *file_flags,
             "-p",
             config.get("index", "PARALLEL_PARSING"),
+            "-b",
+            config.get("index", "PARSER_BUFFER_SIZE", fallback="2GB"),
+            "-m",
+            config.get("index", "STXXL_MEMORY", fallback="16GB"),
         ]
 
         subprocess.run(cmd, cwd=workdir, check=True)
 
-    def _kill_existing_qlever_on_port(self, port: int):
-        """Kill any existing QLever server running on the specified port."""
-        try:
-            import psutil
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                try:
-                    cmdline = proc.info.get('cmdline', [])
-                    if cmdline and 'qlever-server' in ' '.join(cmdline):
-                        # Check if this process is using our port
-                        if f'-p {port}' in ' '.join(cmdline) or f'-p \'{port}\'' in ' '.join(cmdline):
-                            log.warning(f"  Killing existing QLever server (PID {proc.pid}) on port {port}")
-                            proc.kill()
-                            proc.wait(timeout=5)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-        except ImportError:
-            # psutil not available, try pkill
-            try:
-                subprocess.run(['pkill', '-f', f'qlever-server.*-p {port}'], check=False)
-            except Exception:
-                pass
-
-    def _qlever_start(self, workdir: Path, name: str, port: int) -> int | None:
-        """Start QLever server for LSLOD Cloud with increased resources."""
-        # Kill any existing server on this port first
-        self._kill_existing_qlever_on_port(port)
-
-        image_path = self.config.data_dir / "qlever.sif"
-
-        # Use more resources for the complete cloud
-        cmd = [
-            "singularity",
-            "exec",
-            "--bind",
-            f"{workdir}:{workdir}",
-            "-W",
-            str(workdir),
-            str(image_path),
-            "bash",
-            "-c",
-            f"cd '{workdir}' && exec qlever-server -i '{name}' -j 16 -p '{port}' -m 60G -c 12G -e 8G -k 500 -s 2000s -a '{name}'",
-        ]
-
-        log_path = workdir / "server.log"
-        with open(log_path, "w") as log_file:
-            proc = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT)
-
-        # Wait for server to start
-        timeout = self.config.qlever_startup_timeout
-        iterations = timeout // 2
-
-        log.info(f"  Waiting for QLever server (timeout: {timeout}s)...")
-
-        for i in range(iterations):
-            time.sleep(2)
-
-            if proc.poll() is not None:
-                log.error("QLever server died during startup")
-                if log_path.exists():
-                    log.error(f"  Last log:\n{log_path.read_text()[-500:]}")
-                return None
-
-            if log_path.exists():
-                log_content = log_path.read_text()
-                if "The server is ready, listening for requests" in log_content:
-                    log.info(f"  QLever server started after ~{(i + 1) * 2}s")
-                    return proc.pid
-
-        log.error(f"QLever server did not start in {timeout}s")
-        if log_path.exists():
-            log.error(f"  Server log tail:\n{log_path.read_text()[-1000:]}")
-        proc.terminate()
-        return None
-
-    def _qlever_stop(self, pid: int):
-        """Stop QLever server."""
-        import signal
-
-        try:
-            os.kill(pid, signal.SIGTERM)
-            time.sleep(2)
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
 
     def _mine_cloud(self, source_data: list[tuple[Source, Path]], port: int):
         """Mine schema from the complete LSLOD Cloud."""
@@ -1703,27 +1519,25 @@ class LsLodCloudStage(Stage):
 
         miner = SchemaMiner(
             endpoint_url=endpoint,
-            source_name="lslod_cloud",
             graph_uris=graph_uris,
-            timeout=86400.0,
+            timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,
+            sparql_engine="qlever",
+            chunk_size=self.config.chunk_size,
+            class_batch_size=self.config.class_batch_size,
+            enrich=self.config.enrich,
+            examples_per_pattern=self.config.examples_per_pattern,
+            max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
         )
 
+        from rdfsolve.qlever.index_check import verify_named_graphs
+        verify_named_graphs(miner._helper, graph_uris)
         schema = miner.mine(dataset_name="lslod_cloud")
 
-        schema_path = output_dir / "lslod_cloud_schema.jsonld"
-        schema_path.write_text(json.dumps(schema.to_jsonld(), indent=2))
-
-        void_path = output_dir / "lslod_cloud_void.ttl"
-        try:
-            void_graph = schema.to_void_graph()
-            if void_graph:
-                void_ttl = void_graph.serialize(format="turtle")
-                void_path.write_text(void_ttl, encoding="utf-8")
-        except Exception as e:
-            log.warning(f"  Could not generate VoID: {e}")
-
+        self._save_schema_outputs(schema, output_dir, "lslod_cloud", self.config.output_suffix)
+        self._require_complete(miner)
+        schema_path = output_dir / "lslod_cloud_schema.json"
         log.info(f"  -> Saved LSLOD Cloud schema to {schema_path}")
 
         log.info("  Generating SSSOM class mappings...")
@@ -1739,9 +1553,9 @@ class LsLodCloudStage(Stage):
         schemas = []
         dataset_void_uris = {}
         for source, workdir in source_data:
-            schema_path = self.config.output_dir / source.name / f"{source.name}_schema.jsonld"
+            schema_path = self.config.output_dir / source.name / f"{source.name}_schema.json"
             if schema_path.exists():
-                schema = MinedSchema.from_jsonld(schema_path)
+                schema = MinedSchema.from_json(schema_path)
                 schemas.append((source.name, schema))
                 dataset_void_uris[source.name] = f"https://rdfsolve.bigcat-bioinformatics.nl/dataset/{source.name}"
 
@@ -1849,25 +1663,6 @@ class LsLodCloudStage(Stage):
 
         log.info(f"  -> Saved connectivity stats to {stats_path}")
 
-    def _ensure_qlever_image(self):
-        """Ensure QLever Singularity image exists."""
-        image_path = self.config.data_dir / "qlever.sif"
-        if image_path.exists():
-            return
-
-        log.info("Pulling QLever Singularity image...")
-        subprocess.run(
-            [
-                "singularity",
-                "pull",
-                "--disable-cache",
-                str(image_path),
-                self.config.qlever_image,
-            ],
-            check=True,
-        )
-
-
 class SSSOMSeedingStage(Stage):
     """Seed and enrich SSSOM mappings from external sources.
 
@@ -1927,116 +1722,6 @@ class SSSOMSeedingStage(Stage):
             "enriched_mappings": total_enriched,
             "errors": errors,
             "details": results,
-        }
-
-
-class SeMRASeedingStage(Stage):
-    """Seed SeMRA mappings."""
-
-    name = "semra_seeding"
-
-    def _execute(self) -> dict[str, Any]:
-        mappings_dir = self.config.output_dir / "mappings" / "semra"
-        mappings_dir.mkdir(parents=True, exist_ok=True)
-
-        log.info(f"Seeding SeMRA mappings to {mappings_dir}")
-
-        existing = list(mappings_dir.glob("*.jsonld"))
-
-        return {
-            "output_dir": str(mappings_dir),
-            "existing_files": len(existing),
-        }
-
-
-class InstanceMatchingStage(Stage):
-    """Run instance-level matching across endpoints."""
-
-    name = "instance_matching"
-
-    def _execute(self) -> dict[str, Any]:
-
-        mappings_dir = self.config.output_dir / "mappings" / "instance_matching"
-        mappings_dir.mkdir(parents=True, exist_ok=True)
-
-        log.info(f"Running instance matching to {mappings_dir}")
-
-        # Get bioregistry prefixes from sources
-        prefixes = set()
-        for source in self.config.sources:
-            if source.bioregistry_prefix:
-                prefixes.add(source.bioregistry_prefix)
-
-        log.info(f"Found {len(prefixes)} unique bioregistry prefixes")
-
-        # This would run instance matching for each prefix
-        existing = list(mappings_dir.glob("*.jsonld"))
-
-        return {
-            "output_dir": str(mappings_dir),
-            "prefixes": len(prefixes),
-            "existing_files": len(existing),
-        }
-
-
-class ClassDerivationStage(Stage):
-    """Derive class-level mappings from instance evidence."""
-
-    name = "class_derivation"
-
-    def _execute(self) -> dict[str, Any]:
-
-        mappings_dir = self.config.output_dir / "mappings"
-        class_dir = mappings_dir / "class_derived"
-        class_dir.mkdir(parents=True, exist_ok=True)
-
-        log.info(f"Deriving class mappings to {class_dir}")
-
-        # Find instance mapping files
-        instance_files = list((mappings_dir / "instance_matching").glob("*.jsonld"))
-        sssom_files = list((mappings_dir / "sssom").glob("*.jsonld"))
-        semra_files = list((mappings_dir / "semra").glob("*.jsonld"))
-
-        input_files = instance_files + sssom_files + semra_files
-        log.info(f"Found {len(input_files)} input mapping files")
-
-        existing = list(class_dir.glob("*.jsonld"))
-
-        return {
-            "output_dir": str(class_dir),
-            "input_files": len(input_files),
-            "existing_files": len(existing),
-        }
-
-
-class InferenceStage(Stage):
-    """Expand mappings using SeMRA inference."""
-
-    name = "inference"
-
-    def _execute(self) -> dict[str, Any]:
-
-        mappings_dir = self.config.output_dir / "mappings"
-        inference_dir = mappings_dir / "inferenced"
-        inference_dir.mkdir(parents=True, exist_ok=True)
-
-        log.info(f"Running inference expansion to {inference_dir}")
-
-        # Find all mapping files
-        input_files = []
-        for subdir in ["sssom", "semra", "class_derived"]:
-            dir_path = mappings_dir / subdir
-            if dir_path.exists():
-                input_files.extend(dir_path.glob("*.jsonld"))
-
-        log.info(f"Found {len(input_files)} input mapping files")
-
-        existing = list(inference_dir.glob("*.jsonld"))
-
-        return {
-            "output_dir": str(inference_dir),
-            "input_files": len(input_files),
-            "existing_files": len(existing),
         }
 
 
@@ -2170,7 +1855,7 @@ class Pipeline:
 
         log.info("")
         log.info("=" * 70)
-        log.info(f"PIPELINE COMPLETE in {elapsed:.1f}s ({elapsed / 60:.1f} min)")
+        log.info(f"PIPELINE FINISHED in {elapsed:.1f}s ({elapsed / 60:.1f} min)")
         log.info("=" * 70)
 
         # Save results (with suffix to avoid overwriting between jobs)
@@ -2184,6 +1869,46 @@ class Pipeline:
 
 
 # CLI
+
+
+def preflight(config: PipelineConfig, *, grouped: bool, remote: bool) -> None:
+    """Check configuration and cached inputs. Do not query or start servers."""
+    log.info("Query budgets: %d rows/page, %d classes/batch, %d MiB/response, %d remote hosts",
+             config.chunk_size, config.class_batch_size, config.max_response_bytes // (1024 * 1024),
+             config.parallelism)
+    if remote:
+        selected = config.get_remote_sources()
+        if not selected:
+            raise ValueError("No remote sources selected")
+        log.info("Preflight: %d remote sources; endpoint availability is checked during mining", len(selected))
+        return
+    stage = GroupedMiningStage(config) if grouped else LocalMiningStage(config)
+    stage._ensure_qlever_image()
+    import shutil
+    if shutil.which("singularity") is None:
+        raise FileNotFoundError("singularity is not on PATH")
+    sources = config.get_local_sources()
+    if not sources:
+        raise ValueError("No local sources selected")
+    covered = set()
+    if grouped:
+        for name, members in stage._identify_groups(sources).items():
+            workdir = config.data_dir / "qlever_groups" / name
+            if stage._has_qlever_index(workdir, name):
+                covered.update(source.name for source in members)
+                log.info("Cached group %s: %s", name, workdir)
+    missing = []
+    for source in sources:
+        if source.name in covered:
+            continue
+        workdir = config.data_dir / "qlever_workdirs" / source.name
+        if stage._has_qlever_index(workdir, source.name):
+            log.info("Cached source %s: %s", source.name, workdir)
+        else:
+            missing.append(source.name)
+    if missing:
+        raise FileNotFoundError(f"Prepare indices or narrow --sources. Missing indices: {missing}")
+    log.info("Preflight: %d local sources have cached indices; loadability is checked at startup", len(sources))
 
 
 def main():
@@ -2210,6 +1935,9 @@ Examples:
         help="LSLOD Cloud mining only (all local sources)",
     )
     parser.add_argument("--sources", nargs="+", help="Specific source names")
+    parser.add_argument("--sources-file", type=Path, help="Source registry YAML")
+    parser.add_argument("--preflight", action="store_true", help="Check selected inputs without mining")
+    parser.add_argument("--no-index", action="store_true", help="Use prepared indices only")
     parser.add_argument(
         "--skip-providers", nargs="+", help="Skip sources from these providers (e.g., idsm)"
     )
@@ -2218,8 +1946,23 @@ Examples:
     parser.add_argument("--skip-inference", action="store_true", help="Skip inference")
     parser.add_argument("--skip-analysis", action="store_true", help="Skip analysis stage")
     parser.add_argument("--skip-completed", action="store_true", help="Skip sources with existing schema output files")
+    parser.add_argument("--ontology-as-data", action="store_true",
+                        help="Opt in to bounded superclass aggregation (not observed typing)")
+    parser.add_argument("--get-graphs-from-store", action="store_true", help="Mine explicitly configured small Graph Store downloads locally; fail on retrieval errors")
+    parser.add_argument("--graph-store-url", action="append", default=[], metavar="SOURCE=URL", help="Explicit Graph Store service for one source; repeat as needed")
     parser.add_argument("--extract-ontology", action="store_true", help="Extract ontology structure (TBox: rdfs:subClassOf, domain/range)")
     parser.add_argument("--extract-metadata", action="store_true", help="Extract infrastructure metadata (VoID/DCAT)")
+    parser.add_argument("--no-enrichment", action="store_true", help="Skip definitions and observed examples")
+    parser.add_argument("--navigation-hops", type=int, choices=[0, 2, 3, 4, 5, 6], default=2,
+                        help="Compose schema routes locally; 0 disables (no endpoint queries)")
+    parser.add_argument("--navigation-limit", type=int, default=100,
+                        help="Maximum saved candidate routes per hop length")
+    parser.add_argument("--examples-per-pattern", type=int, default=1, choices=range(0, 21),
+                        help="Examples per class and pattern (0: definitions only; default: 1)")
+    parser.add_argument("--trim-descriptions", type=int, default=None,
+                        help="Maximum description characters in exports; omit to keep full text (lossy)")
+    parser.add_argument("--ontology-scope", choices=["schema", "full"], default="schema",
+                        help="Export schema-relevant ontology or all queried axioms")
     parser.add_argument("--output-dir", type=Path, help="Output directory")
     parser.add_argument("--output-suffix", type=str, default="", help="Suffix for output files (e.g., _local, _remote)")
     parser.add_argument(
@@ -2229,21 +1972,64 @@ Examples:
         default=["json-ld", "void"],
         help="Output format(s) to generate (default: json-ld void)",
     )
+    parser.add_argument("--base-port", type=int, default=7019, help="First local QLever port")
+    parser.add_argument("--qlever-startup-timeout", type=int, default=600,
+                        help="Seconds to wait for an index to load")
     parser.add_argument("--data-dir", type=Path, help="Data-directory")
-    parser.add_argument("--timeout", type=float, default=300.0, help="Query timeout")
+    parser.add_argument("--no-download", action="store_true",
+                        help="Use existing RDF and indices; do not fetch source data")
+    parser.add_argument("--parallelism", type=int, default=4, help="Maximum concurrent remote hosts")
+    parser.add_argument("--chunk-size", type=int, default=10000, help="Rows per query page")
+    parser.add_argument("--class-batch-size", type=int, default=15, help="Classes per query batch")
+    parser.add_argument("--max-response-mb", type=int, default=64, help="Decompressed response limit in MiB")
+    parser.add_argument("--timeout", type=float, default=None,
+                        help="Override query timeout in seconds (default: source setting)")
     parser.add_argument("--endpoint-status-file", type=Path, help="Endpoint health check JSON")
     parser.add_argument("--download-status-file", type=Path, help="Download health check JSON")
 
     args = parser.parse_args()
 
     # Build config
-    config = PipelineConfig()
+    import signal
+
+    def stop_on_signal(signum, frame):
+        raise SystemExit(128 + signum)
+
+    signal.signal(signal.SIGTERM, stop_on_signal)
+    repo_dir = Path(__file__).resolve().parents[1]
+    config = PipelineConfig(base_dir=repo_dir.parent, repo_dir=repo_dir)
+    if args.sources_file:
+        config.sources_file = args.sources_file.resolve()
 
     if args.output_dir:
         config.output_dir = args.output_dir
     if args.data_dir:
         config.data_dir = args.data_dir
+    if not 1024 <= args.base_port <= 60000:
+        parser.error("--base-port must be between 1024 and 60000")
+    if args.qlever_startup_timeout <= 0:
+        parser.error("--qlever-startup-timeout must be positive")
+    config.base_port = args.base_port
+    config.qlever_startup_timeout = args.qlever_startup_timeout
+    if min(args.parallelism, args.chunk_size, args.class_batch_size, args.max_response_mb) < 1:
+        parser.error("Request and concurrency limits must be positive")
+    if args.timeout is not None and args.timeout <= 0:
+        parser.error("--timeout must be positive")
+    config.parallelism = args.parallelism
+    config.chunk_size = args.chunk_size
+    config.class_batch_size = args.class_batch_size
+    config.max_response_bytes = args.max_response_mb * 1024 * 1024
     config.timeout = args.timeout
+    config.get_graphs_from_store = args.get_graphs_from_store
+    for value in args.graph_store_url:
+        source_name, separator, url = value.partition("=")
+        if not source_name or not separator or not url:
+            parser.error("--graph-store-url requires SOURCE=URL")
+        config.graph_store_urls[source_name] = url
+    if config.get_graphs_from_store and not config.graph_store_urls:
+        parser.error("--get-graphs-from-store requires --graph-store-url SOURCE=URL")
+    config.no_download = args.no_download
+    config.no_index = args.no_index
     config.output_suffix = args.output_suffix
     config.output_formats = args.output_formats
     config.endpoint_status_file = args.endpoint_status_file
@@ -2255,7 +2041,18 @@ Examples:
     config.skip_remote = args.local_only or args.grouped_only or args.lslod_cloud_only
     config.skip_local = args.remote_only or args.grouped_only or args.lslod_cloud_only
     config.extract_ontology = args.extract_ontology
+    config.ontology_scope = args.ontology_scope
+    config.ontology_as_data = args.ontology_as_data
     config.extract_metadata = args.extract_metadata
+    config.enrich = not args.no_enrichment
+    config.examples_per_pattern = args.examples_per_pattern
+    config.trim_descriptions = args.trim_descriptions
+    if config.trim_descriptions is not None and config.trim_descriptions < 0:
+        parser.error("--trim-descriptions must be nonnegative")
+    config.navigation_hops = args.navigation_hops
+    config.navigation_limit = args.navigation_limit
+    if config.navigation_limit < 0:
+        parser.error("--navigation-limit must be nonnegative")
 
     # Load sources
     config.load_sources(args.sources, skip_providers=args.skip_providers)
@@ -2264,6 +2061,11 @@ Examples:
         log.error("No sources loaded. Check sources.yaml or --sources argument.")
         sys.exit(1)
 
+    if args.preflight:
+        preflight(config, grouped=args.grouped_only, remote=args.remote_only)
+        return
+
+    config.output_dir.mkdir(parents=True, exist_ok=True)
     # Build pipeline
     pipeline = Pipeline(config)
 
@@ -2282,12 +2084,9 @@ Examples:
 
         if not config.skip_mappings:
             pipeline.add_stage(SSSOMSeedingStage)
-            pipeline.add_stage(SeMRASeedingStage)
-            pipeline.add_stage(InstanceMatchingStage)
-            pipeline.add_stage(ClassDerivationStage)
 
         if not config.skip_inference:
-            pipeline.add_stage(InferenceStage)
+            log.info("Inference is a separate workflow: scripts/infer_mappings.py")
 
         if not args.skip_analysis:
             pipeline.add_stage(AnalysisStage)

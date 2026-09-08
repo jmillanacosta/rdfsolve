@@ -1,7 +1,28 @@
 """Tests for SHACL conversion functions."""
 
-from rdfsolve.schema_models.core import AboutMetadata, MinedSchema, SchemaPattern
-from rdfsolve.schema_models.shacl_convert import minedschema_to_shacl, shacl_to_minedschema
+from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.pattern import SchemaPattern
+from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
+from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
+
+
+def test_unknown_kind_is_not_an_iri_and_union_kinds_are_not_collapsed(caplog):
+    import pytest
+
+    source = """
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        <urn:shape> a sh:NodeShape; sh:targetClass <urn:A>;
+            sh:property [sh:path <urn:p>; sh:nodeKind sh:BlankNodeOrLiteral],
+                [sh:path <urn:q>] .
+    """
+    schema = shacl_to_minedschema(source)
+    assert "Retain 1 SHACL branches" in caplog.text
+    assert {(p.property_uri, p.object_class) for p in schema.patterns} == {
+        ("urn:p", "BlankNode"), ("urn:p", "Literal")
+    }
+    with pytest.raises(ValueError, match="Invalid sh:nodeKind"):
+        shacl_to_minedschema(source.replace("sh:BlankNodeOrLiteral", "<urn:NotLiteral>"))
 
 
 def test_roundtrip():
@@ -33,12 +54,8 @@ def test_roundtrip():
 
     assert len(roundtrip.patterns) == len(original.patterns)
 
-    original_keys = {
-        (p.subject_class, p.property_uri, p.object_class) for p in original.patterns
-    }
-    roundtrip_keys = {
-        (p.subject_class, p.property_uri, p.object_class) for p in roundtrip.patterns
-    }
+    original_keys = {(p.subject_class, p.property_uri, p.object_class) for p in original.patterns}
+    roundtrip_keys = {(p.subject_class, p.property_uri, p.object_class) for p in roundtrip.patterns}
     assert original_keys == roundtrip_keys
 
 
@@ -83,7 +100,7 @@ def test_roundtrip_with_multiple_classes():
 
 def test_from_shacl_method():
     """Test MinedSchema.from_shacl() method."""
-    from rdfsolve.schema_models.shacl_convert import minedschema_to_shacl
+    from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 
     original = MinedSchema(
         patterns=[
@@ -139,3 +156,35 @@ def test_datatype_preservation():
     original_datatypes = {(p.property_uri, p.datatype) for p in original.patterns}
     roundtrip_datatypes = {(p.property_uri, p.datatype) for p in roundtrip.patterns}
     assert original_datatypes == roundtrip_datatypes
+
+
+def test_mixed_values_use_alternatives_not_conflicting_node_kinds():
+    """Regress the mixed literal/resource shape produced by mining."""
+    from rdflib import Graph, Namespace
+    from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
+
+    schema = MinedSchema(
+        about=AboutMetadata.build(dataset_name="mixed"),
+        patterns=[
+            SchemaPattern(
+                subject_class="urn:A", property_uri="urn:p", object_class=kind, datatype=datatype
+            )
+            for kind, datatype in [
+                ("urn:B", None),
+                ("Resource", None),
+                ("BlankNode", None),
+                ("Literal", "http://www.w3.org/2001/XMLSchema#string"),
+            ]
+        ],
+    )
+    graph = Graph().parse(data=schema.to_shacl(), format="turtle")
+    sh = Namespace("http://www.w3.org/ns/shacl#")
+    heads = list(graph.objects(None, sh["or"]))
+    assert len(heads) == 1
+    assert len(list(graph.items(heads[0]))) == 4
+    assert all(
+        len(list(graph.objects(subject, sh.nodeKind))) == 1
+        for subject in graph.subjects(sh.nodeKind, None)
+    )
+    restored = MinedSchema.from_shacl(schema.to_shacl())
+    assert {p.object_class for p in restored.patterns} == {p.object_class for p in schema.patterns}

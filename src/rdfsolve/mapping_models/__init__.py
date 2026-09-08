@@ -16,7 +16,7 @@ from rdfsolve.mapping_models.instance import (
 )
 from rdfsolve.mapping_models.semra import SemraMapping
 from rdfsolve.mapping_models.sssom import SsomMapping
-from rdfsolve.schema_models.core import AboutMetadata
+from rdfsolve.schema_models.about import AboutMetadata
 
 __all__ = [
     "SKOS_NARROW_MATCH",

@@ -36,6 +36,7 @@ class QleverConfig:
     memory_for_queries: str = "500G"
     timeout: str = "9999999999s"
     parser_buffer_size: str = "8GB"
+    stxxl_memory: str = "16GB"
     parallel_parsing: bool = False
     num_triples_per_batch: int = 1_000_000
     access_token: str | None = None
@@ -77,6 +78,7 @@ CAT_INPUT_FILES      = {cat_input_files}
 SETTINGS_JSON        = {settings_json}
 PARALLEL_PARSING     = {parallel_parsing}
 PARSER_BUFFER_SIZE   = {parser_buffer_size}
+STXXL_MEMORY         = {stxxl_memory}
 
 [server]
 PORT              = {port}
@@ -632,6 +634,7 @@ def _render_qleverfile(
         runtime=runtime,
         parallel_parsing="true" if cfg.parallel_parsing else "false",
         parser_buffer_size=cfg.parser_buffer_size,
+        stxxl_memory=cfg.stxxl_memory,
         memory_for_queries=cfg.memory_for_queries,
         timeout=cfg.timeout,
         image=cfg.image,
@@ -647,6 +650,8 @@ def build_qleverfile(
     port: int,
     runtime: str,
     cfg: QleverConfig | None = None,
+    *,
+    workdir: Path | None = None,
 ) -> str:
     """Build a Qleverfile for a single sources.yaml entry.
 
@@ -655,7 +660,7 @@ def build_qleverfile(
     """
     cfg = cfg or QleverConfig()
     name = entry.get("name", "unknown")
-    workdir = (data_dir / "qlever_workdirs" / name).resolve()
+    workdir = (workdir or data_dir / "qlever_workdirs" / name).resolve()
     rdf_subdir = "rdf"
     src_data_dir = f"{workdir}/{rdf_subdir}"
 
@@ -709,10 +714,12 @@ def build_provider_qleverfile(
     port: int,
     runtime: str,
     cfg: QleverConfig | None = None,
+    *,
+    workdir: Path | None = None,
 ) -> str:
     """Build a combined Qleverfile for all members of a provider group."""
     cfg = cfg or QleverConfig()
-    workdir = (data_dir / "qlever_workdirs" / provider).resolve()
+    workdir = (workdir or data_dir / "qlever_workdirs" / provider).resolve()
     rdf_subdir = "rdf"
     src_data_dir = f"{workdir}/{rdf_subdir}"
 
@@ -742,7 +749,7 @@ def build_provider_qleverfile(
                     merged[key] = (
                         existing if isinstance(existing, list) else [existing]
                     ) + new_urls
-        return build_qleverfile(merged, data_dir, port, runtime, cfg=cfg)
+        return build_qleverfile(merged, data_dir, port, runtime, cfg=cfg, workdir=workdir)
 
     # Tar-based provider
     all_subdirs: list[str] = []

@@ -162,6 +162,11 @@ fabric.properties
 .idea/codestream.xml
 
 ### JupyterNotebooks ###
+# Keep only the query and typed-client notebooks in Git.
+*.ipynb
+!/notebooks/sparql_helper/**/*.ipynb
+!/notebooks/pydantic_clients/**/*.ipynb
+
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
 
@@ -918,3 +923,14 @@ notes/*
 .vscode/settings.json
 data/*
 /src/logs/
+rdfsolve_pipeline.svg
+docs/known-limitations.md
+KNOWN_LIMITATIONS.md
+scripts/MINING.md
+
+# Local editor formatting settings
+/.markdownlint.json
+/.prettierrc.json
+notebooks/*_summary.json
+notebooks/*models.py
+notebooks/*.ttl

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from rdfsolve.mining.metadata_mining import MetadataMiner
 from rdfsolve.mining.ontology_as_data import (
@@ -39,7 +39,7 @@ def _query_owl_class_superclasses(
         limit: Maximum number of superclasses to return (default 500 to prevent OOM)
 
     Returns:
-        List of superclass URIs (parents of owl:Class instances), limited to top N
+        List of superclass URIs. Fail if the configured limit is reached.
     """
     g_clause = ""
     if graph_uris:
@@ -58,7 +58,7 @@ WHERE {{
     ?child <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?parent .
     FILTER(isURI(?parent))
     FILTER(!isBlank(?parent))
-  {"}}" if g_clause else ""}
+  {"}" if g_clause else ""}
 }}
 GROUP BY ?parent
 ORDER BY DESC(?count)
@@ -67,6 +67,10 @@ LIMIT {limit}"""
     try:
         result = helper.select(query, purpose="owl-class-superclasses")
         bindings = result.get("results", {}).get("bindings", [])
+        if len(bindings) >= limit:
+            raise ValueError(
+                f"Ontology superclass query reached limit {limit}; results may be truncated"
+            )
         classes = []
         for row in bindings:
             class_uri = row.get("parent", {}).get("value")
@@ -76,8 +80,7 @@ LIMIT {limit}"""
         logger.info(f"Found {len(classes)} superclasses of owl:Class instances (top {limit})")
         return classes
     except Exception as e:
-        logger.warning(f"Failed to query owl:Class superclasses: {e}")
-        return []
+        raise RuntimeError(f"Failed to query owl:Class superclasses: {e}") from e
 
 
 def mine_with_ontology(
@@ -85,6 +88,9 @@ def mine_with_ontology(
     extract_ontology: bool = False,
     extract_metadata: bool = False,
     dataset_name: str | None = None,
+    ontology_graph_uris: list[str] | None = None,
+    ontology_scope: Literal["schema", "full"] = "schema",
+    ontology_as_data: bool = False,
 ) -> MiningResult:
     """Mine schema with optional ontology and metadata extraction.
 
@@ -92,39 +98,95 @@ def mine_with_ontology(
         miner: Configured SchemaMiner instance
         extract_ontology: Extract TBox (class hierarchies, domain/range)
         extract_metadata: Extract infrastructure metadata (VoID/DCAT)
+        ontology_as_data: Opt in to bounded superclass aggregation. This is
+            inferred evidence, not observed instance typing. Limit hits fail.
         dataset_name: Optional dataset name to attach to schema metadata
+        ontology_graph_uris: Explicit graph URIs to mine for ontology.
+            If provided, these graphs are mined specifically for ontology triples.
+            If None, uses miner.graph_uris or default graph.
+        ontology_scope: Keep the schema's classes and ancestors, or all queried axioms.
 
     Returns:
         MiningResult with data schema, ontology, and metadata
     """
+    if ontology_scope not in ("schema", "full"):
+        raise ValueError("ontology_scope must be schema or full")
+    with miner._session(dataset_name):
+        miner._report.report.config["ontology_scope"] = ontology_scope
+        miner._report.report.config["ontology_as_data"] = ontology_as_data
+        result = _mine_with_ontology(
+            miner,
+            extract_ontology,
+            extract_metadata,
+            dataset_name,
+            ontology_graph_uris,
+            ontology_as_data,
+            ontology_scope,
+        )
+        ontology_iris = result.ontology.term_iris() if result.ontology else []
+        annotations = None
+        shared_scope = ontology_graph_uris is None or ontology_graph_uris == miner.graph_uris
+        if ontology_iris and (not miner.enrich or not shared_scope):
+            from rdfsolve.mining.enrichment import query_enrichment
+            from rdfsolve.schema_models.core import MinedSchema
+
+            annotations = query_enrichment(
+                MinedSchema(patterns=[], about=result.data_schema.about),
+                miner._helper,
+                ontology_graph_uris if ontology_graph_uris is not None else miner.graph_uris,
+                examples_per_pattern=0,
+                delay=miner.delay,
+                report=miner._report,
+                annotation_iris=ontology_iris,
+            )
+        result.data_schema = miner._finish_schema(
+            result.data_schema, annotation_iris=ontology_iris if shared_scope else None
+        )
+        if result.ontology is not None:
+            annotations = annotations or result.data_schema.enrichment
+            terms = set(ontology_iris)
+            result.ontology.annotations = [
+                annotation
+                for annotation in annotations.labels + annotations.definitions
+                if annotation.term_iri in terms
+            ]
+        return result
+
+
+def _mine_with_ontology(
+    miner: SchemaMiner,
+    extract_ontology: bool,
+    extract_metadata: bool,
+    dataset_name: str | None,
+    ontology_graph_uris: list[str] | None,
+    ontology_as_data: bool,
+    ontology_scope: Literal["schema", "full"],
+) -> MiningResult:
+    """Run optional phases within the miner's active report session."""
     # Detect if endpoint uses ontology-as-data pattern
     # (owl:Class instances used as subjects/objects in properties)
-    uses_ontology_as_data = detect_ontology_as_data(
+    uses_ontology_as_data = ontology_as_data and detect_ontology_as_data(
         miner._helper,
         miner.graph_uris,
         threshold=1000,
     )
 
     ontology = None
-    if extract_ontology:
-        logger.info("Extracting ontology structure (TBox)")
-        ontology_miner = OntologyMiner(miner._helper, miner.graph_uris)
-        ontology = ontology_miner.mine()
-
-        # For ontology-as-data endpoints, query superclasses for aggregation
-        if uses_ontology_as_data:
-            logger.info("Querying for superclasses of owl:Class instances")
-            superclasses = _query_owl_class_superclasses(miner._helper, miner.graph_uris)
-            # Inject these as additional classes for pattern mining
-            if superclasses:
-                miner._ontology_classes = superclasses
+    superclasses: list[str] = []
+    # Aggregation does not require separate ontology export.
+    if uses_ontology_as_data:
+        logger.info("Querying for superclasses of owl:Class instances")
+        superclasses = _query_owl_class_superclasses(miner._helper, miner.graph_uris)
+        if superclasses:
+            miner._ontology_classes = superclasses
 
     logger.info("Mining schema patterns (ABox)")
-    data_schema = miner.mine(dataset_name=dataset_name)
+    data_schema = miner._mine_schema(dataset_name=dataset_name)
 
     # If ontology-as-data detected, mine additional patterns
     # showing how owl:Class instances are used as data
     if uses_ontology_as_data:
+        phase = miner._report.start_phase("ontology-as-data")
         logger.info("Mining ontology-as-data patterns (owl:Class usage as data)")
 
         # Mine patterns where owl:Class instances are objects (attributed to superclass)
@@ -145,6 +207,7 @@ def mine_with_ontology(
         all_patterns = object_patterns + subject_patterns
         logger.info(f"Adding {len(all_patterns)} ontology-as-data patterns to schema")
         data_schema.patterns.extend(all_patterns)
+        miner._report.finish_phase(phase, items=len(all_patterns))
 
         # Update metadata to reflect ontology-as-data strategy
         data_schema.about.pattern_count = len(data_schema.patterns)
@@ -153,11 +216,41 @@ def mine_with_ontology(
         else:
             data_schema.about.strategy = "ontology-as-data"
 
+    if extract_ontology:
+        phase = miner._report.start_phase("ontology-extraction")
+        visible = data_schema
+        if miner.filter_service_namespaces:
+            visible = visible.filter_service_namespaces()
+        scope = ontology_graph_uris if ontology_graph_uris is not None else miner.graph_uris
+        logger.info("Querying %s-scoped ontology axioms", ontology_scope)
+        ontology = OntologyMiner(
+            miner._helper,
+            scope,
+            class_iris=visible.get_classes() if ontology_scope == "schema" else None,
+            property_iris=visible.get_properties() if ontology_scope == "schema" else None,
+            batch_size=min(miner.class_batch_size, 50),
+            delay=miner.delay,
+        ).mine()
+        miner._report.report.ontology_extraction = {
+            "scope": ontology_scope,
+            "graphs_mined": scope or [],
+            "graph_count": len(scope or []),
+            "classes": len(ontology.classes),
+            "subclass_relations": len(ontology.subclass_relations),
+            "domain_assertions": len(ontology.domain_assertions),
+            "range_assertions": len(ontology.range_assertions),
+            "inverse_properties": len(ontology.inverse_properties),
+            "property_characteristics": len(ontology.property_characteristics),
+        }
+        miner._report.finish_phase(phase)
+
     metadata = None
     if extract_metadata:
+        phase = miner._report.start_phase("infrastructure-metadata")
         logger.info("Extracting infrastructure metadata")
         metadata_miner = MetadataMiner(miner._helper, miner.graph_uris)
         metadata = metadata_miner.mine()
+        miner._report.finish_phase(phase)
 
     return MiningResult(
         data_schema=data_schema,

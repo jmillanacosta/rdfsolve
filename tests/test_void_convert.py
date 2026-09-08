@@ -1,7 +1,23 @@
 """Tests for VoID conversion functions."""
 
-from rdfsolve.schema_models.core import AboutMetadata, MinedSchema, SchemaPattern
-from rdfsolve.schema_models.void_convert import minedschema_to_void, void_to_minedschema
+from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.pattern import SchemaPattern
+from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.readers.void import void_to_minedschema
+from rdfsolve.schema_models.exporters.void import minedschema_to_void
+
+
+def test_bare_partition_does_not_invent_an_iri_object(caplog):
+    import pytest
+
+    schema = void_to_minedschema("""
+            @prefix void: <http://rdfs.org/ns/void#> .
+            <urn:dataset> a void:Dataset; void:classPartition [
+                void:class <urn:A>; void:propertyPartition [void:property <urn:p>]
+            ] .
+        """)
+    assert schema.patterns == []
+    assert "omits object kinds" in caplog.text
 
 
 def test_roundtrip_simple():
@@ -45,12 +61,8 @@ def test_roundtrip_simple():
     assert len(roundtrip.patterns) == len(original.patterns)
 
     # Verify pattern content
-    original_keys = {
-        (p.subject_class, p.property_uri, p.object_class) for p in original.patterns
-    }
-    roundtrip_keys = {
-        (p.subject_class, p.property_uri, p.object_class) for p in roundtrip.patterns
-    }
+    original_keys = {(p.subject_class, p.property_uri, p.object_class) for p in original.patterns}
+    roundtrip_keys = {(p.subject_class, p.property_uri, p.object_class) for p in roundtrip.patterns}
     assert original_keys == roundtrip_keys
 
 
@@ -103,9 +115,7 @@ def test_roundtrip_with_datatypes():
     assert len(roundtrip.patterns) == len(original.patterns)
 
     # Verify datatypes are preserved
-    original_datatypes = {
-        (p.subject_class, p.property_uri, p.datatype) for p in original.patterns
-    }
+    original_datatypes = {(p.subject_class, p.property_uri, p.datatype) for p in original.patterns}
     roundtrip_datatypes = {
         (p.subject_class, p.property_uri, p.datatype) for p in roundtrip.patterns
     }
@@ -138,3 +148,35 @@ def test_from_void_method():
     assert roundtrip.patterns[0].subject_class == "http://example.org/Person"
     assert roundtrip.patterns[0].property_uri == "http://example.org/name"
     assert roundtrip.patterns[0].object_class == "Literal"
+
+
+def test_mixed_class_and_datatype_partitions_keep_their_own_counts():
+    from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
+
+    schema = MinedSchema(
+        about=AboutMetadata.build(dataset_name="mixed"),
+        patterns=[
+            SchemaPattern(
+                subject_class="urn:A",
+                property_uri="urn:p",
+                object_class=kind,
+                datatype=datatype,
+                count=count,
+            )
+            for kind, datatype, count in [
+                ("urn:B", None, 0),
+                ("urn:C", None, None),
+                ("Literal", "http://www.w3.org/2001/XMLSchema#string", 2**54 + 1),
+                ("Literal", "http://www.w3.org/2001/XMLSchema#integer", 12),
+            ]
+        ],
+    )
+    restored = MinedSchema.from_dict(schema.to_jsonld())
+    key = lambda p: (p.object_class, p.datatype, p.count)
+    assert {key(p) for p in restored.patterns} == {key(p) for p in schema.patterns}
+
+    from rdfsolve.void_discover import VoidParser
+    parser = VoidParser(schema.to_void_graph())
+    assert {key(p) for p in parser.to_mined_schema().patterns} == {key(p) for p in schema.patterns}
+    assert len(MinedSchema.from_shacl(parser.to_shacl()).patterns) == 4
+    assert len(parser.to_schema()) == 4

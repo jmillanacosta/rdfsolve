@@ -8,18 +8,22 @@ import logging
 import secrets
 import time
 import warnings
+from contextvars import ContextVar
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, ClassVar, Literal
-
-import yaml
+from urllib.parse import urlsplit
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
     import requests
 from rdflib import Graph
 from typing_extensions import Self
+
+from rdfsolve.query_collection import QueryCollection, QueryRun, SavedQuery
+from rdfsolve.schema_models.paths import PropertyPath
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +39,23 @@ class QueryRecord:
     description: str = ""
     keywords: list[str] = field(default_factory=list)
     success: bool = True
+    purpose: str = ""
+    error: str | None = None
+    attempts: int = 0
+    fallback_used: bool = False
+    result: Any = None
+    result_retained: bool = False
+    elapsed_seconds: float = 0.0
+    wait_seconds: float = 0.0
+    request_seconds: float = 0.0
 
     def query_id(self) -> str:
         """Generate a unique ID for this query based on content hash."""
         content = f"{self.query_type}:{self.query}"
         return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
+
+
+_active_record: ContextVar[QueryRecord | None] = ContextVar("sparql_query_record", default=None)
 
 
 class SparqlHelperError(Exception):
@@ -59,6 +75,14 @@ class EndpointTimeoutError(EndpointError):
         self.status_code = status_code
 
 
+class ResponseLimitError(EndpointTimeoutError):
+    """Response exceeded the byte budget; use a smaller query."""
+
+
+class EndpointRateLimitError(EndpointError):
+    """Remote host rate limit; do not split the query into more requests."""
+
+
 class EndpointUnhealthyError(EndpointError):
     """Raised when the endpoint returns a 200/400 with a non-SPARQL body.
 
@@ -75,10 +99,13 @@ class PaginationTruncatedError(EndpointTimeoutError):
     records where pagination stopped.
     """
 
-    def __init__(self, msg: str, offset: int = 0) -> None:
+    def __init__(
+        self, msg: str, offset: int = 0, partial_rows: list[dict[str, Any]] | None = None
+    ) -> None:
         """Initialize with error message and offset where pagination stopped."""
         super().__init__(msg)
         self.offset = offset
+        self.partial_rows = partial_rows if partial_rows is not None else []
 
 
 class QueryError(SparqlHelperError):
@@ -155,208 +182,115 @@ class SparqlHelper:
         "memory limit exceeded",
     )
 
-    # Class-level query registry to collect all executed queries
-    _query_registry: ClassVar[list[QueryRecord]] = []
-    _collect_queries: ClassVar[bool] = False
-
-    # Strategy discovery: maps source name -> winning strategy string.
-    _strategy_updates: ClassVar[dict[str, str]] = {}
-
-    @classmethod
-    def get_strategy_updates(cls) -> dict[str, str]:
-        """Return accumulated strategy updates (source_name -> winning strategy)."""
-        return cls._strategy_updates.copy()
-
-    @classmethod
-    def flush_strategy_updates(
-        cls,
-        sources_yaml: str | Path | None = None,
-    ) -> int:
-        """Write accumulated strategy discoveries to sources.yaml.
-
-        Returns:
-            Number of entries updated.
-        """
-        if not cls._strategy_updates:
-            return 0
-
-        if sources_yaml is None:
-            sources_yaml = Path(__file__).resolve().parent.parent.parent / "data" / "sources.yaml"
-        sources_yaml = Path(sources_yaml)
-
-        with open(sources_yaml, encoding="utf-8") as fh:
-            sources = yaml.safe_load(fh)
-
-        by_name = {s["name"]: s for s in sources}
-        updated = 0
-        for name, strategy in cls._strategy_updates.items():
-            if name in by_name:
-                old = by_name[name].get("sparql_strategy") or ""
-                if old != strategy:
-                    by_name[name]["sparql_strategy"] = strategy
-                    updated += 1
-                    logger.info(
-                        "sources.yaml: %s sparql_strategy %r -> %r",
-                        name,
-                        old,
-                        strategy,
-                    )
-
-        if updated:
-            with open(sources_yaml, "w", encoding="utf-8") as fh:
-                yaml.dump(
-                    sources,
-                    fh,
-                    default_flow_style=False,
-                    sort_keys=False,
-                    width=200,
-                )
-            logger.info("Flushed %d strategy updates to %s", updated, sources_yaml)
-
-        cls._strategy_updates.clear()
-        return updated
-
-    @classmethod
-    def enable_query_collection(cls) -> None:
-        """Enable collection of all executed queries."""
-        cls._collect_queries = True
-        cls._query_registry = []
-        logger.debug("Query collection enabled")
-
-    @classmethod
-    def disable_query_collection(cls) -> None:
-        """Disable query collection."""
-        cls._collect_queries = False
-        logger.debug("Query collection disabled")
-
-    @classmethod
-    def get_collected_queries(cls) -> list[QueryRecord]:
-        """Get all collected queries."""
-        return cls._query_registry.copy()
-
-    @classmethod
-    def clear_collected_queries(cls) -> None:
-        """Clear all collected queries."""
-        cls._query_registry = []
-
-    @classmethod
-    def _record_query(
-        cls,
-        query: str,
-        query_type: Literal["SELECT", "CONSTRUCT", "ASK"],
-        endpoint_url: str,
-        description: str = "",
-        keywords: list[str] | None = None,
-        success: bool = True,
+    def enable_query_collection(
+        self, *, clear: bool = True, include_results: bool | None = None
     ) -> None:
-        """Record a query if collection is enabled."""
-        if cls._collect_queries:
-            record = QueryRecord(
-                query=query,
-                query_type=query_type,
-                endpoint_url=endpoint_url,
-                description=description,
-                keywords=keywords or [],
-                success=success,
-            )
-            cls._query_registry.append(record)
+        """Collect query executions, including failures. Optionally keep prior records."""
+        self._collect_queries = True
+        if include_results is not None:
+            self._collect_results = include_results
+        if clear:
+            self._query_registry.clear()
 
-    @classmethod
-    def export_queries_as_ttl(
-        cls,
-        output_file: str | None = None,
-        base_uri: str = "https://example.org/sparql-queries/",
-        dataset_name: str = "dataset",
-    ) -> str:
-        """Export collected queries as TTL with SHACL SPARQL representation.
+    def disable_query_collection(self) -> None:
+        """Stop automatic query collection."""
+        self._collect_queries = False
 
-        Returns:
-            TTL string with all collected queries.
+    def get_collected_queries(self) -> list[QueryRecord]:
+        """Return execution records, not proof of complete results."""
+        return self._query_registry.copy()
+
+    def clear_collected_queries(self) -> None:
+        """Clear request records. Keep the named query collection."""
+        self._query_registry.clear()
+
+    def _record_query(self, record: QueryRecord) -> None:
+        """Collect a query execution."""
+        if self._collect_queries:
+            self._query_registry.append(record)
+            if not any(saved.query == record.query for saved in self.queries.queries.values()):
+                name = record.query_id()
+                if name not in self.queries.queries:
+                    try:
+                        self.queries.add(name, record.query, endpoint=record.endpoint_url)
+                    except Exception as export_error:
+                        logger.warning(
+                            "Cannot save query %s as a portable example: %s", name, export_error
+                        )
+
+    def add_query(self, name: str, query: str, *, description: str = "") -> SavedQuery:
+        """Save a named read query without executing it."""
+        return self.queries.add(name, query, description=description, endpoint=self.endpoint_url)
+
+    def load_shacl(self, source: str | Path | Graph) -> list[str]:
+        """Load local query examples and paths. Do not execute or fetch imports."""
+        return self.queries.load_shacl(source)
+
+    def run_query(self, name: str) -> dict[str, Any] | bool | Graph:
+        """Run a saved standalone query on this helper's endpoint.
+
+        Review imported queries before running them, including SERVICE clauses.
+        SHACL validation queries require bindings and are not run here.
         """
-        # Deduplicate queries by content hash
-        seen_hashes: set[str] = set()
-        unique_queries: list[QueryRecord] = []
-        for record in cls._query_registry:
-            query_hash = record.query_id()
-            if query_hash not in seen_hashes:
-                seen_hashes.add(query_hash)
-                unique_queries.append(record)
+        saved = self.queries.queries[name]
+        if saved.requires_context:
+            raise ValueError("This query requires SHACL validation context")
+        started_at = datetime.now(timezone.utc).isoformat()
+        started = time.monotonic()
+        error_text = ""
+        success = False
+        try:
+            if saved.query_type == "SELECT":
+                result: dict[str, Any] | bool | Graph = self.select(saved.query)
+            elif saved.query_type == "ASK":
+                result = self.ask(saved.query)
+            else:
+                result = self.construct_graph(saved.query)
+            success = True
+            return result
+        except Exception as error:
+            error_text = str(error)
+            raise
+        finally:
+            self.history.append(
+                QueryRun(
+                    name,
+                    self.endpoint_url,
+                    started_at,
+                    time.monotonic() - started,
+                    success,
+                    error_text,
+                )
+            )
 
-        # Build TTL
-        lines = [
-            f"@prefix ex: <{base_uri}{dataset_name}/> .",
-            "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
-            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
-            "@prefix schema: <https://schema.org/> .",
-            "@prefix sh: <http://www.w3.org/ns/shacl#> .",
-            "@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .",
-            "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",
-            "",
-        ]
-
-        for record in unique_queries:
-            query_id = record.query_id()
-            query_type_class = {
-                "SELECT": "sh:SPARQLSelectExecutable",
-                "CONSTRUCT": "sh:SPARQLConstructExecutable",
-                "ASK": "sh:SPARQLAskExecutable",
-            }.get(record.query_type, "sh:SPARQLExecutable")
-
-            query_predicate = {
-                "SELECT": "sh:select",
-                "CONSTRUCT": "sh:construct",
-                "ASK": "sh:ask",
-            }.get(record.query_type, "sh:select")
-
-            # Escape the query for TTL (triple-quoted string)
-            escaped_query = record.query.replace("\\", "\\\\").replace('"""', '\\"\\"\\"')
-
-            lines.append(f"ex:{query_id} a sh:SPARQLExecutable,")
-            lines.append(f"        {query_type_class} ;")
-
-            if record.description:
-                escaped_desc = record.description.replace('"', '\\"')
-                lines.append(f'    rdfs:comment "{escaped_desc}" ;')
-
-            lines.append(f'    {query_predicate} """')
-            lines.append(escaped_query)
-            lines.append('""" ;')
-
-            if record.keywords:
-                kw_str = " , ".join(f'"{kw}"' for kw in record.keywords)
-                lines.append(f"    schema:keywords {kw_str} ;")
-
-            lines.append(f'    schema:dateCreated "{record.timestamp}"^^xsd:dateTime ;')
-            lines.append("    schema:target [")
-            lines.append("        a sd:Service ;")
-            lines.append(f"        sd:endpoint <{record.endpoint_url}>")
-            lines.append("    ] .")
-            lines.append("")
-
-        ttl_content = "\n".join(lines)
-
-        if output_file:
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(ttl_content)
-            logger.info(f"Exported {len(unique_queries)} queries to {output_file}")
-
-        return ttl_content
+    def export_queries_as_ttl(self, output_file: str | Path | None = None) -> str:
+        """Export saved queries and retained SHACL RDF, not execution results."""
+        return self.queries.to_turtle(output_file)
 
     def __init__(
         self,
         endpoint_url: str,
         *,
         use_post: bool = False,
-        max_retries: int = 10,
+        max_retries: int = 3,
         initial_backoff: float = 1.0,
         max_backoff: float = 30.0,
-        timeout: float = 10000.0,
+        timeout: float = 30.0,
         sparql_engine: str = "",
         sparql_strategy: str = "",
-        source_name: str = "",
         inter_request_delay: float = 0.0,
+        max_response_bytes: int = 64 * 1024 * 1024,
     ) -> None:
         """Initialize SPARQL helper with retry logic and optional strategy hints."""
+        if max_response_bytes < 1 or max_retries < 1 or inter_request_delay < 0:
+            raise ValueError("Use positive response/retry limits and nonnegative request delay")
+        self.queries = QueryCollection()
+        self.history: list[QueryRun] = []
+        self._collect_results = False
+        self._query_registry: list[QueryRecord] = []
+        self._collect_queries = False
+        self.max_response_bytes = max_response_bytes
+        self._last_error_body = ""
         self.endpoint_url = endpoint_url.rstrip("/")
         self.use_post = use_post
         self.max_retries = max_retries
@@ -365,9 +299,7 @@ class SparqlHelper:
         self.timeout = timeout
         self.sparql_engine = sparql_engine
         self.sparql_strategy = sparql_strategy
-        self.source_name = source_name
         self.inter_request_delay = inter_request_delay
-        self._last_winning_strategy: str = ""
 
         # Derive initial method from strategy hint when available.
         if sparql_strategy and not use_post and "post" in sparql_strategy:
@@ -378,6 +310,8 @@ class SparqlHelper:
 
         # Session for connection pooling
         self._session = requests.Session()
+        if urlsplit(self.endpoint_url).hostname in ("localhost", "127.0.0.1", "::1"):
+            self._session.trust_env = False
 
         logger.debug(f"SparqlHelper initialized for {self.endpoint_url}")
 
@@ -387,20 +321,23 @@ class SparqlHelper:
         entry: dict[str, Any],
         *,
         timeout: float | None = None,
-        max_retries: int = 10,
+        max_retries: int = 3,
     ) -> SparqlHelper:
         """Create SparqlHelper from sources.yaml entry with endpoint and strategy configuration."""
         endpoint = entry.get("endpoint", "")
+        if not endpoint:
+            raise ValueError("Source entry needs an endpoint URL")
         engine = entry.get("sparql_engine", "") or ""
         strategy = entry.get("sparql_strategy", "") or ""
-        t = timeout if timeout is not None else entry.get("timeout") or 10000.0
+        t = timeout if timeout is not None else entry.get("timeout") or 30.0
         return cls(
             endpoint,
             timeout=float(t),
             max_retries=max_retries,
             sparql_engine=engine,
             sparql_strategy=strategy,
-            source_name=entry.get("name", ""),
+            inter_request_delay=float(entry.get("delay") or 0),
+            max_response_bytes=int(entry.get("max_response_bytes", 64 * 1024 * 1024)),
         )
 
     def select(
@@ -437,13 +374,8 @@ class SparqlHelper:
         if turtle_data.strip():
             try:
                 graph.parse(data=turtle_data, format="turtle")
-            except Exception as e:
-                logger.warning(f"Failed to parse CONSTRUCT as Turtle: {e}")
-                # Try N3 format as fallback
-                try:
-                    graph.parse(data=turtle_data, format="n3")
-                except Exception:
-                    logger.error("Failed to parse CONSTRUCT result")
+            except Exception as error:
+                raise EndpointError("CONSTRUCT returned invalid Turtle RDF") from error
 
         return graph
 
@@ -452,12 +384,12 @@ class SparqlHelper:
         result: dict[str, Any] = self._execute(
             query, accept=MimeTypes.SELECT_ACCEPT, query_type="ASK", parse_json=True
         )
-        raw = result.get("boolean", False)
-        # JSON parser already gives us a bool; guard against endpoints
-        # that return the string "true"/"false" instead.
-        if isinstance(raw, str):
+        raw = result.get("boolean")
+        if isinstance(raw, bool):
+            return raw
+        if isinstance(raw, str) and raw.strip().lower() in {"true", "false"}:
             return raw.strip().lower() == "true"
-        return bool(raw)
+        raise EndpointError("ASK response has no valid boolean result")
 
     # Characters that are illegal inside a SPARQL IRI literal <...>.
     # Characters that are illegal inside a SPARQL ``<…>`` IRI literal.
@@ -509,6 +441,10 @@ class SparqlHelper:
         values_batch_size: int = 50,
     ) -> dict[str, dict[str, list[str]]]:
         """Find rdf:type classes for IRIs grouped by named graph using VALUES batching."""
+        if values_batch_size < 1:
+            raise ValueError("Use a positive VALUES batch size")
+        for iri in iris:
+            PropertyPath(operator="predicate", iri=iri)
         if not iris:
             return {}
 
@@ -525,10 +461,7 @@ class SparqlHelper:
                 "  GRAPH ?g { ?s a ?c }\n"
                 "}"
             )
-            try:
-                out = self.select(query)
-            except Exception:
-                continue
+            out = self.select(query)
             for b in out.get("results", {}).get("bindings", []):
                 s = b.get("s", {}).get("value")
                 g = b.get("g", {}).get("value")
@@ -546,6 +479,10 @@ class SparqlHelper:
         values_batch_size: int = 50,
     ) -> dict[str, list[str]]:
         """Find rdf:type classes for IRIs using VALUES batching (no graph grouping)."""
+        if values_batch_size < 1:
+            raise ValueError("Use a positive VALUES batch size")
+        for iri in iris:
+            PropertyPath(operator="predicate", iri=iri)
         if not iris:
             return {}
 
@@ -562,10 +499,7 @@ class SparqlHelper:
                 "  ?s a ?c .\n"
                 "}"
             )
-            try:
-                out = self.select(query)
-            except Exception:
-                continue
+            out = self.select(query)
             for b in out.get("results", {}).get("bindings", []):
                 s = b.get("s", {}).get("value")
                 c = b.get("c", {}).get("value")
@@ -604,19 +538,49 @@ class SparqlHelper:
         parse_json: bool = True,
         purpose: str = "",
     ) -> Any:
-        """Execute SPARQL query with GET/POST fallback and retry logic."""
-        # Throttling: sleep before each new logical request so remote
-        # public endpoints are not overloaded.  Zero (default) = no delay.
-        if self.inter_request_delay > 0:
-            time.sleep(self.inter_request_delay)
+        """Record each logical query, including one that fails after retries."""
+        record = QueryRecord(query, query_type, self.endpoint_url, success=False, purpose=purpose)
+        started = time.monotonic()
+        token = _active_record.set(record)
+        try:
+            result = self._execute_request(
+                query, accept, query_type, parse_json, purpose, record=record
+            )
+            record.success = True
+            if self._collect_queries and self._collect_results:
+                record.result = deepcopy(result)
+                record.result_retained = True
+            return result
+        except Exception as error:
+            record.error = type(error).__name__
+            raise
+        finally:
+            record.elapsed_seconds = time.monotonic() - started
+            _active_record.reset(token)
+            self._record_query(record)
 
+    def _execute_request(
+        self,
+        query: str,
+        accept: str,
+        query_type: Literal["SELECT", "CONSTRUCT", "ASK"] = "SELECT",
+        parse_json: bool = True,
+        purpose: str = "",
+        *,
+        record: QueryRecord | None = None,
+    ) -> Any:
+        """Execute SPARQL query with GET/POST fallback and retry logic."""
         # Try GET first (unless we know POST is required)
         use_post = self._requires_post
         # Track whether we've tried raw POST (application/sparql-query)
         _tried_raw_post = False
         _use_raw_post = "post+raw" in (self.sparql_strategy or "")
+        fallback_used = False
 
         for attempt in range(1, self.max_retries + 1):
+            if record is not None:
+                record.attempts = attempt
+                record.fallback_used = fallback_used
             try:
                 if _use_raw_post:
                     result = self._post_raw_query(query, accept)
@@ -631,12 +595,18 @@ class SparqlHelper:
                 # Check if we got HTML instead of expected format
                 if self._is_html_response(result):
                     if not use_post and not _use_raw_post:
-                        logger.debug(f"{purpose} | GET returned HTML, switching to POST")
+                        logger.info("Fallback: GET returned HTML; use POST")
+                        fallback_used = True
+                        if record is not None:
+                            record.fallback_used = True
                         self._requires_post = True
                         use_post = True
                         continue
                     elif use_post and not _tried_raw_post:
-                        logger.debug(f"{purpose} | form POST returned HTML, trying raw POST")
+                        logger.info("Fallback: form POST returned HTML; use raw POST")
+                        fallback_used = True
+                        if record is not None:
+                            record.fallback_used = True
                         _use_raw_post = True
                         _tried_raw_post = True
                         continue
@@ -645,42 +615,14 @@ class SparqlHelper:
                             f"{purpose} | Endpoint returned HTML error even with POST"
                         )
 
-                # Record successful query
-                SparqlHelper._record_query(
-                    query=query,
-                    query_type=query_type,
-                    endpoint_url=self.endpoint_url,
-                    success=True,
+                parsed = json.loads(result) if parse_json else result
+
+                logger.info(
+                    "%s completed (%s)",
+                    query_type,
+                    "HTTP fallback used" if fallback_used else "no HTTP fallback",
                 )
-
-                # Determine winning strategy label
-                if _use_raw_post:
-                    winning = "post+raw+json"
-                elif use_post:
-                    winning = "post+form+json"
-                else:
-                    winning = "get+json"
-                self._last_winning_strategy = winning
-
-                # If strategy differs from configured hint, record update
-                if self.sparql_strategy and winning != self.sparql_strategy and self.source_name:
-                    SparqlHelper._strategy_updates[self.source_name] = winning
-                    logger.info(
-                        "Strategy update for %s: %s -> %s",
-                        self.source_name,
-                        self.sparql_strategy,
-                        winning,
-                    )
-                # If no strategy was configured, record discovery
-                elif not self.sparql_strategy and self.source_name:
-                    if self.source_name not in SparqlHelper._strategy_updates:
-                        SparqlHelper._strategy_updates[self.source_name] = winning
-
-                # Parse JSON if requested
-                if parse_json:
-                    return json.loads(result)
-
-                return result
+                return parsed
 
             except requests.exceptions.HTTPError as e:
                 status_code = e.response.status_code if e.response is not None else 0
@@ -689,20 +631,26 @@ class SparqlHelper:
                 # 400 = Bad Request (QLever rejects GET), 405 = Method Not Allowed,
                 # 414 = URI Too Long
                 if not use_post and not _use_raw_post and status_code in (400, 405, 414):
-                    logger.debug(
-                        "GET returned %d, switching to POST",
+                    logger.info(
+                        "Fallback: GET returned %d; use POST",
                         status_code,
                     )
+                    fallback_used = True
+                    if record is not None:
+                        record.fallback_used = True
                     self._requires_post = True
                     use_post = True
                     continue
 
                 # Form-encoded POST rejected -> try raw POST body
                 if use_post and not _tried_raw_post and status_code in (400, 405, 415):
-                    logger.debug(
-                        "Form POST returned %d, trying raw POST",
+                    logger.info(
+                        "Fallback: form POST returned %d; use raw POST",
                         status_code,
                     )
+                    fallback_used = True
+                    if record is not None:
+                        record.fallback_used = True
                     _use_raw_post = True
                     _tried_raw_post = True
                     continue
@@ -729,7 +677,11 @@ class SparqlHelper:
                     # uses chunked/paginated queries instead of
                     # retrying the same heavy one-shot query 10 more times —
                     # each of which will also run for many minutes before 429.
-                    if status_code == 429:
+                    if status_code == 429 and urlsplit(self.endpoint_url).hostname in (
+                        "localhost",
+                        "127.0.0.1",
+                        "::1",
+                    ):
                         tag = f"{query_type}[{purpose}]" if purpose else query_type
                         logger.warning(
                             "%s 429 Too Many Requests from local QLever %s"
@@ -741,6 +693,15 @@ class SparqlHelper:
                             f"QLever 429 (at capacity): {e}",
                             status_code=429,
                         ) from e
+                    if status_code == 429:
+                        if attempt >= self.max_retries:
+                            raise EndpointRateLimitError(
+                                "Remote host rate limit; retry budget exhausted"
+                            ) from e
+                        logger.warning(
+                            "Remote host rate-limited %s; honor shared cooldown", self.endpoint_url
+                        )
+                        continue
                     # A 500/504 whose body signals "query too expensive"
                     # (Virtuoso cost limit, statement timeout, gateway
                     # timeout, etc.) is not a transient server error -
@@ -748,7 +709,7 @@ class SparqlHelper:
                     # Raise as EndpointTimeoutError so callers (e.g.
                     # the two-phase miner) can use pagination.
                     if status_code in (500, 504):
-                        body = e.response.text.lower() if e.response is not None else ""
+                        body = self._last_error_body.lower()
                         is_cost_limit = status_code == 504 or any(
                             pat in body for pat in self.COST_LIMIT_PATTERNS
                         )
@@ -770,6 +731,9 @@ class SparqlHelper:
 
                 # Non-retryable HTTP error
                 raise EndpointError(f"HTTP {status_code}: {e}") from e
+
+            except (EndpointTimeoutError, EndpointRateLimitError):
+                raise
 
             except requests.exceptions.Timeout as e:
                 # Timeouts are surfaced immediately so that callers
@@ -800,7 +764,10 @@ class SparqlHelper:
 
                 # Check if this looks like a POST-required error
                 if not use_post and self._should_retry_with_post(error_msg):
-                    logger.debug(f"GET failed, switching to POST: {e}")
+                    logger.info("Fallback: GET failed; use POST")
+                    fallback_used = True
+                    if record is not None:
+                        record.fallback_used = True
                     self._requires_post = True
                     use_post = True
                     continue
@@ -838,7 +805,10 @@ class SparqlHelper:
 
                 # Check if this looks like a POST-required error
                 if not use_post and self._should_retry_with_post(error_msg):
-                    logger.debug(f"GET failed for {purpose}, switching to POST: {e}")
+                    logger.info("Fallback: GET failed; use POST")
+                    fallback_used = True
+                    if record is not None:
+                        record.fallback_used = True
                     self._requires_post = True
                     use_post = True
                     continue
@@ -869,6 +839,7 @@ class SparqlHelper:
     def _check_response_health(
         self,
         response: requests.Response,
+        text: str,
     ) -> None:
         """Raise :class:`EndpointUnhealthyError` for deceptive responses.
 
@@ -879,7 +850,7 @@ class SparqlHelper:
         gracefully.
         """
         ct = response.headers.get("Content-Type", "").lower()
-        body = response.text.strip()
+        body = text.strip()
 
         # If the response is proper SPARQL JSON, nothing to do.
         if "sparql-results+json" in ct or "application/json" in ct:
@@ -898,95 +869,91 @@ class SparqlHelper:
                 )
 
     def _get_query(self, query: str, accept: str) -> str:
-        """
-        Execute SPARQL query using HTTP GET.
-
-        Args:
-            query: SPARQL query string
-            accept: Accept header for content negotiation
-
-        Returns:
-            Response body as string
-
-        Raises:
-            requests.exceptions.HTTPError: On HTTP errors
-        """
-        headers = {
-            "Accept": accept,
-            "User-Agent": "rdfsolve/1.0 (SPARQL client)",
-        }
-
-        params = {"query": query}
-
-        response = self._session.get(
-            self.endpoint_url,
-            params=params,
-            headers=headers,
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        self._check_response_health(response)
-
-        return response.text
+        """Send a bounded GET request."""
+        return self._request("GET", query, accept)
 
     def _post_query(self, query: str, accept: str) -> str:
-        """
-        Execute SPARQL query using HTTP POST.
-
-        Uses application/x-www-form-urlencoded encoding as per SPARQL protocol.
-
-        Args:
-            query: SPARQL query string
-            accept: Accept header for content negotiation
-
-        Returns:
-            Response body as string
-
-        Raises:
-            requests.exceptions.HTTPError: On HTTP errors
-        """
-        headers = {
-            "Accept": accept,
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "rdfsolve/1.0 (SPARQL client)",
-        }
-
-        data = {"query": query}
-
-        response = self._session.post(
-            self.endpoint_url,
-            data=data,
-            headers=headers,
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        self._check_response_health(response)
-
-        return response.text
+        """Send a bounded form POST request."""
+        return self._request("POST", query, accept)
 
     def _post_raw_query(self, query: str, accept: str) -> str:
-        """Execute SPARQL query using HTTP POST with raw query body.
+        """Send a bounded SPARQL protocol POST request."""
+        return self._request("POST", query, accept, raw=True)
 
-        Uses ``application/sparql-query`` content-type (SPARQL 1.1
-        Protocol §2.1.3).  Required by some engines (QLever/DSMZ)
-        that reject form-encoded POST.
-        """
-        headers = {
-            "Accept": accept,
-            "Content-Type": "application/sparql-query",
-            "User-Agent": "rdfsolve/1.0 (SPARQL client)",
-        }
+    def _request(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
+        from rdfsolve._host_gate import HostBusyError, host_request
 
-        response = self._session.post(
+        host = urlsplit(self.endpoint_url).hostname or self.endpoint_url
+        record = _active_record.get()
+        started = time.monotonic()
+        request_started = None
+        try:
+            with host_request(host, timeout=self.timeout, interval=self.inter_request_delay):
+                request_started = time.monotonic()
+                return self._request_serial(method, query, accept, raw=raw)
+        except HostBusyError as error:
+            raise EndpointRateLimitError(str(error)) from error
+        finally:
+            finished = time.monotonic()
+            if record is not None:
+                record.wait_seconds += (
+                    request_started if request_started is not None else finished
+                ) - started
+                if request_started is not None:
+                    record.request_seconds += finished - request_started
+
+    def _request_serial(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
+        from rdfsolve._http_policy import defer_host, retry_after_seconds
+
+        host = urlsplit(self.endpoint_url).hostname or self.endpoint_url
+        headers = {"Accept": accept, "User-Agent": "rdfsolve (SPARQL client)"}
+        if method == "POST":
+            headers["Content-Type"] = (
+                "application/sparql-query" if raw else "application/x-www-form-urlencoded"
+            )
+        self._last_error_body = ""
+        started = time.monotonic()
+        with self._session.request(
+            method,
             self.endpoint_url,
-            data=query.encode("utf-8"),
+            params={"query": query} if method == "GET" else None,
+            data=(query.encode("utf-8") if raw else {"query": query}) if method == "POST" else None,
             headers=headers,
             timeout=self.timeout,
-        )
-        response.raise_for_status()
-        self._check_response_health(response)
-
-        return response.text
+            stream=True,
+        ) as response:
+            if response.status_code in (429, 503):
+                cooldown = retry_after_seconds(response.headers.get("Retry-After"))
+                defer_host(
+                    host, cooldown if cooldown is not None else max(1.0, self.initial_backoff)
+                )
+            body = bytearray()
+            error_response = response.status_code >= 400
+            limit = (
+                min(self.max_response_bytes, 65536) if error_response else self.max_response_bytes
+            )
+            for chunk in response.iter_content(chunk_size=65536):
+                if time.monotonic() - started > self.timeout:
+                    raise EndpointTimeoutError("Response stream exceeded the request time budget")
+                available = limit - len(body)
+                body.extend(chunk[:available])
+                if len(chunk) > available:
+                    if error_response:
+                        break
+                    raise ResponseLimitError(f"Decompressed response exceeds {limit} bytes")
+            encoding = (
+                response.encoding
+                if "charset=" in response.headers.get("Content-Type", "").lower()
+                else "utf-8"
+            )
+            text = body.decode(
+                encoding or "utf-8", errors="replace" if error_response else "strict"
+            )
+            if error_response:
+                self._last_error_body = text
+            response.raise_for_status()
+            self._check_response_health(response, text)
+            return text
 
     def _handle_retry(
         self,
@@ -1108,6 +1075,7 @@ class SparqlHelper:
         max_total_results: int | None = None,
         delay_between_chunks: float = 0.5,
         purpose: str = "",
+        max_pages: int = 10000,
     ) -> Any:
         """Execute a SELECT query in chunks using OFFSET/LIMIT pagination.
 
@@ -1130,6 +1098,7 @@ class SparqlHelper:
             delay_between_chunks:
                 Pause between pages in seconds.
             purpose: Caller context for log messages.
+            max_pages: Stop with an incomplete result after this many pages.
 
         Yields:
             List of bindings (dicts) from each chunk.
@@ -1146,7 +1115,9 @@ class SparqlHelper:
         current_offset = 0
         total_fetched = 0
         current_chunk_size = chunk_size
-        max_iterations = 10_000  # safety limit
+        if max_pages < 1:
+            raise ValueError("max_pages must be positive")
+        max_iterations = max_pages
 
         for _ in range(max_iterations):
             # Honour max_total_results cap
@@ -1166,6 +1137,7 @@ class SparqlHelper:
             # attempt this page (with adaptive retries)
             shrink_attempts = 0
             success = False
+            last_error: SparqlHelperError | None = None
 
             while shrink_attempts <= max_shrinks_per_offset:
                 try:
@@ -1179,10 +1151,14 @@ class SparqlHelper:
                     results = self.select(query, purpose=purpose)
                     elapsed = time.monotonic() - t0
 
-                    bindings = results.get(
-                        "results",
-                        {},
-                    ).get("bindings", [])
+                    result_body = results.get("results")
+                    bindings = (
+                        result_body.get("bindings") if isinstance(result_body, dict) else None
+                    )
+                    if not isinstance(bindings, list) or any(
+                        not isinstance(row, dict) for row in bindings
+                    ):
+                        raise EndpointUnhealthyError("Expected SELECT result bindings")
                     logger.debug(
                         "Chunked %s: offset=%d returned %d rows in %.1fs",
                         purpose or "query",
@@ -1193,7 +1169,8 @@ class SparqlHelper:
                     success = True
                     break
 
-                except EndpointTimeoutError:
+                except EndpointTimeoutError as error:
+                    last_error = error
                     # adaptive reduction
                     new_limit = max(
                         int(effective_limit * shrink_factor),
@@ -1228,7 +1205,8 @@ class SparqlHelper:
                     )
                     time.sleep(wait_after_timeout)
 
-                except Exception as e:
+                except SparqlHelperError as e:
+                    last_error = e
                     logger.warning(
                         "Chunk query failed at offset %d: %s",
                         current_offset,
@@ -1239,11 +1217,9 @@ class SparqlHelper:
             if not success:
                 # Raise so callers know the result set is incomplete.
                 raise PaginationTruncatedError(
-                    f"Pagination abandoned at offset {current_offset}"
-                    f" after {max_shrinks_per_offset} chunk-size"
-                    " reductions, results might be incomplete",
+                    f"Pagination abandoned at offset {current_offset}: {last_error}",
                     offset=current_offset,
-                )
+                ) from last_error
 
             if not bindings:
                 logger.debug("No more results, pagination complete")
@@ -1256,7 +1232,7 @@ class SparqlHelper:
             total_fetched += chunk_count
             current_offset += chunk_count
 
-            logger.info(
+            logger.debug(
                 "Chunked %s: fetched %d rows (total so far: %d, limit: %d)",
                 purpose or "query",
                 chunk_count,
@@ -1275,9 +1251,9 @@ class SparqlHelper:
                 time.sleep(delay_between_chunks)
 
         else:
-            logger.warning(
-                "Chunked query hit max iterations (%d)",
-                max_iterations,
+            raise PaginationTruncatedError(
+                f"Pagination reached the limit of {max_pages} pages",
+                offset=current_offset,
             )
 
     @staticmethod

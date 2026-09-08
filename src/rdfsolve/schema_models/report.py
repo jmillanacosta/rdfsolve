@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
+
+from rdfsolve._outcomes import QueryFailure
 
 
 class QueryStats(BaseModel):
@@ -160,6 +162,7 @@ class MiningReport(BaseModel):
 
     # Results summary
     abort_reason: str | None = Field(None)
+    query_failures: list[QueryFailure] = Field(default_factory=list)
     pattern_count: int = Field(0, ge=0)
     class_count: int = Field(0, ge=0)
     property_count: int = Field(0, ge=0)
@@ -175,6 +178,8 @@ class MiningReport(BaseModel):
     )
 
     # Benchmark / resource usage
+    ontology_extraction: dict[str, str | int | list[str]] | None = None
+
     machine: dict[str, Any] | None = Field(None)
     benchmark: dict[str, Any] | None = Field(None)
 
@@ -203,5 +208,20 @@ class MiningReport(BaseModel):
 
     # Canonical URI
     report_uri: str | None = Field(None)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def completion_state(self) -> Literal["complete", "partial", "failed"]:
+        """Distinguish saved rows from a complete run; allow recovered retries."""
+        incomplete = (
+            not self.finished_at
+            or self.abort_reason
+            or self.query_failures
+            or self.dropped_invalid_uris
+            or any(phase.error or not phase.finished_at for phase in self.phases)
+        )
+        if incomplete:
+            return "partial" if self.pattern_count else "failed"
+        return "complete"
 
     model_config = ConfigDict(extra="allow")

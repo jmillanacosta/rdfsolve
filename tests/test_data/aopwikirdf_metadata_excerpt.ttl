@@ -1,0 +1,24 @@
+# Excerpt of AOPWiki metadata supplied by the user on 2026-09-08.
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix pav: <http://purl.org/pav/> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://aopwiki.rdf.bigcat-bioinformatics.org/AOPWikiRDF>
+    a void:Dataset, dcat:Dataset ;
+    dc:description "AOP-Wiki RDF -- complete dataset" ;
+    dcterms:license <https://creativecommons.org/licenses/by-sa/4.0/> ;
+    pav:createdOn "2026-09-05"^^xsd:date ;
+    pav:version "2026.09.05" ;
+    void:sparqlEndpoint <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/> ;
+    void:dataDump <https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/master/data/AOPWikiRDF-Genes.ttl> ;
+    void:subset <https://aopwiki.rdf.bigcat-bioinformatics.org/AOPWikiRDF-Genes.ttl> .
+
+<https://aopwiki.rdf.bigcat-bioinformatics.org/AOPWikiRDF-Genes.ttl>
+    a void:Dataset ;
+    dc:description "Gene mapping enrichment triples" ;
+    pav:createdOn "2026-09-05"^^xsd:date ;
+    void:triples 191652 ;
+    dcat:downloadURL <https://www.genenames.org/download/custom/> .

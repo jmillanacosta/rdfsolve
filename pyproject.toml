@@ -53,6 +53,11 @@ license = { file = "LICENSE" }
 
 requires-python = ">=3.10"
 dependencies = [
+    "pydantic>=2.0",
+    "requests>=2.0",
+    "httpx>=0.24",
+    "sssom>=0.4",
+    "typing-extensions>=4.0",
     # Core RDF processing
     "rdflib>=6.0.0", # RDF graph processing and parsing
     "sparqlwrapper>=2.0.0", # SPARQL endpoint communication
@@ -85,7 +90,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+agents = [
+    "pydantic-ai-slim[openai,anthropic]==1.97.0",
+    "python-dotenv==1.2.3",
+]
 tests = [
+    "pydantic-ai-slim==1.97.0",
     "pytest",
     "coverage",
     "networkx>=2.8",
@@ -102,6 +112,12 @@ docs = [
 ]
 dev = [
     "ruff",
+    "mypy",
+    "pandas-stubs",
+    "types-networkx",
+    "types-PyYAML",
+    "types-requests",
+    "types-ujson",
 ]
 web = [
     "flask>=3.0",
@@ -109,6 +125,7 @@ web = [
     "gunicorn>=22.0",
 ]
 notebooks = [
+    "pydantic-2-mermaid==0.7.3",
     # Additional packages for notebook development and analysis
     "matplotlib>=3.10.7", # Plotting and visualization
     "seaborn>=0.11.0", # Statistical visualization
@@ -154,6 +171,11 @@ skip = [
 plugins = [
     "pydantic.mypy",
 ]
+
+[[tool.mypy.overrides]]
+# These upstream packages do not publish type information.
+module = ["linkml.*", "linkml_runtime.*"]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "rdfsolve.cli"

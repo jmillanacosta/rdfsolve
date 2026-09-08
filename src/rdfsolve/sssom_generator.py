@@ -82,12 +82,8 @@ def create_sssom_mappings(
     msdf = MappingSetDataFrame.from_mappings(mappings=list(mappings), metadata=metadata)
 
     # Add custom prefixes for RDFSolve URIs
-    msdf.prefix_map.update(
-        {
-            "rdfsolve": "https://rdfsolve.bigcat-bioinformatics.nl/",
-            "orcid": "https://orcid.org/",
-        }
-    )
+    msdf.converter.add_prefix("rdfsolve", "https://rdfsolve.bigcat-bioinformatics.nl/", merge=True)
+    msdf.converter.add_prefix("orcid", "https://orcid.org/", merge=True)
 
     # Clean prefix map to only include prefixes actually used in the mapping set
     msdf.clean_prefix_map()
