@@ -118,7 +118,7 @@ class Hydrator:
         self._steps: list[dict[str, Any]] = []
         self._retrievals: list[dict[str, Any]] = []
         if isinstance(self.source, SparqlHelper):
-            self.source.enable_query_collection(clear=False)
+            self.source.enable_query_collection(clear=False, include_results=True)
 
     def _records(self) -> list[QueryRecord]:
         if isinstance(self.source, SparqlHelper):
@@ -243,6 +243,8 @@ class Hydrator:
                 if raw is None:
                     raise EndpointError("Local query returned no results document")
                 result = json.loads(raw)
+                record.result = json.loads(raw)
+                record.result_retained = True
                 record.success = True
             except Exception as error:
                 record.error = type(error).__name__

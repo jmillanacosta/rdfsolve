@@ -18,6 +18,7 @@ from rdflib import Graph, Literal, URIRef
 from rdfsolve.exploration import DatasetClient
 from rdfsolve.hydration import HydrationLimitError, _iri, _term
 from rdfsolve.model_rdf import model_to_graph
+from rdfsolve.query_log import QueryLog
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.sparql_helper import EndpointError
@@ -45,6 +46,10 @@ def _title(record: BaseModel) -> str:
 
 class Client(DatasetClient):
     """Find records without first choosing their type, then explore their links."""
+
+    def query_log(self) -> QueryLog:
+        """Show every session query and its retained response without running it again."""
+        return QueryLog(self.session_metadata())
 
     def model(self, name_or_iri: str) -> type[BaseModel]:
         """Accept generated names, spaced names, or full class IRIs."""
@@ -460,7 +465,7 @@ def explore(endpoint: str, *, graph: str | None = None, timeout: float = 30) -> 
         examples_per_pattern=0,
         timeout=timeout,
     )
-    miner.helper.enable_query_collection()
+    miner.helper.enable_query_collection(include_results=True)
     try:
         schema = miner.mine()
         if miner.last_report is None or miner.last_report.completion_state != "complete":

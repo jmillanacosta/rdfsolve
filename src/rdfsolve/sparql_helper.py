@@ -8,6 +8,7 @@ import logging
 import secrets
 import time
 import warnings
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -41,6 +42,8 @@ class QueryRecord:
     error: str | None = None
     attempts: int = 0
     fallback_used: bool = False
+    result: Any = None
+    result_retained: bool = False
 
     def query_id(self) -> str:
         """Generate a unique ID for this query based on content hash."""
@@ -172,9 +175,13 @@ class SparqlHelper:
         "memory limit exceeded",
     )
 
-    def enable_query_collection(self, *, clear: bool = True) -> None:
+    def enable_query_collection(
+        self, *, clear: bool = True, include_results: bool | None = None
+    ) -> None:
         """Collect query executions, including failures. Optionally keep prior records."""
         self._collect_queries = True
+        if include_results is not None:
+            self._collect_results = include_results
         if clear:
             self._query_registry.clear()
 
@@ -191,7 +198,7 @@ class SparqlHelper:
         self._query_registry.clear()
 
     def _record_query(self, record: QueryRecord) -> None:
-        """Collect a query execution without storing its results."""
+        """Collect a query execution."""
         if self._collect_queries:
             self._query_registry.append(record)
             if not any(saved.query == record.query for saved in self.queries.queries.values()):
@@ -272,6 +279,7 @@ class SparqlHelper:
             raise ValueError("Use positive response/retry limits and nonnegative request delay")
         self.queries = QueryCollection()
         self.history: list[QueryRun] = []
+        self._collect_results = False
         self._query_registry: list[QueryRecord] = []
         self._collect_queries = False
         self.max_response_bytes = max_response_bytes
@@ -530,6 +538,9 @@ class SparqlHelper:
                 query, accept, query_type, parse_json, purpose, record=record
             )
             record.success = True
+            if self._collect_queries and self._collect_results:
+                record.result = deepcopy(result)
+                record.result_retained = True
             return result
         except Exception as error:
             record.error = type(error).__name__

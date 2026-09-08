@@ -55,6 +55,13 @@ def test_find_follow_values_and_saved_links(tmp_path):
         subset = Graph().parse(file)
         assert len(subset) and all(triple in data.source for triple in subset)
         assert len(pathways.without(pathways)) == 0
+        data.source.query = lambda *args, **kwargs: pytest.fail("Log must not query")
+        log = data.query_log()
+        rendered = log._repr_html_()
+        assert "Find Phenobarbital" in rendered
+        assert "Phenobarbital" in rendered and "Query text" in rendered
+        assert all(query["result_retained"] for query in log.queries)
+        assert len(log.queries) == len(data.queries)
 
 
 def test_errors_and_completion_do_not_trigger_hidden_queries():
