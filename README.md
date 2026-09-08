@@ -2,18 +2,34 @@
 
 <p align="center">
     <a href="https://github.com/jmillanacosta/rdfsolve/actions/workflows/tests.yml">
-        <img alt="Tests" src="https://github.com/jmillanacosta/rdfsolve/actions/workflows/tests.yml/badge.svg" /></a>
+        <img
+        alt="Tests"
+        src="https://github.com/jmillanacosta/rdfsolve/actions/workflows/tests.yml/badge.svg"
+    /></a>
     <a href="https://pypi.org/project/rdfsolve">
-        <img alt="PyPI" src="https://img.shields.io/pypi/v/rdfsolve" /></a>
+        <img
+        alt="PyPI"
+        src="https://img.shields.io/pypi/v/rdfsolve"
+    /></a>
     <a href="https://pypi.org/project/rdfsolve">
-        <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/rdfsolve" /></a>
+        <img
+        alt="PyPI - Python Version"
+        src="https://img.shields.io/pypi/pyversions/rdfsolve"
+    /></a>
     <a href="https://github.com/jmillanacosta/rdfsolve/blob/main/LICENSE">
-        <img alt="PyPI - License" src="https://img.shields.io/pypi/l/rdfsolve" /></a>
+        <img
+        alt="PyPI - License"
+        src="https://img.shields.io/pypi/l/rdfsolve"
+    /></a>
     <a href='https://rdfsolve.readthedocs.io/en/latest/?badge=latest'>
-        <img src='https://readthedocs.org/projects/rdfsolve/badge/?version=latest' alt='Documentation Status' /></a>
+        <img
+        src='https://readthedocs.org/projects/rdfsolve/badge/?version=latest'
+        alt='Documentation Status'
+    /></a>
 </p>
 
-Mine typed RDF schemas, convert between formats, and derive cross-dataset mappings.
+Mine typed RDF schemas, convert between formats, and derive cross-dataset
+mappings.
 
 ## Installation
 
@@ -51,9 +67,9 @@ with open("example_schema.json", "w", encoding="utf-8") as f:
 
 `schema.model_dump_json()` returns the `MinedSchema` data as a JSON string.
 
-Use `schema.to_dict()` with `json.dump()` for
-saved rdfsolve files. `MinedSchema.model_json_schema()` describes the internal
-model; `schema.to_pydantic()` instead generates Python classes for the mined RDF types.
+Use `schema.to_dict()` with `json.dump()` for saved rdfsolve files.
+`MinedSchema.model_json_schema()` describes the internal model;
+`schema.to_pydantic()` instead generates Python classes for the mined RDF types.
 
 ### Read schema files
 
@@ -86,13 +102,14 @@ Path("example_models.py").write_text(schema.to_pydantic(), encoding="utf-8")
 # schema.enrichment = miner.query_enrichment(schema)
 ```
 
-Generated classes use cleaned source labels and definitions are used as class docstrings;
-observed values from instances become field examples.
+Generated classes use cleaned source labels and definitions are used as class
+docstrings; observed values from instances become field examples.
 
-
-`schema.about.source_version_iri` gets assigned the source release IRI when metadata queries identify it. `schema_version` uses that IRI, a release label, a source date,
-or a dated mining snapshot. The canonical JSON envelope's `version` is a separate
-storage-format identifier. A snapshot date does not certify an upstream release.
+`schema.about.source_version_iri` gets assigned the source release IRI when
+metadata queries identify it. `schema_version` uses that IRI, a release label, a
+source date, or a dated mining snapshot. The canonical JSON envelope's `version`
+is a separate storage-format identifier. A snapshot date does not certify an
+upstream release.
 
 ### Load and convert existing schemas
 
@@ -114,6 +131,7 @@ schema.to_shacl()  # To SHACL
 Mine multiple endpoints from a YAML file:
 
 **Create `sources.yaml`:**
+
 ```yaml
 sources:
   uniprot:
@@ -124,12 +142,14 @@ sources:
 ```
 
 **Run batch mining:**
+
 ```bash
 python scripts/pipeline.py --sources sources.yaml --remote-only
 ```
 
 **Output:**
-```
+
+```text
 output/
 ├── uniprot/
 │   ├── uniprot_schema.jsonld
@@ -158,10 +178,10 @@ sources:
 python scripts/pipeline.py --sources sources.yaml --local-only
 ```
 
-
 ### Query metadata without mining
 
-Extract dataset metadata (license, publisher, version) without full schema extraction:
+Extract dataset metadata (license, publisher, version) without full schema
+extraction:
 
 ```python
 from rdfsolve.api import query_metadata
@@ -183,7 +203,8 @@ result = discover_void_source(
 
 ### Probe endpoints for entity matching
 
-Match URI patterns across endpoints to find datasets containing specific entity types:
+Match URI patterns across endpoints to find datasets containing specific entity
+types:
 
 ```python
 from rdfsolve.instance_matcher import probe_endpoint
@@ -203,7 +224,11 @@ Test endpoint availability and response times:
 from rdfsolve.endpoint_health import check_endpoint_health
 
 check_endpoint_health("https://aopwiki.rdf.bigcat-bioinformatics.org/sparql")
-# EndpointHealthCheck(endpoint_url='https://aopwiki.rdf.bigcat-bioinformatics.org/sparql', status='up', response_time=0.1596362590789795, error_message='', timestamp='2026-09-08T08:16:36.126659+00:00')
+# EndpointHealthCheck(
+#     endpoint_url='https://aopwiki.rdf.bigcat-bioinformatics.org/sparql',
+#     status='up', response_time=0.1596362590789795, error_message='',
+#     timestamp='2026-09-08T08:16:36.126659+00:00'
+# )
 ```
 
 ### Infer cross-dataset mappings
