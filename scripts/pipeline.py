@@ -61,6 +61,7 @@ from typing import Any
 import yaml
 
 from rdfsolve.qlever import QleverConfig, build_provider_qleverfile, build_qleverfile
+from rdfsolve.qlever.inputs import rdf_input_files
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
 # Configure logging
@@ -1021,10 +1022,7 @@ class GroupedMiningStage(LocalMiningStage):
                     source_workdir.mkdir(parents=True, exist_ok=True)
 
                     # Check if workdir has RDF files
-                    has_files = any(
-                        list(source_workdir.glob(ext))
-                        for ext in ["*.ttl", "*.nt", "*.nq", "rdf/*.ttl", "rdf/*.nt", "rdf/*.nq"]
-                    )
+                    has_files = bool(rdf_input_files(source_workdir))
 
                     # Download if no files exist and source has download URLs
                     if not has_files and self._has_qlever_index(source_workdir, source.name):
@@ -1041,10 +1039,7 @@ class GroupedMiningStage(LocalMiningStage):
                                 self._prepare_qleverfile(source_workdir, source, self.config.base_port)
                             self._execute_qleverfile(source_workdir, source)
                             # Re-check for files
-                            has_files = any(
-                                list(source_workdir.glob(ext))
-                                for ext in ["*.ttl", "*.nt", "*.nq", "rdf/*.ttl", "rdf/*.nt", "rdf/*.nq"]
-                            )
+                            has_files = bool(rdf_input_files(source_workdir))
                         except Exception as dl_err:
                             log.warning(f"  -> Download failed for {source.name}: {dl_err}")
 
@@ -1054,7 +1049,9 @@ class GroupedMiningStage(LocalMiningStage):
                             log.info(f"  -> No RDF files but found existing QLever index for {source.name}")
                             sources_with_existing_index.append((source, source_workdir))
                         else:
-                            log.warning(f"  -> No RDF files in {source.name} workdir, skipping")
+                            raise FileNotFoundError(
+                                f"No prepared RDF inputs for {source.name}; decompress cached downloads first"
+                            )
                         continue
                     source_data.append((source, source_workdir))
 
@@ -1067,18 +1064,10 @@ class GroupedMiningStage(LocalMiningStage):
                 if not qleverfile.exists():
                     self._prepare_group_qleverfile(workdir, group_name, group_sources, port)
 
-                index_done = workdir / ".index.done"
-                if not index_done.exists():
-                    log.info(f"  Indexing {len(source_data)} sources...")
-                    try:
-                        self._execute_group_qleverfile(workdir, group_name, source_data)
-                        index_done.touch()
-                    except Exception as idx_err:
-                        log.error(f"  -> Indexing failed: {idx_err}")
-                        results["failed"].append(
-                            {"group": group_name, "error": f"Index failed: {idx_err}"}
-                        )
-                        continue
+                log.info(f"  Indexing {len(source_data)} sources...")
+                self._execute_group_qleverfile(workdir, group_name, source_data)
+                if not self._has_qlever_index(workdir, group_name):
+                    raise RuntimeError(f"Index command returned without a complete index: {workdir}")
 
                 log.info(f"  Starting QLever on port {port}...")
                 server_pid = self._qlever_start(workdir, group_name, port)
@@ -1223,7 +1212,6 @@ class GroupedMiningStage(LocalMiningStage):
         config = configparser.ConfigParser()
         config.read(qleverfile_path)
 
-        rdf_format = config.get("data", "FORMAT")
         settings_json = config.get("index", "SETTINGS_JSON")
 
         settings_path = workdir / f"{group_name}.settings.json"
@@ -1231,17 +1219,18 @@ class GroupedMiningStage(LocalMiningStage):
 
         input_files = []
         for source, source_workdir in source_data:
-            for ext in ["*.ttl", "*.nt", "*.nq"]:
-                for f in source_workdir.glob(ext):
-                    graph_uri = f"http://rdfsolve.org/graph/{source.name}"
-                    input_files.append((f, graph_uri))
+            files = rdf_input_files(source_workdir)
+            if not files:
+                raise ValueError(f"No prepared RDF inputs for {source.name} in {source_workdir}")
+            graph_uri = f"http://rdfsolve.org/graph/{source.name}"
+            input_files.extend((path, graph_uri) for path in files)
 
         if not input_files:
             raise ValueError(f"No input files found for group {group_name}")
 
         file_flags = []
         for file_path, graph_uri in input_files:
-            file_flags.extend(["-f", str(file_path), "-g", graph_uri])
+            file_flags.extend(["-f", str(file_path), "-F", file_path.suffix[1:], "-g", graph_uri])
 
         image_path = self.config.data_dir / "qlever.sif"
         cmd = [
@@ -1255,8 +1244,6 @@ class GroupedMiningStage(LocalMiningStage):
             group_name,
             "-s",
             str(settings_path),
-            "-F",
-            rdf_format,
             *file_flags,
             "-p",
             config.get("index", "PARALLEL_PARSING"),
@@ -1457,10 +1444,11 @@ class LsLodCloudStage(LocalMiningStage):
 
         input_files = []
         for source, source_workdir in source_data:
-            for ext in ["*.ttl", "*.nt", "*.nq"]:
-                for f in source_workdir.glob(ext):
-                    graph_uri = f"http://rdfsolve.org/graph/{source.name}"
-                    input_files.append((f, graph_uri))
+            files = rdf_input_files(source_workdir)
+            if not files:
+                raise ValueError(f"No prepared RDF inputs for {source.name} in {source_workdir}")
+            graph_uri = f"http://rdfsolve.org/graph/{source.name}"
+            input_files.extend((path, graph_uri) for path in files)
 
         if not input_files:
             raise ValueError("No input files found for LSLOD Cloud")
@@ -1469,7 +1457,7 @@ class LsLodCloudStage(LocalMiningStage):
 
         file_flags = []
         for file_path, graph_uri in input_files:
-            file_flags.extend(["-f", str(file_path), "-g", graph_uri])
+            file_flags.extend(["-f", str(file_path), "-F", file_path.suffix[1:], "-g", graph_uri])
 
         image_path = self.config.data_dir / "qlever.sif"
         cmd = [
