@@ -93,8 +93,8 @@ def main():
                 entry=source,
             )
 
-            if result.get("partitions"):
-                partitions_count = len(result["partitions"])
+            if result.get("files"):
+                partitions_count = result["partitions_found"]
                 files = result.get("files", {})
                 log.info(
                     "  ✓ Found %d partitions for %s",

@@ -1,7 +1,6 @@
 """VoID parser for converting RDF graphs to schemas and discovering VoID catalogs from SPARQL endpoints."""
 
 import logging
-from hashlib import md5
 from typing import Any
 
 import pandas as pd
@@ -132,186 +131,70 @@ class VoidParser:
     # VoID catalog discovery
 
     def discover_void_graphs(
-        self, endpoint_url: str, *, timeout: float = 30.0, max_retries: int = 1
+        self, endpoint_url: str, *, timeout: float = 30.0, max_retries: int = 1,
+        batch_size: int = 100, graph_batch_size: int = 8, max_pages: int = 1000,
     ) -> dict[str, Any]:
-        """Discover VoID graphs at *endpoint_url* via a SELECT query.
+        """Retrieve published VoID and parse it through the canonical reader.
 
-        Queries for VoID partitions across all named graphs.  Returns a
-        dict describing found graphs and their raw partition records,
-        which can be passed directly to
-        :meth:`build_void_graph_from_partitions`.
-
-        Args:
-            endpoint_url: SPARQL endpoint URL.
-
-        Returns:
-            Dict with keys ``has_void_descriptions``, ``found_graphs``,
-            ``total_graphs``, ``void_content``, ``partitions``.
-            Query failures raise; they are not empty results.
+        Named graphs containing 'void' are candidates, not proof of VoID.
+        Try other graphs and the default graph only when candidates are empty.
+        Explicit graph scope never expands. Failures raise.
         """
+        from rdfsolve.schema_models._constants import SERVICE_NAMESPACE_PREFIXES
         from rdfsolve.sparql_helper import SparqlHelper
+        from rdfsolve.void_retrieval import discover_description
 
-        query = """
-        PREFIX void: <http://rdfs.org/ns/void#>
-        PREFIX void-ext: <http://ldf.fi/void-ext#>
-        SELECT DISTINCT ?subjectClass ?prop ?objectClass ?objectDatatype ?g
-        WHERE {
-          GRAPH ?g {
+        with SparqlHelper(endpoint_url, timeout=timeout, max_retries=max_retries) as helper:
+            graph, found, default_graph = discover_description(
+                helper, self.graph_uris, batch_size=batch_size,
+                graph_batch_size=graph_batch_size, max_pages=max_pages,
+                excluded_prefixes=tuple(SERVICE_NAMESPACE_PREFIXES) if self.exclude_graphs else (),
+            )
+        self.graph = graph
+        schema = self.to_mined_schema()
+        partitions = [
             {
-              ?cp void:class ?subjectClass ;
-                  void:propertyPartition ?pp .
-              ?pp void:property ?prop .
-              OPTIONAL {
-                {
-                  ?pp void:classPartition [ void:class ?objectClass ] .
-                } UNION {
-                  ?pp void-ext:datatypePartition
-                      [ void-ext:datatype ?objectDatatype ] .
-                }
-              }
-            } UNION {
-              ?ls void:subjectsTarget [ void:class ?subjectClass ] ;
-                  void:linkPredicate ?prop ;
-                  void:objectsTarget [ void:class ?objectClass ] .
+                "subjectClass": p.subject_class, "prop": p.property_uri,
+                "objectClass": p.object_class, "objectDatatype": p.datatype,
+                "count": p.count,
             }
-          }
+            for p in schema.patterns
+        ]
+        logger.info("Retrieved %d VoID triples and %d patterns", len(graph), len(partitions))
+        return {
+            "has_void_descriptions": bool(len(graph)),
+            "found_graphs": found,
+            "total_graphs": len(found),
+            "default_graph": default_graph,
+            "partitions": partitions,
+            "graph": graph,
+            "schema": schema,
+            "state": "complete" if len(graph) else "empty",
         }
-        """
-        if self.graph_uris == []:
-            raise ValueError("Use graph_uris=None for all named graphs, or select at least one graph")
-        if self.graph_uris is not None:
-            values = " ".join(URIRef(iri).n3() for iri in self.graph_uris)
-            query = query.replace("GRAPH ?g {", "VALUES ?g { " + values + " } GRAPH ?g {", 1)
-        if self.exclude_graphs:
-            from rdflib import Literal
 
-            from rdfsolve.schema_models._constants import SERVICE_NAMESPACE_PREFIXES
-
-            filters = " ".join(
-                f"FILTER(!STRSTARTS(STR(?g), {Literal(prefix).n3()}))"
-                for prefix in SERVICE_NAMESPACE_PREFIXES
-            )
-            query = query.replace("GRAPH ?g {", filters + " GRAPH ?g {", 1)
-        logger.info(
-            "Querying VoID partitions at %s; graph scope: %s",
-            endpoint_url,
-            self.graph_uris if self.graph_uris is not None else "all named graphs",
-        )
-        try:
-            helper = SparqlHelper(endpoint_url, timeout=timeout, max_retries=max_retries)
-            results = helper.select(query, purpose="void/partition-discovery")
-
-            found_graphs: list[str] = []
-            void_content: dict[str, dict[str, Any]] = {}
-            partitions: list[dict[str, str]] = []
-
-            for row in results["results"]["bindings"]:
-                g = row.get("g", {}).get("value")
-                if not g:
-                    continue
-                if g not in void_content:
-                    void_content[g] = {
-                        "partition_count": 0,
-                        "has_any_partitions": True,
-                    }
-                    found_graphs.append(g)
-                void_content[g]["partition_count"] += 1
-
-                p: dict[str, str] = {
-                    "graph": g,
-                    "subjectClass": row.get("subjectClass", {}).get("value", ""),
-                    "prop": row.get("prop", {}).get("value", ""),
-                }
-                if row.get("objectClass", {}).get("value"):
-                    p["objectClass"] = row["objectClass"]["value"]
-                if row.get("objectDatatype", {}).get("value"):
-                    p["objectDatatype"] = row["objectDatatype"]["value"]
-                partitions.append(p)
-
-            logger.info(
-                "Found %d VoID partition records in %d graphs", len(partitions), len(found_graphs)
-            )
-            return {
-                "has_void_descriptions": bool(found_graphs),
-                "found_graphs": found_graphs,
-                "total_graphs": len(found_graphs),
-                "void_content": void_content,
-                "partitions": partitions,
-            }
-        except Exception as exc:
-            logger.warning("VoID discovery failed at %s: %s", endpoint_url, exc)
-            raise
-
-    def discover_all_graphs(self, endpoint_url: str) -> dict[str, Any]:
-        """Discover all named graphs at endpoint with triple counts.
-
-        Executes: SELECT ?g (COUNT(*) AS ?count) WHERE {GRAPH ?g {?s ?p ?o}}
-        GROUP BY ?g ORDER BY DESC(?count)
-
-        Args:
-            endpoint_url: SPARQL endpoint URL.
-
-        Returns:
-            Dict with keys:
-            - ``graphs``: list of dicts with 'uri' and 'count' keys
-            - ``total_graphs``: number of graphs found
-            - ``ontology_graphs``: list of graph URIs with .owl extension
-            - ``void_graphs``: list of graph URIs containing 'void' in name
-            - ``error``: error message (only present on failure)
-        """
+    def discover_all_graphs(
+        self, endpoint_url: str, *, include_counts: bool = False,
+        timeout: float = 30.0, max_retries: int = 1,
+        batch_size: int = 100, max_pages: int = 1000,
+    ) -> dict[str, Any]:
+        """List named graphs. Counts are optional and can be expensive."""
         from rdfsolve.sparql_helper import SparqlHelper
+        from rdfsolve.void_retrieval import discover_graph_names
 
-        query = """
-        SELECT ?g (COUNT(*) AS ?count)
-        WHERE {
-          GRAPH ?g { ?s ?p ?o }
+        with SparqlHelper(endpoint_url, timeout=timeout, max_retries=max_retries) as helper:
+            names = discover_graph_names(helper, batch_size=batch_size, max_pages=max_pages)
+            graphs: list[dict[str, Any]] = [{"uri": uri, "count": None} for uri in names]
+            if include_counts:
+                for graph in graphs:
+                    query = ("SELECT (COUNT(*) AS ?count) WHERE { GRAPH "
+                             + URIRef(graph["uri"]).n3() + " { ?s ?p ?o } }")
+                    rows = helper.select(query, purpose="graph/count")["results"]["bindings"]
+                    graph["count"] = int(rows[0]["count"]["value"])
+        return {
+            "graphs": graphs, "total_graphs": len(graphs),
+            "ontology_graphs": [],
+            "void_graphs": [uri for uri in names if "void" in uri.lower()],
         }
-        GROUP BY ?g
-        ORDER BY DESC(?count)
-        """
-
-        try:
-            helper = SparqlHelper(endpoint_url)
-            results = helper.select(query, purpose="graph-discovery")
-
-            graphs = []
-            ontology_graphs = []
-            void_graphs = []
-
-            for row in results["results"]["bindings"]:
-                g_uri = row.get("g", {}).get("value")
-                count = int(row.get("count", {}).get("value", 0))
-
-                if not g_uri:
-                    continue
-
-                graphs.append({"uri": g_uri, "count": count})
-
-                # Identify ontology graphs (.owl extension)
-                if g_uri.endswith(".owl") or ".owl/" in g_uri or ".owl#" in g_uri:
-                    ontology_graphs.append(g_uri)
-                    logger.info(f"Found ontology graph: {g_uri} ({count} triples)")
-
-                # Identify potential metadata graphs (containing 'void')
-                if "void" in g_uri.lower():
-                    void_graphs.append(g_uri)
-                    logger.info(f"Found VoID metadata graph: {g_uri} ({count} triples)")
-
-            return {
-                "graphs": graphs,
-                "total_graphs": len(graphs),
-                "ontology_graphs": ontology_graphs,
-                "void_graphs": void_graphs,
-            }
-        except Exception as exc:
-            logger.warning(f"Graph discovery failed: {exc}")
-            return {
-                "graphs": [],
-                "total_graphs": 0,
-                "ontology_graphs": [],
-                "void_graphs": [],
-                "error": str(exc),
-            }
 
     def extract_metadata_from_void_graphs(
         self, endpoint_url: str, void_graph_uris: list[str]
@@ -390,107 +273,6 @@ class VoidParser:
                 "total_triples": 0,
                 "error": str(exc),
             }
-
-    def build_void_graph_from_partitions(
-        self,
-        partitions: list[dict[str, str]],
-        base_uri: str | None = None,
-    ) -> Graph:
-        """Convert raw partition records into an RDF VoID graph.
-
-        Partition records are the dicts produced by
-        :meth:`discover_void_graphs` (keys: ``subjectClass``, ``prop``,
-        optionally ``objectClass`` / ``objectDatatype``).
-
-        Args:
-            partitions: Partition records from :meth:`discover_void_graphs`.
-            base_uri: Base URI for generated blank-node-replacement IRIs.
-
-        Returns:
-            RDF :class:`~rdflib.Graph` with VoID partition triples.
-        """
-        VOID = "http://rdfs.org/ns/void#"
-        VOID_EXT = "http://ldf.fi/void-ext#"
-        base = base_uri or "urn:void:partition:"
-
-        void_graph = Graph()
-        void_graph.bind("void", URIRef(VOID))
-        void_graph.bind("void-ext", URIRef(VOID_EXT))
-
-        class_partitions: dict[str, URIRef] = {}
-
-        for part in partitions:
-            sc = part.get("subjectClass", "")
-            prop = part.get("prop", "")
-            if not sc or not prop:
-                continue
-
-            if sc not in class_partitions:
-                cp_uri = URIRef(
-                    f"{base}class_{md5(sc.encode(), usedforsecurity=False).hexdigest()[:12]}"
-                )
-                class_partitions[sc] = cp_uri
-                void_graph.add((cp_uri, URIRef(f"{VOID}class"), URIRef(sc)))
-
-            cp_uri = class_partitions[sc]
-            oc = part.get("objectClass", "")
-            dt = part.get("objectDatatype", "")
-            pp_key = f"{sc}_{prop}_{oc or dt}"
-            pp_uri = URIRef(
-                f"{base}prop_{md5(pp_key.encode(), usedforsecurity=False).hexdigest()[:12]}"
-            )
-
-            void_graph.add((cp_uri, URIRef(f"{VOID}propertyPartition"), pp_uri))
-            void_graph.add((pp_uri, URIRef(f"{VOID}property"), URIRef(prop)))
-            void_graph.add(
-                (
-                    pp_uri,
-                    URIRef(f"{VOID_EXT}subjectClass"),
-                    URIRef(sc),
-                )
-            )
-
-            if oc:
-                if oc not in class_partitions:
-                    oc_uri = URIRef(
-                        f"{base}class_{md5(oc.encode(), usedforsecurity=False).hexdigest()[:12]}"
-                    )
-                    class_partitions[oc] = oc_uri
-                    void_graph.add((oc_uri, URIRef(f"{VOID}class"), URIRef(oc)))
-                oc_uri = class_partitions[oc]
-                void_graph.add(
-                    (
-                        pp_uri,
-                        URIRef(f"{VOID}classPartition"),
-                        oc_uri,
-                    )
-                )
-                void_graph.add(
-                    (
-                        pp_uri,
-                        URIRef(f"{VOID_EXT}objectClass"),
-                        URIRef(oc),
-                    )
-                )
-            elif dt:
-                dt_uri = URIRef(
-                    f"{base}dtype_{md5(dt.encode(), usedforsecurity=False).hexdigest()[:12]}"
-                )
-                void_graph.add(
-                    (
-                        pp_uri,
-                        URIRef(f"{VOID_EXT}datatypePartition"),
-                        dt_uri,
-                    )
-                )
-                void_graph.add((dt_uri, URIRef(f"{VOID_EXT}datatype"), URIRef(dt)))
-
-        logger.debug(
-            "Built VoID graph: %d triples from %d partitions",
-            len(void_graph),
-            len(partitions),
-        )
-        return void_graph
 
     def to_linkml(
         self,

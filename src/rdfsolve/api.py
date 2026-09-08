@@ -259,10 +259,18 @@ def export_schema_artifacts(
     tag: str = "discovered_remote",
     fmt: str = "all",
 ) -> dict[str, str]:
-    """Write VoID / JSON-LD / RDF-config artefacts."""
+    """Write source VoID RDF and canonical schema exports."""
+    if fmt not in {"void", "jsonld", "all"}:
+        raise ValueError("fmt must be void, jsonld, or all")
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     written: dict[str, str] = {}
+    schema = VoidParser(void_source=void_graph).to_mined_schema()
+    schema.about.endpoint = schema.about.endpoint or endpoint
+    schema.about.dataset_name = schema.about.dataset_name or name
+    canonical_path = out / f"{name}_{tag}_schema.json"
+    canonical_path.write_text(json.dumps(schema.to_dict(), indent=2) + "\n", encoding="utf-8")
+    written["schema_json"] = str(canonical_path)
 
     if fmt in ("void", "all"):
         void_path = out / f"{name}_{tag}_void.ttl"
@@ -298,7 +306,7 @@ def export_schema_artifacts(
                 )
             written["rdfconfig_dir"] = str(config_dir)
         except Exception as exc:
-            logger.debug("RDF-config export failed for %s: %s", name, exc)
+            logger.warning("RDF-config export failed for %s: %s", name, exc)
 
     return written
 
@@ -313,38 +321,31 @@ def discover_void_graphs(
     *,
     timeout: float = 30.0,
     max_retries: int = 1,
+    batch_size: int = 100,
+    graph_batch_size: int = 8,
+    max_pages: int = 1000,
 ) -> dict[str, Any]:
-    """Find published VoID partitions. Raise on query failure."""
+    """Retrieve published VoID RDF and its canonical schema. Failures raise."""
     return VoidParser(graph_uris=graph_uris, exclude_graphs=exclude_graphs).discover_void_graphs(
-        endpoint_url, timeout=timeout, max_retries=max_retries
+        endpoint_url, timeout=timeout, max_retries=max_retries,
+        batch_size=batch_size, graph_batch_size=graph_batch_size, max_pages=max_pages,
     )
 
 
-def discover_all_graphs(endpoint_url: str) -> dict[str, Any]:
-    """Discover all named graphs at endpoint with triple counts.
+def discover_all_graphs(
+    endpoint_url: str, *, include_counts: bool = False,
+    timeout: float = 30.0, max_retries: int = 1,
+    batch_size: int = 100, max_pages: int = 1000,
+) -> dict[str, Any]:
+    """List graph names in pages. Set include_counts=True for triple counts.
 
-    Identifies:
-    - All named graphs with their triple counts
-    - Ontology graphs (.owl extension) → marked as void:vocabulary
-    - VoID metadata graphs (containing 'void' in URI)
-
-    Args:
-        endpoint_url: SPARQL endpoint URL.
-
-    Returns:
-        Dict with keys:
-        - ``graphs``: list of dicts with 'uri' and 'count' keys
-        - ``total_graphs``: number of graphs found
-        - ``ontology_graphs``: list of .owl graph URIs
-        - ``void_graphs``: list of graph URIs containing 'void'
-
-    Example:
-        >>> from rdfsolve import discover_all_graphs
-        >>> result = discover_all_graphs("https://sparql.uniprot.org/sparql")
-        >>> print(f"Found {result['total_graphs']} graphs")
-        >>> print(f"Ontology graphs: {result['ontology_graphs']}")
+    A graph name is not evidence that it contains an ontology.
+    Query failures raise. Omitted counts are None, not zero.
     """
-    return VoidParser().discover_all_graphs(endpoint_url)
+    return VoidParser().discover_all_graphs(
+        endpoint_url, include_counts=include_counts, timeout=timeout,
+        max_retries=max_retries, batch_size=batch_size, max_pages=max_pages,
+    )
 
 
 def extract_metadata_from_void_graphs(
@@ -524,6 +525,9 @@ def discover_void_source(
     timeout: float = 30.0,
     max_retries: int = 1,
     graph_uris: str | list[str] | None = None,
+    batch_size: int = 100,
+    graph_batch_size: int = 8,
+    max_pages: int = 1000,
 ) -> dict[str, Any]:
     """Find published VoID and export it; return counts and file paths.
 
@@ -537,10 +541,11 @@ def discover_void_source(
         exclude_graphs=False,
         timeout=timeout,
         max_retries=max_retries,
+        batch_size=batch_size, graph_batch_size=graph_batch_size, max_pages=max_pages,
     )
     partitions = result.get("partitions", [])
 
-    if not partitions:
+    if not result["has_void_descriptions"]:
         return {
             "partitions_found": 0,
             "graphs_found": 0,
@@ -548,9 +553,10 @@ def discover_void_source(
         }
 
     logger.info("Exporting %d VoID partition records for %s", len(partitions), name)
-    base_uri = void_uri_base or resolve_void_uri_base(name, entry=entry)
-    parser = VoidParser()
-    void_graph = parser.build_void_graph_from_partitions(partitions, base_uri=base_uri)
+    # Keep source identifiers. Do not mint replacements for published partitions.
+    if void_uri_base is not None:
+        logger.warning("void_uri_base does not rename published VoID identifiers")
+    void_graph = result["graph"]
 
     files = export_schema_artifacts(
         void_graph,
@@ -566,6 +572,10 @@ def discover_void_source(
         "dataset": name,
         "endpoint": endpoint,
         "source": "discovered",
+        "state": result["state"],
+        "default_graph": result["default_graph"],
+        "graph_uris": result["found_graphs"],
+        "retrieved_triples": len(void_graph),
         "graphs_found": len(result.get("found_graphs", [])),
         "partitions_found": len(partitions),
     }
