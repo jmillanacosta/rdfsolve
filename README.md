@@ -87,7 +87,6 @@ schema = MinedSchema.from_shacl(Path("example_shacl.ttl").read_text(encoding="ut
 
 Allows (partial) interconversion through `MinedSchema`.
 
-
 ### Load and convert existing schemas
 
 ```python
@@ -157,14 +156,24 @@ python scripts/pipeline.py --sources sources.yaml --local-only
 
 ### Query metadata without mining
 
-Extract dataset metadata (license, publisher, version) without full schema
-extraction:
+Retrieve RDF descriptions without mining patterns. The returned document keeps
+source predicates, literal languages, and datatypes:
 
 ```python
 from rdfsolve.api import query_metadata
 
-metadata = query_metadata("https://sparql.uniprot.org/sparql")
+metadata = query_metadata(
+    "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
+    graph_uris=["http://aopwiki.org/"],
+)
+fields = metadata.project()  # Empty if dataset identity is ambiguous.
+rdf = metadata.to_turtle()
 ```
+
+Use `subject_iris=[...]` to retrieve a resource described with another
+vocabulary. Known-field projections leave conflicting scalar values unset.
+Retrieval includes root descriptions and two blank-node levels; it does not
+crawl linked resources. Creation dates are not reported as publication dates.
 
 ### Discover existing VoID descriptions
 
@@ -173,10 +182,26 @@ Find and export pre-existing VoID descriptions at an endpoint:
 ```python
 from rdfsolve.api import discover_void_source
 
-result = discover_void_source(
-    endpoint="https://sparql.uniprot.org/sparql", name="uniprot", output_dir="output/"
+void = discover_void_source(
+    endpoint="https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
+    name="aopwikirdf",
 )
+print(void.has_void, void.has_partitions, void.has_patterns)
+metadata = void.get_metadata()  # No network request.
+for graph_uri in void.graph_uris:
+    description = void.for_graph(graph_uri)
+    print(graph_uri, description.has_partitions, description.has_patterns)
+trig = void.to_trig()  # Preserve graph boundaries.
+schema = void.to_mined_schema()
+stored_metadata = schema.get_metadata()  # RDF generated from stored schema fields.
 ```
+
+Discovery checks every named graph and the default graph, sequentially. Explicit
+`graph_uris` restrict the search. VoID without partitions remains useful
+metadata; class-count partitions alone do not describe relationship patterns.
+Turtle is a union view; use TriG to retain contexts. Metadata graph locations
+are not inferred instance-query scopes. Set `output_dir` only when files are
+wanted.
 
 ### Probe endpoints for entity matching
 
