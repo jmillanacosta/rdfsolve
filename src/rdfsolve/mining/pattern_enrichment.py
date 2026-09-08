@@ -413,7 +413,7 @@ def enrich_patterns_with_labels(
     for pat in patterns:
         all_uris.add(pat.subject_class)
         all_uris.add(pat.property_uri)
-        if pat.object_class not in ("Literal", "Resource"):
+        if pat.object_class not in ("Literal", "Resource", "BlankNode"):
             all_uris.add(pat.object_class)
 
     if not all_uris:
@@ -459,22 +459,27 @@ def _fetch_label_batch(
             time.monotonic() - t0,
         )
         bindings = result.get("results", {}).get("bindings", [])
-        for b in bindings:
-            uri = b.get("uri", {}).get("value", "")
-            if not uri or uri in label_map:
+        candidates: dict[str, dict[str, dict[str, str]]] = {}
+        for row in bindings:
+            uri = row.get("uri", {}).get("value")
+            if uri not in batch:
                 continue
-            rdfs_lbl = b.get("rdfsLabel", {}).get("value")
-            dc_lbl = b.get("dcTitle", {}).get("value")
-            iao_lbl = b.get("iaoLabel", {}).get("value")
-            skos_pref = b.get("skosPrefLabel", {}).get("value")
-            skos_alt = b.get("skosAltLabel", {}).get("value")
+            fields = candidates.setdefault(uri, {})
+            for key, term in row.items():
+                if key == "uri" or not term.get("value"):
+                    continue
+                old = fields.get(key)
+                rank = (term.get("xml:lang") not in (None, "en"), term["value"])
+                if old is None or rank < (old.get("xml:lang") not in (None, "en"), old["value"]):
+                    fields[key] = term
+        for uri, row in candidates.items():
             label_map[uri] = pick_label(
-                rdfs_lbl,
-                dc_lbl,
+                row.get("rdfsLabel", {}).get("value"),
+                row.get("dcTitle", {}).get("value"),
                 uri,
-                iao_label=iao_lbl,
-                skos_pref_label=skos_pref,
-                skos_alt_label=skos_alt,
+                iao_label=row.get("iaoLabel", {}).get("value"),
+                skos_pref_label=row.get("skosPrefLabel", {}).get("value"),
+                skos_alt_label=row.get("skosAltLabel", {}).get("value"),
             )
     except Exception as e:
         report.record_query(
@@ -482,7 +487,7 @@ def _fetch_label_batch(
             time.monotonic() - t0,
             success=False,
         )
-        logger.warning("Label batch failed (%d URIs) : %s", len(batch), e)
+        logger.warning("Label batch failed (%d IRIs): %s", len(batch), type(e).__name__)
 
 
 def _enrich_with_local(

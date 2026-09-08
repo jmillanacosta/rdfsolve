@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
+from typing_extensions import Self
 
 from rdfsolve._uri import get_local_name, pick_label
 from rdfsolve.mining.one_shot_strategy import OneShotStrategy
@@ -207,6 +208,18 @@ class SchemaMiner:
         self._ontology_classes: list[str] | None = None
         self._declared_classes: set[str] = set()
         self.last_report: MiningReport | None = None
+
+    def close(self) -> None:
+        """Release the HTTP session."""
+        self._helper.close()
+
+    def __enter__(self) -> Self:
+        """Use the miner as a context manager."""
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        """Release the HTTP session after mining."""
+        self.close()
 
     def _resolve_strategy(
         self,
@@ -880,4 +893,7 @@ def mine_schema(
         graph_store_dir=graph_store_dir,
         graph_store_max_bytes=graph_store_max_bytes,
     )
-    return miner.mine(dataset_name=dataset_name)
+    try:
+        return miner.mine(dataset_name=dataset_name)
+    finally:
+        miner.close()

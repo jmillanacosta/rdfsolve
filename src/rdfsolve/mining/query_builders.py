@@ -221,26 +221,31 @@ def _build_label_query(
     """
     values = " ".join(f"(<{u}>)" for u in uris)
     g_open, g_close = _graph_clause(graph_uris)
-    q = f"""\
-SELECT ?uri ?rdfsLabel ?dcTitle ?iaoLabel ?skosPrefLabel ?skosAltLabel
-       ?rdfsComment ?dcDescription ?skosDefinition ?schemaDescription ?iaoDefinition ?dcDesc
-WHERE {{
-  VALUES (?uri) {{ {values} }}
-  {g_open}
-    OPTIONAL {{ ?uri <http://www.w3.org/2000/01/rdf-schema#label> ?rdfsLabel . }}
-    OPTIONAL {{ ?uri <http://purl.org/dc/elements/1.1/title> ?dcTitle . }}
-    OPTIONAL {{ ?uri <http://purl.org/dc/terms/title> ?dcTitle . }}
-    OPTIONAL {{ ?uri <http://purl.obolibrary.org/obo/IAO_0000118> ?iaoLabel . }}
-    OPTIONAL {{ ?uri <http://www.w3.org/2004/02/skos/core#prefLabel> ?skosPrefLabel . }}
-    OPTIONAL {{ ?uri <http://www.w3.org/2004/02/skos/core#altLabel> ?skosAltLabel . }}
-    OPTIONAL {{ ?uri <http://www.w3.org/2000/01/rdf-schema#comment> ?rdfsComment . }}
-    OPTIONAL {{ ?uri <http://purl.org/dc/terms/description> ?dcDescription . }}
-    OPTIONAL {{ ?uri <http://www.w3.org/2004/02/skos/core#definition> ?skosDefinition . }}
-    OPTIONAL {{ ?uri <http://schema.org/description> ?schemaDescription . }}
-    OPTIONAL {{ ?uri <http://purl.obolibrary.org/obo/IAO_0000115> ?iaoDefinition . }}
-    OPTIONAL {{ ?uri <http://purl.org/dc/elements/1.1/description> ?dcDesc . }}
-  {g_close}
-}}"""
+    columns = {
+        "rdfsLabel": ["http://www.w3.org/2000/01/rdf-schema#label"],
+        "dcTitle": ["http://purl.org/dc/elements/1.1/title", "http://purl.org/dc/terms/title"],
+        "iaoLabel": ["http://purl.obolibrary.org/obo/IAO_0000118"],
+        "skosPrefLabel": ["http://www.w3.org/2004/02/skos/core#prefLabel"],
+        "skosAltLabel": ["http://www.w3.org/2004/02/skos/core#altLabel"],
+        "rdfsComment": ["http://www.w3.org/2000/01/rdf-schema#comment"],
+        "dcDescription": ["http://purl.org/dc/terms/description"],
+        "skosDefinition": ["http://www.w3.org/2004/02/skos/core#definition"],
+        "schemaDescription": ["http://schema.org/description", "https://schema.org/description"],
+        "iaoDefinition": ["http://purl.obolibrary.org/obo/IAO_0000115"],
+        "dcDesc": ["http://purl.org/dc/elements/1.1/description"],
+    }
+    branches = [
+        f"{{ ?uri <{predicate}> ?{column} . FILTER(isLiteral(?{column})) }}"
+        for column, predicates in columns.items()
+        for predicate in predicates
+    ]
+    q = (
+        "SELECT ?uri "
+        + " ".join(f"?{column}" for column in columns)
+        + f" WHERE {{ VALUES (?uri) {{ {values} }} {g_open} "
+        + " UNION ".join(branches)
+        + f" {g_close} }}"
+    )
     return q
 
 
