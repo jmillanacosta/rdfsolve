@@ -45,6 +45,12 @@ with open("uniprot_schema.json", "w", encoding="utf-8") as f:
     json.dump(schema.to_dict(), f, indent=2)
 ```
 
+`schema.json()` is Pydantic's deprecated instance serializer; use
+`schema.model_dump_json()`. It returns the `MinedSchema` data as a JSON string,
+without the canonical envelope. Use `schema.to_dict()` with `json.dump()` for
+saved rdfsolve files. `MinedSchema.model_json_schema()` describes the internal
+model; `schema.to_pydantic()` instead generates Python classes for the mined RDF types.
+
 ### Read saved analysis data
 
 ```python
