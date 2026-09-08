@@ -152,6 +152,35 @@ schema.to_linkml_yaml()  # To LinkML
 schema.to_shacl()  # To SHACL
 ```
 
+### Retrieve Python objects
+
+Turn a mined schema or SHACL shapes into runtime classes, then retrieve only the
+fields you want. For an AOPWiki schema:
+
+```python
+with schema.hydrator() as client:
+    AOP = client.model("AdverseOutcomePathway")
+    pathways = client.sample(AOP, limit=3, fields=["title", "has_key_event"])
+    for pathway in pathways:
+        print(pathway.title, pathway.has_key_event)
+```
+
+The same client reads endpoints or local RDFLib graphs. Pass
+`schema.hydrator(graph, graph_uris=[])` to read a local graph's default scope.
+Plain predicates, SHACL paths, and paths added with `client.with_paths()` all
+work. Linked resources stay IRIs until you request them with `get()` or
+`get_many()`; nothing downloads recursively.
+
+Requested fields contain lists, including `[]` for no returned values.
+Unrequested fields stay `None`. Original terms remain in `object.rdf_terms`;
+source details remain in `object.rdf_source`. Failures and exceeded row budgets
+raise errors. Retrieval does not validate SHACL or prove completeness.
+
+[Try the live AOPWiki notebook](notebooks/SparqlHelper/AOPWiki_hydration.ipynb):
+mine, generate classes, and retrieve pathway and key-event titles.
+`schema.to_pydantic_classes()` returns runtime classes; `schema.to_pydantic()`
+exports Python source.
+
 ### SparqlHelper
 
 Large SPARQL queries can time out, and endpoints can fail intermittently.
