@@ -421,6 +421,30 @@ Create graphs showing dataset relationships via shared classes and mappings:
 python scripts/build_graphs.py output/schemas/ --mappings output/mappings/
 ```
 
+### Let an agent use your typed client
+
+Install `rdfsolve[agents]` to give a PydanticAI agent the same classes, searches,
+and links you use through `data`. Records stay in Python; queries and returned
+data remain in the session log.
+
+```python
+from pydantic_ai.usage import UsageLimits
+from rdfsolve.pydantic_ai import ClientTools
+
+tools = ClientTools(data)
+agent = tools.agent("openai:gpt-5.4-mini-2026-03-17")
+answer = await agent.run(
+    "Find Phenobarbital and tell me which classes and links describe it.",
+    usage_limits=UsageLimits(request_limit=8, tool_calls_limit=12),
+)
+print(answer.output)
+data.query_log()
+```
+
+Set your provider's API key in your environment, not in a notebook cell.
+The [AOPWiki agent notebook](notebooks/pydantic_ai/01_ask_aopwiki.ipynb) compares
+OpenAI and Claude query proposals with withheld reference queries on a local dump.
+
 ## Documentation
 
 Full docs: [rdfsolve.readthedocs.io](https://rdfsolve.readthedocs.io)
