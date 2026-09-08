@@ -39,7 +39,11 @@ def test_named_queries_roundtrip_and_session_isolation(monkeypatch):
         assert not second.history
         assert "empty" not in second.queries.queries
         first.enable_query_collection()
-        first._record_query(query, "SELECT", first.endpoint_url)
+        monkeypatch.undo()
+        monkeypatch.setattr(first, "_get_query", Mock(
+            return_value=data.query(query).serialize(format="json").decode()
+        ))
+        first.select(query)
         assert len(first.get_collected_queries()) == 1
         assert not second.get_collected_queries()
 

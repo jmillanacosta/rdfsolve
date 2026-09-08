@@ -64,11 +64,16 @@ def test_fallback_log_reports_transport_change(monkeypatch, caplog):
 
     caplog.set_level(logging.INFO, logger="rdfsolve.sparql_helper")
     with SparqlHelper("https://example.org/sparql", max_retries=2) as helper:
+        helper.enable_query_collection()
         monkeypatch.setattr(helper, "_get_query", Mock(return_value="<html>error</html>"))
         monkeypatch.setattr(helper, "_post_query", Mock(return_value='{"boolean": true}'))
         assert helper.ask("ASK {}")
         assert "HTTP fallback used" in caplog.text
+        assert helper.get_collected_queries()[-1].fallback_used
+        assert helper.get_collected_queries()[-1].attempts == 2
         caplog.clear()
         assert helper.ask("ASK {}")
         assert "no HTTP fallback" in caplog.text
+        assert not helper.get_collected_queries()[-1].fallback_used
+        assert helper.get_collected_queries()[-1].attempts == 1
         assert "ASK {}" not in caplog.text

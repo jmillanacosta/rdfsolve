@@ -116,6 +116,7 @@ class Hydrator:
         self._schema = schema
         self._local_records: list[QueryRecord] = []
         self._steps: list[dict[str, Any]] = []
+        self._retrievals: list[dict[str, Any]] = []
         if isinstance(self.source, SparqlHelper):
             self.source.enable_query_collection(clear=False)
 
@@ -170,6 +171,7 @@ class Hydrator:
                 for index, record in enumerate(self._records(), 1)
             ],
             "steps": [dict(step) for step in self._steps],
+            "retrievals": list(self._retrievals),
         }
 
     def save_session(self, path: str | Path) -> None:
@@ -313,6 +315,7 @@ class Hydrator:
         values: dict[str, dict[str, list[RdfTerm]]] = {iri: {} for iri in iris}
         unique = list(values)
         response_scopes: dict[str, str] = {}
+        query_ids: dict[str, int] = {}
         for start in range(0, len(unique), self.batch_size):
             batch = unique[start : start + self.batch_size]
             scope = uuid4().hex
@@ -323,6 +326,7 @@ class Hydrator:
                 f"{body} }} LIMIT {self.max_rows + 1}"
             )
             rows = self._select(query)
+            query_ids.update(dict.fromkeys(batch, len(self._records())))
             if len(rows) > self.max_rows:
                 raise HydrationLimitError("Value budget exceeded; select fewer fields or subjects")
             for row in rows:
@@ -357,6 +361,7 @@ class Hydrator:
                     else None,
                     "graph_uris": self.graph_uris,
                     "blank_node_scope": response_scopes[iri],
+                    "query_id": query_ids[iri],
                     "retrieved_at": datetime.now(timezone.utc).isoformat(),
                 },
             }
@@ -365,8 +370,15 @@ class Hydrator:
                 converted = [_value(term) for term in terms]
                 payload[name] = converted
             objects[iri] = model.model_validate(payload)
+        self._retrievals.append({
+            "model": model.__name__,
+            "class_iri": getattr(model, "rdf_class_iri", None),
+            "subjects": list(objects),
+            "fields": selected,
+            "query_ids": sorted(set(query_ids.values())),
+        })
         logger.info(
-            "Hydrated %d %s objects; %d fields per object",
+            "Retrieved %d %s objects; %d fields per object",
             len(objects),
             model.__name__,
             len(selected),

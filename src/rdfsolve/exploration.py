@@ -144,6 +144,24 @@ class DatasetClient(Hydrator):
             self._link_matches: list[dict[str, Any]] = []
         return self._link_matches
 
+    def steps(self) -> pd.DataFrame:
+        """Summarize named steps; the full queries remain in session metadata."""
+        records = self._records()
+        rows = []
+        for step in self._steps:
+            ids = set(step.get("query_ids", []))
+            rows.append({
+                "Step": step["name"],
+                "Queries": len(ids),
+                "Records read": sum(
+                    len(item["subjects"]) for item in self._retrievals
+                    if ids.intersection(item["query_ids"])
+                ),
+                "HTTP fallbacks": sum(records[index - 1].fallback_used for index in ids),
+                "Result": step["status"],
+            })
+        return pd.DataFrame(rows)
+
     def evidence(self) -> pd.DataFrame:
         """Show recorded path matches, with the query that returned each match."""
         return pd.DataFrame(

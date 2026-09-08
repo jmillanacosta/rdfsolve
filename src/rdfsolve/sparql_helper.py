@@ -39,6 +39,8 @@ class QueryRecord:
     success: bool = True
     purpose: str = ""
     error: str | None = None
+    attempts: int = 0
+    fallback_used: bool = False
 
     def query_id(self) -> str:
         """Generate a unique ID for this query based on content hash."""
@@ -188,26 +190,15 @@ class SparqlHelper:
         """Clear request records. Keep the named query collection."""
         self._query_registry.clear()
 
-    def _record_query(
-        self,
-        query: str,
-        query_type: Literal["SELECT", "CONSTRUCT", "ASK"],
-        endpoint_url: str,
-        success: bool = True,
-        purpose: str = "",
-        error: str | None = None,
-    ) -> None:
+    def _record_query(self, record: QueryRecord) -> None:
         """Collect a query execution without storing its results."""
         if self._collect_queries:
-            record = QueryRecord(
-                query, query_type, endpoint_url, success=success, purpose=purpose, error=error
-            )
             self._query_registry.append(record)
-            if not any(saved.query == query for saved in self.queries.queries.values()):
+            if not any(saved.query == record.query for saved in self.queries.queries.values()):
                 name = record.query_id()
                 if name not in self.queries.queries:
                     try:
-                        self.queries.add(name, query, endpoint=endpoint_url)
+                        self.queries.add(name, record.query, endpoint=record.endpoint_url)
                     except Exception as export_error:
                         logger.warning(
                             "Cannot save query %s as a portable example: %s", name, export_error
@@ -533,20 +524,18 @@ class SparqlHelper:
         purpose: str = "",
     ) -> Any:
         """Record each logical query, including one that fails after retries."""
-        success = False
-        failure = None
+        record = QueryRecord(query, query_type, self.endpoint_url, success=False, purpose=purpose)
         try:
-            result = self._execute_request(query, accept, query_type, parse_json, purpose)
-            success = True
+            result = self._execute_request(
+                query, accept, query_type, parse_json, purpose, record=record
+            )
+            record.success = True
             return result
         except Exception as error:
-            failure = type(error).__name__
+            record.error = type(error).__name__
             raise
         finally:
-            self._record_query(
-                query, query_type, self.endpoint_url,
-                success=success, purpose=purpose, error=failure,
-            )
+            self._record_query(record)
 
     def _execute_request(
         self,
@@ -555,6 +544,8 @@ class SparqlHelper:
         query_type: Literal["SELECT", "CONSTRUCT", "ASK"] = "SELECT",
         parse_json: bool = True,
         purpose: str = "",
+        *,
+        record: QueryRecord | None = None,
     ) -> Any:
         """Execute SPARQL query with GET/POST fallback and retry logic."""
         # Try GET first (unless we know POST is required)
@@ -565,6 +556,9 @@ class SparqlHelper:
         fallback_used = False
 
         for attempt in range(1, self.max_retries + 1):
+            if record is not None:
+                record.attempts = attempt
+                record.fallback_used = fallback_used
             try:
                 if _use_raw_post:
                     result = self._post_raw_query(query, accept)
@@ -581,12 +575,16 @@ class SparqlHelper:
                     if not use_post and not _use_raw_post:
                         logger.info("Fallback: GET returned HTML; use POST")
                         fallback_used = True
+                        if record is not None:
+                            record.fallback_used = True
                         self._requires_post = True
                         use_post = True
                         continue
                     elif use_post and not _tried_raw_post:
                         logger.info("Fallback: form POST returned HTML; use raw POST")
                         fallback_used = True
+                        if record is not None:
+                            record.fallback_used = True
                         _use_raw_post = True
                         _tried_raw_post = True
                         continue
@@ -616,6 +614,8 @@ class SparqlHelper:
                         status_code,
                     )
                     fallback_used = True
+                    if record is not None:
+                        record.fallback_used = True
                     self._requires_post = True
                     use_post = True
                     continue
@@ -627,6 +627,8 @@ class SparqlHelper:
                         status_code,
                     )
                     fallback_used = True
+                    if record is not None:
+                        record.fallback_used = True
                     _use_raw_post = True
                     _tried_raw_post = True
                     continue
@@ -742,6 +744,8 @@ class SparqlHelper:
                 if not use_post and self._should_retry_with_post(error_msg):
                     logger.info("Fallback: GET failed; use POST")
                     fallback_used = True
+                    if record is not None:
+                        record.fallback_used = True
                     self._requires_post = True
                     use_post = True
                     continue
@@ -781,6 +785,8 @@ class SparqlHelper:
                 if not use_post and self._should_retry_with_post(error_msg):
                     logger.info("Fallback: GET failed; use POST")
                     fallback_used = True
+                    if record is not None:
+                        record.fallback_used = True
                     self._requires_post = True
                     use_post = True
                     continue
