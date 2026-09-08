@@ -3,6 +3,6 @@ message: "If you use this software, please cite it as below."
 title: "RDF solve"
 authors:
   - name: "Javier Millán Acosta"
-version: 0.0.2
+version: 0.3.0
 doi:
 url: "https://github.com/jmillanacosta/rdfsolve"
