@@ -62,6 +62,10 @@ schema.to_dict()  # Versioned canonical document (dict)
 schema.get_classes()  # List with classes
 schema.get_properties()  # List with properties
 
+print(schema.get_metadata())    # Print a summary view of found metadata across graphs
+print(schema.get_metadata().to_trig())    # Print metadata as trig
+print(schema.get_metadata().to_turtle())    # Print metadata as turtle
+
 import json
 
 with open("example_schema.json", "w", encoding="utf-8") as f:
@@ -73,6 +77,50 @@ with open("example_schema.json", "w", encoding="utf-8") as f:
 Use `schema.to_dict()` with `json.dump()` for saved rdfsolve files.
 `MinedSchema.model_json_schema()` describes the internal model;
 `schema.to_pydantic()` instead generates Python classes for the mined RDF types.
+
+### Discover existing VoID descriptions
+
+VoID is a published dataset description. It may contain metadata without any
+relationship patterns:
+
+```python
+from rdfsolve.api import discover_void_source
+
+void = discover_void_source(
+    endpoint="https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
+    name="aopwikirdf",
+)
+print(void.has_void, void.has_partitions, void.has_patterns)
+print(void.get_metadata())  # Show retrieved metadata; no new request.
+
+schema = void.to_mined_schema()
+print(schema.get_metadata())  # Show metadata from the stored schema.
+```
+
+`has_void` means any VoID description was found; `has_patterns` means it
+provides relationship patterns.
+
+Discovery checks all graphs, one request at a time. Use `void.graph_uris` to
+list matches and `void.for_graph(uri).get_metadata()` to inspect one. Set
+`output_dir` only when you want files.
+
+### Query metadata without mining
+
+Read the available metadata without mining the data itself:
+
+```python
+from rdfsolve.api import query_metadata
+
+metadata = query_metadata(
+    "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
+    graph_uris=["http://aopwiki.org/"],
+)
+print(metadata)  # Readable view; notebooks also display it automatically.
+```
+
+The view shows what was retrieved, not everything the endpoint may contain. Long
+views are shortened and say what is hidden. Use `metadata.to_turtle()` for all
+retained details, or `metadata.to_markdown()` to save the readable view.
 
 ### Read schema files
 
@@ -153,52 +201,6 @@ sources:
 # Download, index, and mine
 python scripts/pipeline.py --sources sources.yaml --local-only
 ```
-
-### Query metadata without mining
-
-Read the available metadata without mining the data itself:
-
-```python
-from rdfsolve.api import query_metadata
-
-metadata = query_metadata(
-    "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
-    graph_uris=["http://aopwiki.org/"],
-)
-print(metadata)  # Readable view; notebooks also display it automatically.
-```
-
-The view shows what was retrieved, not everything the endpoint may contain. Long
-views are shortened and say what is hidden. Use `metadata.to_turtle()` for all
-retained details, or `metadata.to_markdown()` to save the readable view.
-
-### Discover existing VoID descriptions
-
-VoID is a published dataset description. It may contain metadata without any
-relationship patterns:
-
-```python
-from rdfsolve.api import discover_void_source
-
-void = discover_void_source(
-    endpoint="https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
-    name="aopwikirdf",
-)
-print(void.has_void, void.has_partitions, void.has_patterns)
-print(void.get_metadata())  # Show retrieved metadata; no new request.
-
-schema = void.to_mined_schema()
-print(schema.get_metadata())  # Show metadata from the stored schema.
-```
-
-`has_void` means a description was found; `has_patterns` means it provides
-relationship patterns we can read. Missing patterns do not mean missing
-metadata. Schema metadata is generated from stored fields; it is not the
-original description.
-
-Discovery checks all graphs, one request at a time. Use `void.graph_uris` to
-list matches and `void.for_graph(uri).get_metadata()` to inspect one. Set
-`output_dir` only when you want files.
 
 ### Probe endpoints for entity matching
 
