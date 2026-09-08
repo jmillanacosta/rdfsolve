@@ -22,8 +22,18 @@ def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:
     models = list(dict.fromkeys(client.model(kind) for kind in kinds))
     try:
         mermaid = import_module("pydantic_mermaid")
+    except ModuleNotFoundError as error:
+        if error.name != "pydantic_mermaid":
+            raise
+        raise ImportError(
+            "Install rdfsolve[notebooks] in the notebook kernel's Python environment"
+        ) from error
     except ImportError as error:
-        raise ImportError("Install rdfsolve[notebooks] to draw model diagrams") from error
+        raise ImportError(
+            "Cannot load pydantic-2-mermaid. If pydantic-mermaid is also installed, "
+            "uninstall it and reinstall pydantic-2-mermaid: both packages write "
+            "to the same module. Original error: " + str(error)
+        ) from error
     module = ModuleType("SelectedModels")
     ids = {model: f"C{i}" for i, model in enumerate(models)}
     for model, name in ids.items():
