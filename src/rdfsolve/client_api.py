@@ -114,12 +114,14 @@ class Client(DatasetClient):
         *,
         max_hops: int = 3,
         both_directions: bool = True,
-        max_paths: int = 1000,
+        max_paths: int | None = None,
     ) -> pd.DataFrame:
         """Find actual paths between records, or around one record.
 
         Show every intermediate resource and link. Paths do not repeat resources
-        and stay in one graph. Requests run in sequence and raise on overflow.
+        and stay in one graph. Requests run in sequence. By default, stop at
+        the client's row budget and return a marked partial view with a warning.
+        Set max_paths explicitly to require a strict limit and raise on overflow.
         Set both_directions=False to follow outgoing links only.
         Without a target, return linked resources within max_hops. Do not follow
         rdf:type links or literal values; show classes as node annotations.

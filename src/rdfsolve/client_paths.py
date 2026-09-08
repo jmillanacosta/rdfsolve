@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import warnings
 from collections import defaultdict, deque
 from itertools import product
 from typing import TYPE_CHECKING, Any
@@ -144,16 +145,17 @@ def resource_paths(
     *,
     max_hops: int,
     both_directions: bool,
-    max_paths: int,
+    max_paths: int | None,
 ) -> pd.DataFrame:
-    """Retrieve all simple resource paths within the bounds, or raise on overflow.
+    """Retrieve bounded simple resource paths, marking a limited default view.
 
     Each path stays in one selected graph. Reverse steps are included when
     both_directions is true. With a target, no predicates are excluded.
     Without a target, exclude rdf:type and literal leaves.
     Endpoint limits still apply; a successful response is not a completeness proof.
     """
-    _budget(max_hops, max_paths)
+    budget = client.max_rows if max_paths is None else max_paths
+    _budget(max_hops, budget)
     first = str(vars(source)["uri"]) if isinstance(source, BaseModel) else source
     last = str(vars(target)["uri"]) if isinstance(target, BaseModel) else target
     _iri(first)
@@ -162,6 +164,7 @@ def resource_paths(
     if first == last:
         raise ValueError("Choose two different resources")
     routes: list[dict[str, Any]] = []
+    truncated = False
     description = (
         f"Find connections from {first}"
         if last is None
@@ -172,7 +175,7 @@ def resource_paths(
             body = connection_query(first, last, hops, both_directions)
             variables = [f"?n{i}" for i in range(hops + 1)]
             variables += [f"?p{i} ?back{i}" for i in range(hops)]
-            limit = min(client.max_rows, max_paths - len(routes)) + 1
+            limit = min(client.max_rows, budget - len(routes)) + 1
             query = (
                 f"SELECT DISTINCT {' '.join(variables)} ?_graph WHERE {{ "
                 + client._scope(body)
@@ -180,14 +183,30 @@ def resource_paths(
             )
             bindings = client._select(query)
             if len(bindings) >= limit:
-                raise HydrationLimitError(
-                    "Too many connections; reduce max_hops or raise max_paths and max_rows"
-                )
+                if max_paths is not None:
+                    raise HydrationLimitError(
+                        "Too many connections; reduce max_hops or raise max_paths and max_rows"
+                    )
+                bindings = bindings[: limit - 1]
+                truncated = True
             for binding in bindings:
                 routes.append(
                     {"hops": hops, "bindings": binding, "query_id": len(client._records())}
                 )
-    return resource_path_table(client, routes, max_hops)
+            if truncated:
+                break
+    if truncated:
+        client._steps[-1]["status"] = "partial"
+    table = resource_path_table(client, routes, max_hops)
+    table.attrs.update(truncated=truncated, status="partial" if truncated else "complete")
+    if truncated:
+        warnings.warn(
+            f"Partial connections view: showing {len(routes)} paths; more connections exist. "
+            "Use fewer hops or a specific target to narrow the view.",
+            UserWarning,
+            stacklevel=3,
+        )
+    return table
 
 
 def resource_path_table(
@@ -227,9 +246,10 @@ def _add_classes(client: Client, table: pd.DataFrame, routes: list[dict[str, Any
     nodes = sorted(safe_nodes)
     classes: dict[tuple[str, str], set[str]] = defaultdict(set)
     models = {getattr(model, "rdf_class_iri", ""): model for model in client.models.values()}
+    batch_size = min(CLASS_BATCH_SIZE, client.max_rows)
     with client.step("Read classes along connections"):
-        for start in range(0, len(nodes), CLASS_BATCH_SIZE):
-            values = " ".join(safe_nodes[node] for node in nodes[start : start + CLASS_BATCH_SIZE])
+        for start in range(0, len(nodes), batch_size):
+            values = " ".join(safe_nodes[node] for node in nodes[start : start + batch_size])
             body = client._scope(f"VALUES ?resource {{ {values} }} ?resource a ?class")
             found = client._select(
                 f"SELECT DISTINCT ?resource ?class ?_graph WHERE {{ {body} }} LIMIT {client.max_rows + 1}"

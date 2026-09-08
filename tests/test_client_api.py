@@ -246,6 +246,17 @@ def test_connections_without_target_match_the_aop_neighborhood():
             data.connections(iri, max_hops=2, max_paths=1)
 
 
+def test_default_connections_return_a_marked_partial_view():
+    with client() as data:
+        data.max_rows = 5
+        with pytest.warns(UserWarning, match="Partial connections view"):
+            paths = data.connections("https://identifiers.org/aop/162", max_hops=2)
+        assert len(paths.attrs["routes"]) == 5
+        assert paths.attrs["status"] == "partial"
+        assert data.session_metadata()["steps"][0]["status"] == "partial"
+        assert data.diagram(paths=paths).startswith("Partial view:")
+
+
 def test_record_paths_bind_the_source_and_verify_its_type():
     with client() as data:
         selected_iri = "https://identifiers.org/aop/162"

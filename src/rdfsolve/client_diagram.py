@@ -47,18 +47,24 @@ def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:
     # Sort the library's boxes because its class allow-list is a set.
     blocks = chart.removeprefix("```mermaid\n").removesuffix("```").strip().split("\n\n")
     lines = ["classDiagram", "direction LR"]
-    lines.extend(sorted(block for block in blocks if block.strip().startswith("class ")))
+    labels = {}
     for model, name in ids.items():
         label = _text(client.type_name(model))
         iri = _text(str(getattr(model, "rdf_class_iri", "")))
-        lines.append(f'class {name}["{label}<br/>{iri}"]')
+        labels[name] = f"`{label}<br/>{iri}`"
+    # Quarto's older Mermaid supports quoted names, but not class display aliases.
+    lines.extend(
+        re.sub(r"\bC\d+\b", lambda match: labels[match[0]], block)
+        for block in sorted(blocks)
+        if block.strip().startswith("class ")
+    )
     edges = set()
     for model, source in ids.items():
         for row in client.links(model).itertuples(index=False):
             target = client.model(str(row.target))
             if target in ids and target is not model:
                 label = _text(client.link_name(model, str(row.field)))
-                edges.add(f"{source} --> {ids[target]} : {label}")
+                edges.add(f"{labels[source]} --> {labels[ids[target]]} : {label}")
     lines.extend(sorted(edges))
     return "```mermaid\n" + "\n".join(lines) + "\n```"
 
@@ -119,7 +125,8 @@ def path_diagram(
     lines = ["flowchart LR"]
     lines.extend(f'{name}["{label}"]' for name, label in nodes.values())
     lines.extend(f'{s} -->|"{_text(label)}"| {o}' for s, label, o in sorted(edges))
-    return "```mermaid\n" + "\n".join(lines) + "\n```"
+    notice = "Partial view: more connections exist.\n\n" if paths.attrs.get("truncated") else ""
+    return notice + "```mermaid\n" + "\n".join(lines) + "\n```"
 
 
 def _text(value: str) -> str:
