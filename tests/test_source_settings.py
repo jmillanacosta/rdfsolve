@@ -357,3 +357,41 @@ def test_rdfportal_pubchem_is_not_assigned_to_ftp_group(pipeline, tmp_path):
         download_urls=["https://rdfportal.org/ntriples/pubchem/latest/void.nt.gz"],
     )
     assert stage._identify_groups([source]) == {"rdfportal": [source]}
+
+
+def test_group_index_reads_nested_inputs_and_forwards_budgets(pipeline, tmp_path, monkeypatch):
+    import configparser
+    import shutil
+
+    config = pipeline.PipelineConfig(base_dir=tmp_path)
+    stage = pipeline.GroupedMiningStage(config)
+    source = pipeline.Source(name="aopwikirdf",
+                             download_fields={"download_ttl": "https://aopwiki.org/data.ttl"})
+    workdir = tmp_path / "group"
+    workdir.mkdir()
+    stage._prepare_group_qleverfile(workdir, "aop-group", [source], 8019)
+    settings = configparser.ConfigParser(interpolation=None)
+    settings.read(workdir / "Qleverfile")
+    settings["index"]["STXXL_MEMORY"] = "32GB"
+    settings["index"]["PARSER_BUFFER_SIZE"] = "1GB"
+    with (workdir / "Qleverfile").open("w") as stream:
+        settings.write(stream)
+    source_dir = tmp_path / "aopwikirdf"
+    (source_dir / "rdf").mkdir(parents=True)
+    target = source_dir / "rdf/aop.ttl"
+    shutil.copyfile(Path(__file__).parent / "test_data/aopwikirdf_generated_void.ttl", target)
+    run = Mock()
+    monkeypatch.setattr(pipeline.subprocess, "run", run)
+    stage._execute_group_qleverfile(workdir, "aop-group", [(source, source_dir)])
+    command = run.call_args.args[0]
+    assert command[command.index("-f") + 1] == str(target)
+    assert command[command.index("-F") + 1] == "ttl"
+    assert command[command.index("-g") + 1] == "http://rdfsolve.org/graph/aopwikirdf"
+    assert command[command.index("-m") + 1] == "32GB"
+    assert command[command.index("-b") + 1] == "1GB"
+    run.reset_mock()
+    with pytest.raises(ValueError, match="No prepared RDF"):
+        stage._execute_group_qleverfile(
+            workdir, "aop-group", [(source, source_dir), (source, tmp_path / "missing")]
+        )
+    run.assert_not_called()

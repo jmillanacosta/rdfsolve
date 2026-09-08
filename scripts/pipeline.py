@@ -838,6 +838,10 @@ class LocalMiningStage(Stage):
             *file_flags,
             "-p",
             config.get("index", "PARALLEL_PARSING"),
+            "-b",
+            config.get("index", "PARSER_BUFFER_SIZE", fallback="2GB"),
+            "-m",
+            config.get("index", "STXXL_MEMORY", fallback="16GB"),
         ]
 
         log.info(f"    Indexing {len(input_files)} files...")
@@ -1245,6 +1249,10 @@ class GroupedMiningStage(LocalMiningStage):
             *file_flags,
             "-p",
             config.get("index", "PARALLEL_PARSING"),
+            "-b",
+            config.get("index", "PARSER_BUFFER_SIZE", fallback="2GB"),
+            "-m",
+            config.get("index", "STXXL_MEMORY", fallback="16GB"),
         ]
 
         log.info(f"  Indexing {len(input_files)} files from {len(source_data)} sources...")
@@ -1473,6 +1481,10 @@ class LsLodCloudStage(LocalMiningStage):
             *file_flags,
             "-p",
             config.get("index", "PARALLEL_PARSING"),
+            "-b",
+            config.get("index", "PARSER_BUFFER_SIZE", fallback="2GB"),
+            "-m",
+            config.get("index", "STXXL_MEMORY", fallback="16GB"),
         ]
 
         subprocess.run(cmd, cwd=workdir, check=True)
