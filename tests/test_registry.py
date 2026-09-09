@@ -84,6 +84,9 @@ def test_answer_plan_does_not_confuse_text_matches_with_links():
         plan = session.plan(AOP, [CHEMICAL], ["carcinomas"], "Pathways and connected chemicals")
         source = session.search(["carcinomas"], kind=AOP)
         session.search(["Phenobarbital"], kind=CHEMICAL)
+        from rdfsolve.connection_table import answer_table
+        unlinked = answer_table([session.export_result(ref) for ref in session.results])
+        assert unlinked.empty  # Independent matches cannot become a relationship row.
         assert plan_status(session)["pending"]
         assert plan_status(session)["coverage"][0]["status"] == "route not tried"
         with pytest.raises(ValueError, match="destination class"):
@@ -95,6 +98,12 @@ def test_answer_plan_does_not_confuse_text_matches_with_links():
         assert not status["pending"]
         assert status["coverage"][0]["references"] == [result["reference"]]
         assert status["coverage"][0]["status"] == "linked records retrieved"
+    with client(DATA.with_name("aopwikirdf_metadata_excerpt.ttl")) as data:
+        session = data.session(source_id="aopwikirdf")
+        found = session.search(["complete dataset"], kind="http://rdfs.org/ns/void#Dataset")
+        session.read(found["reference"], fields=["description"])
+        retained = answer_table([session.export_result(found["reference"])])
+        assert retained.empty and retained.attrs["records"]
 
 
 def test_read_pages_before_loading_and_reports_partial_searches():

@@ -9,7 +9,7 @@ import pytest
 from mcp import Client as MCPClient, MCPError, StdioServerParameters
 from rdflib import Literal, URIRef
 
-from rdfsolve.mcp import create_server, read_result
+from rdfsolve.mcp import create_server, read_answer, read_result
 from rdfsolve.query_log import QueryLog
 from tests.test_client_api import AOP, CHEMICAL, DATA, client
 
@@ -81,6 +81,16 @@ def test_mcp_serializes_calls_and_reads_a_selected_route():
                 assert set(links["Target"]) == {URIRef("https://identifiers.org/aop/162")}
                 assert links["Source class"].notna().all() and links["Query"].notna().all()
                 assert len(data.queries) == before
+                from rdfsolve.client_diagram import connection_diagram
+                diagram = connection_diagram(links.iloc[:1], instances=True)
+                assert str(links.iloc[0]["Source"]) in diagram
+                assert str(links.iloc[0]["Target"]) in diagram
+                assert "N0_1 -->" in diagram  # The stored RDF edge points back to the search match.
+                assert "subgraph R1" not in diagram
+                assert "No observed connections" in connection_diagram(links.iloc[:0])
+                with pytest.raises(ValueError, match="path evidence"):
+                    connection_diagram(pd.DataFrame())
+                assert len(data.queries) == before
             calls = data.session_metadata()["tool_calls"]
             assert not set(calls[0]["query_ids"]) & set(calls[1]["query_ids"])
             assert calls[0]["finished_at"] <= calls[1]["started_at"]
@@ -145,6 +155,11 @@ def test_agent_corrects_unknown_output_references_before_export():
                 assert answer.output.text == "Found linked chemicals."
                 assert len(tables) == 2
                 assert str(tables[1].iloc[0]["Identifier"]) == "https://identifiers.org/cas/50-06-6"
+                joined = await read_answer(wire, [item.reference for item in answer.output.results])
+                assert len(joined) == 2
+                assert all("has_chemical_entity" in value for value in joined["Relationship type"])
+                assert joined.attrs["title"] and joined.attrs["records"]
+                assert all(len(match["nodes"]) == 3 for match in joined.attrs["connections"].values())
                 assert len(data.queries) == before
             calls = data.session_metadata()["tool_calls"]
             assert [c["status"] for c in calls] == ["complete", "complete", "complete"]

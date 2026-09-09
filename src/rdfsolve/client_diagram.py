@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import re
 from importlib import import_module
 from types import ModuleType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -126,6 +127,56 @@ def path_diagram(
     lines.extend(f'{name}["{label}"]' for name, label in nodes.values())
     lines.extend(f'{s} -->|"{_text(label)}"| {o}' for s, label, o in sorted(edges))
     notice = "Partial view: more connections exist.\n\n" if paths.attrs.get("truncated") else ""
+    return notice + "```mermaid\n" + "\n".join(lines) + "\n```"
+
+
+def connection_diagram(table: pd.DataFrame, *, instances: bool = False) -> str:
+    """Draw only observed routes in a returned connection table or its selected rows.
+
+    Class mode groups identical observed routes within a graph. Keep routes separate
+    to avoid implying joins between different instances. This does not establish
+    which statements in an agent's prose each route supports. No requests are sent.
+    """
+    retained = table.attrs.get("connections")
+    if not isinstance(retained, dict) or "Connection" not in table:
+        raise ValueError("Use read_result(..., output='connections') to retain path evidence")
+    if table.empty:
+        return "No observed connections in this result."
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for identifier in dict.fromkeys(table["Connection"]):
+        if identifier not in retained:
+            raise ValueError("A selected connection has no retained path evidence")
+        match = retained[identifier]
+        key = (
+            identifier
+            if instances
+            else json.dumps(
+                [match["graph"], [node["type"] for node in match["nodes"]], match["links"]],
+                sort_keys=True,
+            )
+        )
+        groups.setdefault(key, []).append(match)
+    labels = table.attrs.get("class_labels", {})
+    lines = ["flowchart LR"]
+    for number, matches in enumerate(groups.values()):
+        match = matches[0]
+        queries = ", ".join(str(value) for value in sorted({item["query_id"] for item in matches}))
+        title = f"{len(matches)} observed match(es); queries: {queries}; graph: {match['graph'] or 'default'}"
+        lines.append(f'subgraph R{number}["{_text(title)}"]')
+        for index, node in enumerate(match["nodes"]):
+            cls = labels.get(node["type"], node["type"])
+            parts = [cls, node["type"]]
+            if instances:
+                parts = [node.get("label") or node["value"], node["value"], cls]
+            label = "<br/>".join(_text(part) for part in parts)
+            lines.append(f'N{number}_{index}["{label}"]')
+        for index, link in enumerate(match["links"]):
+            left, right = (index + 1, index) if link["inverse"] else (index, index + 1)
+            lines.append(f'N{number}_{left} -->|"{_text(link["predicate"])}"| N{number}_{right}')
+        lines.append("end")
+    notice = "Observed routes retained in this result; not sentence-level citations.\n\n"
+    if table.attrs.get("coverage", {}).get("status") == "partial":
+        notice += "Retrieval was partial.\n\n"
     return notice + "```mermaid\n" + "\n".join(lines) + "\n```"
 
 

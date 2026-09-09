@@ -15,8 +15,8 @@ STRESSOR = "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571"
 CHEMICAL = "http://semanticscience.org/resource/CHEMINF_000000"
 
 
-def client():
-    graph = Graph().parse(DATA, format="turtle")
+def client(data_file=DATA):
+    graph = Graph().parse(data_file, format="turtle")
     patterns = {}
     for subject, predicate, obj in graph:
         if predicate == RDF.type:

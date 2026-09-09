@@ -122,12 +122,7 @@ async def read_result(
     """
     if output not in {"table", "records", "connections"}:
         raise ValueError("Use output='table', 'records' or 'connections'")
-    if len(reference) != 32 or any(char not in "0123456789abcdef" for char in reference):
-        raise ValueError("Use a result reference returned by this server")
-    response = await server.read_resource(f"rdfsolve://results/{reference}", cache_mode="bypass")
-    if len(response.contents) != 1 or not isinstance(response.contents[0], TextResourceContents):
-        raise ValueError("Expected one RDF result document")
-    payload = json.loads(response.contents[0].text)
+    payload = await _result_payload(server, reference)
     if output == "connections":
         from rdfsolve.connection_table import connection_table
 
@@ -154,6 +149,27 @@ async def read_result(
             )
         },
     )
+
+
+async def _result_payload(server: MCPClient, reference: str) -> dict[str, Any]:
+    if len(reference) != 32 or any(char not in "0123456789abcdef" for char in reference):
+        raise ValueError("Use a result reference returned by this server")
+    response = await server.read_resource(f"rdfsolve://results/{reference}", cache_mode="bypass")
+    if len(response.contents) != 1 or not isinstance(response.contents[0], TextResourceContents):
+        raise ValueError("Expected one RDF result document")
+    payload: dict[str, Any] = json.loads(response.contents[0].text)
+    return payload
+
+
+async def read_answer(server: MCPClient, references: list[str]) -> pd.DataFrame:
+    """Return one named table of observed answer rows, metadata and annotation types.
+
+    Use the final answer's references while the server is open. This reads retained
+    results only. It does not query missing descriptions or infer relationships.
+    """
+    from rdfsolve.connection_table import answer_table
+
+    return answer_table([await _result_payload(server, ref) for ref in dict.fromkeys(references)])
 
 
 def main() -> None:
