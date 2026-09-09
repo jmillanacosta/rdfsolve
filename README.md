@@ -238,18 +238,18 @@ then close the connection with `data.close()`.
 
 Large SPARQL queries can time out, and endpoints can fail intermittently.
 `SparqlHelper` retries temporary failures and fetches large results in smaller
-batches. It reduces page sizes with LIMIT/OFFSET steps after timeouts and spaces
+batches. It reduces page sizes after timeouts and spaces
 requests to ease the load on endpoints.
 
 ```python
 from rdfsolve.sparql_helper import SparqlHelper
 
 endpoint = "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
-query = "SELECT DISTINCT ?class WHERE { ?s a ?class } ORDER BY ?class"
+query = "SELECT DISTINCT ?class WHERE { ?s a ?class }"
 
 with SparqlHelper(endpoint, timeout=30) as helper:
     pages = helper.prepare_paginated_query(query)
-    for rows in helper.select_chunked(pages, chunk_size=100):
+    for rows in helper.select_chunked(pages, chunk_size=100, pagination="cursor"):
         print(rows)
 ```
 
@@ -257,8 +257,14 @@ For a single request, use `helper.select(query)`. Use `helper.ask(query)` for
 yes/no questions or `helper.construct_graph(query)` to retrieve RDF. No mining
 pipeline or registry is required.
 
-Paging helps with result size; it cannot guarantee that an expensive query will
-finish.
+Cursor paging continues after the last returned value, avoiding server limits on
+large offsets. For `SELECT DISTINCT`, it uses the returned columns as keys;
+`cursor_keys=["class"]` selects keys explicitly. Keys must identify each row.
+Use `pagination="offset"` for offset paging. Paging cannot make every costly query finish.
+
+Mining accepts the same option: `SchemaMiner(endpoint_url=endpoint, pagination="cursor")`
+or `mine_schema(endpoint, pagination="cursor")`. It applies to paginated phases
+and their fallbacks; the mining report records the choice.
 
 ### Keep and share useful queries
 
@@ -490,7 +496,7 @@ records = table.attrs["records"]  # Generated Pydantic objects
 
 For both, use `await research_agent(server, model)` from `rdfsolve.pydantic_ai`.
 It asks the model to correct references that do not exist in that server session.
-It requires a class-and-route plan before searching, and rejects an answer that
+It requires a class-and-route plan before querying, and rejects an answer that
 leaves available routes to requested classes untried. `await read_plan(server)`
 from `rdfsolve.mcp` shows the chosen classes, routes, searches and remaining gaps.
 `answer.output.text` contains the explanation. `answer.output.results` contains
@@ -507,22 +513,34 @@ table = result.table()
 print(result.query)
 ```
 
-This retrieves names, descriptions and the links between the selected records.
-One SELECT produces the rows; paging and retries run inside rdfsolve, without
-extra model calls or a total-row cap. The query keeps the selected source IRIs,
-not the model's earlier judgment about which records belong in the answer.
-Use `fields={"Key event": ["title", "description"]}` to choose fields for a class.
-Multiple values produce separate rows; empty fields remain empty.
+The agent can go straight from a plan to `answer(paths=..., where=..., fields=...)`.
+It does not need to search and load records first. Filters select classes along
+the paths by exact identifiers or text in their fields. Separate filters use AND;
+terms within a filter use OR. Topic and organism restrictions stay separate.
 
-`result.to_shacl()` returns the query example with its SHACL paths.
+One SELECT retrieves the connections. Batched queries retrieve each record's
+requested fields without multiplying rows. Paging and recovery run inside rdfsolve,
+without extra model calls or a total-row cap. A finished query confirms the links
+under the chosen filters, not that the filters cover every relevant record.
+Use `fields={"Key event": ["title", "description"]}` to choose fields for a class.
+Multiple field values stay together in one cell; empty fields remain empty.
+
+`result.to_shacl()` returns the connection and field query examples with their SHACL paths.
 `result.records()` returns generated Pydantic objects, including intermediate
 records; each object's `to_graph()` writes its returned RDF values.
 `result.to_graph()` returns the observed subset, combining selected named graphs.
 `result.diagram()` draws the returned links; `instances=True, row=0` shows one row.
-These exports send no requests. The original terms remain in `result.bindings`.
+These exports send no requests. `result.bindings` contains the connection bindings;
+`result.execution["metadata"]` contains the field bindings, with RDF types intact.
 Paging failures raise rather than returning a successful but incomplete table.
-Blank-node results cannot be safely joined across endpoint pages; use local RDF
-for those queries. Earlier exploration limits remain reported in `result.coverage`.
+Local RDF keeps blank-node identity when reading fields and exporting records.
+Endpoint blank-node labels belong to one response, not a persistent identifier;
+they cannot be joined across pages by label. Earlier exploration limits remain
+in `result.coverage`.
+
+Server failures stop the run after bounded recovery; they do not ask the model
+to repeat the investigation. Session logs keep query results in a companion
+`.queries.jsonl` file. Keep it beside the JSON log; `QueryLog.read()` opens both.
 
 The model selects a result reference, not the rows. `output="records"` returns
 the objects directly. Tables keep lists of RDF values, including their types
