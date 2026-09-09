@@ -495,7 +495,13 @@ leaves available routes to requested classes untried. `await read_plan(server)`
 from `rdfsolve.mcp` shows the chosen classes, routes, searches and remaining gaps.
 `answer.output.text` contains the explanation. `answer.output.results` contains
 result references; pass each one's `.reference` to `read_result` while the server
-is open. The notebook displays the explanation and each typed table separately.
+is open. The notebook displays the explanation, a linked answer table, and named
+supporting tables.
+For one linked answer table, use
+`await read_answer(server, [item.reference for item in answer.output.results])`.
+It includes record metadata, relationship predicates and source definitions for
+observed paths only. `connection_diagram(result)` from `rdfsolve.client_diagram`
+draws those same rows; use `instances=True` to show individual records.
 
 The model selects a result reference, not the rows. `output="records"` returns
 the objects directly. Tables keep lists of RDF values, including their types
