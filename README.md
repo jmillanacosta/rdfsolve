@@ -459,9 +459,10 @@ python -m rdfsolve.mcp --schema aopwikirdf.schema.json --log session.json
 ```
 
 Use `--endpoint URL` to override its endpoint, or `--data subset.ttl` to query
-local RDF. Nothing is mined at startup. Your MCP client gets four tools:
+local RDF. Nothing is mined at startup. Your MCP client gets five tools:
 
 - `schema`: find classes and fields, with their source definitions.
+- `plan`: choose the answer's classes and topic values; list routes between them.
 - `search`: search several phrases across names and descriptive text; see what matched.
 - `paths`: inspect routes and the fields along them.
 - `read`: read fields or follow selected routes, including the intermediate links.
@@ -489,13 +490,18 @@ records = table.attrs["records"]  # Generated Pydantic objects
 
 For both, use `await research_agent(server, model)` from `rdfsolve.pydantic_ai`.
 It asks the model to correct references that do not exist in that server session.
+It requires a class-and-route plan before searching, and rejects an answer that
+leaves available routes to requested classes untried. `await read_plan(server)`
+from `rdfsolve.mcp` shows the chosen classes, routes, searches and remaining gaps.
 `answer.output.text` contains the explanation. `answer.output.results` contains
 result references; pass each one's `.reference` to `read_result` while the server
 is open. The notebook displays the explanation and each typed table separately.
 
 The model selects a result reference, not the rows. `output="records"` returns
 the objects directly. Tables keep lists of RDF values, including their types
-and languages. Original SPARQL bindings remain in `table.attrs["queries"]`;
+and languages. `output="connections"` shows observed source-to-target routes,
+with intermediate records, predicates, graph and query IDs. It does not infer links
+between independently retrieved records. Original SPARQL bindings remain in `table.attrs["queries"]`;
 these are session queries, not a new query represented by the table.
 Unread fields show as `NA`; a read field with no returned values is `[]`.
 With an ordinary client, use `matches.table()` for the same output or
