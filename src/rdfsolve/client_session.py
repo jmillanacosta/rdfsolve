@@ -38,6 +38,8 @@ Choose routes whose predicate definitions support the requested relationship.
 An executable graph walk alone does not establish that meaning.
 Use class and field definitions, not names alone. Identifier classes can represent entities.
 Prefer plan -> answer(paths, where, fields). No search or read is required first.
+Record all required conditions in plan.where. Execution applies them automatically.
+answer.where can add conditions, not remove planned ones. Replan to change them.
 Choose plausible paths from the plan and execute them together. Use paths for alternatives.
 where filters a route class using exact iris or terms in named fields. Filters are AND;
 terms within a filter are OR alternatives. Keep independent conditions separate.
@@ -102,7 +104,8 @@ class ClientSession:
         omitted classes include names and descriptions. paths uses IDs from plan
         or paths. where filters route classes by exact iris or terms in fields.
         Filters combine with AND; terms within one filter combine with OR.
-        Use separate filters for topic and organism restrictions. References can
+        Planned conditions are applied automatically; where can only add conditions.
+        Replan to change the selection. References can
         instead bind previously selected source records. Keep the returned reference.
         """
         return self.call(
@@ -123,7 +126,7 @@ class ClientSession:
         self,
         source: str,
         targets: list[str],
-        terms: list[str],
+        where: list[PathFilter],
         selection: str,
         evidence: str = "",
         max_hops: HopLimit = 3,
@@ -132,7 +135,9 @@ class ClientSession:
 
         selection states what the question asks to include, without new restrictions.
         targets must name the requested entities, not intermediate route classes.
-        terms are short topic phrases, not relationship questions. evidence selects
+        where records every required condition. Conditions are AND; terms within
+        each condition are OR alternatives. Execution retains these conditions.
+        Use [] only for an unrestricted selection. evidence selects
         useful route fields by their definitions. Return possible routes for each
         target, not observed links. Replan when class choices need correction.
         """
@@ -141,7 +146,9 @@ class ClientSession:
             {
                 "source": source,
                 "targets": targets,
-                "terms": terms,
+                "where": [
+                    item.model_dump() if isinstance(item, PathFilter) else item for item in where
+                ],
                 "selection": selection,
                 "evidence": evidence,
                 "max_hops": max_hops,
@@ -432,6 +439,7 @@ class ClientSession:
             "rows": len(final["bindings"]),
             "status": final["coverage"]["status"],
             "final_query": True,
+            "where": final["where"],
             "columns": list(page.columns),
             "preview": [
                 {

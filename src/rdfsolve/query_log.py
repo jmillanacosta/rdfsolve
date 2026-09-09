@@ -17,6 +17,7 @@ class QueryLog:
         """Read a saved or current session without executing queries."""
         self.queries = session["queries"]
         self.tool_calls = session.get("tool_calls", [])
+        self.agent = session.get("agent")
         self.names = {
             query_id: step["name"] for step in session["steps"] for query_id in step["query_ids"]
         }
@@ -26,6 +27,10 @@ class QueryLog:
         """Open a saved session log without contacting its source."""
         path = Path(path)
         session = json.loads(path.read_text(encoding="utf-8"))
+        if name := session.get("context_file"):
+            if Path(name).name != name:
+                raise ValueError("Context must be beside the session log")
+            session.update(json.loads(path.with_name(name).read_text(encoding="utf-8")))
         if name := session.get("queries_file"):
             if Path(name).name != name:
                 raise ValueError("Query journal must be beside the session log")

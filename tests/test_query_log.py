@@ -44,6 +44,9 @@ def test_incremental_log_appends_results_once_and_keeps_full_values(tmp_path):
         path = tmp_path / "session.json"
         data.save_session(path, incremental=True)
         manifest = json.loads(path.read_text())
+        assert "schema" not in manifest and "registries" not in manifest
+        assert path.with_name(manifest["context_file"]).is_file()
+        assert all("query" not in row for row in manifest["queries"])
         journal = path.with_name(manifest["queries_file"])
         first = journal.read_bytes()
         data.save_session(path, incremental=True)

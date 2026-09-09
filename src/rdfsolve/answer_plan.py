@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve.rdf_operations import Paths, Plan, Search
+from rdfsolve.rdf_operations import Paths, Plan
 from rdfsolve.schema_catalogue import words
 
 if TYPE_CHECKING:
@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 
 def build_plan(session: ClientSession, args: Plan) -> dict[str, Any]:
     """Resolve class choices and list bounded routes without querying data."""
-    Search(terms=args.terms)
     source = str(getattr(session.client.model(args.source), "rdf_class_iri", ""))
     targets = sorted(
         {str(getattr(session.client.model(target), "rdf_class_iri", "")) for target in args.targets}
@@ -68,7 +67,7 @@ def build_plan(session: ClientSession, args: Plan) -> dict[str, Any]:
     return {
         "columns": columns,
         "selection": args.selection,
-        "terms": args.terms,
+        "where": [condition.model_dump() for condition in args.where],
         "evidence": args.evidence,
         "routes": routes,
         "max_hops": args.max_hops,

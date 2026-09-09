@@ -66,9 +66,9 @@ def test_saved_enrichment_reaches_discovery_without_whole_schema():
         assert any(field["description"] for item in fields["types"] for field in item["fields"])
         assert "patterns" not in json.dumps(description) and not data.queries
         with pytest.raises(ValueError, match="Gene identifier"):
-            session.plan("Adverse Outcome Pathway", ["Key Event"], ["thyroid"],
+            session.plan("Adverse Outcome Pathway", ["Key Event"], [{"kind": AOP, "terms": ["thyroid"]}],
                          "Thyroid-related pathways and their linked genes")
-        plan = session.plan("Adverse Outcome Pathway", ["Gene identifier"], ["thyroid"],
+        plan = session.plan("Adverse Outcome Pathway", ["Gene identifier"], [{"kind": AOP, "terms": ["thyroid"]}],
                             "Thyroid-related pathways and their linked genes", evidence="gene evidence")
         routes = plan["routes"][0]["paths"]
         assert {route["steps"][0]["to"] for route in routes} >= {"Key Event", "Key Event Relationship"}
@@ -84,7 +84,7 @@ def test_answer_plan_does_not_confuse_text_matches_with_links():
 
     with client() as data:
         session = data.session(source_id="aopwikirdf")
-        plan = session.plan(AOP, [CHEMICAL], ["carcinomas"], "Pathways and connected chemicals")
+        plan = session.plan(AOP, [CHEMICAL], [{"kind": AOP, "terms": ["carcinomas"]}], "Pathways and connected chemicals")
         source = session.search(["carcinomas"], kind=AOP)
         session.search(["Phenobarbital"], kind=CHEMICAL)
         from rdfsolve.connection_table import answer_table

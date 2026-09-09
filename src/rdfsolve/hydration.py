@@ -212,6 +212,21 @@ class Hydrator:
                     stream.write("\n")
             self._query_logs[path] = (journal, len(records))
             metadata["queries_file"] = journal.name
+            context = {key: metadata.pop(key) for key in ("schema", "registries")}
+            context_path = journal.with_suffix(".context.json")
+            temporary = context_path.with_name(f".{context_path.name}.{uuid4().hex}.tmp")
+            temporary.write_text(json.dumps(context, ensure_ascii=False), encoding="utf-8")
+            temporary.replace(context_path)
+            metadata["context_file"] = context_path.name
+            metadata["queries"] = [
+                {key: row[key] for key in ("id", "query_type", "purpose", "success")}
+                for row in metadata["queries"]
+            ]
+            calls = {call["id"] for call in metadata["tool_calls"]}
+            metadata["operations"] = [
+                {"id": operation["id"]} if operation["id"] in calls else operation
+                for operation in metadata["operations"]
+            ]
         temporary = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
         with temporary.open("w", encoding="utf-8") as stream:
             json.dump(metadata, stream, ensure_ascii=False)

@@ -41,6 +41,11 @@ def execute_answer(
         previous = session.final_queries[references[0]]
         paths = paths or previous["paths"]
         where = where or [PathFilter.model_validate(item) for item in previous["where"]]
+    conditions = [PathFilter.model_validate(item) for item in session.answer_plan.get("where", [])]
+    for condition in where or []:
+        if condition not in conditions:
+            conditions.append(condition)
+    where = conditions
     references = list(
         dict.fromkeys(
             original

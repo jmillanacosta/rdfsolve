@@ -173,7 +173,7 @@ def test_path_first_keeps_multivalued_fields_without_multiplying_connections():
 
     with client() as data:
         session = data.session(source_id="aopwikirdf")
-        plan = session.plan(AOP, [CHEMICAL], ["Phenobarbital"], "Pathways and chemicals")
+        plan = session.plan(AOP, [CHEMICAL], [PathFilter(kind=CHEMICAL, terms=["Phenobarbital"])], "Pathways and chemicals")
         routes = [path["id"] for group in plan["routes"] for path in group["paths"]]
         assert not data.queries
         final = session.answer(paths=routes, where=[PathFilter(kind=CHEMICAL, terms=["Phenobarbital"])],
@@ -202,6 +202,15 @@ def test_path_first_keeps_multivalued_fields_without_multiplying_connections():
         empty = session.answer(paths=routes, where=[PathFilter(kind=CHEMICAL, terms=["Phenobarbital"]),
                                                    PathFilter(kind=AOP, terms=["unrelated nonexistent phrase"])])
         assert empty["rows"] == 0 and empty["status"] == "complete"
+        session.plan(AOP, [CHEMICAL], [
+            PathFilter(kind=AOP, terms=["thyroid"]),
+            PathFilter(kind=AOP, terms=["mouse", "human"]),
+        ], "Thyroid pathways in mouse or human")
+        for extra in ([], [PathFilter(kind=AOP, terms=["thyroid", "mouse", "human"])]):
+            found = session.answer(paths=routes, where=extra)
+            filtered = QueryAnswer(session.export_result(found["reference"]))
+            assert {row["source"]["value"] for row in filtered.bindings} == {"https://identifiers.org/aop/162"}
+            assert filtered.query.count("EXISTS") >= 2
 
 
 def test_local_blank_nodes_keep_fields_and_identity(tmp_path):
@@ -243,18 +252,18 @@ def test_local_blank_nodes_keep_fields_and_identity(tmp_path):
             assert all(p.object_class == "BlankNode" or not p.object_class.startswith("BlankNode[") for p in schema.patterns)
 
 
-def test_agent_corrects_unknown_output_references_before_export():
+def test_agent_corrects_unknown_output_references_before_export(tmp_path):
     from pydantic_ai.messages import ModelResponse, ToolCallPart, ToolReturnPart
     from pydantic_ai.models.function import FunctionModel
     from pydantic_ai.usage import UsageLimits
-    from rdfsolve.pydantic_ai import research_agent
+    from rdfsolve.pydantic_ai import research_agent, save_answer
 
     def model(messages, info):
         if len(messages) == 1:
             return ModelResponse(parts=[ToolCallPart("read", {"reference": "missing"})])
         if len(messages) == 3:
             return ModelResponse(parts=[ToolCallPart("plan", {"source": AOP, "targets": [CHEMICAL],
-                "terms": ["carcinomas"], "selection": "Pathways and linked chemicals"})])
+                "where": [{"kind": AOP, "terms": ["carcinomas"]}], "selection": "Pathways and linked chemicals"})])
         if len(messages) == 5:
             return ModelResponse(parts=[ToolCallPart("search", {"terms": ["carcinomas"], "kind": AOP})])
         payload = next(part.content for message in messages for part in message.parts
@@ -278,7 +287,8 @@ def test_agent_corrects_unknown_output_references_before_export():
 
     async def run():
         with client() as data:
-            async with MCPClient(create_server(data.session(source_id="aopwikirdf"))) as wire:
+            log_path = tmp_path / "session.json"
+            async with MCPClient(create_server(data.session(source_id="aopwikirdf"), log_path=log_path)) as wire:
                 agent = await research_agent(wire, FunctionModel(model))
                 answer = await agent.run("Find pathways and linked chemicals", usage_limits=UsageLimits(request_limit=8))
                 before = len(data.queries)
@@ -295,4 +305,8 @@ def test_agent_corrects_unknown_output_references_before_export():
             calls = data.session_metadata()["tool_calls"]
             assert [c["status"] for c in calls] == ["complete", "complete", "complete"]
             assert not calls[0]["query_ids"] and calls[1]["query_ids"]
+            save_answer(answer, log_path, question="Find pathways and linked chemicals")
+            saved = QueryLog.read(log_path).agent
+            assert saved["output"]["text"] == answer.output.text
+            assert saved["usage"]["requests"] == answer.usage.requests
     asyncio.run(run())

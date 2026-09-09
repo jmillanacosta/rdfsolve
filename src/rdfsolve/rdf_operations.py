@@ -78,23 +78,16 @@ class Paths(Contract):
     limit: PageSize = 10
 
 
-class Plan(Contract):
-    """Choose the answer's classes and topic values before querying records."""
-
-    source: str
-    terms: list[str] = Field(min_length=1, max_length=12)
-    targets: list[str] = Field(default_factory=list, max_length=5)
-    selection: str = Field(min_length=1, max_length=600)
-    evidence: str = ""
-    max_hops: HopLimit = 3
-
-
 class PathFilter(Contract):
     """Match a route class by exact IRIs or text in selected fields."""
 
     kind: str
     fields: list[str] = Field(default_factory=list, max_length=12)
-    terms: list[str] = Field(default_factory=list, max_length=12)
+    terms: list[str] = Field(
+        default_factory=list,
+        max_length=12,
+        description="Alternative text values (OR) for this one condition, not independent requirements.",
+    )
     iris: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -105,6 +98,20 @@ class PathFilter(Contract):
         if self.terms:
             Search(terms=self.terms)
         return self
+
+
+class Plan(Contract):
+    """Choose the answer's classes and required conditions before querying records."""
+
+    source: str
+    where: list[PathFilter] = Field(
+        description="All required conditions (AND). Each condition's terms are alternatives (OR). Use [] only for an unrestricted selection.",
+        max_length=12,
+    )
+    targets: list[str] = Field(default_factory=list, max_length=5)
+    selection: str = Field(min_length=1, max_length=600)
+    evidence: str = ""
+    max_hops: HopLimit = 3
 
 
 class Answer(Contract):

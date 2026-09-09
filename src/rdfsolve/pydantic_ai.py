@@ -5,19 +5,46 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from functools import wraps
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from uuid import uuid4
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, ModelRetry, Tool
 from pydantic_ai.models import Model
+from pydantic_ai.run import AgentRunResult
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import FunctionToolset
+from pydantic_core import to_jsonable_python
 
 from rdfsolve.client_api import Client
 from rdfsolve.client_session import INSTRUCTIONS
 
 if TYPE_CHECKING:
     from mcp import Client as MCPClient
+
+
+def save_answer(
+    result: AgentRunResult[Any], path: str | Path, *, question: str | None = None
+) -> None:
+    """Add the model answer and usage to a session log after closing its server."""
+    path = Path(path)
+    report = json.loads(path.read_text(encoding="utf-8"))
+    report["agent"] = {
+        "question": question,
+        "output": to_jsonable_python(result.output),
+        "usage": to_jsonable_python(result.usage),
+        "messages": [
+            {"model": message.model_name, "text": part.content}
+            for message in result.new_messages()
+            if message.kind == "response"
+            for part in message.parts
+            if part.part_kind == "text"
+        ],
+    }
+    temporary = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
+    temporary.write_text(json.dumps(report, ensure_ascii=False), encoding="utf-8")
+    temporary.replace(path)
 
 
 async def mcp_tools(server: MCPClient, *, require_plan: bool = False) -> FunctionToolset[None]:
@@ -34,7 +61,7 @@ async def mcp_tools(server: MCPClient, *, require_plan: bool = False) -> Functio
             if require_plan and name in {"search", "read", "answer"} and not planned:
                 raise ModelRetry(
                     "Use schema to identify the requested classes, then plan the "
-                    "source, targets and topic terms before querying records."
+                    "source, targets and grouped where conditions before querying records."
                 )
             if require_plan and name == "search" and planned:
                 from rdfsolve.mcp import read_plan
