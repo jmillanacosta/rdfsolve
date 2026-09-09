@@ -460,13 +460,33 @@ python -m rdfsolve.mcp --schema aopwikirdf.schema.json --log session.json
 
 Use `--endpoint URL` to override its endpoint, or `--data subset.ttl` to query
 local RDF. Nothing is mined at startup. Your MCP client gets six tools:
-`find`, `describe`, `resolve`, `call`, `select`, and `release`.
+`catalogue`, `find`, `describe`, `call`, `select`, and `release`.
+`find` searches data; `catalogue` lists operations and classes.
 Calls run one at a time; result references belong to that server session.
 The optional log retains tool answers and source queries, so treat it as data.
 
 [Ask AOPWiki a question](notebooks/mcp/01_ask_aopwiki.ipynb) shows one short
 model run and the tools and queries it used. It opens the included schema and
 uses your local `notebooks/.env`; keys are not sent to the RDF server.
+
+Want data instead of a written answer? Set `output_type=ResultReference` on
+your PydanticAI agent, then read its selected result while the server is open:
+
+```python
+from rdfsolve.pydantic_ai import ResultReference
+from rdfsolve.mcp import read_result
+
+table = await read_result(server, answer.output.reference)
+records = table.attrs["records"]  # Generated Pydantic objects
+```
+
+The model selects a result reference, not the rows. `output="records"` returns
+the objects directly. Tables keep lists of RDF values, including their types
+and languages. Original SPARQL bindings remain in `table.attrs["queries"]`;
+these are session queries, not a new query represented by the table.
+Unread fields show as `NA`; a read field with no returned values is `[]`.
+With an ordinary client, use `matches.table()` for the same output or
+`matches.show()` for a short display. Neither mines the source.
 
 ### Save what a client can do
 

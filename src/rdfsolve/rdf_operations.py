@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pydantic import Field
+from pydantic import Field, TypeAdapter
 from rdflib import Graph
 
 from rdfsolve.registry import Contract, FieldDescription, Operation, Registry, TypeDescription
+from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
+from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.version import VERSION
 
 if TYPE_CHECKING:
@@ -19,6 +21,7 @@ class Find(Contract):
 
     text: str = Field(min_length=1)
     kind: str | None = None
+    field: str | None = None
 
 
 class Get(Contract):
@@ -74,11 +77,22 @@ def build_registry(client: Client, source_id: str) -> Registry:
         for name, field in model.model_fields.items():
             extra = field.json_schema_extra
             if isinstance(extra, dict) and extra.get("rdf_path"):
+                patterns = TypeAdapter(list[SchemaPattern]).validate_python(
+                    extra.get("rdf_patterns", [])
+                )
                 fields.append(
                     FieldDescription(
                         name=name,
                         label=client.link_name(model, name),
                         binding={"path": extra["rdf_path"]},
+                        targets=sorted(
+                            {
+                                p.object_class
+                                for p in patterns
+                                if p.object_class not in _SENTINEL_OBJECTS
+                            }
+                        ),
+                        datatypes=sorted({p.datatype for p in patterns if p.datatype}),
                     )
                 )
         types.append(

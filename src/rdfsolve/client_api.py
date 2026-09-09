@@ -243,7 +243,12 @@ class Client(DatasetClient):
             or getattr(model, "rdf_class_iri", "") == name_or_iri
         ]
         if len(matches) != 1:
-            raise ValueError(f"Choose a type from data.types(): {name_or_iri}")
+            names = sorted(self.models)
+            candidates = [name for name in names if _key(name_or_iri) in _key(name)] or names
+            raise ValueError(
+                f"Unknown or ambiguous class {name_or_iri!r}. Use an exact class name or IRI. "
+                f"Available class names: {', '.join(candidates[:20])}"
+            )
         return matches[0]
 
     def type_name(self, model: type[BaseModel]) -> str:
@@ -283,7 +288,16 @@ class Client(DatasetClient):
             if _key(text) in {_key(name), _key(self.link_name(model, name))}
         ]
         if len(matches) != 1:
-            raise ValueError(f"Choose a field from results.fields: {text}")
+            names = [
+                name
+                for name, field in model.model_fields.items()
+                if isinstance(field.json_schema_extra, dict)
+                and field.json_schema_extra.get("rdf_path")
+            ]
+            raise ValueError(
+                f"Unknown or ambiguous field {text!r} for {self.type_name(model)}. "
+                f"Available fields: {', '.join(names)}"
+            )
         return matches[0]
 
     def from_table(
@@ -628,6 +642,32 @@ class Results:
                 )
             rows.append(row)
         return pd.DataFrame(rows, columns=["Name", "Class", *(_name(f) for f in fields)])
+
+    def table(self, *fields: str) -> pd.DataFrame:
+        """Return RDF term lists and typed records; load requested fields if needed.
+
+        With no fields, use only what has been read. NA means unread or inapplicable;
+        an empty list means the field was read but no value was returned.
+        attrs retains records, session queries with original bindings, and links.
+        """
+        from rdfsolve.client_table import record_table
+
+        for field in fields:
+            self._load(field)
+        models = {type(record) for record in self.records}
+        names = sorted(
+            {self.client.field_name(model, field) for model in models for field in fields}
+        )
+        metadata = self.client.session_metadata()
+        return record_table(
+            self.records,
+            labels={
+                str(getattr(model, "rdf_class_iri", "")): self.client.type_name(model)
+                for model in models
+            },
+            fields=names if fields else None,
+            context={"queries": metadata["queries"], "links": metadata["links"]},
+        )
 
     def values(self, field: str) -> pd.DataFrame:
         """List values of one field across these records, not the whole endpoint."""

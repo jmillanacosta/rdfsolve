@@ -39,7 +39,7 @@ def test_agent_tools_keep_typed_records_and_query_evidence():
 
     def model(messages, info):
         if len(messages) == 1:
-            return ModelResponse(parts=[ToolCallPart("resolve", {"text": "Phenobarbital", "kind": CHEMICAL})])
+            return ModelResponse(parts=[ToolCallPart("find", {"text": "Phenobarbital", "kind": CHEMICAL})])
         return ModelResponse(parts=[TextPart("Found")])
 
     with client() as data:
@@ -53,7 +53,7 @@ def test_agent_tools_keep_typed_records_and_query_evidence():
         assert session["queries"] and all(query["result_retained"] for query in session["queries"])
         before = len(session["queries"])
         with pytest.raises(ValueError, match="budget"):
-            tools.resolve("anything")
+            tools.find("anything")
         with pytest.raises(ValueError, match="Unknown result"):
             tools.select("another-session", [])
         assert len(data.session_metadata()["queries"]) == before
@@ -295,7 +295,7 @@ def test_errors_and_completion_do_not_trigger_hidden_queries():
         assert matches.types().empty
         assert matches.values("title").empty
         queries = len(data.queries)
-        with pytest.raises(ValueError, match="Choose a type"):
+        with pytest.raises(ValueError):
             matches.of_type("made up")
         assert len(data.queries) == queries
         pathways = data.find("thyroid", kind=AOP)

@@ -15,6 +15,8 @@ def test_registry_roundtrip_and_rejected_documents(tmp_path):
         assert not data.queries
         assert registry.describe("records.get")["arguments"]["additionalProperties"] is False
         assert registry.describe(AOP)["fields"]
+        stressor_field = next(field for field in registry.describe(AOP)["fields"] if field["name"] == "c54571")
+        assert stressor_field["targets"] == [STRESSOR]
         output = tmp_path / "registry.json"
         registry.write(output)
         assert Registry.read(output) == registry

@@ -57,6 +57,15 @@ class QueryProposal(BaseModel):
     explanation: str = Field(description="Brief reason for the query or why it cannot be supplied")
 
 
+class ResultReference(BaseModel):
+    """Select retrieved records instead of asking a model to write data rows."""
+
+    reference: str = Field(
+        pattern=r"^[0-9a-f]{32}$",
+        description="An existing result reference from a successful tool call. Read needed fields before returning it.",
+    )
+
+
 class ClientTools(SessionTools):
     """Register the shared session tools with PydanticAI."""
 

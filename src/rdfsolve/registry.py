@@ -23,6 +23,8 @@ class FieldDescription(Contract):
     name: str
     label: str
     binding: dict[str, Any]
+    targets: list[str] = Field(default_factory=list)
+    datatypes: list[str] = Field(default_factory=list)
 
 
 class TypeDescription(Contract):
@@ -48,7 +50,7 @@ class Registry(Contract):
     """A source-scoped snapshot of types, operations and their evidence."""
 
     format: Literal["rdfsolve.operations"] = "rdfsolve.operations"
-    format_version: Literal[1] = 1
+    format_version: Literal[2] = 2
     producer: str
     source_id: str = Field(min_length=1)
     source_version: str | None = None

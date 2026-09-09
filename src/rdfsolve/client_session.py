@@ -51,6 +51,34 @@ class ClientSession:
             raise ValueError("Unknown result reference; use a reference from this session")
         return self.results[reference]
 
+    def result(self, reference: str) -> Results:
+        """Read retained typed records without sending another query."""
+        return self._result(reference)
+
+    def export_result(self, reference: str) -> dict[str, Any]:
+        """Copy retained records and session evidence without fetching unread fields."""
+        records = self._result(reference).records
+        metadata = self.client.session_metadata()
+        return deepcopy(
+            {
+                "reference": reference,
+                "registry_revision": self._revision,
+                "schema": self.registry.evidence,
+                "labels": {item.id: item.label for item in self.registry.types},
+                "records": [
+                    {
+                        "type": str(getattr(type(record), "rdf_class_iri", "")),
+                        "data": record.model_dump(mode="json"),
+                    }
+                    for record in records
+                ],
+                "queries": metadata["queries"],
+                "links": metadata["links"],
+                "operations": metadata["operations"],
+                "scope": self.registry.binding,
+            }
+        )
+
     def call(self, operation: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Validate and execute an allowlisted operation; retain failed attempts too."""
         start = len(self.client._records())
@@ -90,7 +118,9 @@ class ClientSession:
     def _execute(self, arguments: Contract) -> dict[str, Any]:
         if isinstance(arguments, Find):
             return {
-                **self._keep(self.client.find(arguments.text, kind=arguments.kind)),
+                **self._keep(
+                    self.client.find(arguments.text, kind=arguments.kind, field=arguments.field)
+                ),
                 "basis": "Name or identifier matches; shared names do not establish identity or links",
             }
         if isinstance(arguments, Get):

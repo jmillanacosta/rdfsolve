@@ -11,6 +11,50 @@ from rdfsolve.query_log import QueryLog
 from tests.test_client_api import AOP, CHEMICAL, DATA, client
 
 
+def test_typed_result_export_preserves_terms_unread_fields_and_source_bindings():
+    import pandas as pd
+    import pytest
+    from rdflib import Literal, URIRef
+    from mcp import MCPError
+    from rdfsolve.mcp import read_result
+
+    async def run():
+        with client() as data:
+            session = data.session(source_id="aopwikirdf", preview_rows=1)
+            async with MCPClient(create_server(session)) as wire:
+                catalogue = await wire.call_tool("catalogue", {"text": "thyroid"})
+                assert not data.queries
+                assert not catalogue.structured_content["data_queried"]
+                assert catalogue.structured_content["operations"]
+                found = await wire.call_tool("find", {"text": "carcinomas", "kind": AOP})
+                reference = found.structured_content["reference"]
+                table = await read_result(wire, reference)
+                assert len(table) == 2  # Export all retained rows, not just the preview.
+                await wire.call_tool("select", {"reference": reference, "fields": ["C54571"], "limit": 1})
+                before = len(data.queries)
+                table = await read_result(wire, reference)
+                records = await read_result(wire, reference, output="records")
+                assert len(data.queries) == before
+                assert isinstance(table.iloc[0]["Identifier"], URIRef)
+                assert all(isinstance(term, Literal) for term in table.iloc[0]["title"])
+                assert all(isinstance(term, URIRef) for term in table.iloc[0]["c54571"])
+                assert pd.isna(table.iloc[1]["c54571"])
+                assert table.attrs["queries"] == data.session_metadata()["queries"]
+                local = session.result(reference)
+                assert local.table().iloc[0]["c54571"] == table.iloc[0]["c54571"]
+                for original, restored in zip(local, records, strict=True):
+                    assert restored.rdf_class_iri == original.rdf_class_iri
+                    assert restored.model_dump(mode="json") == original.model_dump(mode="json")
+                    assert set(restored.to_graph()) == set(original.to_graph())
+                with pytest.raises(ValueError, match="reference"):
+                    await read_result(wire, "../not-a-result")
+                await wire.call_tool("release", {"reference": reference})
+                with pytest.raises(MCPError, match="Unknown result"):
+                    await read_result(wire, reference)
+            assert records[0].to_graph()  # Values do not need a live server.
+    asyncio.run(run())
+
+
 def test_mcp_reads_records_and_records_errors(tmp_path):
     async def run():
         with client() as data:
@@ -19,11 +63,14 @@ def test_mcp_reads_records_and_records_errors(tmp_path):
             async with MCPClient(create_server(session, log_path=log_path)) as wire:
                 tools = await wire.list_tools()
                 assert {tool.name for tool in tools.tools} == {
-                    "find", "describe", "resolve", "call", "select", "release",
+                    "find", "describe", "catalogue", "call", "select", "release",
                 }
                 await wire.call_tool("describe", {"identifier": "records.get"})
                 assert not data.queries
-                matches = await wire.call_tool("resolve", {"text": "Phenobarbital", "kind": CHEMICAL})
+                bad_kind = await wire.call_tool("find", {"text": "Phenobarbital", "kind": "unknown-class"})
+                assert bad_kind.is_error and not data.queries
+                assert "Available class names:" in bad_kind.content[0].text
+                matches = await wire.call_tool("find", {"text": "Phenobarbital", "kind": CHEMICAL})
                 assert not matches.is_error
                 payload = matches.structured_content
                 assert payload["rows"][0]["id"] == "https://identifiers.org/cas/50-06-6"
@@ -32,6 +79,10 @@ def test_mcp_reads_records_and_records_errors(tmp_path):
                 page = await wire.call_tool("select", {"reference": payload["reference"], "fields": ["title"]})
                 assert page.structured_content["rows"][0]["fields"]["title"][0]["value"] == "Phenobarbital"
                 before = len(data.queries)
+                invalid_field = await wire.call_tool("select", {"reference": payload["reference"], "fields": ["type_label"]})
+                assert invalid_field.is_error and len(data.queries) == before
+                assert "Available fields:" in invalid_field.content[0].text
+                assert "title" in invalid_field.content[0].text
                 bad = await wire.call_tool("call", {"operation": "delete", "arguments": {}})
                 assert bad.is_error and len(data.queries) == before
                 assert "Unknown operation" in bad.content[0].text
@@ -41,7 +92,7 @@ def test_mcp_reads_records_and_records_errors(tmp_path):
             log = QueryLog.read(log_path)
             assert log.tools().iloc[-1]["Status"] == "failed"
             assert "Phenobarbital" in log._repr_html_()
-            assert log.tool_calls[1]["query_ids"] and log.tool_calls[1]["operation_ids"]
+            assert log.tool_calls[2]["query_ids"] and log.tool_calls[2]["operation_ids"]
     asyncio.run(run())
 
 
@@ -50,8 +101,8 @@ def test_mcp_serializes_parallel_reads_and_keeps_query_ownership():
         with client() as data:
             async with MCPClient(create_server(data.session(source_id="aopwikirdf"))) as wire:
                 results = await asyncio.gather(
-                    wire.call_tool("resolve", {"text": "Phenobarbital", "kind": CHEMICAL}),
-                    wire.call_tool("resolve", {"text": "thyroid", "kind": AOP}),
+                    wire.call_tool("find", {"text": "Phenobarbital", "kind": CHEMICAL}),
+                    wire.call_tool("find", {"text": "thyroid", "kind": AOP}),
                 )
                 assert all(not result.is_error for result in results)
             calls = data.session_metadata()["tool_calls"]
@@ -70,7 +121,7 @@ def test_stdio_opens_saved_schema_without_mining(tmp_path):
             "-m", "rdfsolve.mcp", "--schema", str(path), "--data", str(DATA.resolve()),
         ])
         async with MCPClient(transport) as wire:
-            result = await wire.call_tool("resolve", {"text": "Phenobarbital", "kind": CHEMICAL})
+            result = await wire.call_tool("find", {"text": "Phenobarbital", "kind": CHEMICAL})
             assert not result.is_error
             assert result.structured_content["rows"][0]["id"] == "https://identifiers.org/cas/50-06-6"
     asyncio.run(run())
@@ -87,7 +138,7 @@ def test_agent_uses_mcp_contract_and_recovers_from_a_bad_reference():
         if len(messages) == 1:
             return ModelResponse(parts=[ToolCallPart("select", {"reference": "missing", "fields": []})])
         if len(messages) == 3:
-            return ModelResponse(parts=[ToolCallPart("resolve", {"text": "Phenobarbital", "kind": CHEMICAL})])
+            return ModelResponse(parts=[ToolCallPart("find", {"text": "Phenobarbital", "kind": CHEMICAL})])
         assert "50-06-6" in str(messages[-1])
         return ModelResponse(parts=[TextPart("Found")])
 

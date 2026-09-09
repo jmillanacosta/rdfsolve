@@ -3,19 +3,25 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 from collections.abc import Callable
 from functools import partial, wraps
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import anyio
+import pandas as pd
+from mcp import Client as MCPClient
 from mcp.server import MCPServer
-from mcp.server.mcpserver.exceptions import ToolError
-from mcp.types import ToolAnnotations
+from mcp.server.mcpserver.exceptions import ResourceError, ToolError
+from mcp.types import TextResourceContents, ToolAnnotations
+from pydantic import BaseModel
 
 from rdfsolve.client_api import Client
 from rdfsolve.client_session import ClientSession
+from rdfsolve.client_table import record_table
+from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.session_tools import INSTRUCTIONS, SessionTools
 from rdfsolve.sparql_helper import EndpointError
 
@@ -47,20 +53,62 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
                     if log_path is not None:
                         session.client.save_session(log_path)
 
-        local = function.__name__ in {"find", "describe", "release"}
+        local = function.__name__ in {"catalogue", "describe", "release"}
         server.add_tool(
             run,
             annotations=ToolAnnotations(
                 read_only_hint=True,
                 destructive_hint=False,
-                idempotent_hint=function.__name__ in {"find", "describe"},
+                idempotent_hint=function.__name__ in {"catalogue", "describe"},
                 open_world_hint=not local,
             ),
         )
 
     for function in tools.functions.values():
         register(function)
+
+    @server.resource("rdfsolve://results/{reference}", mime_type="application/json")
+    async def result(reference: str) -> str:
+        """Read retained records and evidence outside the tool preview."""
+        async with lock:
+            try:
+                payload = await anyio.to_thread.run_sync(session.export_result, reference)
+            except ValueError as error:
+                raise ResourceError(str(error)) from error
+            return json.dumps(payload, ensure_ascii=False)
+
     return server
+
+
+async def read_result(
+    server: MCPClient, reference: str, *, output: Literal["table", "records"] = "table"
+) -> pd.DataFrame | list[BaseModel]:
+    """Read a server result as a typed table or records, without querying the RDF source.
+
+    Call while the server is open. The returned data remains usable after it closes.
+    Tables retain source terms, generated records, and original session query bindings.
+    """
+    if output not in {"table", "records"}:
+        raise ValueError("Use output='table' or output='records'")
+    if len(reference) != 32 or any(char not in "0123456789abcdef" for char in reference):
+        raise ValueError("Use a result reference returned by this server")
+    response = await server.read_resource(f"rdfsolve://results/{reference}", cache_mode="bypass")
+    if len(response.contents) != 1 or not isinstance(response.contents[0], TextResourceContents):
+        raise ValueError("Expected one RDF result document")
+    payload = json.loads(response.contents[0].text)
+    models = MinedSchema.from_dict(payload["schema"]).to_pydantic_classes()
+    by_type = {str(getattr(model, "rdf_class_iri", "")): model for model in models.values()}
+    records = [by_type[item["type"]].model_validate(item["data"]) for item in payload["records"]]
+    if output == "records":
+        return records
+    return record_table(
+        records,
+        labels=payload["labels"],
+        context={
+            key: payload[key]
+            for key in ("reference", "registry_revision", "queries", "links", "operations", "scope")
+        },
+    )
 
 
 def main() -> None:

@@ -9,9 +9,9 @@ from typing import Any
 
 from rdfsolve.client_session import ClientSession
 
-INSTRUCTIONS = """For a record name or identifier, start with resolve(text), without kind.
-find searches operation/type descriptions, not records. Empty find results do not mean missing data.
-To restrict record types, use IDs from find(types=True); do not invent a kind.
+INSTRUCTIONS = """Search data with find(text), using a short name or identifier, not a whole question.
+catalogue lists operations and types, not data. An empty catalogue search is not missing data.
+To restrict record types, use IDs from catalogue; do not invent a kind.
 Describe selected operation IDs to read their arguments, or type IDs to read their fields.
 Resolve names to candidate records. Do not choose an ambiguous identity without evidence.
 Matching names do not prove identity or links. Read fields or follow links before claiming a connection.
@@ -34,7 +34,7 @@ class SessionTools:
             for method in (
                 self.find,
                 self.describe,
-                self.resolve,
+                self.catalogue,
                 self.call,
                 self.select,
                 self.release,
@@ -68,17 +68,23 @@ class SessionTools:
             record["operation_ids"] = [item["id"] for item in client._operations[operation_start:]]
             record["finished_at"] = datetime.now(timezone.utc).isoformat()
 
-    def find(self, text: str = "", types: bool = False, limit: int = 5) -> list[dict[str, str]]:
-        """Find operation cards, or type cards with types=True. This does not search records."""
-        return self.session.registry.find(text, types=types, limit=limit)
+    def catalogue(self, text: str = "", limit: int = 20) -> dict[str, Any]:
+        """List supported operations and matching class names. Use find to search data."""
+        registry = self.session.registry
+        return {
+            "operations": registry.find(limit=100),
+            "types": registry.find(text, types=True, limit=limit),
+            "available_types": len(registry.types),
+            "data_queried": False,
+        }
 
     def describe(self, identifier: str, evidence: bool = False) -> dict[str, Any]:
         """Read an operation's arguments or a type's fields. Evidence adds the source schema."""
         return self.session.registry.describe(identifier, evidence=evidence)
 
-    def resolve(self, text: str, kind: str | None = None) -> dict[str, Any]:
-        """Search record names or identifiers. Omit kind, or use a type ID from find(types=True)."""
-        return self.call("records.find", {"text": text, "kind": kind})
+    def find(self, text: str, kind: str | None = None, field: str | None = None) -> dict[str, Any]:
+        """Search data by name or identifier. Use kind and field to search a class's description."""
+        return self.call("records.find", {"text": text, "kind": kind, "field": field})
 
     def call(self, operation: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Execute a registry operation. Use describe to read its argument contract."""
@@ -87,7 +93,11 @@ class SessionTools:
     def select(
         self, reference: str, fields: list[str], offset: int = 0, limit: int = 20
     ) -> dict[str, Any]:
-        """Read a page of fields from a result reference; follow next_offset for more."""
+        """Read class fields from describe(type). Preview labels and IDs are already returned.
+
+        Use field names from the class, not preview keys such as type_label or fields.
+        Follow next_offset for more retained rows.
+        """
         return self.call(
             "records.select",
             {"reference": reference, "fields": fields, "offset": offset, "limit": limit},
