@@ -19,6 +19,7 @@ from rdfsolve.exploration import SEARCH_PREDICATES, DatasetClient
 from rdfsolve.hydration import HydrationLimitError, _iri, _term
 from rdfsolve.model_rdf import model_to_graph
 from rdfsolve.query_log import QueryLog
+from rdfsolve.registry import Registry
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.sparql_helper import EndpointError
@@ -46,6 +47,12 @@ def _title(record: BaseModel) -> str:
 
 class Client(DatasetClient):
     """Find records without first choosing their type, then explore their links."""
+
+    def registry(self, *, source_id: str) -> Registry:
+        """Build a versioned operation registry without querying the source."""
+        from rdfsolve.rdf_operations import build_registry
+
+        return build_registry(self, source_id)
 
     def paths_between(
         self,
