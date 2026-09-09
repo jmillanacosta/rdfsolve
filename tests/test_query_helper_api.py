@@ -63,7 +63,7 @@ def test_fallback_log_reports_transport_change(monkeypatch, caplog):
     import logging
 
     caplog.set_level(logging.INFO, logger="rdfsolve.sparql_helper")
-    with SparqlHelper("https://example.org/sparql", max_retries=2) as helper:
+    with SparqlHelper("https://example.org/sparql", max_retries=1) as helper:
         helper.enable_query_collection()
         monkeypatch.setattr(helper, "_get_query", Mock(return_value="<html>error</html>"))
         monkeypatch.setattr(helper, "_post_query", Mock(return_value='{"boolean": true}'))

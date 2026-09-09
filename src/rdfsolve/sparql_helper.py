@@ -12,6 +12,7 @@ from contextvars import ContextVar
 from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from itertools import count
 from pathlib import Path
 from typing import Any, ClassVar, Literal
 from urllib.parse import urlsplit
@@ -577,9 +578,13 @@ class SparqlHelper:
         _use_raw_post = "post+raw" in (self.sparql_strategy or "")
         fallback_used = False
 
-        for attempt in range(1, self.max_retries + 1):
+        attempt = 0
+        requests_made = 0
+        while attempt < self.max_retries:
+            attempt += 1
+            requests_made += 1
             if record is not None:
-                record.attempts = attempt
+                record.attempts = requests_made
                 record.fallback_used = fallback_used
             try:
                 if _use_raw_post:
@@ -601,6 +606,7 @@ class SparqlHelper:
                             record.fallback_used = True
                         self._requires_post = True
                         use_post = True
+                        attempt -= 1
                         continue
                     elif use_post and not _tried_raw_post:
                         logger.info("Fallback: form POST returned HTML; use raw POST")
@@ -609,6 +615,7 @@ class SparqlHelper:
                             record.fallback_used = True
                         _use_raw_post = True
                         _tried_raw_post = True
+                        attempt -= 1
                         continue
                     else:
                         raise EndpointError(
@@ -640,6 +647,7 @@ class SparqlHelper:
                         record.fallback_used = True
                     self._requires_post = True
                     use_post = True
+                    attempt -= 1
                     continue
 
                 # Form-encoded POST rejected -> try raw POST body
@@ -653,6 +661,7 @@ class SparqlHelper:
                         record.fallback_used = True
                     _use_raw_post = True
                     _tried_raw_post = True
+                    attempt -= 1
                     continue
 
                 # Check for retryable status codes
@@ -770,6 +779,7 @@ class SparqlHelper:
                         record.fallback_used = True
                     self._requires_post = True
                     use_post = True
+                    attempt -= 1
                     continue
 
                 # Handle transient network errors with retry
@@ -811,6 +821,7 @@ class SparqlHelper:
                         record.fallback_used = True
                     self._requires_post = True
                     use_post = True
+                    attempt -= 1
                     continue
 
                 self._handle_retry(
@@ -1075,20 +1086,15 @@ class SparqlHelper:
         max_total_results: int | None = None,
         delay_between_chunks: float = 0.5,
         purpose: str = "",
-        max_pages: int = 10000,
+        max_pages: int | None = 10000,
+        until_empty: bool = False,
+        stable_terms: bool = False,
     ) -> Any:
         """Execute a SELECT query in chunks using OFFSET/LIMIT pagination.
 
-        Uses **adaptive pagination**: when the endpoint times out, the
-        chunk (LIMIT) is reduced by ~15 % and the *same* offset is
-        retried after a wait period.  The chunk size will never
-        shrink below 60 % of the original value (i.e. a maximum
-        cumulative reduction of ~40 %).  Up to 3 consecutive shrinks
-        are attempted per offset before giving up on that page.
-
-        After a successful fetch with a reduced chunk size, the smaller
-        size is kept for subsequent pages (the endpoint is consistently
-        slow).
+        On timeout, halve the page size and retry the same offset after a
+        pause. Keep the smaller size for later pages. Stop with an error if
+        a one-row page still fails. Requests run sequentially.
 
         Args:
             query_template: SPARQL query with ``{offset}`` and
@@ -1098,28 +1104,23 @@ class SparqlHelper:
             delay_between_chunks:
                 Pause between pages in seconds.
             purpose: Caller context for log messages.
-            max_pages: Stop with an incomplete result after this many pages.
+            max_pages: Stop with an incomplete result after this many pages; None has no cap.
+            until_empty: Continue after short pages; reject repeated pages.
+            stable_terms: Reject blank nodes whose identity cannot be kept across pages.
 
         Yields:
             List of bindings (dicts) from each chunk.
         """
-        # adaptive pagination
-        shrink_factor = 0.85  # reduce LIMIT by 15 % each time
-        min_chunk_size = max(  # never go below 60 % of original
-            int(chunk_size * 0.60),
-            1,
-        )
-        max_shrinks_per_offset = 3  # stop after 3 reductions
         wait_after_timeout = 5.0  # seconds to wait after a timeout
 
         current_offset = 0
         total_fetched = 0
         current_chunk_size = chunk_size
-        if max_pages < 1:
-            raise ValueError("max_pages must be positive")
-        max_iterations = max_pages
+        if chunk_size < 1 or (max_pages is not None and max_pages < 1):
+            raise ValueError("chunk_size and max_pages must be positive")
+        page_hashes: set[str] = set()
 
-        for _ in range(max_iterations):
+        for _ in count() if max_pages is None else range(max_pages):
             # Honour max_total_results cap
             if max_total_results is not None:
                 remaining = max_total_results - total_fetched
@@ -1135,11 +1136,10 @@ class SparqlHelper:
             )
 
             # attempt this page (with adaptive retries)
-            shrink_attempts = 0
             success = False
             last_error: SparqlHelperError | None = None
 
-            while shrink_attempts <= max_shrinks_per_offset:
+            while True:
                 try:
                     logger.debug(
                         "Chunked %s: offset=%d limit=%d",
@@ -1172,29 +1172,22 @@ class SparqlHelper:
                 except EndpointTimeoutError as error:
                     last_error = error
                     # adaptive reduction
-                    new_limit = max(
-                        int(effective_limit * shrink_factor),
-                        min_chunk_size,
-                    )
+                    new_limit = max(effective_limit // 2, 1)
 
                     if new_limit >= effective_limit:
                         # Can't shrink more
                         logger.warning(
-                            "Timeout at offset %d; chunk size already at minimum (%d) - skipping",
+                            "Timeout at offset %d; one-row page failed (%d)",
                             current_offset,
                             effective_limit,
                         )
                         break
 
-                    shrink_attempts += 1
                     logger.warning(
-                        "Timeout at offset %d - reducing chunk "
-                        "%d -> %d (attempt %d/%d, cooling %ds)",
+                        "Timeout at offset %d - reducing chunk %d -> %d (cooling %ds)",
                         current_offset,
                         effective_limit,
                         new_limit,
-                        shrink_attempts,
-                        max_shrinks_per_offset,
                         int(wait_after_timeout),
                     )
                     effective_limit = new_limit
@@ -1225,6 +1218,21 @@ class SparqlHelper:
                 logger.debug("No more results, pagination complete")
                 break
 
+            if stable_terms and any(
+                term.get("type") == "bnode" for row in bindings for term in row.values()
+            ):
+                raise PaginationTruncatedError(
+                    "Blank-node identity cannot be preserved across OFFSET pages; use a local RDF graph",
+                    offset=current_offset,
+                )
+            if until_empty:
+                digest = hashlib.sha256(json.dumps(bindings, sort_keys=True).encode()).hexdigest()
+                if digest in page_hashes:
+                    raise PaginationTruncatedError(
+                        "The endpoint repeated a page; OFFSET may be ignored", offset=current_offset
+                    )
+                page_hashes.add(digest)
+
             # Yield this chunk's results
             yield bindings
 
@@ -1240,7 +1248,7 @@ class SparqlHelper:
                 effective_limit,
             )
 
-            if chunk_count < effective_limit:
+            if chunk_count < effective_limit and not until_empty:
                 logger.debug(
                     "Partial chunk received, pagination complete",
                 )
