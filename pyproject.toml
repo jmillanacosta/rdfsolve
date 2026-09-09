@@ -91,11 +91,13 @@ dependencies = [
 
 [project.optional-dependencies]
 agents = [
-    "pydantic-ai-slim[openai,anthropic]==1.97.0",
+    "pydantic-ai-slim[openai,anthropic]==2.0.0",
     "python-dotenv==1.2.3",
 ]
+mcp = ["mcp==2.2.0"]
 tests = [
-    "pydantic-ai-slim==1.97.0",
+    "pydantic-ai-slim==2.0.0",
+    "mcp==2.2.0",
     "pytest",
     "coverage",
     "networkx>=2.8",

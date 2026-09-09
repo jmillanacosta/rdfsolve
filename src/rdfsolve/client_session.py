@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
@@ -77,7 +78,7 @@ class ClientSession:
                 raise HydrationLimitError("Result budget reached; release a retained result")
             with self.client.step(operation):
                 result = self._execute(parsed)
-            execution.update(status="complete", result=result)
+            execution.update(status="complete", result=deepcopy(result))
             return {**result, "execution": execution["id"]}
         except Exception as error:
             execution["error"] = {"category": type(error).__name__, "message": str(error)}
@@ -88,7 +89,10 @@ class ClientSession:
 
     def _execute(self, arguments: Contract) -> dict[str, Any]:
         if isinstance(arguments, Find):
-            return self._keep(self.client.find(arguments.text, kind=arguments.kind))
+            return {
+                **self._keep(self.client.find(arguments.text, kind=arguments.kind)),
+                "basis": "Name or identifier matches; shared names do not establish identity or links",
+            }
         if isinstance(arguments, Get):
             model = self.client.model(arguments.kind)
             fields = [self.client.field_name(model, name) for name in arguments.fields]
@@ -162,6 +166,7 @@ class ClientSession:
                 {
                     "id": payload["uri"],
                     "type": requested_type,
+                    "type_label": self.client.type_name(type(record)),
                     "label": _title(record),
                     "observed_types": observed_types,
                     "type_evidence": "observed"

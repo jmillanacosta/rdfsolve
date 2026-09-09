@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from html import escape
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -15,15 +16,37 @@ class QueryLog:
     def __init__(self, session: dict[str, Any]) -> None:
         """Read a saved or current session without executing queries."""
         self.queries = session["queries"]
+        self.tool_calls = session.get("tool_calls", [])
         self.names = {
             query_id: step["name"] for step in session["steps"] for query_id in step["query_ids"]
         }
+
+    @classmethod
+    def read(cls, path: str | Path) -> QueryLog:
+        """Open a saved session log without contacting its source."""
+        return cls(json.loads(Path(path).read_text(encoding="utf-8")))
+
+    def tools(self) -> pd.DataFrame:
+        """List tool calls and the query executions used by each call."""
+        return pd.DataFrame(
+            [
+                {"Tool": call["tool"], "Status": call["status"], "Queries": call["query_ids"]}
+                for call in self.tool_calls
+            ],
+            columns=["Tool", "Status", "Queries"],
+        )
 
     def __repr__(self) -> str:
         return f"QueryLog({len(self.queries)} executions; open in a notebook to view results)"
 
     def _repr_html_(self) -> str:
-        sections = []
+        sections = [
+            f"<details><summary>{escape(call['tool'])} — {escape(call['status'])}</summary>"
+            + "<pre>"
+            + escape(json.dumps(call, indent=2, ensure_ascii=False))
+            + "</pre></details>"
+            for call in self.tool_calls
+        ]
         for query in self.queries:
             name = self.names.get(query["id"]) or query["purpose"].replace("_", " ")
             name = name or query["query_type"]

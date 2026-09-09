@@ -31,7 +31,6 @@ def client():
 
 
 def test_agent_tools_keep_typed_records_and_query_evidence():
-    from pydantic_ai import ModelRetry
     from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
     from pydantic_ai.models.function import FunctionModel
     from pydantic_ai.usage import UsageLimits
@@ -53,9 +52,9 @@ def test_agent_tools_keep_typed_records_and_query_evidence():
         session = data.session_metadata()
         assert session["queries"] and all(query["result_retained"] for query in session["queries"])
         before = len(session["queries"])
-        with pytest.raises(ModelRetry, match="budget"):
+        with pytest.raises(ValueError, match="budget"):
             tools.resolve("anything")
-        with pytest.raises(ModelRetry, match="Unknown result"):
+        with pytest.raises(ValueError, match="Unknown result"):
             tools.select("another-session", [])
         assert len(data.session_metadata()["queries"]) == before
 

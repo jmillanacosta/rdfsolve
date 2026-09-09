@@ -119,6 +119,7 @@ class Hydrator:
         self._steps: list[dict[str, Any]] = []
         self._retrievals: list[dict[str, Any]] = []
         self._operations: list[dict[str, Any]] = []
+        self._tool_calls: list[dict[str, Any]] = []
         self._registries: dict[str, dict[str, Any]] = {}
         if isinstance(self.source, SparqlHelper):
             self.source.enable_query_collection(clear=False, include_results=True)
@@ -175,6 +176,7 @@ class Hydrator:
             "steps": [dict(step) for step in self._steps],
             "retrievals": list(self._retrievals),
             "operations": list(self._operations),
+            "tool_calls": list(self._tool_calls),
             "registries": dict(self._registries),
         }
 

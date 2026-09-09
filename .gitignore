@@ -162,10 +162,12 @@ fabric.properties
 .idea/codestream.xml
 
 ### JupyterNotebooks ###
-# Keep only the query and typed-client notebooks in Git.
+# Keep the query, typed-client, and MCP notebooks in Git.
 *.ipynb
 !/notebooks/sparql_helper/**/*.ipynb
 !/notebooks/pydantic_clients/**/*.ipynb
+!/notebooks/mcp/*.ipynb
+/notebooks/mcp/output/
 
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
@@ -409,6 +411,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv-*/
 env/
 venv/
 ENV/
