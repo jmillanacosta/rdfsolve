@@ -150,6 +150,18 @@ def test_paging_recovers_timeout_and_short_server_pages(monkeypatch):
                 chunk_size=8, max_pages=None, until_empty=True))
 
 
+def test_page_recovery_stops_when_smaller_pages_do_not_help(monkeypatch):
+    from rdfsolve.sparql_helper import EndpointTimeoutError, SparqlHelper
+
+    monkeypatch.setattr("rdfsolve.sparql_helper.time.sleep", lambda _: None)
+    with SparqlHelper("https://example.org/sparql") as helper:
+        request = Mock(side_effect=EndpointTimeoutError("Query cannot finish"))
+        monkeypatch.setattr(helper, "select", request)
+        with pytest.raises(PaginationTruncatedError) as error:
+            list(helper.select_chunked("SELECT * WHERE {{ ?s ?p ?o }} LIMIT {limit} OFFSET {offset}", chunk_size=5000))
+        assert error.value.offset == 0 and request.call_count == 4
+
+
 def test_failed_ontology_query_is_not_an_empty_ontology():
     from rdfsolve.mining import OntologyMiner
 

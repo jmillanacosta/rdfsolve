@@ -42,6 +42,9 @@ class QueryRecord:
     success: bool = True
     purpose: str = ""
     error: str | None = None
+    error_message: str | None = None
+    status_code: int | None = None
+    response_excerpt: str | None = None
     attempts: int = 0
     fallback_used: bool = False
     result: Any = None
@@ -554,6 +557,7 @@ class SparqlHelper:
             return result
         except Exception as error:
             record.error = type(error).__name__
+            record.error_message = str(error)
             raise
         finally:
             record.elapsed_seconds = time.monotonic() - started
@@ -572,7 +576,7 @@ class SparqlHelper:
     ) -> Any:
         """Execute SPARQL query with GET/POST fallback and retry logic."""
         # Try GET first (unless we know POST is required)
-        use_post = self._requires_post
+        use_post = self._requires_post or len(query.encode("utf-8")) > 2000
         # Track whether we've tried raw POST (application/sparql-query)
         _tried_raw_post = False
         _use_raw_post = "post+raw" in (self.sparql_strategy or "")
@@ -633,6 +637,25 @@ class SparqlHelper:
 
             except requests.exceptions.HTTPError as e:
                 status_code = e.response.status_code if e.response is not None else 0
+                if record is not None:
+                    record.status_code = status_code
+                    record.response_excerpt = self._last_error_body[:2000]
+                body = self._last_error_body.lower()
+                detail = self._last_error_body.split("SPARQL query:", 1)[0].strip()[:500]
+                failure = EndpointError(
+                    f"HTTP {status_code}: {detail or 'Endpoint request failed'}"
+                )
+                if any(
+                    marker in body
+                    for marker in (
+                        "sparql compiler",
+                        "syntax error",
+                        "parse error",
+                        "undefined prefix",
+                        "undeclared prefix",
+                    )
+                ):
+                    raise EndpointError(f"HTTP {status_code}: query rejected: {detail}") from e
 
                 # Check if this looks like a POST-required error
                 # 400 = Bad Request (QLever rejects GET), 405 = Method Not Allowed,
@@ -729,17 +752,20 @@ class SparqlHelper:
                                 tag,
                                 self.endpoint_url,
                             )
-                            raise EndpointTimeoutError(f"Query cost/time limit: {e}") from e
+                            raise EndpointTimeoutError(
+                                f"Query cost/time limit: {detail or status_code}",
+                                status_code=status_code,
+                            ) from e
                     self._handle_retry(
                         attempt,
                         query_type,
-                        e,
+                        failure,
                         purpose,
                     )
                     continue
 
                 # Non-retryable HTTP error
-                raise EndpointError(f"HTTP {status_code}: {e}") from e
+                raise failure from e
 
             except (EndpointTimeoutError, EndpointRateLimitError):
                 raise
@@ -1089,12 +1115,13 @@ class SparqlHelper:
         max_pages: int | None = 10000,
         until_empty: bool = False,
         stable_terms: bool = False,
+        max_page_retries: int = 3,
     ) -> Any:
         """Execute a SELECT query in chunks using OFFSET/LIMIT pagination.
 
         On timeout, halve the page size and retry the same offset after a
         pause. Keep the smaller size for later pages. Stop with an error if
-        a one-row page still fails. Requests run sequentially.
+        the retry budget is spent or a one-row page fails. Requests run sequentially.
 
         Args:
             query_template: SPARQL query with ``{offset}`` and
@@ -1107,6 +1134,7 @@ class SparqlHelper:
             max_pages: Stop with an incomplete result after this many pages; None has no cap.
             until_empty: Continue after short pages; reject repeated pages.
             stable_terms: Reject blank nodes whose identity cannot be kept across pages.
+            max_page_retries: Maximum page-size reductions per offset, not a data limit.
 
         Yields:
             List of bindings (dicts) from each chunk.
@@ -1116,8 +1144,8 @@ class SparqlHelper:
         current_offset = 0
         total_fetched = 0
         current_chunk_size = chunk_size
-        if chunk_size < 1 or (max_pages is not None and max_pages < 1):
-            raise ValueError("chunk_size and max_pages must be positive")
+        if chunk_size < 1 or (max_pages is not None and max_pages < 1) or max_page_retries < 0:
+            raise ValueError("Use positive page sizes and nonnegative page retry budgets")
         page_hashes: set[str] = set()
 
         for _ in count() if max_pages is None else range(max_pages):
@@ -1138,6 +1166,7 @@ class SparqlHelper:
             # attempt this page (with adaptive retries)
             success = False
             last_error: SparqlHelperError | None = None
+            reductions = 0
 
             while True:
                 try:
@@ -1171,6 +1200,11 @@ class SparqlHelper:
 
                 except EndpointTimeoutError as error:
                     last_error = error
+                    if reductions >= max_page_retries:
+                        logger.warning(
+                            "Page recovery budget exhausted at offset %d", current_offset
+                        )
+                        break
                     # adaptive reduction
                     new_limit = max(effective_limit // 2, 1)
 
@@ -1191,6 +1225,7 @@ class SparqlHelper:
                         int(wait_after_timeout),
                     )
                     effective_limit = new_limit
+                    reductions += 1
                     current_chunk_size = new_limit  # sticky
                     query = query_template.format(
                         offset=current_offset,
