@@ -155,15 +155,33 @@ schema.to_shacl()  # To SHACL
 ### Typed client generation
 
 Use `rdfsolve.client_api` to find names or identifiers, then follow the results.
-For an AOPWiki schema:
+Start from a saved schema. Opening it makes no endpoint requests and does not
+mine the data:
 
 ```python
 from rdfsolve.client_api import Client
 
-data = Client(schema)
+data = Client.open("aopwikirdf.schema.json")
 matches = data.find("thyroid")
 matches.types()
 ```
+
+The schema supplies the types, fields and endpoint. Searches read the data when
+you ask for it. Use `Client.open(schema)` or `schema.client()` if you already
+have a `MinedSchema` in Python.
+
+Choose another endpoint, local data, or a supported RDF schema export:
+
+```python
+data = Client.open("schema.json", source="https://example.org/sparql")
+data = Client.open("schema.json", data_file="subset.ttl")
+data = Client.open("shapes.ttl", format="shacl", source=endpoint)
+data = Client.open("void.ttl", format="void", source=endpoint)
+```
+
+Prefer canonical schema JSON: it keeps all stored fields. SHACL and VoID use
+their supported import fields. Metadata-only VoID cannot supply a typed client.
+No missing fields are filled by automatic mining.
 
 Pick the records you want and see where they lead:
 
@@ -207,7 +225,9 @@ Press Tab after `pathways.fields.` to discover fields while typing.
 `show()` retrieves only the fields you ask for; displaying results does not
 send requests.
 
-Start directly from an endpoint with `explore(endpoint, graph=graph_iri)`.
+To create a new schema, use `SchemaMiner` separately and save its output.
+`explore(endpoint, graph=graph_iri)` is a quick mining shortcut, not required
+to open a client.
 Show each query and its returned data with `data.query_log()`.
 Save the queries, results, and steps with `data.save_session("session.json")`,
 then close the connection with `data.close()`.
@@ -429,6 +449,24 @@ answer = await agent.run(
 print(answer.output)
 data.query_log()
 ```
+
+### Use the same tools through MCP
+
+Install `rdfsolve[mcp]` and start a local stdio server from a saved schema:
+
+```bash
+python -m rdfsolve.mcp --schema aopwikirdf.schema.json --log session.json
+```
+
+Use `--endpoint URL` to override its endpoint, or `--data subset.ttl` to query
+local RDF. Nothing is mined at startup. Your MCP client gets six tools:
+`find`, `describe`, `resolve`, `call`, `select`, and `release`.
+Calls run one at a time; result references belong to that server session.
+The optional log retains tool answers and source queries, so treat it as data.
+
+[Ask AOPWiki a question](notebooks/mcp/01_ask_aopwiki.ipynb) shows one short
+model run and the tools and queries it used. It opens the included schema and
+uses your local `notebooks/.env`; keys are not sent to the RDF server.
 
 ### Save what a client can do
 
