@@ -20,7 +20,7 @@ from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 if TYPE_CHECKING:
     from rdflib import Graph
 
-    from rdfsolve.exploration import DatasetClient
+    from rdfsolve.client_api import Client
     from rdfsolve.hydration import Hydrator
     from rdfsolve.schema_models.metadata import MetadataDocument
     from rdfsolve.sparql_helper import SparqlHelper
@@ -326,13 +326,11 @@ class MinedSchema(BaseModel):
 
         return build_pydantic_classes(self)
 
-    def client(
-        self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any
-    ) -> DatasetClient:
-        """Explore generated models by name and follow their recorded links."""
-        from rdfsolve.exploration import DatasetClient
+    def client(self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any) -> Client:
+        """Open the exploratory client without mining or querying the source."""
+        from rdfsolve.client_api import Client
 
-        return DatasetClient(self, source, **kwargs)
+        return Client(self, source, **kwargs)
 
     def hydrator(self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any) -> Hydrator:
         """Read generated model fields from a source. See Hydrator for request budgets."""

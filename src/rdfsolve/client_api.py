@@ -10,6 +10,7 @@ from html import escape
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
+from typing import Literal as FormatLiteral
 
 import pandas as pd
 from pydantic import BaseModel
@@ -22,7 +23,7 @@ from rdfsolve.query_log import QueryLog
 from rdfsolve.registry import Registry
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.paths import PropertyPath
-from rdfsolve.sparql_helper import EndpointError
+from rdfsolve.sparql_helper import EndpointError, SparqlHelper
 
 if TYPE_CHECKING:
     from rdfsolve.client_session import ClientSession
@@ -50,6 +51,50 @@ def _title(record: BaseModel) -> str:
 
 class Client(DatasetClient):
     """Find records without first choosing their type, then explore their links."""
+
+    @classmethod
+    def open(
+        cls,
+        schema: MinedSchema | str | Path,
+        source: str | SparqlHelper | Graph | None = None,
+        *,
+        format: FormatLiteral["json", "shacl", "void"] | None = None,
+        data_file: str | Path | None = None,
+        **kwargs: Any,
+    ) -> Client:
+        """Open a saved schema without mining or making source requests.
+
+        JSON uses the canonical or VoID JSON-LD reader. For Turtle, choose
+        format="shacl" or "void". RDF imports retain only supported fields.
+        The source defaults to the schema endpoint. data_file selects local RDF.
+        """
+        if isinstance(schema, MinedSchema):
+            if format is not None:
+                raise ValueError("format applies to schema files, not MinedSchema objects")
+        else:
+            path = Path(schema)
+            if format is None:
+                if path.suffix.lower() not in {".json", ".jsonld"}:
+                    raise ValueError('For Turtle, set format="shacl" or format="void"')
+                format = "json"
+            if format == "json":
+                schema = MinedSchema.from_json(path)
+            elif format == "shacl":
+                schema = MinedSchema.from_shacl(path.read_text(encoding="utf-8"))
+            elif format == "void":
+                schema = MinedSchema.from_void(path.read_text(encoding="utf-8"))
+            else:
+                raise ValueError("Use json, shacl, or void as the schema format")
+        if not schema.get_classes():
+            raise ValueError("The schema has no classes to query; metadata alone is not enough")
+        if data_file is not None:
+            if source is not None:
+                raise ValueError("Choose source or data_file, not both")
+            if kwargs.get("graph_uris"):
+                raise ValueError("A single local RDF graph has no named graph scope")
+            source = Graph().parse(data_file)
+            kwargs["graph_uris"] = []
+        return cls(schema, source, **kwargs)
 
     def registry(self, *, source_id: str) -> Registry:
         """Build a versioned operation registry without querying the source."""
