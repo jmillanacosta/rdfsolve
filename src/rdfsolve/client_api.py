@@ -596,23 +596,25 @@ class Results:
                         found[str(vars(record)["uri"])] = record
         return Results(self.client, list(found.values()))
 
-    def _load(self, field: str) -> None:
-        if field == "uri":
+    def _load(self, *fields: str) -> None:
+        fields = tuple(field for field in fields if field != "uri")
+        if not fields:
             return
         models = {type(record) for record in self.records}
-        names = {model: self.client.field_name(model, field) for model in models}
-        with self.client.step(f"Read {field}"):
-            for model, name in names.items():
+        names = {
+            model: {self.client.field_name(model, field) for field in fields} for model in models
+        }
+        with self.client.step(f"Read {', '.join(fields)}"):
+            for model, requested in names.items():
                 group = [
                     r
                     for r in self.records
                     if type(r) is model
-                    and name not in vars(r).get("rdf_loaded_fields", [])
-                    and name not in r.model_fields_set
+                    and requested - set(vars(r).get("rdf_loaded_fields", [])) - r.model_fields_set
                 ]
                 if not group:
                     continue
-                selected = set(_name_fields(model)) | {name}
+                selected = set(_name_fields(model)) | requested
                 selected.update(
                     field for r in group for field in vars(r).get("rdf_loaded_fields", [])
                 )
@@ -621,13 +623,13 @@ class Results:
                 )
                 replacements = {vars(r)["uri"]: r for r in loaded}
                 self.records = [
-                    replacements[vars(r)["uri"]] if type(r) is model else r for r in self.records
+                    replacements.get(vars(r)["uri"], r) if type(r) is model else r
+                    for r in self.records
                 ]
 
     def show(self, *fields: str) -> pd.DataFrame:
         """Show names and requested fields, retrieving those fields if needed."""
-        for field in fields:
-            self._load(field)
+        self._load(*fields)
         rows = []
         for record in self.records:
             row: dict[str, Any] = {
@@ -652,8 +654,7 @@ class Results:
         """
         from rdfsolve.client_table import record_table
 
-        for field in fields:
-            self._load(field)
+        self._load(*fields)
         models = {type(record) for record in self.records}
         names = sorted(
             {self.client.field_name(model, field) for model in models for field in fields}

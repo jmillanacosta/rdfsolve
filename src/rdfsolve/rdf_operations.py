@@ -33,7 +33,7 @@ class Get(Contract):
 
 
 class Related(Contract):
-    """Follow links from a retained result."""
+    """Follow links from a result reference or retrieved record IRI."""
 
     reference: str
     kind: str | None = None
@@ -43,7 +43,7 @@ class Related(Contract):
 
 
 class Select(Contract):
-    """Read a page of fields from a retained result."""
+    """Read fields from a result reference or retrieved record IRI."""
 
     reference: str
     fields: list[str] = Field(default_factory=list)

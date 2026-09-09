@@ -72,10 +72,23 @@ def test_session_pages_before_reading_fields_and_keeps_evidence(tmp_path):
             "reference": pathways["reference"], "fields": ["C54571"], "limit": 1,
         })["rows"] == page["rows"]
         assert len(data.queries) == before
+        before = len(data.queries)
+        session.preview_rows = 2
+        widened = session.call("records.select", {
+            "reference": pathways["reference"], "fields": ["C54571"], "limit": 2,
+        })
+        assert len(widened["rows"]) == 2 and len(data.queries) == before + 1
+        assert all(record.rdf_loaded_fields for record in session.result(pathways["reference"]))
+        fresh = session.call("records.get", {"iri": "https://identifiers.org/aop/107", "kind": AOP})
+        before = len(data.queries)
+        session.call("records.select", {
+            "reference": fresh["reference"], "fields": ["C54571", "has_key_event"],
+        })
+        assert len(data.queries) == before + 1
         output = tmp_path / "session.json"
         data.save_session(output)
         saved = json.loads(output.read_text())
-        execution = saved["operations"][-2]
+        execution = next(item for item in saved["operations"] if item["id"] == widened["execution"])
         assert execution["query_ids"] and execution["status"] == "complete"
         assert execution["registry_revision"] in saved["registries"]
         assert all(q in {query["id"] for query in saved["queries"]} for q in execution["query_ids"])

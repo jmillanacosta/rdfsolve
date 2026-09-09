@@ -13,6 +13,8 @@ INSTRUCTIONS = """Search data with find(text), using a short name or identifier,
 catalogue lists operations and types, not data. An empty catalogue search is not missing data.
 To restrict record types, use IDs from catalogue; do not invent a kind.
 Describe selected operation IDs to read their arguments, or type IDs to read their fields.
+For connected data, describe a result reference and use related to follow its links.
+Name searches do not follow links. Do not replace link traversal with more name guesses.
 Resolve names to candidate records. Do not choose an ambiguous identity without evidence.
 Matching names do not prove identity or links. Read fields or follow links before claiming a connection.
 type, type_label, and observed_types describe classes, not additional identifiers for a record.
@@ -37,6 +39,7 @@ class SessionTools:
                 self.catalogue,
                 self.call,
                 self.select,
+                self.related,
                 self.release,
             )
         }
@@ -79,8 +82,28 @@ class SessionTools:
         }
 
     def describe(self, identifier: str, evidence: bool = False) -> dict[str, Any]:
-        """Read an operation's arguments or a type's fields. Evidence adds the source schema."""
-        return self.session.registry.describe(identifier, evidence=evidence)
+        """Inspect fields and link targets for a result reference, retrieved record, or class.
+
+        Operation IDs return callable arguments. This reads the schema, not record values.
+        """
+        registry = self.session.registry
+        if identifier in self.session.results:
+            records = self.session.result(identifier).records
+        else:
+            records = [
+                record
+                for result in self.session.results.values()
+                for record in result
+                if vars(record)["uri"] == identifier
+            ]
+        if records or identifier in self.session.results:
+            kinds = sorted({str(getattr(type(record), "rdf_class_iri", "")) for record in records})
+            return {
+                "identifier": identifier,
+                "types": [registry.describe(kind, evidence=evidence) for kind in kinds],
+                "data_queried": False,
+            }
+        return registry.describe(identifier, evidence=evidence)
 
     def find(self, text: str, kind: str | None = None, field: str | None = None) -> dict[str, Any]:
         """Search data by name or identifier. Use kind and field to search a class's description."""
@@ -90,10 +113,34 @@ class SessionTools:
         """Execute a registry operation. Use describe to read its argument contract."""
         return self.session.call(operation, arguments)
 
+    def related(
+        self,
+        reference: str,
+        kind: str | None = None,
+        via: str | None = None,
+        value: str | None = None,
+        incoming: bool = False,
+    ) -> dict[str, Any]:
+        """Follow actual links from a result reference or retrieved record IRI.
+
+        Describe the reference to see fields and target classes. Use a field name for via
+        and its target class for kind. incoming=True follows links in the reverse direction.
+        """
+        return self.call(
+            "records.related",
+            {
+                "reference": reference,
+                "kind": kind,
+                "via": via,
+                "value": value,
+                "incoming": incoming,
+            },
+        )
+
     def select(
         self, reference: str, fields: list[str], offset: int = 0, limit: int = 20
     ) -> dict[str, Any]:
-        """Read class fields from describe(type). Preview labels and IDs are already returned.
+        """Read fields from a result reference or retrieved record IRI.
 
         Use field names from the class, not preview keys such as type_label or fields.
         Follow next_offset for more retained rows.

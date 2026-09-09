@@ -27,7 +27,7 @@ from rdfsolve.sparql_helper import EndpointError
 
 
 def create_server(session: ClientSession, *, log_path: str | Path | None = None) -> MCPServer:
-    """Serve six tools. The caller owns the client; calls run one at a time.
+    """Serve read tools. The caller owns the client; calls run one at a time.
 
     The optional log contains source data. Choose its path outside agent control.
     This server opens no HTTP port and loads no executable registry content.

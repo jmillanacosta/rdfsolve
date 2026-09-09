@@ -51,6 +51,21 @@ class ClientSession:
             raise ValueError("Unknown result reference; use a reference from this session")
         return self.results[reference]
 
+    def _reference(self, value: str) -> str:
+        """Accept a result handle or an IRI already retrieved in this session."""
+        if value in self.results:
+            return value
+        records = {}
+        for reference, result in self.results.items():
+            if result.records and all(vars(record)["uri"] == value for record in result):
+                return reference
+            for record in result:
+                if vars(record)["uri"] == value:
+                    records[type(record)] = record
+        if not records:
+            raise ValueError("Unknown result reference or record IRI; use a retrieved result")
+        return self._retain(Results(self.client, list(records.values())))
+
     def result(self, reference: str) -> Results:
         """Read retained typed records without sending another query."""
         return self._result(reference)
@@ -131,8 +146,9 @@ class ClientSession:
         if isinstance(arguments, Related):
             if arguments.kind is not None:
                 self.client.model(arguments.kind)
-            result = self._result(arguments.reference)
-            return self._keep(
+            result = self._result(self._reference(arguments.reference))
+            start = len(self.client._matches)
+            page = self._keep(
                 result.related(
                     kind=arguments.kind,
                     value=arguments.value,
@@ -140,8 +156,10 @@ class ClientSession:
                     incoming=arguments.incoming,
                 )
             )
+            return {**page, "links": deepcopy(self.client._matches[start:])}
         if isinstance(arguments, Select):
-            return self._page(arguments)
+            reference = self._reference(arguments.reference)
+            return self._page(arguments.model_copy(update={"reference": reference}))
         if isinstance(arguments, Paths):
             table = self.client.paths_between(
                 arguments.source,
@@ -160,14 +178,18 @@ class ClientSession:
         raise ValueError("Unsupported operation arguments")
 
     def _keep(self, result: Results, *, fields: list[str] | None = None) -> dict[str, Any]:
+        reference = self._retain(result)
+        return self._page(Select(reference=reference, fields=fields or [], limit=self.preview_rows))
+
+    def _retain(self, result: Results) -> str:
         count = sum(len(item) for item in self.results.values()) + len(result)
-        if count > self.max_records:
+        if count > self.max_records or len(self.results) >= self.max_results:
             raise HydrationLimitError(
                 "Result exceeds the retained-record budget; narrow the search"
             )
         reference = uuid4().hex
         self.results[reference] = result
-        return self._page(Select(reference=reference, fields=fields or [], limit=self.preview_rows))
+        return reference
 
     def _page(self, arguments: Select) -> dict[str, Any]:
         result = self._result(arguments.reference)
@@ -184,8 +206,7 @@ class ClientSession:
             arguments.offset : arguments.offset + min(arguments.limit, self.preview_rows)
         ]
         page = Results(self.client, records)
-        for field in arguments.fields:
-            page._load(field)
+        page._load(*arguments.fields)
         result.records[arguments.offset : arguments.offset + len(records)] = page.records
         rows = []
         for record in page.records:

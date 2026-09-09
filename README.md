@@ -459,9 +459,13 @@ python -m rdfsolve.mcp --schema aopwikirdf.schema.json --log session.json
 ```
 
 Use `--endpoint URL` to override its endpoint, or `--data subset.ttl` to query
-local RDF. Nothing is mined at startup. Your MCP client gets six tools:
-`catalogue`, `find`, `describe`, `call`, `select`, and `release`.
+local RDF. Nothing is mined at startup. Your MCP client gets seven tools:
+`catalogue`, `find`, `describe`, `related`, `call`, `select`, and `release`.
 `find` searches data; `catalogue` lists operations and classes.
+`describe` shows the fields and link targets of a retrieved result. `related`
+follows those links; another name search does not establish a connection.
+Both field reads and link traversal accept a result reference or a record IRI
+already retrieved in that session.
 Calls run one at a time; result references belong to that server session.
 The optional log retains tool answers and source queries, so treat it as data.
 

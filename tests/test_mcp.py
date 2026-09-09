@@ -63,7 +63,7 @@ def test_mcp_reads_records_and_records_errors(tmp_path):
             async with MCPClient(create_server(session, log_path=log_path)) as wire:
                 tools = await wire.list_tools()
                 assert {tool.name for tool in tools.tools} == {
-                    "find", "describe", "catalogue", "call", "select", "release",
+                    "find", "describe", "catalogue", "related", "call", "select", "release",
                 }
                 await wire.call_tool("describe", {"identifier": "records.get"})
                 assert not data.queries
@@ -109,6 +109,36 @@ def test_mcp_serializes_parallel_reads_and_keeps_query_ownership():
             ids = [call["query_ids"] for call in calls]
             assert all(ids) and not set(ids[0]) & set(ids[1])
             assert calls[0]["finished_at"] <= calls[1]["started_at"]
+    asyncio.run(run())
+
+
+def test_describe_and_follow_found_records_without_guessing_operation_names():
+    from rdflib import URIRef
+
+    async def run():
+        with client() as data:
+            async with MCPClient(create_server(data.session(source_id="aopwikirdf"))) as wire:
+                found = await wire.call_tool("find", {"text": "thyroid", "kind": AOP})
+                reference = found.structured_content["reference"]
+                before = len(data.queries)
+                description = await wire.call_tool("describe", {"identifier": reference})
+                fields = description.structured_content["types"][0]["fields"]
+                link = next(field for field in fields if field["name"] == "has_key_event")
+                assert len(data.queries) == before
+                linked = await wire.call_tool("related", {
+                    "reference": reference, "kind": link["targets"][0], "via": link["name"],
+                })
+                assert not linked.is_error
+                assert linked.structured_content["links"]
+                for match in linked.structured_content["links"]:
+                    assert (URIRef(match["source"]), URIRef(match["path"]["iri"]), URIRef(match["target"])) in data.source
+                iri = linked.structured_content["rows"][0]["id"]
+                described = await wire.call_tool("describe", {"identifier": iri})
+                assert described.structured_content["types"][0]["id"] == link["targets"][0]
+                selected = await wire.call_tool("select", {"reference": iri, "fields": ["title"]})
+                assert not selected.is_error
+                assert [row["id"] for row in selected.structured_content["rows"]] == [iri]
+                assert selected.structured_content["reference"] != iri
     asyncio.run(run())
 
 
