@@ -39,7 +39,7 @@ def test_agent_tools_keep_typed_records_and_query_evidence():
 
     def model(messages, info):
         if len(messages) == 1:
-            return ModelResponse(parts=[ToolCallPart("find", {"text": "Phenobarbital", "kind": CHEMICAL})])
+            return ModelResponse(parts=[ToolCallPart("search", {"terms": ["Phenobarbital"], "kind": CHEMICAL})])
         return ModelResponse(parts=[TextPart("Found")])
 
     with client() as data:
@@ -53,9 +53,9 @@ def test_agent_tools_keep_typed_records_and_query_evidence():
         assert session["queries"] and all(query["result_retained"] for query in session["queries"])
         before = len(session["queries"])
         with pytest.raises(ValueError, match="budget"):
-            tools.find("anything")
+            tools.session.search(["anything"])
         with pytest.raises(ValueError, match="Unknown result"):
-            tools.select("another-session", [])
+            tools.session.read("another-session", [])
         assert len(data.session_metadata()["queries"]) == before
 
 

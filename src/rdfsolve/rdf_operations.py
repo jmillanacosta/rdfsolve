@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pydantic import Field, TypeAdapter
+from pydantic import Field, TypeAdapter, model_validator
 from rdflib import Graph
 
 from rdfsolve.registry import Contract, FieldDescription, Operation, Registry, TypeDescription
@@ -16,39 +16,51 @@ if TYPE_CHECKING:
     from rdfsolve.client_api import Client
 
 
-class Find(Contract):
-    """Find names or identifiers; return all candidates within client budgets."""
+class Schema(Contract):
+    """Find classes and fields using their names and source definitions."""
 
-    text: str = Field(min_length=1)
+    text: str = ""
     kind: str | None = None
-    field: str | None = None
+    offset: int = Field(default=0, ge=0)
+    limit: int = Field(default=10, ge=1, le=30)
 
 
-class Get(Contract):
-    """Read one identifier using a source type and selected fields."""
+class Search(Contract):
+    """Find candidate records in names, identifiers and descriptive text."""
 
-    iri: str
-    kind: str
-    fields: list[str] = Field(default_factory=list)
-
-
-class Related(Contract):
-    """Follow links from a result reference or retrieved record IRI."""
-
-    reference: str
+    terms: list[str] = Field(min_length=1, max_length=12)
     kind: str | None = None
-    value: str | None = None
-    via: str | None = None
-    incoming: bool = False
+    fields: list[str] = Field(default_factory=list, max_length=12)
+
+    @model_validator(mode="after")
+    def nonempty_terms(self) -> Search:
+        """Reject empty phrases before querying."""
+        if any(not term.strip() or len(term) > 200 for term in self.terms):
+            raise ValueError("Use nonempty search phrases of at most 200 characters")
+        return self
 
 
-class Select(Contract):
-    """Read fields from a result reference or retrieved record IRI."""
+class Read(Contract):
+    """Read fields or follow selected paths from retained records."""
 
-    reference: str
-    fields: list[str] = Field(default_factory=list)
+    reference: str | None = None
+    iri: str | None = None
+    kind: str | None = None
+    paths: list[str] = Field(default_factory=list, max_length=20)
+    fields: list[str] = Field(default_factory=list, max_length=12)
     offset: int = Field(default=0, ge=0)
     limit: int = Field(default=20, ge=1, le=100)
+    evidence_offset: int = Field(default=0, ge=0)
+    detail: bool = False
+
+    @model_validator(mode="after")
+    def source_required(self) -> Read:
+        """Require one source and a type for a new IRI."""
+        if (self.reference is None) == (self.iri is None):
+            raise ValueError("Supply a result reference or an iri with kind")
+        if self.iri is not None and self.kind is None:
+            raise ValueError("Supply kind with iri")
+        return self
 
 
 class Paths(Contract):
@@ -57,14 +69,16 @@ class Paths(Contract):
     source: str
     target: str
     max_hops: int = Field(default=2, ge=1, le=3)
+    text: str = ""
+    offset: int = Field(default=0, ge=0)
+    limit: int = Field(default=10, ge=1, le=30)
 
 
 ARGUMENTS: dict[str, type[Contract]] = {
-    "records.find": Find,
-    "records.get": Get,
-    "records.related": Related,
-    "records.select": Select,
-    "schema.paths": Paths,
+    "schema": Schema,
+    "search": Search,
+    "paths": Paths,
+    "read": Read,
 }
 
 
@@ -85,6 +99,20 @@ def build_registry(client: Client, source_id: str) -> Registry:
                         name=name,
                         label=client.link_name(model, name),
                         binding={"path": extra["rdf_path"]},
+                        description=schema.enrichment.description(
+                            str(extra.get("rdf_property_iri", ""))
+                        ),
+                        examples=list(field.examples or [])[:1],
+                        node_kinds=sorted(
+                            {
+                                "literal"
+                                if p.object_class == "Literal"
+                                else "bnode"
+                                if p.object_class == "BlankNode"
+                                else "iri"
+                                for p in patterns
+                            }
+                        ),
                         targets=sorted(
                             {
                                 p.object_class
@@ -100,6 +128,7 @@ def build_registry(client: Client, source_id: str) -> Registry:
                 id=str(getattr(model, "rdf_class_iri", "")),
                 label=client.type_name(model),
                 fields=fields,
+                description=schema.enrichment.description(str(getattr(model, "rdf_class_iri", ""))),
             )
         )
     return Registry(
@@ -116,13 +145,13 @@ def build_registry(client: Client, source_id: str) -> Registry:
         operations=[
             Operation(
                 id=key,
-                action=key.split(".")[1],
+                action=key,
                 description=(model.__doc__ or "").strip(),
                 arguments=model.model_json_schema(),
                 returns="class routes"
                 if model is Paths
-                else "record page"
-                if model is Select
+                else "schema fields"
+                if model is Schema
                 else "record reference",
             )
             for key, model in ARGUMENTS.items()

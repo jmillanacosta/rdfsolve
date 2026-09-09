@@ -19,10 +19,9 @@ from mcp.types import TextResourceContents, ToolAnnotations
 from pydantic import BaseModel
 
 from rdfsolve.client_api import Client
-from rdfsolve.client_session import ClientSession
+from rdfsolve.client_session import INSTRUCTIONS, ClientSession
 from rdfsolve.client_table import record_table
 from rdfsolve.schema_models.core import MinedSchema
-from rdfsolve.session_tools import INSTRUCTIONS, SessionTools
 from rdfsolve.sparql_helper import EndpointError
 
 
@@ -33,7 +32,6 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
     This server opens no HTTP port and loads no executable registry content.
     """
     server = MCPServer("rdfsolve", instructions=INSTRUCTIONS)
-    tools = SessionTools(session)
     lock = anyio.Lock()
 
     def register(function: Callable[..., Any]) -> None:
@@ -44,28 +42,43 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
             """Run one call and save its outcome before accepting the next."""
             async with lock:
                 try:
-                    return await anyio.to_thread.run_sync(
-                        partial(tools.invoke, function.__name__, arguments)
-                    )
+                    return await anyio.to_thread.run_sync(partial(function, **arguments))
                 except (ValueError, LookupError, EndpointError) as error:
                     raise ToolError(str(error)) from error
                 finally:
                     if log_path is not None:
                         session.client.save_session(log_path)
 
-        local = function.__name__ in {"catalogue", "describe", "release"}
+        local = function.__name__ in {"schema", "paths"}
         server.add_tool(
             run,
             annotations=ToolAnnotations(
                 read_only_hint=True,
                 destructive_hint=False,
-                idempotent_hint=function.__name__ in {"catalogue", "describe"},
+                idempotent_hint=local,
                 open_world_hint=not local,
             ),
         )
 
-    for function in tools.functions.values():
+    for function in session.functions.values():
         register(function)
+
+    @server.resource("rdfsolve://results", mime_type="application/json")
+    async def results() -> str:
+        """List current result references without reading source data."""
+        async with lock:
+            return json.dumps(
+                [
+                    {
+                        "reference": reference,
+                        "records": len(result),
+                        "classes": sorted(
+                            {session.client.type_name(type(record)) for record in result}
+                        ),
+                    }
+                    for reference, result in session.results.items()
+                ]
+            )
 
     @server.resource("rdfsolve://results/{reference}", mime_type="application/json")
     async def result(reference: str) -> str:
@@ -106,7 +119,16 @@ async def read_result(
         labels=payload["labels"],
         context={
             key: payload[key]
-            for key in ("reference", "registry_revision", "queries", "links", "operations", "scope")
+            for key in (
+                "reference",
+                "registry_revision",
+                "queries",
+                "links",
+                "operations",
+                "scope",
+                "evidence",
+                "coverage",
+            )
         },
     )
 

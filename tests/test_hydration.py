@@ -135,7 +135,7 @@ def test_exploration_follows_real_links_in_both_directions():
         model = client.model(DATASET)
         root = client.get(model, ROOT, fields=["description"])
         assert "subset" in set(client.links(model)["field"])
-        assert client.search(model, 'missing" } #', fields=["description"]) == []
+        assert client.search_names(model, 'missing" } #', fields=["description"]) == []
         with client.step("Read subsets"):
             subsets = client.follow([root], "subset", model, fields=["description"])
         expected = {str(iri) for iri in graph.objects(URIRef(ROOT), URIRef("http://rdfs.org/ns/void#subset"))}

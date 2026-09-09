@@ -59,7 +59,7 @@ class DatasetClient(Hydrator):
                 )
         return pd.DataFrame(rows, columns=["field", "target", "predicate"]).drop_duplicates()
 
-    def search(
+    def search_names(
         self,
         model: type[Model],
         text: str,

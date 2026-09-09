@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from functools import wraps
 from typing import TYPE_CHECKING, Any
@@ -9,10 +10,11 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, ModelRetry, Tool
 from pydantic_ai.models import Model
+from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import FunctionToolset
 
 from rdfsolve.client_api import Client
-from rdfsolve.session_tools import INSTRUCTIONS, SessionTools
+from rdfsolve.client_session import INSTRUCTIONS
 
 if TYPE_CHECKING:
     from mcp import Client as MCPClient
@@ -66,7 +68,62 @@ class ResultReference(BaseModel):
     )
 
 
-class ClientTools(SessionTools):
+class ResearchAnswer(BaseModel):
+    """Return an explanation and references to its retrieved data."""
+
+    text: str = Field(
+        description="Answer the question with supporting evidence and any unresolved parts."
+    )
+    results: list[ResultReference] = Field(
+        description="Existing result references supporting the answer. Include each relevant record group, not only the starting records. Use an empty list if no data was retrieved."
+    )
+
+
+async def research_agent(
+    server: MCPClient,
+    model: str | Model,
+    *,
+    model_settings: ModelSettings | None = None,
+    retries: int = 2,
+) -> Agent[None, ResearchAnswer]:
+    """Create an agent that returns prose and valid references from this MCP session.
+
+    Reference validation reads only the server's result index. It does not validate
+    scientific claims or substitute another result when the model chooses a bad ID.
+    """
+    from mcp.types import TextResourceContents
+
+    agent = Agent(
+        model,
+        toolsets=[await mcp_tools(server)],
+        instructions=server.instructions,
+        output_type=ResearchAnswer,
+        model_settings=model_settings,
+        retries=retries,
+    )
+
+    @agent.output_validator
+    async def validate(answer: ResearchAnswer) -> ResearchAnswer:
+        """Let the model correct unknown result references before accepting its answer."""
+        response = await server.read_resource("rdfsolve://results", cache_mode="bypass")
+        if len(response.contents) != 1 or not isinstance(
+            response.contents[0], TextResourceContents
+        ):
+            raise ValueError("Expected a result index from the RDF server")
+        available = json.loads(response.contents[0].text)
+        known = {item["reference"] for item in available}
+        if any(result.reference not in known for result in answer.results):
+            raise ModelRetry(
+                "Unknown result reference. Choose exact references from these retained results; "
+                "do not repeat source queries merely to correct an ID: " + json.dumps(available)
+            )
+        unique = {result.reference: result for result in answer.results}
+        return answer.model_copy(update={"results": list(unique.values())})
+
+    return agent
+
+
+class ClientTools:
     """Register the shared session tools with PydanticAI."""
 
     def __init__(
@@ -79,16 +136,14 @@ class ClientTools(SessionTools):
         max_records: int = 1000,
     ) -> None:
         """Create a bounded session. The caller owns and closes the client."""
-        super().__init__(
-            client.session(
-                source_id=source_id or client._schema.about.dataset_name or "rdf",
-                preview_rows=preview_rows,
-                max_results=max_results,
-                max_records=max_records,
-            )
+        self.session = client.session(
+            source_id=source_id or client._schema.about.dataset_name or "rdf",
+            preview_rows=preview_rows,
+            max_results=max_results,
+            max_records=max_records,
         )
         self.toolset: FunctionToolset[None] = FunctionToolset()
-        for function in self.functions.values():
+        for function in self.session.functions.values():
             self.toolset.add_function(self._tool(function), sequential=True)
 
     def _tool(self, function: Callable[..., Any]) -> Callable[..., Any]:
@@ -96,7 +151,7 @@ class ClientTools(SessionTools):
         def run(**arguments: Any) -> Any:
             """Record the call and return validation errors to the model."""
             try:
-                return self.invoke(function.__name__, arguments)
+                return function(**arguments)
             except (ValueError, LookupError) as error:
                 raise ModelRetry(str(error)) from error
 

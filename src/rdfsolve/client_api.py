@@ -386,6 +386,18 @@ class Client(DatasetClient):
                 records.extend(self.get_many(model, sorted(subjects), fields=_name_fields(model)))
         return Results(self, records)
 
+    def search(
+        self, terms: list[str], *, kind: str | None = None, fields: list[str] | None = None
+    ) -> Results:
+        """Find text candidates and keep matching passages in result.evidence.
+
+        Search any phrase in names, identifiers and mined text fields. Supply fields
+        to narrow the search. This does not infer synonyms or scientific relevance.
+        """
+        from rdfsolve.client_search import search_records
+
+        return search_records(self, terms, kind, fields or [])
+
     def save(self, path: str | Path, *groups: Results) -> None:
         """Save selected records and direct links between them as RDF."""
         records = [record for group in groups for record in group]
@@ -412,10 +424,19 @@ class Client(DatasetClient):
 class Results:
     """A reusable set of generated records. Display and completion do not query."""
 
-    def __init__(self, client: Client, records: list[BaseModel]) -> None:
+    def __init__(
+        self,
+        client: Client,
+        records: list[BaseModel],
+        *,
+        evidence: list[dict[str, Any]] | None = None,
+        coverage: dict[str, Any] | None = None,
+    ) -> None:
         """Keep the client and typed records together."""
         self.client = client
         self.records = records
+        self.evidence = evidence or []
+        self.coverage = coverage or {"status": "complete", "basis": "Retrieved records"}
 
     def __len__(self) -> int:
         """Return the number of typed records."""
@@ -468,12 +489,22 @@ class Results:
     def of_type(self, kind: str) -> Results:
         """Keep matches of one type without sending a query."""
         model = self.client.model(kind)
-        return Results(self.client, [r for r in self.records if type(r) is model])
+        return Results(
+            self.client,
+            [r for r in self.records if type(r) is model],
+            evidence=self.evidence,
+            coverage=self.coverage,
+        )
 
     def without(self, other: Results) -> Results:
         """Remove records with IRIs already present in another result set."""
         ids = {vars(record)["uri"] for record in other}
-        return Results(self.client, [r for r in self.records if vars(r)["uri"] not in ids])
+        return Results(
+            self.client,
+            [r for r in self.records if vars(r)["uri"] not in ids],
+            evidence=self.evidence,
+            coverage=self.coverage,
+        )
 
     @property
     def fields(self) -> SimpleNamespace:
@@ -667,7 +698,12 @@ class Results:
                 for model in models
             },
             fields=names if fields else None,
-            context={"queries": metadata["queries"], "links": metadata["links"]},
+            context={
+                "queries": metadata["queries"],
+                "links": metadata["links"],
+                "evidence": self.evidence,
+                "coverage": self.coverage,
+            },
         )
 
     def values(self, field: str) -> pd.DataFrame:
