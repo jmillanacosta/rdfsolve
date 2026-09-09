@@ -1,4 +1,4 @@
-"""Investigate RDF through four operations with retained typed results."""
+"""Plan RDF investigations and retain typed results with their query evidence."""
 
 from __future__ import annotations
 
@@ -13,11 +13,35 @@ from uuid import uuid4
 from rdfsolve.client_api import Client, Results, _title
 from rdfsolve.client_routes import Route, read_routes
 from rdfsolve.hydration import HydrationLimitError
-from rdfsolve.rdf_operations import ARGUMENTS, Paths, Read, Schema, Search
+from rdfsolve.rdf_operations import (
+    ARGUMENTS,
+    HopLimit,
+    PageSize,
+    Paths,
+    Plan,
+    Read,
+    ReadSize,
+    Schema,
+    Search,
+)
 from rdfsolve.registry import Contract
 from rdfsolve.schema_catalogue import catalogue, excerpt, field_card, score
 
-INSTRUCTIONS = """Investigate the question using schema, search, paths and read.
+INSTRUCTIONS = """First determine the answer's columns, then retrieve their values and links.
+Use schema to identify ALL requested classes, then plan(source, targets, terms, selection).
+The source is the main record class; targets are other requested record classes.
+Targets are final answer entities, not intermediate records used to reach them.
+Identifier classes can represent the requested entities. Inspect their definitions.
+Evidence is usually fields on records along a route, not a separate entity class.
+Do not add population, organism or other restrictions absent from the question.
+Plan returns possible routes and source definitions without querying data.
+Search short topic phrases on the source or relevant intermediate classes.
+Terms are OR alternatives, not AND filters: do not mix unrelated restrictions.
+Follow planned routes from retrieved records with read(paths=...). Do not search
+target names for a whole relationship question instead of following its links.
+Return linked target records as well as source records. Inspect evidence fields on
+intermediate records; gene extraction annotations are not experimental validation.
+Use paths for alternatives when the planned routes are empty or unsuitable.
 Use schema to discover classes, field definitions and link targets.
 Search returns candidates and matching passages, not a complete topic answer.
 For broad topics, consider descriptive fields and connected records, not only names
@@ -61,12 +85,43 @@ class ClientSession:
         self.max_results, self.max_records = max_results, max_records
         self.results: dict[str, Results] = {}
         self.routes: dict[str, Route] = {}
+        self.answer_plan: dict[str, Any] = {}
         self.functions: dict[str, Callable[..., Any]] = {
-            method.__name__: method for method in (self.schema, self.search, self.paths, self.read)
+            method.__name__: method
+            for method in (self.schema, self.plan, self.search, self.paths, self.read)
         }
 
+    def plan(
+        self,
+        source: str,
+        targets: list[str],
+        terms: list[str],
+        selection: str,
+        evidence: str = "",
+        max_hops: HopLimit = 3,
+    ) -> dict[str, Any]:
+        """Set the answer's source and target classes before searching for values.
+
+        selection states what the question asks to include, without new restrictions.
+        targets must name the requested entities, not intermediate route classes.
+        terms are short topic phrases, not relationship questions. evidence selects
+        useful route fields by their definitions. Return possible routes for each
+        target, not observed links. Replan when class choices need correction.
+        """
+        return self.call(
+            "plan",
+            {
+                "source": source,
+                "targets": targets,
+                "terms": terms,
+                "selection": selection,
+                "evidence": evidence,
+                "max_hops": max_hops,
+            },
+        )
+
     def schema(
-        self, text: str = "", kind: str | None = None, offset: int = 0, limit: int = 10
+        self, text: str = "", kind: str | None = None, offset: int = 0, limit: PageSize = 10
     ) -> dict[str, Any]:
         """Find classes and fields by names and definitions, without querying records.
 
@@ -92,10 +147,10 @@ class ClientSession:
         self,
         source: str,
         target: str,
-        max_hops: int = 2,
+        max_hops: HopLimit = 2,
         text: str = "",
         offset: int = 0,
-        limit: int = 10,
+        limit: PageSize = 10,
     ) -> dict[str, Any]:
         """Find routes from a class or result reference to a target class.
 
@@ -124,7 +179,7 @@ class ClientSession:
         iri: str | None = None,
         kind: str | None = None,
         offset: int = 0,
-        limit: int = 20,
+        limit: ReadSize = 20,
         evidence_offset: int = 0,
         detail: bool = False,
     ) -> dict[str, Any]:
@@ -245,6 +300,11 @@ class ClientSession:
             tool.update(deepcopy(execution))
 
     def _execute(self, args: Contract) -> dict[str, Any]:
+        if isinstance(args, Plan):
+            from rdfsolve.answer_plan import build_plan
+
+            self.answer_plan = build_plan(self, args)
+            return deepcopy(self.answer_plan)
         if isinstance(args, Schema):
             kinds = self._kinds(args.kind) if args.kind else set()
             if args.kind in self.results and not kinds:
@@ -288,7 +348,14 @@ class ClientSession:
             for route in selected.values():
                 model = self.client.model(route[-1][2])
                 for field in args.fields:
-                    self.client.field_name(model, field)
+                    try:
+                        self.client.field_name(model, field)
+                    except ValueError as error:
+                        raise ValueError(
+                            f"{error}. Fields apply to the destination class. "
+                            "Follow the route without fields first; read source "
+                            "fields using the original reference."
+                        ) from error
             reference = self._retain(read_routes(self.client, source, selected))
         return self._page(
             reference, args.fields, args.offset, args.limit, args.evidence_offset, args.detail

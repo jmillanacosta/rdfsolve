@@ -1,4 +1,4 @@
-"""Exercise the four tools over MCP with retained AOPWiki RDF."""
+"""Exercise investigation tools over MCP with retained AOPWiki RDF."""
 
 import asyncio
 import json
@@ -20,7 +20,9 @@ def test_typed_export_keeps_values_while_previews_are_bounded(tmp_path):
             session = data.session(source_id="aopwikirdf", preview_rows=1)
             log_path = tmp_path / "session.json"
             async with MCPClient(create_server(session, log_path=log_path)) as wire:
-                assert {t.name for t in (await wire.list_tools()).tools} == {"schema", "search", "paths", "read"}
+                assert {t.name for t in (await wire.list_tools()).tools} == {"schema", "plan", "search", "paths", "read"}
+                tools = {t.name: t for t in (await wire.list_tools()).tools}
+                assert tools["schema"].input_schema["properties"]["limit"]["maximum"] == 30
                 await wire.call_tool("schema", {"kind": AOP})
                 assert not data.queries
                 found = await wire.call_tool("search", {"terms": ["carcinomas"], "kind": AOP})
@@ -74,6 +76,11 @@ def test_mcp_serializes_calls_and_reads_a_selected_route():
                 assert not read.is_error
                 assert read.structured_content["rows"][0]["id"] == "https://identifiers.org/aop/162"
                 assert read.structured_content["evidence"]
+                before = len(data.queries)
+                links = await read_result(wire, read.structured_content["reference"], output="connections")
+                assert set(links["Target"]) == {URIRef("https://identifiers.org/aop/162")}
+                assert links["Source class"].notna().all() and links["Query"].notna().all()
+                assert len(data.queries) == before
             calls = data.session_metadata()["tool_calls"]
             assert not set(calls[0]["query_ids"]) & set(calls[1]["query_ids"])
             assert calls[0]["finished_at"] <= calls[1]["started_at"]
@@ -105,26 +112,41 @@ def test_agent_corrects_unknown_output_references_before_export():
         if len(messages) == 1:
             return ModelResponse(parts=[ToolCallPart("read", {"reference": "missing"})])
         if len(messages) == 3:
-            return ModelResponse(parts=[ToolCallPart("search", {"terms": ["Phenobarbital"], "kind": CHEMICAL})])
+            return ModelResponse(parts=[ToolCallPart("plan", {"source": AOP, "targets": [CHEMICAL],
+                "terms": ["carcinomas"], "selection": "Pathways and linked chemicals"})])
+        if len(messages) == 5:
+            return ModelResponse(parts=[ToolCallPart("search", {"terms": ["carcinomas"], "kind": AOP})])
         payload = next(part.content for message in messages for part in message.parts
                        if isinstance(part, ToolReturnPart) and isinstance(part.content, dict) and "reference" in part.content)
-        reference = "0" * 32 if len(messages) == 5 else payload["reference"]
+        reference = "0" * 32 if len(messages) == 7 else payload["reference"]
+        if len(messages) == 11:
+            return ModelResponse(parts=[ToolCallPart("search", {"terms": ["carcinomas"], "kind": AOP})])
+        if len(messages) == 13:
+            plan = next(part.content for message in messages for part in message.parts
+                        if isinstance(part, ToolReturnPart) and part.tool_name == "plan")
+            return ModelResponse(parts=[ToolCallPart("read", {"reference": reference,
+                "paths": [path["id"] for path in plan["routes"][0]["paths"]]})])
+        results = [{"reference": reference}, {"reference": reference}]
+        if len(messages) >= 15:
+            linked = [part.content for message in messages for part in message.parts
+                      if isinstance(part, ToolReturnPart) and part.tool_name == "read"][-1]
+            results.append({"reference": linked["reference"]})
         return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, {
-            "text": "Found Phenobarbital.", "results": [{"reference": reference}, {"reference": reference}],
+            "text": "Found linked chemicals.", "results": results,
         })])
 
     async def run():
         with client() as data:
             async with MCPClient(create_server(data.session(source_id="aopwikirdf"))) as wire:
                 agent = await research_agent(wire, FunctionModel(model))
-                answer = await agent.run("Find Phenobarbital", usage_limits=UsageLimits(request_limit=4))
+                answer = await agent.run("Find pathways and linked chemicals", usage_limits=UsageLimits(request_limit=8))
                 before = len(data.queries)
                 tables = [await read_result(wire, result.reference) for result in answer.output.results]
-                assert answer.output.text == "Found Phenobarbital."
-                assert len(tables) == 1
-                assert str(tables[0].iloc[0]["Identifier"]) == "https://identifiers.org/cas/50-06-6"
+                assert answer.output.text == "Found linked chemicals."
+                assert len(tables) == 2
+                assert str(tables[1].iloc[0]["Identifier"]) == "https://identifiers.org/cas/50-06-6"
                 assert len(data.queries) == before
             calls = data.session_metadata()["tool_calls"]
-            assert [c["status"] for c in calls] == ["failed", "complete"]
+            assert [c["status"] for c in calls] == ["complete", "complete", "complete"]
             assert not calls[0]["query_ids"] and calls[1]["query_ids"]
     asyncio.run(run())

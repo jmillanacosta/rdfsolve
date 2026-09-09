@@ -65,6 +65,36 @@ def test_saved_enrichment_reaches_discovery_without_whole_schema():
         fields = session.schema(kind="Key Event", text="gene", limit=30)
         assert any(field["description"] for item in fields["types"] for field in item["fields"])
         assert "patterns" not in json.dumps(description) and not data.queries
+        with pytest.raises(ValueError, match="Gene identifier"):
+            session.plan("Adverse Outcome Pathway", ["Key Event"], ["thyroid"],
+                         "Thyroid-related pathways and their linked genes")
+        plan = session.plan("Adverse Outcome Pathway", ["Gene identifier"], ["thyroid"],
+                            "Thyroid-related pathways and their linked genes", evidence="gene evidence")
+        routes = plan["routes"][0]["paths"]
+        assert {route["steps"][0]["to"] for route in routes} >= {"Key Event", "Key Event Relationship"}
+        assert all(route["hops"] == 2 for route in routes)
+        assert not data.queries
+
+
+def test_answer_plan_does_not_confuse_text_matches_with_links():
+    from rdfsolve.answer_plan import plan_status
+
+    with client() as data:
+        session = data.session(source_id="aopwikirdf")
+        plan = session.plan(AOP, [CHEMICAL], ["carcinomas"], "Pathways and connected chemicals")
+        source = session.search(["carcinomas"], kind=AOP)
+        session.search(["Phenobarbital"], kind=CHEMICAL)
+        assert plan_status(session)["pending"]
+        assert plan_status(session)["coverage"][0]["status"] == "route not tried"
+        with pytest.raises(ValueError, match="destination class"):
+            session.read(source["reference"], paths=[p["id"] for p in plan["routes"][0]["paths"]],
+                         fields=["missing_field"])
+        assert plan_status(session)["pending"]
+        result = session.read(source["reference"], paths=[p["id"] for p in plan["routes"][0]["paths"]])
+        status = plan_status(session)
+        assert not status["pending"]
+        assert status["coverage"][0]["references"] == [result["reference"]]
+        assert status["coverage"][0]["status"] == "linked records retrieved"
 
 
 def test_read_pages_before_loading_and_reports_partial_searches():

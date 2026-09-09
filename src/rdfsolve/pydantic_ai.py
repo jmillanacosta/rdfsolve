@@ -20,19 +20,42 @@ if TYPE_CHECKING:
     from mcp import Client as MCPClient
 
 
-async def mcp_tools(server: MCPClient) -> FunctionToolset[None]:
+async def mcp_tools(server: MCPClient, *, require_plan: bool = False) -> FunctionToolset[None]:
     """Read tools from a connected MCP client. The caller keeps it open during the run."""
     toolset: FunctionToolset[None] = FunctionToolset()
+    planned = False
 
     def bind(name: str) -> Callable[..., Any]:
         """Bind one remote tool name without changing its argument schema."""
 
         async def call(**arguments: Any) -> Any:
             """Return structured results or let the model correct a failed call."""
+            nonlocal planned
+            if require_plan and name in {"search", "read"} and not planned:
+                raise ModelRetry(
+                    "Use schema to identify the requested classes, then plan the "
+                    "source, targets and topic terms before querying records."
+                )
+            if require_plan and name == "search" and planned:
+                from rdfsolve.mcp import read_plan
+
+                progress = await read_plan(server)
+                pending_routes = [
+                    item for item in progress["pending"] if item.startswith("Follow a route")
+                ]
+                if pending_routes:
+                    raise ModelRetry(
+                        "Source candidates are already retained. Follow the planned "
+                        "links with read(reference=..., paths=[...]) before another "
+                        "text search. Leave fields empty to read destination names first. "
+                        + json.dumps(pending_routes)
+                    )
             result = await server.call_tool(name, arguments)
             if result.is_error:
                 text = "\n".join(item.text for item in result.content if item.type == "text")
                 raise ModelRetry(text or "MCP tool failed")
+            if name == "plan":
+                planned = True
             if result.structured_content is not None:
                 return result.structured_content
             return [item.model_dump(mode="json") for item in result.content]
@@ -95,7 +118,7 @@ async def research_agent(
 
     agent = Agent(
         model,
-        toolsets=[await mcp_tools(server)],
+        toolsets=[await mcp_tools(server, require_plan=True)],
         instructions=server.instructions,
         output_type=ResearchAnswer,
         model_settings=model_settings,
@@ -118,6 +141,23 @@ async def research_agent(
                 "do not repeat source queries merely to correct an ID: " + json.dumps(available)
             )
         unique = {result.reference: result for result in answer.results}
+        from rdfsolve.mcp import read_plan
+
+        progress = await read_plan(server)
+        if progress["pending"]:
+            raise ModelRetry(
+                "The requested answer is not investigated yet: " + json.dumps(progress["pending"])
+            )
+        missing = [
+            row
+            for row in progress["coverage"]
+            if row["references"] and not set(row["references"]) & unique.keys()
+        ]
+        if missing:
+            raise ModelRetry(
+                "Include retrieved linked records for these requested classes: "
+                + json.dumps(missing)
+            )
         return answer.model_copy(update={"results": list(unique.values())})
 
     return agent

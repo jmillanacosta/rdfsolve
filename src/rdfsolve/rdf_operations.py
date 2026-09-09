@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 from pydantic import Field, TypeAdapter, model_validator
 from rdflib import Graph
@@ -15,6 +15,10 @@ from rdfsolve.version import VERSION
 if TYPE_CHECKING:
     from rdfsolve.client_api import Client
 
+PageSize = Annotated[int, Field(ge=1, le=30)]
+ReadSize = Annotated[int, Field(ge=1, le=100)]
+HopLimit = Annotated[int, Field(ge=1, le=3)]
+
 
 class Schema(Contract):
     """Find classes and fields using their names and source definitions."""
@@ -22,7 +26,7 @@ class Schema(Contract):
     text: str = ""
     kind: str | None = None
     offset: int = Field(default=0, ge=0)
-    limit: int = Field(default=10, ge=1, le=30)
+    limit: PageSize = 10
 
 
 class Search(Contract):
@@ -49,7 +53,7 @@ class Read(Contract):
     paths: list[str] = Field(default_factory=list, max_length=20)
     fields: list[str] = Field(default_factory=list, max_length=12)
     offset: int = Field(default=0, ge=0)
-    limit: int = Field(default=20, ge=1, le=100)
+    limit: ReadSize = 20
     evidence_offset: int = Field(default=0, ge=0)
     detail: bool = False
 
@@ -68,13 +72,25 @@ class Paths(Contract):
 
     source: str
     target: str
-    max_hops: int = Field(default=2, ge=1, le=3)
+    max_hops: HopLimit = 2
     text: str = ""
     offset: int = Field(default=0, ge=0)
-    limit: int = Field(default=10, ge=1, le=30)
+    limit: PageSize = 10
+
+
+class Plan(Contract):
+    """Choose the answer's classes and topic values before querying records."""
+
+    source: str
+    terms: list[str] = Field(min_length=1, max_length=12)
+    targets: list[str] = Field(default_factory=list, max_length=5)
+    selection: str = Field(min_length=1, max_length=600)
+    evidence: str = ""
+    max_hops: HopLimit = 3
 
 
 ARGUMENTS: dict[str, type[Contract]] = {
+    "plan": Plan,
     "schema": Schema,
     "search": Search,
     "paths": Paths,
@@ -148,7 +164,9 @@ def build_registry(client: Client, source_id: str) -> Registry:
                 action=key,
                 description=(model.__doc__ or "").strip(),
                 arguments=model.model_json_schema(),
-                returns="class routes"
+                returns="answer plan"
+                if model is Plan
+                else "class routes"
                 if model is Paths
                 else "schema fields"
                 if model is Schema

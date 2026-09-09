@@ -18,6 +18,7 @@ from mcp.server.mcpserver.exceptions import ResourceError, ToolError
 from mcp.types import TextResourceContents, ToolAnnotations
 from pydantic import BaseModel
 
+from rdfsolve.answer_plan import plan_status
 from rdfsolve.client_api import Client
 from rdfsolve.client_session import INSTRUCTIONS, ClientSession
 from rdfsolve.client_table import record_table
@@ -49,7 +50,7 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
                     if log_path is not None:
                         session.client.save_session(log_path)
 
-        local = function.__name__ in {"schema", "paths"}
+        local = function.__name__ in {"schema", "paths", "plan"}
         server.add_tool(
             run,
             annotations=ToolAnnotations(
@@ -62,6 +63,12 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
 
     for function in session.functions.values():
         register(function)
+
+    @server.resource("rdfsolve://plan", mime_type="application/json")
+    async def plan() -> str:
+        """Read the answer plan and its observed coverage without source queries."""
+        async with lock:
+            return json.dumps(plan_status(session))
 
     @server.resource("rdfsolve://results", mime_type="application/json")
     async def results() -> str:
@@ -93,22 +100,38 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
     return server
 
 
+async def read_plan(server: MCPClient) -> dict[str, Any]:
+    """Read chosen classes, routes, topic searches and gaps while the server is open."""
+    response = await server.read_resource("rdfsolve://plan", cache_mode="bypass")
+    if len(response.contents) != 1 or not isinstance(response.contents[0], TextResourceContents):
+        raise ValueError("Expected an answer plan from the RDF server")
+    value: dict[str, Any] = json.loads(response.contents[0].text)
+    return value
+
+
 async def read_result(
-    server: MCPClient, reference: str, *, output: Literal["table", "records"] = "table"
+    server: MCPClient,
+    reference: str,
+    *,
+    output: Literal["table", "records", "connections"] = "table",
 ) -> pd.DataFrame | list[BaseModel]:
     """Read a server result as a typed table or records, without querying the RDF source.
 
     Call while the server is open. The returned data remains usable after it closes.
     Tables retain source terms, generated records, and original session query bindings.
     """
-    if output not in {"table", "records"}:
-        raise ValueError("Use output='table' or output='records'")
+    if output not in {"table", "records", "connections"}:
+        raise ValueError("Use output='table', 'records' or 'connections'")
     if len(reference) != 32 or any(char not in "0123456789abcdef" for char in reference):
         raise ValueError("Use a result reference returned by this server")
     response = await server.read_resource(f"rdfsolve://results/{reference}", cache_mode="bypass")
     if len(response.contents) != 1 or not isinstance(response.contents[0], TextResourceContents):
         raise ValueError("Expected one RDF result document")
     payload = json.loads(response.contents[0].text)
+    if output == "connections":
+        from rdfsolve.connection_table import connection_table
+
+        return connection_table(payload)
     models = MinedSchema.from_dict(payload["schema"]).to_pydantic_classes()
     by_type = {str(getattr(model, "rdf_class_iri", "")): model for model in models.values()}
     records = [by_type[item["type"]].model_validate(item["data"]) for item in payload["records"]]
