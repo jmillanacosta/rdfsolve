@@ -14,6 +14,13 @@ from rdfsolve.query_log import QueryLog
 from tests.test_client_api import AOP, CHEMICAL, DATA, client
 
 
+def column(answer, variable, route=None):
+    info = answer.column_info()
+    if route is not None:
+        info = info.loc[info["Route"].eq(route)]
+    return info.loc[info["Variable"].eq(variable), "Column"].iloc[0]
+
+
 def test_typed_export_keeps_values_while_previews_are_bounded(tmp_path):
     async def run():
         with client() as data:
@@ -86,8 +93,9 @@ def test_mcp_serializes_calls_and_reads_a_selected_route():
                 table = final.table()
                 exported = await read_result(wire, final.payload["reference"])
                 assert exported.equals(table) and exported.attrs["records"]
-                assert len(table) == len(final.bindings) and table["Target title"].notna().all()
-                assert "Connection" not in table and "Relationship 1 IRI" in table
+                assert len(table) == len(final.bindings) and table[column(final, "target_field_title")].notna().all()
+                assert not any(name.startswith(("Source ", "Target ", "Via", "Relationship ")) for name in table)
+                assert "?relationship" not in final.query and "AS ?source_class" not in final.query
                 from rdfsolve.query_collection import QueryCollection
                 queries = QueryCollection()
                 queries.load_shacl(final.to_shacl())
@@ -101,7 +109,7 @@ def test_mcp_serializes_calls_and_reads_a_selected_route():
                 for record in final.records():
                     restored += record.to_graph()
                 assert set(restored) == set(final.to_graph())
-                assert str(table.iloc[0]["Target IRI"]) in final.diagram(instances=True, row=0)
+                assert str(table.iloc[0][column(final, "target")]) in final.diagram(instances=True, row=0)
                 assert len(data.queries) == before + 2
                 from rdfsolve.client_diagram import connection_diagram
                 diagram = connection_diagram(links.iloc[:1], instances=True)
@@ -137,8 +145,8 @@ def test_final_query_reads_unloaded_metadata_without_a_row_cap():
         assert len(data.queries) == before
         final = session.answer([linked["reference"]], name="Dataset descriptions")
         output = QueryAnswer(session.export_result(final["reference"]))
-        assert output.table()["Source description"].eq(Literal("AOP-Wiki RDF -- complete dataset")).all()
-        assert "Gene mapping enrichment triples" in set(map(str, output.table()["Target description"]))
+        assert output.table()[column(output, "source_field_description")].eq(Literal("AOP-Wiki RDF -- complete dataset")).all()
+        assert "Gene mapping enrichment triples" in set(map(str, output.table()[column(output, "target_field_description")]))
         assert set(output.to_graph()) <= set(data.source)
         assert "LIMIT" not in output.query and output.coverage["retrieval"] == "complete"
 
@@ -173,14 +181,19 @@ def test_path_first_keeps_multivalued_fields_without_multiplying_connections():
         result = QueryAnswer(session.export_result(final["reference"]))
         table = result.table()
         assert len(table) == 2
-        assert all(len(values) == 10 for values in table["Target exactmatch"])
-        assert set(table["Source IRI"]) == {URIRef("https://identifiers.org/aop/107"), URIRef("https://identifiers.org/aop/162")}
+        for i, binding in enumerate(result.bindings):
+            heading = column(result, "target_field_exactmatch", int(binding["_route"]["value"]) + 1)
+            assert len(table.iloc[i][heading]) == 10
+        assert set(table[column(result, "source")]) == {URIRef("https://identifiers.org/aop/107"), URIRef("https://identifiers.org/aop/162")}
+        assert column(result, "source") == "Aopo adverse outcome pathway · IRI"
+        assert "→" in column(result, "target") or "←" in column(result, "target")
         assert not plan_status(session)["pending"]
         assert set(result.to_graph()) <= set(data.source)
         assert not any(op["operation"] in {"search", "read"} for op in data._operations)
         before = len(data.queries)
         page = session.read(reference=final["reference"], detail=True)
-        assert len(page["preview"][0]["Target exactmatch"]) == 10
+        heading = column(result, "target_field_exactmatch", int(result.bindings[0]["_route"]["value"]) + 1)
+        assert len(page["preview"][0][heading]) == 10
         assert AOP in session._kinds(final["reference"]) and CHEMICAL in session._kinds(final["reference"])
         assert len(data.queries) == before
         with pytest.raises(ValueError, match="Available fields"):
@@ -215,8 +228,8 @@ def test_local_blank_nodes_keep_fields_and_identity(tmp_path):
             where=[PathFilter(kind=str(SH.SPARQLExecutable), iris=[str(anchor)])],
             fields={str(SH.SPARQLExecutable): [], str(SH.PropertyShape): ["name", "path"]})
         result = QueryAnswer(session.export_result(found["reference"]))
-        assert all(isinstance(node, BNode) for node in result.table()["Target IRI"])
-        assert result.table()["Target name"].notna().all()
+        assert all(isinstance(node, BNode) for node in result.table()[column(result, "target")])
+        assert result.table()[column(result, "target_field_name")].notna().all()
         assert set(result.to_graph()) <= set(data.source)
         assert all(set(record.to_graph()) <= set(data.source) for record in result.records())
         dataset = Dataset()

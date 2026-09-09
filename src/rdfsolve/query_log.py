@@ -40,10 +40,19 @@ class QueryLog:
         """List tool calls and the query executions used by each call."""
         return pd.DataFrame(
             [
-                {"Tool": call["tool"], "Status": call["status"], "Queries": call["query_ids"]}
+                {
+                    "Tool": call["tool"],
+                    "Name": call.get("arguments", {}).get("name")
+                    or call.get("arguments", {}).get("selection")
+                    or call.get("arguments", {}).get("kind")
+                    or call.get("arguments", {}).get("text")
+                    or call["tool"],
+                    "Status": call["status"],
+                    "Queries": call["query_ids"],
+                }
                 for call in self.tool_calls
             ],
-            columns=["Tool", "Status", "Queries"],
+            columns=["Tool", "Name", "Status", "Queries"],
         )
 
     def __repr__(self) -> str:

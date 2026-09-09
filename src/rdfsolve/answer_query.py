@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from itertools import pairwise
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -85,20 +86,34 @@ def execute_answer(
     if chosen.keys() - used_classes:
         raise ValueError("Requested fields include a class outside the selected routes")
     collection = QueryCollection()
-    branches, bodies, columns = [], [], {}
+    branches, bodies = [], []
+    groups: dict[tuple[str, str], list[str]] = {}
     for index, (key, sources) in enumerate(sorted(routes.items())):
         route = session.routes[key]
-        branch, body = _branch(session, route, sorted(sources), chosen, index, collection.graph)
+        branch, body = _branch(session, route, sorted(sources), chosen, collection.graph)
         body += _filters(session, branch, where or [])
         branches.append(branch)
-        bodies.append("{ " + session.client._scope(body) + " }")
-        columns.update(branch["columns"])
-    variables = ["_route", *[var for var in columns if "_field_" not in var], "_graph"]
+        key_variables = " ".join(["?_route", *[f"?link{i + 1}" for i in range(len(route))]])
+        values = f"({index} {' '.join(_iri(edge[1]) for edge in route)})"
+        groups.setdefault((key_variables, body), []).append(values)
+        bodies.append(
+            "{ " + session.client._scope(f"VALUES ({key_variables}) {{ {values} }}\n" + body) + " }"
+        )
+    variables = [
+        "_route",
+        *dict.fromkeys(node["variable"] for branch in branches for node in branch["nodes"]),
+        "_graph",
+    ]
     query = (
         "SELECT DISTINCT "
         + " ".join("?" + var for var in variables)
         + " WHERE {\n"
-        + "\nUNION\n".join(bodies)
+        + "\nUNION\n".join(
+            "{ "
+            + session.client._scope(f"VALUES ({key_variables}) {{ {' '.join(values)} }}\n" + body)
+            + " }"
+            for (key_variables, body), values in groups.items()
+        )
         + "\n}"
     )
     saved = collection.add(
@@ -106,7 +121,7 @@ def execute_answer(
         query,
         description=(
             "Read the selected routes and filters. Record fields are queried separately. "
-            "Relationship names and definitions are copied from the saved schema."
+            "Relationship names and definitions are attached locally from the saved schema."
         ),
         endpoint=str(session.registry.binding.get("endpoint") or ""),
     )
@@ -137,13 +152,13 @@ def execute_answer(
         "metadata": metadata,
         "metadata_query_ids": metadata_ids,
         "branches": branches,
-        "columns": columns,
         "query_id": len(session.client._records()),
         "binding_query_ids": query_ids,
         "coverage": {
             "status": "partial" if partial else "complete",
             "basis": "Selected routes and explicit filters, not exhaustive topic coverage",
             "retrieval": "complete",
+            "interpretation": "Observed edges only. A shared reference does not establish another relationship between records.",
         },
     }
 
@@ -311,7 +326,6 @@ def _branch(
     route: list[tuple[str, str, str, bool]],
     sources: list[str],
     chosen: dict[str, list[str]],
-    index: int,
     graph: Graph,
 ) -> tuple[dict[str, Any], str]:
     """Compile one typed route and its optional fields."""
@@ -325,22 +339,20 @@ def _branch(
     graph.add((shape, RDF.type, SH.PropertyShape))
     path_node = path_to_rdf(path, graph)
     graph.add((shape, SH.path, path_node))
-    graph.add((shape, SH.name, Literal(f"Route {index + 1}")))
     # Read the exported path before compiling its steps to retain intermediate bindings.
     restored = read_path(graph, path_node)
     steps = restored.items if restored.operator == "sequence" else [restored]
     classes = [route[0][0], *[edge[2] for edge in route]]
     slots = ["source", *[f"via{i}" for i in range(1, len(route))], "target"]
-    body = f"BIND({index} AS ?_route) "
+    body = ""
     if sources:
         body += f"VALUES ?source {{ {' '.join(_iri(iri) for iri in sources)} }} "
-    columns, nodes, edges = {}, [], []
+    nodes: list[dict[str, Any]] = []
+    edges: list[dict[str, Any]] = []
     for i, (slot, cls) in enumerate(zip(slots, classes, strict=True)):
         model = session.client.model(cls)
         label = session.client.type_name(model)
-        columns[slot] = f"{slot.capitalize()} IRI"
-        columns[slot + "_class"] = f"{slot.capitalize()} class"
-        body += f"?{slot} a {_iri(cls)} . BIND({_iri(cls)} AS ?{slot}_class) "
+        body += f"?{slot} a {_iri(cls)} . "
         names = chosen.get(cls)
         available = {
             name: info.json_schema_extra
@@ -364,34 +376,42 @@ def _branch(
             if field_path.operator != "predicate":
                 raise ValueError(f"Final answer fields need direct predicates: {label}.{name}")
             var = f"{slot}_field_{name}"
-            columns[var] = f"{slot.capitalize()} {name}"
-            projections.append({"variable": var, "field": name, "predicate": field_path.iri})
-        nodes.append({"variable": slot, "type": cls, "fields": projections})
+            field_label = session.client.link_name(model, name)
+            projections.append(
+                {"variable": var, "field": name, "label": field_label, "predicate": field_path.iri}
+            )
+        nodes.append({"variable": slot, "type": cls, "label": label, "fields": projections})
         if i < len(route):
-            body += f"?{slot} {path_to_sparql(steps[i])} ?{slots[i + 1]} . "
+            start, end = slot, slots[i + 1]
+            if steps[i].operator == "inverse":
+                start, end = end, start
+            body += f"?{start} ?link{i + 1} ?{end} . "
             predicate, reverse = route[i][1], route[i][3]
-            var = f"relationship{i + 1}"
-            columns[var] = f"Relationship {i + 1} IRI"
-            body += f"BIND({_iri(predicate)} AS ?{var}) "
             texts = session.client._schema.enrichment
             label_text = next(
                 (item.text.value for item in texts.labels if item.term_iri == predicate),
                 predicate.rsplit("/", 1)[-1].rsplit("#", 1)[-1],
             )
-            for suffix, text in (
-                ("name", label_text),
-                ("definition", texts.description(predicate)),
-            ):
-                columns[f"{var}_{suffix}"] = f"Relationship {i + 1} {suffix}"
-                if text:
-                    body += f"BIND({Literal(text).n3()} AS ?{var}_{suffix}) "
             edges.append(
-                {"source": slot, "target": slots[i + 1], "predicate": predicate, "inverse": reverse}
+                {
+                    "source": slot,
+                    "target": slots[i + 1],
+                    "predicate": predicate,
+                    "inverse": reverse,
+                    "label": label_text,
+                    "definition": texts.description(predicate),
+                }
             )
     for i, slot in enumerate(slots):
         for other in slots[:i]:
             body += f"FILTER(!sameTerm(?{slot}, ?{other})) "
-    return {"nodes": nodes, "edges": edges, "columns": columns, "sources": sources}, body
+    path_label = nodes[0]["label"]
+    for edge, node in zip(edges, nodes[1:], strict=True):
+        path_label += (
+            f" ← {edge['label']} — " if edge["inverse"] else f" — {edge['label']} → "
+        ) + node["label"]
+    graph.add((shape, SH.name, Literal(path_label)))
+    return {"nodes": nodes, "edges": edges, "sources": sources}, body
 
 
 class QueryAnswer:
@@ -429,25 +449,87 @@ class QueryAnswer:
 
     def table(self) -> pd.DataFrame:
         """Show one row per connection, with lists for fields that have several values."""
-        columns = self.execution["columns"]
+        layouts, descriptions = self._column_layout()
         rows = []
         for row in self.bindings:
-            displayed: dict[str, Any] = {
-                label: _term(row[var]).to_rdf() if var in row else None
-                for var, label in columns.items()
-            }
-            for node in self.execution["branches"][int(row["_route"]["value"])]["nodes"]:
+            index = int(row["_route"]["value"])
+            columns = layouts[index]
+            branch = self.execution["branches"][index]
+            displayed: dict[str, Any] = {}
+            for node in branch["nodes"]:
+                displayed[columns[node["variable"]]] = _term(row[node["variable"]]).to_rdf()
                 for field in node["fields"]:
                     values = self._values(row, node, field)
                     displayed[columns[field["variable"]]] = (
                         values[0] if len(values) == 1 else values or None
                     )
             rows.append(displayed)
-        table = pd.DataFrame(rows, columns=list(columns.values()))
+        table = pd.DataFrame(
+            rows, columns=list(dict.fromkeys(item["Column"] for item in descriptions))
+        )
         table.attrs.update(
-            title=self.name, coverage=self.coverage, bindings=self.bindings, query=self.query
+            title=self.name,
+            coverage=self.coverage,
+            bindings=self.bindings,
+            query=self.query,
+            column_schema=descriptions,
         )
         return table
+
+    def column_info(self) -> pd.DataFrame:
+        """Map table headings to classes, predicates and query variables."""
+        return pd.DataFrame(self._column_layout()[1]).drop_duplicates(ignore_index=True)
+
+    def _column_layout(self) -> tuple[list[dict[str, str]], list[dict[str, Any]]]:
+        layouts, descriptions = [], []
+        identities: dict[str, tuple[Any, ...]] = {}
+        for route, branch in enumerate(self.execution["branches"]):
+            columns: dict[str, str] = {}
+            occurrences: dict[str, int] = {}
+            nodes = {node["variable"]: node for node in branch["nodes"]}
+            incoming = {edge["target"]: edge for edge in branch["edges"]}
+            for node in branch["nodes"]:
+                cls = node["type"]
+                occurrence = occurrences[cls] = occurrences.get(cls, 0) + 1
+                label = node["label"] + (f" ({occurrence})" if occurrence > 1 else "")
+                edge = incoming.get(node["variable"])
+                if edge:
+                    start = nodes[edge["source"]]["label"]
+                    label = (
+                        f"{start} ← {edge['label']} — {label}"
+                        if edge["inverse"]
+                        else f"{start} — {edge['label']} → {label}"
+                    )
+                for field in [None, *node["fields"]]:
+                    predicate = field["predicate"] if field else None
+                    variable = field["variable"] if field else node["variable"]
+                    heading = f"{label} · {field['label'] if field else 'IRI'}"
+                    identity = (
+                        cls,
+                        occurrence,
+                        predicate,
+                        nodes[edge["source"]]["type"] if edge else None,
+                        edge["predicate"] if edge else None,
+                        edge["inverse"] if edge else None,
+                    )
+                    if heading in identities and identities[heading] != identity:
+                        heading += f" <{predicate or cls}>"
+                    identities[heading] = identity
+                    columns[variable] = heading
+                    descriptions.append(
+                        {
+                            "Column": heading,
+                            "Class": cls,
+                            "Property": predicate,
+                            "Variable": variable,
+                            "Route": route + 1,
+                            "Relationship": edge["predicate"] if edge else None,
+                            "Inverse": edge["inverse"] if edge else None,
+                            "Definition": edge["definition"] if edge else None,
+                        }
+                    )
+            layouts.append(columns)
+        return layouts, descriptions
 
     def to_shacl(self) -> Graph:
         """Return the standalone SELECT example and referenced descriptive paths."""
@@ -571,4 +653,19 @@ class QueryAnswer:
         """Draw only paths observed by this final query; optionally select one row."""
         from rdfsolve.client_diagram import connection_diagram
 
-        return connection_diagram(self.connections(row=row), instances=instances)
+        indexes = range(len(self.bindings)) if row is None else [row]
+        shared = any(
+            not edge["inverse"] and following["inverse"]
+            for index in indexes
+            for branch in [self.execution["branches"][int(self.bindings[index]["_route"]["value"])]]
+            for edge, following in pairwise(branch["edges"])
+        )
+        notice = (
+            (
+                "This route joins records through a shared reference. It does not establish "
+                "another relationship between those records.\n\n"
+            )
+            if shared
+            else ""
+        )
+        return notice + connection_diagram(self.connections(row=row), instances=instances)

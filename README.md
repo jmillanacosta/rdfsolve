@@ -524,6 +524,10 @@ without extra model calls or a total-row cap. A finished query confirms the link
 under the chosen filters, not that the filters cover every relevant record.
 Use `fields={"Key event": ["title", "description"]}` to choose fields for a class.
 Multiple field values stay together in one cell; empty fields remain empty.
+Headings use class, relationship and field labels, matching the diagram. Different
+relationships keep separate columns. `result.column_info()` lists the class and predicate
+IRIs behind each heading. Relationship labels and definitions are added locally,
+not requested from the endpoint on every row.
 
 `result.to_shacl()` returns the connection and field query examples with their SHACL paths.
 `result.records()` returns generated Pydantic objects, including intermediate

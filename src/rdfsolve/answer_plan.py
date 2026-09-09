@@ -74,6 +74,7 @@ def build_plan(session: ClientSession, args: Plan) -> dict[str, Any]:
         "max_hops": args.max_hops,
         "row": "One observed source-to-target route; retain intermediate records and query IDs.",
         "basis": "Proposed answer structure, not a claim that records or links exist",
+        "shared_references": "Shared references establish common objects, not another relationship between records.",
         "data_queried": False,
     }
 

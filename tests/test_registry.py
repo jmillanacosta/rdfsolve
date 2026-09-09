@@ -73,6 +73,9 @@ def test_saved_enrichment_reaches_discovery_without_whole_schema():
         routes = plan["routes"][0]["paths"]
         assert {route["steps"][0]["to"] for route in routes} >= {"Key Event", "Key Event Relationship"}
         assert all(route["hops"] == 2 for route in routes)
+        alternatives = session.paths("Adverse Outcome Pathway", "Key Event", max_hops=3, limit=30)
+        shared = [route for route in alternatives["paths"] if route["shared_references"]]
+        assert shared and any("Gene" in name for route in shared for name in route["shared_references"])
         assert not data.queries
 
 
