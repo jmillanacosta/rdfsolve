@@ -87,12 +87,18 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
                 [
                     {
                         "reference": reference,
-                        "records": len(result),
+                        "records": None if reference in session.final_queries else len(result),
+                        "rows": len(session.final_queries[reference]["bindings"])
+                        if reference in session.final_queries
+                        else None,
                         "source_references": session.final_queries.get(reference, {}).get(
                             "references", []
                         ),
                         "classes": sorted(
-                            {session.client.type_name(type(record)) for record in result}
+                            {
+                                session.client.type_name(session.client.model(kind))
+                                for kind in session._kinds(reference)
+                            }
                         ),
                     }
                     for reference, result in session.results.items()

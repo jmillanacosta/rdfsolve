@@ -178,7 +178,7 @@ def _build_blank_node_query(
     """Query 4: blank-node objects with optional properties."""
     g_open, g_close = _graph_clause(graph_uris)
     q = f"""\
-SELECT DISTINCT ?sc ?p ?bnPred ?bnObj (DATATYPE(?bnObj) AS ?bnObjType)
+SELECT DISTINCT ?sc ?p ?bnPred
 WHERE {{
   {g_open}
     ?s ?p ?o .
@@ -196,7 +196,7 @@ def _build_blank_node_query_plain(
     """Query 4 - blank-node patterns, no LIMIT/OFFSET placeholders."""
     g_open, g_close = _graph_clause(graph_uris)
     return f"""\
-SELECT DISTINCT ?sc ?p ?bnPred ?bnObj (DATATYPE(?bnObj) AS ?bnObjType)
+SELECT DISTINCT ?sc ?p ?bnPred
 WHERE {{
   {g_open}
     ?s ?p ?o .
@@ -556,7 +556,7 @@ def _build_batched_blank_node_query(
     values = _values_block(class_uris)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
-SELECT {distinct}?class ?p ?bnPred ?bnObj (DATATYPE(?bnObj) AS ?bnObjType)
+SELECT {distinct}?class ?p ?bnPred
 WHERE {{
   {g_open}
     {values}

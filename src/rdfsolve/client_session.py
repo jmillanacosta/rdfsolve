@@ -257,6 +257,13 @@ class ClientSession:
         return self._retain(Results(self.client, list(records.values())))
 
     def _kinds(self, value: str) -> set[str]:
+        if value in self.final_queries:
+            final = self.final_queries[value]
+            return {
+                node["type"]
+                for row in final["bindings"]
+                for node in final["branches"][int(row["_route"]["value"])]["nodes"]
+            }
         if value in self.results:
             return {
                 str(getattr(type(record), "rdf_class_iri", "")) for record in self.result(value)

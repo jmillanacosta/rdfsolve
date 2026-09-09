@@ -7,7 +7,7 @@ import logging
 import re
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from rdfsolve.schema_models.metadata import MetadataDocument
@@ -412,6 +412,7 @@ def mine_schema(
     graph_store_url: str | None = None,
     graph_store_dir: str | Path = "graph-store",
     graph_store_max_bytes: int = 64 * 1024 * 1024,
+    pagination: Literal["offset", "cursor"] = "offset",
 ) -> MinedSchema:
     """Mine RDF schema from a SPARQL endpoint using SELECT queries.
 
@@ -436,6 +437,7 @@ def mine_schema(
         graph_uris=graph_uris,
         dataset_name=dataset_name,
         chunk_size=chunk_size,
+        pagination=pagination,
         class_chunk_size=class_chunk_size,
         class_batch_size=class_batch_size,
         delay=delay,

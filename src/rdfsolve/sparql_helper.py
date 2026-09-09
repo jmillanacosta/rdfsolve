@@ -21,6 +21,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
     import requests
 from rdflib import Graph
+from rdflib import Literal as RdfLiteral
 from typing_extensions import Self
 
 from rdfsolve.query_collection import QueryCollection, QueryRun, SavedQuery
@@ -181,6 +182,7 @@ class SparqlHelper:
         "execution time limit",
         "statement timeout",
         "cost limit exceeded",
+        "sorted top clause",
         # QLever-specific: query exhausted memory or thread resources
         "waited for a result from another thread which then failed",
         "memory limit exceeded",
@@ -1116,8 +1118,10 @@ class SparqlHelper:
         until_empty: bool = False,
         stable_terms: bool = False,
         max_page_retries: int = 3,
+        pagination: Literal["offset", "cursor"] = "offset",
+        cursor_keys: list[str] | None = None,
     ) -> Any:
-        """Execute a SELECT query in chunks using OFFSET/LIMIT pagination.
+        """Execute a SELECT query in chunks using offset or cursor paging.
 
         On timeout, halve the page size and retry the same offset after a
         pause. Keep the smaller size for later pages. Stop with an error if
@@ -1135,11 +1139,58 @@ class SparqlHelper:
             until_empty: Continue after short pages; reject repeated pages.
             stable_terms: Reject blank nodes whose identity cannot be kept across pages.
             max_page_retries: Maximum page-size reductions per offset, not a data limit.
+            pagination: Use OFFSET, or continue after the last returned key.
+            cursor_keys: Projected variables that jointly identify a row; default all projected variables.
 
         Yields:
             List of bindings (dicts) from each chunk.
         """
         wait_after_timeout = 5.0  # seconds to wait after a timeout
+        cursor_names: list[str] = []
+        cursor: tuple[str, ...] | None = None
+        cursor_filter = "true"
+        if pagination not in {"offset", "cursor"}:
+            raise ValueError("pagination must be offset or cursor")
+        if pagination == "cursor":
+            from pyparsing import original_text_for
+            from rdflib.plugins.sparql import prepareQuery
+            from rdflib.plugins.sparql.parser import Prologue, parseQuery
+
+            suffix = "\nOFFSET {offset}\nLIMIT {limit}"
+            if not query_template.endswith(suffix):
+                raise ValueError("Use prepare_paginated_query for cursor paging")
+            base = query_template.removesuffix(suffix).format()
+            parsed = parseQuery(base)[1]
+            if cursor_keys is None and parsed.get("modifier") != "DISTINCT":
+                raise ValueError(
+                    "Cursor paging needs SELECT DISTINCT or explicit unique cursor_keys"
+                )
+            projected = {str(variable) for variable in prepareQuery(base).algebra["PV"]}
+            cursor_keys = cursor_keys if cursor_keys is not None else sorted(projected)
+            if not cursor_keys or not set(cursor_keys) <= projected:
+                raise ValueError("Supply projected cursor_keys that jointly identify each row")
+            if any(name.startswith("__rdfsolve_cursor") for name in projected):
+                raise ValueError("The __rdfsolve_cursor prefix is reserved for paging")
+            cursor_names = [f"__rdfsolve_cursor{i}" for i in range(len(cursor_keys))]
+            binds = []
+            for key, name in zip(cursor_keys, cursor_names, strict=True):
+                # Encode term identity, not numeric or human display order.
+                expression = (
+                    f'IF(BOUND(?{key}), IF(isIRI(?{key}), CONCAT("I", STR(?{key})), '
+                    f'CONCAT("L", ENCODE_FOR_URI(STR(?{key})), "|", '
+                    f'COALESCE(ENCODE_FOR_URI(LANG(?{key})), ""), "|", '
+                    f'COALESCE(ENCODE_FOR_URI(STR(DATATYPE(?{key}))), ""))), "U")'
+                )
+                binds.append(f"BIND({expression} AS ?{name})")
+            prologue = str(original_text_for(Prologue).parse_string(base)[0])
+            body = base.lstrip().removeprefix(prologue)
+            wrapped = prologue + "\nSELECT * WHERE { { " + body + " } " + " ".join(binds)
+            query_template = (
+                self.escape_sparql_for_format(wrapped)
+                + " FILTER({cursor_filter}) }} ORDER BY "
+                + " ".join("?" + name for name in cursor_names)
+                + " LIMIT {limit}"
+            )
 
         current_offset = 0
         total_fetched = 0
@@ -1161,6 +1212,7 @@ class SparqlHelper:
             query = query_template.format(
                 offset=current_offset,
                 limit=effective_limit,
+                cursor_filter=cursor_filter,
             )
 
             # attempt this page (with adaptive retries)
@@ -1230,6 +1282,7 @@ class SparqlHelper:
                     query = query_template.format(
                         offset=current_offset,
                         limit=effective_limit,
+                        cursor_filter=cursor_filter,
                     )
                     time.sleep(wait_after_timeout)
 
@@ -1253,13 +1306,40 @@ class SparqlHelper:
                 logger.debug("No more results, pagination complete")
                 break
 
-            if stable_terms and any(
+            if (stable_terms or cursor_names) and any(
                 term.get("type") == "bnode" for row in bindings for term in row.values()
             ):
                 raise PaginationTruncatedError(
-                    "Blank-node identity cannot be preserved across OFFSET pages; use a local RDF graph",
+                    "Blank-node identity cannot be preserved across pages; use a local RDF graph",
                     offset=current_offset,
                 )
+            if cursor_names:
+                for row in bindings:
+                    try:
+                        next_cursor = tuple(str(row[name]["value"]) for name in cursor_names)
+                    except KeyError as error:
+                        raise PaginationTruncatedError(
+                            "Missing cursor key in endpoint response", offset=current_offset
+                        ) from error
+                    if cursor is not None and next_cursor <= cursor:
+                        raise PaginationTruncatedError(
+                            "Cursor keys are not unique or the endpoint did not advance",
+                            offset=current_offset,
+                        )
+                    cursor = next_cursor
+                if cursor is None:
+                    raise EndpointUnhealthyError("No cursor key returned")
+                equal: list[str] = []
+                clauses = []
+                for name, value in zip(cursor_names, cursor, strict=True):
+                    literal = RdfLiteral(value).n3()
+                    clauses.append("(" + " && ".join([*equal, f"?{name} > {literal}"]) + ")")
+                    equal.append(f"?{name} = {literal}")
+                cursor_filter = " || ".join(clauses)
+                bindings = [
+                    {key: value for key, value in row.items() if key not in cursor_names}
+                    for row in bindings
+                ]
             if until_empty:
                 digest = hashlib.sha256(json.dumps(bindings, sort_keys=True).encode()).hexdigest()
                 if digest in page_hashes:
@@ -1283,7 +1363,7 @@ class SparqlHelper:
                 effective_limit,
             )
 
-            if chunk_count < effective_limit and not until_empty:
+            if chunk_count < effective_limit and not until_empty and not cursor_names:
                 logger.debug(
                     "Partial chunk received, pagination complete",
                 )

@@ -11,7 +11,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import ValidationError
 from typing_extensions import Self
@@ -157,6 +157,7 @@ class SchemaMiner:
         graph_store_url: str | None = None,
         graph_store_dir: str | Path = "graph-store",
         graph_store_max_bytes: int = 64 * 1024 * 1024,
+        pagination: Literal["offset", "cursor"] = "offset",
     ) -> None:
         """Initialize a SchemaMiner.
 
@@ -167,6 +168,11 @@ class SchemaMiner:
                 - None (uses "two-phase" as default)
         """
         self.endpoint_url = endpoint_url
+        if pagination not in {"offset", "cursor"}:
+            raise ValueError("pagination must be offset or cursor")
+        if pagination == "cursor" and unsafe_paging:
+            raise ValueError("Cursor paging requires distinct rows; disable unsafe_paging")
+        self.pagination = pagination
         self.get_graphs_from_store = get_graphs_from_store
         self.graph_store_url = graph_store_url
         self.graph_store_dir = Path(graph_store_dir)
@@ -308,6 +314,7 @@ class SchemaMiner:
                 "sparql_engine": self._helper.sparql_engine,
                 "sparql_strategy": self._helper.sparql_strategy,
                 "chunk_size": self.chunk_size,
+                "pagination": self.pagination,
                 "class_chunk_size": self.class_chunk_size,
                 "class_batch_size": self.class_batch_size,
                 "delay": self.delay,
@@ -754,14 +761,22 @@ class SchemaMiner:
         """
         effective = chunk_size if chunk_size is not None else self.chunk_size
         all_bindings: list[dict[str, Any]] = []
-        has_rc = hasattr(self, "_rc")
+        has_rc = self._rc is not None
         page = 0
+        cursor_keys = None
+        if self.pagination == "cursor":
+            from rdflib.plugins.sparql import prepareQuery
+
+            base = query_template.removesuffix("\nOFFSET {offset}\nLIMIT {limit}").format()
+            cursor_keys = [str(variable) for variable in prepareQuery(base).algebra["PV"]]
         try:
             for chunk in self._helper.select_chunked(
                 query_template,
                 chunk_size=effective,
                 delay_between_chunks=self.delay,
                 purpose=purpose,
+                pagination=self.pagination,
+                cursor_keys=cursor_keys,
             ):
                 page += 1
                 all_bindings.extend(chunk)
@@ -830,6 +845,7 @@ def mine_schema(
     graph_store_url: str | None = None,
     graph_store_dir: str | Path = "graph-store",
     graph_store_max_bytes: int = 64 * 1024 * 1024,
+    pagination: Literal["offset", "cursor"] = "offset",
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`.
 
@@ -883,6 +899,7 @@ def mine_schema(
         endpoint_url=endpoint_url,
         graph_uris=graph_uris,
         chunk_size=chunk_size,
+        pagination=pagination,
         class_chunk_size=class_chunk_size,
         class_batch_size=class_batch_size,
         delay=delay,

@@ -181,6 +181,7 @@ def test_path_first_keeps_multivalued_fields_without_multiplying_connections():
         before = len(data.queries)
         page = session.read(reference=final["reference"], detail=True)
         assert len(page["preview"][0]["Target exactmatch"]) == 10
+        assert AOP in session._kinds(final["reference"]) and CHEMICAL in session._kinds(final["reference"])
         assert len(data.queries) == before
         with pytest.raises(ValueError, match="Available fields"):
             session.answer(paths=routes, where=[PathFilter(kind=CHEMICAL, fields=["missing"], terms=["x"])])
@@ -188,6 +189,45 @@ def test_path_first_keeps_multivalued_fields_without_multiplying_connections():
         empty = session.answer(paths=routes, where=[PathFilter(kind=CHEMICAL, terms=["Phenobarbital"]),
                                                    PathFilter(kind=AOP, terms=["unrelated nonexistent phrase"])])
         assert empty["rows"] == 0 and empty["status"] == "complete"
+
+
+def test_local_blank_nodes_keep_fields_and_identity(tmp_path):
+    from rdflib import BNode, DCTERMS, RDF, SH
+    from rdfsolve.answer_query import QueryAnswer
+    from rdfsolve.rdf_operations import PathFilter
+    from rdfsolve.miner import SchemaMiner
+    from rdfsolve.mining.local_graph import LocalGraphHelper
+    from rdflib import Dataset
+
+    with client() as data:
+        session = data.session(source_id="aopwikirdf")
+        paths = session.paths(AOP, CHEMICAL, max_hops=2)
+        found = session.answer(paths=[p["id"] for p in paths["paths"]],
+                               where=[PathFilter(kind=CHEMICAL, terms=["Phenobarbital"])])
+        graph = QueryAnswer(session.export_result(found["reference"])).to_shacl()
+        path = tmp_path / "actual-query-export.ttl"
+        graph.serialize(path, format="turtle")
+    with client(path) as data:
+        session = data.session(source_id="queries")
+        anchor = next(data.source.subjects(DCTERMS.references, None))
+        paths = session.paths(str(SH.SPARQLExecutable), str(SH.PropertyShape), max_hops=1)
+        found = session.answer(paths=[p["id"] for p in paths["paths"]],
+            where=[PathFilter(kind=str(SH.SPARQLExecutable), iris=[str(anchor)])],
+            fields={str(SH.SPARQLExecutable): [], str(SH.PropertyShape): ["name", "path"]})
+        result = QueryAnswer(session.export_result(found["reference"]))
+        assert all(isinstance(node, BNode) for node in result.table()["Target IRI"])
+        assert result.table()["Target name"].notna().all()
+        assert set(result.to_graph()) <= set(data.source)
+        assert all(set(record.to_graph()) <= set(data.source) for record in result.records())
+        dataset = Dataset()
+        dataset.default_graph += data.source
+        with SchemaMiner("https://example.org/sparql", strategy="single-pass", counts=False,
+                         pagination="cursor", delay=0, chunk_size=10) as miner:
+            miner._helper = LocalGraphHelper(miner.endpoint_url, dataset)
+            schema = miner.mine("queries")
+            blank = [p for p in schema.patterns if p.property_uri == str(DCTERMS.references) and p.object_class == "BlankNode"]
+            assert blank and str(SH.path) in blank[0].blank_node_predicates
+            assert all(p.object_class == "BlankNode" or not p.object_class.startswith("BlankNode[") for p in schema.patterns)
 
 
 def test_agent_corrects_unknown_output_references_before_export():

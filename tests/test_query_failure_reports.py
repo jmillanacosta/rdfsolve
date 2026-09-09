@@ -162,6 +162,49 @@ def test_page_recovery_stops_when_smaller_pages_do_not_help(monkeypatch):
         assert error.value.offset == 0 and request.call_count == 4
 
 
+def test_cursor_reads_rdf_terms_without_offset(monkeypatch):
+    import json
+    from rdflib import Graph
+    from rdfsolve.sparql_helper import SparqlHelper
+    from tests.test_client_api import DATA
+
+    graph = Graph().parse(DATA, format="turtle")
+    query = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nSELECT DISTINCT ?s ?p ?o WHERE { ?s ?p ?o }"
+    expected = json.loads(graph.query(query).serialize(format="json"))["results"]["bindings"]
+    calls = []
+    def select(text, **kwargs):
+        assert "OFFSET" not in text
+        calls.append(text)
+        return json.loads(graph.query(text).serialize(format="json"))
+
+    with SparqlHelper("https://example.org/sparql") as helper:
+        monkeypatch.setattr(helper, "select", select)
+        actual = [row for page in helper.select_chunked(helper.prepare_paginated_query(query),
+            pagination="cursor", chunk_size=10, delay_between_chunks=0) for row in page]
+    normalized = lambda rows: {json.dumps(row, sort_keys=True) for row in rows}
+    assert normalized(actual) == normalized(expected)
+    assert len(actual) == len(expected) and len(calls) > 2
+
+
+def test_mining_uses_cursor_for_pattern_pages(monkeypatch):
+    import json
+    from rdflib import Graph
+    from rdfsolve.miner import SchemaMiner
+    from rdfsolve.mining.query_builders import _build_typed_object_query
+    from tests.test_client_api import DATA
+
+    graph = Graph().parse(DATA, format="turtle")
+    with SchemaMiner("https://example.org/sparql", pagination="cursor", chunk_size=2, delay=0) as miner:
+        queries = []
+        def select(query, **kwargs):
+            queries.append(query)
+            return json.loads(graph.query(query).serialize(format="json"))
+        monkeypatch.setattr(miner.helper, "select", select)
+        rows = miner._collect_bindings(_build_typed_object_query(None))
+        assert rows and len(queries) > 1
+        assert all("OFFSET" not in query for query in queries)
+
+
 def test_failed_ontology_query_is_not_an_empty_ontology():
     from rdfsolve.mining import OntologyMiner
 

@@ -35,11 +35,7 @@ def execute_answer(
     paths: list[str] | None = None,
     where: list[PathFilter] | None = None,
 ) -> dict[str, Any]:
-    """Query selected sources and routes again, including requested record fields.
-
-    Source IRIs freeze the earlier selection, not the meaning of the question.
-    Read connections first, then their fields without multiplying connection rows.
-    """
+    """Query selected paths and filters, then their fields without multiplying rows."""
     if len(references) == 1 and references[0] in session.final_queries:
         previous = session.final_queries[references[0]]
         paths = paths or previous["paths"]
@@ -103,19 +99,13 @@ def execute_answer(
         + " ".join("?" + var for var in variables)
         + " WHERE {\n"
         + "\nUNION\n".join(bodies)
-        + "\n} ORDER BY "
-        + " ".join(
-            f"?{var}"
-            for var in variables
-            if var in {"_route", "_graph", "source", "target"}
-            or (var.startswith("via") and "_" not in var)
-        )
+        + "\n}"
     )
     saved = collection.add(
         name,
         query,
         description=(
-            "Read the selected source IRIs and routes. Record fields are queried separately. "
+            "Read the selected routes and filters. Record fields are queried separately. "
             "Relationship names and definitions are copied from the saved schema."
         ),
         endpoint=str(session.registry.binding.get("endpoint") or ""),
@@ -123,8 +113,14 @@ def execute_answer(
     for shape in list(collection.graph.subjects(RDF.type, SH.PropertyShape)):
         collection.graph.add((saved.node, DCTERMS.references, shape))
     with session.client.step(name):
-        bindings, query_ids = _read_all(session, query, name)
-        metadata, metadata_ids = _read_fields(session, bindings, branches, collection, name)
+        keys = [
+            var
+            for var in variables
+            if var in {"_route", "_graph", "source", "target"}
+            or (var.startswith("via") and "_" not in var)
+        ]
+        bindings, query_ids = _read_all(session, query, name, cursor_keys=keys)
+        metadata, metadata_ids = _read_fields(session, bindings, branches, bodies, collection, name)
     partial = any(
         item.coverage.get("source", item.coverage).get("status") == "partial" for item in selected
     )
@@ -153,7 +149,12 @@ def execute_answer(
 
 
 def _read_all(
-    session: ClientSession, query: str, name: str, *, page_size: int | None = None
+    session: ClientSession,
+    query: str,
+    name: str,
+    *,
+    page_size: int | None = None,
+    cursor_keys: list[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[int]]:
     """Read all rows and keep the page query ID for each row."""
     client = session.client
@@ -170,6 +171,8 @@ def _read_all(
             max_pages=None,
             until_empty=True,
             stable_terms=True,
+            pagination="cursor",
+            cursor_keys=cursor_keys,
             purpose=name,
         ):
             rows.extend(page)
@@ -229,6 +232,7 @@ def _read_fields(
     session: ClientSession,
     bindings: list[dict[str, Any]],
     branches: list[dict[str, Any]],
+    bodies: list[str],
     collection: QueryCollection,
     name: str,
 ) -> tuple[list[dict[str, Any]], list[int]]:
@@ -244,12 +248,36 @@ def _read_fields(
             )
     if not any(resources.values()):
         return [], []
-    # Blank-node labels cannot be used as identifiers in a later SPARQL request.
+    rows: list[dict[str, Any]] = []
+    ids: list[int] = []
     if any(resource.startswith("_:") for resource in resources):
-        raise ValueError(
-            "Field retrieval requires IRI resources; blank nodes need a local graph reader"
+        if not isinstance(session.client.source, Graph):
+            raise ValueError(
+                "Remote blank nodes must be read with their anchored path in one response"
+            )
+        choices = []
+        for branch, body in zip(branches, bodies, strict=True):
+            for node in branch["nodes"]:
+                if node["fields"]:
+                    predicates = " ".join(_iri(field["predicate"]) for field in node["fields"])
+                    choices.append(
+                        "{ "
+                        + body
+                        + f" BIND(?{node['variable']} AS ?resource) FILTER(isBlank(?resource)) "
+                        + session.client._scope(
+                            f"VALUES ?predicate {{ {predicates} }} ?resource ?predicate ?value"
+                        )
+                        + " }"
+                    )
+        query = (
+            "SELECT DISTINCT ?resource ?predicate ?value ?_graph WHERE { "
+            + " UNION ".join(choices)
+            + " }"
         )
-    rows, ids = [], []
+        purpose = f"{name}: blank-node fields"
+        collection.add(purpose, query)
+        rows, ids = _read_all(session, query, purpose)
+        resources = {key: value for key, value in resources.items() if not key.startswith("_:")}
     batch_size = min(session.client.max_rows, 500)
     ordered = sorted(resources)
     for start in range(0, len(ordered), batch_size):
@@ -268,8 +296,7 @@ def _read_fields(
         query = (
             "SELECT DISTINCT ?resource ?predicate ?value ?_graph WHERE { "
             + session.client._scope(body)
-            + " } ORDER BY ?_graph ?resource ?predicate STR(?value) isIRI(?value) "
-            + 'COALESCE(LANG(?value), "") COALESCE(STR(DATATYPE(?value)), "")'
+            + " }"
         )
         purpose = f"{name}: fields {start // batch_size + 1}"
         collection.add(purpose, query, endpoint=str(session.registry.binding.get("endpoint") or ""))
@@ -368,7 +395,7 @@ def _branch(
 
 
 class QueryAnswer:
-    """One executed SELECT, its typed rows, path descriptions and observed RDF subset."""
+    """Observed connections, record fields, query examples and an RDF subset."""
 
     def __init__(self, payload: dict[str, Any]) -> None:
         """Restore an answer without endpoint requests."""

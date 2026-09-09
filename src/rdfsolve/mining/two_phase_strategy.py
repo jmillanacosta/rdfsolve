@@ -9,6 +9,7 @@ from collections.abc import Callable
 from pydantic import ValidationError
 
 from rdfsolve._outcomes import QueryOutcome
+from rdfsolve.mining.blank_nodes import blank_node_patterns
 from rdfsolve.mining.query_builders import (
     _build_batched_blank_node_query,
     _build_batched_literal_query,
@@ -277,25 +278,6 @@ class TwoPhaseStrategy(MiningStrategy):
                 time.monotonic() - t0,
                 success=blank_bindings.state == "complete",
             )
-            for b in blank_bindings.rows:
-                cls = b.get("class", {}).get("value", "")
-                p = b.get("p", {}).get("value", "")
-                bn_pred = b.get("bnPred", {}).get("value")
-                if cls and p:
-                    # Represent blank nodes with structural signature if available
-                    if bn_pred:
-                        object_class = f"BlankNode[{bn_pred}]"
-                    else:
-                        object_class = "BlankNode"
-                    try:
-                        patterns.append(
-                            SchemaPattern(
-                                subject_class=cls,
-                                property_uri=p,
-                                object_class=object_class,
-                            )
-                        )
-                    except (ValueError, ValidationError):
-                        context.report.record_dropped_uri(f"{cls} {p} {object_class}")
+            patterns.extend(blank_node_patterns(blank_bindings.rows, context, "class"))
 
         return patterns, abort_reason
