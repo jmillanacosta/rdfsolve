@@ -513,10 +513,12 @@ table = result.table()
 print(result.query)
 ```
 
-The agent can go straight from a plan to `answer(paths=..., where=..., fields=...)`.
+The agent can go straight from a plan to `answer(paths=..., fields=...)`.
 It does not need to search and load records first. Filters select classes along
-the paths by exact identifiers or text in their fields. Separate filters use AND;
-terms within a filter use OR. Topic and organism restrictions stay separate.
+the paths by exact identifiers or text in their fields. `plan.where` retains each
+required condition. Separate conditions use AND; terms within one use OR.
+Execution applies the planned conditions automatically. `answer.where` can add
+conditions; changing or removing a condition requires a new plan.
 
 One SELECT retrieves the connections. Batched queries retrieve each record's
 requested fields without multiplying rows. Paging and recovery run inside rdfsolve,
@@ -610,6 +612,21 @@ reports the search scope. `data.find("Phenobarbital")` remains a name lookup.
 
 The session log includes each operation, its arguments, outcome, registry
 snapshot and query IDs. No model service is needed for these script calls.
+MCP logs keep query responses and schema context in companion files. Keep them
+beside the main JSON report; `QueryLog.read()` opens them together.
+
+After closing the MCP server, save the model's answer and token usage too:
+
+```python
+from rdfsolve.pydantic_ai import save_answer
+
+save_answer(answer, "session.json", question=question)
+```
+
+The text is under `agent.output.text`, usage under `agent.usage`, and other model
+text under `agent.messages`. Tool results stay in the session log, not duplicated
+in the model section. Older logs did not record the model answer.
+
 To inspect a saved registry without connecting to its source:
 
 ```python
