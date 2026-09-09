@@ -19,6 +19,7 @@ from mcp.types import TextResourceContents, ToolAnnotations
 from pydantic import BaseModel
 
 from rdfsolve.answer_plan import plan_status
+from rdfsolve.answer_query import QueryAnswer
 from rdfsolve.client_api import Client
 from rdfsolve.client_session import INSTRUCTIONS, ClientSession
 from rdfsolve.client_table import record_table
@@ -79,6 +80,9 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
                     {
                         "reference": reference,
                         "records": len(result),
+                        "source_references": session.final_queries.get(reference, {}).get(
+                            "references", []
+                        ),
                         "classes": sorted(
                             {session.client.type_name(type(record)) for record in result}
                         ),
@@ -123,6 +127,15 @@ async def read_result(
     if output not in {"table", "records", "connections"}:
         raise ValueError("Use output='table', 'records' or 'connections'")
     payload = await _result_payload(server, reference)
+    if "answer" in payload:
+        final = QueryAnswer(payload)
+        if output == "records":
+            return final.records()
+        if output == "connections":
+            return final.connections()
+        table = final.table()
+        table.attrs["records"] = final.records()
+        return table
     if output == "connections":
         from rdfsolve.connection_table import connection_table
 
@@ -170,6 +183,32 @@ async def read_answer(server: MCPClient, references: list[str]) -> pd.DataFrame:
     from rdfsolve.connection_table import answer_table
 
     return answer_table([await _result_payload(server, ref) for ref in dict.fromkeys(references)])
+
+
+async def query_answer(
+    server: MCPClient,
+    references: list[str],
+    *,
+    name: str = "Answer",
+    fields: dict[str, list[str]] | None = None,
+) -> QueryAnswer:
+    """Run the final SELECT, then keep its table, query example and RDF subset locally.
+
+    Call while the server is open. A single already-final reference is read without
+    executing it again. Omitted classes include their name and description fields.
+    """
+    if len(references) == 1:
+        payload = await _result_payload(server, references[0])
+        if "answer" in payload:
+            return QueryAnswer(payload)
+    response = await server.call_tool(
+        "answer", {"references": references, "name": name, "fields": fields or {}}
+    )
+    if response.is_error:
+        raise ValueError("\n".join(item.text for item in response.content if item.type == "text"))
+    if response.structured_content is None:
+        raise ValueError("Expected a final query reference")
+    return QueryAnswer(await _result_payload(server, response.structured_content["reference"]))
 
 
 def main() -> None:

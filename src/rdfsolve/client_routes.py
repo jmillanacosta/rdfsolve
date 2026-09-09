@@ -112,6 +112,13 @@ def read_routes(client: Client, source: Results, routes: dict[str, Route]) -> Re
             "basis": "Observed paths for the selected records and routes, not proof of causation",
             "source": source.coverage,
             "selected_paths": list(routes),
+            "sources": [
+                {
+                    "type": str(getattr(type(record), "rdf_class_iri", "")),
+                    "iri": str(vars(record)["uri"]),
+                }
+                for record in source
+            ],
             "limit_reached": partial,
         },
     )

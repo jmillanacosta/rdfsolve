@@ -31,7 +31,7 @@ async def mcp_tools(server: MCPClient, *, require_plan: bool = False) -> Functio
         async def call(**arguments: Any) -> Any:
             """Return structured results or let the model correct a failed call."""
             nonlocal planned
-            if require_plan and name in {"search", "read"} and not planned:
+            if require_plan and name in {"search", "read", "answer"} and not planned:
                 raise ModelRetry(
                     "Use schema to identify the requested classes, then plan the "
                     "source, targets and topic terms before querying records."
@@ -141,6 +141,10 @@ async def research_agent(
                 "do not repeat source queries merely to correct an ID: " + json.dumps(available)
             )
         unique = {result.reference: result for result in answer.results}
+        covered = set(unique)
+        for item in available:
+            if item["reference"] in unique:
+                covered.update(item.get("source_references", []))
         from rdfsolve.mcp import read_plan
 
         progress = await read_plan(server)
@@ -151,7 +155,7 @@ async def research_agent(
         missing = [
             row
             for row in progress["coverage"]
-            if row["references"] and not set(row["references"]) & unique.keys()
+            if row["references"] and not set(row["references"]) & covered
         ]
         if missing:
             raise ModelRetry(

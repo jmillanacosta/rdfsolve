@@ -9,7 +9,7 @@ import pytest
 from mcp import Client as MCPClient, MCPError, StdioServerParameters
 from rdflib import Literal, URIRef
 
-from rdfsolve.mcp import create_server, read_answer, read_result
+from rdfsolve.mcp import create_server, query_answer, read_answer, read_result
 from rdfsolve.query_log import QueryLog
 from tests.test_client_api import AOP, CHEMICAL, DATA, client
 
@@ -20,7 +20,7 @@ def test_typed_export_keeps_values_while_previews_are_bounded(tmp_path):
             session = data.session(source_id="aopwikirdf", preview_rows=1)
             log_path = tmp_path / "session.json"
             async with MCPClient(create_server(session, log_path=log_path)) as wire:
-                assert {t.name for t in (await wire.list_tools()).tools} == {"schema", "plan", "search", "paths", "read"}
+                assert {t.name for t in (await wire.list_tools()).tools} == {"schema", "plan", "search", "paths", "read", "answer"}
                 tools = {t.name: t for t in (await wire.list_tools()).tools}
                 assert tools["schema"].input_schema["properties"]["limit"]["maximum"] == 30
                 await wire.call_tool("schema", {"kind": AOP})
@@ -81,6 +81,28 @@ def test_mcp_serializes_calls_and_reads_a_selected_route():
                 assert set(links["Target"]) == {URIRef("https://identifiers.org/aop/162")}
                 assert links["Source class"].notna().all() and links["Query"].notna().all()
                 assert len(data.queries) == before
+                final = await query_answer(wire, [read.structured_content["reference"]], name="Events and pathways")
+                assert len(data.queries) == before + 1
+                table = final.table()
+                exported = await read_result(wire, final.payload["reference"])
+                assert exported.equals(table) and exported.attrs["records"]
+                assert len(table) == len(final.bindings) and table["Target title"].notna().all()
+                assert "Connection" not in table and "Relationship 1 IRI" in table
+                from rdfsolve.query_collection import QueryCollection
+                queries = QueryCollection()
+                queries.load_shacl(final.to_shacl())
+                saved = queries.queries["Events and pathways"]
+                assert saved.query == final.query and queries.paths
+                rerun = json.loads(data.source.query(saved.query).serialize(format="json"))["results"]["bindings"]
+                assert rerun == final.bindings
+                assert set(final.to_graph()) <= set(data.source)
+                from rdflib import Graph
+                restored = Graph()
+                for record in final.records():
+                    restored += record.to_graph()
+                assert set(restored) == set(final.to_graph())
+                assert str(table.iloc[0]["Target IRI"]) in final.diagram(instances=True, row=0)
+                assert len(data.queries) == before + 1
                 from rdfsolve.client_diagram import connection_diagram
                 diagram = connection_diagram(links.iloc[:1], instances=True)
                 assert str(links.iloc[0]["Source"]) in diagram
@@ -90,11 +112,35 @@ def test_mcp_serializes_calls_and_reads_a_selected_route():
                 assert "No observed connections" in connection_diagram(links.iloc[:0])
                 with pytest.raises(ValueError, match="path evidence"):
                     connection_diagram(pd.DataFrame())
-                assert len(data.queries) == before
+                assert len(data.queries) == before + 1
             calls = data.session_metadata()["tool_calls"]
             assert not set(calls[0]["query_ids"]) & set(calls[1]["query_ids"])
             assert calls[0]["finished_at"] <= calls[1]["started_at"]
     asyncio.run(run())
+
+
+def test_final_query_reads_unloaded_metadata_without_a_row_cap():
+    from pathlib import Path
+    from rdfsolve.answer_query import QueryAnswer
+
+    metadata = Path(__file__).parent / "test_data/aopwikirdf_metadata_excerpt.ttl"
+    with client(metadata) as data:
+        session = data.session(source_id="aopwikirdf")
+        kind = "http://www.w3.org/ns/dcat#Dataset"
+        target = "http://rdfs.org/ns/void#Dataset"
+        found = session.search(["complete dataset"], kind=kind)
+        paths = session.paths(found["reference"], target, max_hops=1)
+        linked = session.read(reference=found["reference"], paths=[p["id"] for p in paths["paths"]])
+        before = len(data.queries)
+        with pytest.raises(ValueError):
+            session.answer([linked["reference"]], fields={kind: ["not_a_field"]})
+        assert len(data.queries) == before
+        final = session.answer([linked["reference"]], name="Dataset descriptions")
+        output = QueryAnswer(session.export_result(final["reference"]))
+        assert output.table()["Source description"].eq(Literal("AOP-Wiki RDF -- complete dataset")).all()
+        assert "Gene mapping enrichment triples" in set(map(str, output.table()["Target description"]))
+        assert set(output.to_graph()) <= set(data.source)
+        assert "LIMIT" not in output.query and output.coverage["retrieval"] == "complete"
 
 
 def test_stdio_opens_saved_schema_without_mining(tmp_path):

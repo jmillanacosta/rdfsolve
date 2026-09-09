@@ -89,7 +89,16 @@ class Plan(Contract):
     max_hops: HopLimit = 3
 
 
+class Answer(Contract):
+    """Execute one final SELECT for chosen linked results and record fields."""
+
+    references: list[str] = Field(min_length=1, max_length=50)
+    name: str = Field(default="Answer", min_length=1, max_length=120)
+    fields: dict[str, list[str]] = Field(default_factory=dict)
+
+
 ARGUMENTS: dict[str, type[Contract]] = {
+    "answer": Answer,
     "plan": Plan,
     "schema": Schema,
     "search": Search,
@@ -164,7 +173,9 @@ def build_registry(client: Client, source_id: str) -> Registry:
                 action=key,
                 description=(model.__doc__ or "").strip(),
                 arguments=model.model_json_schema(),
-                returns="answer plan"
+                returns="answer query"
+                if model is Answer
+                else "answer plan"
                 if model is Plan
                 else "class routes"
                 if model is Paths
