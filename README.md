@@ -432,8 +432,8 @@ python scripts/build_graphs.py output/schemas/ --mappings output/mappings/
 
 ### Let an agent use your typed client
 
-Install `rdfsolve[agents]` to let a PydanticAI agent find operations and types,
-resolve names to candidate records, and read their fields and links. Records
+Install `rdfsolve[agents]` to let a PydanticAI agent search descriptive text,
+inspect definitions, choose paths, and read connected records. Records
 stay in Python; queries and returned data remain in the session log.
 
 ```python
@@ -459,18 +459,21 @@ python -m rdfsolve.mcp --schema aopwikirdf.schema.json --log session.json
 ```
 
 Use `--endpoint URL` to override its endpoint, or `--data subset.ttl` to query
-local RDF. Nothing is mined at startup. Your MCP client gets seven tools:
-`catalogue`, `find`, `describe`, `related`, `call`, `select`, and `release`.
-`find` searches data; `catalogue` lists operations and classes.
-`describe` shows the fields and link targets of a retrieved result. `related`
-follows those links; another name search does not establish a connection.
-Both field reads and link traversal accept a result reference or a record IRI
-already retrieved in that session.
+local RDF. Nothing is mined at startup. Your MCP client gets four tools:
+
+- `schema`: find classes and fields, with their source definitions.
+- `search`: search several phrases across names and descriptive text; see what matched.
+- `paths`: inspect routes and the fields along them.
+- `read`: read fields or follow selected routes, including the intermediate links.
+
+Search can start from related events, not just the names of the records you want.
+It returns candidates to assess, not proof of relevance. The agent chooses search
+phrases and routes; rdfsolve executes them and keeps the source evidence.
 Calls run one at a time; result references belong to that server session.
 The optional log retains tool answers and source queries, so treat it as data.
 
 [Ask AOPWiki a question](notebooks/mcp/01_ask_aopwiki.ipynb) shows one short
-model run and the tools and queries it used. It opens the included schema and
+investigation and the tools and queries it used. It opens the included schema and
 uses your local `notebooks/.env`; keys are not sent to the RDF server.
 
 Want data instead of a written answer? Set `output_type=ResultReference` on
@@ -483,6 +486,12 @@ from rdfsolve.mcp import read_result
 table = await read_result(server, answer.output.reference)
 records = table.attrs["records"]  # Generated Pydantic objects
 ```
+
+For both, use `await research_agent(server, model)` from `rdfsolve.pydantic_ai`.
+It asks the model to correct references that do not exist in that server session.
+`answer.output.text` contains the explanation. `answer.output.results` contains
+result references; pass each one's `.reference` to `read_result` while the server
+is open. The notebook displays the explanation and each typed table separately.
 
 The model selects a result reference, not the rows. `output="records"` returns
 the objects directly. Tables keep lists of RDF values, including their types
@@ -501,7 +510,7 @@ session = data.session(source_id="aopwikirdf")
 session.registry.write("aopwikirdf.registry.json")
 
 print(session.registry.find("identifier"))
-print(session.registry.describe("records.get"))
+print(session.registry.describe("read"))
 ```
 
 This makes no source requests. The file records supported operations, not a
@@ -512,25 +521,37 @@ is unknown.
 Use the same operations from a script:
 
 ```python
-matches = session.call("records.find", {"text": "Phenobarbital"})
-page = session.call(
-    "records.select",
-    {
-        "reference": matches["reference"],
-        "fields": ["title"],
-        "limit": 5,
-    },
+matches = session.search(["thyroxine", "thyroid hormone"])
+routes = session.paths(matches["reference"], "Adverse Outcome Pathway")
+print(routes["paths"])  # Inspect before choosing a route.
+
+page = session.read(
+    matches["reference"],
+    paths=[routes["paths"][0]["id"]],
+    fields=["title"],
 )
 print(page["rows"])
+print(page["evidence"])
 data.save_session("session.json")
 ```
 
 Each row keeps its identifier, requested type, observed types and RDF values.
-Name searches return candidates, not a chosen identity. `next_offset` gives the
+Text searches return candidates, not a chosen identity. `next_offset` gives the
 next page of retained records; `retained_records` is not an endpoint total.
-`status="complete"` means the operation finished, not that the dataset is complete.
+`status="partial"` reports a reached search or path limit. `complete` means the
+operation finished, not that every scientifically relevant record was found.
 Field reads apply only to the requested page. References belong to this session;
 use `session.release(reference)` to free a result when needed.
+
+Previews shorten long values and show up to three values per field. Use
+`read(..., detail=True)` for full values on that page, or export the retained
+typed records. `next_evidence_offset` pages supporting matches independently of
+records. Full text, RDF terms and query bindings remain in the result and log.
+The saved schema is never shortened to make a tool response smaller.
+
+For direct Python exploration, `data.search(["thyroxine"])` returns typed
+results; `matches.evidence` holds matching passages and `matches.coverage`
+reports the search scope. `data.find("Phenobarbital")` remains a name lookup.
 
 The session log includes each operation, its arguments, outcome, registry
 snapshot and query IDs. No model service is needed for these script calls.
