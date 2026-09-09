@@ -10,6 +10,7 @@ from rdflib import DCTERMS, RDF, RDFS, SH, BNode, Graph, Literal, URIRef
 
 from rdfsolve.hydration import _iri, _term, _value
 from rdfsolve.query_collection import QueryCollection
+from rdfsolve.rdf_operations import PathFilter
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import DEFINITION_PREDICATES, LABEL_PREDICATES, RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_rdf, path_to_sparql
@@ -26,13 +27,23 @@ logger = logging.getLogger(__name__)
 
 
 def execute_answer(
-    session: ClientSession, references: list[str], name: str, fields: dict[str, list[str]]
+    session: ClientSession,
+    references: list[str],
+    name: str,
+    fields: dict[str, list[str]],
+    *,
+    paths: list[str] | None = None,
+    where: list[PathFilter] | None = None,
 ) -> dict[str, Any]:
     """Query selected sources and routes again, including requested record fields.
 
     Source IRIs freeze the earlier selection, not the meaning of the question.
-    OPTIONAL fields retain missing values. Multiple values yield separate rows.
+    Read connections first, then their fields without multiplying connection rows.
     """
+    if len(references) == 1 and references[0] in session.final_queries:
+        previous = session.final_queries[references[0]]
+        paths = paths or previous["paths"]
+        where = where or [PathFilter.model_validate(item) for item in previous["where"]]
     references = list(
         dict.fromkeys(
             original
@@ -51,8 +62,21 @@ def execute_answer(
         for match in result.evidence:
             if match.get("nodes") and match["nodes"][0]["kind"] == "uri":
                 routes.setdefault(match["path"], set()).add(match["nodes"][0]["value"])
+    for key in paths or []:
+        if key not in session.routes:
+            raise ValueError("Unknown path ID; choose a path from plan or paths")
+        source_type = session.routes[key][0][0]
+        sources = {
+            str(vars(record)["uri"])
+            for result in selected
+            for record in result
+            if getattr(type(record), "rdf_class_iri", "") == source_type
+        }
+        if not sources and not where:
+            raise ValueError("Supply where filters or retained source records for selected paths")
+        routes.setdefault(key, set()).update(sources)
     if not routes:
-        raise ValueError("Select a result from a route read before producing a linked answer")
+        raise ValueError("Supply paths from plan or paths, or references from a route read")
     if len(routes) > 20:
         raise ValueError("Select at most 20 answer routes")
     chosen = {
@@ -69,33 +93,29 @@ def execute_answer(
     for index, (key, sources) in enumerate(sorted(routes.items())):
         route = session.routes[key]
         branch, body = _branch(session, route, sorted(sources), chosen, index, collection.graph)
+        body += _filters(session, branch, where or [])
         branches.append(branch)
         bodies.append("{ " + session.client._scope(body) + " }")
         columns.update(branch["columns"])
-    variables = ["_route", *columns, "_graph"]
+    variables = ["_route", *[var for var in columns if "_field_" not in var], "_graph"]
     query = (
         "SELECT DISTINCT "
         + " ".join("?" + var for var in variables)
         + " WHERE {\n"
         + "\nUNION\n".join(bodies)
-        + "\n} ORDER BY CONCAT("
-        + ", ".join(
-            f'CONCAT(COALESCE(IF(isIRI(?{var}), "U", "L"), "Z"), '
-            f'COALESCE(ENCODE_FOR_URI(STR(?{var})), ""), "|", '
-            f'COALESCE(ENCODE_FOR_URI(LANG(?{var})), ""), "|", '
-            f'COALESCE(ENCODE_FOR_URI(STR(DATATYPE(?{var}))), ""), "|")'
+        + "\n} ORDER BY "
+        + " ".join(
+            f"?{var}"
             for var in variables
             if var in {"_route", "_graph", "source", "target"}
-            or var.startswith("via")
-            or "_field_" in var
+            or (var.startswith("via") and "_" not in var)
         )
-        + ")"
     )
     saved = collection.add(
         name,
         query,
         description=(
-            "Read the selected source IRIs and routes. OPTIONAL values form separate rows. "
+            "Read the selected source IRIs and routes. Record fields are queried separately. "
             "Relationship names and definitions are copied from the saved schema."
         ),
         endpoint=str(session.registry.binding.get("endpoint") or ""),
@@ -104,6 +124,7 @@ def execute_answer(
         collection.graph.add((saved.node, DCTERMS.references, shape))
     with session.client.step(name):
         bindings, query_ids = _read_all(session, query, name)
+        metadata, metadata_ids = _read_fields(session, bindings, branches, collection, name)
     partial = any(
         item.coverage.get("source", item.coverage).get("status") == "partial" for item in selected
     )
@@ -111,24 +132,28 @@ def execute_answer(
         logger.warning("Answer selection is partial: an earlier exploration reached a limit")
     return {
         "references": list(dict.fromkeys(references)),
+        "paths": list(routes),
+        "where": [item.model_dump() for item in where or []],
         "name": name,
         "query": query,
         "shacl": collection.to_turtle(),
         "bindings": bindings,
+        "metadata": metadata,
+        "metadata_query_ids": metadata_ids,
         "branches": branches,
         "columns": columns,
         "query_id": len(session.client._records()),
         "binding_query_ids": query_ids,
         "coverage": {
             "status": "partial" if partial else "complete",
-            "basis": "Selected source IRIs and routes, not exhaustive topic coverage",
+            "basis": "Selected routes and explicit filters, not exhaustive topic coverage",
             "retrieval": "complete",
         },
     }
 
 
 def _read_all(
-    session: ClientSession, query: str, name: str
+    session: ClientSession, query: str, name: str, *, page_size: int | None = None
 ) -> tuple[list[dict[str, Any]], list[int]]:
     """Read all rows and keep the page query ID for each row."""
     client = session.client
@@ -141,7 +166,7 @@ def _read_all(
     try:
         for page in helper.select_chunked(
             helper.prepare_paginated_query(query),
-            chunk_size=client.max_rows,
+            chunk_size=page_size or client.max_rows,
             max_pages=None,
             until_empty=True,
             stable_terms=True,
@@ -151,6 +176,106 @@ def _read_all(
             ids.extend([len(client._records())] * len(page))
     finally:
         client.queries.extend(record.query for record in client._records()[start:])
+    return rows, ids
+
+
+def _filters(session: ClientSession, branch: dict[str, Any], filters: list[PathFilter]) -> str:
+    """AND filters together; OR values within each filter. Do not join matching text."""
+    expressions = []
+    for index, criterion in enumerate(filters):
+        model = session.client.model(criterion.kind)
+        slots = [
+            node["variable"]
+            for node in branch["nodes"]
+            if node["type"] == getattr(model, "rdf_class_iri", "")
+        ]
+        if not slots:
+            raise ValueError(f"Filter class {criterion.kind} is absent from a selected route")
+        if criterion.iris:
+            values = ", ".join(_iri(iri) for iri in criterion.iris)
+            expressions.append(" || ".join(f"?{slot} IN ({values})" for slot in slots))
+            continue
+        names = criterion.fields or [
+            name
+            for name, field in model.model_fields.items()
+            if isinstance(field.json_schema_extra, dict)
+            and field.json_schema_extra.get("rdf_property_iri")
+            in (*LABEL_PREDICATES, *DEFINITION_PREDICATES)
+        ]
+        predicates = []
+        for name in names:
+            extra = model.model_fields[session.client.field_name(model, name)].json_schema_extra
+            if not isinstance(extra, dict) or not extra.get("rdf_path"):
+                raise ValueError(f"No RDF path for {criterion.kind}.{name}")
+            predicates.append(path_to_sparql(PropertyPath.model_validate(extra["rdf_path"])))
+        if not predicates:
+            raise ValueError(
+                f"Choose text fields for {criterion.kind}; no name or description fields are recorded"
+            )
+        text = f"?match{index}"
+        terms = " || ".join(
+            f"CONTAINS(LCASE(STR({text})), LCASE({Literal(term).n3()}))" for term in criterion.terms
+        )
+        expressions.append(
+            " || ".join(
+                f"EXISTS {{ ?{slot} ({'|'.join(predicates)}) {text} . FILTER({terms}) }}"
+                for slot in slots
+            )
+        )
+    return " ".join(f"FILTER({expression})" for expression in expressions)
+
+
+def _read_fields(
+    session: ClientSession,
+    bindings: list[dict[str, Any]],
+    branches: list[dict[str, Any]],
+    collection: QueryCollection,
+    name: str,
+) -> tuple[list[dict[str, Any]], list[int]]:
+    """Read each resource/property pair once, keeping graph and RDF term identity."""
+    resources: dict[str, set[str]] = {}
+    for row in bindings:
+        for node in branches[int(row["_route"]["value"])]["nodes"]:
+            if not node["fields"]:
+                continue
+            subject = _term(row[node["variable"]]).to_rdf().n3()
+            resources.setdefault(subject, set()).update(
+                field["predicate"] for field in node["fields"]
+            )
+    if not any(resources.values()):
+        return [], []
+    # Blank-node labels cannot be used as identifiers in a later SPARQL request.
+    if any(resource.startswith("_:") for resource in resources):
+        raise ValueError(
+            "Field retrieval requires IRI resources; blank nodes need a local graph reader"
+        )
+    rows, ids = [], []
+    batch_size = min(session.client.max_rows, 500)
+    ordered = sorted(resources)
+    for start in range(0, len(ordered), batch_size):
+        groups: dict[tuple[str, ...], list[str]] = {}
+        for resource in ordered[start : start + batch_size]:
+            if resources[resource]:
+                groups.setdefault(tuple(sorted(resources[resource])), []).append(resource)
+        body = " UNION ".join(
+            "{ VALUES ?resource { "
+            + " ".join(subjects)
+            + " } VALUES ?predicate { "
+            + " ".join(_iri(predicate) for predicate in predicates)
+            + " } ?resource ?predicate ?value }"
+            for predicates, subjects in groups.items()
+        )
+        query = (
+            "SELECT DISTINCT ?resource ?predicate ?value ?_graph WHERE { "
+            + session.client._scope(body)
+            + " } ORDER BY ?_graph ?resource ?predicate STR(?value) isIRI(?value) "
+            + 'COALESCE(LANG(?value), "") COALESCE(STR(DATATYPE(?value)), "")'
+        )
+        purpose = f"{name}: fields {start // batch_size + 1}"
+        collection.add(purpose, query, endpoint=str(session.registry.binding.get("endpoint") or ""))
+        found, query_ids = _read_all(session, query, purpose, page_size=500)
+        rows.extend(found)
+        ids.extend(query_ids)
     return rows, ids
 
 
@@ -179,9 +304,9 @@ def _branch(
     steps = restored.items if restored.operator == "sequence" else [restored]
     classes = [route[0][0], *[edge[2] for edge in route]]
     slots = ["source", *[f"via{i}" for i in range(1, len(route))], "target"]
-    body = (
-        f"BIND({index} AS ?_route) VALUES ?source {{ {' '.join(_iri(iri) for iri in sources)} }} "
-    )
+    body = f"BIND({index} AS ?_route) "
+    if sources:
+        body += f"VALUES ?source {{ {' '.join(_iri(iri) for iri in sources)} }} "
     columns, nodes, edges = {}, [], []
     for i, (slot, cls) in enumerate(zip(slots, classes, strict=True)):
         model = session.client.model(cls)
@@ -213,7 +338,6 @@ def _branch(
                 raise ValueError(f"Final answer fields need direct predicates: {label}.{name}")
             var = f"{slot}_field_{name}"
             columns[var] = f"{slot.capitalize()} {name}"
-            body += f"OPTIONAL {{ ?{slot} {path_to_sparql(field_path)} ?{var} }} "
             projections.append({"variable": var, "field": name, "predicate": field_path.iri})
         nodes.append({"variable": slot, "type": cls, "fields": projections})
         if i < len(route):
@@ -254,20 +378,45 @@ class QueryAnswer:
         self.name: str = self.execution["name"]
         self.bindings: list[dict[str, Any]] = self.execution["bindings"]
         self.coverage: dict[str, Any] = self.execution["coverage"]
+        self._fields: dict[tuple[str, str, str], list[Any]] = {}
+        for row in self.execution["metadata"]:
+            key = (
+                row.get("_graph", {}).get("value", ""),
+                row["resource"]["value"],
+                row["predicate"]["value"],
+            )
+            self._fields.setdefault(key, []).append(_term(row["value"]).to_rdf())
+
+    def _values(
+        self, row: dict[str, Any], node: dict[str, Any], field: dict[str, Any]
+    ) -> list[Any]:
+        """Look up a field in the same graph as its observed connection."""
+        return self._fields.get(
+            (
+                row.get("_graph", {}).get("value", ""),
+                row[node["variable"]]["value"],
+                field["predicate"],
+            ),
+            [],
+        )
 
     def table(self) -> pd.DataFrame:
-        """Show each SELECT row with RDF terms and human-readable column names."""
+        """Show one row per connection, with lists for fields that have several values."""
         columns = self.execution["columns"]
-        table = pd.DataFrame(
-            [
-                {
-                    label: _term(row[var]).to_rdf() if var in row else None
-                    for var, label in columns.items()
-                }
-                for row in self.bindings
-            ],
-            columns=list(columns.values()),
-        )
+        rows = []
+        for row in self.bindings:
+            displayed: dict[str, Any] = {
+                label: _term(row[var]).to_rdf() if var in row else None
+                for var, label in columns.items()
+            }
+            for node in self.execution["branches"][int(row["_route"]["value"])]["nodes"]:
+                for field in node["fields"]:
+                    values = self._values(row, node, field)
+                    displayed[columns[field["variable"]]] = (
+                        values[0] if len(values) == 1 else values or None
+                    )
+            rows.append(displayed)
+        table = pd.DataFrame(rows, columns=list(columns.values()))
         table.attrs.update(
             title=self.name, coverage=self.coverage, bindings=self.bindings, query=self.query
         )
@@ -288,14 +437,8 @@ class QueryAnswer:
                 fields = nodes.setdefault((node["type"], subject.n3()), set())
                 for field in node["fields"]:
                     fields.add(field["field"])
-                    if field["variable"] in row:
-                        graph.add(
-                            (
-                                subject,
-                                URIRef(field["predicate"]),
-                                _term(row[field["variable"]]).to_rdf(),
-                            )
-                        )
+                    for value in self._values(row, node, field):
+                        graph.add((subject, URIRef(field["predicate"]), value))
             for edge in branch["edges"]:
                 source, target = (_term(row[edge[key]]).to_rdf() for key in ("source", "target"))
                 if edge["inverse"]:
@@ -341,7 +484,12 @@ class QueryAnswer:
                         "rdf_terms": terms,
                         "rdf_loaded_fields": list(values),
                         "rdf_source": {
-                            "query_ids": sorted(set(self.execution["binding_query_ids"])),
+                            "query_ids": sorted(
+                                set(
+                                    self.execution["binding_query_ids"]
+                                    + self.execution["metadata_query_ids"]
+                                )
+                            ),
                             "coverage": self.coverage,
                         },
                     }
@@ -370,9 +518,10 @@ class QueryAnswer:
             nodes = []
             for node in branch["nodes"]:
                 labels = [
-                    str(_term(binding[field["variable"]]).to_rdf())
+                    str(value)
                     for field in node["fields"]
-                    if field["predicate"] in LABEL_PREDICATES and field["variable"] in binding
+                    if field["predicate"] in LABEL_PREDICATES
+                    for value in self._values(binding, node, field)
                 ]
                 nodes.append(
                     {

@@ -33,3 +33,23 @@ def test_responses_are_opt_in_isolated_and_distinct_from_failures(monkeypatch):
         assert "False" in html and "Failed" in html and "EndpointError" in html
         assert "<script>" not in html and "<unsafe>" not in html
         assert "&lt;script&gt;" in html and "&lt;unsafe&gt;" in html
+
+
+def test_incremental_log_appends_results_once_and_keeps_full_values(tmp_path):
+    import json
+    from tests.test_client_api import client
+
+    with client() as data:
+        data.find("Phenobarbital")
+        path = tmp_path / "session.json"
+        data.save_session(path, incremental=True)
+        manifest = json.loads(path.read_text())
+        journal = path.with_name(manifest["queries_file"])
+        first = journal.read_bytes()
+        data.save_session(path, incremental=True)
+        assert journal.read_bytes() == first
+        data.find("thyroxine")
+        data.save_session(path, incremental=True)
+        assert journal.read_bytes().startswith(first)
+        assert QueryLog.read(path).queries == data.session_metadata()["queries"]
+        assert all("result" not in row for row in json.loads(path.read_text())["queries"])

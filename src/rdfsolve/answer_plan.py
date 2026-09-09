@@ -96,6 +96,13 @@ def plan_status(session: ClientSession) -> dict[str, Any]:
                 operation["arguments"].get("paths", [])
             )
     observed: dict[str, set[str]] = {}
+    for reference, final in session.final_queries.items():
+        attempts.update(final["paths"])
+        for row in final["bindings"]:
+            branch = final["branches"][int(row["_route"]["value"])]
+            if branch["nodes"][0]["type"] == source:
+                references.setdefault(source, []).append(reference)
+                observed.setdefault(branch["nodes"][-1]["type"], set()).add(reference)
     for reference, result in session.results.items():
         for match in result.evidence:
             if match.get("nodes") and match["nodes"][0]["type"] == source:
@@ -106,7 +113,7 @@ def plan_status(session: ClientSession) -> dict[str, Any]:
             op["operation"] == "search" and op["status"] != "failed"
             for op in session.client._operations
         )
-        if not searched:
+        if not searched and not session.final_queries:
             pending.append("Search the planned topic values; no records have been queried.")
     rows = []
     for group in plan["routes"]:

@@ -121,6 +121,7 @@ class Hydrator:
         self._operations: list[dict[str, Any]] = []
         self._tool_calls: list[dict[str, Any]] = []
         self._registries: dict[str, dict[str, Any]] = {}
+        self._query_logs: dict[Path, tuple[Path, int]] = {}
         if isinstance(self.source, SparqlHelper):
             self.source.enable_query_collection(clear=False, include_results=True)
 
@@ -151,7 +152,7 @@ class Hydrator:
             item["query_ids"] = list(range(start + 1, len(self._records()) + 1))
             item["finished_at"] = datetime.now(timezone.utc).isoformat()
 
-    def session_metadata(self) -> dict[str, Any]:
+    def session_metadata(self, *, include_results: bool = True) -> dict[str, Any]:
         """Return all retained helper queries and named steps, not a data snapshot.
 
         Query IDs identify executions, including repeated texts. Queries outside
@@ -171,7 +172,20 @@ class Hydrator:
                 "max_subjects": self.max_subjects,
             },
             "queries": [
-                {"id": index, **asdict(record)} for index, record in enumerate(self._records(), 1)
+                {
+                    "id": index,
+                    **(
+                        asdict(record)
+                        if include_results
+                        else {
+                            **{
+                                key: value for key, value in vars(record).items() if key != "result"
+                            },
+                            "result_retained": False,
+                        }
+                    ),
+                }
+                for index, record in enumerate(self._records(), 1)
             ],
             "steps": [dict(step) for step in self._steps],
             "retrievals": list(self._retrievals),
@@ -180,12 +194,29 @@ class Hydrator:
             "registries": dict(self._registries),
         }
 
-    def save_session(self, path: str | Path) -> None:
-        """Save query text, step outcomes, schema, and budgets as JSON."""
-        Path(path).write_text(
-            json.dumps(self.session_metadata(), indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
+    def save_session(self, path: str | Path, *, incremental: bool = False) -> None:
+        """Save session JSON. Incremental mode appends query results to a sidecar.
+
+        Keep both files together. QueryLog.read loads either representation.
+        """
+        path = Path(path).resolve()
+        metadata = self.session_metadata(include_results=not incremental)
+        if incremental:
+            journal, written = self._query_logs.get(
+                path, (path.with_name(f"{path.stem}-{uuid4().hex}.queries.jsonl"), 0)
+            )
+            records = self._records()
+            with journal.open("a", encoding="utf-8") as stream:
+                for index, record in enumerate(records[written:], written + 1):
+                    json.dump({"id": index, **vars(record)}, stream, ensure_ascii=False)
+                    stream.write("\n")
+            self._query_logs[path] = (journal, len(records))
+            metadata["queries_file"] = journal.name
+        temporary = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
+        with temporary.open("w", encoding="utf-8") as stream:
+            json.dump(metadata, stream, ensure_ascii=False)
+            stream.write("\n")
+        temporary.replace(path)
 
     def model(self, name_or_iri: str) -> type[BaseModel]:
         """Find a generated class by its Python name or full RDF class IRI."""

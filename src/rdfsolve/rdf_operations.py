@@ -89,10 +89,30 @@ class Plan(Contract):
     max_hops: HopLimit = 3
 
 
-class Answer(Contract):
-    """Execute one final SELECT for chosen linked results and record fields."""
+class PathFilter(Contract):
+    """Match a route class by exact IRIs or text in selected fields."""
 
-    references: list[str] = Field(min_length=1, max_length=50)
+    kind: str
+    fields: list[str] = Field(default_factory=list, max_length=12)
+    terms: list[str] = Field(default_factory=list, max_length=12)
+    iris: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def require_values(self) -> PathFilter:
+        """Require text or exact identifiers, but not both."""
+        if bool(self.terms) == bool(self.iris):
+            raise ValueError("Supply terms or iris for each filter")
+        if self.terms:
+            Search(terms=self.terms)
+        return self
+
+
+class Answer(Contract):
+    """Execute selected paths with filters, then read the requested fields."""
+
+    references: list[str] = Field(default_factory=list, max_length=50)
+    paths: list[str] = Field(default_factory=list, max_length=20)
+    where: list[PathFilter] = Field(default_factory=list, max_length=12)
     name: str = Field(default="Answer", min_length=1, max_length=120)
     fields: dict[str, list[str]] = Field(default_factory=dict)
 

@@ -57,6 +57,10 @@ async def mcp_tools(server: MCPClient, *, require_plan: bool = False) -> Functio
             if name == "plan":
                 planned = True
             if result.structured_content is not None:
+                if result.structured_content.get("retryable_by_agent") is False:
+                    from rdfsolve.sparql_helper import EndpointError
+
+                    raise EndpointError(str(result.structured_content["failure"]))
                 return result.structured_content
             return [item.model_dump(mode="json") for item in result.content]
 

@@ -24,7 +24,17 @@ class QueryLog:
     @classmethod
     def read(cls, path: str | Path) -> QueryLog:
         """Open a saved session log without contacting its source."""
-        return cls(json.loads(Path(path).read_text(encoding="utf-8")))
+        path = Path(path)
+        session = json.loads(path.read_text(encoding="utf-8"))
+        if name := session.get("queries_file"):
+            if Path(name).name != name:
+                raise ValueError("Query journal must be beside the session log")
+            with path.with_name(name).open(encoding="utf-8") as stream:
+                queries = {
+                    row["id"]: row for line in stream if line.strip() for row in [json.loads(line)]
+                }
+            session["queries"] = [queries[row["id"]] for row in session["queries"]]
+        return cls(session)
 
     def tools(self) -> pd.DataFrame:
         """List tool calls and the query executions used by each call."""

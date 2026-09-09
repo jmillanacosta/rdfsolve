@@ -45,11 +45,19 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
             async with lock:
                 try:
                     return await anyio.to_thread.run_sync(partial(function, **arguments))
-                except (ValueError, LookupError, EndpointError) as error:
+                except EndpointError as error:
+                    return {
+                        "status": "failed",
+                        "failure": {"category": type(error).__name__, "message": str(error)},
+                        "retryable_by_agent": False,
+                    }
+                except (ValueError, LookupError) as error:
                     raise ToolError(str(error)) from error
                 finally:
                     if log_path is not None:
-                        session.client.save_session(log_path)
+                        await anyio.to_thread.run_sync(
+                            partial(session.client.save_session, log_path, incremental=True)
+                        )
 
         local = function.__name__ in {"schema", "paths", "plan"}
         server.add_tool(
@@ -197,7 +205,7 @@ async def query_answer(
     Call while the server is open. A single already-final reference is read without
     executing it again. Omitted classes include their name and description fields.
     """
-    if len(references) == 1:
+    if len(references) == 1 and fields is None:
         payload = await _result_payload(server, references[0])
         if "answer" in payload:
             return QueryAnswer(payload)
@@ -208,6 +216,8 @@ async def query_answer(
         raise ValueError("\n".join(item.text for item in response.content if item.type == "text"))
     if response.structured_content is None:
         raise ValueError("Expected a final query reference")
+    if response.structured_content.get("status") == "failed":
+        raise EndpointError(str(response.structured_content["failure"]))
     return QueryAnswer(await _result_payload(server, response.structured_content["reference"]))
 
 
@@ -240,7 +250,7 @@ def main() -> None:
             create_server(session, log_path=arguments.log).run()
         finally:
             if arguments.log:
-                client.save_session(arguments.log)
+                client.save_session(arguments.log, incremental=True)
 
 
 if __name__ == "__main__":

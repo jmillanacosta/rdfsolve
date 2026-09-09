@@ -207,9 +207,12 @@ class DatasetClient(Hydrator):
             self._matches, columns=["source", "field", "target", "graph", "query_id", "path"]
         )
 
-    def session_metadata(self) -> dict[str, Any]:
+    def session_metadata(self, *, include_results: bool = True) -> dict[str, Any]:
         """Include the source/target matches with the saved query record."""
-        return {**super().session_metadata(), "links": list(self._matches)}
+        return {
+            **super().session_metadata(include_results=include_results),
+            "links": list(self._matches),
+        }
 
     @staticmethod
     def table(records: list[BaseModel], fields: list[str]) -> pd.DataFrame:

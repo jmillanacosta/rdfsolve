@@ -82,7 +82,7 @@ def test_mcp_serializes_calls_and_reads_a_selected_route():
                 assert links["Source class"].notna().all() and links["Query"].notna().all()
                 assert len(data.queries) == before
                 final = await query_answer(wire, [read.structured_content["reference"]], name="Events and pathways")
-                assert len(data.queries) == before + 1
+                assert len(data.queries) == before + 2
                 table = final.table()
                 exported = await read_result(wire, final.payload["reference"])
                 assert exported.equals(table) and exported.attrs["records"]
@@ -102,7 +102,7 @@ def test_mcp_serializes_calls_and_reads_a_selected_route():
                     restored += record.to_graph()
                 assert set(restored) == set(final.to_graph())
                 assert str(table.iloc[0]["Target IRI"]) in final.diagram(instances=True, row=0)
-                assert len(data.queries) == before + 1
+                assert len(data.queries) == before + 2
                 from rdfsolve.client_diagram import connection_diagram
                 diagram = connection_diagram(links.iloc[:1], instances=True)
                 assert str(links.iloc[0]["Source"]) in diagram
@@ -112,7 +112,7 @@ def test_mcp_serializes_calls_and_reads_a_selected_route():
                 assert "No observed connections" in connection_diagram(links.iloc[:0])
                 with pytest.raises(ValueError, match="path evidence"):
                     connection_diagram(pd.DataFrame())
-                assert len(data.queries) == before + 1
+                assert len(data.queries) == before + 2
             calls = data.session_metadata()["tool_calls"]
             assert not set(calls[0]["query_ids"]) & set(calls[1]["query_ids"])
             assert calls[0]["finished_at"] <= calls[1]["started_at"]
@@ -156,6 +156,38 @@ def test_stdio_opens_saved_schema_without_mining(tmp_path):
             assert not result.is_error
             assert result.structured_content["rows"][0]["id"] == "https://identifiers.org/cas/50-06-6"
     asyncio.run(run())
+
+
+def test_path_first_keeps_multivalued_fields_without_multiplying_connections():
+    from rdfsolve.answer_query import QueryAnswer
+    from rdfsolve.answer_plan import plan_status
+    from rdfsolve.rdf_operations import PathFilter
+
+    with client() as data:
+        session = data.session(source_id="aopwikirdf")
+        plan = session.plan(AOP, [CHEMICAL], ["Phenobarbital"], "Pathways and chemicals")
+        routes = [path["id"] for group in plan["routes"] for path in group["paths"]]
+        assert not data.queries
+        final = session.answer(paths=routes, where=[PathFilter(kind=CHEMICAL, terms=["Phenobarbital"])],
+                               fields={AOP: ["title"], CHEMICAL: ["title", "exactmatch"]})
+        result = QueryAnswer(session.export_result(final["reference"]))
+        table = result.table()
+        assert len(table) == 2
+        assert all(len(values) == 10 for values in table["Target exactmatch"])
+        assert set(table["Source IRI"]) == {URIRef("https://identifiers.org/aop/107"), URIRef("https://identifiers.org/aop/162")}
+        assert not plan_status(session)["pending"]
+        assert set(result.to_graph()) <= set(data.source)
+        assert not any(op["operation"] in {"search", "read"} for op in data._operations)
+        before = len(data.queries)
+        page = session.read(reference=final["reference"], detail=True)
+        assert len(page["preview"][0]["Target exactmatch"]) == 10
+        assert len(data.queries) == before
+        with pytest.raises(ValueError, match="Available fields"):
+            session.answer(paths=routes, where=[PathFilter(kind=CHEMICAL, fields=["missing"], terms=["x"])])
+        assert len(data.queries) == before
+        empty = session.answer(paths=routes, where=[PathFilter(kind=CHEMICAL, terms=["Phenobarbital"]),
+                                                   PathFilter(kind=AOP, terms=["unrelated nonexistent phrase"])])
+        assert empty["rows"] == 0 and empty["status"] == "complete"
 
 
 def test_agent_corrects_unknown_output_references_before_export():
