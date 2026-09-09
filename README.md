@@ -497,11 +497,32 @@ from `rdfsolve.mcp` shows the chosen classes, routes, searches and remaining gap
 result references; pass each one's `.reference` to `read_result` while the server
 is open. The notebook displays the explanation, a linked answer table, and named
 supporting tables.
-For one linked answer table, use
-`await read_answer(server, [item.reference for item in answer.output.results])`.
-It includes record metadata, relationship predicates and source definitions for
-observed paths only. `connection_diagram(result)` from `rdfsolve.client_diagram`
-draws those same rows; use `instances=True` to show individual records.
+For a final table with its own executable query:
+
+```python
+from rdfsolve.mcp import query_answer
+
+result = await query_answer(server, [item.reference for item in answer.output.results])
+table = result.table()
+print(result.query)
+```
+
+This retrieves names, descriptions and the links between the selected records.
+One SELECT produces the rows; paging and retries run inside rdfsolve, without
+extra model calls or a total-row cap. The query keeps the selected source IRIs,
+not the model's earlier judgment about which records belong in the answer.
+Use `fields={"Key event": ["title", "description"]}` to choose fields for a class.
+Multiple values produce separate rows; empty fields remain empty.
+
+`result.to_shacl()` returns the query example with its SHACL paths.
+`result.records()` returns generated Pydantic objects, including intermediate
+records; each object's `to_graph()` writes its returned RDF values.
+`result.to_graph()` returns the observed subset, combining selected named graphs.
+`result.diagram()` draws the returned links; `instances=True, row=0` shows one row.
+These exports send no requests. The original terms remain in `result.bindings`.
+Paging failures raise rather than returning a successful but incomplete table.
+Blank-node results cannot be safely joined across endpoint pages; use local RDF
+for those queries. Earlier exploration limits remain reported in `result.coverage`.
 
 The model selects a result reference, not the rows. `output="records"` returns
 the objects directly. Tables keep lists of RDF values, including their types
