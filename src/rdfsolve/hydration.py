@@ -118,6 +118,8 @@ class Hydrator:
         self._local_records: list[QueryRecord] = []
         self._steps: list[dict[str, Any]] = []
         self._retrievals: list[dict[str, Any]] = []
+        self._operations: list[dict[str, Any]] = []
+        self._registries: dict[str, dict[str, Any]] = {}
         if isinstance(self.source, SparqlHelper):
             self.source.enable_query_collection(clear=False, include_results=True)
 
@@ -172,6 +174,8 @@ class Hydrator:
             ],
             "steps": [dict(step) for step in self._steps],
             "retrievals": list(self._retrievals),
+            "operations": list(self._operations),
+            "registries": dict(self._registries),
         }
 
     def save_session(self, path: str | Path) -> None:

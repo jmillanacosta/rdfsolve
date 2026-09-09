@@ -9,7 +9,7 @@ from collections.abc import Iterator
 from html import escape
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from pydantic import BaseModel
@@ -23,6 +23,9 @@ from rdfsolve.registry import Registry
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.sparql_helper import EndpointError
+
+if TYPE_CHECKING:
+    from rdfsolve.client_session import ClientSession
 
 
 def _key(name: str) -> str:
@@ -53,6 +56,25 @@ class Client(DatasetClient):
         from rdfsolve.rdf_operations import build_registry
 
         return build_registry(self, source_id)
+
+    def session(
+        self,
+        *,
+        source_id: str,
+        preview_rows: int = 20,
+        max_results: int = 50,
+        max_records: int = 1000,
+    ) -> ClientSession:
+        """Run registered reads with retained results and a shared query log."""
+        from rdfsolve.client_session import ClientSession
+
+        return ClientSession(
+            self,
+            source_id=source_id,
+            preview_rows=preview_rows,
+            max_results=max_results,
+            max_records=max_records,
+        )
 
     def paths_between(
         self,

@@ -75,11 +75,17 @@ class Registry(Contract):
         content = json.dumps(self.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(content.encode()).hexdigest()
 
-    def find(self, text: str = "", *, limit: int = 5) -> list[dict[str, str]]:
-        """Find operation cards by words, without making source requests."""
+    def find(self, text: str = "", *, types: bool = False, limit: int = 5) -> list[dict[str, str]]:
+        """Find operation or type cards by words, without making source requests."""
         if type(limit) is not int or not 1 <= limit <= 100:
             raise ValueError("Use a limit from 1 to 100")
         words = text.casefold().split()
+        if types:
+            return [
+                {"id": item.id, "label": item.label}
+                for item in self.types
+                if all(word in f"{item.id} {item.label}".casefold() for word in words)
+            ][:limit]
         return [
             {
                 "id": item.id,

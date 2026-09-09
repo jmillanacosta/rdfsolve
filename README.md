@@ -28,10 +28,10 @@
     /></a>
 </p>
 
-An RDF toolkit for retrieving SPARQL endpoint and RDF dump metadata, testing
-endpoint availability, running queries with batching and retries, extract and
-convert schemas between descriptive (VoID) and validation (SHACL) formats,
-generate typed Python models (Pydantic), and derive mappings across datasets.
+Tools to retrieve RDF metadata, test endpoint availability, run batched SPARQL
+queries and maintain source registries. Extract and convert schemas, generate
+typed Python clients, follow links between records and derive mappings across
+datasets. Keep the queries and results behind each exploration.
 
 ## Installation
 
@@ -412,9 +412,9 @@ python scripts/build_graphs.py output/schemas/ --mappings output/mappings/
 
 ### Let an agent use your typed client
 
-Install `rdfsolve[agents]` to give a PydanticAI agent the same classes, searches,
-and links of the typed client. Records stay in Python; queries and returned
-data remain in the session log.
+Install `rdfsolve[agents]` to let a PydanticAI agent find operations and types,
+resolve names to candidate records, and read their fields and links. Records
+stay in Python; queries and returned data remain in the session log.
 
 ```python
 from pydantic_ai.usage import UsageLimits
@@ -428,6 +428,57 @@ answer = await agent.run(
 )
 print(answer.output)
 data.query_log()
+```
+
+### Save what a client can do
+
+Export its operations, argument types, available fields and source evidence:
+
+```python
+session = data.session(source_id="aopwikirdf")
+session.registry.write("aopwikirdf.registry.json")
+
+print(session.registry.find("identifier"))
+print(session.registry.describe("records.get"))
+```
+
+This makes no source requests. The file records supported operations, not a
+promise that the endpoint is online. Its content revision, file format version
+and source dataset version are separate. The source version stays unset if it
+is unknown.
+
+Use the same operations from a script:
+
+```python
+matches = session.call("records.find", {"text": "Phenobarbital"})
+page = session.call(
+    "records.select",
+    {
+        "reference": matches["reference"],
+        "fields": ["title"],
+        "limit": 5,
+    },
+)
+print(page["rows"])
+data.save_session("session.json")
+```
+
+Each row keeps its identifier, requested type, observed types and RDF values.
+Name searches return candidates, not a chosen identity. `next_offset` gives the
+next page of retained records; `retained_records` is not an endpoint total.
+`status="complete"` means the operation finished, not that the dataset is complete.
+Field reads apply only to the requested page. References belong to this session;
+use `session.release(reference)` to free a result when needed.
+
+The session log includes each operation, its arguments, outcome, registry
+snapshot and query IDs. No model service is needed for these script calls.
+To inspect a saved registry without connecting to its source:
+
+```python
+from rdfsolve.registry import Registry
+
+registry = Registry.read("aopwikirdf.registry.json")
+print(registry.find(types=True))
 ```
 
 ## Documentation
