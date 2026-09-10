@@ -465,13 +465,14 @@ python -m rdfsolve.mcp --schema aopwikirdf.schema.json --log session.json
 ```
 
 Use `--endpoint URL` to override its endpoint, or `--data subset.ttl` to query
-local RDF. Nothing is mined at startup. Your MCP client gets five tools:
+local RDF. Nothing is mined at startup. Your MCP client gets six tools:
 
 - `schema`: find classes and fields, with their source definitions.
 - `plan`: choose the answer's classes and topic values; list routes between them.
 - `search`: search several phrases across names and descriptive text; see what matched.
 - `paths`: inspect routes and the fields along them.
 - `read`: read fields or follow selected routes, including the intermediate links.
+- `answer`: join selected paths, apply filters, and return a table with its queries.
 
 Search can start from related events, not just the names of the records you want.
 It returns candidates to assess, not proof of relevance. The agent chooses search
@@ -495,9 +496,16 @@ records = table.attrs["records"]  # Generated Pydantic objects
 ```
 
 For both, use `await research_agent(server, model)` from `rdfsolve.pydantic_ai`.
-It asks the model to correct references that do not exist in that server session.
-It requires a class-and-route plan before querying, and rejects an answer that
-leaves available routes to requested classes untried. `await read_plan(server)`
+It provides class names up front and four tools: `schema`, `search`, `plan`, and
+`answer`. The package executes the joins and returns counts for the whole result,
+not just its preview. Repeated identical answers reuse the retained session result.
+It rejects unknown references and search candidates passed off as a final table.
+Requested object fields on a route's last class are joined to typed records.
+Each extension keeps the selected source route; it does not search for a new one.
+For direct session calls, enable this with `answer(..., expand_links=True)`.
+The research agent uses the plan's filters for its final query, not a capped
+search preview. Put exact identifiers in `plan.where` when selecting named records.
+It does not validate the model's scientific interpretation. `await read_plan(server)`
 from `rdfsolve.mcp` shows the chosen classes, routes, searches and remaining gaps.
 `answer.output.text` contains the explanation. `answer.output.results` contains
 result references; pass each one's `.reference` to `read_result` while the server
@@ -519,6 +527,9 @@ the paths by exact identifiers or text in their fields. `plan.where` retains eac
 required condition. Separate conditions use AND; terms within one use OR.
 Execution applies the planned conditions automatically. `answer.where` can add
 conditions; changing or removing a condition requires a new plan.
+Use `plan(..., via=["Intermediate class"])` when the requested connection must
+pass through a particular class. Leave `answer.fields` empty to include names
+and descriptions; select extra fields when needed.
 
 One SELECT retrieves the connections. Batched queries retrieve each record's
 requested fields without multiplying rows. Paging and recovery run inside rdfsolve,

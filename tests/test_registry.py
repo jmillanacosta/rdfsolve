@@ -65,14 +65,18 @@ def test_saved_enrichment_reaches_discovery_without_whole_schema():
         fields = session.schema(kind="Key Event", text="gene", limit=30)
         assert any(field["description"] for item in fields["types"] for field in item["fields"])
         assert "patterns" not in json.dumps(description) and not data.queries
-        with pytest.raises(ValueError, match="Gene identifier"):
-            session.plan("Adverse Outcome Pathway", ["Key Event"], [{"kind": AOP, "terms": ["thyroid"]}],
-                         "Thyroid-related pathways and their linked genes")
+        session.plan("Adverse Outcome Pathway", ["Key Event"], [{"kind": AOP, "terms": ["thyroid"]}],
+                     "Thyroid-related pathways and their linked genes")
         plan = session.plan("Adverse Outcome Pathway", ["Gene identifier"], [{"kind": AOP, "terms": ["thyroid"]}],
                             "Thyroid-related pathways and their linked genes", evidence="gene evidence")
         routes = plan["routes"][0]["paths"]
         assert {route["steps"][0]["to"] for route in routes} >= {"Key Event", "Key Event Relationship"}
         assert all(route["hops"] == 2 for route in routes)
+        constrained = session.plan("Adverse Outcome Pathway", ["Gene identifier"],
+            [{"kind": AOP, "terms": ["thyroid"]}], "Linked genes", via=["Key Event"])
+        assert constrained["routes"][0]["paths"]
+        assert all(path["steps"][0]["to"] == "Key Event"
+                   for path in constrained["routes"][0]["paths"])
         alternatives = session.paths("Adverse Outcome Pathway", "Key Event", max_hops=3, limit=30)
         shared = [route for route in alternatives["paths"] if route["shared_references"]]
         assert shared and any("Gene" in name for route in shared for name in route["shared_references"])

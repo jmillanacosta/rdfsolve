@@ -45,14 +45,18 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
             async with lock:
                 try:
                     return await anyio.to_thread.run_sync(partial(function, **arguments))
-                except EndpointError as error:
-                    return {
-                        "status": "failed",
-                        "failure": {"category": type(error).__name__, "message": str(error)},
-                        "retryable_by_agent": False,
-                    }
                 except (ValueError, LookupError) as error:
                     raise ToolError(str(error)) from error
+                except Exception as error:
+                    return {
+                        "status": "failed",
+                        "failure": {
+                            "category": type(error).__name__,
+                            "message": str(error),
+                            "kind": "endpoint" if isinstance(error, EndpointError) else "execution",
+                        },
+                        "retryable_by_agent": False,
+                    }
                 finally:
                     if log_path is not None:
                         await anyio.to_thread.run_sync(
@@ -72,6 +76,11 @@ def create_server(session: ClientSession, *, log_path: str | Path | None = None)
 
     for function in session.functions.values():
         register(function)
+
+    @server.resource("rdfsolve://classes", mime_type="application/json")
+    async def classes() -> str:
+        """List class names and identifiers from the saved schema, without field data."""
+        return json.dumps([{"label": item.label, "id": item.id} for item in session.registry.types])
 
     @server.resource("rdfsolve://plan", mime_type="application/json")
     async def plan() -> str:
@@ -211,6 +220,10 @@ async def query_answer(
     Call while the server is open. A single already-final reference is read without
     executing it again. Omitted classes include their name and description fields.
     """
+    if not references:
+        raise ValueError(
+            "No answer result was supplied. The agent must execute a path query before exporting a table."
+        )
     if len(references) == 1 and fields is None:
         payload = await _result_payload(server, references[0])
         if "answer" in payload:

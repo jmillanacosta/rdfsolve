@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from rdfsolve.rdf_operations import Paths, Plan
-from rdfsolve.schema_catalogue import words
 
 if TYPE_CHECKING:
     from rdfsolve.client_session import ClientSession
@@ -19,24 +18,6 @@ def build_plan(session: ClientSession, args: Plan) -> dict[str, Any]:
         - {source}
     )
     descriptions = {item.id: item for item in session.registry.types}
-    # Match only explicit class words. This does not resolve synonyms or infer intent.
-    generic = {"id", "identifier", "entity", "record", "class"}
-    concepts = {item.id: set(words(item.label)) - generic for item in descriptions.values()}
-    represented = set().union(*(concepts[kind] for kind in [source, *targets]))
-    requested = set(words(args.selection))
-    missing = [
-        item.label
-        for item in descriptions.values()
-        if concepts[item.id]
-        and concepts[item.id] <= requested
-        and not concepts[item.id] & represented
-    ]
-    if missing:
-        raise ValueError(
-            "The selection names classes missing from the answer columns: "
-            + ", ".join(missing)
-            + ". Choose the requested entity classes, not only intermediate classes."
-        )
     columns = [
         {"class": descriptions[kind].label, "type": kind, "role": role}
         for kind, role in [(source, "source"), *[(target, "target") for target in targets]]
@@ -45,22 +26,28 @@ def build_plan(session: ClientSession, args: Plan) -> dict[str, Any]:
     for target in targets:
         found = session._paths(
             Paths(
-                source=source, target=target, text=args.evidence, max_hops=args.max_hops, limit=30
+                source=source,
+                target=target,
+                text=args.evidence,
+                max_hops=args.max_hops,
+                limit=30,
+                via=args.via,
             )
         )
         ordered = sorted(found["paths"], key=lambda path: path["hops"])
-        chosen, seen = [], set()
-        for _ in range(min(3, len(ordered))):
+        chosen = []
+        counts: dict[tuple[str, ...], int] = {}
+        for _ in range(min(6, len(ordered))):
             path = min(
                 ordered,
                 key=lambda item: (
                     item["hops"],
-                    tuple(step["to"] for step in item["steps"]) in seen,
+                    counts.get(tuple(step["to"] for step in item["steps"]), 0),
                 ),
             )
             chain = tuple(step["to"] for step in path["steps"])
             chosen.append(path)
-            seen.add(chain)
+            counts[chain] = counts.get(chain, 0) + 1
             ordered.remove(path)
         found.update(paths=chosen, next_offset=0 if len(chosen) < found["matched_paths"] else None)
         routes.append({"target": target, **found})
@@ -71,6 +58,7 @@ def build_plan(session: ClientSession, args: Plan) -> dict[str, Any]:
         "evidence": args.evidence,
         "routes": routes,
         "max_hops": args.max_hops,
+        "via": args.via,
         "row": "One observed source-to-target route; retain intermediate records and query IDs.",
         "basis": "Proposed answer structure, not a claim that records or links exist",
         "shared_references": "Shared references establish common objects, not another relationship between records.",
@@ -102,7 +90,8 @@ def plan_status(session: ClientSession) -> dict[str, Any]:
             branch = final["branches"][int(row["_route"]["value"])]
             if branch["nodes"][0]["type"] == source:
                 references.setdefault(source, []).append(reference)
-                observed.setdefault(branch["nodes"][-1]["type"], set()).add(reference)
+                for node in branch["nodes"][1:]:
+                    observed.setdefault(node["type"], set()).add(reference)
     for reference, result in session.results.items():
         for match in result.evidence:
             if match.get("nodes") and match["nodes"][0]["type"] == source:

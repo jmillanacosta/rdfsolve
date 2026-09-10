@@ -18,6 +18,14 @@ if TYPE_CHECKING:
 PageSize = Annotated[int, Field(ge=1, le=30)]
 ReadSize = Annotated[int, Field(ge=1, le=100)]
 HopLimit = Annotated[int, Field(ge=1, le=3)]
+SearchTerms = Annotated[
+    list[str],
+    Field(
+        min_length=1,
+        max_length=12,
+        description="Literal substrings, matched with OR. Use short data values, not a question or class names.",
+    ),
+]
 
 
 class Schema(Contract):
@@ -32,7 +40,7 @@ class Schema(Contract):
 class Search(Contract):
     """Find candidate records in names, identifiers and descriptive text."""
 
-    terms: list[str] = Field(min_length=1, max_length=12)
+    terms: SearchTerms
     kind: str | None = None
     fields: list[str] = Field(default_factory=list, max_length=12)
 
@@ -76,17 +84,22 @@ class Paths(Contract):
     text: str = ""
     offset: int = Field(default=0, ge=0)
     limit: PageSize = 10
+    via: list[str] = Field(default_factory=list, max_length=2)
 
 
 class PathFilter(Contract):
     """Match a route class by exact IRIs or text in selected fields."""
 
     kind: str
-    fields: list[str] = Field(default_factory=list, max_length=12)
+    fields: list[str] = Field(
+        default_factory=list,
+        max_length=12,
+        description="Leave empty to search names and descriptions. Restrict only when the question specifies a particular field.",
+    )
     terms: list[str] = Field(
         default_factory=list,
         max_length=12,
-        description="Alternative text values (OR) for this one condition, not independent requirements.",
+        description="Literal data values for ONE requirement, combined with OR. Independent requirements need separate conditions. Never use field labels or desired output information as filter values.",
     )
     iris: list[str] = Field(default_factory=list)
 
@@ -112,6 +125,7 @@ class Plan(Contract):
     selection: str = Field(min_length=1, max_length=600)
     evidence: str = ""
     max_hops: HopLimit = 3
+    via: list[str] = Field(default_factory=list, max_length=2)
 
 
 class Answer(Contract):
@@ -122,6 +136,7 @@ class Answer(Contract):
     where: list[PathFilter] = Field(default_factory=list, max_length=12)
     name: str = Field(default="Answer", min_length=1, max_length=120)
     fields: dict[str, list[str]] = Field(default_factory=dict)
+    expand_links: bool = False
 
 
 ARGUMENTS: dict[str, type[Contract]] = {

@@ -62,7 +62,14 @@ def catalogue(
     items = [item for item in registry.types if not kinds or item.id in kinds]
     if text and not kinds:
         items = [item for item in items if score(type_text(item), text)]
-    items.sort(key=lambda item: (-score(type_text(item), text), item.label, item.id))
+    items.sort(
+        key=lambda item: (
+            -score(item.label, text),
+            -score(type_text(item), text),
+            item.label,
+            item.id,
+        )
+    )
     cards = []
     for item in items if kinds else items[offset : offset + limit]:
         card: dict[str, Any] = {

@@ -281,11 +281,15 @@ class Client(DatasetClient):
         return _name(field)
 
     def field_name(self, model: type[BaseModel], text: str) -> str:
-        """Resolve a field by its Python name or displayed source label."""
+        """Resolve a field by its Python name, source label or exact predicate IRI."""
         matches = [
             name
-            for name in model.model_fields
+            for name, field in model.model_fields.items()
             if _key(text) in {_key(name), _key(self.link_name(model, name))}
+            or (
+                isinstance(field.json_schema_extra, dict)
+                and field.json_schema_extra.get("rdf_property_iri") == text
+            )
         ]
         if len(matches) != 1:
             names = [

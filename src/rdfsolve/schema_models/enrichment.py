@@ -16,6 +16,7 @@ DEFINITION_PREDICATES = (
     "http://www.w3.org/2004/02/skos/core#definition",
     "http://purl.obolibrary.org/obo/IAO_0000115",
     "http://purl.org/dc/terms/description",
+    "http://purl.org/dc/terms/abstract",
     "http://www.w3.org/2000/01/rdf-schema#comment",
     "http://schema.org/description",
     "https://schema.org/description",

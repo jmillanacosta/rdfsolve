@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from copy import deepcopy
 from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -47,59 +48,56 @@ def save_answer(
     temporary.replace(path)
 
 
-async def mcp_tools(server: MCPClient, *, require_plan: bool = False) -> FunctionToolset[None]:
+async def mcp_tools(
+    server: MCPClient, *, names: set[str] | None = None, path_first: bool = False
+) -> FunctionToolset[None]:
     """Read tools from a connected MCP client. The caller keeps it open during the run."""
     toolset: FunctionToolset[None] = FunctionToolset()
-    planned = False
 
     def bind(name: str) -> Callable[..., Any]:
         """Bind one remote tool name without changing its argument schema."""
 
         async def call(**arguments: Any) -> Any:
             """Return structured results or let the model correct a failed call."""
-            nonlocal planned
-            if require_plan and name in {"search", "read", "answer"} and not planned:
-                raise ModelRetry(
-                    "Use schema to identify the requested classes, then plan the "
-                    "source, targets and grouped where conditions before querying records."
-                )
-            if require_plan and name == "search" and planned:
-                from rdfsolve.mcp import read_plan
-
-                progress = await read_plan(server)
-                pending_routes = [
-                    item for item in progress["pending"] if item.startswith("Follow a route")
-                ]
-                if pending_routes:
-                    raise ModelRetry(
-                        "Source candidates are already retained. Follow the planned "
-                        "links with read(reference=..., paths=[...]) before another "
-                        "text search. Leave fields empty to read destination names first. "
-                        + json.dumps(pending_routes)
-                    )
+            if path_first and name == "answer":
+                arguments["expand_links"] = True
             result = await server.call_tool(name, arguments)
             if result.is_error:
                 text = "\n".join(item.text for item in result.content if item.type == "text")
                 raise ModelRetry(text or "MCP tool failed")
-            if name == "plan":
-                planned = True
             if result.structured_content is not None:
                 if result.structured_content.get("retryable_by_agent") is False:
                     from rdfsolve.sparql_helper import EndpointError
 
-                    raise EndpointError(str(result.structured_content["failure"]))
+                    failure = result.structured_content["failure"]
+                    error = EndpointError if failure.get("kind") == "endpoint" else RuntimeError
+                    raise error(f"{name}: {failure['category']}: {failure['message']}")
                 return result.structured_content
             return [item.model_dump(mode="json") for item in result.content]
 
         return call
 
     for tool in (await server.list_tools()).tools:
+        if names is not None and tool.name not in names:
+            continue
+        schema = deepcopy(tool.input_schema)
+        description = tool.description
+        if path_first and tool.name == "answer":
+            for name in ("references", "where", "expand_links"):
+                schema["properties"].pop(name, None)
+            schema["additionalProperties"] = False
+            description = (
+                "Execute chosen path IDs with the plan's filters and return a final table. "
+                "fields maps class names to extra fields; omit it for names and descriptions. "
+                "Requested object fields extend the route to typed records. Paging is automatic. "
+                "Search previews do not restrict this query. Use plan.where with iris for exact records."
+            )
         toolset.add_tool(
             Tool.from_schema(
                 bind(tool.name),
                 name=tool.name,
-                description=tool.description,
-                json_schema=tool.input_schema,
+                description=description,
+                json_schema=schema,
                 sequential=True,
             )
         )
@@ -118,7 +116,7 @@ class ResultReference(BaseModel):
 
     reference: str = Field(
         pattern=r"^[0-9a-f]{32}$",
-        description="An existing result reference from a successful tool call. Read needed fields before returning it.",
+        description="An exact reference returned by a successful tool call in this session.",
     )
 
 
@@ -129,7 +127,7 @@ class ResearchAnswer(BaseModel):
         description="Answer the question with supporting evidence and any unresolved parts."
     )
     results: list[ResultReference] = Field(
-        description="Existing result references supporting the answer. Include each relevant record group, not only the starting records. Use an empty list if no data was retrieved."
+        description="Final table references returned by answer. Usually one table. Use [] when no answer query could be executed."
     )
 
 
@@ -147,10 +145,22 @@ async def research_agent(
     """
     from mcp.types import TextResourceContents
 
+    catalogue = await server.read_resource("rdfsolve://classes")
+    classes = "\n".join(
+        item.text for item in catalogue.contents if isinstance(item, TextResourceContents)
+    )
+    class_names = [item["label"] for item in json.loads(classes)]
     agent = Agent(
         model,
-        toolsets=[await mcp_tools(server, require_plan=True)],
-        instructions=server.instructions,
+        toolsets=[
+            await mcp_tools(server, names={"schema", "search", "plan", "answer"}, path_first=True)
+        ],
+        instructions=(
+            f"{server.instructions}\nRequested object fields on the last route class are joined "
+            f"to their typed records, keeping the full source route.\n"
+            f"First {min(50, len(class_names))} of {len(class_names)} classes; use schema to find others:\n"
+            f"{json.dumps(class_names[:50])}"
+        ),
         output_type=ResearchAnswer,
         model_settings=model_settings,
         retries=retries,
@@ -172,26 +182,11 @@ async def research_agent(
                 "do not repeat source queries merely to correct an ID: " + json.dumps(available)
             )
         unique = {result.reference: result for result in answer.results}
-        covered = set(unique)
-        for item in available:
-            if item["reference"] in unique:
-                covered.update(item.get("source_references", []))
-        from rdfsolve.mcp import read_plan
-
-        progress = await read_plan(server)
-        if progress["pending"]:
+        final = {item["reference"] for item in available if item["rows"] is not None}
+        if any(result.reference not in final for result in answer.results):
             raise ModelRetry(
-                "The requested answer is not investigated yet: " + json.dumps(progress["pending"])
-            )
-        missing = [
-            row
-            for row in progress["coverage"]
-            if row["references"] and not set(row["references"]) & covered
-        ]
-        if missing:
-            raise ModelRetry(
-                "Include retrieved linked records for these requested classes: "
-                + json.dumps(missing)
+                "Return a table from answer, not search candidates. Use plan to choose the "
+                "requested source and target classes, then answer with the returned path IDs."
             )
         return answer.model_copy(update={"results": list(unique.values())})
 

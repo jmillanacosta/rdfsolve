@@ -9,7 +9,7 @@ import pytest
 from mcp import Client as MCPClient, MCPError, StdioServerParameters
 from rdflib import Literal, URIRef
 
-from rdfsolve.mcp import create_server, query_answer, read_answer, read_result
+from rdfsolve.mcp import create_server, query_answer, read_result
 from rdfsolve.query_log import QueryLog
 from tests.test_client_api import AOP, CHEMICAL, DATA, client
 
@@ -29,6 +29,9 @@ def test_typed_export_keeps_values_while_previews_are_bounded(tmp_path):
             async with MCPClient(create_server(session, log_path=log_path)) as wire:
                 assert {t.name for t in (await wire.list_tools()).tools} == {"schema", "plan", "search", "paths", "read", "answer"}
                 tools = {t.name: t for t in (await wire.list_tools()).tools}
+                with pytest.raises(ValueError, match="No answer result"):
+                    await query_answer(wire, [])
+                assert not data.queries
                 assert tools["schema"].input_schema["properties"]["limit"]["maximum"] == 30
                 await wire.call_tool("schema", {"kind": AOP})
                 assert not data.queries
@@ -63,6 +66,30 @@ def test_typed_export_keeps_values_while_previews_are_bounded(tmp_path):
                 assert bad.is_error and "Available fields:" in bad.content[0].text
             assert QueryLog.read(log_path).tools().iloc[-1]["Status"] == "failed"
             assert records[0].to_graph()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("failure", [RuntimeError("Broken execution"), AttributeError("Broken client")])
+def test_execution_fault_is_not_an_agent_retry(monkeypatch, failure):
+    from pydantic_ai import Agent
+    from pydantic_ai.messages import ModelResponse, ToolCallPart
+    from pydantic_ai.models.function import FunctionModel
+    from rdfsolve.pydantic_ai import mcp_tools
+
+    calls = []
+    def model(messages, info):
+        calls.append(True)
+        return ModelResponse(parts=[ToolCallPart("search", {"terms": ["Phenobarbital"]})])
+    def fail(*args, **kwargs):
+        raise failure
+    async def run():
+        with client() as data:
+            monkeypatch.setattr(data, "search", fail)
+            async with MCPClient(create_server(data.session(source_id="aopwikirdf"))) as wire:
+                agent = Agent(FunctionModel(model), toolsets=[await mcp_tools(wire)])
+                with pytest.raises(RuntimeError, match=str(failure)):
+                    await agent.run("Find Phenobarbital")
+        assert len(calls) == 1
     asyncio.run(run())
 
 
@@ -181,6 +208,12 @@ def test_path_first_keeps_multivalued_fields_without_multiplying_connections():
         result = QueryAnswer(session.export_result(final["reference"]))
         table = result.table()
         assert len(table) == 2
+        assert sum(route["rows"] for route in result.summary()["routes"]) == len(table)
+        assert {item["class"]: item["count"] for item in result.summary()["entities"]}[AOP] == 2
+        before = len(data.queries)
+        repeated = session.answer(paths=routes, where=[PathFilter(kind=CHEMICAL, terms=["Phenobarbital"])],
+                                  fields={AOP: ["title"], CHEMICAL: ["title", "exactmatch"]})
+        assert repeated["reference"] == final["reference"] and len(data.queries) == before
         for i, binding in enumerate(result.bindings):
             heading = column(result, "target_field_exactmatch", int(binding["_route"]["value"]) + 1)
             assert len(table.iloc[i][heading]) == 10
@@ -211,6 +244,31 @@ def test_path_first_keeps_multivalued_fields_without_multiplying_connections():
             filtered = QueryAnswer(session.export_result(found["reference"]))
             assert {row["source"]["value"] for row in filtered.bindings} == {"https://identifiers.org/aop/162"}
             assert filtered.query.count("EXISTS") >= 2
+
+
+def test_object_field_extension_keeps_the_selected_source_route():
+    from rdfsolve.answer_query import QueryAnswer
+
+    event = "http://aopkb.org/aop_ontology#KeyEvent"
+    gene = "http://edamontology.org/data_1025"
+    predicate = "https://aopwiki.rdf.bigcat-bioinformatics.org/geneDetectedByNER"
+    with client(DATA.with_name("aopwikirdf_thyroid_genes_excerpt.ttl")) as data:
+        session = data.session(source_id="aopwikirdf")
+        plan = session.plan(AOP, [event], [
+            {"kind": AOP, "terms": ["thyroid"]},
+            {"kind": AOP, "terms": ["human", "mammal"]},
+        ], "Thyroid-related pathways and their linked genes", max_hops=1)
+        paths = [p["id"] for p in plan["routes"][0]["paths"]]
+        final = session.answer(paths=paths, fields={event: [predicate]}, expand_links=True)
+        result = QueryAnswer(session.export_result(final["reference"]))
+        assert len(result.bindings) == 1
+        row = result.bindings[0]
+        assert row["source"]["value"] == "https://identifiers.org/aop/300"
+        assert row["via1"]["value"] == "https://identifiers.org/aop.events/1656"
+        assert row["target"]["value"] == "https://identifiers.org/hgnc/11782"
+        assert [node["type"] for node in result.execution["branches"][0]["nodes"]] == [AOP, event, gene]
+        assert set(result.to_graph()) <= set(data.source)
+        assert not list(result.to_graph().triples((URIRef("https://identifiers.org/aop.events/277"), None, None)))
 
 
 def test_local_blank_nodes_keep_fields_and_identity(tmp_path):
@@ -252,61 +310,44 @@ def test_local_blank_nodes_keep_fields_and_identity(tmp_path):
             assert all(p.object_class == "BlankNode" or not p.object_class.startswith("BlankNode[") for p in schema.patterns)
 
 
-def test_agent_corrects_unknown_output_references_before_export(tmp_path):
-    from pydantic_ai.messages import ModelResponse, ToolCallPart, ToolReturnPart
+@pytest.mark.parametrize("invalid", ["unknown", "search"])
+def test_agent_rejects_unknown_or_unjoined_results(tmp_path, invalid):
+    from pydantic_ai.messages import ModelResponse, ToolCallPart, RetryPromptPart
     from pydantic_ai.models.function import FunctionModel
     from pydantic_ai.usage import UsageLimits
     from rdfsolve.pydantic_ai import research_agent, save_answer
 
     def model(messages, info):
-        if len(messages) == 1:
-            return ModelResponse(parts=[ToolCallPart("read", {"reference": "missing"})])
-        if len(messages) == 3:
-            return ModelResponse(parts=[ToolCallPart("plan", {"source": AOP, "targets": [CHEMICAL],
-                "where": [{"kind": AOP, "terms": ["carcinomas"]}], "selection": "Pathways and linked chemicals"})])
-        if len(messages) == 5:
-            return ModelResponse(parts=[ToolCallPart("search", {"terms": ["carcinomas"], "kind": AOP})])
-        payload = next(part.content for message in messages for part in message.parts
-                       if isinstance(part, ToolReturnPart) and isinstance(part.content, dict) and "reference" in part.content)
-        reference = "0" * 32 if len(messages) == 7 else payload["reference"]
-        if len(messages) == 11:
-            return ModelResponse(parts=[ToolCallPart("search", {"terms": ["carcinomas"], "kind": AOP})])
-        if len(messages) == 13:
-            plan = next(part.content for message in messages for part in message.parts
-                        if isinstance(part, ToolReturnPart) and part.tool_name == "plan")
-            return ModelResponse(parts=[ToolCallPart("read", {"reference": reference,
-                "paths": [path["id"] for path in plan["routes"][0]["paths"]]})])
+        retried = any(isinstance(part, RetryPromptPart) for message in messages for part in message.parts)
+        answer_tool = next(tool for tool in info.function_tools if tool.name == "answer")
+        assert set(answer_tool.parameters_json_schema["properties"]) == {"name", "paths", "fields"}
+        reference = final["reference"] if retried else bad_reference
         results = [{"reference": reference}, {"reference": reference}]
-        if len(messages) >= 15:
-            linked = [part.content for message in messages for part in message.parts
-                      if isinstance(part, ToolReturnPart) and part.tool_name == "read"][-1]
-            results.append({"reference": linked["reference"]})
         return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, {
-            "text": "Found linked chemicals.", "results": results,
+            "text": "Found connected pathways.", "results": results,
         })])
 
     async def run():
+        nonlocal final, bad_reference
         with client() as data:
             log_path = tmp_path / "session.json"
-            async with MCPClient(create_server(data.session(source_id="aopwikirdf"), log_path=log_path)) as wire:
+            session = data.session(source_id="aopwikirdf")
+            found = session.search(["Phenobarbital"], kind=CHEMICAL)
+            routes = session.paths(CHEMICAL, AOP)
+            final = session.answer(references=[found["reference"]], paths=[p["id"] for p in routes["paths"]])
+            bad_reference = "0" * 32 if invalid == "unknown" else found["reference"]
+            async with MCPClient(create_server(session, log_path=log_path)) as wire:
                 agent = await research_agent(wire, FunctionModel(model))
-                answer = await agent.run("Find pathways and linked chemicals", usage_limits=UsageLimits(request_limit=8))
                 before = len(data.queries)
+                answer = await agent.run("Find connected pathways", usage_limits=UsageLimits(request_limit=2))
                 tables = [await read_result(wire, result.reference) for result in answer.output.results]
-                assert answer.output.text == "Found linked chemicals."
-                assert len(tables) == 2
-                assert str(tables[1].iloc[0]["Identifier"]) == "https://identifiers.org/cas/50-06-6"
-                joined = await read_answer(wire, [item.reference for item in answer.output.results])
-                assert len(joined) == 2
-                assert all("has_chemical_entity" in value for value in joined["Relationship type"])
-                assert joined.attrs["title"] and joined.attrs["records"]
-                assert all(len(match["nodes"]) == 3 for match in joined.attrs["connections"].values())
+                assert len(tables) == 1
+                assert len(tables[0]) == 2
                 assert len(data.queries) == before
-            calls = data.session_metadata()["tool_calls"]
-            assert [c["status"] for c in calls] == ["complete", "complete", "complete"]
-            assert not calls[0]["query_ids"] and calls[1]["query_ids"]
-            save_answer(answer, log_path, question="Find pathways and linked chemicals")
+            data.save_session(log_path)
+            save_answer(answer, log_path, question="Find Phenobarbital")
             saved = QueryLog.read(log_path).agent
             assert saved["output"]["text"] == answer.output.text
             assert saved["usage"]["requests"] == answer.usage.requests
+    final, bad_reference = {}, ""
     asyncio.run(run())

@@ -35,6 +35,7 @@ def execute_answer(
     *,
     paths: list[str] | None = None,
     where: list[PathFilter] | None = None,
+    expand_links: bool = False,
 ) -> dict[str, Any]:
     """Query selected paths and filters, then their fields without multiplying rows."""
     if len(references) == 1 and references[0] in session.final_queries:
@@ -66,7 +67,19 @@ def execute_answer(
                 routes.setdefault(match["path"], set()).add(match["nodes"][0]["value"])
     for key in paths or []:
         if key not in session.routes:
-            raise ValueError("Unknown path ID; choose a path from plan or paths")
+            available = [
+                path["id"]
+                for group in session.answer_plan.get("routes", [])
+                for path in group["paths"]
+            ]
+            raise ValueError(
+                "Unknown path ID. Use IDs from plan, not record or class IRIs. "
+                + (
+                    f"Available IDs: {', '.join(available)}"
+                    if available
+                    else "The current plan has no routes. Use schema to find the requested target class and replan."
+                )
+            )
         source_type = session.routes[key][0][0]
         sources = {
             str(vars(record)["uri"])
@@ -79,17 +92,25 @@ def execute_answer(
         routes.setdefault(key, set()).update(sources)
     if not routes:
         raise ValueError("Supply paths from plan or paths, or references from a route read")
-    if len(routes) > 20:
-        raise ValueError("Select at most 20 answer routes")
     chosen = {
         str(getattr(session.client.model(kind), "rdf_class_iri", "")): names
         for kind, names in fields.items()
     }
+    if expand_links:
+        routes = _extend_fields(session, routes, chosen)
+    if len(routes) > 20:
+        raise ValueError("Select at most 20 answer routes; reduce the requested object fields")
     used_classes = {
         cls for key in routes for edge in session.routes[key] for cls in (edge[0], edge[2])
     }
     if chosen.keys() - used_classes:
-        raise ValueError("Requested fields include a class outside the selected routes")
+        raise ValueError(
+            "Requested fields include a class outside the selected routes. "
+            "Use fields={} for names and descriptions, or fields only for: "
+            + ", ".join(
+                session.client.type_name(session.client.model(cls)) for cls in sorted(used_classes)
+            )
+        )
     collection = QueryCollection()
     branches, bodies = [], []
     groups: dict[tuple[str, str], list[str]] = {}
@@ -166,6 +187,33 @@ def execute_answer(
             "interpretation": "Observed edges only. A shared reference does not establish another relationship between records.",
         },
     }
+
+
+def _extend_fields(
+    session: ClientSession, routes: dict[str, set[str]], fields: dict[str, list[str]]
+) -> dict[str, set[str]]:
+    """Join requested object fields without leaving the selected source route."""
+    extended: dict[str, set[str]] = {}
+    types = {item.id: item for item in session.registry.types}
+    for key, sources in routes.items():
+        route = session.routes[key]
+        cls = route[-1][2]
+        model = session.client.model(cls)
+        names = {session.client.field_name(model, name) for name in fields.get(cls, [])}
+        links = [field for field in types[cls].fields if field.name in names and field.targets]
+        additions = []
+        for field in links:
+            path = field.binding["path"]
+            if path["operator"] != "predicate":
+                raise ValueError("Route extensions need direct object fields")
+            for target in field.targets:
+                if target not in {route[0][0], *[edge[2] for edge in route]}:
+                    additions.append(
+                        session._keep_route([*route, (cls, path["iri"], target, False)])
+                    )
+        for identifier in additions or [key]:
+            extended.setdefault(identifier, set()).update(sources)
+    return extended
 
 
 def _read_all(
@@ -484,6 +532,37 @@ class QueryAnswer:
     def column_info(self) -> pd.DataFrame:
         """Map table headings to classes, predicates and query variables."""
         return pd.DataFrame(self._column_layout()[1]).drop_duplicates(ignore_index=True)
+
+    def summary(self) -> dict[str, Any]:
+        """Count all retained entities and routes, not just the displayed sample."""
+        entities: dict[str, set[tuple[str, str]]] = {}
+        counts = [0] * len(self.execution["branches"])
+        for row in self.bindings:
+            index = int(row["_route"]["value"])
+            counts[index] += 1
+            for node in self.execution["branches"][index]["nodes"]:
+                term = row[node["variable"]]
+                scope = row.get("_graph", {}).get("value", "") if term["type"] == "bnode" else ""
+                entities.setdefault(node["type"], set()).add((scope, term["value"]))
+        return {
+            "selection": "All recorded where conditions were applied. The preview is only a sample.",
+            "coverage": self.coverage,
+            "entities": [
+                {"class": kind, "count": len(values)} for kind, values in entities.items()
+            ],
+            "routes": [
+                {
+                    "rows": count,
+                    "classes": [node["label"] for node in branch["nodes"]],
+                    "links": [
+                        {key: edge[key] for key in ("predicate", "label", "definition", "inverse")}
+                        for edge in branch["edges"]
+                    ],
+                }
+                for count, branch in zip(counts, self.execution["branches"], strict=True)
+                if count
+            ],
+        }
 
     def _column_layout(self) -> tuple[list[dict[str, str]], list[dict[str, Any]]]:
         layouts, descriptions = [], []
