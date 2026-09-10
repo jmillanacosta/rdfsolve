@@ -315,7 +315,7 @@ def test_agent_rejects_unknown_or_unjoined_results(tmp_path, invalid):
     from pydantic_ai.messages import ModelResponse, ToolCallPart, RetryPromptPart
     from pydantic_ai.models.function import FunctionModel
     from pydantic_ai.usage import UsageLimits
-    from rdfsolve.pydantic_ai import research_agent, save_answer
+    from rdfsolve.pydantic_ai import _answer_agent, save_answer
 
     def model(messages, info):
         retried = any(isinstance(part, RetryPromptPart) for message in messages for part in message.parts)
@@ -337,7 +337,7 @@ def test_agent_rejects_unknown_or_unjoined_results(tmp_path, invalid):
             final = session.answer(references=[found["reference"]], paths=[p["id"] for p in routes["paths"]])
             bad_reference = "0" * 32 if invalid == "unknown" else found["reference"]
             async with MCPClient(create_server(session, log_path=log_path)) as wire:
-                agent = await research_agent(wire, FunctionModel(model))
+                agent = await _answer_agent(wire, FunctionModel(model), plan={"routes": [routes]})
                 before = len(data.queries)
                 answer = await agent.run("Find connected pathways", usage_limits=UsageLimits(request_limit=2))
                 tables = [await read_result(wire, result.reference) for result in answer.output.results]
@@ -350,4 +350,38 @@ def test_agent_rejects_unknown_or_unjoined_results(tmp_path, invalid):
             assert saved["output"]["text"] == answer.output.text
             assert saved["usage"]["requests"] == answer.usage.requests
     final, bad_reference = {}, ""
+    asyncio.run(run())
+
+
+def test_ask_keeps_one_budget_across_planning_and_execution():
+    from pydantic_ai.messages import ModelResponse, ToolCallPart, ToolReturnPart
+    from pydantic_ai.models.function import FunctionModel
+    from pydantic_ai.usage import UsageLimits
+    from rdfsolve.pydantic_ai import ask
+
+    def model(messages, info):
+        output = info.output_tools[0]
+        if "source" in output.parameters_json_schema["properties"]:
+            args = {"source": AOP, "targets": [CHEMICAL],
+                    "where": [{"kind": CHEMICAL, "terms": ["Phenobarbital"]}],
+                    "selection": "Pathways linked to Phenobarbital"}
+            return ModelResponse(parts=[ToolCallPart(output.name, args)])
+        results = [part.content for message in messages for part in message.parts
+                   if isinstance(part, ToolReturnPart) and part.tool_name == "answer"]
+        if not results:
+            tool = next(tool for tool in info.function_tools if tool.name == "answer")
+            paths = tool.parameters_json_schema["properties"]["paths"]["items"]["enum"]
+            return ModelResponse(parts=[ToolCallPart("answer", {"name": "Linked pathways", "paths": paths})])
+        return ModelResponse(parts=[ToolCallPart(output.name, {
+            "text": "Two connected pathways.", "results": [{"reference": results[-1]["reference"]}],
+        })])
+
+    async def run():
+        with client() as data:
+            async with MCPClient(create_server(data.session(source_id="aopwikirdf"))) as wire:
+                answer = await ask(wire, "Find pathways linked to Phenobarbital", model=FunctionModel(model),
+                                   usage_limits=UsageLimits(request_limit=3))
+                assert answer.usage.requests == 3
+                result = await query_answer(wire, [item.reference for item in answer.output.results])
+                assert len(result.bindings) == 2 and set(result.to_graph()) <= set(data.source)
     asyncio.run(run())

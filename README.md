@@ -495,9 +495,11 @@ table = await read_result(server, answer.output.reference)
 records = table.attrs["records"]  # Generated Pydantic objects
 ```
 
-For both, use `await research_agent(server, model)` from `rdfsolve.pydantic_ai`.
-It provides class names up front and four tools: `schema`, `search`, `plan`, and
-`answer`. The package executes the joins and returns counts for the whole result,
+For both, use `await ask(server, question, model=model)` from `rdfsolve.pydantic_ai`.
+It first identifies the requested classes and filters, then selects their routes.
+Both phases use the same model and share one usage budget. The execution phase
+cannot replace the chosen classes or use search previews as its final selection.
+The package executes the joins and returns counts for the whole result,
 not just its preview. Repeated identical answers reuse the retained session result.
 It rejects unknown references and search candidates passed off as a final table.
 Requested object fields on a route's last class are joined to typed records.
