@@ -30,33 +30,20 @@ def client(data_file=DATA):
     return Client(MinedSchema(about={"dataset_name": "aopwikirdf"}, patterns=list(patterns.values())), graph, graph_uris=[])
 
 
-def test_agent_tools_keep_typed_records_and_query_evidence():
-    from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
-    from pydantic_ai.models.function import FunctionModel
-    from pydantic_ai.usage import UsageLimits
-
-    from rdfsolve.pydantic_ai import ClientTools
-
-    def model(messages, info):
-        if len(messages) == 1:
-            return ModelResponse(parts=[ToolCallPart("search", {"terms": ["Phenobarbital"], "kind": CHEMICAL})])
-        return ModelResponse(parts=[TextPart("Found")])
-
+def test_workspace_keeps_typed_records_and_query_evidence():
     with client() as data:
-        tools = ClientTools(data, preview_rows=1, max_results=1)
-        agent = tools.agent(FunctionModel(model))
-        agent.run_sync("Find Phenobarbital", usage_limits=UsageLimits(request_limit=2))
-        records = next(iter(tools.session.results.values())).records
+        workspace = data.workspace()
+        matches = workspace.find("Phenobarbital", kind=CHEMICAL)
+        records = [workspace.records[item['ref']] for item in matches['records']]
         assert records and all(record.rdf_class_iri == CHEMICAL for record in records)
         assert all(record.to_graph() for record in records)
         session = data.session_metadata()
-        assert session["queries"] and all(query["result_retained"] for query in session["queries"])
-        before = len(session["queries"])
-        with pytest.raises(ValueError, match="budget"):
-            tools.session.search(["anything"])
-        with pytest.raises(ValueError, match="Unknown result"):
-            tools.session.read("another-session", [])
-        assert len(data.session_metadata()["queries"]) == before
+        assert session['queries'] and all(q['result_retained'] for q in session['queries'])
+        before = len(session['queries'])
+        assert workspace.find("Phenobarbital", kind=CHEMICAL) == matches
+        with pytest.raises(ValueError, match="Unknown"):
+            workspace.inspect("nonexistent-reference")
+        assert len(data.session_metadata()['queries']) == before
 
 
 def test_find_follow_values_and_saved_links(tmp_path):

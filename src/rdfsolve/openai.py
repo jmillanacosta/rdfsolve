@@ -1,20 +1,15 @@
-"""Small notebook entry point for a running OpenAI-compatible model server.
-
-No SLURM jobs, tunnels, model downloads, or schema mining are started here.
-"""
+"""Notebook convenience for the package-backed MCP agent. No planning logic."""
 from __future__ import annotations
 
-import json
-import logging
-from collections import Counter
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
+from time import perf_counter
+from typing import Any
 from uuid import uuid4
+import json
 import os
 import sys
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any
-
 
 SCHEMA_RELATIVE = Path("notebooks/data/aopwikirdf.schema.json")
 
@@ -77,7 +72,7 @@ def model_config(*, base_url: str | None = None, model_name: str | None = None) 
             model_name or os.getenv("RDFSOLVE_MODEL") or os.getenv("QWEN_MODEL") or "qwen36-35b-a3b")
 
 
-def launch_config(schema: str | Path | None = None, *, timeout: float = 900, total_ceiling: int = 2000) -> dict[str, Any]:
+def launch_config(schema: str | Path | None = None, *, timeout: float = 900, total_ceiling: int = 200) -> dict[str, Any]:
     """Use this kernel's Python and this exact package checkout in the subprocess."""
     path = resolve_schema(schema)
     env = dict(os.environ)
@@ -86,197 +81,128 @@ def launch_config(schema: str | Path | None = None, *, timeout: float = 900, tot
     env["PYTHONUNBUFFERED"] = "1"
     return dict(command=sys.executable,
         args=["-m", "rdfsolve.mcp", "--schema", str(path), "--source-id", "aopwikirdf",
-              "--timeout", str(timeout), "--total-ceiling", str(total_ceiling)], env=env)
+              "--timeout", str(timeout), "--max-paths", str(total_ceiling)], env=env)
 
 
-def server_parameters(schema: str | Path | None = None, *, timeout: float = 900, total_ceiling: int = 2000):
+def server_parameters(schema: str | Path | None = None, *, timeout: float = 900, total_ceiling: int = 200):
     from mcp import StdioServerParameters
     return StdioServerParameters(**launch_config(schema, timeout=timeout, total_ceiling=total_ceiling))
 
 
 @dataclass
 class NotebookAnswer:
-    """Retrieved data stays separate from the model's prose."""
     text: str
     state: str
     query: str | None
     bindings: list[dict[str, Any]]
-    result_ref: str | None
-    query_ref: str | None
     usage: Any
-    calls: list[dict[str, Any]]
+    calls: list[dict]
     schema: str
-    run: Any
-    execution: dict[str, Any] = field(default_factory=dict)
-    error: dict[str, Any] | None = None
-    messages: list[Any] = field(default_factory=list)
-    diagnostic_files: dict[str, str] = field(default_factory=dict)
+    run: Any = None
+    error: dict | None = None
+    query_ref: str | None = None
+    result_ref: str | None = None
+    execution: dict = field(default_factory=dict)
+    package: dict = field(default_factory=dict)
+    messages: list = field(default_factory=list)
+    diagnostic_files: dict = field(default_factory=dict)
+    elapsed_seconds: float = 0
 
     def table(self):
         if self.state != "complete":
-            raise ValueError(f"No executed result: state={self.state}. Read .text and .calls.")
+            raise ValueError(f"No executed result: {self.state}. Inspect .error and .calls.")
         import pandas as pd
-        return pd.DataFrame([{name: term["value"] for name, term in row.items()} for row in self.bindings])
+        return pd.DataFrame([{name:term['value'] for name,term in row.items()} for row in self.bindings])
 
-    def diagnostics(self) -> dict[str, Any]:
-        """Describe the recorded run, without claiming to infer its semantic cause."""
-        from rdfsolve.pydantic_ai import _argument_key
-        usage = self.usage() if callable(self.usage) else self.usage
-        actual = [c for c in self.calls if c.get("name") != "workflow_stop"]
-        keys = Counter(_argument_key(c["name"], c.get("model_arguments", c["arguments"])) for c in actual)
-        transitions = [c["result"] for c in actual if c["name"] in
-                       {"query_start", "query_decide", "query_finish"} and "state" in c["result"]]
-        executions = [c for c in actual if c["name"] == "query_finish"
-                      and c.get("sent_to_server", True)
-                      and c["arguments"].get("action", {}).get("type") == "execute"]
-        return {"state": self.state,
-                "model_requests": usage.get("requests") if isinstance(usage, dict) else getattr(usage, "requests", None),
-                "tool_calls": len(actual),
-                "tools": dict(Counter(c["name"] for c in actual)),
-                "server_calls": sum(c.get("sent_to_server", True) for c in actual),
-                "errors": dict(Counter(c["result"]["error"].get("code", "unknown")
-                                       for c in self.calls if "error" in c["result"])),
-                "accepted_sessions": len({r["session"] for r in transitions if r.get("session")}),
-                "execute_requests": len(executions),
-                "completed_result_artifacts": len({r["result_ref"] for r in transitions if r.get("result_ref")}),
-                "last_service_state": transitions[-1].get("state") if transitions else None,
-                "repeated_identical_actions": sum(n-1 for n in keys.values()),
-                "files": dict(self.diagnostic_files)}
-
-    def save(self, path: str | Path) -> None:
+    def diagnostics(self):
         from pydantic_core import to_jsonable_python
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        data = {name: value for name, value in vars(self).items() if name != "run"}
-        if callable(data["usage"]):
-            data["usage"] = data["usage"]()
-        path.write_text(json.dumps(to_jsonable_python(data), ensure_ascii=False, indent=2), encoding="utf-8")
+        usage=self.usage() if callable(self.usage) else self.usage
+        return {'state':self.state,'usage':to_jsonable_python(usage),
+                'elapsed_seconds':self.elapsed_seconds,'tool_calls':len(self.calls),
+                'tool_response_bytes':sum(c.get('result_bytes',0) for c in self.calls),
+                'package':self.package,'execution':self.execution,'error':self.error,
+                'files':self.diagnostic_files}
+
+    def save(self,path):
+        from pydantic_core import to_jsonable_python
+        data={k:v for k,v in vars(self).items() if k!='run'}
+        if callable(data['usage']):
+            data['usage']=data['usage']()
+        path=Path(path)
+        path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text(json.dumps(to_jsonable_python(data),ensure_ascii=False,indent=2),encoding='utf-8')
 
 
-def generation_settings(overrides: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Model-neutral budgets; explicit settings override environment defaults."""
-    settings = {"temperature": 0, "max_tokens": int(os.getenv("RDFSOLVE_MAX_TOKENS", "16384")),
-                "timeout": float(os.getenv("RDFSOLVE_MODEL_TIMEOUT", "900"))}
+def generation_settings(overrides=None):
+    settings={'temperature':0, 'max_tokens':int(os.getenv('RDFSOLVE_MAX_TOKENS','16384')),
+              'timeout':float(os.getenv('RDFSOLVE_MODEL_TIMEOUT','900'))}
     settings.update(overrides or {})
-    if settings.get("max_tokens") is not None and settings["max_tokens"] < 1:
-        raise ValueError("max_tokens must be positive")
     return settings
 
 
-def ensure_kernel_error_reply() -> None:
-    """Guard ipykernel's uninitialized traceback field for async exception groups.
+async def ask_aopwiki(question: str, *, schema=None, model=None, base_url=None,
+                     model_name=None, model_settings=None, usage_limits=None,
+                     timeout=900, total_ceiling=200, data_file=None):
+    """Use the existing schema and local-model environment, with one MCP investigation.
 
-    Does not catch errors or change their status. The native stderr traceback
-    remains available even when IPython bypasses its normal traceback hook.
+    Passing schema selects another dataset; no AOPWiki vocabulary is embedded in
+    the planner or tools. Full results are read outside the model context.
     """
+    from mcp import Client as MCPClient, StdioServerParameters
+    from rdfsolve.mcp.agent import ask,read_resource
+    load_notebook_env()
+    path=resolve_schema(schema)
+    if model is None:
+        from pydantic_ai.models.openai import OpenAIChatModel
+        from pydantic_ai.providers.openai import OpenAIProvider
+        url,name=model_config(base_url=base_url,model_name=model_name)
+        model=OpenAIChatModel(name,provider=OpenAIProvider(base_url=url,
+                             api_key=os.getenv('RDFSOLVE_MODEL_API_KEY','not-needed')))
+    config=launch_config(path,timeout=timeout,total_ceiling=total_ceiling)
+    if data_file is not None:
+        config['args']+=['--data-file',str(Path(data_file).resolve())]
+    output=os.getenv('RDFSOLVE_QWEN_OUTPUT') or os.getenv('RDFSOLVE_OUTPUT')
+    files={}
+    if output:
+        folder=Path(output);folder.mkdir(parents=True,exist_ok=True)
+        stem='rdfsolve-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')+'-'+uuid4().hex[:8]
+        files={'calls':str(folder/(stem+'.calls.jsonl')),'answer':str(folder/(stem+'.answer.json'))}
+        config['args']+=['--log',str(folder/(stem+'.package.json'))]
+    def log_call(item):
+        if files:
+            with Path(files['calls']).open('a',encoding='utf-8') as stream:
+                stream.write(json.dumps(item,ensure_ascii=False)+'\n')
+    started=perf_counter();calls=[];run=None
+    answer=NotebookAnswer('', 'failed', None, [], {}, calls, str(path),diagnostic_files=files)
+    # Some ipykernel versions access this after async exception groups.
     try:
         from IPython import get_ipython
+        shell=get_ipython()
+        if shell is not None and not hasattr(shell,'_last_traceback'):
+            shell._last_traceback=[]
     except ImportError:
-        return
-    shell = get_ipython()
-    if shell is not None and not hasattr(shell, "_last_traceback"):
-        shell._last_traceback = []
-
-
-async def ask_aopwiki(question: str, *, model=None, base_url: str | None = None,
-                     model_name: str | None = None, schema: str | Path | None = None,
-                     model_settings: dict[str, Any] | None = None, usage_limits=None,
-                     timeout: float = 900, total_ceiling: int = 2000,
-                     mcp_timeout: float = 21600, no_progress_limit: int | None = 4,
-                     diagnostics_dir: str | Path | None = None) -> NotebookAnswer:
-    """Ask once using the existing local model service and the saved AOPWiki schema."""
-    ensure_kernel_error_reply()
-    from mcp import Client as MCPClient
-    from pydantic_ai.exceptions import UnexpectedModelBehavior, UsageLimitExceeded
-    from pydantic_ai.models.openai import OpenAIChatModel
-    from pydantic_ai.providers.openai import OpenAIProvider
-    from rdfsolve.pydantic_ai import RepeatedToolCallError, ask, read_json_resource
-
-    load_notebook_env()
-    path = resolve_schema(schema)
-    url, name = model_config(base_url=base_url, model_name=model_name)
-    if model is None:
-        model = OpenAIChatModel(name, provider=OpenAIProvider(base_url=url,
-            api_key=os.getenv("RDFSOLVE_MODEL_API_KEY") or "not-needed"))
-    if mcp_timeout <= timeout:
-        raise ValueError("mcp_timeout must exceed the per-request endpoint timeout")
-    files, observer = _diagnostic_writer(diagnostics_dir)
-    calls = []
-    trace: dict[str, Any] = {}
-    model_error = None
-    run = None
-    # Permit server-side retries to finish before the MCP transport times out.
-    async with MCPClient(server_parameters(path, timeout=timeout, total_ceiling=total_ceiling),
-                         read_timeout_seconds=mcp_timeout) as server:
-        try:
-            run = await ask(server, question, model=model, observations=calls,
-                            model_settings=model_settings, usage_limits=usage_limits, trace=trace,
-                            no_progress_limit=no_progress_limit, on_observation=observer)
-        except (UnexpectedModelBehavior, UsageLimitExceeded, RepeatedToolCallError) as exc:
-            # Catch inside the MCP context: an expected budget failure must not
-            # escape into AnyIO teardown as nested exception groups.
-            errors = [c["result"]["error"] for c in calls if "error" in c["result"]]
-            model_error = {"code": "model_failure", "message": f"{type(exc).__name__}: {exc}",
-                           "tool_error_count": len(errors), "last_tool_error": errors[-1] if errors else None}
-        transitions = [c["result"] for c in calls if c["name"] in {"query_start", "query_decide", "query_finish"}
-                       and "state" in c["result"]]
-        last = transitions[-1] if transitions else {}
-        successes = [last] if last.get("state") == "complete" and last.get("result_ref") else []
-        result_ref = query = None
-        query_ref = last.get("query_ref")
-        execution = await read_json_resource(server, last["execution_ref"]) if last.get("execution_ref") else {}
-        bindings = []
-        if successes:
-            completed = successes[-1]
-            result_ref = completed["result_ref"]
-            data = await read_json_resource(server, result_ref)
-            if data["type"] != "result" or data["row_count"] != len(data["bindings"]):
-                raise RuntimeError("Invalid retained result artifact")
-            bindings = data["bindings"]
-            query_ref = result_ref.rsplit("/", 1)[0] + "/" + data["query_artifact_id"]
-        if query_ref:
-            query = (await read_json_resource(server, query_ref))["query"]
-        answer = NotebookAnswer(text=run.output if run is not None else model_error["message"],
-                              state="failed" if model_error else last.get("state", "failed"), query=query, bindings=bindings,
-                              result_ref=result_ref, query_ref=query_ref,
-                              usage=run.usage if run is not None else trace.get("usage"), calls=calls, schema=str(path), run=run,
-                              execution=execution, error=model_error or last.get("error"),
-                              messages=trace.get("messages", []), diagnostic_files=files)
+        pass
+    try:
+        async with MCPClient(StdioServerParameters(**config),read_timeout_seconds=timeout*4) as server:
+            run=await ask(server,question,model=model,model_settings=generation_settings(model_settings),
+                          usage_limits=usage_limits,calls=calls,on_call=log_call)
+            answer.run,answer.usage,answer.messages=run,run.usage,run.messages
+            answer.state,answer.text,answer.error=run.state,run.text,run.error
+            answer.query_ref=run.terminal.get('query_ref')
+            answer.result_ref=run.terminal.get('result_ref')
+            if answer.query_ref:
+                answer.query=(await read_resource(server,answer.query_ref))['sparql']
+            if answer.state=='complete':
+                data=await read_resource(server,answer.result_ref)
+                answer.bindings=data['bindings']
+                answer.execution=run.terminal.get('execution',{})
+            answer.package=await read_resource(server,'diagnostics')
+    except Exception as exc:
+        answer.state='failed'
+        answer.error={'type':type(exc).__name__,'message':str(exc),'code':'workflow_error'}
+        answer.text=f'{type(exc).__name__}: {exc}'
+    finally:
+        answer.elapsed_seconds=perf_counter()-started
         if files:
-            try:
-                answer.save(files["answer"])
-            except (OSError, TypeError, ValueError) as exc:
-                logging.getLogger(__name__).warning("Could not save final diagnostics: %s", exc)
-            else:
-                # Make the location visible before an unconditional .table() can
-                # throw in a user's old cell. No fabricated empty table on failure.
-                if answer.state != "complete":
-                    answer.text += "\nDiagnostics: " + files["answer"]
-        return answer
-
-
-
-def _diagnostic_writer(directory=None):
-    """Local append-only tool journal, outside the model's context.
-
-    SLURM's existing output-directory environment is reused. No new shell setup
-    is required. Each question gets a distinct file pair.
-    """
-    directory = directory or os.getenv("RDFSOLVE_TRACE_DIR") or os.getenv("RDFSOLVE_QWEN_OUTPUT")
-    if not directory:
-        return {}, None
-    root = Path(directory).expanduser().resolve()
-    root.mkdir(parents=True, exist_ok=True)
-    stem = "rdfsolve-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "-" + uuid4().hex[:8]
-    files = {"calls": str(root / (stem + ".calls.jsonl")), "answer": str(root / (stem + ".answer.json"))}
-    # Validate that the destination is writable before invoking the model.
-    Path(files["calls"]).touch(exist_ok=False)
-
-    def write(entry):
-        try:
-            with open(files["calls"], "a", encoding="utf-8") as stream:
-                stream.write(json.dumps(entry, ensure_ascii=False) + "\n")
-        except OSError as exc:
-            logging.getLogger(__name__).warning("Could not append tool diagnostics: %s", exc)
-
-    return files, write
+            answer.save(files['answer'])
+    return answer

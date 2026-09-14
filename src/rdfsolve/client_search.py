@@ -26,6 +26,11 @@ def search_records(
 
     args = Search(terms=terms, kind=kind, fields=fields)
     models = [client.model(args.kind)] if args.kind else list(client.models.values())
+    if fields and any(
+        (model.model_fields[client.field_name(model, name)].json_schema_extra or {}).get("rdf_path", {}).get("operator") not in (None, "predicate")
+        for model in models for name in fields
+    ):
+        return _search_field_paths(client, terms, models, fields)
     pairs: dict[tuple[str, str], str] = {}
     for model in models:
         cls = str(getattr(model, "rdf_class_iri", ""))
@@ -119,3 +124,48 @@ def search_records(
             "limit_reached": truncated,
         },
     )
+
+
+def _search_field_paths(client, terms, models, fields):
+    """Search explicitly selected full field paths; keep path evidence, not fake edges."""
+    from rdfsolve.client_api import Results, _name_fields
+    from rdfsolve.exploration import _path
+    from rdfsolve.schema_models.exporters.paths import path_to_sparql
+    branches, selected = [], {}
+    condition = " || ".join(f"CONTAINS(LCASE(STR(?text)), LCASE({Literal(t).n3()}))" for t in terms)
+    for model in models:
+        cls = str(model.rdf_class_iri)
+        for field in fields:
+            name = client.field_name(model, field)
+            path = _path(model, name)
+            selected[(cls, name)] = path
+            branches.append("{ " + f"?s a {_iri(cls)} ; {path_to_sparql(path)} ?text . "
+                            f"BIND({_iri(cls)} AS ?type) BIND({Literal(name).n3()} AS ?field) "
+                            f"FILTER(isIRI(?s) && !isBlank(?text) && ({condition}))" + " }")
+    if not branches:
+        raise ValueError("No matching generated field paths")
+    with client.step("Search selected generated field paths"):
+        rows = client._select("SELECT DISTINCT ?s ?type ?field ?text ?_graph WHERE { "
+                              + client._scope(" UNION ".join(branches))
+                              + f" }} ORDER BY ?s ?type ?field ?text LIMIT {client.max_rows+1}")
+        partial = len(rows) > client.max_rows
+        groups, evidence, seen = defaultdict(set), [], set()
+        for row in rows[:client.max_rows]:
+            subject, cls, name = (_term(row[k]) for k in ("s", "type", "field"))
+            if subject.kind != "uri" or (cls.value, name.value) not in selected:
+                raise ValueError("Unexpected field-path search binding")
+            if subject.value not in seen and len(seen) >= client.max_subjects:
+                partial = True
+                continue
+            seen.add(subject.value); groups[cls.value].add(subject.value)
+            path = selected[(cls.value, name.value)]
+            evidence.append({"id":subject.value,"type":cls.value,"field":name.value,
+                             "predicate":path.iri if path.operator=="predicate" else None,
+                             "path":path.model_dump(mode="json"),"text":_term(row["text"]).model_dump(mode="json"),
+                             "graph":row.get("_graph",{}).get("value"),"query_id":len(client._records())})
+        records=[]
+        for cls, ids in groups.items():
+            model=client.model(cls)
+            records.extend(client.get_many(model,sorted(ids),fields=_name_fields(model)))
+    return Results(client,records,evidence=evidence,coverage={"status":"partial" if partial else "complete",
+                   "basis":"Text candidates through explicitly selected generated field paths", "limit_reached":partial})

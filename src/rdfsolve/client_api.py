@@ -102,6 +102,61 @@ class Client(DatasetClient):
 
         return build_registry(self, source_id)
 
+    def workspace(self, *, source_id: str = "rdf", **kwargs):
+        """Open a retained exploration/composition workspace without an agent or MCP."""
+        from rdfsolve.workspace import Workspace
+        return Workspace(self, source_id=source_id, **kwargs)
+
+    def select(self, query: str):
+        """Execute SELECT through this client's shared helper and return typed cells.
+
+        Scope must already be present in query (Workspace.prepare adds it). The
+        returned QueryResult preserves the query's row associations and RDF terms.
+        This operation never creates another endpoint connection or bypasses
+        SparqlHelper.select_with_fallback.
+        """
+        from time import perf_counter
+        from rdflib.plugins.sparql import prepareQuery
+        from rdfsolve.query import QueryResult, ResultCell
+        parsed = prepareQuery(query)
+        if parsed.algebra.name != "SelectQuery":
+            raise ValueError("Client.select requires a SELECT query")
+        variables = [str(v) for v in parsed.algebra.PV]
+        started = perf_counter()
+        bindings = self._select(query)
+        rows = []
+        for binding in bindings:
+            row = {}
+            for name, cell in binding.items():
+                term = _term(cell)
+                row[name] = ResultCell(value=term.value, type=term.kind,
+                                       lang=term.language, datatype=term.datatype)
+            rows.append(row)
+        return QueryResult(query=query,
+            endpoint="" if isinstance(self.source, Graph) else self.source.endpoint_url,
+            variables=variables, rows=rows, row_count=len(rows),
+            duration_ms=round((perf_counter()-started)*1000))
+
+    def field_values(self, kind: str, field: str, *, text: str = "",
+                     limit: int = 8, offset: int = 0) -> list[dict[str, Any]]:
+        """Sample actual subject/value pairs through a generated field's full path.
+
+        This is discovery, not a final answer. Request limit+1 to detect another
+        page. Blank nodes must not be reused as identifiers in a later query.
+        """
+        from rdfsolve.exploration import _path
+        from rdfsolve.schema_models.exporters.paths import path_to_sparql
+        if type(limit) is not int or not 1 <= limit <= self.max_rows or offset < 0:
+            raise ValueError("Use a positive bounded limit and nonnegative offset")
+        model = self.model(kind)
+        name = self.field_name(model, field)
+        path = _path(model, name)
+        pattern = f"?subject a {_iri(model.rdf_class_iri)} ; {path_to_sparql(path)} ?value ."
+        if text:
+            pattern += f" FILTER(!isBlank(?value) && CONTAINS(LCASE(STR(?value)), LCASE({Literal(text).n3()})))"
+        return self._select(f"SELECT DISTINCT ?subject ?value WHERE {{ {self._scope(pattern)} }} "
+                            f"ORDER BY ?subject ?value LIMIT {limit} OFFSET {offset}")
+
     def session(
         self,
         *,
@@ -130,6 +185,8 @@ class Client(DatasetClient):
         max_hops: int = 3,
         both_directions: bool = True,
         max_paths: int = 1000,
+        allow_partial: bool = False,
+        allow_repeated_classes: bool = False,
     ) -> pd.DataFrame:
         """List class routes, or query connections to a matching record name.
 
@@ -153,6 +210,8 @@ class Client(DatasetClient):
             _iri(source_resource)
             source = str(getattr(type(source), "rdf_class_iri", ""))
         if target_value is not None or source_resource is not None:
+            if allow_partial or allow_repeated_classes:
+                raise ValueError("Partial/repeated-class options apply to schema routes, not observed value paths")
             source_class = str(getattr(self.model(source), "rdf_class_iri", ""))
             target_class = (
                 str(getattr(self.model(target), "rdf_class_iri", ""))
@@ -179,6 +238,8 @@ class Client(DatasetClient):
             max_hops=max_hops,
             both_directions=both_directions,
             max_paths=max_paths,
+            allow_partial=allow_partial,
+            allow_repeated_classes=allow_repeated_classes,
         )
 
     def connections(

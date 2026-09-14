@@ -44,13 +44,15 @@ def class_paths(
     max_hops: int,
     both_directions: bool,
     max_paths: int,
+    allow_partial: bool = False,
+    allow_repeated_classes: bool = False,
 ) -> pd.DataFrame:
     """Enumerate simple routes in the supplied schema, not instance matches."""
     _budget(max_hops, max_paths)
     start = client.model(source)
     end = client.model(target)
     first, last = str(getattr(start, "rdf_class_iri", "")), str(getattr(end, "rdf_class_iri", ""))
-    if first == last:
+    if first == last and not allow_repeated_classes:
         raise ValueError("Choose two different classes")
     models = {str(getattr(model, "rdf_class_iri", "")): model for model in client.models.values()}
     edges: dict[str, set[tuple[str, str, bool]]] = defaultdict(set)
@@ -74,24 +76,33 @@ def class_paths(
                 pending.append(previous)
     routes: list[list[tuple[str, str, str, bool]]] = []
 
-    def visit(node: str, seen: set[str], route: list[tuple[str, str, str, bool]]) -> None:
-        """Extend a route only where the target is still reachable."""
+    # Breadth-first search permits bounded, explicitly requested repeated-class
+    # roles. Stop with marked partial results, never convert exhaustion to absence.
+    queue = deque([(first, {first}, [])])
+    truncated, expansions = False, 0
+    expansion_limit = max(1000, max_paths * 100)
+    while queue:
+        node, seen, route = queue.popleft()
         if len(route) + distances.get(node, max_hops + 1) > max_hops:
-            return
-        if node == last:
+            continue
+        if node == last and route:
             routes.append(route)
             if len(routes) > max_paths:
-                raise HydrationLimitError(
-                    "Too many class paths; reduce max_hops or raise max_paths"
-                )
-            return
+                truncated = True
+                routes.pop()
+                break
+            continue
+        if len(route) >= max_hops:
+            continue
+        expansions += 1
+        if expansions > expansion_limit or len(queue) > expansion_limit:
+            truncated = True
+            break
         for predicate, next_node, backward in sorted(edges[node]):
-            if next_node not in seen:
-                visit(
-                    next_node, seen | {next_node}, [*route, (node, predicate, next_node, backward)]
-                )
-
-    visit(first, {first}, [])
+            if allow_repeated_classes or next_node not in seen:
+                queue.append((next_node, seen | {next_node}, [*route, (node, predicate, next_node, backward)]))
+    if truncated and not allow_partial:
+        raise HydrationLimitError("Class path budget exhausted; reduce max_hops or raise max_paths")
     routes.sort(key=lambda route: (len(route), route))
     rows = [
         [
@@ -106,7 +117,8 @@ def class_paths(
         for step, (s, p, o, backward) in enumerate(route, 1)
     ]
     table = pd.DataFrame(rows, columns=COLUMNS)
-    table.attrs.update(routes=routes, basis="mined class patterns", max_hops=max_hops)
+    table.attrs.update(routes=routes, basis="mined class patterns", max_hops=max_hops, truncated=truncated, expansions=expansions,
+                       status="partial" if truncated else "complete")
     return table
 
 

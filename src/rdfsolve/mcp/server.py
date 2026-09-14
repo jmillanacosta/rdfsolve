@@ -1,128 +1,147 @@
-"""Four-tool MCP v2 server. No legacy planner or fabricated backend interface."""
+"""MCP transport and typed contracts only. RDF work lives in Client.workspace()."""
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
-from typing import Any, Literal, TYPE_CHECKING
+from typing import Any
 
-if TYPE_CHECKING:
-    from mcp.server import Server
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic_core import to_jsonable_python
 
-from rdfsolve.client_api import Client
-from rdfsolve.mcp.query_service import Intent, QueryService
-
-logger = logging.getLogger(__name__)
-
-
-class _Args(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
+from rdfsolve.hydration import HydrationLimitError
+from rdfsolve.sparql_helper import EndpointError
+from rdfsolve.workspace import Workspace
 
 
-class StartArgs(_Args):
-    operation_id: str = Field(min_length=1)
-    question: str = Field(min_length=1)
-    intent: Intent
-    scope: str | None = None
+class Args(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
 
 
-class DecisionAction(_Args):
-    type: Literal["choose", "more", "reject", "expand", "revise"]
-    decision: str | None = None
-    option: str | None = None
-    intent: Intent | None = None
+class SchemaArgs(Args):
+    concepts: list[str] = Field(default_factory=list, max_length=8, description='Separate concepts; each searched independently over classes AND fields.')
+    owner: str | None = Field(default=None, description='Optional type reference or exact class label, to inspect its fields.')
+    offset: int = Field(default=0, ge=0)
 
 
-class DecideArgs(_Args):
-    session: str
-    revision: int = Field(ge=1)
-    operation_id: str = Field(min_length=1)
-    action: DecisionAction
+class FindArgs(Args):
+    text: str = Field(min_length=1, max_length=200)
+    kind: str | None = Field(default=None, description='Type reference or exact class label. Prefer a known type to broad search.')
+    fields: list[str] | None = Field(default=None, max_length=12)
+    descriptions: bool = Field(default=False, description='False searches entity names/IDs with Client.find; True uses Client.search over descriptive fields.')
+    offset: int = Field(default=0, ge=0)
 
 
-class InspectArgs(_Args):
-    target: str = Field(description="schema:<words>, type:<class IRI>, status, decision:<id>, option:<decision>:<option>, or requirement:<id>")
-    session: str | None = None
-    revision: int | None = Field(default=None, ge=1)
+class PathsArgs(Args):
+    source: str
+    target: str | None = None
+    target_text: str | None = Field(default=None, description='Alternative to target: core value-grounded path search. Contacts the source.')
+    max_hops: int = Field(default=2, ge=1, le=6)
+    offset: int = Field(default=0, ge=0)
 
 
-class FinishAction(_Args):
-    type: Literal["emit_query", "execute"]
-    operation_id: str | None = None
+class InspectArgs(Args):
+    ref: str
+    fields: list[str] | None = Field(default=None, max_length=12, description='Hydrate these generated fields on a retained record.')
+    text: str = Field(default='', description='For a field reference, optionally filter its sampled actual values.')
+    offset: int = Field(default=0, ge=0)
 
 
-class FinishArgs(_Args):
-    session: str
-    revision: int = Field(ge=1)
-    action: FinishAction
+class FollowArgs(Args):
+    record: str
+    field: str
+    target: str
+    fields: list[str] | None = Field(default=None, max_length=12)
+
+
+class PrepareArgs(Args):
+    sparql: str = Field(min_length=1, description='SELECT, optionally inserting grounded {{ref ?s ?o}} fragments or {{term_ref}} values. Scope is added by Client. Never executed automatically.')
+
+
+class ProbeArgs(Args):
+    query_ref: str
+    limit: int = Field(default=5, ge=1, le=20)
+
+
+class FinishArgs(Args):
+    query_ref: str
 
 
 CONTRACTS = {
-    "query_start": (StartArgs, "Start from the original question and a typed intent. Use schema inspection to obtain class labels/IRIs. A simple class listing uses where={op:'all',args:[]}. Do not supply SPARQL."),
-    "query_decide": (DecideArgs, "Choose an offered option, show more retained choices, reject, or revise intent. Use the current revision and a fresh operation_id. expand does not extend the configured search scope."),
-    "query_inspect": (InspectArgs, "Read retained schema or state. Before starting: schema:<short keywords> lists class IRIs, and type:<IRI> lists fields. State targets require session and revision. No endpoint query is run."),
-    "query_finish": (FinishArgs, "emit_query returns compiled SPARQL; execute runs that exact query and returns row count, five-row preview and a readable result_ref. execute requires action.operation_id. The preview is not the full result."),
+    'rdf_schema': (SchemaArgs, 'schema', 'Discover actual classes and full field paths in the saved schema. Multiple concepts are separate searches. Use owner to browse opaque fields. No endpoint query.'),
+    'rdf_find': (FindArgs, 'find', 'Ground entity names/IDs using Client.find or Client.search. Retains generated typed records and exact RDF terms. A candidate search does not impose a final substring filter.'),
+    'rdf_paths': (PathsArgs, 'paths', 'Use Client.paths_between / connections, plus retained compound SHACL fields. Returns grounded reusable fragments, direction, anchors and hop complexity. Paths are alternatives, not automatically correct meanings.'),
+    'rdf_inspect': (InspectArgs, 'inspect', 'Type: browse fields. Field: probe actual values using its full path. Record: hydrate selected fields using Client.get_many. Query/result: inspect retained artifact. Truncated text is an excerpt, never the RDF value.'),
+    'rdf_follow': (FollowArgs, 'follow', 'Follow a generated field from a retained typed record using Client.follow; retain typed targets and package evidence.'),
+    'rdf_prepare': (PrepareArgs, 'prepare', 'Compose grounded fragments with normal SPARQL OPTIONAL/UNION/FILTER. Package expands paths, allocates internal variables, parses, and applies Client graph scope. Returns a query artifact, NOT an answer.'),
+    'rdf_probe': (ProbeArgs, 'probe', 'Execute a bounded sample of a prepared SELECT through the same client/helper. Retains full sampled RDF values. Never finalizes the investigation.'),
+    'rdf_finish': (FinishArgs, 'finish', 'Explicitly execute the final prepared artifact once through Client.select and its helper fallbacks. Finish only when all requested outputs and restrictions are present. Zero rows are valid. Full rows remain in the result resource.'),
 }
 
 
-def dispatch(service: QueryService, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
-    """Validate actual calls, not just the schemas advertised to the model."""
+def dispatch(workspace: Workspace, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     if name not in CONTRACTS:
-        return {"error": {"code": "unknown_tool", "message": f"Unknown tool: {name}"}}
+        return {'error': {'code':'unknown_tool', 'message':name}}
+    model, method, _ = CONTRACTS[name]
     try:
-        args = CONTRACTS[name][0].model_validate(arguments).model_dump(mode="json", by_alias=True, exclude_none=True, exclude_unset=True)
-        if "session" in args:
-            args["session_id"] = args.pop("session")
-        return getattr(service, name)(**args)
+        args = model.model_validate(arguments).model_dump(exclude_none=True)
+        with workspace.lock:
+            return getattr(workspace,method)(**args)
     except ValidationError as exc:
-        details = [{"path": ".".join(map(str, e["loc"])), "message": e["msg"]} for e in exc.errors(include_input=False)[:5]]
-        return {"error": {"code": "invalid_input", "message": "Arguments do not match the tool contract", "details": details}}
-    except (ValueError, TypeError, KeyError) as exc:
-        return {"error": {"code": "invalid_input", "message": str(exc)}}
+        return {'error': {'code':'invalid_arguments','details':exc.errors(include_input=False,include_url=False)}}
+    except HydrationLimitError as exc:
+        return {'error': {'code':'search_budget','message':str(exc),'not_absence':True}}
+    except EndpointError as exc:
+        return {'state':'failed','error':{'code':'endpoint_error','message':str(exc)},
+                'execution':workspace.client.last_query_execution}
+    except (ValueError,KeyError,TypeError,LookupError) as exc:
+        return {'error': {'code':'invalid_request','message':str(exc)}}
     except Exception as exc:
-        logger.exception("%s failed", name)
-        return {"error": {"code": "internal_error", "message": f"{type(exc).__name__}: {exc}"}}
+        logging.getLogger(__name__).exception('Tool %s failed',name)
+        return {'error':{'code':'package_error','message':f'{type(exc).__name__}: {exc}'}}
 
 
-def create_server(client: Client, source_id: str | None = None, *, total_ceiling: int = 2000) -> Server:
+def create_server(client, source_id='rdf', *, max_paths=200):
     from mcp.server import Server
-    from mcp.types import (
-        CallToolResult, ListResourcesResult, ListToolsResult, ReadResourceResult,
-        Resource, TextContent, TextResourceContents, Tool,
-    )
-    service = QueryService(client, source_id=source_id, total_ceiling=total_ceiling)
+    from mcp.types import (CallToolResult, ListToolsResult, ReadResourceResult, ListResourcesResult, Resource,
+                           TextContent, TextResourceContents, Tool)
+    workspace = client.workspace(source_id=source_id,max_paths=max_paths)
 
     async def list_tools(ctx, params):
-        return ListToolsResult(tools=[Tool(name=name, description=description,
-                                          input_schema=model.model_json_schema(by_alias=True))
-                                      for name, (model, description) in CONTRACTS.items()])
+        return ListToolsResult(tools=[Tool(name=name,description=desc,input_schema=model.model_json_schema())
+            for name,(model,_,desc) in CONTRACTS.items()])
 
-    async def call_tool(ctx, params):
-        # Blocking endpoint I/O must not occupy the event loop. The service lock
-        # makes concurrent replay deterministic, including a cancelled client call.
-        result = await asyncio.to_thread(dispatch, service, params.name, params.arguments or {})
-        return CallToolResult(content=[TextContent(type="text", text=json.dumps(result, ensure_ascii=False))],
-                              structured_content=result, is_error="error" in result)
+    async def call_tool(ctx,params):
+        value = await asyncio.to_thread(dispatch,workspace,params.name,params.arguments or {})
+        value = to_jsonable_python(value)
+        # IDs are workspace-local; the resource URI is supplied by this adapter.
+        for key in ('query_ref','result_ref'):
+            if value.get(key):
+                value[key.replace('_ref','_uri')] = 'rdfsolve://artifacts/' + value[key]
+        return CallToolResult(content=[TextContent(type='text',text=json.dumps(value,ensure_ascii=False))],
+                              structured_content=value,is_error='error' in value)
 
-    async def list_resources(ctx, params):
-        with service._lock:
-            resources = [Resource(uri=f"rdfsolve://sessions/{owner}/artifacts/{identifier}",
-                                  name=identifier, mime_type="application/json")
-                         for identifier, owner in service._artifact_owners.items()]
-        return ListResourcesResult(resources=resources)
+    async def list_resources(ctx,params):
+        return ListResourcesResult(resources=[Resource(uri='rdfsolve://artifacts/diagnostics',
+            name='package-diagnostics',mime_type='application/json')])
 
-    async def read_resource(ctx, params):
-        result = await asyncio.to_thread(service.read_resource, str(params.uri))
-        return ReadResourceResult(contents=[TextResourceContents(uri=str(params.uri), mime_type="application/json",
-                                                                 text=json.dumps(result, ensure_ascii=False))])
+    async def read_resource(ctx,params):
+        prefix='rdfsolve://artifacts/'
+        uri=str(params.uri)
+        if not uri.startswith(prefix):
+            raise ValueError('Unknown resource URI')
+        ref=uri[len(prefix):]
+        with workspace.lock:
+            value = workspace.diagnostics() if ref=='diagnostics' else workspace.resource(ref)
+        text=json.dumps(to_jsonable_python(value),ensure_ascii=False)
+        return ReadResourceResult(contents=[TextResourceContents(uri=uri,mime_type='application/json',text=text)])
 
-    return Server(name="rdfsolve", on_list_tools=list_tools, on_call_tool=call_tool,
-                  on_list_resources=list_resources, on_read_resource=read_resource)
+    return Server(name='rdfsolve',on_list_tools=list_tools,on_call_tool=call_tool,
+                  on_list_resources=list_resources,on_read_resource=read_resource)
 
 
-async def run_server(client: Client, source_id: str | None = None, *, total_ceiling: int = 2000) -> None:
+async def run_server(client,source_id='rdf',*,max_paths=200):
     from mcp.server.stdio import stdio_server
-    server = create_server(client, source_id, total_ceiling=total_ceiling)
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(read_stream, write_stream, server.create_initialization_options())
+    server=create_server(client,source_id,max_paths=max_paths)
+    async with stdio_server() as (read,write):
+        await server.run(read,write,server.create_initialization_options())

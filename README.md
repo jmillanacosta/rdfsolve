@@ -436,140 +436,65 @@ Create graphs showing dataset relationships via shared classes and mappings:
 python scripts/build_graphs.py output/schemas/ --mappings output/mappings/
 ```
 
-### Let an agent use your typed client
+### Package-first exploration and MCP
 
-Install `rdfsolve[agents]` to let a PydanticAI agent search descriptive text,
-inspect definitions, choose paths, and read connected records. Records
-stay in Python; queries and returned data remain in the session log.
+The MCP folder contains transport and the PydanticAI scaffold. Discovery, typed
+records, field/path fragments and execution are performed with `rdfsolve`:
 
 ```python
-from pydantic_ai.usage import UsageLimits
-from rdfsolve.pydantic_ai import ClientTools
+from rdfsolve.client_api import Client
 
-tools = ClientTools(data)
-agent = tools.agent("openai:gpt-5.4-mini-2026-03-17")
-answer = await agent.run(
-    "Find Phenobarbital and tell me which classes and links describe it.",
-    usage_limits=UsageLimits(request_limit=8, tool_calls_limit=12),
-)
-print(answer.output)
-data.query_log()
+client = Client.open("notebooks/data/aopwikirdf.schema.json")
+work = client.workspace()
+print(work.schema(["Key Event", "taxon"]))
+# Use the returned type/field references for work.find(), work.paths(),
+# work.inspect(), work.follow(), and work.prepare(). No model is needed here.
 ```
 
-### Use the same tools through MCP
+`Workspace.find` delegates to `Client.find` / `Client.search`. Records are the
+existing generated Pydantic models. `paths` delegates to `Client.paths_between`
+(including value-grounded search) or `Client.connections`, supplemented by retained
+full SHACL field paths. `inspect` and `follow` use core hydration and field readers.
+The workspace does not substitute prose matching for an entity relationship.
 
-Install `rdfsolve[mcp]` and start a local stdio server from a saved schema:
+Composition uses ordinary SELECT syntax, optionally inserting retained paths:
+`{{path_ref ?source ?target}}` and exact observed terms: `{{entity_ref}}`.
+The package expands its own PropertyPath objects, allocates internal variables,
+checks static vocabulary, and applies the Client graph scope. It does not require
+a second executable-intent language. `prepare` never executes. `probe` is a bounded
+sample; only `finish` executes a final artifact. Execution uses `Client.select`
+and the shared SPARQL helper, including its pagination and transport recovery.
+
+Install the existing pinned `rdfsolve[agents,mcp]` extras and start stdio:
 
 ```bash
-python -m rdfsolve.mcp --schema aopwikirdf.schema.json --log session.json
+python -m rdfsolve.mcp --schema notebooks/data/aopwikirdf.schema.json
 ```
 
-Use `--endpoint URL` to override its endpoint, or `--data subset.ttl` to query
-local RDF. Nothing is mined at startup. Your MCP client gets six tools:
+For local RDF, add `--data-file subset.ttl`. There are eight tools:
+`rdf_schema`, `rdf_find`, `rdf_paths`, `rdf_inspect`, `rdf_follow`, `rdf_prepare`,
+`rdf_probe`, and `rdf_finish`. Full artifacts are read through resource references;
+normal observations are bounded. There are no reviewer/extractor agents and no
+model-managed operation IDs. The agent implementation is `rdfsolve.mcp.agent`.
 
-- `schema`: find classes and fields, with their source definitions.
-- `plan`: choose the answer's classes and topic values; list routes between them.
-- `search`: search several phrases across names and descriptive text; see what matched.
-- `paths`: inspect routes and the fields along them.
-- `read`: read fields or follow selected routes, including the intermediate links.
-- `answer`: join selected paths, apply filters, and return a table with its queries.
-
-Search can start from related events, not just the names of the records you want.
-It returns candidates to assess, not proof of relevance. The agent chooses search
-phrases and routes; rdfsolve executes them and keeps the source evidence.
-Calls run one at a time; result references belong to that server session.
-The optional log retains tool answers and source queries, so treat it as data.
-
-[Ask AOPWiki a question](notebooks/mcp/01_ask_aopwiki.ipynb) shows one short
-investigation and the tools and queries it used. It opens the included schema and
-uses your local `notebooks/.env`; keys are not sent to the RDF server.
-
-Want data instead of a written answer? Set `output_type=ResultReference` on
-your PydanticAI agent, then read its selected result while the server is open:
 
 ```python
-from rdfsolve.pydantic_ai import ResultReference
-from rdfsolve.mcp import read_result
+from rdfsolve.openai import ask_aopwiki
 
-table = await read_result(server, answer.output.reference)
-records = table.attrs["records"]  # Generated Pydantic objects
+answer = await ask_aopwiki("Return Key Events with their applicable species and measurement methods for all Adverse outcome pathways in human taxon")
+print(answer.text)
+print(answer.diagnostics())
+if answer.state == "complete":
+    display(answer.table())
+else:
+    print(answer.error)
 ```
 
-For both, use `await ask(server, question, model=model)` from `rdfsolve.pydantic_ai`.
-It first identifies the requested classes and filters, then selects their routes.
-Both phases use the same model and share one usage budget. The execution phase
-cannot replace the chosen classes or use search previews as its final selection.
-The package executes the joins and returns counts for the whole result,
-not just its preview. Repeated identical answers reuse the retained session result.
-It rejects unknown references and search candidates passed off as a final table.
-Requested object fields on a route's last class are joined to typed records.
-Each extension keeps the selected source route; it does not search for a new one.
-For direct session calls, enable this with `answer(..., expand_links=True)`.
-The research agent uses the plan's filters for its final query, not a capped
-search preview. Put exact identifiers in `plan.where` when selecting named records.
-It does not validate the model's scientific interpretation. `await read_plan(server)`
-from `rdfsolve.mcp` shows the chosen classes, routes, searches and remaining gaps.
-`answer.output.text` contains the explanation. `answer.output.results` contains
-result references; pass each one's `.reference` to `read_result` while the server
-is open. The notebook displays the explanation, a linked answer table, and named
-supporting tables.
-For a final table with its own executable query:
+The model must still interpret the question and choose the correct scope and
+SPARQL operators.
 
-```python
-from rdfsolve.mcp import query_answer
-
-result = await query_answer(server, [item.reference for item in answer.output.results])
-table = result.table()
-print(result.query)
-```
-
-The agent can go straight from a plan to `answer(paths=..., fields=...)`.
-It does not need to search and load records first. Filters select classes along
-the paths by exact identifiers or text in their fields. `plan.where` retains each
-required condition. Separate conditions use AND; terms within one use OR.
-Execution applies the planned conditions automatically. `answer.where` can add
-conditions; changing or removing a condition requires a new plan.
-Use `plan(..., via=["Intermediate class"])` when the requested connection must
-pass through a particular class. Leave `answer.fields` empty to include names
-and descriptions; select extra fields when needed.
-
-One SELECT retrieves the connections. Batched queries retrieve each record's
-requested fields without multiplying rows. Paging and recovery run inside rdfsolve,
-without extra model calls or a total-row cap. A finished query confirms the links
-under the chosen filters, not that the filters cover every relevant record.
-Use `fields={"Key event": ["title", "description"]}` to choose fields for a class.
-Multiple field values stay together in one cell; empty fields remain empty.
-Headings use class, relationship and field labels, matching the diagram. Different
-relationships keep separate columns. `result.column_info()` lists the class and predicate
-IRIs behind each heading. Relationship labels and definitions are added locally,
-not requested from the endpoint on every row.
-
-`result.to_shacl()` returns the connection and field query examples with their SHACL paths.
-`result.records()` returns generated Pydantic objects, including intermediate
-records; each object's `to_graph()` writes its returned RDF values.
-`result.to_graph()` returns the observed subset, combining selected named graphs.
-`result.diagram()` draws the returned links; `instances=True, row=0` shows one row.
-These exports send no requests. `result.bindings` contains the connection bindings;
-`result.execution["metadata"]` contains the field bindings, with RDF types intact.
-Paging failures raise rather than returning a successful but incomplete table.
-Local RDF keeps blank-node identity when reading fields and exporting records.
-Endpoint blank-node labels belong to one response, not a persistent identifier;
-they cannot be joined across pages by label. Earlier exploration limits remain
-in `result.coverage`.
-
-Server failures stop the run after bounded recovery; they do not ask the model
-to repeat the investigation. Session logs keep query results in a companion
-`.queries.jsonl` file. Keep it beside the JSON log; `QueryLog.read()` opens both.
-
-The model selects a result reference, not the rows. `output="records"` returns
-the objects directly. Tables keep lists of RDF values, including their types
-and languages. `output="connections"` shows observed source-to-target routes,
-with intermediate records, predicates, graph and query IDs. It does not infer links
-between independently retrieved records. Original SPARQL bindings remain in `table.attrs["queries"]`;
-these are session queries, not a new query represented by the table.
-Unread fields show as `NA`; a read field with no returned values is `[]`.
-With an ordinary client, use `matches.table()` for the same output or
-`matches.show()` for a short display. Neither mines the source.
+The host does not
+finalize an exploratory query automatically. It stops after explicit `rdf_finish`.
 
 ### Save what a client can do
 
@@ -627,18 +552,6 @@ The session log includes each operation, its arguments, outcome, registry
 snapshot and query IDs. No model service is needed for these script calls.
 MCP logs keep query responses and schema context in companion files. Keep them
 beside the main JSON report; `QueryLog.read()` opens them together.
-
-After closing the MCP server, save the model's answer and token usage too:
-
-```python
-from rdfsolve.pydantic_ai import save_answer
-
-save_answer(answer, "session.json", question=question)
-```
-
-The text is under `agent.output.text`, usage under `agent.usage`, and other model
-text under `agent.messages`. Tool results stay in the session log, not duplicated
-in the model section. Older logs did not record the model answer.
 
 To inspect a saved registry without connecting to its source:
 
