@@ -8,6 +8,7 @@ import logging
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import asdict
 from datetime import datetime, timezone
 from importlib.metadata import version
@@ -114,6 +115,7 @@ class Hydrator:
         self.max_rows = max_rows
         self.max_subjects = max_subjects
         self.queries: list[str] = []
+        self.last_query_execution: dict[str, Any] = {}
         self._schema = schema
         self._local_records: list[QueryRecord] = []
         self._steps: list[dict[str, Any]] = []
@@ -288,6 +290,7 @@ class Hydrator:
     def _select(self, query: str) -> list[dict[str, Any]]:
         """Execute one bounded query and retain its text for inspection."""
         self.queries.append(query)
+        self.last_query_execution = {"strategy": "local_graph" if isinstance(self.source, Graph) else "single_response"}
         if isinstance(self.source, Graph):
             record = QueryRecord(query, "SELECT", "", success=False, purpose="hydrate")
             self._local_records.append(record)
@@ -306,7 +309,10 @@ class Hydrator:
             finally:
                 record.elapsed_seconds = time.monotonic() - started
         else:
-            result = self.source.select(query, purpose="hydrate")
+            try:
+                result = self.source.select_with_fallback(query, purpose="hydrate")
+            finally:
+                self.last_query_execution = deepcopy(getattr(self.source, "last_select_execution", {}))
         try:
             rows = result["results"]["bindings"]
         except (KeyError, TypeError) as error:

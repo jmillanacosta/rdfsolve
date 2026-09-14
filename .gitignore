@@ -939,3 +939,4 @@ notebooks/*models.py
 notebooks/*.ttl
 *.out
 *.err
+notebooks/mcp/output*

@@ -23,7 +23,13 @@ from rdfsolve.mcp.query_service import (
     UnparsedRequirement,
     WhereClause,
 )
-from rdfsolve.mcp.server import create_server, run_server
+
+def __getattr__(name):
+    if name in {"create_server", "run_server"}:
+        from rdfsolve.mcp import server
+        return getattr(server, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "BlockedReason",

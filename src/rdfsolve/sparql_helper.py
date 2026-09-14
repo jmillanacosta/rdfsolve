@@ -285,6 +285,9 @@ class SparqlHelper:
         sparql_engine: str = "",
         sparql_strategy: str = "",
         inter_request_delay: float = 0.0,
+        select_page_size: int = 100,
+        select_page_retries: int = 8,
+        select_page_cooldown: float = 5.0,
         max_response_bytes: int = 64 * 1024 * 1024,
     ) -> None:
         """Initialize SPARQL helper with retry logic and optional strategy hints."""
@@ -306,6 +309,13 @@ class SparqlHelper:
         self.sparql_engine = sparql_engine
         self.sparql_strategy = sparql_strategy
         self.inter_request_delay = inter_request_delay
+        if (type(select_page_size) is not int or select_page_size < 1
+                or type(select_page_retries) is not int or select_page_retries < 0
+                or select_page_cooldown < 0):
+            raise ValueError("Invalid SELECT recovery configuration")
+        self.select_page_size = select_page_size
+        self.select_page_retries = select_page_retries
+        self.select_page_cooldown = select_page_cooldown
 
         # Derive initial method from strategy hint when available.
         if sparql_strategy and not use_post and "post" in sparql_strategy:
@@ -750,7 +760,7 @@ class SparqlHelper:
                         if is_cost_limit:
                             tag = f"{query_type}[{purpose}]" if purpose else query_type
                             logger.warning(
-                                "%s query cost/time limit on %s - not retrying",
+                                "%s query cost/time limit on %s - not retrying the unchanged query",
                                 tag,
                                 self.endpoint_url,
                             )
@@ -1107,6 +1117,98 @@ class SparqlHelper:
 
         return simplified
 
+    def select_with_fallback(self, query: str, *, purpose: str = "",
+                             max_pages: int | None = 10000) -> dict[str, Any]:
+        """Try one SELECT, then the existing adaptive pager on cost/time failure.
+
+        All requests use this helper's transport fallback, host spacing, cooldowns,
+        response budgets and journal. No filters or required graph patterns are
+        dropped. Original outer LIMIT/OFFSET and duplicate multiplicity survive.
+        Paging assumes stable data. Blank-node identities and volatile expressions
+        cannot safely be reconstructed across independent endpoint responses.
+        """
+        from pyparsing import Optional, ZeroOrMore, StringEnd, ParseResults, original_text_for, restOfLine
+        from rdflib.plugins.sparql import prepareQuery
+        from rdflib.plugins.sparql.parser import (
+            Prologue, SelectClause, DatasetClause, WhereClause, GroupClause,
+            HavingClause, OrderClause, LimitOffsetClauses, ValuesClause, parseQuery,
+        )
+        meta = {"strategy": "single_response", "status": "running", "pages": 0}
+        self.last_select_execution = meta
+        started = time.monotonic()
+        try:
+            try:
+                result = self.select(query, purpose=purpose)
+            except EndpointTimeoutError as error:
+                meta.update(strategy="adaptive_offset", first_error=str(error))
+                logger.warning("SELECT[%s] switching to adaptive pages: %s", purpose, error)
+            else:
+                meta.update(status="complete", rows=len(result.get("results", {}).get("bindings", [])))
+                return result
+            parsed = parseQuery(query)[1]
+            if parsed.name != "SelectQuery":
+                raise QueryError("Pagination recovery requires SELECT")
+            if "modifier" in parsed and parsed["modifier"] == "REDUCED":
+                raise QueryError("Cannot safely page SELECT REDUCED across independent responses")
+            def volatile(node):
+                if getattr(node, "name", None) in {
+                    "Builtin_RAND", "Builtin_UUID", "Builtin_STRUUID", "Builtin_NOW", "Builtin_BNODE",
+                    "Aggregate_Sample", "Aggregate_GroupConcat",
+                }:
+                    return True
+                children = node.values() if isinstance(node, dict) else node if isinstance(node, (list, tuple, ParseResults)) else ()
+                return any(volatile(child) for child in children)
+            if volatile(parsed):
+                raise QueryError("Cannot paginate volatile expressions without changing their meaning")
+            projected = [str(v) for v in prepareQuery(query).algebra["PV"]]
+            if not projected:
+                raise QueryError("No projected variables to order for pagination")
+            # Locate the outer slice with the SPARQL grammar. Do not regex-rewrite
+            # LIMIT/OFFSET inside strings, nested queries, IRIs or comments.
+            body = (Prologue + SelectClause + ZeroOrMore(DatasetClause) + WhereClause
+                    + Optional(GroupClause) + Optional(HavingClause) + Optional(OrderClause))
+            syntax = (original_text_for(body)("body") + Optional(original_text_for(LimitOffsetClauses)("slice"))
+                      + original_text_for(ValuesClause)("values") + StringEnd())
+            syntax.ignore("#" + restOfLine)
+            parts = syntax.parse_string(query)
+            slice_ = parsed["limitoffset"] if "limitoffset" in parsed else {}
+            limit = int(slice_["limit"]) if "limit" in slice_ else None
+            offset = int(slice_["offset"]) if "offset" in slice_ else 0
+            order = []
+            for v in projected:
+                order.append(
+                    f'ASC(IF(BOUND(?{v}), IF(isIRI(?{v}), CONCAT("I", STR(?{v})), '
+                    f'CONCAT("L", ENCODE_FOR_URI(STR(?{v})), "|", '
+                    f'COALESCE(ENCODE_FOR_URI(LANG(?{v})), ""), "|", '
+                    f'COALESCE(ENCODE_FOR_URI(STR(DATATYPE(?{v}))), ""))), "U"))'
+                )
+            base = parts["body"] + "\n" + ("" if "orderby" in parsed else "ORDER BY ") + " ".join(order)
+            template = (self.escape_sparql_for_format(base) + "\nOFFSET {offset}\nLIMIT {limit}\n"
+                        + self.escape_sparql_for_format(parts["values"]))
+            rows = []
+            try:
+                for page in self.select_chunked(
+                    template, chunk_size=self.select_page_size, max_total_results=limit,
+                    delay_between_chunks=self.inter_request_delay, purpose=purpose, max_pages=max_pages,
+                    until_empty=True, stable_terms=True, max_page_retries=self.select_page_retries,
+                    initial_offset=offset, wait_after_timeout=self.select_page_cooldown,
+                    detect_repeated_pages=("modifier" in parsed and parsed["modifier"] == "DISTINCT"),
+                ):
+                    rows.extend(page)
+                    meta.update(pages=meta["pages"] + 1, rows=len(rows))
+                    logger.info("SELECT[%s] page %d; %d rows retained", purpose, meta["pages"], len(rows))
+            except PaginationTruncatedError as error:
+                error.partial_rows = deepcopy(rows)
+                raise
+            meta.update(status="complete", rows=len(rows), completeness_basis=
+                        "original_limit" if limit is not None and len(rows) == limit else "empty_page")
+            return {"head": {"vars": projected}, "results": {"bindings": rows}}
+        except Exception as error:
+            meta.update(status="failed", error=f"{type(error).__name__}: {error}")
+            raise
+        finally:
+            meta["elapsed_seconds"] = time.monotonic() - started
+
     def select_chunked(
         self,
         query_template: str,
@@ -1120,6 +1222,9 @@ class SparqlHelper:
         max_page_retries: int = 3,
         pagination: Literal["offset", "cursor"] = "offset",
         cursor_keys: list[str] | None = None,
+        initial_offset: int = 0,
+        wait_after_timeout: float = 5.0,
+        detect_repeated_pages: bool = True,
     ) -> Any:
         """Execute a SELECT query in chunks using offset or cursor paging.
 
@@ -1145,7 +1250,10 @@ class SparqlHelper:
         Yields:
             List of bindings (dicts) from each chunk.
         """
-        wait_after_timeout = 5.0  # seconds to wait after a timeout
+        if type(initial_offset) is not int or initial_offset < 0 or wait_after_timeout < 0:
+            raise ValueError("Use nonnegative offset and cooldown")
+        if pagination == "cursor" and initial_offset:
+            raise ValueError("initial_offset requires offset pagination")
         cursor_names: list[str] = []
         cursor: tuple[str, ...] | None = None
         cursor_filter = "true"
@@ -1192,7 +1300,7 @@ class SparqlHelper:
                 + " LIMIT {limit}"
             )
 
-        current_offset = 0
+        current_offset = initial_offset
         total_fetched = 0
         current_chunk_size = chunk_size
         if chunk_size < 1 or (max_pages is not None and max_pages < 1) or max_page_retries < 0:
@@ -1340,7 +1448,7 @@ class SparqlHelper:
                     {key: value for key, value in row.items() if key not in cursor_names}
                     for row in bindings
                 ]
-            if until_empty:
+            if until_empty and detect_repeated_pages:
                 digest = hashlib.sha256(json.dumps(bindings, sort_keys=True).encode()).hexdigest()
                 if digest in page_hashes:
                     raise PaginationTruncatedError(
@@ -1367,6 +1475,9 @@ class SparqlHelper:
                 logger.debug(
                     "Partial chunk received, pagination complete",
                 )
+                break
+
+            if max_total_results is not None and total_fetched >= max_total_results:
                 break
 
             # Delay between pages
