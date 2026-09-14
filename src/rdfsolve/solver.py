@@ -2,6 +2,11 @@
 
 The solver handles routine query-planning work internally while preserving
 query correctness. The model receives only decision-relevant observations.
+
+Milestone C adds binding-aware query fragments:
+- Explicit binding identities for same-class roles
+- Composable fragments (join, union, filter)
+- Shape-derived planning constraints
 """
 
 from __future__ import annotations
@@ -22,7 +27,7 @@ from rdfsolve.client_routes import Route
 
 if TYPE_CHECKING:
     from rdfsolve.client_api import Client
-    from rdfsolve.registry import Registry
+    from rdfsolve.registry import Registry, TypeDescription
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +114,170 @@ class CompactObservation(BaseModel):
     unresolved: list[str] = Field(default_factory=list)
 
 
+# =============================================================================
+# Milestone C: Binding-aware query fragments
+# =============================================================================
+
+
+class FragmentKind(str, Enum):
+    """Type of query fragment."""
+
+    NODE = "node"  # Single class binding
+    EDGE = "edge"  # Predicate connecting two nodes
+    JOIN = "join"  # Sequential composition
+    UNION = "union"  # Alternative paths
+    FILTER = "filter"  # Value constraint
+
+
+@dataclass
+class Binding:
+    """Explicit binding identity for a class occurrence.
+
+    When the same class appears multiple times in a query (e.g., source
+    and target are both ChemicalCompound), each occurrence gets a distinct
+    binding with a unique variable and role.
+    """
+
+    variable: str  # SPARQL variable name (e.g., "source", "via1", "target")
+    class_iri: str  # The RDF class IRI
+    role: str  # Semantic role: "source", "target", "via", "filter_anchor"
+    occurrence: int = 1  # Which occurrence of this class (1-indexed)
+    label: str | None = None  # Human-readable class label
+
+
+@dataclass
+class QueryFragment:
+    """Composable query building block with explicit bindings.
+
+    Fragments know their bindings, making it clear when same-class nodes
+    represent different entities in the query.
+    """
+
+    kind: FragmentKind
+    bindings: list[Binding] = field(default_factory=list)
+    children: list[QueryFragment] = field(default_factory=list)
+    predicate: str | None = None  # For EDGE fragments
+    inverse: bool = False  # For EDGE fragments
+    condition: dict[str, Any] | None = None  # For FILTER fragments
+    route_id: str | None = None  # Source route ID if derived from route
+
+    def variables(self) -> set[str]:
+        """Return all SPARQL variables used in this fragment."""
+        result = {b.variable for b in self.bindings}
+        for child in self.children:
+            result.update(child.variables())
+        return result
+
+    def classes(self) -> set[str]:
+        """Return all class IRIs referenced in this fragment."""
+        result = {b.class_iri for b in self.bindings}
+        for child in self.children:
+            result.update(child.classes())
+        return result
+
+    def binding_for_class(self, class_iri: str, occurrence: int = 1) -> Binding | None:
+        """Find binding for a specific class occurrence."""
+        count = 0
+        for binding in self.bindings:
+            if binding.class_iri == class_iri:
+                count += 1
+                if count == occurrence:
+                    return binding
+        for child in self.children:
+            found = child.binding_for_class(class_iri, occurrence)
+            if found:
+                return found
+        return None
+
+
+@dataclass
+class BindingContext:
+    """Tracks binding allocations across query composition.
+
+    Ensures unique variable names and tracks class occurrences.
+    """
+
+    _counter: int = 0
+    _class_counts: dict[str, int] = field(default_factory=dict)
+    _bindings: dict[str, Binding] = field(default_factory=dict)
+
+    def allocate(self, class_iri: str, role: str, label: str | None = None) -> Binding:
+        """Allocate a new binding for a class."""
+        occurrence = self._class_counts.get(class_iri, 0) + 1
+        self._class_counts[class_iri] = occurrence
+
+        # Generate variable name based on role and occurrence
+        if role == "source":
+            variable = "source"
+        elif role == "target":
+            variable = "target" if occurrence == 1 else f"target{occurrence}"
+        elif role == "via":
+            variable = f"via{self._counter}"
+            self._counter += 1
+        else:
+            variable = f"n{self._counter}"
+            self._counter += 1
+
+        binding = Binding(
+            variable=variable,
+            class_iri=class_iri,
+            role=role,
+            occurrence=occurrence,
+            label=label,
+        )
+        self._bindings[variable] = binding
+        return binding
+
+    def get(self, variable: str) -> Binding | None:
+        """Look up binding by variable name."""
+        return self._bindings.get(variable)
+
+    def occurrences(self, class_iri: str) -> int:
+        """Count how many times a class has been bound."""
+        return self._class_counts.get(class_iri, 0)
+
+    def all_bindings(self) -> list[Binding]:
+        """Return all allocated bindings."""
+        return list(self._bindings.values())
+
+
+@dataclass
+class ShapeConstraint:
+    """Constraint derived from schema shape.
+
+    Used to inform planning decisions based on schema structure.
+    """
+
+    class_iri: str
+    field_name: str
+    predicate_iri: str
+    required: bool = False
+    targets: list[str] = field(default_factory=list)  # Target class IRIs
+    cardinality: str = "many"  # "one", "many", "optional"
+
+
+@dataclass
+class PlanningFragment:
+    """High-level planning structure derived from shapes.
+
+    Represents what can be queried for a class, not the query itself.
+    """
+
+    class_iri: str
+    class_label: str
+    outgoing: list[ShapeConstraint] = field(default_factory=list)
+    incoming: list[ShapeConstraint] = field(default_factory=list)
+
+    def reachable_classes(self) -> set[str]:
+        """Return classes reachable in one hop."""
+        result: set[str] = set()
+        for constraint in self.outgoing:
+            result.update(constraint.targets)
+        for constraint in self.incoming:
+            result.add(constraint.class_iri)
+        return result
+
+
 class QuerySolver:
     """Coordinates query planning with bounded internal advancement.
 
@@ -166,6 +335,12 @@ class QuerySolver:
         self._result_reference: str | None = None
         self._final_query: dict[str, Any] | None = None
         self._execution_log: list[dict[str, Any]] = []
+
+        # Milestone C: Binding-aware fragments
+        self._binding_context = BindingContext()
+        self._planning_fragments: dict[str, PlanningFragment] = {}
+        self._query_fragments: list[QueryFragment] = []
+        self._build_planning_fragments()
 
     @property
     def plan_id(self) -> str:
@@ -629,13 +804,7 @@ class QuerySolver:
                 # Query compiled, waiting for execution
                 break
 
-            elif self._state == SolverState.COMPLETE:
-                break
-
-            elif self._state == SolverState.BLOCKED:
-                break
-
-            elif self._state == SolverState.FAILED:
+            elif self._state == SolverState.COMPLETE or self._state == SolverState.BLOCKED or self._state == SolverState.FAILED:
                 break
 
         if iteration >= max_iterations:
@@ -793,7 +962,183 @@ class QuerySolver:
 
         self._filters = [f.model_dump() for f in filters]
         self._compiled_query = f"Routes: {self._selected_routes}, Filters: {len(filters)}"
-        self._log("compile_query", {"routes": self._selected_routes, "filters": len(filters)})
+
+        # Build binding-aware fragments from selected routes
+        self._query_fragments = self._build_query_fragments()
+
+        self._log("compile_query", {
+            "routes": self._selected_routes,
+            "filters": len(filters),
+            "fragments": len(self._query_fragments),
+            "bindings": len(self._binding_context.all_bindings()),
+        })
+
+    # =========================================================================
+    # Milestone C: Fragment composition methods
+    # =========================================================================
+
+    def _build_planning_fragments(self) -> None:
+        """Build planning fragments from registry shapes.
+
+        Extracts navigable structure from schema to inform route planning.
+        """
+        for type_desc in self.registry.types:
+            outgoing = []
+            for field_desc in type_desc.fields:
+                path_binding = field_desc.binding.get("path", {})
+                if path_binding.get("operator") != "predicate":
+                    continue
+                predicate_iri = path_binding.get("iri", "")
+                if not predicate_iri:
+                    continue
+                outgoing.append(
+                    ShapeConstraint(
+                        class_iri=type_desc.id,
+                        field_name=field_desc.name,
+                        predicate_iri=predicate_iri,
+                        targets=list(field_desc.targets),
+                        cardinality="one" if len(field_desc.targets) == 1 else "many",
+                    )
+                )
+
+            self._planning_fragments[type_desc.id] = PlanningFragment(
+                class_iri=type_desc.id,
+                class_label=type_desc.label,
+                outgoing=outgoing,
+                incoming=[],  # Populated in second pass
+            )
+
+        # Second pass: populate incoming edges
+        for source_iri, source_frag in self._planning_fragments.items():
+            for constraint in source_frag.outgoing:
+                for target_iri in constraint.targets:
+                    if target_iri in self._planning_fragments:
+                        self._planning_fragments[target_iri].incoming.append(
+                            ShapeConstraint(
+                                class_iri=source_iri,
+                                field_name=constraint.field_name,
+                                predicate_iri=constraint.predicate_iri,
+                                targets=[source_iri],
+                            )
+                        )
+
+        self._log("build_planning_fragments", {
+            "classes": len(self._planning_fragments),
+            "total_constraints": sum(
+                len(f.outgoing) + len(f.incoming)
+                for f in self._planning_fragments.values()
+            ),
+        })
+
+    def _build_query_fragments(self) -> list[QueryFragment]:
+        """Build query fragments from selected routes with explicit bindings.
+
+        Returns a list of JOIN fragments, one per selected route.
+        """
+        fragments = []
+        self._binding_context = BindingContext()  # Reset for fresh compilation
+
+        for route_id in self._selected_routes:
+            if route_id not in self._routes:
+                continue
+            route = self._routes[route_id]
+            fragment = self._route_to_fragment(route_id, route)
+            fragments.append(fragment)
+
+        return fragments
+
+    def _route_to_fragment(self, route_id: str, route: Route) -> QueryFragment:
+        """Convert a route to a JOIN fragment with explicit bindings."""
+        children = []
+        classes = [route[0][0], *[edge[2] for edge in route]]
+
+        # Determine roles for each position
+        roles = ["source"]
+        for i in range(1, len(classes)):
+            if i == len(classes) - 1:
+                roles.append("target")
+            else:
+                roles.append("via")
+
+        # Create node fragments with bindings
+        prev_binding = None
+        for i, (cls, role) in enumerate(zip(classes, roles, strict=True)):
+            label = self._class_label(cls)
+            binding = self._binding_context.allocate(cls, role, label)
+
+            # Node fragment
+            node_frag = QueryFragment(
+                kind=FragmentKind.NODE,
+                bindings=[binding],
+            )
+            children.append(node_frag)
+
+            # Edge fragment connecting to previous node
+            if prev_binding and i > 0:
+                edge = route[i - 1]
+                edge_frag = QueryFragment(
+                    kind=FragmentKind.EDGE,
+                    bindings=[prev_binding, binding],
+                    predicate=edge[1],
+                    inverse=edge[3],
+                )
+                children.append(edge_frag)
+
+            prev_binding = binding
+
+        return QueryFragment(
+            kind=FragmentKind.JOIN,
+            children=children,
+            route_id=route_id,
+        )
+
+    def compose_union(self, fragments: list[QueryFragment]) -> QueryFragment:
+        """Compose multiple fragments as alternatives (UNION)."""
+        return QueryFragment(
+            kind=FragmentKind.UNION,
+            children=fragments,
+        )
+
+    def compose_filter(
+        self, fragment: QueryFragment, condition: dict[str, Any]
+    ) -> QueryFragment:
+        """Add a filter condition to a fragment."""
+        filter_frag = QueryFragment(
+            kind=FragmentKind.FILTER,
+            condition=condition,
+        )
+        return QueryFragment(
+            kind=FragmentKind.JOIN,
+            children=[fragment, filter_frag],
+        )
+
+    def fragment_summary(self) -> dict[str, Any]:
+        """Summarize current query fragments for observation."""
+        bindings_by_class: dict[str, list[str]] = {}
+        for binding in self._binding_context.all_bindings():
+            bindings_by_class.setdefault(binding.class_iri, []).append(binding.variable)
+
+        return {
+            "fragments": len(self._query_fragments),
+            "total_bindings": len(self._binding_context.all_bindings()),
+            "bindings_by_class": {
+                self._class_label(cls): vars
+                for cls, vars in bindings_by_class.items()
+            },
+            "same_class_bindings": [
+                {
+                    "class": self._class_label(cls),
+                    "variables": vars,
+                    "count": len(vars),
+                }
+                for cls, vars in bindings_by_class.items()
+                if len(vars) > 1
+            ],
+        }
+
+    def get_planning_fragment(self, class_iri: str) -> PlanningFragment | None:
+        """Get planning fragment for a class."""
+        return self._planning_fragments.get(class_iri)
 
     def _observe(self) -> CompactObservation:
         """Create a compact observation of current state."""

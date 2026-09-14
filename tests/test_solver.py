@@ -263,8 +263,10 @@ class TestQuerySolverBasics:
 
         log = solver.get_log()
         assert len(log) > 0
-        assert log[0]["action"] == "interpret"
-        assert "plan_id" in log[0]
+        # Find interpret action in log (may not be first due to init logging)
+        interpret_entries = [e for e in log if e["action"] == "interpret"]
+        assert len(interpret_entries) > 0, "Log should contain interpret action"
+        assert "plan_id" in interpret_entries[0]
 
     def test_solver_export_state(self) -> None:
         class MockClient:
