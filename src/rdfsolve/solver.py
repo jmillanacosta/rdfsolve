@@ -86,13 +86,13 @@ class Decision:
 class Intent(BaseModel):
     """Normalized interpretation of the question."""
 
-    question: str = Field(description="Original question")
-    source_class: str | None = Field(default=None, description="Starting entity class")
-    target_classes: list[str] = Field(default_factory=list, description="Requested entity classes")
-    filters: list[dict[str, Any]] = Field(default_factory=list, description="Value conditions")
-    projections: list[str] = Field(default_factory=list, description="Requested output fields")
-    selection: str = Field(default="", description="What the question asks for")
-    via_classes: list[str] = Field(default_factory=list, description="Required intermediate classes")
+    question: str = ""
+    source_class: str | None = None
+    target_classes: list[str] = Field(default_factory=list)
+    filters: list[dict[str, Any]] = Field(default_factory=list)
+    projections: list[str] = Field(default_factory=list)
+    selection: str = ""
+    via_classes: list[str] = Field(default_factory=list)
 
 
 class CompactObservation(BaseModel):
@@ -102,8 +102,8 @@ class CompactObservation(BaseModel):
     revision: int
     state: SolverState
     decision: Decision | None = None
-    reference: str | None = None  # Final result reference
-    execution: str | None = None  # complete, partial, etc.
+    reference: str | None = None
+    execution: str | None = None
     rows: int | None = None
     meaning: str | None = None
     unresolved: list[str] = Field(default_factory=list)
@@ -124,12 +124,16 @@ class QuerySolver:
         registry: Registry | None = None,
         max_candidates: int = 50,
         display_options: int = 4,
+        auto_select_unique: bool = True,
+        probe_routes: bool = False,
     ) -> None:
         self.client = client
         self.source_id = source_id
         self.registry = registry or client.registry(source_id=source_id)
         self.max_candidates = max_candidates
         self.display_options = display_options
+        self.auto_select_unique = auto_select_unique
+        self.probe_routes = probe_routes
 
         # State tracking
         self._plan_id = uuid4().hex[:8]
@@ -139,10 +143,12 @@ class QuerySolver:
         self._requirements: list[Requirement] = []
         self._decisions: dict[str, Decision] = {}
         self._current_decision: str | None = None
+        self._pending_targets: list[str] = []  # Targets awaiting route decisions
 
         # Route candidates (full set, not just displayed)
         self._candidates: dict[str, list[dict[str, Any]]] = {}  # target -> routes
         self._displayed: dict[str, list[str]] = {}  # target -> displayed route ids
+        self._rejected: dict[str, set[str]] = {}  # target -> rejected route ids
         self._selected_routes: list[str] = []
 
         # Route storage (compatible with existing system)
@@ -151,8 +157,12 @@ class QuerySolver:
         # Filter conditions from intent
         self._filters: list[dict[str, Any]] = []
 
+        # Operation replay cache: hash -> (revision, result)
+        self._operation_cache: dict[str, tuple[int, dict[str, Any]]] = {}
+
         # Results
         self._compiled_query: str | None = None
+        self._compiled_only: bool = False  # True if compile() was called instead of execute()
         self._result_reference: str | None = None
         self._final_query: dict[str, Any] | None = None
         self._execution_log: list[dict[str, Any]] = []
@@ -262,16 +272,19 @@ class QuerySolver:
             raise ValueError(f"Unknown decision: {decision_id}")
 
         decision = self._decisions[decision_id]
-        # Find which target this decision is for
-        target = decision.clause.split("to ")[-1] if "to " in decision.clause else None
+        target = self._get_decision_target(decision)
 
         if target and target in self._candidates:
             all_routes = self._candidates[target]
             displayed = self._displayed.get(target, [])
-            remaining = [r for r in all_routes if r["id"] not in displayed]
+            rejected = self._rejected.get(target, set())
+            remaining = [
+                r for r in all_routes
+                if r["id"] not in displayed and r["id"] not in rejected
+            ]
 
             if remaining:
-                # Add more options
+                # Add more options (routes are already sorted by score)
                 new_options = []
                 for route in remaining[: self.display_options]:
                     opt_id = f"opt-{len(decision.options) + len(new_options):02d}"
@@ -281,6 +294,7 @@ class QuerySolver:
                             meaning=route.get("description", route["id"]),
                             route_id=route["id"],
                             evidence=route.get("evidence", {}),
+                            score=route.get("score", 0.0),
                         )
                     )
                     displayed.append(route["id"])
@@ -289,7 +303,11 @@ class QuerySolver:
                 self._displayed[target] = displayed
                 decision.more_available = len(remaining) > self.display_options
 
-        self._log("show_more", {"decision": decision_id, "new_count": len(decision.options)})
+        self._log("show_more", {
+            "decision": decision_id,
+            "total_options": len(decision.options),
+            "more_available": decision.more_available,
+        })
         return self._observe()
 
     def reject_all(self, decision_id: str) -> CompactObservation:
@@ -298,16 +316,26 @@ class QuerySolver:
             raise ValueError(f"Unknown decision: {decision_id}")
 
         decision = self._decisions[decision_id]
-        target = decision.clause.split("to ")[-1] if "to " in decision.clause else None
+        target = self._get_decision_target(decision)
 
         if target and target in self._candidates:
+            # Mark current options as rejected
+            for opt in decision.options:
+                if opt.route_id:
+                    self._rejected.setdefault(target, set()).add(opt.route_id)
+
             displayed = self._displayed.get(target, [])
+            rejected = self._rejected.get(target, set())
             all_routes = self._candidates[target]
-            remaining = [r for r in all_routes if r["id"] not in displayed]
+            remaining = [r for r in all_routes if r["id"] not in displayed and r["id"] not in rejected]
 
             if not remaining:
                 self._state = SolverState.BLOCKED
-                self._log("reject_all_exhausted", {"decision": decision_id})
+                self._log("reject_all_exhausted", {
+                    "decision": decision_id,
+                    "total_candidates": len(all_routes),
+                    "rejected": len(rejected),
+                })
             else:
                 # Replace options with new ones
                 new_options = []
@@ -319,6 +347,7 @@ class QuerySolver:
                             meaning=route.get("description", route["id"]),
                             route_id=route["id"],
                             evidence=route.get("evidence", {}),
+                            score=self._rank_route(route),
                         )
                     )
                     displayed.append(route["id"])
@@ -326,8 +355,52 @@ class QuerySolver:
                 decision.options = new_options
                 self._displayed[target] = displayed
                 decision.more_available = len(remaining) > self.display_options
-                self._log("reject_all_replaced", {"decision": decision_id})
+                self._log("reject_all_replaced", {
+                    "decision": decision_id,
+                    "new_options": len(new_options),
+                    "remaining": len(remaining) - len(new_options),
+                })
 
+        return self._observe()
+
+    def _get_decision_target(self, decision: Decision) -> str | None:
+        """Extract target class from decision clause."""
+        # Decision clause is like "Route to <target_iri>"
+        if "Route to " in decision.clause:
+            return decision.clause.split("Route to ")[-1]
+        return None
+
+    def _rank_route(self, route: dict[str, Any]) -> float:
+        """Rank a route by structural properties.
+
+        Lower scores are better. Considers:
+        - Hop count (fewer is better, primary factor)
+        - Direction consistency (all forward or all backward is slightly better)
+        """
+        hops = route.get("hops", len(route.get("route", [])))
+        route_data = route.get("route", [])
+
+        # Base score from hop count (primary ranking factor)
+        score = hops * 10.0
+
+        # Minor bonus for direction consistency
+        if route_data:
+            directions = [edge[3] for edge in route_data]  # inverse flags
+            if all(d == directions[0] for d in directions):
+                score -= 1.0
+
+        return score
+
+    def compile(self) -> CompactObservation:
+        """Compile the query without executing it.
+
+        Returns the compiled state. Use execute() to run the query.
+        """
+        if self._state != SolverState.READY:
+            raise ValueError(f"Cannot compile in state {self._state}")
+
+        self._compiled_only = True
+        self._log("compile_only", {"routes": self._selected_routes, "filters": len(self._filters)})
         return self._observe()
 
     def execute(self, session: Any = None) -> CompactObservation:
@@ -337,6 +410,16 @@ class QuerySolver:
         """
         if self._state != SolverState.READY:
             raise ValueError(f"Cannot execute in state {self._state}")
+
+        # Check for replay
+        cache_key = self._execution_cache_key()
+        if cache_key in self._operation_cache:
+            cached_revision, cached_result = self._operation_cache[cache_key]
+            self._log("execute_replay", {"cache_key": cache_key, "cached_revision": cached_revision})
+            self._state = SolverState.COMPLETE
+            self._result_reference = cached_result.get("reference")
+            self._final_query = cached_result.get("final_query")
+            return self._observe()
 
         self._log("execute_start", {"query": self._compiled_query})
 
@@ -370,6 +453,12 @@ class QuerySolver:
                 self._result_reference = uuid4().hex
                 self._state = SolverState.COMPLETE
 
+                # Cache the result
+                self._operation_cache[cache_key] = (
+                    self._revision,
+                    {"reference": self._result_reference, "final_query": final},
+                )
+
                 self._log(
                     "execute_complete",
                     {
@@ -381,6 +470,10 @@ class QuerySolver:
                 # Internal execution (minimal)
                 self._state = SolverState.COMPLETE
                 self._result_reference = uuid4().hex
+                self._operation_cache[cache_key] = (
+                    self._revision,
+                    {"reference": self._result_reference, "final_query": None},
+                )
                 self._log("execute_complete", {"reference": self._result_reference})
 
         except Exception as e:
@@ -390,6 +483,71 @@ class QuerySolver:
 
         self._increment_revision()
         return self._observe()
+
+    def _execution_cache_key(self) -> str:
+        """Generate cache key for execution replay."""
+        key_data = {
+            "routes": sorted(self._selected_routes),
+            "filters": self._filters,
+            "intent": self._intent.model_dump() if self._intent else None,
+        }
+        return hashlib.sha256(json.dumps(key_data, sort_keys=True).encode()).hexdigest()[:16]
+
+    def revise(self, **updates: Any) -> CompactObservation:
+        """Revise the current interpretation with updates.
+
+        Allows changing filters, adding/removing targets, etc. without
+        starting over completely.
+        """
+        if not self._intent:
+            raise ValueError("No intent to revise. Call interpret() first.")
+
+        self._log("revise_start", {"updates": updates})
+
+        # Apply updates
+        if "filters" in updates:
+            self._intent = Intent(
+                **{**self._intent.model_dump(), "filters": updates["filters"]}
+            )
+            # Re-process filter requirements
+            self._requirements = [r for r in self._requirements if r.kind != "filter"]
+            for filter_spec in updates["filters"]:
+                self._requirements.append(
+                    Requirement(
+                        id=f"req-{len(self._requirements):02d}",
+                        clause=f"Filter: {filter_spec}",
+                        kind="filter",
+                        status=RequirementStatus.PENDING,
+                        bindings={"filter": filter_spec},
+                    )
+                )
+
+        if "targets" in updates:
+            new_targets = updates["targets"]
+            self._intent = Intent(
+                **{**self._intent.model_dump(), "target_classes": new_targets}
+            )
+            # Re-process target requirements
+            self._requirements = [r for r in self._requirements if r.kind != "target"]
+            for target in new_targets:
+                self._requirements.append(
+                    Requirement(
+                        id=f"req-{len(self._requirements):02d}",
+                        clause=f"Target class: {target}",
+                        kind="target",
+                        status=RequirementStatus.PENDING,
+                        bindings={"class": target},
+                    )
+                )
+            # Clear route decisions for removed targets
+            self._pending_targets = []
+
+        # Reset to interpreting state
+        self._state = SolverState.INTERPRETING
+        self._current_decision = None
+        self._increment_revision()
+
+        return self._advance()
 
     def _advance(self) -> CompactObservation:
         """Advance internally until a decision point or completion."""
@@ -406,36 +564,61 @@ class QuerySolver:
                     self._state = SolverState.BLOCKED
                     break
 
-                # Check if we need route decisions
-                needs_decision = False
-                for req in self._requirements:
-                    if req.kind == "target" and req.status == RequirementStatus.PENDING:
-                        target = req.bindings.get("class")
-                        if target and self._intent.source_class:
-                            routes = self._find_routes(self._intent.source_class, target)
-                            if len(routes) > 1:
-                                # Need model to choose
-                                needs_decision = True
-                                self._create_route_decision(target, routes)
-                                break
-                            elif len(routes) == 1:
-                                # Automatic selection
-                                self._selected_routes.append(routes[0]["id"])
-                                req.status = RequirementStatus.RESOLVED
-                            else:
-                                req.status = RequirementStatus.UNSUPPORTED
-                                req.reason = "No route found"
+                # Collect all pending target requirements
+                pending_targets = [
+                    req for req in self._requirements
+                    if req.kind == "target" and req.status == RequirementStatus.PENDING
+                ]
 
-                if needs_decision:
-                    self._state = SolverState.CHOOSE
-                    break
+                if not pending_targets:
+                    # All targets resolved, check filters
+                    pending_filters = [
+                        req for req in self._requirements
+                        if req.kind == "filter" and req.status == RequirementStatus.PENDING
+                    ]
+                    # Mark filters as resolved (they're validated at execution time)
+                    for req in pending_filters:
+                        req.status = RequirementStatus.RESOLVED
 
-                # Check if all requirements resolved
-                unresolved = [r for r in self._requirements if r.status == RequirementStatus.PENDING]
-                if not unresolved:
                     # Compile query
                     self._compile_query()
                     self._state = SolverState.READY
+                    break
+
+                # Process each pending target
+                needs_decision = False
+                for req in pending_targets:
+                    target = req.bindings.get("class")
+                    if not target or not self._intent.source_class:
+                        req.status = RequirementStatus.UNSUPPORTED
+                        req.reason = "Missing source or target class"
+                        continue
+
+                    routes = self._find_routes(self._intent.source_class, target)
+                    # Filter out rejected routes
+                    rejected = self._rejected.get(target, set())
+                    available = [r for r in routes if r["id"] not in rejected]
+
+                    if len(available) == 0:
+                        if len(routes) > 0:
+                            req.status = RequirementStatus.UNSUPPORTED
+                            req.reason = "All routes rejected"
+                        else:
+                            req.status = RequirementStatus.UNSUPPORTED
+                            req.reason = "No route found"
+                    elif len(available) == 1 and self.auto_select_unique:
+                        # Automatic selection when only one route exists
+                        self._selected_routes.append(available[0]["id"])
+                        req.status = RequirementStatus.RESOLVED
+                        self._log("auto_select", {"target": target, "route": available[0]["id"]})
+                    else:
+                        # Need model to choose
+                        needs_decision = True
+                        self._create_route_decision(target, available)
+                        break  # Handle one decision at a time
+
+                if needs_decision:
+                    self._state = SolverState.CHOOSE
                     break
 
             elif self._state == SolverState.CHOOSE:
@@ -476,20 +659,23 @@ class QuerySolver:
                 route_id = self._route_id(route)
                 # Store the route for later use
                 self._routes[route_id] = route
-                routes.append(
-                    {
-                        "id": route_id,
-                        "route": route,
-                        "hops": len(route),
-                        "description": self._route_description(route),
-                        "steps": self._route_steps(route),
-                        "evidence": {},
-                    }
-                )
+                route_info = {
+                    "id": route_id,
+                    "route": route,
+                    "hops": len(route),
+                    "description": self._route_description(route),
+                    "steps": self._route_steps(route),
+                    "evidence": {},
+                }
+                route_info["score"] = self._rank_route(route_info)
+                routes.append(route_info)
         except Exception as e:
             self._log("route_error", {"source": source, "target": target, "error": str(e)})
 
+        # Sort by score (lower is better)
+        routes.sort(key=lambda r: r.get("score", float("inf")))
         self._candidates[target] = routes
+        self._log("routes_found", {"source": source, "target": target, "count": len(routes)})
         return routes
 
     def _route_id(self, route: Route) -> str:
@@ -543,9 +729,16 @@ class QuerySolver:
         """Create a decision for route selection."""
         decision_id = f"d-{len(self._decisions):02d}"
 
-        # Select top options to display
-        displayed_routes = routes[: self.display_options]
+        # Filter out rejected routes
+        rejected = self._rejected.get(target, set())
+        available = [r for r in routes if r["id"] not in rejected]
+
+        # Select top options to display (already sorted by score)
+        displayed_routes = available[: self.display_options]
         self._displayed[target] = [r["id"] for r in displayed_routes]
+
+        # Get target label for better clause
+        target_label = self._class_label(target)
 
         options = [
             DecisionOption(
@@ -553,7 +746,7 @@ class QuerySolver:
                 meaning=route["description"],
                 route_id=route["id"],
                 evidence=route.get("evidence", {}),
-                score=1.0 / (route["hops"] + 1),  # Simple hop-based score
+                score=route.get("score", 0.0),
             )
             for i, route in enumerate(displayed_routes)
         ]
@@ -563,12 +756,18 @@ class QuerySolver:
             clause=f"Route to {target}",
             kind="route_choice",
             options=options,
-            more_available=len(routes) > self.display_options,
+            more_available=len(available) > self.display_options,
         )
 
         self._decisions[decision_id] = decision
         self._current_decision = decision_id
-        self._log("create_decision", {"decision_id": decision_id, "options": len(options)})
+        self._log("create_decision", {
+            "decision_id": decision_id,
+            "target": target,
+            "target_label": target_label,
+            "options": len(options),
+            "total_available": len(available),
+        })
 
     def _compile_query(self) -> None:
         """Compile the selected routes into a query using answer_query."""

@@ -442,7 +442,7 @@ class TestEmptyResults:
             state=SolverState.COMPLETE,
             reference="result-123",
             execution="complete",
-            rows=0,  # Zero rows is valid
+            rows=0,
             meaning="Query with no matches",
         )
         assert obs.rows == 0
@@ -468,3 +468,258 @@ class TestEmptyResults:
         assert success_empty.state == SolverState.COMPLETE
         assert failed.state == SolverState.FAILED
         assert success_empty.state != failed.state
+
+
+class TestMilestoneBFeatures:
+    """Test Milestone B: Recoverable decisions and internal advancement."""
+
+    def test_compile_without_execute(self) -> None:
+        """Compile should set state ready without executing."""
+
+        class MockClient:
+            _schema = type(
+                "Schema",
+                (),
+                {"enrichment": type("E", (), {"labels": [], "description": lambda s, x: ""})()},
+            )()
+
+            def registry(self, source_id: str) -> "MockRegistry":
+                return MockRegistry()
+
+            def paths_between(self, *args, **kwargs):
+                import pandas as pd
+
+                df = pd.DataFrame()
+                df.attrs["routes"] = []
+                return df
+
+        class MockRegistry:
+            revision = "test-rev"
+            types = []
+
+        client = MockClient()
+        solver = QuerySolver(client, source_id="test")
+        solver._state = SolverState.READY
+        solver._selected_routes = ["test-route"]
+
+        obs = solver.compile()
+        assert obs.state == SolverState.READY
+        assert solver._compiled_only is True
+
+    def test_revise_updates_intent(self) -> None:
+        """Revise should update filters and targets."""
+
+        class MockClient:
+            _schema = type(
+                "Schema",
+                (),
+                {"enrichment": type("E", (), {"labels": [], "description": lambda s, x: ""})()},
+            )()
+
+            def registry(self, source_id: str) -> "MockRegistry":
+                return MockRegistry()
+
+            def paths_between(self, *args, **kwargs):
+                import pandas as pd
+
+                df = pd.DataFrame()
+                df.attrs["routes"] = []
+                return df
+
+        class MockRegistry:
+            revision = "test-rev"
+            types = []
+
+        client = MockClient()
+        solver = QuerySolver(client, source_id="test")
+
+        # First interpret
+        intent = Intent(
+            source_class="http://example.org/Source",
+            target_classes=["http://example.org/Target1"],
+            selection="Test",
+        )
+        solver.interpret(intent)
+
+        # Now revise with new filters
+        new_filters = [{"kind": "Source", "terms": ["test"]}]
+        solver.revise(filters=new_filters)
+
+        assert solver._intent.filters == new_filters
+
+    def test_revise_without_intent_fails(self) -> None:
+        """Revise without interpret should fail."""
+
+        class MockClient:
+            _schema = type(
+                "Schema",
+                (),
+                {"enrichment": type("E", (), {"labels": [], "description": lambda s, x: ""})()},
+            )()
+
+            def registry(self, source_id: str) -> "MockRegistry":
+                return MockRegistry()
+
+        class MockRegistry:
+            revision = "test-rev"
+            types = []
+
+        client = MockClient()
+        solver = QuerySolver(client, source_id="test")
+
+        with pytest.raises(ValueError, match="No intent to revise"):
+            solver.revise(filters=[])
+
+    def test_execution_cache_replay(self) -> None:
+        """Identical executions should replay from cache."""
+
+        class MockClient:
+            _schema = type(
+                "Schema",
+                (),
+                {"enrichment": type("E", (), {"labels": [], "description": lambda s, x: ""})()},
+            )()
+
+            def registry(self, source_id: str) -> "MockRegistry":
+                return MockRegistry()
+
+        class MockRegistry:
+            revision = "test-rev"
+            types = []
+
+        client = MockClient()
+        solver = QuerySolver(client, source_id="test")
+        solver._state = SolverState.READY
+        solver._selected_routes = ["route-1"]
+
+        # First execution
+        obs1 = solver.execute()
+        ref1 = obs1.reference
+        rev1 = solver._revision
+
+        # Reset state for second execution
+        solver._state = SolverState.READY
+
+        # Second execution should replay
+        obs2 = solver.execute()
+        ref2 = obs2.reference
+
+        # References should match (replayed)
+        assert ref1 == ref2
+
+    def test_reject_all_tracks_rejected(self) -> None:
+        """Reject all should track rejected routes."""
+
+        class MockClient:
+            _schema = type(
+                "Schema",
+                (),
+                {"enrichment": type("E", (), {"labels": [], "description": lambda s, x: ""})()},
+            )()
+
+            def registry(self, source_id: str) -> "MockRegistry":
+                return MockRegistry()
+
+        class MockRegistry:
+            revision = "test-rev"
+            types = []
+
+        client = MockClient()
+        solver = QuerySolver(client, source_id="test")
+
+        # Set up a decision with options
+        target = "http://example.org/Target"
+        solver._candidates[target] = [
+            {"id": "route-1", "description": "Route 1"},
+            {"id": "route-2", "description": "Route 2"},
+            {"id": "route-3", "description": "Route 3"},
+        ]
+
+        decision = Decision(
+            id="d-00",
+            clause=f"Route to {target}",
+            kind="route_choice",
+            options=[
+                DecisionOption(id="opt-00", meaning="Route 1", route_id="route-1"),
+            ],
+        )
+        solver._decisions["d-00"] = decision
+        solver._current_decision = "d-00"
+        solver._displayed[target] = ["route-1"]
+
+        # Reject all
+        solver.reject_all("d-00")
+
+        # Route-1 should be in rejected set
+        assert "route-1" in solver._rejected.get(target, set())
+
+    def test_auto_select_unique_route(self) -> None:
+        """When only one route exists, auto-select if enabled."""
+
+        class MockClient:
+            _schema = type(
+                "Schema",
+                (),
+                {"enrichment": type("E", (), {"labels": [], "description": lambda s, x: ""})()},
+            )()
+
+            def registry(self, source_id: str) -> "MockRegistry":
+                return MockRegistry()
+
+            def paths_between(self, source, target, **kwargs):
+                import pandas as pd
+
+                df = pd.DataFrame()
+                # Return exactly one route
+                df.attrs["routes"] = [
+                    [("http://example.org/Source", "http://example.org/pred", "http://example.org/Target", False)]
+                ]
+                return df
+
+        class MockRegistry:
+            revision = "test-rev"
+            types = []
+
+        client = MockClient()
+        solver = QuerySolver(client, source_id="test", auto_select_unique=True)
+
+        intent = Intent(
+            source_class="http://example.org/Source",
+            target_classes=["http://example.org/Target"],
+            selection="Test",
+        )
+
+        obs = solver.interpret(intent)
+
+        # With one route, should auto-select and reach READY
+        assert solver.state == SolverState.READY
+        assert len(solver._selected_routes) == 1
+
+    def test_ranking_prefers_fewer_hops(self) -> None:
+        """Routes with fewer hops should rank higher."""
+
+        class MockClient:
+            _schema = type(
+                "Schema",
+                (),
+                {"enrichment": type("E", (), {"labels": [], "description": lambda s, x: ""})()},
+            )()
+
+            def registry(self, source_id: str) -> "MockRegistry":
+                return MockRegistry()
+
+        class MockRegistry:
+            revision = "test-rev"
+            types = []
+
+        client = MockClient()
+        solver = QuerySolver(client, source_id="test")
+
+        route1 = {"hops": 1, "route": [("A", "p", "B", False)]}
+        route2 = {"hops": 2, "route": [("A", "p", "C", False), ("C", "q", "B", False)]}
+
+        score1 = solver._rank_route(route1)
+        score2 = solver._rank_route(route2)
+
+        # Lower score is better, so 1-hop should have lower score
+        assert score1 < score2

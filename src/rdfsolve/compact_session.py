@@ -336,6 +336,27 @@ class CompactSession:
         finally:
             execution["finished_at"] = datetime.now(timezone.utc).isoformat()
 
+    def compile(self) -> dict[str, Any]:
+        """Compile the query without executing it."""
+        execution = self._start_operation("compile")
+
+        try:
+            observation = self._solver.compile()
+            result = self._format_observation(observation)
+            result["compiled"] = True
+
+            execution["status"] = "complete"
+            execution["result"] = result
+            return result
+
+        except Exception as e:
+            execution["status"] = "failed"
+            execution["error"] = {"category": type(e).__name__, "message": str(e)}
+            raise
+
+        finally:
+            execution["finished_at"] = datetime.now(timezone.utc).isoformat()
+
     def execute(self) -> dict[str, Any]:
         """Execute the compiled query."""
         execution = self._start_operation("execute")
@@ -363,6 +384,41 @@ class CompactSession:
                     self._session_proxy.final_queries[observation.reference] = (
                         self._solver._final_query
                     )
+
+            execution["status"] = "complete"
+            execution["result"] = result
+            return result
+
+        except Exception as e:
+            execution["status"] = "failed"
+            execution["error"] = {"category": type(e).__name__, "message": str(e)}
+            raise
+
+        finally:
+            execution["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    def revise(
+        self,
+        filters: list[dict[str, Any]] | None = None,
+        targets: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Revise the current interpretation."""
+        execution = self._start_operation("revise")
+
+        try:
+            updates = {}
+            if filters is not None:
+                updates["filters"] = filters
+            if targets is not None:
+                # Resolve class names to IRIs
+                target_iris = [
+                    str(getattr(self.client.model(t), "rdf_class_iri", ""))
+                    for t in targets
+                ]
+                updates["targets"] = target_iris
+
+            observation = self._solver.revise(**updates)
+            result = self._format_observation(observation)
 
             execution["status"] = "complete"
             execution["result"] = result
@@ -512,7 +568,9 @@ class CompactSession:
             "show_more": self.show_more,
             "reject_all": self.reject_all,
             "inspect": self.inspect,
+            "compile": self.compile,
             "execute": self.execute,
+            "revise": self.revise,
             "schema": self.schema,
             "status": self.status,
         }
