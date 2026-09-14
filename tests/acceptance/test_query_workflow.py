@@ -12,9 +12,9 @@ from tests.acceptance.fixtures import f01_unrestricted
 from tests.acceptance.fixtures import f02_ambiguous
 
 
-# =============================================================================
+
 # Fixture verification tests (Gate 0)
-# =============================================================================
+
 
 
 class TestFixtureOracles:
@@ -41,9 +41,9 @@ class TestFixtureOracles:
         assert f02_ambiguous.verify_oracle_q04(g)
 
 
-# =============================================================================
+
 # T01: Unrestricted select compiles and executes
-# =============================================================================
+
 
 
 class TestT01UnrestrictedSelect:
@@ -163,9 +163,9 @@ class TestT01UnrestrictedSelect:
         assert parsed is not None
 
 
-# =============================================================================
+
 # T02-T03: Ambiguous route decisions
-# =============================================================================
+
 
 
 class TestT02AmbiguousRoute:
@@ -283,9 +283,569 @@ class TestT03IncorrectChoiceGivesWrongResult:
         assert len(meanings) >= 2
 
 
-# =============================================================================
+
+# T14-T18: Decision workflow (query_decide)
+
+
+
+class TestT14ChooseTransitionsToReady:
+    """T14: choose_action_transitions_to_ready.
+
+    From T02's 'choose' state, call query_decide with choose action.
+    Must transition to 'ready' with query_ref, no unresolved requirements.
+    """
+
+    @pytest.fixture
+    def f02_intent(self):
+        """Intent for Person to Organization."""
+        return {
+            "roles": [
+                {"id": "person", "class_hint": "Person"},
+                {"id": "org", "class_hint": "Organization"},
+            ],
+            "where": {
+                "op": "all",
+                "args": [
+                    {
+                        "id": "r1",
+                        "op": "relation",
+                        "from": "person",
+                        "to": "org",
+                        "meaning": "employed at",
+                        "via": [],
+                    }
+                ],
+            },
+            "select": ["person", "org"],
+            "distinct": True,
+            "unparsed_requirements": [],
+        }
+
+    def test_choose_transitions_to_ready(self, f02_client, f02_intent):
+        """Choosing an option transitions to ready state."""
+        from rdfsolve.mcp import QueryService
+
+        service = QueryService(f02_client, source_id="fixture")
+
+        # Start - should be in choose state
+        start_result = service.query_start(
+            operation_id="op1",
+            question="Find people employed at organizations",
+            intent=f02_intent,
+        )
+        assert start_result["state"] == "choose"
+
+        session_id = start_result["session"]
+        revision = start_result["revision"]
+        decision = start_result["decision"]
+
+        # Choose the first option
+        decide_result = service.query_decide(
+            session_id=session_id,
+            revision=revision,
+            operation_id="op2",
+            action={
+                "type": "choose",
+                "decision": decision["id"],
+                "option": decision["options"][0]["id"],
+            },
+        )
+
+        assert "error" not in decide_result, f"Error: {decide_result}"
+        assert decide_result["state"] == "ready"
+        assert "query_ref" in decide_result
+        assert decide_result["revision"] > revision
+
+    def test_invalid_option_rejected(self, f02_client, f02_intent):
+        """Choosing invalid option returns error."""
+        from rdfsolve.mcp import QueryService
+
+        service = QueryService(f02_client, source_id="fixture")
+
+        start_result = service.query_start(
+            operation_id="op1",
+            question="Find people",
+            intent=f02_intent,
+        )
+        assert start_result["state"] == "choose"
+
+        decide_result = service.query_decide(
+            session_id=start_result["session"],
+            revision=start_result["revision"],
+            operation_id="op2",
+            action={
+                "type": "choose",
+                "decision": start_result["decision"]["id"],
+                "option": "invalid-option-id",
+            },
+        )
+
+        assert "error" in decide_result
+        assert decide_result["error"]["code"] == "invalid_option"
+
+
+class TestT15RejectShowsNewOptions:
+    """T15: reject_action_shows_new_options.
+
+    From choose state with more_retained=true, call reject.
+    Must return new options (different IDs) or blocked if exhausted.
+    """
+
+    @pytest.fixture
+    def f02_intent(self):
+        """Intent for Person to Organization."""
+        return {
+            "roles": [
+                {"id": "person", "class_hint": "Person"},
+                {"id": "org", "class_hint": "Organization"},
+            ],
+            "where": {
+                "op": "all",
+                "args": [
+                    {
+                        "id": "r1",
+                        "op": "relation",
+                        "from": "person",
+                        "to": "org",
+                        "meaning": "employed at",
+                        "via": [],
+                    }
+                ],
+            },
+            "select": ["person", "org"],
+            "distinct": True,
+            "unparsed_requirements": [],
+        }
+
+    def test_reject_with_exhausted_options_blocks(self, f02_client, f02_intent):
+        """Rejecting when no more options blocks the session."""
+        from rdfsolve.mcp import QueryService
+
+        service = QueryService(f02_client, source_id="fixture", display_window=10)
+
+        start_result = service.query_start(
+            operation_id="op1",
+            question="Find people",
+            intent=f02_intent,
+        )
+        assert start_result["state"] == "choose"
+
+        # Reject all - with only 2 routes and window=10, should exhaust
+        decide_result = service.query_decide(
+            session_id=start_result["session"],
+            revision=start_result["revision"],
+            operation_id="op2",
+            action={
+                "type": "reject",
+                "decision": start_result["decision"]["id"],
+            },
+        )
+
+        # Should be blocked since F02 only has 2 routes
+        assert decide_result["state"] == "blocked"
+        assert decide_result.get("reason") == "options_rejected"
+
+
+class TestT16MoreAppendsOptions:
+    """T16: more_action_appends_options.
+
+    From choose state with more_retained=true, call more.
+    Must append new options without removing existing ones.
+    """
+
+    @pytest.fixture
+    def f02_intent(self):
+        """Intent for Person to Organization."""
+        return {
+            "roles": [
+                {"id": "person", "class_hint": "Person"},
+                {"id": "org", "class_hint": "Organization"},
+            ],
+            "where": {
+                "op": "all",
+                "args": [
+                    {
+                        "id": "r1",
+                        "op": "relation",
+                        "from": "person",
+                        "to": "org",
+                        "meaning": "employed at",
+                        "via": [],
+                    }
+                ],
+            },
+            "select": ["person", "org"],
+            "distinct": True,
+            "unparsed_requirements": [],
+        }
+
+    def test_more_with_small_window(self, f02_client, f02_intent):
+        """More action with small window shows additional options."""
+        from rdfsolve.mcp import QueryService
+
+        # Use window of 1 to force pagination
+        service = QueryService(f02_client, source_id="fixture", display_window=1)
+
+        start_result = service.query_start(
+            operation_id="op1",
+            question="Find people",
+            intent=f02_intent,
+        )
+
+        if start_result["state"] != "choose":
+            pytest.skip("Not enough routes for this test")
+
+        decision = start_result["decision"]
+        initial_count = len(decision["options"])
+
+        if not decision.get("more_retained"):
+            pytest.skip("No more options retained")
+
+        # Request more
+        more_result = service.query_decide(
+            session_id=start_result["session"],
+            revision=start_result["revision"],
+            operation_id="op2",
+            action={
+                "type": "more",
+                "decision": decision["id"],
+            },
+        )
+
+        assert "error" not in more_result
+        # Should have more options now
+        new_decision = more_result.get("decision", {})
+        assert len(new_decision.get("options", [])) >= initial_count
+
+
+class TestT17ReviseResetsSession:
+    """T17: revise_action_resets_session.
+
+    From any state, revise with new intent resets requirements and routes.
+    Previous selections are cleared.
+    """
+
+    @pytest.fixture
+    def f01_intent(self):
+        """Intent A to B."""
+        return {
+            "roles": [
+                {"id": "a", "class_hint": "A"},
+                {"id": "b", "class_hint": "B"},
+            ],
+            "where": {
+                "op": "all",
+                "args": [
+                    {
+                        "id": "r1",
+                        "op": "relation",
+                        "from": "a",
+                        "to": "b",
+                        "meaning": "links",
+                        "via": [],
+                    }
+                ],
+            },
+            "select": ["a", "b"],
+            "distinct": True,
+            "unparsed_requirements": [],
+        }
+
+    @pytest.fixture
+    def f01_revised_intent(self):
+        """Revised intent C to B."""
+        return {
+            "roles": [
+                {"id": "c", "class_hint": "C"},
+                {"id": "b", "class_hint": "B"},
+            ],
+            "where": {
+                "op": "all",
+                "args": [
+                    {
+                        "id": "r1",
+                        "op": "relation",
+                        "from": "c",
+                        "to": "b",
+                        "meaning": "links",
+                        "via": [],
+                    }
+                ],
+            },
+            "select": ["c", "b"],
+            "distinct": True,
+            "unparsed_requirements": [],
+        }
+
+    def test_revise_changes_intent(self, f01_client, f01_intent, f01_revised_intent):
+        """Revise action changes the intent and re-evaluates."""
+        from rdfsolve.mcp import QueryService
+
+        service = QueryService(f01_client, source_id="fixture")
+
+        # Start with A to B
+        start_result = service.query_start(
+            operation_id="op1",
+            question="Find A linked to B",
+            intent=f01_intent,
+        )
+        assert start_result["state"] == "ready"  # Unique route
+
+        # Revise to C to B
+        revise_result = service.query_decide(
+            session_id=start_result["session"],
+            revision=start_result["revision"],
+            operation_id="op2",
+            action={
+                "type": "revise",
+                "intent": f01_revised_intent,
+            },
+        )
+
+        assert "error" not in revise_result
+        # Should be ready (C to B also has unique route)
+        assert revise_result["state"] == "ready"
+        assert revise_result["revision"] > start_result["revision"]
+
+
+class TestT18ReplayReturnsCachedResponse:
+    """T18: replay_returns_cached_response.
+
+    Calling same operation_id with same payload returns cached response.
+    No additional backend calls.
+    """
+
+    @pytest.fixture
+    def f01_intent(self):
+        """Intent A to B."""
+        return {
+            "roles": [
+                {"id": "a", "class_hint": "A"},
+                {"id": "b", "class_hint": "B"},
+            ],
+            "where": {
+                "op": "all",
+                "args": [
+                    {
+                        "id": "r1",
+                        "op": "relation",
+                        "from": "a",
+                        "to": "b",
+                        "meaning": "links",
+                        "via": [],
+                    }
+                ],
+            },
+            "select": ["a", "b"],
+            "distinct": True,
+            "unparsed_requirements": [],
+        }
+
+    def test_start_replay(self, f01_client, f01_intent):
+        """Same query_start operation_id returns cached response."""
+        from rdfsolve.mcp import QueryService
+
+        service = QueryService(f01_client, source_id="fixture")
+
+        # First call
+        result1 = service.query_start(
+            operation_id="same-op",
+            question="Find A linked to B",
+            intent=f01_intent,
+        )
+
+        # Second call with same operation_id
+        result2 = service.query_start(
+            operation_id="same-op",
+            question="Find A linked to B",
+            intent=f01_intent,
+        )
+
+        # Should return same session
+        assert result1["session"] == result2["session"]
+        assert result1["revision"] == result2["revision"]
+
+
+
+# T19-T21: Inspection (query_inspect)
+
+
+
+class TestT19InspectStatus:
+    """T19: inspect_status_returns_session_summary.
+
+    Call query_inspect with target='status' returns session state summary.
+    """
+
+    @pytest.fixture
+    def f01_intent(self):
+        """Intent A to B."""
+        return {
+            "roles": [
+                {"id": "a", "class_hint": "A"},
+                {"id": "b", "class_hint": "B"},
+            ],
+            "where": {
+                "op": "all",
+                "args": [
+                    {
+                        "id": "r1",
+                        "op": "relation",
+                        "from": "a",
+                        "to": "b",
+                        "meaning": "links",
+                        "via": [],
+                    }
+                ],
+            },
+            "select": ["a", "b"],
+            "distinct": True,
+            "unparsed_requirements": [],
+        }
+
+    def test_inspect_status(self, f01_client, f01_intent):
+        """Inspect status returns session summary."""
+        from rdfsolve.mcp import QueryService
+
+        service = QueryService(f01_client, source_id="fixture")
+
+        start_result = service.query_start(
+            operation_id="op1",
+            question="Find A linked to B",
+            intent=f01_intent,
+        )
+
+        status = service.query_inspect(
+            session_id=start_result["session"],
+            revision=start_result["revision"],
+            target="status",
+        )
+
+        assert "error" not in status
+        assert status["session"] == start_result["session"]
+        assert status["state"] == "ready"
+        assert "question" in status
+        assert "scope" in status
+
+
+class TestT20InspectDecision:
+    """T20: inspect_decision_returns_details.
+
+    Call query_inspect with target='decision:ID' returns decision details.
+    """
+
+    @pytest.fixture
+    def f02_intent(self):
+        """Intent Person to Organization."""
+        return {
+            "roles": [
+                {"id": "person", "class_hint": "Person"},
+                {"id": "org", "class_hint": "Organization"},
+            ],
+            "where": {
+                "op": "all",
+                "args": [
+                    {
+                        "id": "r1",
+                        "op": "relation",
+                        "from": "person",
+                        "to": "org",
+                        "meaning": "employed at",
+                        "via": [],
+                    }
+                ],
+            },
+            "select": ["person", "org"],
+            "distinct": True,
+            "unparsed_requirements": [],
+        }
+
+    def test_inspect_decision(self, f02_client, f02_intent):
+        """Inspect decision returns full details."""
+        from rdfsolve.mcp import QueryService
+
+        service = QueryService(f02_client, source_id="fixture")
+
+        start_result = service.query_start(
+            operation_id="op1",
+            question="Find people",
+            intent=f02_intent,
+        )
+        assert start_result["state"] == "choose"
+
+        decision_id = start_result["decision"]["id"]
+        details = service.query_inspect(
+            session_id=start_result["session"],
+            revision=start_result["revision"],
+            target=f"decision:{decision_id}",
+        )
+
+        assert "error" not in details
+        assert details["id"] == decision_id
+        assert "options" in details
+        assert "requirement_id" in details
+
+
+class TestT21InspectRequirement:
+    """T21: inspect_requirement_returns_clause.
+
+    Call query_inspect with target='requirement:ID' returns requirement details.
+    """
+
+    @pytest.fixture
+    def f01_intent(self):
+        """Intent A to B."""
+        return {
+            "roles": [
+                {"id": "a", "class_hint": "A"},
+                {"id": "b", "class_hint": "B"},
+            ],
+            "where": {
+                "op": "all",
+                "args": [
+                    {
+                        "id": "r1",
+                        "op": "relation",
+                        "from": "a",
+                        "to": "b",
+                        "meaning": "links",
+                        "via": [],
+                    }
+                ],
+            },
+            "select": ["a", "b"],
+            "distinct": True,
+            "unparsed_requirements": [],
+        }
+
+    def test_inspect_requirement(self, f01_client, f01_intent):
+        """Inspect requirement returns clause details."""
+        from rdfsolve.mcp import QueryService
+
+        service = QueryService(f01_client, source_id="fixture")
+
+        start_result = service.query_start(
+            operation_id="op1",
+            question="Find A linked to B",
+            intent=f01_intent,
+        )
+
+        # Inspect the relation requirement
+        details = service.query_inspect(
+            session_id=start_result["session"],
+            revision=start_result["revision"],
+            target="requirement:r1",
+        )
+
+        assert "error" not in details
+        assert details["id"] == "r1"
+        assert details["op"] == "relation"
+        assert "clause" in details
+
+
+
 # T04-T07: Compilation and execution basics
-# =============================================================================
+
 
 
 class TestT04ReadyRequiresArtifact:
@@ -360,9 +920,9 @@ class TestT07UnknownOperations:
         assert ErrorCode.INVALID_OPTION.value == "invalid_option"
 
 
-# =============================================================================
+
 # T08: Missing route is blocked
-# =============================================================================
+
 
 
 class TestT08MissingRoute:
@@ -397,9 +957,9 @@ class TestT08MissingRoute:
         assert not f01_graph.query(query_no_path).askAnswer
 
 
-# =============================================================================
+
 # T12: Malformed intent rejected
-# =============================================================================
+
 
 
 class TestT12MalformedIntent:
@@ -458,9 +1018,9 @@ class TestT12MalformedIntent:
             CompareRequirement(id="c1", role="p", field="year", operator="approximately", term=term)
 
 
-# =============================================================================
+
 # T13: Unparsed requirements block readiness
-# =============================================================================
+
 
 
 class TestT13UnparsedRequirements:

@@ -15,10 +15,10 @@ from typing import Any
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 
 from rdfsolve.client_api import Client
-from rdfsolve.mcp.query_service import QueryService, Intent
+from rdfsolve.mcp.query_service import Intent, QueryService
 
 logger = logging.getLogger(__name__)
 

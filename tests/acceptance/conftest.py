@@ -11,6 +11,8 @@ from tests.acceptance.fixtures import EX
 from tests.acceptance.fixtures import f01_unrestricted
 from tests.acceptance.fixtures import f02_ambiguous
 from tests.acceptance.fixtures import f03_conjunction
+from tests.acceptance.fixtures import f06_repeated_class
+from tests.acceptance.fixtures import f09_date_integer
 
 
 def _build_client(fixture_module):
@@ -145,3 +147,31 @@ def backend_spy(f01_graph):
     spy.wrap()
     yield spy
     spy.unwrap()
+
+
+@pytest.fixture
+def f06_client():
+    """Create a Client with F06 fixture data."""
+    return _build_client(f06_repeated_class)
+
+
+@pytest.fixture
+def f06_graph():
+    """Create the F06 fixture graph with labels."""
+    g = f06_repeated_class.create_graph()
+    f06_repeated_class.add_labels(g)
+    return g
+
+
+@pytest.fixture
+def f09_client():
+    """Create a Client with F09 fixture data."""
+    return _build_client(f09_date_integer)
+
+
+@pytest.fixture
+def f09_graph():
+    """Create the F09 fixture graph with labels."""
+    g = f09_date_integer.create_graph()
+    f09_date_integer.add_labels(g)
+    return g

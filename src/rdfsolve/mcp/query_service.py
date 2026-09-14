@@ -34,9 +34,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-# =============================================================================
 # State enumeration
-# =============================================================================
 
 
 class QueryState(str, Enum):
@@ -70,9 +68,7 @@ class ErrorCode(str, Enum):
     BACKEND_UNAVAILABLE = "backend_unavailable"
 
 
-# =============================================================================
 # Intent grammar models
-# =============================================================================
 
 
 class RoleDef(BaseModel):
@@ -187,9 +183,7 @@ class Intent(BaseModel):
         return v  # Full validation done in service
 
 
-# =============================================================================
 # Decision models
-# =============================================================================
 
 
 @dataclass
@@ -214,9 +208,7 @@ class Decision:
     can_expand: bool = False
 
 
-# =============================================================================
 # Session and artifact models
-# =============================================================================
 
 
 @dataclass
@@ -274,9 +266,7 @@ class Session:
     result_artifact: ResultArtifact | None = None
 
 
-# =============================================================================
 # Query Service
-# =============================================================================
 
 
 class QueryService:
@@ -351,7 +341,7 @@ class QueryService:
         # Check for replay
         cache_key = self._operation_cache_key(None, operation_id, "start", intent)
         if cache_key in self._operation_cache:
-            cached_revision, cached_response = self._operation_cache[cache_key]
+            _cached_revision, cached_response = self._operation_cache[cache_key]
             return cached_response
 
         # Validate and parse intent
@@ -423,7 +413,7 @@ class QueryService:
         # Check for replay
         cache_key = self._operation_cache_key(session_id, operation_id, "decide", action)
         if cache_key in self._operation_cache:
-            cached_revision, cached_response = self._operation_cache[cache_key]
+            _cached_revision, cached_response = self._operation_cache[cache_key]
             return cached_response
 
         # Check stale revision (after replay check per spec)
@@ -446,7 +436,9 @@ class QueryService:
         elif action_type == "revise":
             return self._handle_revise(session, operation_id, action, cache_key)
         else:
-            return self._error_response(ErrorCode.INVALID_INPUT, f"Unknown action type: {action_type}")
+            return self._error_response(
+                ErrorCode.INVALID_INPUT, f"Unknown action type: {action_type}"
+            )
 
     def query_inspect(
         self,
@@ -513,10 +505,14 @@ class QueryService:
         elif action_type == "execute":
             operation_id = action.get("operation_id")
             if not operation_id:
-                return self._error_response(ErrorCode.INVALID_INPUT, "execute requires operation_id")
+                return self._error_response(
+                    ErrorCode.INVALID_INPUT, "execute requires operation_id"
+                )
             return self._handle_execute(session, revision, operation_id)
         else:
-            return self._error_response(ErrorCode.INVALID_INPUT, f"Unknown action type: {action_type}")
+            return self._error_response(
+                ErrorCode.INVALID_INPUT, f"Unknown action type: {action_type}"
+            )
 
     def read_artifact(self, artifact_id: str) -> dict[str, Any]:
         """Read an artifact by ID."""
@@ -732,14 +728,13 @@ class QueryService:
     def _resolve_class(self, session: Session, role_id: str) -> str | None:
         """Resolve role to class IRI."""
         for role in session.intent.roles:
-            if role.id == role_id:
-                if role.class_hint:
-                    # Try to find class by label or IRI
-                    for type_desc in self.registry.types:
-                        if type_desc.label == role.class_hint or type_desc.id == role.class_hint:
-                            return type_desc.id
-                    # Not found - return hint as-is (might be full IRI)
-                    return role.class_hint
+            if role.id == role_id and role.class_hint:
+                # Try to find class by label or IRI
+                for type_desc in self.registry.types:
+                    if type_desc.label == role.class_hint or type_desc.id == role.class_hint:
+                        return type_desc.id
+                # Not found - return hint as-is (might be full IRI)
+                return role.class_hint
         return None
 
     def _find_routes(
@@ -758,13 +753,15 @@ class QueryService:
             for route in table.attrs.get("routes", []):
                 route_id = self._route_id(route)
                 description = self._route_description(route)
-                routes.append({
-                    "id": route_id,
-                    "route": route,
-                    "description": description,
-                    "hops": len(route),
-                    "meaning": meaning,
-                })
+                routes.append(
+                    {
+                        "id": route_id,
+                        "route": route,
+                        "description": description,
+                        "hops": len(route),
+                        "meaning": meaning,
+                    }
+                )
         except Exception as e:
             logger.warning("Route search failed: %s", e)
 
@@ -778,7 +775,7 @@ class QueryService:
     def _route_description(self, route: list) -> str:
         """Generate human-readable route description."""
         parts = []
-        for s, p, o, inverse in route:
+        for _s, p, _o, inverse in route:
             pred_label = self._get_predicate_label(p)
             direction = "<-" if inverse else "->"
             parts.append(f"{direction} {pred_label}")
@@ -805,7 +802,7 @@ class QueryService:
         decision_id = f"d-{len(session.decisions_made):03d}"
 
         # Get displayed window
-        displayed_routes = routes[:self.display_window]
+        displayed_routes = routes[: self.display_window]
         session.displayed_options[req_id] = [r["id"] for r in displayed_routes]
 
         options = [
@@ -933,7 +930,7 @@ class QueryService:
         if from_class:
             patterns.append(f"?{current_var} a <{from_class}>")
 
-        for i, (s, p, o, inverse) in enumerate(route):
+        for i, (_s, p, _o, inverse) in enumerate(route):
             if i == len(route) - 1:
                 # Last step - use target role variable
                 next_var = self._role_variable(session, to_role)
@@ -977,15 +974,15 @@ class QueryService:
         if operator == "eq":
             if term_type == "literal":
                 if datatype:
-                    return f"FILTER(?{var}_field = \"{term_value}\"^^<{datatype}>)"
-                return f"FILTER(?{var}_field = \"{term_value}\")"
+                    return f'FILTER(?{var}_field = "{term_value}"^^<{datatype}>)'
+                return f'FILTER(?{var}_field = "{term_value}")'
             return f"FILTER(?{var}_field = <{term_value}>)"
 
         op_map = {"lt": "<", "le": "<=", "gt": ">", "ge": ">="}
         sparql_op = op_map.get(operator, "=")
 
         if datatype:
-            return f"FILTER(?{var}_field {sparql_op} \"{term_value}\"^^<{datatype}>)"
+            return f'FILTER(?{var}_field {sparql_op} "{term_value}"^^<{datatype}>)'
         return f"FILTER(?{var}_field {sparql_op} {term_value})"
 
     def _observation(self, session: Session) -> dict[str, Any]:
@@ -1001,9 +998,7 @@ class QueryService:
             result["decision"] = {
                 "id": d.id,
                 "requirement_id": d.requirement_id,
-                "options": [
-                    {"id": o.id, "meaning": o.meaning} for o in d.options
-                ],
+                "options": [{"id": o.id, "meaning": o.meaning} for o in d.options],
                 "more_retained": d.more_retained,
                 "search_exhausted": d.search_exhausted,
                 "can_expand": d.can_expand,
@@ -1014,19 +1009,20 @@ class QueryService:
             result["blocked_requirement_ids"] = session.blocked_requirement_ids
 
         if session.state == QueryState.READY and session.query_artifact:
-            result["query_ref"] = f"rdfsolve://sessions/{session.id}/artifacts/{session.query_artifact.id}"
+            result["query_ref"] = (
+                f"rdfsolve://sessions/{session.id}/artifacts/{session.query_artifact.id}"
+            )
 
         if session.state == QueryState.COMPLETE:
             result["execution"] = "complete"
             if session.result_artifact:
-                result["result_ref"] = f"rdfsolve://sessions/{session.id}/artifacts/{session.result_artifact.id}"
+                result["result_ref"] = (
+                    f"rdfsolve://sessions/{session.id}/artifacts/{session.result_artifact.id}"
+                )
                 result["rows"] = session.result_artifact.row_count
 
         # Always include unresolved requirements
-        unresolved = [
-            req_id for req_id, req in session.requirements.items()
-            if not req["resolved"]
-        ]
+        unresolved = [req_id for req_id, req in session.requirements.items() if not req["resolved"]]
         if unresolved:
             result["unresolved"] = unresolved
 
@@ -1122,7 +1118,7 @@ class QueryService:
             return self._observation(session)
 
         # Add next window
-        new_routes = available[:self.display_window]
+        new_routes = available[: self.display_window]
         new_options = [
             DecisionOption(
                 id=f"o-{len(session.current_decision.options) + i:03d}",

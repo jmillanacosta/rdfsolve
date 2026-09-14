@@ -114,9 +114,7 @@ class CompactObservation(BaseModel):
     unresolved: list[str] = Field(default_factory=list)
 
 
-# =============================================================================
 # Milestone C: Binding-aware query fragments
-# =============================================================================
 
 
 class FragmentKind(str, Enum):
@@ -400,7 +398,7 @@ class QuerySolver:
                 )
             )
 
-        for i, filter_spec in enumerate(intent.filters):
+        for _i, filter_spec in enumerate(intent.filters):
             self._requirements.append(
                 Requirement(
                     id=f"req-{len(self._requirements):02d}",
@@ -421,13 +419,13 @@ class QuerySolver:
 
         decision = self._decisions[decision_id]
         if decision.id != self._current_decision:
-            raise ValueError(f"Decision {decision_id} is not current (expected {self._current_decision})")
+            raise ValueError(
+                f"Decision {decision_id} is not current (expected {self._current_decision})"
+            )
 
         valid_ids = {opt.id for opt in decision.options}
         if option_id not in valid_ids:
-            raise ValueError(
-                f"Invalid option {option_id}. Valid: {', '.join(sorted(valid_ids))}"
-            )
+            raise ValueError(f"Invalid option {option_id}. Valid: {', '.join(sorted(valid_ids))}")
 
         decision.selected = option_id
         self._log("choose", {"decision": decision_id, "option": option_id})
@@ -454,8 +452,7 @@ class QuerySolver:
             displayed = self._displayed.get(target, [])
             rejected = self._rejected.get(target, set())
             remaining = [
-                r for r in all_routes
-                if r["id"] not in displayed and r["id"] not in rejected
+                r for r in all_routes if r["id"] not in displayed and r["id"] not in rejected
             ]
 
             if remaining:
@@ -478,11 +475,14 @@ class QuerySolver:
                 self._displayed[target] = displayed
                 decision.more_available = len(remaining) > self.display_options
 
-        self._log("show_more", {
-            "decision": decision_id,
-            "total_options": len(decision.options),
-            "more_available": decision.more_available,
-        })
+        self._log(
+            "show_more",
+            {
+                "decision": decision_id,
+                "total_options": len(decision.options),
+                "more_available": decision.more_available,
+            },
+        )
         return self._observe()
 
     def reject_all(self, decision_id: str) -> CompactObservation:
@@ -502,15 +502,20 @@ class QuerySolver:
             displayed = self._displayed.get(target, [])
             rejected = self._rejected.get(target, set())
             all_routes = self._candidates[target]
-            remaining = [r for r in all_routes if r["id"] not in displayed and r["id"] not in rejected]
+            remaining = [
+                r for r in all_routes if r["id"] not in displayed and r["id"] not in rejected
+            ]
 
             if not remaining:
                 self._state = SolverState.BLOCKED
-                self._log("reject_all_exhausted", {
-                    "decision": decision_id,
-                    "total_candidates": len(all_routes),
-                    "rejected": len(rejected),
-                })
+                self._log(
+                    "reject_all_exhausted",
+                    {
+                        "decision": decision_id,
+                        "total_candidates": len(all_routes),
+                        "rejected": len(rejected),
+                    },
+                )
             else:
                 # Replace options with new ones
                 new_options = []
@@ -530,11 +535,14 @@ class QuerySolver:
                 decision.options = new_options
                 self._displayed[target] = displayed
                 decision.more_available = len(remaining) > self.display_options
-                self._log("reject_all_replaced", {
-                    "decision": decision_id,
-                    "new_options": len(new_options),
-                    "remaining": len(remaining) - len(new_options),
-                })
+                self._log(
+                    "reject_all_replaced",
+                    {
+                        "decision": decision_id,
+                        "new_options": len(new_options),
+                        "remaining": len(remaining) - len(new_options),
+                    },
+                )
 
         return self._observe()
 
@@ -590,7 +598,9 @@ class QuerySolver:
         cache_key = self._execution_cache_key()
         if cache_key in self._operation_cache:
             cached_revision, cached_result = self._operation_cache[cache_key]
-            self._log("execute_replay", {"cache_key": cache_key, "cached_revision": cached_revision})
+            self._log(
+                "execute_replay", {"cache_key": cache_key, "cached_revision": cached_revision}
+            )
             self._state = SolverState.COMPLETE
             self._result_reference = cached_result.get("reference")
             self._final_query = cached_result.get("final_query")
@@ -681,9 +691,7 @@ class QuerySolver:
 
         # Apply updates
         if "filters" in updates:
-            self._intent = Intent(
-                **{**self._intent.model_dump(), "filters": updates["filters"]}
-            )
+            self._intent = Intent(**{**self._intent.model_dump(), "filters": updates["filters"]})
             # Re-process filter requirements
             self._requirements = [r for r in self._requirements if r.kind != "filter"]
             for filter_spec in updates["filters"]:
@@ -699,9 +707,7 @@ class QuerySolver:
 
         if "targets" in updates:
             new_targets = updates["targets"]
-            self._intent = Intent(
-                **{**self._intent.model_dump(), "target_classes": new_targets}
-            )
+            self._intent = Intent(**{**self._intent.model_dump(), "target_classes": new_targets})
             # Re-process target requirements
             self._requirements = [r for r in self._requirements if r.kind != "target"]
             for target in new_targets:
@@ -741,14 +747,16 @@ class QuerySolver:
 
                 # Collect all pending target requirements
                 pending_targets = [
-                    req for req in self._requirements
+                    req
+                    for req in self._requirements
                     if req.kind == "target" and req.status == RequirementStatus.PENDING
                 ]
 
                 if not pending_targets:
                     # All targets resolved, check filters
                     pending_filters = [
-                        req for req in self._requirements
+                        req
+                        for req in self._requirements
                         if req.kind == "filter" and req.status == RequirementStatus.PENDING
                     ]
                     # Mark filters as resolved (they're validated at execution time)
@@ -804,7 +812,11 @@ class QuerySolver:
                 # Query compiled, waiting for execution
                 break
 
-            elif self._state == SolverState.COMPLETE or self._state == SolverState.BLOCKED or self._state == SolverState.FAILED:
+            elif (
+                self._state == SolverState.COMPLETE
+                or self._state == SolverState.BLOCKED
+                or self._state == SolverState.FAILED
+            ):
                 break
 
         if iteration >= max_iterations:
@@ -855,7 +867,7 @@ class QuerySolver:
     def _route_description(self, route: Route) -> str:
         """Generate human-readable route description."""
         parts = [self._class_label(route[0][0])]
-        for s, p, o, inverse in route:
+        for _s, p, o, inverse in route:
             pred_name = p.rsplit("/", 1)[-1].rsplit("#", 1)[-1]
             arrow = " <- " if inverse else " -> "
             parts.append(f"{arrow}{pred_name}{arrow}{self._class_label(o)}")
@@ -930,13 +942,16 @@ class QuerySolver:
 
         self._decisions[decision_id] = decision
         self._current_decision = decision_id
-        self._log("create_decision", {
-            "decision_id": decision_id,
-            "target": target,
-            "target_label": target_label,
-            "options": len(options),
-            "total_available": len(available),
-        })
+        self._log(
+            "create_decision",
+            {
+                "decision_id": decision_id,
+                "target": target,
+                "target_label": target_label,
+                "options": len(options),
+                "total_available": len(available),
+            },
+        )
 
     def _compile_query(self) -> None:
         """Compile the selected routes into a query using answer_query."""
@@ -966,12 +981,15 @@ class QuerySolver:
         # Build binding-aware fragments from selected routes
         self._query_fragments = self._build_query_fragments()
 
-        self._log("compile_query", {
-            "routes": self._selected_routes,
-            "filters": len(filters),
-            "fragments": len(self._query_fragments),
-            "bindings": len(self._binding_context.all_bindings()),
-        })
+        self._log(
+            "compile_query",
+            {
+                "routes": self._selected_routes,
+                "filters": len(filters),
+                "fragments": len(self._query_fragments),
+                "bindings": len(self._binding_context.all_bindings()),
+            },
+        )
 
     # =========================================================================
     # Milestone C: Fragment composition methods
@@ -1022,13 +1040,15 @@ class QuerySolver:
                             )
                         )
 
-        self._log("build_planning_fragments", {
-            "classes": len(self._planning_fragments),
-            "total_constraints": sum(
-                len(f.outgoing) + len(f.incoming)
-                for f in self._planning_fragments.values()
-            ),
-        })
+        self._log(
+            "build_planning_fragments",
+            {
+                "classes": len(self._planning_fragments),
+                "total_constraints": sum(
+                    len(f.outgoing) + len(f.incoming) for f in self._planning_fragments.values()
+                ),
+            },
+        )
 
     def _build_query_fragments(self) -> list[QueryFragment]:
         """Build query fragments from selected routes with explicit bindings.
@@ -1099,9 +1119,7 @@ class QuerySolver:
             children=fragments,
         )
 
-    def compose_filter(
-        self, fragment: QueryFragment, condition: dict[str, Any]
-    ) -> QueryFragment:
+    def compose_filter(self, fragment: QueryFragment, condition: dict[str, Any]) -> QueryFragment:
         """Add a filter condition to a fragment."""
         filter_frag = QueryFragment(
             kind=FragmentKind.FILTER,
@@ -1122,8 +1140,7 @@ class QuerySolver:
             "fragments": len(self._query_fragments),
             "total_bindings": len(self._binding_context.all_bindings()),
             "bindings_by_class": {
-                self._class_label(cls): vars
-                for cls, vars in bindings_by_class.items()
+                self._class_label(cls): vars for cls, vars in bindings_by_class.items()
             },
             "same_class_bindings": [
                 {
@@ -1206,7 +1223,7 @@ class QuerySolver:
                 for k, v in self._decisions.items()
             },
             "selected_routes": self._selected_routes,
-            "routes": {k: v for k, v in self._routes.items()},
+            "routes": dict(self._routes.items()),
             "filters": self._filters,
             "compiled_query": self._compiled_query,
             "result_reference": self._result_reference,
