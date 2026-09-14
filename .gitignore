@@ -937,3 +937,5 @@ scripts/MINING.md
 notebooks/*_summary.json
 notebooks/*models.py
 notebooks/*.ttl
+*.out
+*.err
