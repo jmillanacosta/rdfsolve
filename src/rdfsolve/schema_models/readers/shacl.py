@@ -35,6 +35,9 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
         else MinedSchema(about=AboutMetadata.build())
     )
     schema.shapes = shapes
+    schema.prefixes = {
+        prefix: str(namespace) for prefix, namespace in shapes.to_rdf(graph).namespaces()
+    }
     keys = {(p.subject_class, p.property_uri, p.object_class, p.datatype) for p in schema.patterns}
     unrepresented = 0
     kinds = {

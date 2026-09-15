@@ -59,6 +59,7 @@ def void_graph_to_minedschema(
     schema = MinedSchema(
         patterns=patterns,
         about=about,
+        prefixes={prefix: str(namespace) for prefix, namespace in g.namespaces()},
         source_metadata=RetainedMetadata.from_document(
             MetadataDocument(graph=g, endpoint=endpoint, scope="retained VoID RDF")
         ),

@@ -69,6 +69,8 @@ def _add_record(
     if id(record) in seen:
         return
     seen.add(id(record))
+    for prefix, namespace in getattr(type(record), "rdf_prefixes", {}).items():
+        graph.bind(prefix, namespace)
     data = vars(record)
     source = data.get("rdf_source", {})
     scope = str(source.get("blank_node_scope", ""))

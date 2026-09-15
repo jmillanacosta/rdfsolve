@@ -2,21 +2,16 @@
 
 from __future__ import annotations
 
-import logging
 from hashlib import md5
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from rdfsolve._uri import uri_to_curie
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 
 if TYPE_CHECKING:
     from rdflib import Graph
 
     from rdfsolve.schema_models.core import MinedSchema
-    from rdfsolve.schema_models.pattern import SchemaPattern
     from rdfsolve.schema_models.void_model import VoidDataset
-
-_log = logging.getLogger(__name__)
 
 
 def to_void_graph(
@@ -434,42 +429,12 @@ def to_void_graph(
 
     # A typed relationship alone does not establish a cross-dataset linkset.
 
-    _bind_discovered_prefixes(g, schema.patterns)
     schema.annotate_rdf(g)
     for partition, class_iri in g.subject_objects(void["class"]):
         for example in schema.enrichment.class_examples.get(str(class_iri), []):
             if example.kind == "uri":
                 g.add((partition, void.exampleResource, example.to_rdf()))
     return g
-
-
-# LinkML export
-
-
-def _bind_discovered_prefixes(
-    g: Any,
-    patterns: list[SchemaPattern],
-) -> None:
-    """Bind bioregistry-derived prefixes to the graph."""
-    for pat in patterns:
-        for uri in (
-            pat.subject_class,
-            pat.property_uri,
-            pat.object_class,
-        ):
-            if uri in _SENTINEL_OBJECTS:
-                continue
-            _, pfx, ns = uri_to_curie(uri)
-            if pfx and ns:
-                try:
-                    g.bind(pfx, ns, override=False)
-                except Exception:
-                    _log.debug(
-                        "Could not bind %s=%s",
-                        pfx,
-                        ns,
-                        exc_info=True,
-                    )
 
 
 def minedschema_to_void(schema: MinedSchema, base_url: str = "https://example.org") -> VoidDataset:

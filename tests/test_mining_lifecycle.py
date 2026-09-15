@@ -148,4 +148,5 @@ def test_bounded_graph_uses_real_mining_queries():
         schema = miner.mine("local-fixture")
         assert ("urn:mine:A", "urn:mine:link", "urn:mine:B") in {
             (p.subject_class, p.property_uri, p.object_class) for p in schema.patterns}
+        assert schema.prefixes["e"] == "urn:mine:"
         assert miner.last_report.finished_at

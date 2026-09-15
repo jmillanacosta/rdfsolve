@@ -44,7 +44,7 @@ def minedschema_to_shacl(
             lost_counts,
         )
     if schema.shapes is not None:
-        return _add_navigation(schema, schema.shapes.model_copy(deep=True), base_uri)
+        return _complete_shapes(schema, schema.shapes.model_copy(deep=True), base_uri)
 
     from collections import defaultdict
     from hashlib import md5
@@ -111,21 +111,22 @@ def minedschema_to_shacl(
             )
         )
 
-    return _add_navigation(
+    return _complete_shapes(
         schema, ShaclShapesGraph(node_shapes=node_shapes, base_uri=base_uri), base_uri
     )
 
 
-def _add_navigation(
+def _complete_shapes(
     schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str
 ) -> ShaclShapesGraph:
-    """Describe candidate paths without adding validation constraints."""
+    """Add namespace declarations and candidate navigation paths."""
     import logging
     from collections import defaultdict
     from hashlib import sha256
 
     from rdfsolve.schema_models.navigation import NavigationPath
 
+    shapes.declare_prefixes(schema.get_prefixes(), resource=base_uri)
     if schema.navigation is None or not schema.navigation.paths:
         return shapes
     grouped: dict[tuple[str, tuple[str, ...]], list[NavigationPath]] = defaultdict(list)

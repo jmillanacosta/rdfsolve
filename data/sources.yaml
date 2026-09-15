@@ -4464,6 +4464,10 @@
     state: skipped
     reason: No endpoint URL
 - name: aopwikirdf
+  sparql_examples:
+    shacl_dumps:
+    - ../notebooks/mcp/examples/aopwiki.ttl
+    link_to_repository: https://github.com/marvinm2/AOP-Wiki-Queries
   endpoint: https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
   void_iri: http://aopwiki.org/
   download_ttl:
@@ -4516,6 +4520,8 @@
   endpoint_down: false
   avg_response_time: 0.36818718910217285
 - name: wikipathways
+  sparql_examples:
+    link_to_repository: https://github.com/wikipathways/sparql-examples
   endpoint: https://sparql.wikipathways.org/sparql/
   void_iri: http://rdf.wikipathways.org/
   in_kamdar: true
