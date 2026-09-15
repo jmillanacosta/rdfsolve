@@ -195,21 +195,38 @@ def test_ontology_evidence_unlocks_a_local_field_without_changing_scope(monkeypa
         with fixture(provider(monkeypatch) if enabled else False) as client:
             client.source += g
             s = Session(client)
-            observation = s.schema(question="Return events and available measurement methods", goals=[
-                {"clause": "Return events", "kind": "output", "concept": "Event"},
-                {"clause": "Available measurement methods", "kind": "output", "concept": "measurement method", "owner": EVENT, "required": False},
-            ])
-            query = f'SELECT ?event ?method WHERE {{ ?event a <{EVENT}> . OPTIONAL {{ ?event <{MMO}> ?method }} }}'
+            observation = s.schema(
+                question="Return events and available measurement methods",
+                goals=[
+                    {"clause": "Return events", "kind": "output", "concept": "Event"},
+                    {
+                        "clause": "Available measurement methods",
+                        "kind": "output",
+                        "concept": "measurement method",
+                        "owner": EVENT,
+                        "required": False,
+                    },
+                ],
+            )
+            query = f"SELECT ?event ?method WHERE {{ ?event a <{EVENT}> . OPTIONAL {{ ?event <{MMO}> ?method }} }}"
             if not enabled:
-                with pytest.raises(ValueError, match="unresolved|evidence|meaning|explain"):
+                with pytest.raises(ValueError, match=r"unresolved|evidence|meaning|explain"):
                     s.prepare(query)
             else:
                 cards = [c for match in observation["matches"] for c in match["items"]]
                 assert any(c.get("ontology_evidence") for c in cards)
                 rows = values(s, s.prepare(query))
-                assert rows == [{"event": {"type": "uri", "value": "urn:event"}, "method": {"type": "literal", "value": "Assay"}}]
+                assert rows == [
+                    {
+                        "event": {"type": "uri", "value": "urn:event"},
+                        "method": {"type": "literal", "value": "Assay"},
+                    }
+                ]
                 assert "urn:parent" not in query
-                assert "Recorded value restrictions: 0" in next(iter(s.executions.values()))["strategy"]
+                assert (
+                    "Recorded value restrictions: 0"
+                    in next(iter(s.executions.values()))["strategy"]
+                )
 
 
 def test_partial_word_match_cannot_ground_a_field(monkeypatch):
@@ -218,32 +235,124 @@ def test_partial_word_match_cannot_ground_a_field(monkeypatch):
 
     predicate = "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C17469"
     lookup = OntologyLookup()
-    monkeypatch.setattr(lookup, "_json", lambda *a, **k: {"_embedded": {"terms": [{
-        "iri": canonical_iri(predicate), "label": "Taxonomy", "description": ["The science of classification."],
-    }]}})
-    schema = MinedSchema(about={"dataset_name": "test"}, patterns=[
-        SchemaPattern(subject_class=str(E.Event), property_uri=predicate, object_class="Literal")])
+    monkeypatch.setattr(
+        lookup,
+        "_json",
+        lambda *a, **k: {
+            "_embedded": {
+                "terms": [
+                    {
+                        "iri": canonical_iri(predicate),
+                        "label": "Taxonomy",
+                        "description": ["The science of classification."],
+                    }
+                ]
+            }
+        },
+    )
+    schema = MinedSchema(
+        about={"dataset_name": "test"},
+        patterns=[
+            SchemaPattern(
+                subject_class=str(E.Event), property_uri=predicate, object_class="Literal"
+            )
+        ],
+    )
     with Client(schema, Graph(), graph_uris=[], ontology_grounding=lookup) as client:
         session = Session(client)
-        session.schema(question="Return event taxon values", goals=[
-            {"clause": "Return event taxon values", "kind": "output", "concept": "taxon", "owner": str(E.Event)}])
+        session.schema(
+            question="Return event taxon values",
+            goals=[
+                {
+                    "clause": "Return event taxon values",
+                    "kind": "output",
+                    "concept": "taxon",
+                    "owner": str(E.Event),
+                }
+            ],
+        )
         client.vocabulary(predicate)
         session.catalogue.search("taxon", owners=[str(E.Event)])
         ref = next(iter(session.catalogue.field_refs.values()))
-        query = f'SELECT ?event ?value WHERE {{ ?event a <{E.Event}> ; <{predicate}> ?value }}'
+        query = f"SELECT ?event ?value WHERE {{ ?event a <{E.Event}> ; <{predicate}> ?value }}"
         with pytest.raises(ValueError, match="explain"):
             session.prepare(query, grounding={"g1": {"evidence": [ref]}})
 
 
 def test_discovery_retains_goals_and_accepts_an_added_restriction(session):
-    question = 'Pathways with their events, applicable to Human'
-    output = dict(clause='Return pathways', kind='output', concept='Adverse Outcome Pathway')
+    question = "Pathways with their events, applicable to Human"
+    output = {"clause": "Return pathways", "kind": "output", "concept": "Adverse Outcome Pathway"}
     session.schema(question=question, goals=[output])
-    human = dict(clause='Applicable to Human', kind='entity_filter', concept='applicable taxon', value='Human', owner='a')
+    human = {
+        "clause": "Applicable to Human",
+        "kind": "entity_filter",
+        "concept": "applicable taxon",
+        "value": "Human",
+        "owner": "a",
+    }
     session.schema(question=question, goals=[human])
-    assert [r.clause for r in session.requirements.values()] == ['Return pathways', 'Applicable to Human']
+    assert [r.clause for r in session.requirements.values()] == [
+        "Return pathways",
+        "Applicable to Human",
+    ]
     session.schema(question=question, goals=[output])
-    assert session.requirements['g2'].value == 'Human'
-    with pytest.raises(ValueError, match='Preserve the value restriction'):
-        session.schema(question=question, goals=[dict(human, value='Mouse')])
-    assert session.requirements['g2'].value == 'Human'
+    assert session.requirements["g2"].value == "Human"
+    with pytest.raises(ValueError, match="Preserve the value restriction"):
+        session.schema(question=question, goals=[dict(human, value="Mouse")])
+    assert session.requirements["g2"].value == "Human"
+
+
+def test_goal_correction_keeps_clauses_and_compiles_real_bindings(session):
+    question = "Return Key Events belonging to Human pathways"
+    goals = [
+        {"clause": "Return Key Events", "kind": "output", "concept": "Key Event"},
+        {
+            "clause": "Events belong to pathways",
+            "kind": "relation",
+            "concept": "participatesIn",
+            "owner": "Key Event",
+        },
+        {
+            "clause": "Pathways apply to Human",
+            "kind": "entity_filter",
+            "concept": "Taxon",
+            "owner": "Adverse Outcome Pathway",
+            "value": "Human",
+        },
+    ]
+    session.schema(question=question, goals=goals)
+    correction = {"g2": {"concept": "has Key Event", "owner": "Adverse Outcome Pathway"}}
+    session.schema(question=question, corrections=correction)
+    session.schema(question=question, corrections=correction)
+    assert list(session.goals.values()) == [g["clause"] for g in goals]
+    assert len(session.interpretation_warnings) == 1
+    session.find("Human", str(E.Taxon))
+    query = f"SELECT ?event WHERE {{ ?a a <{E.AOP}>; <{E.event}> ?event; <{E.taxon}> <{E.Human}> . ?event a <{E.Event}> }}"
+    rows = values(session, session.prepare(query))
+    assert {r["event"]["value"] for r in rows} == {str(E.ke1), str(E.ke3)}
+    before = dict(session.requirements)
+    for changes in ({"value": "Mouse"}, {"kind": "text_filter"}, {"concept": "context"}):
+        with pytest.raises(ValueError):
+            session.schema(question=question, corrections={"g3": changes})
+    with pytest.raises(ValueError, match="corrections"):
+        session.schema(
+            question=question, goals=[dict(g, clause=g["clause"] + " again") for g in goals]
+        )
+    assert session.requirements == before
+
+
+def test_schema_keeps_field_owners_and_does_not_hide_literals(session):
+    goals = [
+        {
+            "clause": owner + " taxon",
+            "kind": "output",
+            "concept": "applicable taxon",
+            "owner": owner,
+        }
+        for owner in ["Key Event", "Adverse Outcome Pathway"]
+    ]
+    result = session.schema(question="Return event and pathway taxa", goals=goals)
+    assert {m["owner"] for m in result["matches"]} == {g["owner"] for g in goals}
+    result = session.schema(["measurement method"], owners=["Key Event"], targets=["Taxon"])
+    assert any(c["label"] == "measurement method" for m in result["matches"] for c in m["items"])
+    assert not session.client.queries
