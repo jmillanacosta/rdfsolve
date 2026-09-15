@@ -9,13 +9,36 @@ from pathlib import Path
 import pytest
 from conftest import E
 from mcp import Client as MCPClient
-from mcp import StdioServerParameters
+from mcp import MCPError, StdioServerParameters
 from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 
 from rdfsolve.api import ask_rdf
 from rdfsolve.mcp.openai import launch_config
 from rdfsolve.mcp.server import CONTRACTS
+
+
+def test_final_receipt_preserves_distinct_semantic_warnings():
+    from rdfsolve.mcp.agent import receipt_text
+
+    text = receipt_text(
+        {
+            "state": "complete",
+            "rows": 10,
+            "warnings": [
+                "Species mapping is uncertain.",
+                "Species mapping is uncertain.",
+                "Measurement methods were mapped to gene extraction.",
+                "Mixed RDF values.",
+            ],
+        }
+    )
+    assert text.count("Species mapping") == 1
+    assert "gene extraction" in text and "Mixed RDF values" in text
+    from rdfsolve.mcp.openai import Answer
+
+    answer = Answer(calls=[{"result": {"state": "complete", "warnings": ["Review mapping"]}}])
+    assert answer.diagnostics()["warnings"] == ["Review mapping"]
 
 
 def files(session, folder):
@@ -108,10 +131,20 @@ def test_real_transport_reports_errors_and_refuses_dataset_resources(session, tm
             assert (
                 error.is_error and error.structured_content["error"]["code"] == "invalid_arguments"
             )
-            with pytest.raises(Exception):
+            with pytest.raises(MCPError):
                 await server.read_resource("rdfsolve://artifacts/results")
 
     asyncio.run(check())
+
+
+def test_model_prose_cannot_claim_completed_execution(session, tmp_path):
+    from pydantic_ai.messages import TextPart
+
+    schema, data = files(session, tmp_path)
+    model = FunctionModel(lambda messages, info: ModelResponse(parts=[TextPart("Ready.")]))
+    answer = asyncio.run(ask_rdf("List pathways", schema=schema, data_file=data, model=model))
+    assert answer.state == "blocked" and not answer.bindings
+    assert answer.text.startswith("No final query was executed.")
 
 
 def test_subprocess_paths_use_this_checkout_from_any_directory(tmp_path, monkeypatch):
@@ -162,3 +195,9 @@ def test_working_context_retains_goals_and_complete_recent_tool_pairs():
     calls = {p.tool_call_id for m in compact for p in m.parts if isinstance(p, ToolCallPart)}
     returns = {p.tool_call_id for m in compact for p in m.parts if isinstance(p, ToolReturnPart)}
     assert calls == returns == {str(i) for i in range(24, 30)}
+    messages += [
+        ModelResponse(parts=[ToolCallPart("rdf_schema", {}, tool_call_id="30")]),
+        ModelRequest(parts=[ToolReturnPart("rdf_schema", {}, tool_call_id="30")]),
+    ]
+    next_context = bridge.context(messages)
+    assert next_context[:2] == compact[:2] and len(next_context) == len(compact) + 2

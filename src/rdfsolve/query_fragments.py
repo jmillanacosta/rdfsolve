@@ -51,7 +51,7 @@ def walk(value):
 
 
 def path_size(path: PropertyPath) -> dict[str, int | None]:
-    """Structural edge count and min/max traversal length, not execution cost."""
+    """Return structural edge count and minimum/maximum traversal length."""
     if path.operator == "predicate":
         return {"edges": 1, "min_hops": 1, "max_hops": 1}
     sizes = [path_size(p) for p in path.items]
@@ -261,7 +261,7 @@ class PreparedQuery:
 def compile_query(
     template: str, fragments: dict[str, Fragment], scope: Callable[[str], str], known_iris: set[str]
 ) -> PreparedQuery:
-    """Expand retained fragments and parse. Does not certify natural-language intent."""
+    """Expand retained fragments and parse a SELECT in its source scope."""
     if not template.strip():
         raise ValueError("Supply a SELECT query.")
     reserved = set(
@@ -353,9 +353,7 @@ def compile_query(
         raise ValueError(
             "Select output variables explicitly; SELECT * would expose package-internal path/scope variables."
         )
-    warnings = [
-        "Syntax and source vocabulary checked; interpretation of the question is not independently verified."
-    ]
+    warnings = []
 
     type_variables = sorted(
         {
@@ -378,12 +376,6 @@ def compile_query(
         "unprojected_resource_variables": unprojected,
         "has_aggregates": aggregate,
     }
-    if unprojected and not aggregate:
-        warnings.append(
-            "Resource identities not projected: "
-            + ", ".join("?" + v for v in unprojected)
-            + ". For entity listings retain their IRIs alongside labels. This is a warning, not a query rewrite."
-        )
     return PreparedQuery(
         identifier("q", sparql), template, sparql, variables, uses, warnings, diagnostics
     )

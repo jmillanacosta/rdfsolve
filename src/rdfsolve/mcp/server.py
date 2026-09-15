@@ -45,15 +45,20 @@ class FindArgs(Args):
     """Ground a name within a discovered class."""
 
     text: str = Field(min_length=1, max_length=200)
-    kind: str
+    kind: str = Field(
+        description="Exact discovered class reference, such as a field target's ref. This selects the dataset class to search."
+    )
     fields: list[str] = Field(default_factory=list, max_length=12)
+    offset: int = Field(default=0, ge=0)
 
 
 class PathsArgs(Args):
     """Retrieve bounded paths between grounded endpoints."""
 
-    source: str
-    target: str
+    source: str = Field(description="Discovered source class or retained entity reference.")
+    target: str = Field(
+        description="Discovered target class or retained entity reference. Field references already supply their own insertable path."
+    )
     max_hops: int = Field(default=3, ge=1, le=6)
     offset: int = Field(default=0, ge=0)
 
@@ -202,6 +207,33 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
                 "code": "package_error",
                 "message": "A package operation failed. Inspect the correlated server log.",
             }
+        }
+    if name == "rdf_prepare" and "error" in value:
+        grounding = arguments.get("grounding", {})
+        grounding = grounding if isinstance(grounding, dict) else {}
+        refs = list(
+            dict.fromkeys(
+                ref
+                for goal in grounding.values()
+                if isinstance(goal, dict)
+                for ref in goal.get("evidence", [])
+                if isinstance(ref, str) and ref in session.catalogue.fragments
+            )
+        )
+        value["selected_evidence"] = session._page(refs, budget=2500)
+        value["repair"] = (
+            "Use each field's exact insert with your subject/object variables. Use rdf_schema with the goal concept and owner if this evidence means something else."
+        )
+        if value["error"]["code"] == "goal_owner":
+            value["repair"] = (
+                "Before preparation, use rdf_schema to correct the affected goal's owner while retaining all original clause texts. Then use the selected field insert in your SELECT."
+            )
+            value["retained_requirements"] = {
+                key: requirement.model_dump() for key, requirement in session.requirements.items()
+            }
+    if name == "rdf_schema" and "error" in value and session.requirements:
+        value["retained_requirements"] = {
+            key: requirement.model_dump() for key, requirement in session.requirements.items()
         }
     value = to_jsonable_python(value)
     if len(json.dumps(value).encode()) > 12000:

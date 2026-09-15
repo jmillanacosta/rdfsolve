@@ -1,10 +1,9 @@
 """The retained schema and generated models must determine grounding."""
 
-from conftest import prepare
-
 import json
 
-from conftest import E, declare, field, insert, values
+import pytest
+from conftest import E, declare, field, insert, prepare, values
 from pydantic import BaseModel
 from rdflib import RDF, Graph, Literal, Namespace
 
@@ -22,6 +21,22 @@ def test_connected_schema_requires_no_endpoint_query(session):
     assert not session.client.queries
     selected = session.schema(owners=[str(E.AOP)], targets=[str(E.Event)])
     assert len(selected["matches"][0]["items"]) == 1
+    partial = session.schema(["Key Event"], owners=[str(E.AOP)], targets=["a named individual"])
+    assert partial["unresolved_types"] == ["a named individual"]
+    assert partial["matches"][0]["items"] and not session.client.queries
+    fallback = session.inspect(
+        session.catalogue.type_refs[str(E.Event)], text="undocumented concept"
+    )
+    index = fallback["unmatched_field_indexes"][session.catalogue.type_refs[str(E.Event)]]
+    assert any(row[1] == "measurement method" for row in index["fields"])
+    assert not index["more"] and not session.client.queries
+    field_card = next(c for c in result["connections"]["items"] if c["label"] == "applicable taxon")
+    target = next(t for t in field_card["targets"] if t["label"] == "Taxon")
+    found = session.find("Human", target["ref"])
+    assert found["searched_class"] == target
+    assert found["items"][0]["iri"] == str(E.Human)
+    with pytest.raises(ValueError, match=target["ref"]):
+        session.paths(field_card["ref"], target["ref"])
 
 
 def test_typed_entity_and_package_paths_anchor_the_answer(session):
@@ -39,6 +54,24 @@ def test_typed_entity_and_package_paths_anchor_the_answer(session):
         prepare(session, {"g1": {"pattern": insert(path["ref"], "a", "tax"), "project": ["a"]}}),
     )
     assert {r["a"]["value"] for r in rows} == {str(E.humanAOP), str(E.noChemicalAOP)}
+
+
+def test_candidates_beyond_first_page_remain_usable(session):
+    for i in range(7):
+        session.client.source.add((E[f"member{i}"], RDF.type, E.Taxon))
+        session.client.source.add(
+            (
+                E[f"member{i}"],
+                Namespace("http://www.w3.org/2000/01/rdf-schema#").label,
+                Literal("Shared name"),
+            )
+        )
+    first = session.find("Shared name", str(E.Taxon))
+    count = len(session.client.queries)
+    second = session.find("Shared name", str(E.Taxon), offset=first["next_offset"])
+    assert len(first["items"]) == 4 and len(second["items"]) == 3
+    assert not second["more"] and len(session.client.queries) == count
+    assert session.paths(str(E.AOP), second["items"][-1]["ref"], max_hops=1)["items"]
 
 
 def test_shape_only_sequence_and_inverse_execute():
@@ -67,23 +100,35 @@ def test_shape_only_sequence_and_inverse_execute():
 
 
 def test_mapping_evidence_improves_local_class_retrieval(session):
-    import inspect
+    from rdfsolve.class_derivation import derive_class_mappings
+    from rdfsolve.class_index import ClassIndex, EntityClassInfo
+    from rdfsolve.mapping_models.core import MappingEdge
+    from rdfsolve.registry import TypeDescription
 
-    # The fixture mappings use the package's mapping model and real registry.
-    from rdfsolve.class_derivation import ClassPair, derive_class_mappings
-    from rdfsolve.class_index import ClassIndex
-    from rdfsolve.registry import Registry, TypeDescription
-
-    pair = ClassPair(
-        source_class=str(E.Taxon),
-        target_class="urn:peer:Species",
-        source_dataset="rdf",
-        target_dataset="peer",
-        predicate="http://www.w3.org/2004/02/skos/core#relatedMatch",
-        source_entities={str(E.Human)},
-        target_entities={"urn:peer:Human"},
-        instance_count=1,
+    index = ClassIndex(
+        endpoint_url="urn:local",
+        entities={
+            str(E.Human): EntityClassInfo(
+                entity_iri=str(E.Human), graph_classes={"rdf": [str(E.Taxon)]}
+            ),
+            "urn:peer:Human": EntityClassInfo(
+                entity_iri="urn:peer:Human", graph_classes={"peer": ["urn:peer:Species"]}
+            ),
+        },
     )
+    pairs, stats = derive_class_mappings(
+        [
+            MappingEdge(
+                source_class=str(E.Human),
+                target_class="urn:peer:Human",
+                source_dataset="rdf",
+                target_dataset="peer",
+                predicate="http://www.w3.org/2004/02/skos/core#relatedMatch",
+            )
+        ],
+        index,
+    )
+    assert stats["processed_edges"] == 1
     peer = session.catalogue.registry.model_copy(
         update={
             "source_id": "peer",
@@ -97,7 +142,7 @@ def test_mapping_evidence_improves_local_class_retrieval(session):
             ],
         }
     )
-    mapped = Session(session.client, class_mappings=[pair], related_registries=[peer])
+    mapped = Session(session.client, class_mappings=pairs, related_registries=[peer])
     result = mapped.schema(["Species"])
     assert any(
         item["ref"] == mapped.catalogue.type_refs[str(E.Taxon)]
@@ -105,3 +150,6 @@ def test_mapping_evidence_improves_local_class_retrieval(session):
     )
     assert mapped.catalogue.mapping_status["indexed_links"] == 1
     assert "urn:peer:Species" not in mapped.catalogue.known_iris
+    card = next(i for i in result["matches"][0]["items"] if i["kind"] == "type")
+    evidence = mapped.inspect(card["mapped_context"][0]["ref"])
+    assert evidence["related_source"] == "peer" and evidence["support"]["mapped_pairs"] == 1

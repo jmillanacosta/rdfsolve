@@ -28,11 +28,11 @@
     /></a>
 </p>
 
-Tools and MCP to retrieve RDF metadata, test endpoint availability, run batched SPARQL
-queries and maintain source registries. Extract and convert schemas, generate
-typed Python clients, follow links between records and derive mappings across
-datasets. Keep the queries and results behind each exploration, and export back into RDF, allowing to generate RDF subsets.
-
+Tools and MCP to retrieve RDF metadata, test endpoint availability, run batched
+SPARQL queries and maintain source registries. Extract and convert schemas,
+generate typed Python clients, follow links between records and derive mappings
+across datasets. Keep the queries and results behind each exploration, and
+export back into RDF, allowing to generate RDF subsets.
 
 ## Installation
 
@@ -195,8 +195,8 @@ chemicals = stressors.related("Chemical entity")
 chemicals.show("identifier")
 ```
 
-Use `values("title")` to list values across your selected records.
-Use `target_value` when you know a name but not its class:
+Use `values("title")` to list values across your selected records. Use
+`target_value` when you know a name but not its class:
 
 ```python
 from IPython.display import Markdown, display
@@ -206,10 +206,10 @@ display(paths)
 display(Markdown(data.diagram(paths=paths)))
 ```
 
-This verifies mined class routes against matching names or identifiers, ignoring case.
-It does not link records just because they share a type. Passing a second class
-instead lists possible class routes without querying the data.
-Use `diagram(paths=paths, path=1)` for the first complete path. Add
+This verifies mined class routes against matching names or identifiers, ignoring
+case. It does not link records just because they share a type. Passing a second
+class instead lists possible class routes without querying the data. Use
+`diagram(paths=paths, path=1)` for the first complete path. Add
 `instances=False` to show its classes instead of its records.
 
 Start from one record to keep the search within its connections:
@@ -222,14 +222,13 @@ chemical_paths = data.paths_between(pathways[0], "Chemical entity", max_hops=3)
 The first finds matching names; the second finds records of the chosen class.
 Both verify the links from this pathway, not all pathways of its class.
 
-Press Tab after `pathways.fields.` to discover fields while typing.
-`show()` retrieves only the fields you ask for; displaying results does not
-send requests.
+Press Tab after `pathways.fields.` to discover fields while typing. `show()`
+retrieves only the fields you ask for; displaying results does not send
+requests.
 
 To create a new schema, use `SchemaMiner` separately and save its output.
-`explore(endpoint, graph=graph_iri)` is a quick mining shortcut, not required
-to open a client.
-Show each query and its returned data with `data.query_log()`.
+`explore(endpoint, graph=graph_iri)` is a quick mining shortcut, not required to
+open a client. Show each query and its returned data with `data.query_log()`.
 Save the queries, results, and steps with `data.save_session("session.json")`,
 then close the connection with `data.close()`.
 
@@ -239,8 +238,8 @@ then close the connection with `data.close()`.
 
 Large SPARQL queries can time out, and endpoints can fail intermittently.
 `SparqlHelper` retries temporary failures and fetches large results in smaller
-batches. It reduces page sizes after timeouts and spaces
-requests to ease the load on endpoints.
+batches. It reduces page sizes after timeouts and spaces requests to ease the
+load on endpoints.
 
 ```python
 from rdfsolve.sparql_helper import SparqlHelper
@@ -261,11 +260,13 @@ pipeline or registry is required.
 Cursor paging continues after the last returned value, avoiding server limits on
 large offsets. For `SELECT DISTINCT`, it uses the returned columns as keys;
 `cursor_keys=["class"]` selects keys explicitly. Keys must identify each row.
-Use `pagination="offset"` for offset paging. Paging cannot make every costly query finish.
+Use `pagination="offset"` for offset paging. Paging cannot make every costly
+query finish.
 
-Mining accepts the same option: `SchemaMiner(endpoint_url=endpoint, pagination="cursor")`
-or `mine_schema(endpoint, pagination="cursor")`. It applies to paginated phases
-and their fallbacks; the mining report records the choice.
+Mining accepts the same option:
+`SchemaMiner(endpoint_url=endpoint, pagination="cursor")` or
+`mine_schema(endpoint, pagination="cursor")`. It applies to paginated phases and
+their fallbacks; the mining report records the choice.
 
 ### Keep and share useful queries
 
@@ -466,15 +467,17 @@ must agree with the mapping records.
 All model integration lives in `rdfsolve.mcp`. The core `Catalogue` indexes
 classes, mappings and full field paths. `retrieval.verify_query` expands one
 ordinary SELECT and checks its outputs, exact entity restrictions, field owners,
-connected bindings, optional scope and retrieval operators against declared goals.
-The initial semantic classification can be corrected before preparation. Corrections
-are recorded; probes cannot weaken the requirements. Initial interpretation and
-semantic selection remain model decisions.
+connected bindings, optional scope and retrieval operators against declared
+goals. The initial semantic classification can be corrected before preparation.
+Corrections are recorded; accepted entity restrictions and requested values
+cannot be weakened. Initial interpretation and semantic selection remain model
+decisions.
 
-The seven MCP tools discover schema, ground entities, find paths, inspect targeted
-evidence, prepare a query, probe it and explicitly finish. Complete bindings stay
-in local caller artifacts. Tools return compact evidence, profiles and execution
-receipts. Endpoint queries use the Client and shared SparqlHelper recovery.
+The seven MCP tools discover schema, ground entities, find paths, inspect
+targeted evidence, prepare a query, probe it and explicitly finish. Complete
+bindings stay in local caller artifacts. Tools return compact evidence, profiles
+and execution receipts. Endpoint queries use the Client and shared SparqlHelper
+recovery.
 
 For Claude or another MCP host, configure a stdio server:
 
@@ -483,22 +486,24 @@ python -m rdfsolve.mcp --schema /absolute/path/schema.json --source-id my-databa
 ```
 
 The server supports SELECT retrieval with joins, optional patterns, alternatives
-and filters. Aggregation, BIND-based output transformations, final LIMIT/OFFSET, federation and
-model-selected source scope are rejected. Ordinary SPARQL expressions inside
-filters preserve their declared scope. Schema evidence is approximate; unsupported
-target-class evidence produces a warning. Full natural-language equivalence is
-not something a schema check proves.
+and filters. Aggregation, BIND-based output transformations, nested SELECT,
+negation, final LIMIT/OFFSET, federation and model-selected source scope are
+rejected. Required goals need mandatory witnesses outside alternative-only
+branches. Ordinary SPARQL expressions inside filters preserve their declared
+scope. Schema evidence is approximate; unsupported target-class evidence
+produces a warning. Full natural-language equivalence is not something a schema
+check proves.
 
 Run deterministic tests with `uvx tox -e mcp`. The six files in `tests/mcp`
-contain exact RDF answer tests and real MCP/PydanticAI integration checks.
-Run local-model experiments through `sbatch scripts/slurm_qwen_mcp.sh`.
-Job logs, model logs and saved answers are under `../logs/mcp-test/`.
+contain exact RDF answer tests and real MCP/PydanticAI integration checks. Run
+local-model experiments through `sbatch scripts/slurm_qwen_mcp.sh`. Job logs,
+model logs and saved answers are under `../logs/mcp-test/`.
 
-The development notebooks are `notebooks/mcp/00_mine.ipynb`, `01_small.ipynb`, and
-`test-mcp.ipynb`. Their source queries, fixed RDF samples and canonical schemas
-live in `notebooks/mcp/schemas/`. Run the small evaluation with
-`RDFSOLVE_NOTEBOOK=01_small.ipynb sbatch scripts/slurm_qwen_mcp.sh`.
-Reference answers remain outside the model context. Results include exact tuple
+The development notebooks are `notebooks/mcp/00_mine.ipynb`, `01_small.ipynb`,
+and `test-mcp.ipynb`. Their source queries, fixed RDF samples and canonical
+schemas live in `notebooks/mcp/schemas/`. Run the small evaluation with
+`RDFSOLVE_NOTEBOOK=01_small.ipynb sbatch scripts/slurm_qwen_mcp.sh`. Reference
+answers remain outside the model context. Results include exact tuple
 precision/recall, request counts, inclusive input tokens and cache reads.
 
 ## Documentation

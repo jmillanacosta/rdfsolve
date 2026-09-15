@@ -155,7 +155,7 @@ class Hydrator:
             item["finished_at"] = datetime.now(timezone.utc).isoformat()
 
     def session_metadata(self, *, include_results: bool = True) -> dict[str, Any]:
-        """Return all retained helper queries and named steps, not a data snapshot.
+        """Return all retained helper queries and named steps.
 
         Query IDs identify executions, including repeated texts. Queries outside
         a named step remain in the session. HTTP retries are one execution.
@@ -287,7 +287,7 @@ class Hydrator:
         graphs = " ".join(_iri(graph) for graph in self.graph_uris)
         return f"VALUES ?_graph {{ {graphs} }} GRAPH ?_graph {{ {body} }}"
 
-    def _select(self, query: str) -> list[dict[str, Any]]:
+    def _select(self, query: str, *, exhaustive: bool = False) -> list[dict[str, Any]]:
         """Execute one bounded query and retain its text for inspection."""
         self.queries.append(query)
         self.last_query_execution = {
@@ -312,7 +312,9 @@ class Hydrator:
                 record.elapsed_seconds = time.monotonic() - started
         else:
             try:
-                result = self.source.select_with_fallback(query, purpose="hydrate")
+                result = self.source.select_with_fallback(
+                    query, purpose="hydrate", **({"exhaustive": True} if exhaustive else {})
+                )
             finally:
                 self.last_query_execution = deepcopy(
                     getattr(self.source, "last_select_execution", {})

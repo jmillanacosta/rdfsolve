@@ -1,11 +1,9 @@
 """Model observations are bounded; complete RDF remains caller-side."""
 
-from conftest import prepare
-
 import json
 
 import pytest
-from conftest import E, declare, field, values
+from conftest import E, declare, field, prepare, values
 from rdflib import Literal
 
 from rdfsolve.mcp.server import CONTRACTS, dispatch
@@ -46,3 +44,13 @@ def test_errors_are_actionable_and_serializable(session):
     )
     assert bad["error"]["code"] == "sparql_syntax"
     assert bad["error"]["line"] and bad["error"]["hints"]
+    ref = session.catalogue.type_refs[str(E.AOP)]
+    bad = dispatch(
+        session,
+        "rdf_prepare",
+        {
+            "sparql": f"SELECT ?a WHERE {{ ?a {ref} }}",
+            "grounding": {"g1": {"evidence": [ref]}},
+        },
+    )
+    assert bad["selected_evidence"]["items"][0]["insert"] == "{{" + ref + " ?s}}"

@@ -1,9 +1,7 @@
 """Expected bindings and counterexamples define query validity."""
 
-from conftest import prepare
-
 import pytest
-from conftest import E, declare, event_goals, field, insert, values
+from conftest import E, declare, event_goals, field, insert, prepare, values
 from rdflib import RDF, XSD, Literal, URIRef
 
 from rdfsolve.retrieval import QueryValidationError
@@ -28,13 +26,15 @@ def test_event_answers_preserve_owner_scope_and_optional_data(session):
     )
 
 
-@pytest.mark.parametrize("change", ["projection", "anchor", "optional", "empty"])
+@pytest.mark.parametrize("change", ["projection", "metadata", "anchor", "optional", "empty"])
 def test_final_query_must_preserve_declared_goal_witnesses(session, change):
     goals = event_goals(session)
     ref = prepare(session, goals)["query_ref"]
     query = session.prepared[ref].template
     if change == "projection":
         query = query.replace("SELECT DISTINCT ?event", "SELECT DISTINCT ?aop")
+    elif change == "metadata":
+        query = query.replace("?method WHERE", "WHERE")
     elif change == "anchor":
         import re
 
@@ -80,6 +80,8 @@ def test_optional_parent_cannot_bind_an_unrelated_chemical(session):
         (f"?a a <{E.AOP}> . ?c a <{E.Chemical}> .", "disconnected_roles"),
         (f"?a a <{E.AOP}> . BIND(STR(?a) AS ?value)", "retrieval_operator"),
         (f"?a a <{E.AOP}> . ?a ?predicate ?value", "variable_predicate"),
+        (f"?a a <{E.AOP}> FILTER NOT EXISTS {{ ?a <{E.event}> ?e }}", "retrieval_operator"),
+        (f"{{ SELECT ?a WHERE {{ ?a a <{E.AOP}> }} }}", "retrieval_operator"),
     ],
 )
 def test_field_and_retrieval_constraints(session, pattern, code):
@@ -188,14 +190,14 @@ def test_graph_scope_does_not_join_different_named_graphs(session):
 def test_declared_outputs_and_entity_restrictions_need_actual_witnesses(session):
     c = session.catalogue
     goals = [
-        dict(clause="Return Key Events", kind="output", concept="Key Event"),
-        dict(
-            clause="AOPs apply to Human",
-            kind="entity_filter",
-            concept="Taxon",
-            owner="Adverse Outcome Pathway",
-            value="Human",
-        ),
+        {"clause": "Return Key Events", "kind": "output", "concept": "Key Event"},
+        {
+            "clause": "AOPs apply to Human",
+            "kind": "entity_filter",
+            "concept": "Taxon",
+            "owner": "Adverse Outcome Pathway",
+            "value": "Human",
+        },
     ]
     session.schema(question="Return Key Events of AOPs applicable to Human", goals=goals)
     human = session.find("Human", str(E.Taxon))["items"][0]["ref"]
@@ -204,19 +206,19 @@ def test_declared_outputs_and_entity_restrictions_need_actual_witnesses(session)
         (str(E.AOP), session.client.field_name(session.client.model(str(E.AOP)), str(E.taxon)))
     ]
     grounding = {
-        "g1": dict(
-            pattern=field(session, E.AOP, E.event, "a", "event") + " " + insert(event, "event"),
-            project=["event"],
-            evidence=[event],
-        ),
-        "g2": dict(
-            pattern=field(session, E.AOP, E.taxon, "a", "tax")
+        "g1": {
+            "pattern": field(session, E.AOP, E.event, "a", "event") + " " + insert(event, "event"),
+            "project": ["event"],
+            "evidence": [event],
+        },
+        "g2": {
+            "pattern": field(session, E.AOP, E.taxon, "a", "tax")
             + " VALUES ?tax { "
             + insert(human)
             + " }",
-            evidence=[tax],
-            entity=human,
-        ),
+            "evidence": [tax],
+            "entity": human,
+        },
     }
     assert len(values(session, prepare(session, grounding))) == 2
     from copy import deepcopy
@@ -237,13 +239,57 @@ def test_declared_outputs_and_entity_restrictions_need_actual_witnesses(session)
     with pytest.raises(QueryValidationError, match="exact entity"):
         prepare(session, bad)
     bad = deepcopy(grounding)
-    bad["g1"] = dict(
-        pattern=insert(c.type_refs[str(E.AOP)], "a"),
-        project=["a"],
-        evidence=[c.type_refs[str(E.AOP)]],
+    session.find("Mouse", str(E.Taxon))
+    bad["g2"]["pattern"] = (
+        field(session, E.AOP, E.taxon, "a", "tax")
+        + " VALUES ?tax { <"
+        + str(E.Human)
+        + "> <"
+        + str(E.Mouse)
+        + "> }"
     )
+    with pytest.raises(QueryValidationError, match="exact entity"):
+        prepare(session, bad)
+    bad = deepcopy(grounding)
+    bad["g1"] = {
+        "pattern": insert(c.type_refs[str(E.AOP)], "a"),
+        "project": ["a"],
+        "evidence": [c.type_refs[str(E.AOP)]],
+    }
     with pytest.raises(QueryValidationError, match="Key Event"):
         prepare(session, bad)
+
+
+def test_missing_owner_type_reports_the_needed_pattern(session):
+    session.schema(
+        question="Return event methods",
+        goals=[
+            {
+                "clause": "Return event methods",
+                "kind": "output",
+                "concept": "measurement method",
+                "owner": "Key Event",
+            }
+        ],
+    )
+    ref = next(
+        r
+        for r in session.catalogue.field_refs.values()
+        if session.catalogue.fragments[r].label == "measurement method"
+    )
+    grounding = {"g1": {"evidence": [ref], "project": ["method"]}}
+    body = f"?event <{E.method}> ?method ."
+    with pytest.raises(QueryValidationError, match=rf"\?event a <{E.Event}>") as error:
+        session.prepare("SELECT ?method WHERE {" + body + "}", grounding)
+    assert error.value.code == "goal_type"
+    prepared = session.prepare(
+        f"SELECT ?method WHERE {{ ?event a <{E.Event}> . {body} }}", grounding
+    )
+    assert {r["method"]["value"] for r in values(session, prepared)} == {
+        "Assay A",
+        "Assay B",
+        "Unrelated assay",
+    }
 
 
 def test_source_scope_is_configuration_and_term_kinds_include_values(session):
@@ -251,8 +297,8 @@ def test_source_scope_is_configuration_and_term_kinds_include_values(session):
     session.schema(
         question="List AOPs from rdf",
         goals=[
-            dict(clause="Return AOPs", kind="output", concept="Adverse Outcome Pathway"),
-            dict(clause="from rdf", kind="entity_filter", concept="database", value="rdf"),
+            {"clause": "Return AOPs", "kind": "output", "concept": "Adverse Outcome Pathway"},
+            {"clause": "from rdf", "kind": "entity_filter", "concept": "database", "value": "rdf"},
         ],
     )
     root = c.type_refs[str(E.AOP)]
@@ -273,18 +319,52 @@ def test_source_scope_is_configuration_and_term_kinds_include_values(session):
         session.prepare(wrong, {"g1": {"evidence": [root], "project": ["a"]}})
 
 
-def test_initial_grounding_repairs_preserve_clauses_and_stop_after_preparation(session):
-    request = "Return pathways"
-    wrong = [
-        dict(clause=request, kind="entity_filter", concept="Adverse Outcome Pathway", value="Human")
+def test_grounding_repairs_preserve_value_restrictions(session):
+    request = "Pathways applicable to Human"
+    goal = {
+        "clause": request,
+        "kind": "entity_filter",
+        "concept": "Taxon",
+        "owner": "unresolved owner",
+        "value": "Human",
+    }
+    session.schema(question=request, goals=[goal])
+    corrected = {**goal, "owner": "Adverse Outcome Pathway"}
+    session.schema(question=request, goals=[corrected])
+    with pytest.raises(ValueError, match="Preserve the value restriction"):
+        session.schema(question=request, goals=[{**corrected, "kind": "text_filter"}])
+    human = session.find("Human", str(E.Taxon))["items"][0]["ref"]
+    ref = session.catalogue.field_refs[
+        (str(E.AOP), session.client.field_name(session.client.model(str(E.AOP)), str(E.taxon)))
     ]
-    session.schema(question=request, goals=wrong)
-    corrected = [dict(clause=request, kind="output", concept="Adverse Outcome Pathway")]
-    session.schema(question=request, goals=corrected)
-    ref = session.catalogue.type_refs[str(E.AOP)]
     ready = session.prepare(
-        "SELECT ?a WHERE { " + insert(ref, "a") + " }", {"g1": {"evidence": [ref]}}
+        "SELECT ?a WHERE { " + insert(ref, "a", "tax") + " VALUES ?tax { " + insert(human) + " } }",
+        {"g1": {"evidence": [ref], "entity": human}},
     )
-    assert ready["warnings"] and len(values(session, ready)) == 3
+    assert ready["warnings"] and len(values(session, ready)) == 2
     with pytest.raises(ValueError, match="retained across probes"):
-        session.schema(question=request, goals=wrong)
+        session.schema(question=request, goals=[goal])
+
+
+def test_text_conditions_match_literals_and_preserve_the_requested_word(session):
+    session.schema(
+        question="Pathways whose context mentions human",
+        goals=[
+            {
+                "clause": "context mentions human",
+                "kind": "text_filter",
+                "concept": "context",
+                "owner": "Adverse Outcome Pathway",
+                "value": "human",
+            }
+        ],
+    )
+    name = session.client.field_name(session.client.model(str(E.AOP)), str(E.context))
+    ref = session.catalogue.field_refs[(str(E.AOP), name)]
+    pattern = field(session, E.AOP, E.context, "a", "text")
+    query = "SELECT ?a WHERE { " + pattern + ' FILTER(CONTAINS(LCASE(STR(?text)), "human")) }'
+    with pytest.raises(QueryValidationError, match="isLiteral"):
+        session.prepare(query, {"g1": {"evidence": [ref]}})
+    query = query.replace("FILTER(CONTAINS", "FILTER(isLiteral(?text) && CONTAINS")
+    rows = values(session, session.prepare(query, {"g1": {"evidence": [ref]}}))
+    assert rows == [{"a": {"type": "uri", "value": str(E.mouseAOP)}}]

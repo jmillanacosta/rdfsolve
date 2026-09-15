@@ -5160,9 +5160,7 @@
       "state": "complete",
       "examples_per_pattern": 0,
       "query_count": 2,
-      "graph_uris": [
-        "http://aopwiki.org/"
-      ],
+      "graph_uris": ["http://aopwiki.org/"],
       "endpoint": "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
       "definitions": [
         {
@@ -5909,9 +5907,7 @@
       "dataset_name": null,
       "endpoint": "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql",
       "metadata_graph_uris": null,
-      "graph_uris": [
-        "http://aopwiki.org/"
-      ],
+      "graph_uris": ["http://aopwiki.org/"],
       "discovered_graphs": null,
       "ontology_graph_uris": null,
       "generated_by": "rdfsolve 0.0.2",

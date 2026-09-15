@@ -86,13 +86,27 @@ class Session:
                 complexity=path_size(f.path),
             )
             m = c.metadata.get(ref, {})
-            card["targets"] = [c.type_refs.get(t, t) for t in m.get("targets", [])]
+            card["targets"] = [
+                {"ref": c.type_refs[t], "label": short(c.fragments[c.type_refs[t]].label)}
+                for t in m.get("targets", [])
+                if t in c.type_refs
+            ]
             card["value_kinds"] = m.get("node_kinds", [])
         if f.term:
             card["identity"] = ref
             card["term_kind"] = f.term.kind
             if f.term.kind == "uri":
                 card["iri"] = f.term.value
+        hints = c.schema_documents.get(ref, ("", []))[1]
+        if hints:
+            card["mapped_context"] = [
+                {
+                    "ref": h,
+                    "label": short(c.metadata[h]["label"]),
+                    "source": c.metadata[h]["related_source"],
+                }
+                for h in hints[:2]
+            ]
         arguments = " ?s" if f.kind == "type" else " ?s ?o" if f.path else ""
         card["insert"] = "{{" + ref + arguments + "}}"
         return {k: v for k, v in card.items() if v not in (None, [], "")}
@@ -106,7 +120,31 @@ class Session:
             ) > budget:
                 break
             cards.append(card)
-        return {"items": cards, "more": offset + len(cards) < len(refs), "retained": len(refs)}
+        return {
+            "items": cards,
+            "more": offset + len(cards) < len(refs),
+            "retained": len(refs),
+            "next_offset": offset + len(cards),
+        }
+
+    def _field_index(self, refs, offset, budget):
+        c, rows = self.catalogue, []
+        for ref in refs[offset:]:
+            targets = [
+                c.fragments[c.type_refs[t]].label
+                for t in c.metadata[ref].get("targets", [])
+                if t in c.type_refs
+            ]
+            row = [ref, short(c.fragments[ref].label, 80), targets]
+            if len(json.dumps([*rows, row]).encode()) > budget:
+                break
+            rows.append(row)
+        return {
+            "columns": ["field reference", "label", "target classes"],
+            "fields": rows,
+            "more": offset + len(rows) < len(refs),
+            "next_offset": offset + len(rows),
+        }
 
     def schema(
         self, concepts=None, owners=None, targets=None, *, question="", goals=None, offset=0
@@ -163,16 +201,44 @@ class Session:
                     raise ValueError(
                         "Prepared requirements are retained across probes and query repairs. A data result cannot weaken them."
                     )
+                revisions = []
                 for key, previous in self.requirements.items():
                     if previous != requirements[key]:
-                        self.interpretation_warnings.append(
-                            f"Interpretation revised for '{previous.clause}': {previous.kind} to {requirements[key].kind}."
+                        revised = requirements[key]
+                        if previous.kind in {"entity_filter", "text_filter"} and (
+                            previous.value != revised.value
+                            or (
+                                previous.kind == "entity_filter" and revised.kind != "entity_filter"
+                            )
+                            or revised.kind not in {"entity_filter", "text_filter"}
+                        ):
+                            raise ValueError(
+                                f"Preserve the value restriction '{previous.clause}'. Ground its requested value; changing an entity restriction into text or an output would weaken it."
+                            )
+                        changed = [
+                            name
+                            for name, value in previous.model_dump().items()
+                            if value != revised.model_dump()[name]
+                        ]
+                        revisions.append(
+                            f"Interpretation revised for '{previous.clause}': {', '.join(changed)}."
                         )
+                self.interpretation_warnings.extend(revisions)
             self.question, self.goals = question, requested
             self.requirements = requirements
         c = self.catalogue
-        owner_ids = {c._type(o) for o in owners or []}
-        target_ids = {c._type(t) for t in targets or []}
+        unresolved = []
+
+        def resolve_types(values):
+            resolved = set()
+            for value in values or []:
+                try:
+                    resolved.add(c._type(value))
+                except ValueError:
+                    unresolved.append(value)
+            return resolved
+
+        owner_ids, target_ids = resolve_types(owners), resolve_types(targets)
         refs = list(c.field_refs.values()) if owner_ids else list(c.schema_documents)
         refs = [
             r
@@ -182,10 +248,27 @@ class Session:
                 not target_ids or target_ids.intersection(c.metadata.get(r, {}).get("targets", []))
             )
         ]
-        groups, seeds = [], set(owner_ids) | target_ids
-        for concept in concepts or [""]:
+        groups, seeds, fallback = [], set(owner_ids) | target_ids, {}
+        searches = dict.fromkeys(concepts or [], None)
+        for requirement in self.requirements.values():
+            if requirement.kind != "scope" and (
+                goals is not None or requirement.concept in searches
+            ):
+                searches[requirement.concept] = requirement.owner or None
+        if not searches:
+            searches[""] = None
+        for concept, requested_owner in searches.items():
+            candidates = refs
+            cls = next(iter(owner_ids)) if len(owner_ids) == 1 else None
+            if requested_owner:
+                try:
+                    cls = c._type(requested_owner)
+                except ValueError:
+                    cls = None
+                if cls:
+                    candidates = [r for r in refs if c.fragments[r].owner == cls]
             ranked = sorted(
-                (r for r in refs if score(c.schema_documents[r][0], concept)),
+                (r for r in candidates if score(c.schema_documents[r][0], concept)),
                 key=lambda r: (
                     -score(c.fragments[r].label, concept),
                     -score(c.schema_documents[r][0], concept),
@@ -200,10 +283,12 @@ class Session:
             if exact:
                 ranked = exact
                 seeds.update(c.fragments[r].iri for r in exact)
+            if cls and not any(score(c.schema_documents[r][0], concept) >= 1 for r in ranked):
+                fallback[cls] = [r for r in c.field_refs.values() if c.fragments[r].owner == cls]
             groups.append(
                 {
                     "concept": concept,
-                    **self._page(ranked, offset, budget=5000 // max(1, len(concepts or []))),
+                    **self._page(ranked, offset, budget=5000 // len(searches)),
                 }
             )
         connections = [
@@ -222,9 +307,20 @@ class Session:
             "source": c.registry.source_id,
             "scope": c.registry.binding,
             "mapping_evidence": c.mapping_status,
+            "unresolved_types": unresolved,
+            "unmatched_field_indexes": {
+                c.type_refs[cls]: {
+                    "basis": "No recorded meaning matched the requested concept. Select or clarify a retained field on this owner.",
+                    **self._field_index(fields, offset, 4000 // len(fallback)),
+                }
+                for cls, fields in fallback.items()
+            },
+            "next_step": "Use rdf_find for named members of a discovered class."
+            if unresolved
+            else None,
         }
 
-    def find(self, text, kind, *, fields=None):
+    def find(self, text, kind, *, fields=None, offset=0):
         """Keep typed candidate records; expose only distinguishing identities."""
         c = self.catalogue
         cls = c._type(kind)
@@ -255,8 +351,19 @@ class Session:
                 )
                 self.records[ref] = record
                 refs.append(ref)
-            self.cache[key] = refs
-        return self._page(self.cache[key], budget=3000, limit=4)
+            self.cache[key] = refs, result.coverage
+        refs, coverage = self.cache[key]
+        return {
+            **self._page(refs, offset, budget=3000, limit=4),
+            "searched_class": {
+                "ref": c.type_refs[cls],
+                "label": c.fragments[c.type_refs[cls]].label,
+            },
+            "search_limited": coverage.get("status") == "partial",
+            "finding": "No matching name was found. Try a documented alias or a targeted field lookup."
+            if not refs
+            else "Typed candidates retained; choose the intended identity.",
+        }
 
     def paths(self, source, target, *, max_hops=3, offset=0):
         """Delegate path generation to the core catalogue and client."""
@@ -299,10 +406,16 @@ class Session:
             }
         if ref in self.results:
             return {"result_ref": ref, "profile": profile(self.results[ref])}
+        if ref in c.metadata and ref.startswith("map_"):
+            evidence = dict(c.metadata[ref])
+            evidence["description"] = short(evidence.get("description"))
+            return evidence
         if ref not in c.fragments:
             raise ValueError("Unknown retained reference. Use a reference returned by discovery.")
         card = self._card(ref)
         f = c.fragments[ref]
+        if text and f.kind == "type":
+            return self.schema([text], owners=[ref])
         if text and f.kind == "field":
             key = identifier("values", [ref, text])
             if key not in self.cache:
@@ -338,7 +451,7 @@ class Session:
                 f"Ground every active clause: {sorted(active)}. Source-scope clauses are already enforced by the Client.",
             )
         query = verify_query(sparql, self.requirements, grounding, self.catalogue)
-        query.warnings = [*self.interpretation_warnings, *query.warnings]
+        query.warnings = list(dict.fromkeys([*self.interpretation_warnings, *query.warnings]))
         self.grounding = grounding
         self.prepared = {query.ref: query}
         return {
@@ -373,7 +486,7 @@ class Session:
             return self.executions[query_ref]
         query = self.prepared[query_ref]
         try:
-            result = self.client.select(query.sparql)
+            result = self.client.select(query.sparql, exhaustive=True)
         except Exception as exc:
             return {
                 "state": "failed",
@@ -382,6 +495,12 @@ class Session:
             }
         ref = identifier("result", query_ref)
         self.results[ref] = result
+        warnings = list(query.warnings)
+        for name, column in profile(result)["columns"].items():
+            if len(column["kinds"]) > 1:
+                warnings.append(
+                    f"{name} contains mixed RDF value kinds ({', '.join(column['kinds'])}); raw values were preserved for inspection."
+                )
         receipt = {
             "state": "complete",
             "query_ref": query_ref,
@@ -389,7 +508,7 @@ class Session:
             "rows": result.row_count,
             "variables": result.variables,
             "goals": self.goals,
-            "warnings": query.warnings,
+            "warnings": warnings,
             "strategy": "Expanded retained paths, checked selected goal witnesses and binding scopes, and retrieved RDF through the shared query helper.",
             "execution": self.client.last_query_execution,
         }
@@ -427,6 +546,7 @@ class Session:
         """Report query counts and correlated operation outcomes."""
         return {
             "source_queries": len(self.client.queries),
+            "endpoint_requests": sum(record.attempts for record in self.client._records()),
             "steps": self.events,
             "schema_revision": self.catalogue.registry.revision,
         }

@@ -188,6 +188,17 @@ class Catalogue:
     def _type(self, value):
         if value in self.fragments and self.fragments[value].kind == "type":
             return self.fragments[value].iri
+        fragment = self.fragments.get(value)
+        if fragment and fragment.path:
+            classes = [fragment.owner, *self.metadata.get(value, {}).get("targets", [])]
+            choices = {
+                self.type_refs[c]: self.fragments[self.type_refs[c]].label
+                for c in classes
+                if c in self.type_refs
+            }
+            raise ValueError(
+                f"{value} already describes a path. Use its insert, or select a class endpoint for further search: {choices}."
+            )
         matches = [
             t.id
             for t in self.registry.types
@@ -202,8 +213,18 @@ class Catalogue:
         try:
             return str(self.client.model(value).rdf_class_iri)
         except ValueError as exc:
+            candidates = sorted(
+                (t for t in self.registry.types if score(t.label + " " + t.id, str(value))),
+                key=lambda t: -score(t.label + " " + t.id, str(value)),
+            )[:4]
+            choices = ", ".join(f"{self.type_refs[t.id]} ({t.label})" for t in candidates)
             raise ValueError(
-                "Unknown or ambiguous class. Use a type reference from schema discovery."
+                f"Class {value!r} needs grounding. "
+                + (
+                    f"Related retained types: {choices}. Select a type reference."
+                    if choices
+                    else "Search class concepts in the catalogue, then select a type reference."
+                )
             ) from exc
 
     def _field_names(self, owner, fields):

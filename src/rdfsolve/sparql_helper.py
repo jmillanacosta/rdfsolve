@@ -309,9 +309,13 @@ class SparqlHelper:
         self.sparql_engine = sparql_engine
         self.sparql_strategy = sparql_strategy
         self.inter_request_delay = inter_request_delay
-        if (type(select_page_size) is not int or select_page_size < 1
-                or type(select_page_retries) is not int or select_page_retries < 0
-                or select_page_cooldown < 0):
+        if (
+            type(select_page_size) is not int
+            or select_page_size < 1
+            or type(select_page_retries) is not int
+            or select_page_retries < 0
+            or select_page_cooldown < 0
+        ):
             raise ValueError("Invalid SELECT recovery configuration")
         self.select_page_size = select_page_size
         self.select_page_retries = select_page_retries
@@ -715,12 +719,7 @@ class SparqlHelper:
                             f"HTTP 502 Bad Gateway (overload): {e}",
                             status_code=502,
                         ) from e
-                    # 429 from a local QLever means the server is at capacity
-                    # (query too expensive / concurrent limit hit).
-                    # Raise as EndpointTimeoutError immediately so the miner
-                    # uses chunked/paginated queries instead of
-                    # retrying the same heavy one-shot query 10 more times —
-                    # each of which will also run for many minutes before 429.
+                    # Let adaptive callers reduce work after local capacity errors.
                     if status_code == 429 and urlsplit(self.endpoint_url).hostname in (
                         "localhost",
                         "127.0.0.1",
@@ -746,12 +745,7 @@ class SparqlHelper:
                             "Remote host rate-limited %s; honor shared cooldown", self.endpoint_url
                         )
                         continue
-                    # A 500/504 whose body signals "query too expensive"
-                    # (Virtuoso cost limit, statement timeout, gateway
-                    # timeout, etc.) is not a transient server error -
-                    # retrying the identical query will always fail.
-                    # Raise as EndpointTimeoutError so callers (e.g.
-                    # the two-phase miner) can use pagination.
+                    # Cost and time limits require smaller queries from the caller.
                     if status_code in (500, 504):
                         body = self._last_error_body.lower()
                         is_cost_limit = status_code == 504 or any(
@@ -783,10 +777,7 @@ class SparqlHelper:
                 raise
 
             except requests.exceptions.Timeout as e:
-                # Timeouts are surfaced immediately so that callers
-                # (e.g. select_chunked) can apply adaptive strategies
-                # such as reducing the page size, rather than blindly
-                # retrying the same expensive query.
+                # Adaptive callers can reduce page size after a timeout.
                 tag = f"{query_type}[{purpose}]" if purpose else query_type
                 logger.warning(
                     "%s timed out against %s: %s",
@@ -1117,9 +1108,15 @@ class SparqlHelper:
 
         return simplified
 
-    def select_with_fallback(self, query: str, *, purpose: str = "",
-                             max_pages: int | None = 10000) -> dict[str, Any]:
-        """Try one SELECT, then the existing adaptive pager on cost/time failure.
+    def select_with_fallback(
+        self,
+        query: str,
+        *,
+        purpose: str = "",
+        max_pages: int | None = 10000,
+        exhaustive: bool = False,
+    ) -> dict[str, Any]:
+        """Execute SELECT with optional paging to exhaustion and adaptive recovery.
 
         All requests use this helper's transport fallback, host spacing, cooldowns,
         response budgets and journal. No filters or required graph patterns are
@@ -1127,51 +1124,100 @@ class SparqlHelper:
         Paging assumes stable data. Blank-node identities and volatile expressions
         cannot safely be reconstructed across independent endpoint responses.
         """
-        from pyparsing import Optional, ZeroOrMore, StringEnd, ParseResults, original_text_for, restOfLine
+        from pyparsing import (
+            Optional,
+            ParseResults,
+            StringEnd,
+            ZeroOrMore,
+            original_text_for,
+            restOfLine,
+        )
         from rdflib.plugins.sparql import prepareQuery
         from rdflib.plugins.sparql.parser import (
-            Prologue, SelectClause, DatasetClause, WhereClause, GroupClause,
-            HavingClause, OrderClause, LimitOffsetClauses, ValuesClause, parseQuery,
+            DatasetClause,
+            GroupClause,
+            HavingClause,
+            LimitOffsetClauses,
+            OrderClause,
+            Prologue,
+            SelectClause,
+            ValuesClause,
+            WhereClause,
+            parseQuery,
         )
+
         meta = {"strategy": "single_response", "status": "running", "pages": 0}
         self.last_select_execution = meta
         started = time.monotonic()
         try:
-            try:
-                result = self.select(query, purpose=purpose)
-            except EndpointTimeoutError as error:
-                meta.update(strategy="adaptive_offset", first_error=str(error))
-                logger.warning("SELECT[%s] switching to adaptive pages: %s", purpose, error)
-            else:
-                meta.update(status="complete", rows=len(result.get("results", {}).get("bindings", [])))
-                return result
+            if not exhaustive:
+                try:
+                    result = self.select(query, purpose=purpose)
+                except EndpointTimeoutError as error:
+                    meta.update(first_error=str(error))
+                    logger.warning("SELECT[%s] switching to adaptive pages: %s", purpose, error)
+                else:
+                    meta.update(
+                        status="complete",
+                        rows=len(result.get("results", {}).get("bindings", [])),
+                        completeness_basis="endpoint_response",
+                    )
+                    return result
+            meta.update(strategy="adaptive_offset")
             parsed = parseQuery(query)[1]
             if parsed.name != "SelectQuery":
                 raise QueryError("Pagination recovery requires SELECT")
             if "modifier" in parsed and parsed["modifier"] == "REDUCED":
                 raise QueryError("Cannot safely page SELECT REDUCED across independent responses")
+
             def volatile(node):
                 if getattr(node, "name", None) in {
-                    "Builtin_RAND", "Builtin_UUID", "Builtin_STRUUID", "Builtin_NOW", "Builtin_BNODE",
-                    "Aggregate_Sample", "Aggregate_GroupConcat",
+                    "Builtin_RAND",
+                    "Builtin_UUID",
+                    "Builtin_STRUUID",
+                    "Builtin_NOW",
+                    "Builtin_BNODE",
+                    "Aggregate_Sample",
+                    "Aggregate_GroupConcat",
                 }:
                     return True
-                children = node.values() if isinstance(node, dict) else node if isinstance(node, (list, tuple, ParseResults)) else ()
+                children = (
+                    node.values()
+                    if isinstance(node, dict)
+                    else node
+                    if isinstance(node, (list, tuple, ParseResults))
+                    else ()
+                )
                 return any(volatile(child) for child in children)
+
             if volatile(parsed):
-                raise QueryError("Cannot paginate volatile expressions without changing their meaning")
+                raise QueryError(
+                    "Cannot paginate volatile expressions without changing their meaning"
+                )
             projected = [str(v) for v in prepareQuery(query).algebra["PV"]]
             if not projected:
                 raise QueryError("No projected variables to order for pagination")
             # Locate the outer slice with the SPARQL grammar. Do not regex-rewrite
             # LIMIT/OFFSET inside strings, nested queries, IRIs or comments.
-            body = (Prologue + SelectClause + ZeroOrMore(DatasetClause) + WhereClause
-                    + Optional(GroupClause) + Optional(HavingClause) + Optional(OrderClause))
-            syntax = (original_text_for(body)("body") + Optional(original_text_for(LimitOffsetClauses)("slice"))
-                      + original_text_for(ValuesClause)("values") + StringEnd())
+            body = (
+                Prologue
+                + SelectClause
+                + ZeroOrMore(DatasetClause)
+                + WhereClause
+                + Optional(GroupClause)
+                + Optional(HavingClause)
+                + Optional(OrderClause)
+            )
+            syntax = (
+                original_text_for(body)("body")
+                + Optional(original_text_for(LimitOffsetClauses)("slice"))
+                + original_text_for(ValuesClause)("values")
+                + StringEnd()
+            )
             syntax.ignore("#" + restOfLine)
             parts = syntax.parse_string(query)
-            slice_ = parsed["limitoffset"] if "limitoffset" in parsed else {}
+            # CompValue.get substitutes the key when a property is absent.
+            slice_ = dict.get(parsed, "limitoffset", {})
             limit = int(slice_["limit"]) if "limit" in slice_ else None
             offset = int(slice_["offset"]) if "offset" in slice_ else 0
             order = []
@@ -1182,26 +1228,50 @@ class SparqlHelper:
                     f'COALESCE(ENCODE_FOR_URI(LANG(?{v})), ""), "|", '
                     f'COALESCE(ENCODE_FOR_URI(STR(DATATYPE(?{v}))), ""))), "U"))'
                 )
-            base = parts["body"] + "\n" + ("" if "orderby" in parsed else "ORDER BY ") + " ".join(order)
-            template = (self.escape_sparql_for_format(base) + "\nOFFSET {offset}\nLIMIT {limit}\n"
-                        + self.escape_sparql_for_format(parts["values"]))
+            base = (
+                parts["body"]
+                + "\n"
+                + ("" if "orderby" in parsed else "ORDER BY ")
+                + " ".join(order)
+            )
+            template = (
+                self.escape_sparql_for_format(base)
+                + "\nOFFSET {offset}\nLIMIT {limit}\n"
+                + self.escape_sparql_for_format(parts["values"])
+            )
             rows = []
             try:
                 for page in self.select_chunked(
-                    template, chunk_size=self.select_page_size, max_total_results=limit,
-                    delay_between_chunks=self.inter_request_delay, purpose=purpose, max_pages=max_pages,
-                    until_empty=True, stable_terms=True, max_page_retries=self.select_page_retries,
-                    initial_offset=offset, wait_after_timeout=self.select_page_cooldown,
-                    detect_repeated_pages=("modifier" in parsed and parsed["modifier"] == "DISTINCT"),
+                    template,
+                    chunk_size=self.select_page_size,
+                    max_total_results=limit,
+                    delay_between_chunks=self.inter_request_delay,
+                    purpose=purpose,
+                    max_pages=max_pages,
+                    until_empty=True,
+                    stable_terms=True,
+                    max_page_retries=self.select_page_retries,
+                    initial_offset=offset,
+                    wait_after_timeout=self.select_page_cooldown,
+                    detect_repeated_pages=(
+                        "modifier" in parsed and parsed["modifier"] == "DISTINCT"
+                    ),
                 ):
                     rows.extend(page)
                     meta.update(pages=meta["pages"] + 1, rows=len(rows))
-                    logger.info("SELECT[%s] page %d; %d rows retained", purpose, meta["pages"], len(rows))
+                    logger.info(
+                        "SELECT[%s] page %d; %d rows retained", purpose, meta["pages"], len(rows)
+                    )
             except PaginationTruncatedError as error:
                 error.partial_rows = deepcopy(rows)
                 raise
-            meta.update(status="complete", rows=len(rows), completeness_basis=
-                        "original_limit" if limit is not None and len(rows) == limit else "empty_page")
+            meta.update(
+                status="complete",
+                rows=len(rows),
+                completeness_basis="original_limit"
+                if limit is not None and len(rows) == limit
+                else "empty_page",
+            )
             return {"head": {"vars": projected}, "results": {"bindings": rows}}
         except Exception as error:
             meta.update(status="failed", error=f"{type(error).__name__}: {error}")

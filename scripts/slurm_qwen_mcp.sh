@@ -18,7 +18,7 @@ REPO="$PWD"
 
 MODEL_PATH="${MODEL_PATH:-/trinity/shared/llm-models/qwen36-35b-a3b/Qwen3.6-35B-A3B-Q8_0.gguf}"
 IMAGE="${LLAMA_SERVER_IMAGE:-/trinity/shared/containers/llama-server-cuda.sif}"
-PORT="${QWEN_PORT:-8080}"
+PORT="${QWEN_PORT:-$((20000 + ${SLURM_JOB_ID:-0} % 30000))}"
 OUTPUT_DIR="${QWEN_OUTPUT_DIR:-$REPO/../logs/mcp-test/qwen-${SLURM_JOB_ID:-manual}}"
 mkdir -p "$OUTPUT_DIR"
 OUTPUT_DIR="$(cd -- "$OUTPUT_DIR" && pwd)"
@@ -43,6 +43,26 @@ unset all_proxy ALL_PROXY
 source "$REPO/.venv/bin/activate"
 uv pip install --python "$REPO/.venv/bin/python" -e .
 python -m ipykernel install --sys-prefix --name rdfsolve
+mkdir -p "$OUTPUT_DIR/source"
+cp -a "$REPO/src/rdfsolve" "$OUTPUT_DIR/source/rdfsolve"
+export PYTHONPATH="$OUTPUT_DIR/source${PYTHONPATH:+:$PYTHONPATH}"
+python - <<'PYCODE'
+import hashlib, importlib.metadata, json, os, subprocess
+from pathlib import Path
+root, output = Path(os.environ['RDFSOLVE_ROOT']), Path(os.environ['RDFSOLVE_OUTPUT'])
+files = list((root / 'src/rdfsolve').rglob('*.py')) + list((root / 'notebooks/mcp/schemas').glob('*'))
+manifest = {
+    'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+    'source_sha256': {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files if p.is_file()},
+    'versions': {name: importlib.metadata.version(name) for name in ['rdfsolve','pydantic-ai-slim','mcp','rdflib','pydantic']},
+    'model': os.environ['RDFSOLVE_MODEL'],
+    'max_tokens': os.environ['RDFSOLVE_MAX_TOKENS'],
+    'notebook': os.environ.get('RDFSOLVE_NOTEBOOK', 'test-mcp.ipynb'),
+    'source_snapshot': 'source/rdfsolve',
+    'case': os.environ.get('RDFSOLVE_CASE', 'all'),
+}
+(output / 'run-manifest.json').write_text(json.dumps(manifest, indent=2))
+PYCODE
 
 [[ -r "$MODEL_PATH" ]] || { echo "Model not readable: $MODEL_PATH" >&2; exit 2; }
 [[ -r "$IMAGE" ]] || { echo "Container not readable: $IMAGE" >&2; exit 2; }

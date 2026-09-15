@@ -114,20 +114,20 @@ def event_goals(s):
     s.schema(
         question="Return Key Events and available metadata for Human AOPs",
         goals=[
-            dict(clause="Return Key Events", kind="output", concept="Key Event"),
-            dict(
-                clause="AOP applicability is Human",
-                kind="entity_filter",
-                concept="Taxon",
-                owner="Adverse Outcome Pathway",
-                value="Human",
-            ),
-            dict(
-                clause="Return available species and methods",
-                kind="output",
-                concept="species and methods",
-                required=False,
-            ),
+            {"clause": "Return Key Events", "kind": "output", "concept": "Key Event"},
+            {
+                "clause": "AOP applicability is Human",
+                "kind": "entity_filter",
+                "concept": "Taxon",
+                "owner": "Adverse Outcome Pathway",
+                "value": "Human",
+            },
+            {
+                "clause": "Return available species and methods",
+                "kind": "output",
+                "concept": "species and methods",
+                "required": False,
+            },
         ],
     )
     human = s.find("Human", str(E.Taxon))["items"][0]["ref"]

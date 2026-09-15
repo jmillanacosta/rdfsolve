@@ -36,6 +36,7 @@ class UnaddressableTargetError(EndpointError):
     """A returned URI cannot be used as an absolute IRI in a later request."""
 
     def __init__(self, term, field: str, query_id: int):
+        """Retain the observed term and its anchored source query."""
         self.observed = term.model_dump(mode="json", exclude_none=True)
         self.field = field
         self.query_id = query_id
@@ -83,8 +84,7 @@ class DatasetClient(Hydrator):
     ) -> list[Model]:
         """Find typed IRIs whose label or title contains text, ignoring case.
 
-        Raise if the match count exceeds the limit. This is a text search,
-        not a search for related biological concepts.
+        Matching uses literal wording. Raise if the match count exceeds the limit.
         """
         if not text.strip():
             raise ValueError("Supply search text")
@@ -121,8 +121,8 @@ class DatasetClient(Hydrator):
         """Follow a named field and retrieve distinct typed targets.
 
         In inverse mode the field belongs to the target model. Keep matched
-        source/target pairs in session metadata. A path match is not a claim
-        of causation. Blank nodes cannot be followed between requests.
+        source/target pairs in session metadata as observed connections.
+        Blank nodes require retrieval anchored in the same request.
         """
         if not records:
             return []

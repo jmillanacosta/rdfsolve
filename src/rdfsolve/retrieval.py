@@ -1,9 +1,8 @@
-"""Compose and check retrieval queries against grounded question clauses."""
+"""Check retrieval queries against grounded question clauses."""
 
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any
 from typing import Literal as Choice
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -65,41 +64,32 @@ class Requirement(BaseModel):
         return self
 
 
-def canonical(value: Any) -> Any:
-    """Compare algebra while retaining scope, filters, terms and multiplicity."""
-    if isinstance(value, CompValue):
-        entries = []
-        for key, item in value.items():
-            if key.startswith("_"):
-                continue
-            normalized = canonical(item)
-            if key in {"triples", "PV"}:
-                normalized = tuple(sorted(set(normalized), key=repr))
-            entries.append((key, normalized))
-        return value.name, tuple(sorted(entries))
-    if isinstance(value, dict):
-        return tuple(sorted((canonical(k), canonical(v)) for k, v in value.items()))
-    if isinstance(value, (tuple, list)):
-        return tuple(canonical(v) for v in value)
-    if isinstance(value, set):
-        return tuple(sorted((canonical(v) for v in value), key=repr))
-    if isinstance(value, (URIRef, Literal, Variable, Path)):
-        return type(value).__name__, value.n3()
-    return value
-
-
 def validate_retrieval(query: PreparedQuery, catalogue) -> list[str]:
     """Check the supported SELECT algebra, paths, owners and term constraints."""
     algebra = prepareQuery(query.sparql).algebra
     nodes = list(walk(algebra))
-    forbidden = {"Extend", "AggregateJoin", "Group", "Minus", "Reduced", "Slice"}
+    forbidden = {
+        "Extend",
+        "AggregateJoin",
+        "Group",
+        "Minus",
+        "Reduced",
+        "Slice",
+        "Builtin_EXISTS",
+        "Builtin_NOTEXISTS",
+    }
+    if sum(isinstance(n, CompValue) and n.name == "Project" for n in nodes) > 1:
+        raise QueryValidationError(
+            "retrieval_operator",
+            "Nested SELECT scopes need separate goal validation. Use a single retrieval projection.",
+        )
     for node in nodes:
         if isinstance(node, CompValue) and (
             node.name in forbidden or node.name.startswith("Aggregate_")
         ):
             raise QueryValidationError(
                 "retrieval_operator",
-                f"{node.name} transforms the answer. Retrieve RDF bindings and transform them in Python.",
+                f"{node.name} is outside the supported retrieval subset. Retrieve RDF bindings and apply subsequent transformations in Python.",
             )
     triples = [
         triple
@@ -234,15 +224,10 @@ def validate_retrieval(query: PreparedQuery, catalogue) -> list[str]:
 @lru_cache(maxsize=512)
 def canonical_path(text: str) -> str:
     """Normalize grouping in a retained path for the RDFLib serializer."""
-    # Algebra parsing provides the authoritative path structure.
     path = prepareQuery(f"SELECT ?s ?o WHERE {{ ?s {text} ?o }}").algebra
-    return repr(
-        canonical(
-            next(
-                n.triples[0][1] for n in walk(path) if isinstance(n, CompValue) and n.name == "BGP"
-            )
-        )
-    )
+    return next(
+        n.triples[0][1] for n in walk(path) if isinstance(n, CompValue) and n.name == "BGP"
+    ).n3()
 
 
 def _optional_scope(node) -> tuple[set, set]:
@@ -277,7 +262,7 @@ def verify_query(sparql, requirements, grounding, catalogue) -> PreparedQuery:
     query = compile_query(
         sparql, catalogue.fragments, catalogue.client._scope, catalogue.known_iris
     )
-    query.warnings = validate_retrieval(query, catalogue)
+    query.warnings.extend(validate_retrieval(query, catalogue))
     for key, requirement in requirements.items():
         if requirement.kind != "scope":
             validate_goal(requirement, grounding[key], query, catalogue)
@@ -316,7 +301,7 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             "goal_evidence",
             f"{requirement.clause}: select retained class, field or path references as evidence.",
         )
-    from rdfsolve.catalogue import words
+    from rdfsolve.catalogue import score, words
 
     exact_types = {
         f.iri
@@ -332,12 +317,15 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             "goal_concept",
             f"{requirement.clause}: select evidence for the discovered {requirement.concept} class.",
         )
+    if not any(
+        score(catalogue.schema_documents.get(ref, (f.label, []))[0], requirement.concept) >= 1
+        for ref, f in zip(evidence, fragments, strict=True)
+    ):
+        expanded.warnings.append(
+            f"'{requirement.concept}' was mapped to {', '.join(f.label for f in fragments)}. The saved metadata does not explain that meaning; verify this interpretation."
+        )
     algebra = prepareQuery(expanded.sparql).algebra
-    nodes = list(
-        required_nodes(algebra)
-        if requirement.required and requirement.kind in {"entity_filter", "text_filter", "relation"}
-        else walk(algebra)
-    )
+    nodes = list(required_nodes(algebra) if requirement.required else walk(algebra))
     triples = [t for n in nodes if isinstance(n, CompValue) and n.name == "BGP" for t in n.triples]
     types = {}
     for n in walk(algebra):
@@ -357,7 +345,32 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
         if bound:
             subject_binding = Variable(requirement.owner.lstrip("?$"))
         else:
-            owner = catalogue._type(requirement.owner)
+            try:
+                owner = catalogue._type(requirement.owner)
+            except ValueError as exc:
+                owners = sorted({catalogue.type_refs[f.owner] for f in fragments if f.owner})
+                raise QueryValidationError(
+                    "goal_owner",
+                    f"{requirement.clause}: owner '{requirement.owner}' is unresolved. Ground this goal's owner to its subject variable or retained class {owners}. Field inserts include their owner type.",
+                ) from exc
+            bindings = [str(v) for v, classes in types.items() if owner in classes]
+            if len(bindings) > 1:
+                raise QueryValidationError(
+                    "goal_owner",
+                    f"{requirement.clause}: this class occurs in several roles {bindings}. Ground the owner to the intended subject variable.",
+                )
+    matching_fields = {
+        ref
+        for ref in catalogue.field_refs.values()
+        if words(requirement.concept) == words(catalogue.fragments[ref].label)
+        and (not owner or catalogue.fragments[ref].owner == owner)
+        and (subject_binding is None or catalogue.fragments[ref].owner in types[subject_binding])
+    }
+    if matching_fields and not matching_fields.intersection(evidence) and not exact_types:
+        raise QueryValidationError(
+            "goal_concept",
+            f"{requirement.clause}: discover the '{requirement.concept}' field on its owner; the selected evidence describes another field.",
+        )
     witnessed = []
     for ref, fragment in zip(evidence, fragments, strict=True):
         if owner and fragment.owner and fragment.owner != owner:
@@ -388,6 +401,12 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             ]
             expected_owner = fragment.owner or owner
             if expected_owner:
+                if matches and not any(expected_owner in types.get(s, set()) for s, _ in matches):
+                    subject = matches[0][0].n3()
+                    raise QueryValidationError(
+                        "goal_type",
+                        f"{requirement.clause}: identify the field's subject class with {subject} a <{expected_owner}> . The selected field insert supplies this pattern.",
+                    )
                 matches = [(s, o) for s, o in matches if expected_owner in types.get(s, set())]
             if subject_binding is not None:
                 matches = [(s, o) for s, o in matches if s == subject_binding]
@@ -399,6 +418,13 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
                 "goal_path",
                 f"{requirement.clause}: the selected schema evidence is absent from its pattern.",
             )
+        if requirement.kind == "output":
+            values = [s if fragment.kind == "type" else o for s, o in matches]
+            if not outputs.intersection(values):
+                raise QueryValidationError(
+                    "goal_output",
+                    f"{requirement.clause}: project the selected {fragment.label} binding.",
+                )
         if requirement.kind == "output" and not requirement.required:
             mandatory = [
                 t
@@ -431,9 +457,9 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             rdf = term.term.to_rdf()
             fixed = any(o == rdf for o in witnessed)
             fixed |= any(
-                isinstance(n, dict)
-                and any(v in witnessed and value == rdf for v, value in n.items())
+                n.res and any(all(row.get(v) == rdf for row in n.res) for v in witnessed)
                 for n in nodes
+                if isinstance(n, CompValue) and n.name == "values"
             )
             if not fixed:
                 raise QueryValidationError(
@@ -443,7 +469,17 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
         else:
             filters = [n for n in nodes if isinstance(n, CompValue) and n.name == "Filter"]
             if not any(
-                set(witnessed).intersection(walk(n.expr))
+                isinstance(n, CompValue)
+                and n.name.lower() == "builtin_isliteral"
+                and any(v in witnessed for v in walk(n) if isinstance(v, Variable))
+                for n in nodes
+            ):
+                raise QueryValidationError(
+                    "goal_text_kind",
+                    f"{requirement.clause}: add isLiteral on the text binding so URI strings cannot satisfy a wording condition.",
+                )
+            if not any(
+                any(v in witnessed for v in walk(n.expr) if isinstance(v, Variable))
                 and any(
                     isinstance(v, Literal) and str(v).casefold() == requirement.value.casefold()
                     for v in walk(n.expr)

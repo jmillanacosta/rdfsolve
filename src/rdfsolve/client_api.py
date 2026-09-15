@@ -94,18 +94,18 @@ class Client(DatasetClient):
         return cls(schema, source, **kwargs)
 
     def registry(self, *, source_id: str) -> Registry:
-        """Build a versioned operation registry without querying the source."""
+        """Describe generated classes and source bindings from retained metadata."""
         from rdfsolve.registry import build_registry
 
         return build_registry(self, source_id)
 
-    def select(self, query: str):
+    def select(self, query: str, *, exhaustive: bool = False):
         """Execute SELECT through this client's shared helper and return typed cells.
 
         Scope must already be present in the query. The
         returned QueryResult preserves the query's row associations and RDF terms.
-        This operation never creates another endpoint connection or bypasses
-        SparqlHelper.select_with_fallback.
+        exhaustive=True uses the helper's adaptive pager until an empty page.
+        Endpoint execution uses the existing SparqlHelper.select_with_fallback.
         """
         from time import perf_counter
 
@@ -118,7 +118,7 @@ class Client(DatasetClient):
             raise ValueError("Client.select requires a SELECT query")
         variables = [str(v) for v in parsed.algebra.PV]
         started = perf_counter()
-        bindings = self._select(query)
+        bindings = self._select(query, exhaustive=True) if exhaustive else self._select(query)
         rows = []
         for binding in bindings:
             row = {}
@@ -142,8 +142,8 @@ class Client(DatasetClient):
     ) -> list[dict[str, Any]]:
         """Sample actual subject/value pairs through a generated field's full path.
 
-        This is discovery, not a final answer. Request limit+1 to detect another
-        page. Blank nodes must not be reused as identifiers in a later query.
+        Request limit+1 to detect another page. Blank-node identifiers belong
+        to the response that supplied them.
         """
         from rdfsolve.exploration import _path
         from rdfsolve.schema_models.exporters.paths import path_to_sparql
@@ -179,8 +179,8 @@ class Client(DatasetClient):
         restricts observed paths to that record's IRI. Use target_value
         instead to verify mined class routes against records whose names or
         identifiers contain that text, ignoring case. Paths stay in one graph
-        and do not repeat classes or resources. Class routes are queried in
-        batches and bounded by max_paths. Raise rather than return partial paths.
+        by default. Class route search accepts repeated classes and partial
+        candidates through explicit options. max_paths bounds its search.
         """
         from rdfsolve.client_paths import class_paths
         from rdfsolve.client_value_paths import value_paths
@@ -310,7 +310,7 @@ class Client(DatasetClient):
         if labels:
             return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", min(labels))
         local = re.split(r"[/#:]", iri)[-1]
-        return local if re.search(r"\\d", local) else _name(model.__name__)
+        return local if re.search(r"\d", local) else _name(local)
 
     def link_name(self, model: type[BaseModel], field: str) -> str:
         """Use a source label or readable predicate name for a link."""
@@ -759,7 +759,7 @@ class Results:
         )
 
     def values(self, field: str) -> pd.DataFrame:
-        """List values of one field across these records, not the whole endpoint."""
+        """List values of one field across the selected records."""
         self._load(field)
         values: dict[str, set[str]] = defaultdict(set)
         for record in self.records:

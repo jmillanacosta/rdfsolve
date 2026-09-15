@@ -48,9 +48,23 @@ class Answer:
 
         return to_jsonable_python(
             {
-                k: v
-                for k, v in vars(self).items()
-                if k not in {"bindings", "messages", "calls", "query"}
+                "warnings": next(
+                    (
+                        c["result"].get("warnings", [])
+                        for c in reversed(self.calls)
+                        if c["result"].get("state") in {"complete", "prepared"}
+                    ),
+                    [],
+                ),
+                "max_request_input_tokens": max(
+                    (m.usage.input_tokens for m in self.messages if getattr(m, "usage", None)),
+                    default=None,
+                ),
+                **{
+                    k: v
+                    for k, v in vars(self).items()
+                    if k not in {"bindings", "messages", "calls", "query"}
+                },
             }
         )
 
